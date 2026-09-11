@@ -1,0 +1,19 @@
+/* Role shapes explain patterns; these colors never denote chart difficulty. */
+.pattern-example { display:block; width:100%; height:auto; max-height:108px; overflow:visible; color:#075e70; background:#f1f9fa; border-radius:8px; }
+.pattern-example text { fill:#3c626b; font:600 11px system-ui,sans-serif; }
+.pattern-example .pattern-example-caption { font-size:10px; font-weight:400; }
+.pattern-example-guide { fill:none; stroke:#c4dce0; stroke-width:1; }
+.pattern-example-line { fill:none; stroke:#075e70; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+.pattern-example-movement { fill:none; stroke:#075e70; stroke-width:5; stroke-linecap:round; stroke-linejoin:round; }
+.pattern-example-wait { fill:none; stroke:#547b83; stroke-width:2; stroke-dasharray:4 5; }
+.pattern-example-tap { fill:#fff; stroke:#075e70; stroke-width:3; }
+.pattern-example-together { stroke:#91bac1; stroke-width:7; }
+.pattern-example-hold { fill:#b8dde2; stroke:#075e70; stroke-width:2; }
+.pattern-example-density { fill:#187988; }
+@media (forced-colors:active) {
+  .pattern-example { color:CanvasText; background:Canvas; }
+  .pattern-example text { fill:CanvasText; }
+  .pattern-example path,.pattern-example circle,.pattern-example rect { stroke:CanvasText; }
+  .pattern-example-tap { fill:Canvas; }
+  .pattern-example-density,.pattern-example-hold { fill:CanvasText; }
+}

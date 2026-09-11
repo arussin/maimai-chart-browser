@@ -1,0 +1,447 @@
+{
+  "repository": "arussin/maimai-report-starter",
+  "revision": "1503c87f6da7ba3fa564f0a5b112784119464e70",
+  "files": [
+    {
+      "source": "src/maimai_analyzer/__init__.py",
+      "destination": "src/maimai_analyzer/__init__.py",
+      "source_sha256": "16dab6195eee173ea49001644bce475f15209456018e8f97371580ab94e672e5"
+    },
+    {
+      "source": "src/maimai_analyzer/__main__.py",
+      "destination": "src/maimai_analyzer/__main__.py",
+      "source_sha256": "7f8acafe24f78a8ea279ee877b68a25faabef62a6cbea237c3ad4a349fd1dce6"
+    },
+    {
+      "source": "src/maimai_analyzer/catalog.py",
+      "destination": "src/maimai_analyzer/catalog.py",
+      "source_sha256": "7a439b0dd629ec981801c3bad3ce1ec0f3e00d4a13666d09cc0cbc0f037a44e0"
+    },
+    {
+      "source": "src/maimai_analyzer/catalog_navigation.py",
+      "destination": "src/maimai_analyzer/catalog_navigation.py",
+      "source_sha256": "ad6219936a9e747957992d0ba24bb34c38df006d432a83f60e907c9e8d041d88"
+    },
+    {
+      "source": "src/maimai_analyzer/challenge.py",
+      "destination": "src/maimai_analyzer/challenge.py",
+      "source_sha256": "ad81791b6b69c3f5f91f12241bd29d161b679ffae1a67b995bc9a191e292ff22"
+    },
+    {
+      "source": "src/maimai_analyzer/challenge_evaluation.py",
+      "destination": "src/maimai_analyzer/challenge_evaluation.py",
+      "source_sha256": "fcc8bb1a8c3e0eb57a18bdfdc3648827a8a267afabc2211147df4e601335d497"
+    },
+    {
+      "source": "src/maimai_analyzer/challenge_similarity.py",
+      "destination": "src/maimai_analyzer/challenge_similarity.py",
+      "source_sha256": "a49d9bd446c0fd5fa1447591247ba4b17700a938680c5bbe5b2a8005b5d2561b"
+    },
+    {
+      "source": "src/maimai_analyzer/contracts.py",
+      "destination": "src/maimai_analyzer/contracts.py",
+      "source_sha256": "549c1abce1c2e122a2432bd2d216ad7dbfcdbd293f325486a6fca33c75c5936c"
+    },
+    {
+      "source": "src/maimai_analyzer/core.py",
+      "destination": "src/maimai_analyzer/core.py",
+      "source_sha256": "50cf58ff289d03657bf0ed00a70a59a9a1e3efc86ac10b2505de46e736d23f09"
+    },
+    {
+      "source": "src/maimai_analyzer/dataset.py",
+      "destination": "src/maimai_analyzer/dataset.py",
+      "source_sha256": "fa5a928db600702d93a6c54e3dfd2b35e7ddedf9f69131004b881a179588f2ac"
+    },
+    {
+      "source": "src/maimai_analyzer/fixtures.py",
+      "destination": "src/maimai_analyzer/fixtures.py",
+      "source_sha256": "721e0bbc29f4db0d50991544cb04c98899b14a9ff12383babe55892fce5f8e38"
+    },
+    {
+      "source": "src/maimai_analyzer/flow.py",
+      "destination": "src/maimai_analyzer/flow.py",
+      "source_sha256": "7d14a6b1f8ba73bda9ca7d33ea5b04af49e9d7a8a794873ea0f2a0f8df2536e1"
+    },
+    {
+      "source": "src/maimai_analyzer/pattern_evidence.py",
+      "destination": "src/maimai_analyzer/pattern_evidence.py",
+      "source_sha256": "3d3c740875e477a0959b27da3bc1dea1b3d5c88d3df7dd705f73f1463ba2d220"
+    },
+    {
+      "source": "src/maimai_analyzer/pattern_registry.seed.json",
+      "destination": "src/maimai_analyzer/pattern_registry.seed.json",
+      "source_sha256": "504211fef8b6840901c2cf269e349fa170590e7536a756301355ef61ab4ff5bd"
+    },
+    {
+      "source": "src/maimai_analyzer/patterns.py",
+      "destination": "src/maimai_analyzer/patterns.py",
+      "source_sha256": "20f77a1036ac598b8192d093f855ee5e2117e97fb4d5d15df6d09a8189d7d8bd"
+    },
+    {
+      "source": "src/maimai_analyzer/rational.py",
+      "destination": "src/maimai_analyzer/rational.py",
+      "source_sha256": "e09c6e2f1f7b6aba49802c3e8a18f865508b355339ee07ab32b06cf9c672ab8f"
+    },
+    {
+      "source": "src/maimai_analyzer/simai_notation.py",
+      "destination": "src/maimai_analyzer/simai_notation.py",
+      "source_sha256": "666a101c121b64e7f11f9b547cda51d7aacf75add030aaec271fc1db781400c6"
+    },
+    {
+      "source": "src/maimai_analyzer/simai_subset.py",
+      "destination": "src/maimai_analyzer/simai_subset.py",
+      "source_sha256": "d0b959e214351f9cf330e55c5647f5c4f41f8b9d3dd08780af980f045ec2089e"
+    },
+    {
+      "source": "src/maimai_analyzer/simai_timing.py",
+      "destination": "src/maimai_analyzer/simai_timing.py",
+      "source_sha256": "906cdcdb70c7783514be23ea4cd68cbf4c970272c38f77aeed0c0d29906e9b56"
+    },
+    {
+      "source": "src/maimai_analyzer/similarity.py",
+      "destination": "src/maimai_analyzer/similarity.py",
+      "source_sha256": "2f7d1e1822345ba4fa40e49d883eefc103cbaf38f4a9d0f2071819db94a1c58f"
+    },
+    {
+      "source": "src/maimai_analyzer/wire.py",
+      "destination": "src/maimai_analyzer/wire.py",
+      "source_sha256": "3d7d873e613827b6ad97f2d9bd13109ee2c6cdb2dc82f6afa2770d21368cc981"
+    },
+    {
+      "source": "src/maimai_report/recommendations/README.md",
+      "destination": "src/maimai_intelligence/recommendations/README.md",
+      "source_sha256": "2ea4114209c81ff2fe10dd82673ce6a79c14d8cf6750317c4c004cea2642636e"
+    },
+    {
+      "source": "src/maimai_report/recommendations/__init__.py",
+      "destination": "src/maimai_intelligence/recommendations/__init__.py",
+      "source_sha256": "1fd495d36aae1949bbdf8ea10b1a3aadcea68a13d858d4d4b3fef724da20784c"
+    },
+    {
+      "source": "src/maimai_report/recommendations/rating.py",
+      "destination": "src/maimai_intelligence/recommendations/rating.py",
+      "source_sha256": "f3c3726d998213e37f05cc67e2ca8d31e209d2bb73783275847e06b8931a1405"
+    },
+    {
+      "source": "src/maimai_report/recommendations/scoring.py",
+      "destination": "src/maimai_intelligence/recommendations/scoring.py",
+      "source_sha256": "eb7ccaf4e384f6be1b5b3c4c078b930d42dfab46d96c9a2ef67e3f7c6208b50f"
+    },
+    {
+      "source": "src/maimai_report/recommendations/selection.py",
+      "destination": "src/maimai_intelligence/recommendations/selection.py",
+      "source_sha256": "36f7a3f4ad01921524d386c7cf936ae63f6b736a62637438f3f61e129dc38d2e"
+    },
+    {
+      "source": "src/maimai_report/explorer.py",
+      "destination": "src/maimai_intelligence/explorer.py",
+      "source_sha256": "fcfdf34735092c62db0ccb206e2342cd3e6b202be015945aac644935308ef7af"
+    },
+    {
+      "source": "src/maimai_report/intelligence_recommendations.py",
+      "destination": "src/maimai_intelligence/intelligence_recommendations.py",
+      "source_sha256": "0827b1c41fe95c9a9d9d6c1ac879ed27505df1b2adbdbeb62bccce4806bebae3"
+    },
+    {
+      "source": "src/maimai_report/io.py",
+      "destination": "src/maimai_intelligence/io.py",
+      "source_sha256": "c7c0753ae978aa756b8bd0fb42a0f5ed41faaf0c8715703f3ba0340dddb718dc"
+    },
+    {
+      "source": "src/maimai_report/errors.py",
+      "destination": "src/maimai_intelligence/errors.py",
+      "source_sha256": "b9345a38b22e440199ebb4d55217fe995b091a490d6344f5a265a891b29dce63"
+    },
+    {
+      "source": "src/maimai_report/challenge_review.py",
+      "destination": "src/maimai_intelligence/challenge_review.py",
+      "source_sha256": "ce7a2663a5d1efe0bac8bfa5bf95894d89d52380099e89fe1804217712752282"
+    },
+    {
+      "source": "src/maimai_report/assets/__init__.py",
+      "destination": "src/maimai_intelligence/assets/__init__.py",
+      "source_sha256": "5111dad0bed788f25133f6b5542962f5560d35d271d35ccc6573c024a17128e3"
+    },
+    {
+      "source": "src/maimai_report/assets/challenge-review.css",
+      "destination": "src/maimai_intelligence/assets/challenge-review.css",
+      "source_sha256": "567867aa78bfc40b968d847a0286581106c4e00417d03a49ce82536597cca270"
+    },
+    {
+      "source": "src/maimai_report/assets/challenge-review.js",
+      "destination": "src/maimai_intelligence/assets/challenge-review.js",
+      "source_sha256": "2d2900e931a04e532c38e8de940a6728515bbd539e212e009948c4c2d129497d"
+    },
+    {
+      "source": "src/maimai_report/assets/chart-theme.json",
+      "destination": "src/maimai_intelligence/assets/chart-theme.json",
+      "source_sha256": "8e0433c3cd84bb8da63e13257ee5808bc23289164b01a04e1d0a29184750a187"
+    },
+    {
+      "source": "src/maimai_report/assets/chart-visuals.css",
+      "destination": "src/maimai_intelligence/assets/chart-visuals.css",
+      "source_sha256": "b9a83f2246c48b6e5af445e9296b5ee78216bc4d34ca86d4f6b763aec45e6b45"
+    },
+    {
+      "source": "src/maimai_report/assets/chart-visuals.js",
+      "destination": "src/maimai_intelligence/assets/chart-visuals.js",
+      "source_sha256": "58add19d16e22f1520527457086b9fdb6dd98bcd7bee8deeefc9a973b4c6a13a"
+    },
+    {
+      "source": "src/maimai_report/assets/explore-similarity.js",
+      "destination": "src/maimai_intelligence/assets/explore-similarity.js",
+      "source_sha256": "e3baf888745767bbb5374dc57cf49aaa7b008740bdb527c6fa5b4f1ed1870225"
+    },
+    {
+      "source": "src/maimai_report/assets/explore-wire.js",
+      "destination": "src/maimai_intelligence/assets/explore-wire.js",
+      "source_sha256": "6a9cf5b682878877a4b35f95beb8c4e41a4062658b70a005e45c63f41d2c928f"
+    },
+    {
+      "source": "src/maimai_report/assets/explore.css",
+      "destination": "src/maimai_intelligence/assets/explore.css",
+      "source_sha256": "b7493224a49869d1897ce5d8b74f0e7a920dbf895a6288fe7e6401efc8cc6c7d"
+    },
+    {
+      "source": "src/maimai_report/assets/explore.js",
+      "destination": "src/maimai_intelligence/assets/explore.js",
+      "source_sha256": "d1e4066be10c56e016360769068b95ecc6b2dfd4d75a33534fa0b0cb7a3f5c78"
+    },
+    {
+      "source": "src/maimai_report/assets/styles.css",
+      "destination": "src/maimai_intelligence/assets/styles.css",
+      "source_sha256": "41769d3d6be5b45cf5eb15cfdb2d103893f7eb95d5768a7a9128a436d2e53adc"
+    },
+    {
+      "source": "scripts/acquire_maichart_pack.py",
+      "destination": "scripts/acquire_maichart_pack.py",
+      "source_sha256": "53c5634f379c868b6653802d1da1d61452d9273c00c7b3a489bbfe2b88c4a2a2"
+    },
+    {
+      "source": "scripts/acquire_simai_corpus.py",
+      "destination": "scripts/acquire_simai_corpus.py",
+      "source_sha256": "f9ff880d1a576663af9cc52e1e9a5cf069a13eeba37d7d52fc68d1c646afd839"
+    },
+    {
+      "source": "scripts/analyze_simai_corpus.py",
+      "destination": "scripts/analyze_simai_corpus.py",
+      "source_sha256": "c128a9a945bae8a54a8177e4a52479460842f74fbf6b60e95596021902a0d31d"
+    },
+    {
+      "source": "scripts/benchmark_chart_intelligence.py",
+      "destination": "scripts/benchmark_chart_intelligence.py",
+      "source_sha256": "2299eb3796da1d7c424817581bbff78f6309ba567c2e4ea15e7ff54251b376b2"
+    },
+    {
+      "source": "scripts/build_challenge_package.py",
+      "destination": "scripts/build_challenge_package.py",
+      "source_sha256": "c674701710972332db58abc7c9c7713378b75f8b01660290177d3a7dfe08efb6"
+    },
+    {
+      "source": "scripts/build_real_chart_study.py",
+      "destination": "scripts/build_real_chart_study.py",
+      "source_sha256": "cdb79f4de6312c79637c1789b9e023c5526ec3fd940589d16ff35bc4a7ab55c9"
+    },
+    {
+      "source": "scripts/evaluate_simai_pilot.py",
+      "destination": "scripts/evaluate_simai_pilot.py",
+      "source_sha256": "ec6df066f3fed505d40ad17746ec54e0239daedead01c0b2eef62dcbbc709c60"
+    },
+    {
+      "source": "scripts/prepare_maichart_pack.py",
+      "destination": "scripts/prepare_maichart_pack.py",
+      "source_sha256": "318880bb62ef87de2c067d2147d01ed69ffe0874255c7b451bc43784173b885b"
+    },
+    {
+      "source": "scripts/refresh_challenge_navigation.py",
+      "destination": "scripts/refresh_challenge_navigation.py",
+      "source_sha256": "04b2ff1ed87a3668025bc39240de1566e7087192a84a0c39b69333becfbd804d"
+    },
+    {
+      "source": "scripts/simai_collection.py",
+      "destination": "scripts/simai_collection.py",
+      "source_sha256": "54dd3ae4bee0205c934928ecab9600bb69f9d502bf3e6ae1e6736f214d24c813"
+    },
+    {
+      "source": "tests/__init__.py",
+      "destination": "tests/__init__.py",
+      "source_sha256": "56a150a1069bbe1ea1f104cbf1225e31a293833b5745f16a46f2575c60be79d3"
+    },
+    {
+      "source": "tests/explorer_fixture.py",
+      "destination": "tests/explorer_fixture.py",
+      "source_sha256": "58a5a9b90c676df345d72be3c3c049e9282b119b9ff1cc9143eaff8bf581e00c"
+    },
+    {
+      "source": "tests/test_analyzer_core.py",
+      "destination": "tests/test_analyzer_core.py",
+      "source_sha256": "4209813adebbe3245e2c2acee487a46e4c3d5bf34baadd6913d2a836f9e3ca14"
+    },
+    {
+      "source": "tests/test_analyzer_input_extensions.py",
+      "destination": "tests/test_analyzer_input_extensions.py",
+      "source_sha256": "3514d26083d8e87dff7b872233570412a0acb98bcf4889d987deda2f301398bf"
+    },
+    {
+      "source": "tests/test_analyzer_rational.py",
+      "destination": "tests/test_analyzer_rational.py",
+      "source_sha256": "51978939a1680a272f3d130f47e9ac2e8d3a497d031542ffa051a96fd197a16b"
+    },
+    {
+      "source": "tests/test_analyzer_reproducibility.py",
+      "destination": "tests/test_analyzer_reproducibility.py",
+      "source_sha256": "c320c74a51d2ed6cc0f92fb166b5dc72110292393800d725b613b852f72d2827"
+    },
+    {
+      "source": "tests/test_catalog_navigation.py",
+      "destination": "tests/test_catalog_navigation.py",
+      "source_sha256": "23f69c06a41d4850ac59dc41d538333f46ffa9af061275216d5f4606dffd35c6"
+    },
+    {
+      "source": "tests/test_challenge_intelligence.py",
+      "destination": "tests/test_challenge_intelligence.py",
+      "source_sha256": "2cb65ef613876f91730a0d8a00c0bbb130489f3ac5a8c3dce65166ceb6916ad3"
+    },
+    {
+      "source": "tests/test_chart_wire.py",
+      "destination": "tests/test_chart_wire.py",
+      "source_sha256": "eb2d1c351282d73a92ce3e66e4194dd78cc338a327eb557183d0e768bf32f550"
+    },
+    {
+      "source": "tests/test_intelligence_recommendations.py",
+      "destination": "tests/test_intelligence_recommendations.py",
+      "source_sha256": "fe2f48901a78da0ee299da7ef6bb6364a78a5a8d183fdf264bb71e7b87b09654"
+    },
+    {
+      "source": "tests/test_maichart_pack.py",
+      "destination": "tests/test_maichart_pack.py",
+      "source_sha256": "f7dbec7ce3340b7842baf5138d4da1a990c1a58e9c74846f594d86f88a0c5d85"
+    },
+    {
+      "source": "tests/test_real_chart_pilot.py",
+      "destination": "tests/test_real_chart_pilot.py",
+      "source_sha256": "ff6383855d231b3841b54144ee48cdfa256e93ea86f31d9bd6bec8ea9896a18d"
+    },
+    {
+      "source": "tests/test_real_chart_study.py",
+      "destination": "tests/test_real_chart_study.py",
+      "source_sha256": "679121d7205caadb9ea45d9d5666702b46c2707e8dc41a57d102d3e502687c98"
+    },
+    {
+      "source": "tests/test_recommendations.py",
+      "destination": "tests/test_recommendations.py",
+      "source_sha256": "cfec2a030ec4b319d4a3892657c907d6687e7b8f3d1fc6cfaf92edf00ce2a83d"
+    },
+    {
+      "source": "tests/test_simai_acquisition.py",
+      "destination": "tests/test_simai_acquisition.py",
+      "source_sha256": "fdd1e700f3ff40bebf3876a135c3a712151891cafb5fb7bf9f9c5db7286cfb8b"
+    },
+    {
+      "source": "tests/test_simai_collection.py",
+      "destination": "tests/test_simai_collection.py",
+      "source_sha256": "8a312c624a758ce0c81e59d35e1df53087fe81137d15e38a270b63936ca8ba0f"
+    },
+    {
+      "source": "tests/test_simai_compatibility_notes.py",
+      "destination": "tests/test_simai_compatibility_notes.py",
+      "source_sha256": "662272af0f71ce0faa9cc7f417668a549f9fa58e2e7cfa946f3cf7bfdb6bd733"
+    },
+    {
+      "source": "tests/test_simai_container.py",
+      "destination": "tests/test_simai_container.py",
+      "source_sha256": "25e8f7ef43c224c4346dd01eb27e5739a2ea70febfbba213ef56f41e9bc33b38"
+    },
+    {
+      "source": "tests/test_simai_corpus.py",
+      "destination": "tests/test_simai_corpus.py",
+      "source_sha256": "208b6215325d16a6dcc1a964e27dff4920f188f36e338ef465a0aee48f4db03d"
+    },
+    {
+      "source": "tests/test_simai_counting.py",
+      "destination": "tests/test_simai_counting.py",
+      "source_sha256": "2473735a3f3345769fbf35b4b88a42f8c7a5a1c3d50ff5867e1bc7b61437d84f"
+    },
+    {
+      "source": "tests/test_simai_expanded.py",
+      "destination": "tests/test_simai_expanded.py",
+      "source_sha256": "8edcf9e91cfab02072a39ae8d37f1ac4e2eefa6250a349994e6815fe3cfea32a"
+    },
+    {
+      "source": "tests/test_simai_framing.py",
+      "destination": "tests/test_simai_framing.py",
+      "source_sha256": "7bc0dac25f8a0d66e4327b071042f4ab314b4a8d294c6f6978f0063dfe3db184"
+    },
+    {
+      "source": "tests/test_simai_notation.py",
+      "destination": "tests/test_simai_notation.py",
+      "source_sha256": "964646ab1311a20b8599682627b000ff6344e6a8c332d3e0b0cd566d6ea068de"
+    },
+    {
+      "source": "tests/test_simai_subset.py",
+      "destination": "tests/test_simai_subset.py",
+      "source_sha256": "ca85643b8fcf3ef2bbe66ed4a50b3c6c4ec23ba54de46b39bf5889b0c0738bd4"
+    },
+    {
+      "source": "tests/test_simai_unequal_waits.py",
+      "destination": "tests/test_simai_unequal_waits.py",
+      "source_sha256": "ee83bbc6ee41b60e2490aa914252600ae7a71d8b0d1980421943ee222f70286f"
+    },
+    {
+      "source": "tests/test_simai_zero_holds.py",
+      "destination": "tests/test_simai_zero_holds.py",
+      "source_sha256": "9ee3b14dfe677df815f8e30d1647446c99b796a8c1e00896f11455b5f400eb53"
+    },
+    {
+      "source": "tests/test_similarity.py",
+      "destination": "tests/test_similarity.py",
+      "source_sha256": "29d7380f7aa76689bc7402d33ef5618ff7d94fb5ff761721665d6c084e131eb4"
+    },
+    {
+      "source": "LICENSE",
+      "destination": "LICENSE",
+      "source_sha256": "a78f4f85f034b229f0daf70c8d482ee6abda6cc309b1158b2c0d96ee35f28ddf"
+    },
+    {
+      "source": "requirements-dev.txt",
+      "destination": "requirements-dev.txt",
+      "source_sha256": "1e8324ee24531453b436db6b6f3477f35dddc5bb32d56c2a04cb745911d33838"
+    },
+    {
+      "source": "docs/CHART_INTELLIGENCE.md",
+      "destination": "docs/source-notes/CHART_INTELLIGENCE.md",
+      "source_sha256": "f2e06e44631b8a67e2b1f39e7bc4daf73eaa5be6d6556e0be381ff12bfd4dce4"
+    },
+    {
+      "source": "docs/SCORING_ENGINE_STATUS.md",
+      "destination": "docs/source-notes/SCORING_ENGINE_STATUS.md",
+      "source_sha256": "92af4ad93930e223feeefde8a156abe137801715f2844264287eaa9b0af9d81b"
+    },
+    {
+      "source": "docs/CHART_SOURCE_AUDIT.md",
+      "destination": "docs/source-notes/CHART_SOURCE_AUDIT.md",
+      "source_sha256": "0570d5db4c4e8104facedaf7e252ba9a0e8cdd32da7408657c0e904dc9167e89"
+    },
+    {
+      "source": "docs/MAICHART_DATASET_TRIAL.md",
+      "destination": "docs/source-notes/MAICHART_DATASET_TRIAL.md",
+      "source_sha256": "3832a4f67c5dca92bbf4d40b6469f239d4d4c1429bd448501ca2cbce057ce2a0"
+    },
+    {
+      "source": "tests/test_scoring_engine.py",
+      "destination": "tests/test_scoring_engine.py",
+      "source_sha256": "57a0b154b4f3882716caf1b13ab760a3f26c41d31847460e30c65c55a342faf5"
+    },
+    {
+      "source": "scripts/templates/real_chart_pilot.html",
+      "destination": "scripts/templates/real_chart_pilot.html",
+      "source_sha256": "1066cfec4e042bcf1c606ca29cd504a7fe65f686ef29adb158919a7147d74465"
+    }
+  ],
+  "golden_fixture": {
+    "path": "tests/golden/source-recommendations.json",
+    "source": "tests/recommendation_fixture.py",
+    "source_revision": "1503c87f6da7ba3fa564f0a5b112784119464e70",
+    "kind": "authored_synthetic_only"
+  }
+}

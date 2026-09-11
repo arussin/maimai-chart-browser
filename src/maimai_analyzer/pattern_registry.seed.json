@@ -1,0 +1,1177 @@
+{
+  "schema_version": "1.0.0",
+  "registry_version": "0.1.0-design-seed",
+  "prepared_on": "2026-09-10",
+  "status": "design_seed_not_analyzed_catalog",
+  "scope": "Definitions and research leads only. No existing detector implementation or real-song tag assignment is claimed.",
+  "default_automatic_tagging_enabled": false,
+  "source_index_file": "sources.json",
+  "entries": [
+    {
+      "id": "pattern.umiyuri",
+      "display_name": "Umiyuri pattern",
+      "kind": "motif",
+      "family": "slide_coordination",
+      "name_origin": "community_attested",
+      "aliases": [
+        {
+          "text": "ウミユリ配置",
+          "language": "ja",
+          "relation": "attested_name"
+        },
+        {
+          "text": "Umiyuri",
+          "language": "en",
+          "relation": "abbreviation"
+        }
+      ],
+      "definition_status": "name_attested_definition_pending",
+      "definition": "Community-named slide/tap coordination family. Exact event grammar, admissible variants and boundaries require review; this is not a synonym for every tap occurring during a slide.",
+      "detector_status": "not_implemented",
+      "automatic_tagging_enabled": false,
+      "detector_proposal": "Review the two named tutorials or accessible equivalent primary explanations; identify exact chart variants and sections; record event-role, phase and spatial constraints plus hard negatives. Only then implement a versioned motif recognizer.",
+      "required_capabilities": [
+        "timing",
+        "positions",
+        "slide_movement",
+        "validated_motif_grammar"
+      ],
+      "counterexamples_and_limits": [
+        "Any generic slide/tap overlap is insufficient.",
+        "Song-title matching must never assign this tag.",
+        "Name attestation is not detector validation."
+      ],
+      "candidate_practice_dimensions": [
+        "slide_tap_independence",
+        "slide_reading"
+      ],
+      "practice_claim_status": "hypothesis_not_validated",
+      "source_ids": [
+        "S6",
+        "S7"
+      ],
+      "planned_phase": "P2",
+      "verified_chart_examples": [],
+      "reviewed_at": null
+    },
+    {
+      "id": "pattern.two_position_alternation",
+      "display_name": "Trill / two-position alternation",
+      "kind": "motif",
+      "family": "tap_sequences",
+      "name_origin": "generic_descriptive",
+      "aliases": [
+        {
+          "text": "trill",
+          "language": "en",
+          "relation": "descriptive_search_alias"
+        }
+      ],
+      "definition_status": "operational_definition_proposed",
+      "definition": "A monophonic sequence alternating between two distinct positions with a locally regular onset spacing. Trill is a descriptive label here; this seed does not assert a universal maimai definition.",
+      "detector_status": "not_implemented",
+      "automatic_tagging_enabled": false,
+      "detector_proposal": "Start with at least six onsets alternating A/B; match spacing in beat units with explicit tolerance and permit documented break/EX flags without changing the motif.",
+      "required_capabilities": [
+        "timing",
+        "positions"
+      ],
+      "counterexamples_and_limits": [
+        "Two notes alone are not a trill.",
+        "Simultaneous A+B chords are not an alternating stream.",
+        "Do not infer actual left/right hand assignment."
+      ],
+      "candidate_practice_dimensions": [
+        "alternation",
+        "rhythm_accuracy"
+      ],
+      "practice_claim_status": "hypothesis_not_validated",
+      "source_ids": [
+        "U1"
+      ],
+      "planned_phase": "P1",
+      "verified_chart_examples": [],
+      "reviewed_at": null
+    },
+    {
+      "id": "pattern.same_position_repetition",
+      "display_name": "Repeated-button notes",
+      "kind": "motif",
+      "family": "tap_sequences",
+      "name_origin": "project_defined",
+      "aliases": [
+        {
+          "text": "jacks",
+          "language": "en",
+          "relation": "descriptive_search_alias"
+        }
+      ],
+      "definition_status": "operational_definition_proposed",
+      "definition": "Three or more separate onsets repeatedly directed to the same button or explicitly supported touch location.",
+      "detector_status": "not_implemented",
+      "automatic_tagging_enabled": false,
+      "detector_proposal": "Find same-position runs, storing spacing and run length; split across a configurable long gap and preserve event type.",
+      "required_capabilities": [
+        "timing",
+        "positions"
+      ],
+      "counterexamples_and_limits": [
+        "One hold is not repeated tapping.",
+        "Duplicate parser events must be removed before detection."
+      ],
+      "candidate_practice_dimensions": [
+        "rhythm_accuracy"
+      ],
+      "practice_claim_status": "hypothesis_not_validated",
+      "source_ids": [
+        "U1"
+      ],
+      "planned_phase": "P1",
+      "verified_chart_examples": [],
+      "reviewed_at": null
+    },
+    {
+      "id": "pattern.gallop_pairs",
+      "display_name": "Gallop notes",
+      "kind": "motif",
+      "family": "rhythm",
+      "name_origin": "user_suggested_descriptive",
+      "aliases": [
+        {
+          "text": "gallops",
+          "language": "en",
+          "relation": "descriptive_search_alias"
+        }
+      ],
+      "definition_status": "operational_definition_proposed",
+      "definition": "Repeated two-onset groups with a short within-pair interval followed by a longer inter-pair interval. This operational label follows the user suggestion rather than claiming a maimai-standard taxonomy.",
+      "detector_status": "not_implemented",
+      "automatic_tagging_enabled": false,
+      "detector_proposal": "Proposed seed: at least three pairs, with a consistent long/short spacing ratio near 2 or 3 under a versioned tolerance. Store ratio and orientation; do not require particular hand use.",
+      "required_capabilities": [
+        "timing",
+        "positions"
+      ],
+      "counterexamples_and_limits": [
+        "A uniform trill is not a gallop.",
+        "Three notes are not automatically musical triplets.",
+        "Do not equate every swung rhythm with this motif."
+      ],
+      "candidate_practice_dimensions": [
+        "rhythm_accuracy"
+      ],
+      "practice_claim_status": "hypothesis_not_validated",
+      "source_ids": [
+        "U1"
+      ],
+      "planned_phase": "P1",
+      "verified_chart_examples": [],
+      "reviewed_at": null
+    },
+    {
+      "id": "pattern.three_note_burst",
+      "display_name": "Three-note burst",
+      "kind": "motif",
+      "family": "rhythm",
+      "name_origin": "project_defined",
+      "aliases": [],
+      "definition_status": "operational_definition_proposed",
+      "definition": "A locally grouped burst of three onsets separated from neighboring activity by longer gaps.",
+      "detector_status": "not_implemented",
+      "automatic_tagging_enabled": false,
+      "detector_proposal": "Compare within-group and outside gaps using explicit beat-relative thresholds; store all three event roles and positions.",
+      "required_capabilities": [
+        "timing",
+        "positions"
+      ],
+      "counterexamples_and_limits": [
+        "A group of three is not necessarily triplet subdivision.",
+        "Chord cardinality is not sequential burst length."
+      ],
+      "candidate_practice_dimensions": [
+        "rhythm_accuracy",
+        "alternation"
+      ],
+      "practice_claim_status": "hypothesis_not_validated",
+      "source_ids": [
+        "U1"
+      ],
+      "planned_phase": "P1",
+      "verified_chart_examples": [],
+      "reviewed_at": null
+    },
+    {
+      "id": "pattern.triplet_grid",
+      "display_name": "Triplet-grid sequence",
+      "kind": "motif",
+      "family": "rhythm",
+      "name_origin": "project_defined",
+      "aliases": [],
+      "definition_status": "operational_definition_proposed",
+      "definition": "A run aligned to a three-part subdivision of a validated local beat grid.",
+      "detector_status": "not_implemented",
+      "automatic_tagging_enabled": false,
+      "detector_proposal": "Match event phases to rational thirds (or documented finer triplet subdivisions), requiring several successive intervals and a valid beat anchor.",
+      "required_capabilities": [
+        "timing",
+        "beat_grid"
+      ],
+      "counterexamples_and_limits": [
+        "Unknown beat anchor yields unknown.",
+        "Three arbitrary notes do not establish triplet rhythm."
+      ],
+      "candidate_practice_dimensions": [
+        "rhythm_accuracy"
+      ],
+      "practice_claim_status": "hypothesis_not_validated",
+      "source_ids": [
+        "U1"
+      ],
+      "planned_phase": "P1",
+      "verified_chart_examples": [],
+      "reviewed_at": null
+    },
+    {
+      "id": "pattern.offbeat_onsets",
+      "display_name": "Offbeat-onset run",
+      "kind": "motif",
+      "family": "rhythm",
+      "name_origin": "project_defined",
+      "aliases": [],
+      "definition_status": "operational_definition_proposed",
+      "definition": "A repeated run on an explicitly defined non-downbeat phase of a validated beat grid.",
+      "detector_status": "not_implemented",
+      "automatic_tagging_enabled": false,
+      "detector_proposal": "Record phase distribution and require repeated nonzero phase; split at tempo/grid changes when continuity is not known.",
+      "required_capabilities": [
+        "timing",
+        "beat_grid"
+      ],
+      "counterexamples_and_limits": [
+        "BPM alone does not establish the musical downbeat.",
+        "Do not call a chart syncopated solely from a shifted global offset."
+      ],
+      "candidate_practice_dimensions": [
+        "rhythm_accuracy"
+      ],
+      "practice_claim_status": "hypothesis_not_validated",
+      "source_ids": [
+        "U1"
+      ],
+      "planned_phase": "P1",
+      "verified_chart_examples": [],
+      "reviewed_at": null
+    },
+    {
+      "id": "pattern.simultaneous_group",
+      "display_name": "Simultaneous-note group",
+      "kind": "motif",
+      "family": "coordination",
+      "name_origin": "generic_descriptive",
+      "aliases": [
+        {
+          "text": "chord",
+          "language": "en",
+          "relation": "descriptive_search_alias"
+        },
+        {
+          "text": "each",
+          "language": "en",
+          "relation": "source_notation_alias"
+        }
+      ],
+      "definition_status": "operational_definition_proposed",
+      "definition": "Two or more distinct input onsets authored at the same time, with event type and positions retained.",
+      "detector_status": "not_implemented",
+      "automatic_tagging_enabled": false,
+      "detector_proposal": "Use authored simultaneous groups or exact normalized timing; count unique physical onset events and preserve source pseudo-simultaneous distinctions.",
+      "required_capabilities": [
+        "timing",
+        "positions"
+      ],
+      "counterexamples_and_limits": [
+        "Near-simultaneous decorative notes are not necessarily a chord.",
+        "A shared slide head is not several taps."
+      ],
+      "candidate_practice_dimensions": [
+        "coordination"
+      ],
+      "practice_claim_status": "hypothesis_not_validated",
+      "source_ids": [
+        "S2",
+        "U1"
+      ],
+      "planned_phase": "P1",
+      "verified_chart_examples": [],
+      "reviewed_at": null
+    },
+    {
+      "id": "pattern.chord_stream",
+      "display_name": "Repeated simultaneous groups",
+      "kind": "motif",
+      "family": "coordination",
+      "name_origin": "project_defined",
+      "aliases": [],
+      "definition_status": "operational_definition_proposed",
+      "definition": "Several simultaneous-note groups occurring in sequence.",
+      "detector_status": "not_implemented",
+      "automatic_tagging_enabled": false,
+      "detector_proposal": "Group at least three repeated simultaneous events and store changes in cardinality, positions and spacing.",
+      "required_capabilities": [
+        "timing",
+        "positions"
+      ],
+      "counterexamples_and_limits": [
+        "Do not claim a fixed two-hand solution.",
+        "Different group shapes are retained, not flattened."
+      ],
+      "candidate_practice_dimensions": [
+        "coordination",
+        "rhythm_accuracy"
+      ],
+      "practice_claim_status": "hypothesis_not_validated",
+      "source_ids": [
+        "U1"
+      ],
+      "planned_phase": "P1",
+      "verified_chart_examples": [],
+      "reviewed_at": null
+    },
+    {
+      "id": "pattern.tap_staircase",
+      "display_name": "Button staircase",
+      "kind": "motif",
+      "family": "tap_sequences",
+      "name_origin": "project_defined",
+      "aliases": [],
+      "definition_status": "operational_definition_proposed",
+      "definition": "A sequence stepping through neighboring perimeter buttons in a consistent direction over a bounded arc.",
+      "detector_status": "not_implemented",
+      "automatic_tagging_enabled": false,
+      "detector_proposal": "Match at least four distinct neighbor steps on circular button coordinates, preserving direction and modulo wrap.",
+      "required_capabilities": [
+        "timing",
+        "positions"
+      ],
+      "counterexamples_and_limits": [
+        "One long slide is not a tap staircase.",
+        "Do not prescribe a hand crossover."
+      ],
+      "candidate_practice_dimensions": [
+        "movement_transitions",
+        "alternation"
+      ],
+      "practice_claim_status": "hypothesis_not_validated",
+      "source_ids": [
+        "U1"
+      ],
+      "planned_phase": "P1",
+      "verified_chart_examples": [],
+      "reviewed_at": null
+    },
+    {
+      "id": "pattern.perimeter_run",
+      "display_name": "Perimeter run",
+      "kind": "motif",
+      "family": "tap_sequences",
+      "name_origin": "project_defined",
+      "aliases": [],
+      "definition_status": "operational_definition_proposed",
+      "definition": "A tap sequence progressing around a substantial part of the outer button ring.",
+      "detector_status": "not_implemented",
+      "automatic_tagging_enabled": false,
+      "detector_proposal": "Extend adjacent-step analysis with cumulative angular travel and run length; distinguish full circuits from partial arcs.",
+      "required_capabilities": [
+        "timing",
+        "positions"
+      ],
+      "counterexamples_and_limits": [
+        "Visual rotation alone is insufficient.",
+        "A fan slide is not a perimeter tap run."
+      ],
+      "candidate_practice_dimensions": [
+        "movement_transitions",
+        "alternation"
+      ],
+      "practice_claim_status": "hypothesis_not_validated",
+      "source_ids": [
+        "U1"
+      ],
+      "planned_phase": "P1",
+      "verified_chart_examples": [],
+      "reviewed_at": null
+    },
+    {
+      "id": "pattern.direction_reversal",
+      "display_name": "Direction-reversal run",
+      "kind": "motif",
+      "family": "tap_sequences",
+      "name_origin": "project_defined",
+      "aliases": [],
+      "definition_status": "operational_definition_proposed",
+      "definition": "A perimeter tap run that changes its traversal direction within the local phrase.",
+      "detector_status": "not_implemented",
+      "automatic_tagging_enabled": false,
+      "detector_proposal": "Find adjacent-step runs with a sustained sign change in angular increments; preserve both phrase lengths.",
+      "required_capabilities": [
+        "timing",
+        "positions"
+      ],
+      "counterexamples_and_limits": [
+        "One repeated button is not a direction change.",
+        "The shortest geometric path need not be the player hand path."
+      ],
+      "candidate_practice_dimensions": [
+        "movement_transitions"
+      ],
+      "practice_claim_status": "hypothesis_not_validated",
+      "source_ids": [
+        "U1"
+      ],
+      "planned_phase": "P1",
+      "verified_chart_examples": [],
+      "reviewed_at": null
+    },
+    {
+      "id": "pattern.same_head_slide_fan",
+      "display_name": "Shared-head slide fan",
+      "kind": "motif",
+      "family": "slides",
+      "name_origin": "project_defined",
+      "aliases": [],
+      "definition_status": "operational_definition_proposed",
+      "definition": "Two or more slide branches attached to the same authored head event.",
+      "detector_status": "not_implemented",
+      "automatic_tagging_enabled": false,
+      "detector_proposal": "Use shared-head IDs and separate path IDs; store branch count, waiting and movement overlaps without duplicating the head tap.",
+      "required_capabilities": [
+        "timing",
+        "slide_groups"
+      ],
+      "counterexamples_and_limits": [
+        "Different heads at the same timestamp are not a shared head.",
+        "Multiple branches do not prove more hands are required."
+      ],
+      "candidate_practice_dimensions": [
+        "slide_reading"
+      ],
+      "practice_claim_status": "hypothesis_not_validated",
+      "source_ids": [
+        "S2",
+        "S3",
+        "U1"
+      ],
+      "planned_phase": "P1",
+      "verified_chart_examples": [],
+      "reviewed_at": null
+    },
+    {
+      "id": "pattern.staggered_slide_starts",
+      "display_name": "Staggered slide starts",
+      "kind": "motif",
+      "family": "slides",
+      "name_origin": "project_defined",
+      "aliases": [],
+      "definition_status": "operational_definition_proposed",
+      "definition": "Slide movement intervals with unequal start times that overlap in time.",
+      "detector_status": "not_implemented",
+      "automatic_tagging_enabled": false,
+      "detector_proposal": "Sweep movement interval endpoints; require positive interval overlap and distinct movement starts, then store phase separation.",
+      "required_capabilities": [
+        "timing",
+        "slide_movement"
+      ],
+      "counterexamples_and_limits": [
+        "Simultaneous visual appearance is not movement overlap.",
+        "A slide waiting to move must not be counted as already moving."
+      ],
+      "candidate_practice_dimensions": [
+        "slide_reading",
+        "slide_tap_independence"
+      ],
+      "practice_claim_status": "hypothesis_not_validated",
+      "source_ids": [
+        "U1"
+      ],
+      "planned_phase": "P1",
+      "verified_chart_examples": [],
+      "reviewed_at": null
+    },
+    {
+      "id": "pattern.moving_slide_overlap",
+      "display_name": "Overlapping moving slides",
+      "kind": "motif",
+      "family": "slides",
+      "name_origin": "project_defined",
+      "aliases": [],
+      "definition_status": "operational_definition_proposed",
+      "definition": "At least two slide paths moving concurrently for a nonzero interval.",
+      "detector_status": "not_implemented",
+      "automatic_tagging_enabled": false,
+      "detector_proposal": "Use half-open movement intervals; store duration, maximum concurrency, shared-head relationship and any separately supported geometry overlap.",
+      "required_capabilities": [
+        "timing",
+        "slide_movement"
+      ],
+      "counterexamples_and_limits": [
+        "Waiting intervals are separate.",
+        "Concurrency does not prove crossing hands or occlusion."
+      ],
+      "candidate_practice_dimensions": [
+        "slide_reading"
+      ],
+      "practice_claim_status": "hypothesis_not_validated",
+      "source_ids": [
+        "U1"
+      ],
+      "planned_phase": "P1",
+      "verified_chart_examples": [],
+      "reviewed_at": null
+    },
+    {
+      "id": "pattern.slide_tap_interleave",
+      "display_name": "Slide/tap interleave",
+      "kind": "motif",
+      "family": "slide_coordination",
+      "name_origin": "project_defined",
+      "aliases": [],
+      "definition_status": "operational_definition_proposed",
+      "definition": "Distinct tap onsets occurring during another slide movement interval.",
+      "detector_status": "not_implemented",
+      "automatic_tagging_enabled": false,
+      "detector_proposal": "Join taps to active slide intervals, exclude the slide own head and documented co-trigger equivalences; retain spatial relations where supported.",
+      "required_capabilities": [
+        "timing",
+        "positions",
+        "slide_movement"
+      ],
+      "counterexamples_and_limits": [
+        "This is not sufficient for the Umiyuri tag.",
+        "Temporal overlap alone does not establish two independent hand actions."
+      ],
+      "candidate_practice_dimensions": [
+        "slide_tap_independence"
+      ],
+      "practice_claim_status": "hypothesis_not_validated",
+      "source_ids": [
+        "U1"
+      ],
+      "planned_phase": "P1",
+      "verified_chart_examples": [],
+      "reviewed_at": null
+    },
+    {
+      "id": "pattern.delayed_slide_interleave",
+      "display_name": "Tap-while-slide-waits",
+      "kind": "motif",
+      "family": "slide_coordination",
+      "name_origin": "project_defined",
+      "aliases": [],
+      "definition_status": "operational_definition_proposed",
+      "definition": "Other tap onsets between a slide head and that slide movement start.",
+      "detector_status": "not_implemented",
+      "automatic_tagging_enabled": false,
+      "detector_proposal": "Join independent onsets into the open waiting interval and preserve waiting length and spatial roles.",
+      "required_capabilities": [
+        "timing",
+        "slide_wait"
+      ],
+      "counterexamples_and_limits": [
+        "Taps during movement belong to a different detector.",
+        "Default delay alone is not automatically unusual timing."
+      ],
+      "candidate_practice_dimensions": [
+        "slide_timing",
+        "slide_tap_independence"
+      ],
+      "practice_claim_status": "hypothesis_not_validated",
+      "source_ids": [
+        "U1"
+      ],
+      "planned_phase": "P1",
+      "verified_chart_examples": [],
+      "reviewed_at": null
+    },
+    {
+      "id": "pattern.variable_slide_wait",
+      "display_name": "Changing slide waits",
+      "kind": "motif",
+      "family": "slides",
+      "name_origin": "project_defined",
+      "aliases": [],
+      "definition_status": "operational_definition_proposed",
+      "definition": "A local series switching between distinct head-to-movement waiting intervals in beat units or explicitly authored seconds.",
+      "detector_status": "not_implemented",
+      "automatic_tagging_enabled": false,
+      "detector_proposal": "Cluster successive waiting values using explicit tolerances and retain tempo context; distinguish absolute-time and beat-based declarations.",
+      "required_capabilities": [
+        "timing",
+        "slide_wait"
+      ],
+      "counterexamples_and_limits": [
+        "Tempo change can alter seconds without changing beat-relative structure.",
+        "Unsupported waiting syntax produces unknown."
+      ],
+      "candidate_practice_dimensions": [
+        "slide_timing"
+      ],
+      "practice_claim_status": "hypothesis_not_validated",
+      "source_ids": [
+        "U1"
+      ],
+      "planned_phase": "P1",
+      "verified_chart_examples": [],
+      "reviewed_at": null
+    },
+    {
+      "id": "pattern.connected_slide_chain",
+      "display_name": "Connected slide chain",
+      "kind": "motif",
+      "family": "slides",
+      "name_origin": "project_defined",
+      "aliases": [],
+      "definition_status": "operational_definition_proposed",
+      "definition": "An authored connected slide with multiple sequential path segments.",
+      "detector_status": "not_implemented",
+      "automatic_tagging_enabled": false,
+      "detector_proposal": "Use explicit chain and segment IDs; preserve segment timings, connectivity and any missing local geometry.",
+      "required_capabilities": [
+        "timing",
+        "slide_groups"
+      ],
+      "counterexamples_and_limits": [
+        "Adjacent unrelated slides are not automatically one connected chain.",
+        "Segment count is not note count."
+      ],
+      "candidate_practice_dimensions": [
+        "slide_reading",
+        "movement_transitions"
+      ],
+      "practice_claim_status": "hypothesis_not_validated",
+      "source_ids": [
+        "S2",
+        "S3",
+        "U1"
+      ],
+      "planned_phase": "P1",
+      "verified_chart_examples": [],
+      "reviewed_at": null
+    },
+    {
+      "id": "pattern.hold_tap_interleave",
+      "display_name": "Hold/tap interleave",
+      "kind": "motif",
+      "family": "coordination",
+      "name_origin": "project_defined",
+      "aliases": [],
+      "definition_status": "operational_definition_proposed",
+      "definition": "Independent tap onsets occurring while a hold or supported touch hold is active.",
+      "detector_status": "not_implemented",
+      "automatic_tagging_enabled": false,
+      "detector_proposal": "Join unique taps to hold intervals, keeping location and input type; do not count a hold as repeated taps.",
+      "required_capabilities": [
+        "timing",
+        "positions",
+        "hold_intervals"
+      ],
+      "counterexamples_and_limits": [
+        "Do not assign a holding hand from aggregate geometry alone."
+      ],
+      "candidate_practice_dimensions": [
+        "coordination"
+      ],
+      "practice_claim_status": "hypothesis_not_validated",
+      "source_ids": [
+        "U1"
+      ],
+      "planned_phase": "P1",
+      "verified_chart_examples": [],
+      "reviewed_at": null
+    },
+    {
+      "id": "pattern.hold_slide_overlap",
+      "display_name": "Hold/slide overlap",
+      "kind": "motif",
+      "family": "coordination",
+      "name_origin": "project_defined",
+      "aliases": [],
+      "definition_status": "operational_definition_proposed",
+      "definition": "A hold interval and a slide movement interval overlap.",
+      "detector_status": "not_implemented",
+      "automatic_tagging_enabled": false,
+      "detector_proposal": "Calculate overlap intervals, spatial context when supported, and duration; distinguish wait from movement.",
+      "required_capabilities": [
+        "timing",
+        "hold_intervals",
+        "slide_movement"
+      ],
+      "counterexamples_and_limits": [
+        "Overlap is a structural observation, not proof of an impossible input combination."
+      ],
+      "candidate_practice_dimensions": [
+        "coordination",
+        "slide_reading"
+      ],
+      "practice_claim_status": "hypothesis_not_validated",
+      "source_ids": [
+        "U1"
+      ],
+      "planned_phase": "P1",
+      "verified_chart_examples": [],
+      "reviewed_at": null
+    },
+    {
+      "id": "pattern.touch_tap_interleave",
+      "display_name": "Touch/button interleave",
+      "kind": "motif",
+      "family": "coordination",
+      "name_origin": "project_defined",
+      "aliases": [],
+      "definition_status": "operational_definition_proposed",
+      "definition": "A locally interleaved sequence of inner touch and perimeter-button onsets.",
+      "detector_status": "not_implemented",
+      "automatic_tagging_enabled": false,
+      "detector_proposal": "Match alternating or mixed runs with documented locality/gap limits and retain touch-zone identity.",
+      "required_capabilities": [
+        "timing",
+        "positions",
+        "touch_zones"
+      ],
+      "counterexamples_and_limits": [
+        "Touch/button switching is not measured hand travel.",
+        "Missing touch-zone geometry limits movement interpretations."
+      ],
+      "candidate_practice_dimensions": [
+        "coordination",
+        "movement_transitions"
+      ],
+      "practice_claim_status": "hypothesis_not_validated",
+      "source_ids": [
+        "U1"
+      ],
+      "planned_phase": "P1",
+      "verified_chart_examples": [],
+      "reviewed_at": null
+    },
+    {
+      "id": "trait.high_onset_density",
+      "display_name": "High onset density",
+      "kind": "trait",
+      "family": "density",
+      "name_origin": "project_defined",
+      "aliases": [],
+      "definition_status": "operational_definition_proposed",
+      "definition": "A large rate of distinct authored input onsets under a stated absolute scale or named reference cohort.",
+      "detector_status": "not_implemented",
+      "automatic_tagging_enabled": false,
+      "detector_proposal": "Measure unweighted unique onset count per effective second over fixed windows; attach scale/reference ID and threshold.",
+      "required_capabilities": [
+        "timing"
+      ],
+      "counterexamples_and_limits": [
+        "Break score value is not extra physical note count.",
+        "This does not measure total difficulty."
+      ],
+      "candidate_practice_dimensions": [
+        "sustained_execution"
+      ],
+      "practice_claim_status": "hypothesis_not_validated",
+      "source_ids": [
+        "U1"
+      ],
+      "planned_phase": "P1",
+      "verified_chart_examples": [],
+      "reviewed_at": null
+    },
+    {
+      "id": "trait.bursty_density",
+      "display_name": "Bursty density",
+      "kind": "trait",
+      "family": "flow_shape",
+      "name_origin": "project_defined",
+      "aliases": [],
+      "definition_status": "operational_definition_proposed",
+      "definition": "Short high-density passages contrasted with lower-density sections.",
+      "detector_status": "not_implemented",
+      "automatic_tagging_enabled": false,
+      "detector_proposal": "Use short-window peak-to-background ratio plus absolute floor and minimum separation, storing affected intervals.",
+      "required_capabilities": [
+        "timing"
+      ],
+      "counterexamples_and_limits": [
+        "Very low baseline alone must not produce a dramatic burst label.",
+        "A density burst is not a diagnosis of stamina demand."
+      ],
+      "candidate_practice_dimensions": [
+        "sustained_execution"
+      ],
+      "practice_claim_status": "hypothesis_not_validated",
+      "source_ids": [
+        "U1"
+      ],
+      "planned_phase": "P1",
+      "verified_chart_examples": [],
+      "reviewed_at": null
+    },
+    {
+      "id": "trait.sustained_density",
+      "display_name": "Sustained density",
+      "kind": "trait",
+      "family": "flow_shape",
+      "name_origin": "project_defined",
+      "aliases": [],
+      "definition_status": "operational_definition_proposed",
+      "definition": "A long contiguous period above an explicitly documented density threshold.",
+      "detector_status": "not_implemented",
+      "automatic_tagging_enabled": false,
+      "detector_proposal": "Measure longest and total qualifying duration with a small, versioned gap-merging rule.",
+      "required_capabilities": [
+        "timing"
+      ],
+      "counterexamples_and_limits": [
+        "Unknown chart span must be reported.",
+        "Long holds alone do not establish high onset density."
+      ],
+      "candidate_practice_dimensions": [
+        "sustained_execution"
+      ],
+      "practice_claim_status": "hypothesis_not_validated",
+      "source_ids": [
+        "U1"
+      ],
+      "planned_phase": "P1",
+      "verified_chart_examples": [],
+      "reviewed_at": null
+    },
+    {
+      "id": "trait.backloaded_density",
+      "display_name": "Backloaded density",
+      "kind": "trait",
+      "family": "flow_shape",
+      "name_origin": "project_defined",
+      "aliases": [],
+      "definition_status": "operational_definition_proposed",
+      "definition": "The latter part of the analyzed span contains substantially more measured onset activity than the beginning.",
+      "detector_status": "not_implemented",
+      "automatic_tagging_enabled": false,
+      "detector_proposal": "Compare duration-weighted early/late density and center of mass, with absolute contrast requirements and explicit span basis.",
+      "required_capabilities": [
+        "timing",
+        "span"
+      ],
+      "counterexamples_and_limits": [
+        "Call this backloaded density, not guaranteed ending difficulty.",
+        "An uncertain audio tail must not shift classification silently."
+      ],
+      "candidate_practice_dimensions": [],
+      "practice_claim_status": "hypothesis_not_validated",
+      "source_ids": [
+        "U1"
+      ],
+      "planned_phase": "P1",
+      "verified_chart_examples": [],
+      "reviewed_at": null
+    },
+    {
+      "id": "trait.frontloaded_density",
+      "display_name": "Frontloaded density",
+      "kind": "trait",
+      "family": "flow_shape",
+      "name_origin": "project_defined",
+      "aliases": [],
+      "definition_status": "operational_definition_proposed",
+      "definition": "The earlier part of the analyzed span contains substantially more measured onset activity than the ending.",
+      "detector_status": "not_implemented",
+      "automatic_tagging_enabled": false,
+      "detector_proposal": "Mirror the documented backloaded-density decision rule and store early/late values.",
+      "required_capabilities": [
+        "timing",
+        "span"
+      ],
+      "counterexamples_and_limits": [
+        "Song audio duration and note span are not interchangeable."
+      ],
+      "candidate_practice_dimensions": [],
+      "practice_claim_status": "hypothesis_not_validated",
+      "source_ids": [
+        "U1"
+      ],
+      "planned_phase": "P1",
+      "verified_chart_examples": [],
+      "reviewed_at": null
+    },
+    {
+      "id": "trait.isolated_density_spike",
+      "display_name": "Isolated density spike",
+      "kind": "trait",
+      "family": "flow_shape",
+      "name_origin": "project_defined",
+      "aliases": [],
+      "definition_status": "operational_definition_proposed",
+      "definition": "One separated peak dominates the density profile under a stated peak detector.",
+      "detector_status": "not_implemented",
+      "automatic_tagging_enabled": false,
+      "detector_proposal": "Require prominence, minimum duration, neighboring lower activity and a single dominant qualifying peak.",
+      "required_capabilities": [
+        "timing",
+        "span"
+      ],
+      "counterexamples_and_limits": [
+        "Do not smooth away a short spike.",
+        "This tag says nothing about pattern teachability without separate evidence."
+      ],
+      "candidate_practice_dimensions": [],
+      "practice_claim_status": "hypothesis_not_validated",
+      "source_ids": [
+        "U1"
+      ],
+      "planned_phase": "P1",
+      "verified_chart_examples": [],
+      "reviewed_at": null
+    },
+    {
+      "id": "trait.multi_peak_density",
+      "display_name": "Multiple density peaks",
+      "kind": "trait",
+      "family": "flow_shape",
+      "name_origin": "project_defined",
+      "aliases": [],
+      "definition_status": "operational_definition_proposed",
+      "definition": "Two or more separated prominent density peaks.",
+      "detector_status": "not_implemented",
+      "automatic_tagging_enabled": false,
+      "detector_proposal": "Store peak intervals and prominence rather than only a binary tag; use a versioned separation criterion.",
+      "required_capabilities": [
+        "timing",
+        "span"
+      ],
+      "counterexamples_and_limits": [
+        "Tiny numerical ripples are not separate meaningful peaks."
+      ],
+      "candidate_practice_dimensions": [],
+      "practice_claim_status": "hypothesis_not_validated",
+      "source_ids": [
+        "U1"
+      ],
+      "planned_phase": "P1",
+      "verified_chart_examples": [],
+      "reviewed_at": null
+    },
+    {
+      "id": "trait.steady_density",
+      "display_name": "Steady density",
+      "kind": "trait",
+      "family": "flow_shape",
+      "name_origin": "project_defined",
+      "aliases": [],
+      "definition_status": "operational_definition_proposed",
+      "definition": "Density varies relatively little through the analyzed span, with a nontrivial activity floor.",
+      "detector_status": "not_implemented",
+      "automatic_tagging_enabled": false,
+      "detector_proposal": "Use robust relative variation and coverage thresholds; report absolute density separately.",
+      "required_capabilities": [
+        "timing",
+        "span"
+      ],
+      "counterexamples_and_limits": [
+        "An empty chart is not a steady practice chart.",
+        "Steady density does not imply easy execution."
+      ],
+      "candidate_practice_dimensions": [],
+      "practice_claim_status": "hypothesis_not_validated",
+      "source_ids": [
+        "U1"
+      ],
+      "planned_phase": "P1",
+      "verified_chart_examples": [],
+      "reviewed_at": null
+    },
+    {
+      "id": "trait.low_onset_gaps",
+      "display_name": "Low-onset gaps",
+      "kind": "trait",
+      "family": "flow_shape",
+      "name_origin": "project_defined",
+      "aliases": [],
+      "definition_status": "operational_definition_proposed",
+      "definition": "Intervals with few new onsets, with any active holds/slides reported separately.",
+      "detector_status": "not_implemented",
+      "automatic_tagging_enabled": false,
+      "detector_proposal": "Locate low-onset windows and annotate residual active movement/hold occupancy.",
+      "required_capabilities": [
+        "timing",
+        "hold_intervals",
+        "slide_movement"
+      ],
+      "counterexamples_and_limits": [
+        "Low onset count during ongoing slides is not necessarily a rest."
+      ],
+      "candidate_practice_dimensions": [],
+      "practice_claim_status": "hypothesis_not_validated",
+      "source_ids": [
+        "U1"
+      ],
+      "planned_phase": "P1",
+      "verified_chart_examples": [],
+      "reviewed_at": null
+    },
+    {
+      "id": "trait.break_concentration",
+      "display_name": "Break-note concentration",
+      "kind": "trait",
+      "family": "scoring_structure",
+      "name_origin": "project_defined",
+      "aliases": [],
+      "definition_status": "operational_definition_proposed",
+      "definition": "Concentration of source-flagged break events within sections of the chart.",
+      "detector_status": "not_implemented",
+      "automatic_tagging_enabled": false,
+      "detector_proposal": "Measure event counts, fraction and temporal concentration by supported event type; no rating-rule weighting in the player-independent analyzer.",
+      "required_capabilities": [
+        "timing",
+        "note_flags"
+      ],
+      "counterexamples_and_limits": [
+        "Break value must not inflate physical density.",
+        "Scoring risk requires a separate version-aware rating/scoring interpretation."
+      ],
+      "candidate_practice_dimensions": [
+        "rhythm_accuracy"
+      ],
+      "practice_claim_status": "hypothesis_not_validated",
+      "source_ids": [
+        "U1"
+      ],
+      "planned_phase": "P1",
+      "verified_chart_examples": [],
+      "reviewed_at": null
+    },
+    {
+      "id": "trait.rhythm_variability",
+      "display_name": "Variable onset spacing",
+      "kind": "trait",
+      "family": "rhythm",
+      "name_origin": "project_defined",
+      "aliases": [],
+      "definition_status": "operational_definition_proposed",
+      "definition": "Substantial changes among beat-relative inter-onset intervals in local phrases.",
+      "detector_status": "not_implemented",
+      "automatic_tagging_enabled": false,
+      "detector_proposal": "Measure interval distributions and transition frequency with motif/tempo context; preserve observable values.",
+      "required_capabilities": [
+        "timing",
+        "beat_grid"
+      ],
+      "counterexamples_and_limits": [
+        "Entropy alone is not musical complexity.",
+        "Tempo changes are not automatically harder rhythm."
+      ],
+      "candidate_practice_dimensions": [
+        "rhythm_accuracy"
+      ],
+      "practice_claim_status": "hypothesis_not_validated",
+      "source_ids": [
+        "U1"
+      ],
+      "planned_phase": "P1",
+      "verified_chart_examples": [],
+      "reviewed_at": null
+    },
+    {
+      "id": "trait.slide_occupancy",
+      "display_name": "High moving-slide occupancy",
+      "kind": "trait",
+      "family": "slides",
+      "name_origin": "project_defined",
+      "aliases": [],
+      "definition_status": "operational_definition_proposed",
+      "definition": "A large fraction of the analyzed span has at least one slide path moving.",
+      "detector_status": "not_implemented",
+      "automatic_tagging_enabled": false,
+      "detector_proposal": "Integrate the union of slide movement intervals, report concurrency separately, and attach the threshold and span basis.",
+      "required_capabilities": [
+        "timing",
+        "slide_movement",
+        "span"
+      ],
+      "counterexamples_and_limits": [
+        "Many visible waiting slides are not moving occupancy.",
+        "High occupancy does not imply a named motif."
+      ],
+      "candidate_practice_dimensions": [
+        "slide_reading"
+      ],
+      "practice_claim_status": "hypothesis_not_validated",
+      "source_ids": [
+        "U1"
+      ],
+      "planned_phase": "P1",
+      "verified_chart_examples": [],
+      "reviewed_at": null
+    },
+    {
+      "id": "trait.repeated_motif",
+      "display_name": "Repeated motif",
+      "kind": "trait",
+      "family": "structure",
+      "name_origin": "project_defined",
+      "aliases": [],
+      "definition_status": "operational_definition_proposed",
+      "definition": "A structural phrase appears repeatedly under a documented exact or normalized matching policy.",
+      "detector_status": "not_implemented",
+      "automatic_tagging_enabled": false,
+      "detector_proposal": "Compare event-role/phase signatures with explicit rotation, reflection and tempo-normalization settings; retain all matching sections.",
+      "required_capabilities": [
+        "timing",
+        "positions",
+        "motif_signatures"
+      ],
+      "counterexamples_and_limits": [
+        "Rotation and reflection are not always equally playable.",
+        "Shared broad tags are not sufficient to assert repetition."
+      ],
+      "candidate_practice_dimensions": [
+        "pattern_transfer"
+      ],
+      "practice_claim_status": "hypothesis_not_validated",
+      "source_ids": [
+        "U1"
+      ],
+      "planned_phase": "P2",
+      "verified_chart_examples": [],
+      "reviewed_at": null
+    },
+    {
+      "id": "trait.isolated_pattern_sections",
+      "display_name": "Isolated pattern sections",
+      "kind": "trait",
+      "family": "practice_structure",
+      "name_origin": "project_defined",
+      "aliases": [],
+      "definition_status": "operational_definition_proposed",
+      "definition": "Occurrences of a target motif have relatively few competing event roles or demands around them.",
+      "detector_status": "not_implemented",
+      "automatic_tagging_enabled": false,
+      "detector_proposal": "Calculate a target-specific surrounding-activity vector; require supported motif identification and explicit temporal neighborhood.",
+      "required_capabilities": [
+        "timing",
+        "pattern_occurrences",
+        "local_features"
+      ],
+      "counterexamples_and_limits": [
+        "This is target-specific, not a universal chart property.",
+        "Isolation supports a practice hypothesis; it does not prove learning effectiveness."
+      ],
+      "candidate_practice_dimensions": [
+        "pattern_transfer"
+      ],
+      "practice_claim_status": "hypothesis_not_validated",
+      "source_ids": [
+        "U1"
+      ],
+      "planned_phase": "P2",
+      "verified_chart_examples": [],
+      "reviewed_at": null
+    }
+  ]
+}
