@@ -5,6 +5,7 @@
   let manifest, overlaySchema, release, pack, personal = null, loading = 0, routing = false;
   const status = (message, error = false) => { $('site-status').textContent = message; $('site-status').dataset.error = String(error); };
   const object = value => value !== null && typeof value === 'object' && !Array.isArray(value);
+  const modes = new Set(['overall','same-pattern','easier','next-step','section','discovery']);
   function require(condition, message) { if (!condition) throw new Error(message); }
   async function readPublic(path, expected) {
     const url = new URL(path, location.href);
@@ -68,16 +69,29 @@
     for(const card of recommendations.cards) {
       require(object(card) && ids.has(card.chart_id) && !cardIds.has(card.chart_id) && ['rating','practice','discovery'].includes(card.category), 'Invalid recommendation chart');cardIds.add(card.chart_id);
       for(const key of ['target_achievement','previous_achievement','gain_if_achieved']) require(card[key]==null || typeof card[key]==='number' && Number.isFinite(card[key]) && card[key]>=0, 'Invalid recommendation number');
-      require(card.targeted_patterns==null || Array.isArray(card.targeted_patterns) && card.targeted_patterns.every(x=>typeof x==='string'), 'Invalid recommendation patterns');
+      require(card.targeted_patterns==null || Array.isArray(card.targeted_patterns) && card.targeted_patterns.every(x=>pack.patterns.some(p=>p.pattern_id===x)), 'Invalid recommendation patterns');
       require(card.alternative_query==null || object(card.alternative_query) && (!card.alternative_query.chart_id || ids.has(card.alternative_query.chart_id)), 'Invalid alternative chart');
+      const alternative=card.alternative_query;
+      if(alternative){
+        require(!alternative.mode || modes.has(alternative.mode),'Invalid comparison mode');
+        require(!alternative.pattern_id || pack.patterns.some(p=>p.pattern_id===alternative.pattern_id),'Invalid comparison pattern');
+        require(!alternative.section_id || pack.charts.find(c=>c.chart_id===alternative.chart_id)?.sections?.some(s=>s.section_id===alternative.section_id),'Invalid comparison section');
+      }
     }
     return bundle;
   }
   function navigate(query) {
     if(routing) return;
+    // Only public catalog identities and known comparison modes enter shareable URLs.
+    const chart=pack.charts.find(c=>c.chart_id===query.chart_id);
+    if(query.chart_id && !chart)return;
+    const allowed={chart_id:chart?.chart_id};
+    if(query.pattern_id && pack.patterns.some(p=>p.pattern_id===query.pattern_id))allowed.pattern_id=query.pattern_id;
+    if(query.section_id && chart?.sections?.some(s=>s.section_id===query.section_id))allowed.section_id=query.section_id;
+    if(modes.has(query.mode))allowed.mode=query.mode;
     const url = new URL(location.href); url.search = '';
     url.searchParams.set('catalog',release.id);url.searchParams.set('version',release.version);
-    for(const [key,field] of [['chart','chart_id'],['section','section_id'],['pattern','pattern_id'],['mode','mode']]) if(query[field]) url.searchParams.set(key,query[field]);
+    for(const [key,field] of [['chart','chart_id'],['section','section_id'],['pattern','pattern_id'],['mode','mode']]) if(allowed[field]) url.searchParams.set(key,allowed[field]);
     if(url.href!==location.href) history.pushState(null,'',url);
   }
   function route() {

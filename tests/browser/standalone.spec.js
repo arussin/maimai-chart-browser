@@ -31,6 +31,12 @@ test('invalid versions, missing charts and duplicate attempts fail without repla
     await expect(page.getByRole('button',{name:'My results',exact:true})).toBeVisible();
   }
 });
+test('personal metadata cannot be copied into shareable comparison URLs',async({page})=>{
+  await open(page);const data=await personal();
+  data.recommendations.cards[0].alternative_query={chart_id:data.recommendations.cards[0].chart_id,mode:'private-player-name'};
+  await importValue(page,data);await expect(page.locator('#site-status')).toContainText('Invalid comparison mode');
+  expect(page.url()).not.toContain('private-player-name');await expect(page.locator('#site-clear')).toBeHidden();
+});
 test('versioned chart links open exact details and missing releases are recoverable',async({page})=>{
   const data=await personal(),id=data.overlay.entries[0].chart_id;
   await page.goto('/?'+new URLSearchParams({catalog:data.catalog.id,version:data.catalog.version,chart:id}));
