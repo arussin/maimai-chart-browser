@@ -36,12 +36,13 @@ manifest. The main page links to the research browser, with three views:
   selected chart, including BPM. Changing sort or search retains the filters.
   Source song BPM is display metadata; passages may change tempo. Unknown BPM
   remains unknown and sorts last in either direction.
-- **Pattern dictionary:** all 36 reference definitions, including 14 authored
-  schematic demos with play, step, speed and progress controls. Supported input
-  patterns also show an animated eight-button layout. Definitions awaiting
-  review remain available without invented demos or real-chart assignments.
-  Missing demos and unresolved named definitions have distinct labels; existing
-  working definitions are shown directly. See the [dictionary completion work](docs/PATTERN_DICTIONARY.md).
+- **Pattern dictionary:** all 36 lessons have an authored example and a contrast,
+  explanations, variants and limits. Play, Step, speed and progress controls work
+  across 72 diagrams. Input patterns use timing and position views; chart traits
+  use activity graphs or highlighted phrases. A current-event readout describes
+  each step. Umiyuri has a scoped, source-linked illustration of one recurring
+  form. Teaching examples do not assign real-chart labels or validate detectors.
+  See the [dictionary checklist and remaining review](docs/PATTERN_DICTIONARY.md).
 - **Compare charts:** choose any two charts using the searchable pickers, or
   choose one and **Find similar** across the catalog. Comparisons use existing
   chart measurements for input speed, rhythm, simultaneous inputs, holds, slides

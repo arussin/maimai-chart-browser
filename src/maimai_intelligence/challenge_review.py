@@ -20,8 +20,12 @@ def _encoded(value):
 def review_scripts():
     assets = files("maimai_intelligence.assets")
     theme = assets.joinpath("chart-theme.json").read_text("utf-8")
+    lessons = _encoded(json.loads(assets.joinpath("pattern-lessons.json").read_text("utf-8")))
     return "\n".join(
-        assets.joinpath(name).read_text("utf-8").replace("__MAIMAI_CHART_THEME__", theme)
+        assets.joinpath(name)
+        .read_text("utf-8")
+        .replace("__MAIMAI_CHART_THEME__", theme)
+        .replace("__MAIMAI_PATTERN_LESSONS__", lessons)
         for name in (
             "chart-visuals.js",
             "pattern-library.js",
@@ -63,7 +67,7 @@ def render_review(package, catalog, review, snippets, benchmark, navigation=None
     assets = files("maimai_intelligence.assets")
     css = "\n".join(
         assets.joinpath(name).read_text("utf-8")
-        for name in ("challenge-review.css", "chart-visuals.css")
+        for name in ("challenge-review.css", "chart-visuals.css", "pattern-lessons.css")
     )
     html = assets.joinpath("challenge-review.html").read_text("utf-8")
     return (

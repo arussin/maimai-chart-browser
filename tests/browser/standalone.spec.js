@@ -94,19 +94,20 @@ test('complete dictionary supports demos, keyboard close and stable links',async
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto('/lab/?version=fixture-v4');await page.locator('#patterns-tab').click();
   await expect(page.locator('#pattern-list .pattern-card')).toHaveCount(36);
-  await expect(page.locator('#pattern-count')).toContainText('14 illustrated demos');
+  await expect(page.locator('#pattern-count')).toContainText('36 illustrated demos with contrasts');
   const requests=[];page.on('request',r=>requests.push(r.url()));
   await page.locator('#pattern-search').fill('two-position');
   await page.locator('[data-open-pattern="pattern.two_position_alternation"]').click();
   const dialog=page.locator('#pattern-dialog');await expect(dialog).toBeVisible();
-  await dialog.getByRole('button',{name:'Step',exact:true}).click();await expect(dialog.locator('.demo-progress')).toHaveText('7%');
+  await dialog.getByRole('button',{name:'Step',exact:true}).click();await expect(dialog.locator('.demo-progress')).toHaveText('13% · 0.5 beats');
   await expect(dialog.locator('.field svg circle[fill="#b82d75"]')).toHaveCount(1);
   await dialog.getByRole('button',{name:'Play demo',exact:true}).click();await expect(dialog.getByRole('button',{name:'Pause demo'})).toBeVisible();
   await dialog.getByRole('button',{name:'Pause demo'}).click();const link=page.url();expect(link).toContain('pattern=pattern.two_position_alternation');
   await page.keyboard.press('Escape');await expect(dialog).toBeHidden();
   await expect(page.locator('[data-open-pattern="pattern.two_position_alternation"]')).toBeFocused();
   await page.locator('#pattern-search').fill('umiyuri');await page.locator('[data-open-pattern="pattern.umiyuri"]').click();
-  await expect(dialog).toContainText('The exact named pattern and its variants still need review');await expect(dialog.getByRole('button',{name:'Play demo'})).toHaveCount(0);
+  await expect(dialog).toContainText('pair → intervening tap → next pair');await expect(dialog.getByRole('button',{name:'Play demo'})).toBeVisible();
+  await dialog.getByRole('button',{name:'Contrasting example',exact:true}).click();await expect(dialog.locator('.lesson-caption')).toContainText('lacks this recurring phase relationship');
   expect(requests).toEqual([]);expect(errors).toEqual([]);
   await page.goto(link);await expect(dialog).toBeVisible();await expect(dialog).toContainText('two-position alternation');
 });
@@ -220,7 +221,7 @@ test('song rows retain same-level difficulty choices and update exact chart acti
   await expect(page.locator('#comparison-pickers')).toContainText('RE:MASTER');
 });
 
-test('BPM sorting keeps missing values last and working definitions are visible',async({page})=>{
+test('BPM sorting keeps missing values last and completed lessons are visible',async({page})=>{
   await page.goto('/lab/');await page.locator('#sort-panel summary').click();
   await page.locator('#sort-key-0').selectOption('bpm');
   const tempos=()=>page.locator('#songs .chart-bpm').allTextContents();
@@ -228,8 +229,49 @@ test('BPM sorting keeps missing values last and working definitions are visible'
   await page.locator('#sort-direction-0').click();
   expect(await tempos()).toEqual(['180','160','160','120','120','—']);
   await page.locator('#patterns-tab').click();await page.locator('#pattern-search').fill('gallop');
-  await expect(page.locator('.pattern-description')).toContainText('Repeated two-onset groups');
-  await expect(page.locator('.pattern-status')).toHaveText('Working definition · Demo not yet available');
+  await expect(page.locator('.pattern-description')).toContainText('Repeat short-long timing pairs');
+  await expect(page.locator('.pattern-card .lesson-art')).toHaveCount(1);
   await page.locator('#pattern-search').fill('umiyuri');
-  await expect(page.locator('.pattern-status')).toHaveText('Named definition needs review');
+  await expect(page.locator('[data-pattern-id="pattern.umiyuri"] .pattern-description')).toContainText('launch the previous slide at the next pair');
+});
+
+test('all 36 lessons play, step, switch contrasts and preserve privacy',async({page})=>{
+  test.setTimeout(60000);
+  const errors=[];page.on('pageerror',e=>errors.push(e.message));
+  await page.goto('/lab/?view=patterns');await expect(page.locator('.pattern-card')).toHaveCount(36);
+  await page.locator('#pattern-scope').selectOption('traits');await expect(page.locator('.pattern-card')).toHaveCount(14);
+  await page.locator('#pattern-scope').selectOption('patterns');await expect(page.locator('.pattern-card')).toHaveCount(22);
+  await page.locator('#pattern-scope').selectOption('all');
+  const ids=await page.locator('[data-open-pattern]').evaluateAll(nodes=>nodes.map(n=>n.dataset.openPattern)),requests=[];
+  page.on('request',r=>requests.push(r.url()));
+  const dialog=page.locator('#pattern-dialog');
+  for(const id of ids){
+    await page.locator('[data-open-pattern="'+id+'"]').click();
+    for(const name of ['Example','Contrasting example']){
+      await dialog.getByRole('button',{name,exact:true}).click();
+      const art=dialog.locator('.demo-stage>.lesson-art');await expect(art).toBeVisible();
+      const before=await art.locator('.lesson-playhead').getAttribute('x1');
+      await dialog.getByRole('button',{name:'Step',exact:true}).click();expect(await art.locator('.lesson-playhead').getAttribute('x1')).not.toBe(before);
+      await dialog.getByRole('button',{name:'Play demo',exact:true}).click();await expect(dialog.getByRole('button',{name:'Pause demo',exact:true})).toBeVisible();
+      await dialog.getByRole('button',{name:'Pause demo',exact:true}).click();
+      await dialog.locator('input[type=range]').fill('1000');await expect(dialog.locator('.demo-progress')).toContainText('100%');
+      await dialog.getByRole('button',{name:'Restart',exact:true}).click();await expect(dialog.locator('.demo-progress')).toContainText('0%');
+    }
+    await dialog.getByRole('button',{name:'Close pattern'}).click();
+  }
+  expect(errors).toEqual([]);expect(requests).toEqual([]);
+});
+
+test('lesson contrasts keep equal graph scales and work with reduced motion',async({page})=>{
+  await page.emulateMedia({reducedMotion:'reduce'});await page.goto('/lab/?view=patterns&pattern=trait.high_onset_density');
+  const dialog=page.locator('#pattern-dialog');await expect(dialog).toBeVisible();
+  await expect(dialog.getByRole('button',{name:'Play demo',exact:true})).toBeHidden();
+  const labels=()=>dialog.locator('.lesson-art .lesson-axis').allTextContents(),scale=await labels();
+  await dialog.getByRole('button',{name:'Contrasting example',exact:true}).click();expect(await labels()).toEqual(scale);
+  await dialog.getByRole('button',{name:'Step',exact:true}).click();await expect(dialog.locator('.demo-progress')).toContainText('1 second');
+  await expect(dialog.locator('.lesson-reading')).toContainText('3 inputs / s');
+  expect((await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21aa']).analyze()).violations).toEqual([]);
+  await page.evaluate(()=>document.documentElement.style.fontSize='200%');
+  expect(await dialog.evaluate(n=>n.scrollWidth<=n.clientWidth)).toBe(true);
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
 });

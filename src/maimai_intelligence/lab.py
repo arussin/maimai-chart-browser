@@ -81,7 +81,9 @@ def build_lab(package_directory, output, *, catalog_version):
         root / "challenge-review.css",
         assets.joinpath("challenge-review.css").read_text("utf-8")
         + "\n"
-        + assets.joinpath("chart-visuals.css").read_text("utf-8"),
+        + assets.joinpath("chart-visuals.css").read_text("utf-8")
+        + "\n"
+        + assets.joinpath("pattern-lessons.css").read_text("utf-8"),
     )
     html = re.sub(
         r"<style>.*?</style>",
