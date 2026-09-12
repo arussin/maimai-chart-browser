@@ -109,7 +109,7 @@ async function run(change=()=>{},alter=()=>{}){
   const requests=[],appended=[],status={textContent:''};
   const assets=Object.fromEntries(parts.map((p,i)=>[p.path,fragments[i]]));
   assets[entry.path]=bytes;alter(assets);
-  const scope={crypto:webcrypto,Uint8Array,TextDecoder,URL,URLSearchParams,
+  const scope={window:{},crypto:webcrypto,Uint8Array,TextDecoder,URL,URLSearchParams,
     location:{href:'http://localhost/?left=chart-id',search:'?left=chart-id'},
     history:{replaceState(...args){scope.pinned=args[2].href;}},
     document:{getElementById(){return status;},createElement(){return {};},
@@ -121,11 +121,13 @@ async function run(change=()=>{},alter=()=>{}){
       return new Response(body||'missing',{status:body?200:404});
     }};
   await vm.runInNewContext(loader,scope);
-  return {status:status.textContent,requests,appended,pinned:scope.pinned};
+  return {status:status.textContent,requests,appended,pinned:scope.pinned,
+    catalog:scope.window.maimaiResearchCatalog};
 }
 (async()=>{
   let r=await run();assert.equal(r.appended.length,2);
   assert.equal(r.appended[0].textContent,bytes.toString('utf8'));
+  assert.equal(JSON.stringify(r.catalog),bytes.toString('utf8'));
   assert.match(r.pinned,/left=chart-id&version=v1/);
   assert(!r.requests.some(p=>p.includes('chart-id')));
   r=await run(m=>{m.schema_version='1.0.0';delete m.releases[0].parts;});

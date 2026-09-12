@@ -1,6 +1,6 @@
 /* Sealed review; no network, account access, automatic storage or imported scores. */
 (()=>{'use strict';
-const data=JSON.parse(document.getElementById('challenge-data').textContent);
+const data=window.maimaiResearchCatalog??=JSON.parse(document.getElementById('challenge-data').textContent);
 const byId=new Map(data.catalog.map(c=>[c.chart_id,c]));
 const el=id=>document.getElementById(id),make=(tag,text,cls)=>{const e=document.createElement(tag);if(text!==undefined)e.textContent=text;if(cls)e.className=cls;return e;};
 const names={cadence:'Input speed',rhythm:'Rhythm',coordination:'Simultaneous inputs',holds:'Hold interactions',slides:'Slide timing',spatial:'Layout'};
@@ -201,7 +201,7 @@ function catalog(focusKey=null){
     if(!chartFilters.matches(c))return false;
     if(!patternFilter.matches(c))return false;
     return true;
-  }).sort(compareCharts);
+  });
   const grouped=new Map();
   for(const chart of charts){const key=rowKey(chart);if(!grouped.has(key))grouped.set(key,[]);grouped.get(key).push(chart);}
   const rows=[...grouped].map(([key,choices])=>({key,choices,chart:choices.find(c=>c.chart_id===selectedCharts.get(key))||[...choices].sort((a,b)=>(values.difficulty(a)??99)-(values.difficulty(b)??99)||a.chart_id.localeCompare(b.chart_id))[0]})).sort((a,b)=>compareCharts(a.chart,b.chart));

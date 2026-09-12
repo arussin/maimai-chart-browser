@@ -1,6 +1,6 @@
 /* Exact-source research observations and Flow; no accounts or external requests. */
 (()=>{'use strict';
-const data=JSON.parse(document.getElementById('challenge-data').textContent),pack=data.analysis;
+const data=window.maimaiResearchCatalog??=JSON.parse(document.getElementById('challenge-data').textContent),pack=data.analysis;
 const definitions=new Map(JSON.parse(document.getElementById('pattern-data').textContent).map(p=>[p.pattern_id,p]));
 const make=(tag,text,cls)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(cls)n.className=cls;return n;};
 const svg=(tag,attrs,text)=>{const n=document.createElementNS('http://www.w3.org/2000/svg',tag);for(const[k,v]of Object.entries(attrs))n.setAttribute(k,String(v));if(text!==undefined)n.textContent=text;return n;};

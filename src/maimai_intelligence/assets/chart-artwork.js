@@ -1,6 +1,6 @@
 /* Display-only artwork from the verified public catalog, with same-site images only. */
 (()=>{'use strict';
-const data=JSON.parse(document.getElementById('challenge-data').textContent),art=data.artwork;
+const data=window.maimaiResearchCatalog??=JSON.parse(document.getElementById('challenge-data').textContent),art=data.artwork;
 function image(path,className,label){
   const box=document.createElement('span');box.className=className+' artwork-missing';
   box.title=label+' unavailable';box.setAttribute('role','img');box.setAttribute('aria-label',label+' unavailable');
