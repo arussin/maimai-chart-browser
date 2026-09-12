@@ -20,7 +20,9 @@ Build with real reviewed metadata using
 Catalog versions are immutable; repeated builds retain older releases and links.
 Serve the generated directory as static files, including its manifest and assets.
 No account service, upload endpoint or application server is required.
-Permanent hosting is a separate rollout.
+The [public release plan](docs/PUBLIC_RELEASE.md) follows completion of the active
+pattern-detection goal. It covers public source, maimai.party hosting, community
+contributions and owner-only official corpus publication. See [contributing](CONTRIBUTING.md).
 
 Both browser pages use the maimai.party wordmark, with Deluxe-inspired colors
 on `.party`. Their shared footer includes creator support, the GitHub link,
