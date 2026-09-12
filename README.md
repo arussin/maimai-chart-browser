@@ -22,12 +22,26 @@ Serve the generated directory as static files, including its manifest and assets
 No account service, upload endpoint or application server is required.
 Permanent hosting is a separate rollout.
 
-To retain the existing full research browser alongside Explore, add
---lab-package PATH/TO/challenge-v1 to the demo or site command. It verifies the pinned
-research package, preserves genre/level/version folders and animated comparison
-samples, and externalizes its data behind its own immutable release manifest.
-The main page then links to Challenge Lab. Research data is not included in the
-Python distribution or source repository and cannot accept personal results.
+To open the full research browser alongside Explore, add
+`--lab-package PATH/TO/challenge-v1` to the demo or site command. It verifies the
+pinned research package and externalizes its data behind an immutable release
+manifest. The main page links to the research browser, with three views:
+
+- **Charts:** combine genre, version, difficulty, format and level-range filters.
+  Three ordered sort rules apply to individual chart variants and break ties in
+  order. Changing sort or search retains the selected filters.
+- **Pattern dictionary:** all 36 reference definitions, including 14 authored
+  schematic demos with play, step, speed and progress controls. Supported input
+  patterns also show an animated eight-button layout. Definitions awaiting
+  review remain available without invented demos or real-chart assignments.
+- **Compare charts:** the prepared starting-chart examples show experimental
+  structural similarity and synchronized chart passages. These are not personal
+  recommendations; only the prepared query subset has passage comparisons.
+
+The interface follows the report site's white/teal presentation. Dictionary
+links retain the research catalog version and pattern ID. Research data is not
+included in the Python distribution or source repository and cannot accept
+personal results.
 
 ## Download and prepare personal results
 

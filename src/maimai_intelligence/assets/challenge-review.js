@@ -4,9 +4,9 @@ const data=JSON.parse(document.getElementById('challenge-data').textContent);
 const byId=new Map(data.catalog.map(c=>[c.chart_id,c]));
 const el=id=>document.getElementById(id),make=(tag,text,cls)=>{const e=document.createElement(tag);if(text!==undefined)e.textContent=text;if(cls)e.className=cls;return e;};
 const names={cadence:'Input speed',rhythm:'Rhythm',coordination:'Simultaneous inputs',holds:'Hold interactions',slides:'Slide timing',spatial:'Layout'};
-const judgments=new Map();let cleanup=[],sort='genre',visible=40,folder='all',format='all',folderOptions=[];
+const judgments=new Map();let cleanup=[],visible=40,format='all';
 const navigation=data.navigation||{charts:{},genres:[],versions:[]};
-function folderValue(c,mode=sort){
+function folderValue(c,mode){
   if(mode==='level')return c.level||'unknown';
   const n=navigation.charts[c.chart_id];
   return n&&n.source_hash===c.source_hash?(n[mode]||'unknown'):'unknown';
@@ -17,12 +17,12 @@ function metrics(c){const root=make('div',undefined,'demand');for(const [group,k
 function xy(pos){if(pos==='C')return[0,0];let n,r=1,offset=0;if(typeof pos==='number')n=pos;else if(/^[ABDE][1-8]$/.test(pos||'')){n=+pos[1];r='BE'.includes(pos[0])?.55:1;offset='DE'.includes(pos[0])?-.5:0;}else return null;let a=(n-.5+offset)*Math.PI/4;return[Math.sin(a)*r,-Math.cos(a)*r];}
 const ns='http://www.w3.org/2000/svg';
 function svgNode(tag,attrs){const e=document.createElementNS(ns,tag);for(const [k,v]of Object.entries(attrs))e.setAttribute(k,String(v));return e;}
-function field(snippet,label){const box=make('div',undefined,'field');box.append(make('h4',label));const svg=svgNode('svg',{viewBox:'-1.35 -1.35 2.7 2.7',role:'img','aria-label':label+' chart passage'});box.append(svg);const note=make('p','', 'muted');box.append(note);
+function field(snippet,label,lead=600000){const box=make('div',undefined,'field');box.append(make('h4',label));const svg=svgNode('svg',{viewBox:'-1.35 -1.35 2.7 2.7',role:'img','aria-label':label+' chart passage'});box.append(svg);const note=make('p','', 'muted');box.append(note);
 function draw(t){svg.replaceChildren();svg.append(svgNode('circle',{cx:0,cy:0,r:1,fill:'none',stroke:'#cfc4e8','stroke-width':.025}));for(let n=1;n<=8;n++){let[x,y]=xy(n);svg.append(svgNode('circle',{cx:x,cy:y,r:.09,fill:'white',stroke:'#aa9dc3','stroke-width':.012}));const tx=svgNode('text',{x,y:y+.036,'text-anchor':'middle','font-size':.11,fill:'#65577d'});tx.textContent=n;svg.append(tx);}
 let unknown=0;
 for(const s of snippet.slides){if(t<s.wait_start_us||t>s.movement_end_us)continue;if(!s.geometry){unknown++;continue;}const points=s.geometry.points,waiting=t<s.movement_start_us;svg.append(svgNode('polyline',{points:points.map(p=>p.join(',')).join(' '),fill:'none',stroke:waiting?'#987500':'#007d88','stroke-width':.05,'stroke-dasharray':waiting?'.07 .04':'none'}));if(!waiting){let u=Math.min(1,(t-s.movement_start_us)/(s.movement_end_us-s.movement_start_us));let lengths=points.slice(1).map((p,i)=>Math.hypot(p[0]-points[i][0],p[1]-points[i][1]));let distance=u*lengths.reduce((a,b)=>a+b,0),i=0;while(i<lengths.length-1&&distance>lengths[i])distance-=lengths[i++];let v=lengths[i]?distance/lengths[i]:0;let p=[points[i][0]+v*(points[i+1][0]-points[i][0]),points[i][1]+v*(points[i+1][1]-points[i][1])];svg.append(svgNode('circle',{cx:p[0],cy:p[1],r:.065,fill:'#007d88'}));}}
 for(const h of snippet.holds){let p=xy(h.position);if(p&&t>=h.start_us&&t<h.end_us)svg.append(svgNode('circle',{cx:p[0],cy:p[1],r:.16,fill:'none',stroke:'#b55812','stroke-width':.05}));}
-for(const e of snippet.events){let dt=e.time_us-t;if(dt< -120000||dt>600000)continue;let p=xy(e.position);if(!p)continue;let r=Math.max(.05,Math.min(.16,.16-dt/600000*.10));svg.append(svgNode('circle',{cx:p[0],cy:p[1],r,fill:e.role==='star_tap'?'#007d88':'#b82d75',opacity:dt<0?.5:1}));}
+for(const e of snippet.events){let dt=e.time_us-t;if(dt< -120000||dt>lead)continue;let p=xy(e.position);if(!p)continue;let r=Math.max(.05,Math.min(.16,.16-dt/600000*.10));svg.append(svgNode('circle',{cx:p[0],cy:p[1],r,fill:e.role==='star_tap'?'#007d88':'#b82d75',opacity:dt<0?.5:1}));}
 note.textContent=(t/1000000).toFixed(2)+' s · '+(unknown?unknown+' active path(s) not rendered':'Wait: dashed gold · Move: solid teal');}
 return{box,draw};}
 function beatAt(s,t){let a=s.bpm_segments[0];for(const x of s.bpm_segments){if(x.time_us>t)break;a=x;}return Number(a.beat[0])/Number(a.beat[1])+(t-a.time_us)/60000000*Number(a.bpm[0])/Number(a.bpm[1]);}
@@ -39,11 +39,13 @@ function status(){el('review-status').textContent=judgments.size+' / '+data.revi
 function stopPlayers(clear=true){cleanup.forEach(f=>f());if(clear)cleanup=[];}
 function selectView(name){
   stopPlayers();
-  for(const n of ['compare','catalog']){
+  for(const n of ['compare','catalog','patterns']){
     el(n).hidden=n!==name;
     el(n+'-tab').setAttribute('aria-pressed',String(n===name));
   }
-  if(name==='catalog')catalog();else render();
+  window.maimaiPatternLibrary.stop();
+  if(name==='catalog')catalog();else if(name==='compare')render();else window.maimaiPatternLibrary.render();
+  const url=new URL(location.href);url.searchParams.set('view',name);url.searchParams.delete('pattern');history.replaceState(null,'',url);
 }
 function openSample(index){
   el('query').value=String(index);
@@ -54,14 +56,14 @@ function render(){
   stopPlayers();
   const item=data.review[+el('query').value];
   el('matches').replaceChildren();el('query-card').replaceChildren();
-  if(!item){el('matches').append(make('p','No recommendation samples are prepared in this package yet.'));return;}
+  if(!item){el('matches').append(make('p','No chart comparisons are prepared in this catalog yet.'));return;}
   const q=byId.get(item.query_id),query=make('article',undefined,'card source-card');
   query.append(make('span','STARTING CHART','eyebrow'),make('h3',displayTitle(q)),meta(q));
   el('query-card').append(query);
   const feedback=el('feedback').checked,blind=feedback&&el('blind').checked;
   let candidates=[...item.candidates];
   if(blind)candidates.sort((a,b)=>a.chart_id.localeCompare(b.chart_id));
-  el('matches').append(make('h3',blind?'Candidates to compare':'Suggested charts'));
+  el('matches').append(make('h3',blind?'Charts to compare':'Charts with similar passages'));
   if(!candidates.length)el('matches').append(make('p','No candidates are prepared for this starting chart.'));
   candidates.forEach((m,i)=>{
     const c=byId.get(m.chart_id),card=make('article',undefined,'card candidate');
@@ -104,100 +106,112 @@ function render(){
   });
   status();
 }
-function songGroups(charts){
-  const groups=new Map();
-  for(const c of charts){
-    const key=JSON.stringify([c.title.normalize('NFKC').toLowerCase(),c.artist.normalize('NFKC').toLowerCase()]);
-    if(!groups.has(key))groups.set(key,[]);groups.get(key).push(c);
+const difficultyOrder=['BASIC','ADVANCED','EXPERT','MASTER','Re:MASTER'];
+const collator=new Intl.Collator(undefined,{numeric:true,sensitivity:'base'});
+const levelNumber=value=>value&&Number.isFinite(parseFloat(value))?parseFloat(value)+(value.endsWith('+')?.5:0):null;
+const sortFields={title:'Title',artist:'Artist',level:'Level',difficulty:'Difficulty',format:'Format',genre:'Genre',version:'Version',speed:'Inputs / s',peak:'Peak inputs / s'};
+let sortRules=[{key:'title',direction:1},{key:'difficulty',direction:1},{key:'format',direction:1}];
+const filters=['genre','version','difficulty','min','max'];
+const genreLabel=value=>(navigation.genres||[]).find(g=>g.id===value)?.label||'Uncategorized';
+const values={title:c=>displayTitle(c),artist:c=>c.artist,level:c=>levelNumber(c.level),difficulty:c=>difficultyOrder.indexOf(c.difficulty),format:c=>c.format,genre:c=>genreLabel(folderValue(c,'genre')),version:c=>{const v=(navigation.versions||[]).indexOf(folderValue(c,'version'));return v<0?null:v;},speed:c=>c.demand.cadence.mean_onsets_s??null,peak:c=>c.demand.cadence.peak_onsets_s??null};
+function compareCharts(a,b){
+  for(const rule of sortRules){if(!rule.key)continue;const av=values[rule.key](a),bv=values[rule.key](b);
+    // Unknown measurements stay at the end in either direction.
+    if(av==null||bv==null){if(av!==bv)return av==null?1:-1;continue;}
+    const diff=typeof av==='number'?av-bv:collator.compare(av,bv);if(diff)return diff*rule.direction;
   }
-  return [...groups.values()];
+  return collator.compare(displayTitle(a),displayTitle(b))||a.chart_id.localeCompare(b.chart_id);
+}
+function sortLabel(rule){return sortFields[rule.key]+(['title','artist','genre','format'].includes(rule.key)?(rule.direction===1?' A–Z':' Z–A'):(rule.direction===1?' ↑':' ↓'));}
+function renderSort(){
+  const root=el('sort-rules');root.replaceChildren();
+  sortRules.forEach((rule,index)=>{
+    const row=make('div',undefined,'sort-rule'),label=make('label',['First by','Then by','Finally by'][index]),select=make('select');select.id='sort-key-'+index;
+    if(index)select.append(new Option('No additional rule',''));
+    for(const [key,name]of Object.entries(sortFields)){const option=new Option(name,key);option.disabled=sortRules.some((r,i)=>i!==index&&r.key===key);select.append(option);}
+    select.value=rule.key;label.append(select);
+    const direction=make('button',rule.direction===1?'Ascending ↑':'Descending ↓');direction.id='sort-direction-'+index;direction.setAttribute('aria-label','Reverse '+['first','second','third'][index]+' sort direction');direction.disabled=!rule.key;
+    select.onchange=()=>{rule.key=select.value;visible=40;renderSort();catalog();el(select.id).focus();};
+    direction.onclick=()=>{rule.direction*=-1;renderSort();catalog();el(direction.id).focus();};row.append(label,direction);root.append(row);
+  });
+  el('sort-summary').textContent=sortRules.filter(r=>r.key).map(sortLabel).join(' · ');
+}
+function initializeFilters(){
+  for(const id of filters){const select=el('filter-'+id);let options=[];
+    if(id==='genre')options=(navigation.genres||[]).map(g=>[g.id,g.label]);
+    if(id==='version')options=(navigation.versions||[]).map(v=>[v,v.replace(/^maimai DX /,'DX ').replace(/^maimai /,'')]);
+    if(id==='difficulty')options=difficultyOrder.filter(d=>data.catalog.some(c=>c.difficulty===d)).map(d=>[d,d]);
+    if(id==='min'||id==='max')options=[...new Set(data.catalog.map(c=>c.level).filter(v=>levelNumber(v)!=null))].sort((a,b)=>levelNumber(a)-levelNumber(b)).map(v=>[v,v]);
+    for(const [value,label]of options)select.append(new Option(label,value));
+    select.onchange=()=>{visible=40;catalog();};
+  }
+  for(const key of ['all','STD','DX'])el('format-'+key).onclick=()=>{format=key;visible=40;updateFormat();catalog();};
+  el('reset-filters').onclick=()=>{for(const id of filters)el('filter-'+id).value='';el('search').value='';format='all';visible=40;updateFormat();catalog();};
+  renderSort();
+}
+function updateFormat(){for(const key of ['all','STD','DX'])el('format-'+key).setAttribute('aria-pressed',String(key===format));}
+function activeFilters(){
+  const root=el('active-filters');root.replaceChildren();
+  for(const id of filters){const select=el('filter-'+id);if(!select.value)continue;
+    const button=make('button',({min:'From level ',max:'To level '}[id]||'')+select.selectedOptions[0].text+' ×','filter-chip');
+    button.setAttribute('aria-label','Remove '+select.parentElement.firstChild.textContent+' filter');
+    button.onclick=()=>{select.value='';visible=40;catalog();select.focus();};root.append(button);
+  }
 }
 function catalog(){
   const search=el('search').value.normalize('NFKC').toLowerCase();
-  const available=data.catalog.filter(c=>(format==='all'||c.format===format)&&(c.title+' '+c.artist).normalize('NFKC').toLowerCase().includes(search));
-  renderFolders(available);
-  const charts=available.filter(c=>sort==='title'||folder==='all'||folderValue(c)===folder);
-  const songs=songGroups(charts);
-  songs.sort((a,b)=>a[0].title.localeCompare(b[0].title));
-  el('songs').replaceChildren();
-  for(const [rowIndex,group] of songs.slice(0,visible).entries()){
-    const row=make('article',undefined,'song-row');row.append(make('h3',displayTitle(group[0])),make('p',group[0].artist,'muted'));
-    const variants=make('div',undefined,'variants'),panel=make('div',undefined,'chart-measurements');
-    panel.id='chart-'+rowIndex;panel.hidden=true;
-    for(const c of group){
-      const v=make('button',undefined,'variant');
-      v.dataset.chartId=c.chart_id;
-      v.append(make('span',c.format+' '+c.difficulty,'badge '+c.difficulty.replace(':','')),make('span','Lv. '+(c.level||'?')));
-      v.setAttribute('aria-expanded','false');v.setAttribute('aria-controls',panel.id);
-      v.onclick=()=>{
-        const wasOpen=v.getAttribute('aria-expanded')==='true';
-        for(const b of variants.querySelectorAll('button'))b.setAttribute('aria-expanded','false');
-        panel.hidden=wasOpen;if(wasOpen)return;
-        v.setAttribute('aria-expanded','true');panel.replaceChildren();
-        panel.append(make('h4',c.format+' '+c.difficulty+' measurements'),metrics(c),make('p','No personal scores loaded. Named-pattern labels are not validated yet.','muted'));
-        const sample=data.review.findIndex(r=>r.query_id===c.chart_id);
-        if(sample>=0){const b=make('button','Show recommendation sample');b.onclick=()=>openSample(sample);panel.append(b);}
-        else panel.append(make('p','Recommendations for this chart are not prepared yet. Try one of the starting charts in Recommendation samples.','muted'));
-      };
-      variants.append(v);
-    }
-    row.append(variants,panel);el('songs').append(row);
+  const selected=Object.fromEntries(filters.map(id=>[id,el('filter-'+id).value]));
+  const charts=data.catalog.filter(c=>{
+    if(format!=='all'&&c.format!==format)return false;
+    if(!(c.title+' '+c.artist).normalize('NFKC').toLowerCase().includes(search))return false;
+    for(const key of ['genre','version'])if(selected[key]&&folderValue(c,key)!==selected[key])return false;
+    if(selected.difficulty&&c.difficulty!==selected.difficulty)return false;
+    const level=levelNumber(c.level);
+    if(selected.min&&(level==null||level<levelNumber(selected.min)))return false;
+    if(selected.max&&(level==null||level>levelNumber(selected.max)))return false;
+    return true;
+  }).sort(compareCharts);
+  el('songs').replaceChildren();activeFilters();
+  for(const [index,c]of charts.slice(0,visible).entries()){
+    const row=make('article',undefined,'song-row');row.dataset.chartId=c.chart_id;row.dataset.level=c.level||'';row.dataset.title=c.title;row.dataset.difficulty=c.difficulty;row.dataset.genre=folderValue(c,'genre');row.dataset.version=folderValue(c,'version');
+    const summary=make('div',undefined,'chart-row'),identity=make('div',undefined,'song-identity'),title=make('button',displayTitle(c),'song-title');
+    const heading=make('h2');heading.append(title);identity.append(heading,make('p',c.artist||'Artist not provided','muted'));
+    const chart=make('div',undefined,'chart-identity');chart.append(make('span',c.difficulty,'badge '+c.difficulty.replace(':','')),make('span',c.format,'format-label'));
+    const level=make('span',c.level||'—','chart-level'),speed=make('span',values.speed(c)==null?'—':values.speed(c).toFixed(1),'chart-speed');
+    level.setAttribute('aria-label','Level '+(c.level||'unknown'));speed.setAttribute('aria-label',(values.speed(c)==null?'Unknown':values.speed(c).toFixed(1))+' inputs per second');
+    summary.append(identity,chart,level,speed);
+    const panel=make('div',undefined,'chart-measurements');panel.id='chart-'+index;panel.hidden=true;title.setAttribute('aria-expanded','false');title.setAttribute('aria-controls',panel.id);
+    title.onclick=()=>{
+      panel.hidden=!panel.hidden;title.setAttribute('aria-expanded',String(!panel.hidden));if(panel.hidden)return;
+      panel.replaceChildren();panel.append(make('h3',c.format+' '+c.difficulty+' · Lv. '+(c.level||'?')),metrics(c));
+      panel.append(make('p',genreLabel(folderValue(c,'genre'))+' · '+folderValue(c,'version'),'muted'));
+      const sample=data.review.findIndex(r=>r.query_id===c.chart_id);
+      if(sample>=0){const b=make('button','Compare prepared passages');b.onclick=()=>openSample(sample);panel.append(b);}
+      else panel.append(make('p','A passage comparison has not been prepared for this chart.','muted'));
+      const link=make('button','Explore the pattern dictionary','text-button');link.onclick=()=>selectView('patterns');panel.append(link);
+    };
+    row.append(summary,panel);el('songs').append(row);
   }
-  el('catalog-count').textContent=songs.length.toLocaleString()+' song groups · '+charts.length.toLocaleString()+' chart variants'+(folder!=='all'?' · Matching variants shown':'');
-  if(!songs.length)el('songs').append(make('p','No songs match this search.'));
-  el('more').hidden=songs.length<=visible;
+  el('catalog-count').textContent=charts.length.toLocaleString()+' matching charts';
+  if(!charts.length)el('songs').append(make('p',selected.min&&selected.max&&levelNumber(selected.min)>levelNumber(selected.max)?'The minimum level is above the maximum. Adjust either level filter.':'No charts match this combination. Remove a filter or try another search.','empty-state'));
+  el('more').hidden=charts.length<=visible;
 }
-function chooseFolder(value,focus=false){
-  folder=value;visible=40;catalog();
-  const button=[...el('folders').children].find(b=>b.dataset.folder===value);
-  if(button){button.scrollIntoView({block:'nearest',inline:'nearest'});if(focus)button.focus({preventScroll:true});}
-}
-function renderFolders(charts){
-  el('folder-navigation').hidden=sort==='title';
-  if(sort==='title'){el('folder-heading').textContent='All songs';return;}
-  const present=new Map();
-  for(const c of charts){const key=folderValue(c);if(!present.has(key))present.set(key,[]);present.get(key).push(c);}
-  const genres=navigation.genres||[],versions=navigation.versions||[];
-  let values=sort==='genre'?genres.map(g=>g.id):sort==='version'?versions:[...present.keys()].filter(k=>k!=='unknown').sort((a,b)=>(parseFloat(a)+(a.endsWith('+')?.5:0))-(parseFloat(b)+(b.endsWith('+')?.5:0)));
-  values=values.filter(k=>k!=='unknown'&&present.has(k));
-  if(present.has('unknown'))values.push('unknown');
-  const label=key=>key==='unknown'?'Uncategorized':sort==='genre'?(genres.find(g=>g.id===key)?.label||key):sort==='level'?'Lv. '+key:key.replace(/^maimai DX /,'').replace(/^maimai /,'');
-  folderOptions=[{id:'all',label:'All '+({genre:'genres',level:'levels',version:'versions'}[sort])},...values.map(id=>({id,label:label(id)}))];
-  if(!folderOptions.some(o=>o.id===folder))folder='all';
-  const scroll=el('folders').scrollLeft;
-  el('folders').replaceChildren();
-  for(const option of folderOptions){
-    const b=make('button',undefined,'folder');b.dataset.folder=option.id;
-    b.setAttribute('aria-pressed',String(folder===option.id));
-    b.append(make('strong',option.label),make('span',songGroups(option.id==='all'?charts:present.get(option.id)).length.toLocaleString()+' songs'));
-    b.onclick=()=>chooseFolder(option.id,true);el('folders').append(b);
-  }
-  el('folders').scrollLeft=scroll;
-  el('folder-heading').textContent=folderOptions.find(o=>o.id===folder).label;
-  el('folder-prev').disabled=el('folder-next').disabled=folderOptions.length<=1;
-}
-const modes={genre:'browse-genre',level:'sort-level',version:'browse-version',title:'sort-title'};
-for(const [mode,id]of Object.entries(modes))el(id).onclick=()=>{
-  sort=mode;folder='all';visible=40;el('folders').scrollLeft=0;
-  for(const [key,button]of Object.entries(modes))el(button).setAttribute('aria-pressed',String(key===mode));catalog();
-};
-for(const key of ['all','STD','DX'])el('format-'+key).onclick=()=>{
-  format=key;visible=40;for(const value of ['all','STD','DX'])el('format-'+value).setAttribute('aria-pressed',String(value===key));catalog();
-};
-for(const [id,step]of [['folder-prev',-1],['folder-next',1]])el(id).onclick=()=>{
-  const index=folderOptions.findIndex(o=>o.id===folder);chooseFolder(folderOptions[(index+step+folderOptions.length)%folderOptions.length].id);
-};
+
 data.review.forEach((r,i)=>{const c=byId.get(r.query_id);el('query').append(new Option(displayTitle(c)+' · '+c.format+' '+c.difficulty+' · Lv. '+(c.level||'?'),String(i)));});
 el('query').onchange=render;el('blind').onchange=render;
 el('feedback').onchange=()=>{el('blind').disabled=!el('feedback').checked;el('download').disabled=!el('feedback').checked;render();};
-el('search').oninput=()=>{visible=40;folder='all';catalog();};
+el('search').oninput=()=>{visible=40;catalog();};
 el('more').onclick=()=>{visible+=40;catalog();};
-for(const name of ['compare','catalog'])el(name+'-tab').onclick=()=>selectView(name);
+for(const name of ['compare','catalog','patterns'])el(name+'-tab').onclick=()=>selectView(name);
 el('download').onclick=()=>{const blob=new Blob([JSON.stringify({version:'challenge-judgments-1',benchmark_hash:data.benchmark_hash,policy:data.package.retrieval_policy,judgments:[...judgments.values()]},null,2)],{type:'application/json'});const url=URL.createObjectURL(blob),a=make('a');a.href=url;a.download='challenge-judgments.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
 el('coverage').textContent=data.catalog.length+' chart profiles · '+data.review.length+' prepared review queries · '+data.package.status.replaceAll('_',' ');el('credit').textContent=data.package.source.credit;el('notice').textContent=data.package.source.notice;el('revision').textContent=data.package.source.revision;
 el('loaded-count').textContent=data.catalog.length.toLocaleString();
-el('sample-count').textContent=String(data.review.length);
-el('sample-intro').textContent=data.review.length+' prepared starting charts. Experimental suggestions span difficulties and are not personalized Targets.';
+el('sample-intro').textContent='Choose from '+data.review.length+' prepared starting charts to inspect side-by-side passage demos. These are examples of structural similarity, not recommendations based on your scores.';
 if(data.package.outcomes){const o=data.package.outcomes;el('coverage').textContent+=' · '+o.excluded+' Utage slots excluded · '+o.unavailable+' source container unavailable.';}
-catalog();status();
+window.maimaiPreviewField=field;
+initializeFilters();catalog();status();
+const params=new URLSearchParams(location.search),initialView=params.get('view'),initialPattern=params.get('pattern');
+window.maimaiPatternLibrary.setNavigation(id=>{const url=new URL(location.href);if(id)url.searchParams.set('pattern',id);else url.searchParams.delete('pattern');url.searchParams.set('view','patterns');history.replaceState(null,'',url);});
+if(['catalog','patterns','compare'].includes(initialView))selectView(initialView);
+if(initialPattern&&window.maimaiPatternLibrary.has(initialPattern)){selectView('patterns');window.maimaiPatternLibrary.show(initialPattern);}
 })();

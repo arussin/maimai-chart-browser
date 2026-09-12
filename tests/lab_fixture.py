@@ -21,7 +21,7 @@ def write_package(directory):
         profile.update(
             title=f"Fictional study {index}",
             artist="Authored fixture",
-            level=str(10 + index),
+            level=str(10 + index // 3),
             input_id=f"synthetic:{index}",
             source_container_id=str(index),
         )

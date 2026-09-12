@@ -1,4 +1,4 @@
-"""Externalize the retained, nonpersonal Challenge Lab without changing its UI."""
+"""Build the versioned, nonpersonal research chart browser."""
 
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ from pathlib import Path
 
 from maimai_analyzer.dataset import SOURCE_LOCK
 
-from .challenge_review import render_review
+from .challenge_review import render_review, review_scripts
 from .io import atomic_write_text
 from .snapshots import MAX_BYTES, atomic_json, canonical, read_json
 
@@ -74,8 +74,15 @@ def build_lab(package_directory, output, *, catalog_version):
         manifest["releases"].append(entry)
     manifest["default"] = catalog_version
     assets = files("maimai_intelligence.assets")
-    for name in ("challenge-review.js", "challenge-review.css", "lab-loader.js"):
+    for name in ("challenge-review.css", "lab-loader.js"):
         atomic_write_text(root / name, assets.joinpath(name).read_text("utf-8"))
+    atomic_write_text(root / "challenge-review.js", review_scripts())
+    atomic_write_text(
+        root / "challenge-review.css",
+        assets.joinpath("challenge-review.css").read_text("utf-8")
+        + "\n"
+        + assets.joinpath("chart-visuals.css").read_text("utf-8"),
+    )
     html = re.sub(
         r"<style>.*?</style>",
         '<link rel="stylesheet" href="challenge-review.css">',

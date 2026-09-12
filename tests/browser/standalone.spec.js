@@ -52,12 +52,69 @@ test('accessible controls and mobile reflow with personal cards',async({page})=>
   await page.evaluate(()=>document.documentElement.style.fontSize='200%');
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
 });
-test('Challenge Lab keeps game-style folders and comparison samples',async({page})=>{
+test('research browser combines filters and retains them while sorting',async({page})=>{
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
-  await page.goto('/lab/?version=fixture-v1');await expect(page.locator('#loaded-count')).toHaveText('6');
+  await page.goto('/lab/?version=fixture-v2');await expect(page.locator('#loaded-count')).toHaveText('6');
   await page.locator('#search').fill('Fictional study 0');await expect(page.locator('#songs')).toContainText('Fictional study 0');
-  await page.locator('#search').fill('');await page.locator('#browse-version').click();await expect(page.locator('#folders')).toContainText('PRiSM PLUS');
-  await page.locator('#sort-level').click();await expect(page.locator('#folders')).toContainText('10');
+  await page.locator('#search').fill('');
+  await page.locator('#filter-version').selectOption({label:'DX PRiSM PLUS'});
+  await page.locator('#filter-min').selectOption('11');
+  await expect(page.locator('#songs .song-row')).toHaveCount(2);
+  await page.locator('#filter-difficulty').selectOption('MASTER');
+  await expect(page.locator('#songs .song-row')).toHaveCount(1);
+  await page.locator('#sort-panel summary').click();await page.locator('#sort-key-0').selectOption('level');
+  await page.locator('#sort-direction-0').click();
+  await expect(page.locator('#filter-version')).toHaveValue('maimai DX PRiSM PLUS');
+  await expect(page.locator('#filter-min')).toHaveValue('11');
+  await page.locator('#search').fill('not found');await expect(page.locator('#songs .song-row')).toHaveCount(0);
+  await page.locator('#search').fill('');await expect(page.locator('#songs .song-row')).toHaveCount(1);
+  await page.locator('#reset-filters').click();await expect(page.locator('#songs .song-row')).toHaveCount(6);
   await page.locator('#compare-tab').click();await expect(page.locator('#query-card')).toBeVisible();
+  await expect(page.locator('#sample-intro')).toContainText('not recommendations based on your scores');
   expect(errors).toEqual([]);expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+});
+
+test('three sort priorities break ties in order and reverse independently',async({page})=>{
+  await page.goto('/lab/');await expect(page.locator('#songs .song-row')).toHaveCount(6);
+  await page.locator('#sort-panel summary').click();
+  await page.locator('#sort-key-0').selectOption('level');await page.locator('#sort-direction-0').click();
+  await page.locator('#sort-key-1').selectOption('difficulty');
+  await page.locator('#sort-key-2').selectOption('title');await page.locator('#sort-direction-2').click();
+  const titles=()=>page.locator('#songs .song-row').evaluateAll(rows=>rows.map(row=>row.dataset.title));
+  expect(await titles()).toEqual(['Fictional study 5','Fictional study 4','Fictional study 3','Fictional study 1','Fictional study 2','Fictional study 0']);
+  await page.locator('#sort-direction-1').click();
+  expect(await titles()).toEqual(['Fictional study 4','Fictional study 3','Fictional study 5','Fictional study 2','Fictional study 0','Fictional study 1']);
+});
+
+test('complete dictionary supports demos, keyboard close and stable links',async({page})=>{
+  const errors=[];page.on('pageerror',e=>errors.push(e.message));
+  await page.goto('/lab/?version=fixture-v2');await page.locator('#patterns-tab').click();
+  await expect(page.locator('#pattern-list .pattern-card')).toHaveCount(36);
+  await expect(page.locator('#pattern-count')).toContainText('14 illustrated demos');
+  const requests=[];page.on('request',r=>requests.push(r.url()));
+  await page.locator('#pattern-search').fill('two-position');
+  await page.locator('[data-open-pattern="pattern.two_position_alternation"]').click();
+  const dialog=page.locator('#pattern-dialog');await expect(dialog).toBeVisible();
+  await dialog.getByRole('button',{name:'Step',exact:true}).click();await expect(dialog.locator('.demo-progress')).toHaveText('7%');
+  await expect(dialog.locator('.field svg circle[fill="#b82d75"]')).toHaveCount(1);
+  await dialog.getByRole('button',{name:'Play demo',exact:true}).click();await expect(dialog.getByRole('button',{name:'Pause demo'})).toBeVisible();
+  await dialog.getByRole('button',{name:'Pause demo'}).click();const link=page.url();expect(link).toContain('pattern=pattern.two_position_alternation');
+  await page.keyboard.press('Escape');await expect(dialog).toBeHidden();
+  await expect(page.locator('[data-open-pattern="pattern.two_position_alternation"]')).toBeFocused();
+  await page.locator('#pattern-search').fill('umiyuri');await page.locator('[data-open-pattern="pattern.umiyuri"]').click();
+  await expect(dialog).toContainText('A demo is awaiting review');await expect(dialog.getByRole('button',{name:'Play demo'})).toHaveCount(0);
+  expect(requests).toEqual([]);expect(errors).toEqual([]);
+  await page.goto(link);await expect(dialog).toBeVisible();await expect(dialog).toContainText('two-position alternation');
+});
+
+test('research controls and pattern demos remain accessible and reflow at 200 percent',async({page})=>{
+  await page.goto('/lab/');await expect(page.locator('#loaded-count')).toHaveText('6');
+  await page.locator('#sort-panel summary').click();
+  expect((await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21aa']).analyze()).violations).toEqual([]);
+  await page.locator('#patterns-tab').click();
+  await page.locator('[data-open-pattern="pattern.two_position_alternation"]').click();
+  expect((await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21aa']).analyze()).violations).toEqual([]);
+  await page.evaluate(()=>document.documentElement.style.fontSize='200%');
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+  expect(await page.locator('#pattern-dialog').evaluate(el=>el.scrollWidth<=el.clientWidth)).toBe(true);
 });

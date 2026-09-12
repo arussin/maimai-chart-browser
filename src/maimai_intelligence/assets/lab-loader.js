@@ -16,6 +16,7 @@
     const sha=[...new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))].map(x=>x.toString(16).padStart(2,'0')).join('');
     if(sha!==entry.sha256)throw new Error('Research catalog integrity check failed');
     const data=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes));
+    const pinned=new URL(location.href);pinned.searchParams.set('version',version);history.replaceState(null,'',pinned);
     const element=document.createElement('script');element.type='application/json';element.id='challenge-data';element.textContent=JSON.stringify(data);document.body.append(element);
     const script=document.createElement('script');script.src='challenge-review.js';script.onload=()=>{status.textContent='';};script.onerror=()=>{status.textContent='The research browser could not start.';};document.body.append(script);
   }catch(error){status.textContent=error.message;}

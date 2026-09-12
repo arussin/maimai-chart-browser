@@ -1,0 +1,63 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>maimai · Chart browser</title><style>__CSS__</style></head><body>
+<a class="skip-link" href="#catalog">Skip to charts</a>
+<header class="site-header"><div class="brand"><span class="brand-word">maimai<b>DX</b></span>
+<span class="brand-caption">Chart browser</span></div>
+<nav aria-label="Views"><button id="catalog-tab" aria-pressed="true">Charts</button>
+<button id="patterns-tab" aria-pressed="false">Pattern dictionary</button>
+<button id="compare-tab" aria-pressed="false">Compare charts</button></nav></header>
+<main><section id="catalog" tabindex="-1">
+<div class="page-heading"><div><p class="eyebrow">EXPLORE THE MUSIC</p><h1>Find a chart.</h1>
+<p class="lede">Choose your mix of genre, level and version. Keep every filter as you sort.</p></div>
+<p class="catalog-total"><strong id="loaded-count"></strong> charts<span>Research catalog</span></p></div>
+<div class="catalog-controls"><label class="search-field">Search songs
+<input id="search" type="search" placeholder="Song or artist…"></label>
+<div class="format-switch" role="group" aria-label="Chart format">
+<button id="format-all" aria-pressed="true">All charts</button>
+<button id="format-STD" aria-pressed="false">STD</button>
+<button id="format-DX" aria-pressed="false">DX</button></div>
+<button id="reset-filters" class="text-button">Reset filters</button></div>
+<div class="filter-row">
+<label>Genre<select id="filter-genre"><option value="">All genres</option></select></label>
+<label>Version<select id="filter-version"><option value="">All versions</option></select></label>
+<label>Difficulty<select id="filter-difficulty"><option value="">All difficulties</option></select></label>
+<label>From level<select id="filter-min"><option value="">Any level</option></select></label>
+<label>To level<select id="filter-max"><option value="">Any level</option></select></label></div>
+<div class="sort-toolbar"><p id="catalog-count" role="status"></p>
+<details id="sort-panel"><summary>Sort <span id="sort-summary">Title A–Z</span></summary>
+<div id="sort-rules" class="sort-rules"></div><p class="muted">Rules apply in order. The next rule breaks ties.</p></details></div>
+<div id="active-filters" class="active-filters" role="group" aria-label="Active filters"></div>
+<div class="column-labels" aria-hidden="true"><span>Song / artist</span><span>Chart</span><span>Level</span><span>Inputs / s</span></div>
+<div id="songs"></div><button id="more">Show more charts</button></section>
+<section id="patterns" hidden>
+<div class="page-heading"><div><p class="eyebrow">LEARN THE SHAPES</p><h1>Pattern dictionary.</h1>
+<p class="lede">Understand a pattern, watch it unfold, then explore how it differs from others.</p></div></div>
+<div class="catalog-controls"><label class="search-field">Find a pattern
+<input id="pattern-search" type="search" placeholder="Name, alias or description…"></label>
+<label>Show<select id="pattern-scope"><option value="all">All definitions</option>
+<option value="demo">With a demo</option><option value="pending">Awaiting a demo</option></select></label></div>
+<p id="pattern-count" class="muted" role="status"></p>
+<p class="reference-note">Demos are simplified illustrations, not song excerpts. Definitions awaiting review stay visible; they do not label charts in this catalog.</p>
+<div id="pattern-list" class="pattern-grid"></div>
+<dialog id="pattern-dialog" aria-labelledby="pattern-title"></dialog></section>
+<section id="compare" hidden>
+<div class="page-heading"><div><p class="eyebrow">SIDE BY SIDE</p><h1>Compare chart passages.</h1>
+<p class="lede">See where two charts ask for similar timing, movement or coordination.</p></div></div>
+<p id="sample-intro" class="reference-note"></p><div class="toolbar">
+<label class="query-label">Starting chart <select id="query"></select></label></div>
+<div id="query-card"></div><div id="matches"></div>
+<details class="feedback"><summary>Help improve the comparisons</summary>
+<p>Your optional judgments stay in this page until you save them.</p>
+<div class="toolbar"><label class="check"><input type="checkbox" id="feedback"> Enable feedback</label>
+<label class="check"><input type="checkbox" id="blind" disabled>Hide ranking order and reasons</label>
+<button id="download" disabled>Save judgments</button></div>
+<p id="review-status" role="status"></p></details></section>
+<footer class="sources"><details><summary>About this research catalog</summary><p id="coverage"></p>
+<p>Source levels and categories are shown. Official constants, regional availability and chart-addition dates are not independently verified. Utage is excluded.</p>
+<p>Comparisons are experimental and are not personalized practice recommendations. Named-pattern chart labels still require independent review.</p>
+<p>Passage animation uses chart time, without audio. Straight and center-V slides are schematic. Unsupported paths are labeled.</p>
+<p id="credit"></p><p id="notice"></p><p>Maichart-Converts · Neskol/Maichart-Converts on GitHub</p>
+<code id="revision"></code></details></footer></main>
+<script id="pattern-data" type="application/json">__PATTERNS__</script>
+<script id="challenge-data" type="application/json">__DATA__</script><script>__JS__</script></body></html>
