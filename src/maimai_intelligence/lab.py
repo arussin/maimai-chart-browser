@@ -144,7 +144,11 @@ def build_lab(package_directory, output, *, catalog_version):
         "form-action 'none'"
         '">\n<title>',
     )
-    html = html.replace("</head>", '<script defer src="analytics.js"></script></head>')
+    html = html.replace(
+        "</head>",
+        f'<link rel="preload" as="script" href="challenge-review.js?v={script_revision}">'
+        '<script defer src="analytics.js"></script></head>',
+    )
     atomic_write_text(root / "index.html", html)
     atomic_json(manifest_path, manifest)
     return root / "index.html"

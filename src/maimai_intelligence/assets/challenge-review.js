@@ -29,6 +29,10 @@ return{box,draw};}
 function beatAt(s,t){let a=s.bpm_segments[0];for(const x of s.bpm_segments){if(x.time_us>t)break;a=x;}return Number(a.beat[0])/Number(a.beat[1])+(t-a.time_us)/60000000*Number(a.bpm[0])/Number(a.bpm[1]);}
 function timeAt(s,b){let a=s.bpm_segments[0];for(const x of s.bpm_segments){if(Number(x.beat[0])/Number(x.beat[1])>b)break;a=x;}return a.time_us+(b-Number(a.beat[0])/Number(a.beat[1]))*60000000/(Number(a.bpm[0])/Number(a.bpm[1]));}
 function comparison(qid,cid,pairs){const container=make('div');if(!pairs.length){container.append(make('p','No supporting passage is available.'));return container;}
+const delivery=window.maimaiCatalogDetails;
+if(delivery&&[qid,cid].some(id=>!delivery.ready(byId.get(id)))){
+  const load=()=>{container.replaceChildren(make('p','Loading passage animations…','muted'));Promise.all([qid,cid].map(id=>delivery.ensure(byId.get(id),true))).then(()=>{if(container.isConnected)container.replaceWith(comparison(qid,cid,pairs));}).catch(()=>{const retry=make('button','Retry loading passages');retry.onclick=load;container.replaceChildren(make('p','Passages could not be loaded.','muted'),retry);});};load();return container;
+}
 let selected=0,playing=false,position=0,previous=0,raf=0,speed=1,beatSync=true;const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
 const selector=make('select');selector.setAttribute('aria-label','Supporting passage');pairs.forEach((p,i)=>selector.append(new Option('Passage '+(i+1),String(i))));
 const controls=make('div',undefined,'play-controls'),play=make('button','Play'),step=make('button','Step'),rate=make('button','0.5×'),sync=make('button','Beat sync'),range=make('input');range.type='range';range.min='0';range.max='1000';range.value='0';range.setAttribute('aria-label','Passage position');sync.setAttribute('aria-pressed','true');controls.append(selector,play,step,rate,sync,range);container.append(controls);const pairbox=make('div',undefined,'pair');container.append(pairbox);let q,c,left,right;
@@ -118,7 +122,7 @@ const filters=['genre'],selectedVersions=new Set();
 let chartFilters,patternFilter;
 const versionLabel=value=>value.replace(/^maimai DX /,'DX ').replace(/^maimai /,'');
 const genreLabel=value=>(navigation.genres||[]).find(g=>g.id===value)?.label||'Uncategorized';
-const values={title:c=>displayTitle(c),artist:c=>c.artist,level:c=>levelNumber(c.level),bpm:c=>navigation.charts?.[c.chart_id]?.bpm??null,difficulty:c=>{const rank=difficultyOrder.indexOf(c.difficulty.toUpperCase());return rank<0?null:rank;},format:c=>c.format,genre:c=>genreLabel(folderValue(c,'genre')),version:c=>{const v=(navigation.versions||[]).indexOf(folderValue(c,'version'));return v<0?null:v;},speed:c=>c.demand.cadence.mean_onsets_s??null,peak:c=>{const peaks=(overview.get(c)?.segments||[]).filter(s=>s[3]!=null&&s[4]>0).map(s=>s[3]);return peaks.length?Math.max(...peaks):null;}};
+const values={title:c=>displayTitle(c),artist:c=>c.artist,level:c=>levelNumber(c.level),bpm:c=>navigation.charts?.[c.chart_id]?.bpm??null,difficulty:c=>{const rank=difficultyOrder.indexOf(c.difficulty.toUpperCase());return rank<0?null:rank;},format:c=>c.format,genre:c=>genreLabel(folderValue(c,'genre')),version:c=>{const v=(navigation.versions||[]).indexOf(folderValue(c,'version'));return v<0?null:v;},speed:c=>c.demand.cadence.mean_onsets_s??null,peak:c=>{const record=overview.get(c);if(record&&Object.hasOwn(record,'flow_peak'))return record.flow_peak;const peaks=(record?.segments||[]).filter(s=>s[3]!=null&&s[4]>0).map(s=>s[3]);return peaks.length?Math.max(...peaks):null;}};
 const selectedCharts=new Map(),expandedRows=new Set();
 const rowKey=c=>JSON.stringify([navigation.charts?.[c.chart_id]?.source_path||c.source_container_id||c.song_id,c.format]);
 function compareCharts(a,b){
