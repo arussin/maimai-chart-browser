@@ -146,6 +146,18 @@ preserved separately. They remain explicit offline/research workflows; opening
 the main browser does not run them. Attribution: [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
 
+## Chart filters
+
+Difficulty is a checkbox menu: choose any combination of BASIC through RE:MASTER.
+Rows retain a selector for the matching difficulty currently displayed.
+The level range has two draggable, keyboard-accessible handles plus editable
+From/To fields. Enter or leave a field to apply it; `13.5` is accepted as `13+`.
+Bounds use the levels present in the selected catalog. Invalid text leaves the
+applied range unchanged, and typing a bound past the other moves both to that
+level. Clear a field to restore that end of the full range. Reset levels leaves
+other filters intact. Comparisons use the same difficulty/range constraints when
+“Use chart filters for matches” is enabled.
+
 ## Optional public artwork
 
 Prepare jackets and version logos once, then serve the generated local WebP files.

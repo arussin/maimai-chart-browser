@@ -32,6 +32,7 @@ def review_scripts():
             "challenge-matching.js",
             "chart-links.js",
             "chart-artwork.js",
+            "chart-filters.js",
             "chart-overview.js",
             "chart-comparison.js",
             "challenge-review.js",
@@ -81,6 +82,7 @@ def render_review(
             "chart-visuals.css",
             "pattern-lessons.css",
             "chart-overview.css",
+            "chart-filters.css",
         )
     )
     html = assets.joinpath("challenge-review.html").read_text("utf-8")

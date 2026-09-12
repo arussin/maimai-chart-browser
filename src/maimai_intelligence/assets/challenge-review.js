@@ -113,7 +113,8 @@ const collator=new Intl.Collator(undefined,{numeric:true,sensitivity:'base'});
 const levelNumber=value=>value&&Number.isFinite(parseFloat(value))?parseFloat(value)+(value.endsWith('+')?.5:0):null;
 const sortFields={title:'Title',artist:'Artist',level:'Level',bpm:'BPM',difficulty:'Difficulty',format:'Format',genre:'Genre',version:'Version',speed:'Inputs / s',peak:'Peak inputs / s'};
 let sortRules=[{key:'title',direction:1}];
-const filters=['genre','difficulty','min','max','pattern'],selectedVersions=new Set();
+const filters=['genre','pattern'],selectedVersions=new Set();
+let chartFilters;
 const versionLabel=value=>value.replace(/^maimai DX /,'DX ').replace(/^maimai /,'');
 const genreLabel=value=>(navigation.genres||[]).find(g=>g.id===value)?.label||'Uncategorized';
 const values={title:c=>displayTitle(c),artist:c=>c.artist,level:c=>levelNumber(c.level),bpm:c=>navigation.charts?.[c.chart_id]?.bpm??null,difficulty:c=>{const rank=difficultyOrder.indexOf(c.difficulty.toUpperCase());return rank<0?null:rank;},format:c=>c.format,genre:c=>genreLabel(folderValue(c,'genre')),version:c=>{const v=(navigation.versions||[]).indexOf(folderValue(c,'version'));return v<0?null:v;},speed:c=>c.demand.cadence.mean_onsets_s??null,peak:c=>{const peaks=(overview.get(c)?.segments||[]).filter(s=>s[3]!=null&&s[4]>0).map(s=>s[3]);return peaks.length?Math.max(...peaks):null;}};
@@ -139,11 +140,10 @@ function renderSort(){
   }
 }
 function initializeFilters(){
+  chartFilters=window.maimaiCatalogFilters.mount(data.catalog,()=>{visible=40;catalog();});
   for(const id of filters){const select=el('filter-'+id);let options=[];
     if(id==='genre')options=(navigation.genres||[]).map(g=>[g.id,g.label]);
-    if(id==='difficulty')options=[...new Set(data.catalog.map(c=>c.difficulty))].sort((a,b)=>difficultyOrder.indexOf(a.toUpperCase())-difficultyOrder.indexOf(b.toUpperCase())).map(d=>[d,d]);
     if(id==='pattern')options=overview.patternIds.map(p=>[p,overview.name(p)+(overview.coverage.get(p)?' ('+(overview.frequency.get(p)||0)+')':' · not covered')]);
-    if(id==='min'||id==='max')options=[...new Set(data.catalog.map(c=>c.level).filter(v=>levelNumber(v)!=null))].sort((a,b)=>levelNumber(a)-levelNumber(b)).map(v=>[v,v]);
     for(const [value,label]of options){const option=new Option(label,value);if(id==='pattern'&&!overview.coverage.get(value))option.disabled=true;select.append(option);}
     select.onchange=()=>{visible=40;catalog();if(id==='pattern')writePatternFilter();};
   }
@@ -158,7 +158,7 @@ function initializeFilters(){
   el('version-clear').onclick=()=>{selectedVersions.clear();visible=40;updateVersions();catalog();};
   el('version-filter').addEventListener('keydown',event=>{if(event.key==='Escape'){el('version-filter').open=false;el('version-summary').focus();event.stopPropagation();}});
   document.addEventListener('click',event=>{if(!el('version-filter').contains(event.target))el('version-filter').open=false;});
-  el('reset-filters').onclick=()=>{for(const id of filters)el('filter-'+id).value='';selectedVersions.clear();updateVersions();el('search').value='';format='all';visible=40;writePatternFilter();updateFormat();catalog();};
+  el('reset-filters').onclick=()=>{for(const id of filters)el('filter-'+id).value='';selectedVersions.clear();updateVersions();chartFilters.clear();el('search').value='';format='all';visible=40;writePatternFilter();updateFormat();catalog();};
   renderSort();
   el('mapping-note').textContent=overview.patternIds.length?overview.coverage.size+' pattern / trait types found automatically · not yet reviewed. Click a tag for its lesson.':'Pattern and Flow data are not available in this catalog release.';
   const newest=(navigation.versions||[]).find(v=>data.catalog.some(c=>folderValue(c,'version')===v));el('catalog-era').textContent=newest?'Through '+versionLabel(newest):'Research catalog';
@@ -170,16 +170,22 @@ function updateVersions(){
 }
 function updateFormat(){for(const key of ['all','STD','DX'])el('format-'+key).setAttribute('aria-pressed',String(key===format));}
 function activeFilters(){
-  const root=el('active-filters');root.replaceChildren();
+  const root=el('active-filters'),chips=[];
   for(const version of selectedVersions){
     const button=make('button',versionLabel(version)+' ×','filter-chip');button.setAttribute('aria-label','Remove version '+versionLabel(version));
-    button.onclick=()=>{selectedVersions.delete(version);visible=40;updateVersions();catalog();el('version-summary').focus();};root.append(button);
+    button.onclick=()=>{selectedVersions.delete(version);visible=40;updateVersions();catalog();el('version-summary').focus();};chips.push(button);
   }
+  chips.push(...chartFilters.chips());
   for(const id of filters){const select=el('filter-'+id);if(!select.value)continue;
-    const button=make('button',({min:'From level ',max:'To level '}[id]||'')+select.selectedOptions[0].text+' ×','filter-chip');
+    const button=make('button',select.selectedOptions[0].text+' ×','filter-chip');
     button.setAttribute('aria-label','Remove '+select.parentElement.firstChild.textContent+' filter');
-    button.onclick=()=>{select.value='';visible=40;catalog();if(id==='pattern')writePatternFilter();select.focus();};root.append(button);
+    button.onclick=()=>{select.value='';visible=40;catalog();if(id==='pattern')writePatternFilter();select.focus();};chips.push(button);
   }
+  // Preserve controls during text-field blur so a pending pointer click lands
+  // on the same chip after the level filter updates.
+  const existing=new Map([...root.children].map(node=>[node.getAttribute('aria-label'),node]));
+  chips.forEach((candidate,index)=>{const key=candidate.getAttribute('aria-label'),node=existing.get(key)||candidate;existing.delete(key);node.textContent=candidate.textContent;node.onclick=candidate.onclick;if(root.children[index]!==node)root.insertBefore(node,root.children[index]||null);});
+  for(const node of existing.values())node.remove();
 }
 function catalog(focusKey=null){
   const search=el('search').value.normalize('NFKC').toLowerCase();
@@ -189,11 +195,8 @@ function catalog(focusKey=null){
     if(!(c.title+' '+c.artist).normalize('NFKC').toLowerCase().includes(search))return false;
     if(selected.genre&&folderValue(c,'genre')!==selected.genre)return false;
     if(selectedVersions.size&&!selectedVersions.has(folderValue(c,'version')))return false;
-    if(selected.difficulty&&c.difficulty!==selected.difficulty)return false;
+    if(!chartFilters.matches(c))return false;
     if(selected.pattern&&!overview.detected(c).some(t=>t.id===selected.pattern))return false;
-    const level=levelNumber(c.level);
-    if(selected.min&&(level==null||level<levelNumber(selected.min)))return false;
-    if(selected.max&&(level==null||level>levelNumber(selected.max)))return false;
     return true;
   }).sort(compareCharts);
   const grouped=new Map();
@@ -232,7 +235,7 @@ function catalog(focusKey=null){
     if(!panel.hidden)renderDetails();row.append(header,panel);el('songs').append(row);
   }
   el('catalog-count').textContent=charts.length.toLocaleString()+' matching charts in '+rows.length.toLocaleString()+' song / format rows';
-  if(!charts.length)el('songs').append(make('p',selected.min&&selected.max&&levelNumber(selected.min)>levelNumber(selected.max)?'The minimum level is above the maximum. Adjust either level filter.':'No charts match this combination. Remove a filter or try another search.','empty-state'));
+  if(!charts.length)el('songs').append(make('p','No charts match this combination. Remove a filter or try another search.','empty-state'));
   el('more').hidden=rows.length<=visible;
 }
 
@@ -254,9 +257,8 @@ comparisonUI=window.maimaiChartComparison.mount({data,comparison,stopPlayers,eli
   if(format!=='all'&&c.format!==format)return false;
   if(selectedVersions.size&&!selectedVersions.has(folderValue(c,'version')))return false;
   if(el('filter-pattern').value&&!overview.detected(c).some(t=>t.id===el('filter-pattern').value))return false;
-  for(const key of ['genre','difficulty']){const selected=el('filter-'+key).value;if(selected&&(key==='genre'?folderValue(c,key):c.difficulty)!==selected)return false;}
-  const level=levelNumber(c.level),min=el('filter-min').value,max=el('filter-max').value;
-  return(!min||(level!=null&&level>=levelNumber(min)))&&(!max||(level!=null&&level<=levelNumber(max)));
+  if(el('filter-genre').value&&folderValue(c,'genre')!==el('filter-genre').value)return false;
+  return chartFilters.matches(c);
 }).map(c=>c.chart_id)});
 const params=new URLSearchParams(location.search),initialView=params.get('view'),initialPattern=params.get('pattern');
 window.maimaiPatternLibrary.setDiscovery(id=>{el('reset-filters').click();el('filter-pattern').value=id;writePatternFilter();selectView('catalog');catalog();el('filter-pattern').focus();});

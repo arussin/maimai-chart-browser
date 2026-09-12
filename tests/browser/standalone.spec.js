@@ -60,9 +60,9 @@ test('research browser combines filters and retains them while sorting',async({p
   await page.locator('#version-summary').click();
   await page.locator('#version-options').getByRole('checkbox',{name:'DX PRiSM PLUS',exact:true}).check();
   await page.keyboard.press('Escape');
-  await page.locator('#filter-min').selectOption('11');
+  await setLevel(page,'min','11');
   await expect(page.locator('#songs .song-row')).toHaveCount(2);
-  await page.locator('#filter-difficulty').selectOption('MASTER');
+  await selectDifficulties(page,['MASTER']);
   await expect(page.locator('#songs .song-row')).toHaveCount(1);
   await page.locator('[data-sort-key=level]').click();
   await page.locator('[data-sort-key=level]').click();
@@ -86,7 +86,7 @@ test('three sort priorities break ties in order and reverse independently',async
   expect(await titles()).toEqual(['Fictional study 4','Fictional study 3','Fictional study 5','Fictional study 1','Fictional study 2','Fictional study 0']);
   await page.locator('[data-sort-key=difficulty]').click();
   expect(await titles()).toEqual(['Fictional study 5','Fictional study 4','Fictional study 3','Fictional study 2','Fictional study 0','Fictional study 1']);
-  await page.locator('#filter-difficulty').selectOption('RE:MASTER');
+  await selectDifficulties(page,['RE:MASTER']);
   expect(await titles()).toEqual(['Fictional study 5']);
 });
 
@@ -133,11 +133,14 @@ test('version multi-select unions releases while retaining other filters',async(
   await expect(page.locator('#songs .song-row')).toHaveCount(6);
   await expect(page.locator('#version-summary')).toHaveText('2 versions selected');
   await page.keyboard.press('Escape');await expect(page.locator('#version-summary')).toBeFocused();
-  await page.locator('#filter-min').selectOption('11');await expect(page.locator('#songs .song-row')).toHaveCount(3);
+  await setLevel(page,'min','11');await expect(page.locator('#songs .song-row')).toHaveCount(3);
   await page.getByRole('button',{name:'Remove version DX PRiSM PLUS',exact:true}).click();
   await expect(page.locator('#songs .song-row')).toHaveCount(1);await expect(page.locator('#filter-min')).toHaveValue('11');
   await page.locator('#version-summary').click();await page.locator('#version-clear').click();
   await expect(page.locator('#songs .song-row')).toHaveCount(3);
+  await options.getByRole('checkbox',{name:'DX',exact:true}).check();await page.locator('#version-summary').click();await setLevel(page,'min','10');
+  await page.locator('#filter-min').fill('11');await page.getByRole('button',{name:'Remove version DX',exact:true}).click();
+  await expect(page.locator('#version-summary')).toHaveText('All versions');await expect(page.locator('#filter-min')).toHaveValue('11');await expect(page.locator('#songs .song-row')).toHaveCount(3);
 });
 
 test('whole chart row responds to level, whitespace, Enter and Space',async({page})=>{
@@ -211,11 +214,11 @@ test('song rows retain same-level difficulty choices and update exact chart acti
   await expect(row).toHaveAttribute('data-difficulty','RE:MASTER');
   expect(await row.evaluate(el=>getComputedStyle(el).backgroundColor)).not.toBe(before);
   await expect(row.locator('.chart-measurements>h3')).toContainText('RE:MASTER');
-  await page.locator('#filter-min').selectOption('11');await page.locator('#filter-max').selectOption('11');
+  await setLevel(page,'min','11');await setLevel(page,'max','11');
   await expect(picker.locator('option')).toHaveCount(2);await expect(picker).toHaveValue(remaster);
-  await page.locator('#filter-difficulty').selectOption('MASTER');
+  await selectDifficulties(page,['MASTER']);
   await expect(picker.locator('option')).toHaveCount(1);await expect(row).toHaveAttribute('data-difficulty','MASTER');
-  await page.locator('#filter-difficulty').selectOption('');await expect(picker).toHaveValue(remaster);
+  await selectDifficulties(page,[]);await expect(picker).toHaveValue(remaster);
   await row.getByRole('button',{name:'Compare this chart',exact:true}).click();
   expect(new URL(page.url()).searchParams.get('left')).toBe(remaster);
   await expect(page.locator('#comparison-pickers')).toContainText('RE:MASTER');
@@ -427,4 +430,60 @@ test('unavailable jacket files fall back without breaking chart interactions',as
   await page.goto('/artwork/');await expect(page.locator('#loaded-count')).toHaveText('6');
   const row=page.locator('.song-row').first();await expect(row.locator('.song-jacket')).toHaveClass(/artwork-missing/);
   await expect(row.locator('.song-jacket img')).toHaveCount(0);await row.locator('.chart-row').click();await expect(row.locator('.chart-measurements')).toBeVisible();
+});
+
+
+async function setLevel(page,side,value){const field=page.locator('#filter-'+side);await field.fill(value);await field.press('Enter');}
+async function selectDifficulties(page,values){
+  if(!await page.locator('#difficulty-filter').evaluate(el=>el.open))await page.locator('#difficulty-summary').click();
+  await page.locator('#difficulty-clear').click();
+  for(const value of values)await page.locator('#difficulty-options').getByRole('checkbox',{name:value,exact:true}).check();
+  await page.keyboard.press('Escape');
+}
+
+test('difficulty checkboxes combine choices and preserve matching row selections',async({page})=>{
+  await page.goto('/grouped/');await expect(page.locator('.song-row')).toHaveCount(5);
+  await selectDifficulties(page,['MASTER','RE:MASTER']);await expect(page.locator('#difficulty-summary')).toHaveText('2 difficulties selected');
+  await page.locator('#search').fill('Fictional study 3');const row=page.locator('.song-row'),picker=row.locator('.row-difficulty');
+  await expect(picker.locator('option')).toHaveCount(2);const remaster=await picker.locator('option').filter({hasText:'RE:MASTER'}).getAttribute('value');await picker.selectOption(remaster);
+  await page.locator('[data-sort-key=level]').click();await expect(picker).toHaveValue(remaster);
+  await page.getByRole('button',{name:'Remove difficulty MASTER',exact:true}).click();await expect(picker.locator('option')).toHaveCount(1);await expect(row).toHaveAttribute('data-difficulty','RE:MASTER');
+  await page.locator('#difficulty-summary').click();const master=page.locator('#difficulty-options').getByRole('checkbox',{name:'MASTER',exact:true});await master.focus();await page.keyboard.press('Space');await page.keyboard.press('Escape');await expect(page.locator('#difficulty-summary')).toBeFocused();
+  await expect(picker.locator('option')).toHaveCount(2);await expect(picker).toHaveValue(remaster);
+  await page.locator('#reset-filters').click();await expect(page.locator('#difficulty-summary')).toHaveText('All difficulties');await expect(page.locator('.song-row')).toHaveCount(5);
+});
+
+test('level handles and typed plus values stay in sync, validate input and retain ordered bounds',async({page})=>{
+  await page.goto('/levels/');await expect(page.locator('.song-row')).toHaveCount(6);
+  const low=page.getByRole('slider',{name:'Minimum level',exact:true}),high=page.getByRole('slider',{name:'Maximum level',exact:true});
+  await setLevel(page,'min','10+');await setLevel(page,'max','13.5');await expect(page.locator('#filter-max')).toHaveValue('13+');await expect(page.locator('.song-row')).toHaveCount(4);
+  await expect(low).toHaveAttribute('aria-valuetext','Level 10+');await expect(high).toHaveAttribute('aria-valuetext','Level 13+');
+  await low.focus();await low.press('ArrowRight');await high.focus();await high.press('ArrowLeft');await expect(page.locator('#filter-min')).toHaveValue('11');await expect(page.locator('#filter-max')).toHaveValue('12');await expect(page.locator('.song-row')).toHaveCount(2);
+  await low.press('End');await expect(page.locator('#filter-min')).toHaveValue('12');await expect(page.locator('.song-row')).toHaveCount(1);await high.press('End');await expect(page.locator('#filter-max')).toHaveValue('14');
+  await setLevel(page,'min','13.7');await expect(page.locator('#filter-min')).toHaveAttribute('aria-invalid','true');await expect(page.locator('#level-error')).toContainText('Enter an available level');await expect(page.locator('.song-row')).toHaveCount(3);
+  await page.locator('#filter-min').press('Escape');await expect(page.locator('#filter-min')).toHaveValue('12');await expect(page.locator('#level-error')).toBeEmpty();
+  await setLevel(page,'max','11');await expect(page.locator('#filter-min')).toHaveValue('11');await expect(page.locator('#filter-max')).toHaveValue('11');
+  await setLevel(page,'min','14');await expect(page.locator('#filter-max')).toHaveValue('14');
+  await setLevel(page,'min','');await expect(page.locator('#filter-min')).toHaveValue('10');await expect(page.locator('.song-row')).toHaveCount(6);
+  await setLevel(page,'min','１３＋');await expect(page.locator('#filter-min')).toHaveValue('13+');await page.locator('#level-clear').click();await expect(page.locator('.song-row')).toHaveCount(6);
+  expect((await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21aa']).analyze()).violations).toEqual([]);
+});
+
+test('both level handles drag and a collapsed range can reopen by tapping the track',async({page})=>{
+  await page.goto('/levels/');await expect(page.locator('.song-row')).toHaveCount(6);
+  const track=page.locator('#level-range');await track.scrollIntoViewIfNeeded();const box=await track.boundingBox(),x=i=>box.x+12+(box.width-24)*i/5,y=box.y+box.height/2;
+  await page.mouse.move(x(0),y);await page.mouse.down();await page.mouse.move(x(2),y,{steps:8});await page.mouse.up();await expect(page.locator('#filter-min')).toHaveValue('11');
+  await page.mouse.move(x(5),y);await page.mouse.down();await page.mouse.move(x(3),y,{steps:8});await page.mouse.up();await expect(page.locator('#filter-max')).toHaveValue('12');
+  await setLevel(page,'min','12');await expect(page.locator('.song-row')).toHaveCount(1);
+  await track.click({position:{x:12,y:box.height/2}});await expect(page.locator('#filter-min')).toHaveValue('10');
+  await track.click({position:{x:box.width-12,y:box.height/2}});await expect(page.locator('#filter-max')).toHaveValue('14');
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+});
+
+test('similar-chart filtering uses multiple difficulties and the selected level range',async({page})=>{
+  await page.goto('/levels/');await expect(page.locator('.song-row')).toHaveCount(6);
+  await selectDifficulties(page,['EXPERT','RE:MASTER']);await setLevel(page,'min','10+');await setLevel(page,'max','13+');
+  await page.locator('#compare-tab').click();await chooseComparisonChart(page,'left','Fictional study 4');await page.locator('#similar-use-filters').check();await page.locator('#find-similar').click();
+  const cards=page.locator('#similar-results .similar-chart');await expect(cards).toHaveCount(1);await expect(cards).toContainText('Fictional study 2');
+  await page.locator('#catalog-tab').click();await page.locator('#reset-filters').click();await page.locator('#compare-tab').click();await page.locator('#find-similar').click();expect(await cards.count()).toBeGreaterThan(1);
 });

@@ -24,9 +24,18 @@
 <details id="version-filter"><summary id="version-summary">All versions</summary>
 <div class="version-panel"><button id="version-clear" type="button" class="text-button">All versions</button>
 <div id="version-options" role="group" aria-labelledby="version-label"></div></div></details></div>
-<label>Difficulty<select id="filter-difficulty"><option value="">All difficulties</option></select></label>
-<label>From level<select id="filter-min"><option value="">Any level</option></select></label>
-<label>To level<select id="filter-max"><option value="">Any level</option></select></label></div>
+<div class="difficulty-field"><span id="difficulty-label">Difficulty</span>
+<details id="difficulty-filter"><summary id="difficulty-summary">All difficulties</summary>
+<div class="difficulty-panel"><button id="difficulty-clear" type="button" class="text-button">All difficulties</button>
+<div id="difficulty-options" role="group" aria-labelledby="difficulty-label"></div></div></details></div>
+<div class="level-field" role="group" aria-labelledby="level-label">
+<div class="level-heading"><span id="level-label">Level range</span><button id="level-clear" type="button" class="text-button">Reset levels</button></div>
+<div class="level-values"><label for="filter-min">From<input id="filter-min" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" aria-describedby="level-hint level-error"></label>
+<span aria-hidden="true">–</span><label for="filter-max">To<input id="filter-max" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" aria-describedby="level-hint level-error"></label></div>
+<div id="level-range" class="level-range"><div class="level-track"><span></span></div>
+<input id="level-min-slider" type="range" aria-label="Minimum level" aria-describedby="level-hint">
+<input id="level-max-slider" type="range" aria-label="Maximum level" aria-describedby="level-hint"></div>
+<p id="level-hint">Drag handles, or type 13, 13+ or 13.5.</p><p id="level-error" role="status"></p></div></div>
 <div class="sort-toolbar"><p id="catalog-count" role="status"></p>
 <label class="check"><input id="sort-keep" type="checkbox">Keep sort priorities</label></div>
 <div id="sort-rules" class="sort-priorities" role="group" aria-label="Sort priorities"></div>

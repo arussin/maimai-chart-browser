@@ -98,7 +98,9 @@ def build_lab(package_directory, output, *, catalog_version):
         + "\n"
         + assets.joinpath("pattern-lessons.css").read_text("utf-8")
         + "\n"
-        + assets.joinpath("chart-overview.css").read_text("utf-8"),
+        + assets.joinpath("chart-overview.css").read_text("utf-8")
+        + "\n"
+        + assets.joinpath("chart-filters.css").read_text("utf-8"),
     )
     html = re.sub(
         r"<style>.*?</style>",
