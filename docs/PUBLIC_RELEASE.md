@@ -4,8 +4,10 @@ The owner requested this rollout on 12 September 2026, **after completion of
 the active pattern-detection goal**. The target repository is the existing
 `arussin/maimai-chart-browser`, which becomes public at release. The target
 website is `https://maimai.party`. Report generation stays in its own repository.
-This plan records authorized follow-on work; it does not claim deployment or
-repository protection is already configured.
+The experimental release is now public, hosted, and merged into `main`. Live
+deployment IDs, enforced access controls, passing checks, analytics verification
+and the exercised rollback are recorded in [OWNER_PUBLICATION.md](OWNER_PUBLICATION.md).
+The checklist below remains the basis for subsequent updates.
 
 ## 1. Finish and evaluate pattern detection
 
@@ -84,8 +86,9 @@ and [code-owner documentation](https://docs.github.com/en/repositories/managing-
 
 The offline release builder and owner instructions are now available in
 [OWNER_PUBLICATION.md](OWNER_PUBLICATION.md). It retains all accepted catalog
-versions in verified pieces that fit static hosting limits. Live publication
-still requires working GitHub repository access and Cloudflare write access.
+versions in verified pieces that fit static hosting limits. The owner completed
+GitHub and scoped Cloudflare Pages authorization, and the prepared browser is
+live at [maimai.party](https://maimai.party).
 
 - Confirm access to the existing repository and domain/hosting account. Prepare
   the complete static deployment and owner-only release controls before enabling
