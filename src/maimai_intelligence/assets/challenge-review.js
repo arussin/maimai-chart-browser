@@ -44,14 +44,9 @@ function status(){el('review-status').textContent=judgments.size+' / '+data.revi
 function stopPlayers(clear=true){cleanup.forEach(f=>f());if(clear)cleanup=[];}
 function selectView(name){
   stopPlayers();
-  for(const n of ['compare','catalog','patterns']){
-    el(n).hidden=n!==name;
-    el(n+'-tab').setAttribute('aria-pressed',String(n===name));
-  }
+  window.maimaiViews.show(name);
   window.maimaiPatternLibrary.stop();
-  if(name==='catalog')catalog();else if(name==='compare'){render();comparisonUI?.render();}else window.maimaiPatternLibrary.render();
-  const url=new URL(location.href);url.searchParams.set('view',name);url.searchParams.delete('pattern');history.replaceState(null,'',url);
-  window.dispatchEvent(new Event('maimai:viewchange'));
+  if(name==='catalog')catalog();else if(name==='compare'){render();comparisonUI?.render();}else if(name==='patterns')window.maimaiPatternLibrary.render();
 }
 function openSample(index){
   el('query').value=String(index);
@@ -251,7 +246,7 @@ el('query').onchange=render;el('blind').onchange=render;
 el('feedback').onchange=()=>{el('blind').disabled=!el('feedback').checked;el('download').disabled=!el('feedback').checked;render();};
 el('search').oninput=()=>{visible=40;catalog();};
 el('more').onclick=()=>{visible+=40;catalog();};
-for(const name of ['compare','catalog','patterns'])el(name+'-tab').onclick=()=>selectView(name);
+for(const name of ['compare','catalog','patterns','about'])el(name+'-tab').onclick=()=>selectView(name);
 el('download').onclick=()=>{const blob=new Blob([JSON.stringify({version:'challenge-judgments-1',benchmark_hash:data.benchmark_hash,policy:data.package.retrieval_policy,judgments:[...judgments.values()]},null,2)],{type:'application/json'});const url=URL.createObjectURL(blob),a=make('a');a.href=url;a.download='challenge-judgments.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
 el('coverage').textContent=data.catalog.length+' chart profiles · '+data.review.length+' prepared review queries · '+data.package.status.replaceAll('_',' ');el('credit').textContent=data.package.source.credit;el('notice').textContent=data.package.source.notice;el('revision').textContent=data.package.source.revision;
 el('loaded-count').textContent=data.catalog.length.toLocaleString();
@@ -270,6 +265,6 @@ comparisonUI=window.maimaiChartComparison.mount({data,comparison,stopPlayers,eli
 const params=new URLSearchParams(location.search),initialView=params.get('view'),initialPattern=params.get('pattern');
 window.maimaiPatternLibrary.setDiscovery(id=>{el('reset-filters').click();patternFilter.set([id]);writePatternFilter();selectView('catalog');catalog();el('pattern-filter-summary').focus();});
 window.maimaiPatternLibrary.setNavigation(id=>{const url=new URL(location.href);if(id)url.searchParams.set('pattern',id);else url.searchParams.delete('pattern');history.replaceState(null,'',url);});
-if(['catalog','patterns','compare'].includes(initialView))selectView(initialView);
+if(['catalog','patterns','compare','about'].includes(initialView))selectView(initialView);
 if(initialPattern&&window.maimaiPatternLibrary.has(initialPattern)){window.maimaiPatternLibrary.show(initialPattern);}
 })();

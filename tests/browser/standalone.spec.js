@@ -7,6 +7,36 @@ async function personal(){return JSON.parse(await readFile(fixtureURL,'utf8'));}
 async function open(page){await page.goto('/');await expect(page.locator('#explore-search')).toBeVisible();}
 async function importValue(page,value){await page.locator('#site-import').setInputFiles({name:'results.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(value))});}
 
+test('About exposes support and credits while preserving chart filters and keyboard navigation',async({page},testInfo)=>{
+  await page.goto('/lab/');await expect(page.locator('#loaded-count')).toHaveText('6');
+  await page.locator('#search').fill('Fictional study 0');
+  await page.locator('[data-sort-key=bpm]').click();
+  await page.locator('#about-tab').focus();await page.keyboard.press('Enter');
+  await expect(page.locator('#about')).toBeVisible();await expect(page.locator('#catalog')).toBeHidden();
+  await expect(page.locator('#about-tab')).toHaveAttribute('aria-pressed','true');
+  await expect(page.getByRole('link',{name:'Buy the creator a maimai credit',exact:true})).toHaveAttribute('href','https://buymeacoffee.com/russin');
+  await expect(page.locator('#about .footer-credits')).toHaveAttribute('open','');
+  await expect(page.locator('#about')).toContainText('Neskol · Maichart-Converts');
+  expect(new URL(page.url()).searchParams.get('view')).toBe('about');
+  expect((await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21aa']).analyze()).violations).toEqual([]);
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+  await page.screenshot({path:testInfo.outputPath('about.png')});
+  await page.locator('#catalog-tab').click();
+  await expect(page.locator('#search')).toHaveValue('Fictional study 0');
+  await expect(page.locator('#songs .song-row')).toHaveCount(1);
+  await expect(page.locator('[data-sort-key=bpm]')).toHaveAttribute('aria-pressed','true');
+});
+
+test('About links work even when the catalog cannot load',async({page})=>{
+  await page.route('**/manifest.json',route=>route.fulfill({status:503,body:'Unavailable'}));
+  await page.goto('/progressive/?view=about');
+  await expect(page.locator('#about')).toBeVisible();
+  await expect(page.locator('#about h1')).toHaveText('About maimai.party.');
+  await expect(page.getByRole('link',{name:'Buy the creator a maimai credit',exact:true})).toBeVisible();
+  await page.locator('#catalog-tab').click();await expect(page.locator('#catalog')).toBeVisible();
+  await page.locator('#about-tab').click();await expect(page.locator('#about')).toBeVisible();
+});
+
 test('romaji searches share aliases across Charts and both comparison pickers',async({page})=>{
   await page.goto('/romaji/');await expect(page.locator('#loaded-count')).toHaveText('6');
   const requests=[];page.on('request',r=>requests.push(r.url()));

@@ -49,6 +49,7 @@ def build_capacity_fixture(root: Path, count: int = 7000):
         "challenge-review.js",
         "challenge-review.css",
         "analytics.js",
+        "view-navigation.js",
     ]:
         shutil.copyfile(source / name, target / name)
     (target / "catalogs").mkdir(exist_ok=True)
