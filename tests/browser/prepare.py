@@ -9,6 +9,7 @@ from maimai_intelligence.site import build_site
 from maimai_intelligence.snapshots import atomic_json, read_json
 from scripts.build_challenge_package import write
 from tests.artwork_fixture import add_artwork
+from tests.browser.capacity_fixture import build_capacity_fixture
 from tests.lab_fixture import write_package
 from tests.personal_fixture import fixture
 
@@ -20,6 +21,7 @@ build_site(pack, root, catalog_version="synthetic-v2")
 build_site(pack, root, catalog_version="synthetic-v1")
 atomic_json(Path("output/personal-fixture.json"), bundle)
 build_lab(write_package(Path("output/lab-fixture")), root / "lab", catalog_version="fixture-v5")
+build_capacity_fixture(root)
 build_lab(
     write_package(Path("output/grouped-fixture"), grouped=True),
     root / "grouped",

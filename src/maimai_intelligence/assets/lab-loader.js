@@ -22,13 +22,19 @@
       for(const p of entry.parts){if(!/^[a-f0-9]{64}$/.test(p.sha256)||p.path!==`catalog-parts/${p.sha256}.json`||!Number.isInteger(p.bytes)||p.bytes<1||p.bytes>8*1024*1024)throw new Error('Invalid catalog part');total+=p.bytes;}
       if(total>maximum)throw new Error('Research catalog exceeds 32 MiB');
       bytes=new Uint8Array(total);let offset=0;
-      for(const p of entry.parts){const part=await read(p.path,p.bytes);if(part.length!==p.bytes||await hash(part)!==p.sha256)throw new Error('Catalog part integrity check failed');bytes.set(part,offset);offset+=part.length;}
+      // Two bounded reads overlap network latency without fetching every part at once.
+      for(let i=0;i<entry.parts.length;i+=2){
+        const batch=await Promise.all(entry.parts.slice(i,i+2).map(async p=>{const part=await read(p.path,p.bytes);if(part.length!==p.bytes||await hash(part)!==p.sha256)throw new Error('Catalog part integrity check failed');return part;}));
+        for(const part of batch){bytes.set(part,offset);offset+=part.length;}
+      }
     }else bytes=await read(entry.path,maximum);
     const sha=await hash(bytes);
     if(sha!==entry.sha256)throw new Error('Research catalog integrity check failed');
-    const data=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes));
+    const text=new TextDecoder('utf-8',{fatal:true}).decode(bytes),data=JSON.parse(text);
     const pinned=new URL(location.href);pinned.searchParams.set('version',version);history.replaceState(null,'',pinned);
-    const element=document.createElement('script');element.type='application/json';element.id='challenge-data';element.textContent=JSON.stringify(data);document.body.append(element);
+    // Public catalog only. All interface modules share this one parsed object.
+    window.maimaiResearchCatalog=data;
+    const element=document.createElement('script');element.type='application/json';element.id='challenge-data';element.textContent=text;document.body.append(element);
     const script=document.createElement('script');script.src='challenge-review.js';script.onload=()=>{status.textContent='';if(version!==manifest.default){status.textContent='You are viewing an older catalog. ';const link=document.createElement('a'),latest=new URL(location.href);latest.searchParams.set('version',manifest.default);link.href=latest.href;link.textContent='Open the latest catalog';status.append(link);}};script.onerror=()=>{status.textContent='The research browser could not start.';};document.body.append(script);
   }catch(error){status.textContent=error.message;}
 })();
