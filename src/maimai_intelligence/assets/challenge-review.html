@@ -28,11 +28,13 @@
 <label>From level<select id="filter-min"><option value="">Any level</option></select></label>
 <label>To level<select id="filter-max"><option value="">Any level</option></select></label></div>
 <div class="sort-toolbar"><p id="catalog-count" role="status"></p>
-<details id="sort-panel"><summary>Sort <span id="sort-summary">Title A–Z</span></summary>
-<div id="sort-rules" class="sort-rules"></div><p class="muted">Rules apply in order. The next rule breaks ties.</p></details></div>
+<label class="check"><input id="sort-keep" type="checkbox">Keep sort priorities</label></div>
+<div id="sort-rules" class="sort-priorities" role="group" aria-label="Sort priorities"></div>
 <div id="active-filters" class="active-filters" role="group" aria-label="Active filters"></div>
 <p class="row-help muted">One row per song and chart format. Choose a matching difficulty to update its measurements. Sort rules use the selected chart.</p>
-<div class="column-labels" aria-hidden="true"><span>Song / artist</span><span>Difficulty</span><span>Level</span><span>BPM</span><span>Inputs / s</span></div>
+<div class="pattern-filter-row"><label>Pattern or chart trait<select id="filter-pattern"><option value="">All patterns</option></select></label><p class="muted" id="mapping-note"></p></div>
+<p class="sort-help muted">Click a column to sort; click again to reverse. Shift-click, or turn on Keep sort priorities, to add a tie-breaker.</p>
+<div class="column-labels" role="group" aria-label="Sort by column"><button data-sort-key="title">Song / artist</button><button data-sort-key="difficulty">Difficulty</button><button data-sort-key="level">Level</button><button data-sort-key="bpm">BPM</button><button data-sort-key="speed">Inputs / s</button><button data-sort-key="peak">Flow · peak</button></div>
 <div id="songs"></div><button id="more">Show more songs</button></section>
 <section id="patterns" hidden>
 <div class="page-heading"><div><p class="eyebrow">LEARN THE SHAPES</p><h1>Pattern dictionary.</h1>
@@ -42,20 +44,21 @@
 <label>Show<select id="pattern-scope"><option value="all">All lessons</option>
 <option value="patterns">Patterns</option><option value="traits">Chart traits</option></select></label></div>
 <p id="pattern-count" class="muted" role="status"></p>
-<p class="reference-note">Every lesson has an example and a contrast to explore. Demos are authored illustrations, without audio. They explain patterns and chart traits; they do not label songs in this catalog. The Umiyuri lesson illustrates one documented form.</p>
+<p class="reference-note">Every lesson has an authored example and contrast, without audio. Find charts uses separately prepared experimental detections from exact chart transcriptions. Named families without a detector remain unmapped. The Umiyuri lesson illustrates one documented form.</p>
 <div id="pattern-list" class="pattern-grid"></div>
-<dialog id="pattern-dialog" aria-labelledby="pattern-title"></dialog></section>
+</section>
 <section id="compare" hidden>
 <div class="page-heading"><div><p class="eyebrow">SIDE BY SIDE</p><h1>Compare charts.</h1>
 <p class="lede">Choose any two charts, or start with one and find similar chart demands.</p></div></div>
 <div id="comparison-pickers" class="comparison-pickers"></div>
 <div class="comparison-actions"><button id="find-similar" type="button" disabled>Find similar to first chart</button>
+<label>Prioritize<select id="similar-priority"><option value="patterns">Patterns & measurements</option><option value="measurements">Measurements</option></select></label>
 <label class="check"><input id="similar-use-filters" type="checkbox">Use chart filters for matches</label>
 <button id="comparison-clear" type="button" class="text-button">Clear comparison</button></div>
 <p id="comparison-status" class="muted" role="status">Choose a first chart to begin.</p>
 <div id="direct-comparison"></div><div id="similar-results"></div>
 <details class="comparison-method"><summary>What this comparison tells you</summary>
-<p>These comparisons use measured input speed, rhythm, simultaneous inputs, holds, slides and layout across the catalog. Similar demands do not establish the same named patterns, difficulty or practice benefit.</p>
+<p>Patterns &amp; measurements gives 60% weight to experimental pattern similarity and 40% to measured demands. Pattern similarity combines presence (50%), occurrence rate (30%) and time covered (20%); rarer detected patterns carry more weight. Only patterns with supported coverage on both charts contribute; charts with insufficient coverage fall back to measurements and follow covered matches. Measurements uses input speed, rhythm, simultaneous inputs, holds, slides and layout alone. Neither mode is a difficulty or practice-benefit estimate.</p>
 <p>Passage animations are available for the prepared pairs below. Other pairs can be compared by their chart measurements.</p></details>
 <details id="prepared-examples" class="prepared-examples"><summary>Prepared passage demonstrations</summary>
 <p id="sample-intro" class="reference-note"></p><div class="toolbar">
@@ -67,6 +70,7 @@
 <label class="check"><input type="checkbox" id="blind" disabled>Hide ranking order and reasons</label>
 <button id="download" disabled>Save judgments</button></div>
 <p id="review-status" role="status"></p></details></details></section>
+<dialog id="pattern-dialog" aria-labelledby="pattern-title"></dialog>
 <footer class="sources"><details><summary>About this research catalog</summary><p id="coverage"></p>
 <p>Source levels and categories are shown. Official constants, regional availability and chart-addition dates are not independently verified. Utage is excluded.</p>
 <p>Comparisons are experimental and are not personalized practice recommendations. Named-pattern chart labels still require independent review.</p>

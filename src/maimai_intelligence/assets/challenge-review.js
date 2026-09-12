@@ -6,6 +6,7 @@ const el=id=>document.getElementById(id),make=(tag,text,cls)=>{const e=document.
 const names={cadence:'Input speed',rhythm:'Rhythm',coordination:'Simultaneous inputs',holds:'Hold interactions',slides:'Slide timing',spatial:'Layout'};
 const judgments=new Map();let cleanup=[],visible=40,format='all',comparisonUI=null;
 const navigation=data.navigation||{charts:{},genres:[],versions:[]};
+const overview=window.maimaiChartOverview;
 function folderValue(c,mode){
   if(mode==='level')return c.level||'unknown';
   const n=navigation.charts[c.chart_id];
@@ -111,11 +112,11 @@ const difficultyOrder=['BASIC','ADVANCED','EXPERT','MASTER','RE:MASTER'];
 const collator=new Intl.Collator(undefined,{numeric:true,sensitivity:'base'});
 const levelNumber=value=>value&&Number.isFinite(parseFloat(value))?parseFloat(value)+(value.endsWith('+')?.5:0):null;
 const sortFields={title:'Title',artist:'Artist',level:'Level',bpm:'BPM',difficulty:'Difficulty',format:'Format',genre:'Genre',version:'Version',speed:'Inputs / s',peak:'Peak inputs / s'};
-let sortRules=[{key:'title',direction:1},{key:'difficulty',direction:1},{key:'format',direction:1}];
-const filters=['genre','difficulty','min','max'],selectedVersions=new Set();
+let sortRules=[{key:'title',direction:1}];
+const filters=['genre','difficulty','min','max','pattern'],selectedVersions=new Set();
 const versionLabel=value=>value.replace(/^maimai DX /,'DX ').replace(/^maimai /,'');
 const genreLabel=value=>(navigation.genres||[]).find(g=>g.id===value)?.label||'Uncategorized';
-const values={title:c=>displayTitle(c),artist:c=>c.artist,level:c=>levelNumber(c.level),bpm:c=>navigation.charts?.[c.chart_id]?.bpm??null,difficulty:c=>{const rank=difficultyOrder.indexOf(c.difficulty.toUpperCase());return rank<0?null:rank;},format:c=>c.format,genre:c=>genreLabel(folderValue(c,'genre')),version:c=>{const v=(navigation.versions||[]).indexOf(folderValue(c,'version'));return v<0?null:v;},speed:c=>c.demand.cadence.mean_onsets_s??null,peak:c=>c.demand.cadence.peak_onsets_s??null};
+const values={title:c=>displayTitle(c),artist:c=>c.artist,level:c=>levelNumber(c.level),bpm:c=>navigation.charts?.[c.chart_id]?.bpm??null,difficulty:c=>{const rank=difficultyOrder.indexOf(c.difficulty.toUpperCase());return rank<0?null:rank;},format:c=>c.format,genre:c=>genreLabel(folderValue(c,'genre')),version:c=>{const v=(navigation.versions||[]).indexOf(folderValue(c,'version'));return v<0?null:v;},speed:c=>c.demand.cadence.mean_onsets_s??null,peak:c=>{const peaks=(overview.get(c)?.segments||[]).filter(s=>s[3]!=null&&s[4]>0).map(s=>s[3]);return peaks.length?Math.max(...peaks):null;}};
 const selectedCharts=new Map(),expandedRows=new Set();
 const rowKey=c=>JSON.stringify([navigation.charts?.[c.chart_id]?.source_path||c.source_container_id||c.song_id,c.format]);
 function compareCharts(a,b){
@@ -129,24 +130,22 @@ function compareCharts(a,b){
 function sortLabel(rule){return sortFields[rule.key]+(['title','artist','genre','format'].includes(rule.key)?(rule.direction===1?' A–Z':' Z–A'):(rule.direction===1?' ↑':' ↓'));}
 function renderSort(){
   const root=el('sort-rules');root.replaceChildren();
-  sortRules.forEach((rule,index)=>{
-    const row=make('div',undefined,'sort-rule'),label=make('label',['First by','Then by','Finally by'][index]),select=make('select');select.id='sort-key-'+index;
-    if(index)select.append(new Option('No additional rule',''));
-    for(const [key,name]of Object.entries(sortFields)){const option=new Option(name,key);option.disabled=sortRules.some((r,i)=>i!==index&&r.key===key);select.append(option);}
-    select.value=rule.key;label.append(select);
-    const direction=make('button',rule.direction===1?'Ascending ↑':'Descending ↓');direction.id='sort-direction-'+index;direction.setAttribute('aria-label','Reverse '+['first','second','third'][index]+' sort direction');direction.disabled=!rule.key;
-    select.onchange=()=>{rule.key=select.value;visible=40;renderSort();catalog();el(select.id).focus();};
-    direction.onclick=()=>{rule.direction*=-1;renderSort();catalog();el(direction.id).focus();};row.append(label,direction);root.append(row);
-  });
-  el('sort-summary').textContent=sortRules.filter(r=>r.key).map(sortLabel).join(' · ');
+  sortRules.forEach((rule,index)=>{const b=make('button',(index+1)+'. '+sortLabel(rule)+' ×','filter-chip');b.setAttribute('aria-label','Remove '+sortFields[rule.key]+' sort priority');b.onclick=()=>{sortRules.splice(index,1);if(!sortRules.length)sortRules=[{key:'title',direction:1}];renderSort();catalog();document.querySelector('[data-sort-key="'+rule.key+'"]').focus();};root.append(b);});
+  for(const button of document.querySelectorAll('[data-sort-key]')){
+    const key=button.dataset.sortKey,index=sortRules.findIndex(r=>r.key===key),rule=sortRules[index],label=key==='title'?'Song / artist':key==='peak'?'Flow · peak':sortFields[key];
+    button.textContent=label+(rule?' '+(rule.direction===1?'↑':'↓')+' '+(index+1):' ↕');button.setAttribute('aria-pressed',String(!!rule));
+    button.setAttribute('aria-label',label+(rule?', priority '+(index+1)+', '+(rule.direction===1?'ascending':'descending'):' unsorted'));
+    button.onclick=event=>{const keep=event.shiftKey||el('sort-keep').checked,prior=sortRules.find(r=>r.key===key);if(keep){if(prior)prior.direction*=-1;else sortRules.push({key,direction:1});}else sortRules=[{key,direction:prior&&sortRules[0]===prior?-prior.direction:1}];visible=40;renderSort();catalog();button.focus();};
+  }
 }
 function initializeFilters(){
   for(const id of filters){const select=el('filter-'+id);let options=[];
     if(id==='genre')options=(navigation.genres||[]).map(g=>[g.id,g.label]);
     if(id==='difficulty')options=[...new Set(data.catalog.map(c=>c.difficulty))].sort((a,b)=>difficultyOrder.indexOf(a.toUpperCase())-difficultyOrder.indexOf(b.toUpperCase())).map(d=>[d,d]);
+    if(id==='pattern')options=overview.patternIds.map(p=>[p,overview.name(p)+(overview.coverage.get(p)?' ('+(overview.frequency.get(p)||0)+')':' · not covered')]);
     if(id==='min'||id==='max')options=[...new Set(data.catalog.map(c=>c.level).filter(v=>levelNumber(v)!=null))].sort((a,b)=>levelNumber(a)-levelNumber(b)).map(v=>[v,v]);
-    for(const [value,label]of options)select.append(new Option(label,value));
-    select.onchange=()=>{visible=40;catalog();};
+    for(const [value,label]of options){const option=new Option(label,value);if(id==='pattern'&&!overview.coverage.get(value))option.disabled=true;select.append(option);}
+    select.onchange=()=>{visible=40;catalog();if(id==='pattern')writePatternFilter();};
   }
   for(const key of ['all','STD','DX'])el('format-'+key).onclick=()=>{format=key;visible=40;updateFormat();catalog();};
   for(const version of navigation.versions||[]){
@@ -157,9 +156,11 @@ function initializeFilters(){
   el('version-clear').onclick=()=>{selectedVersions.clear();visible=40;updateVersions();catalog();};
   el('version-filter').addEventListener('keydown',event=>{if(event.key==='Escape'){el('version-filter').open=false;el('version-summary').focus();event.stopPropagation();}});
   document.addEventListener('click',event=>{if(!el('version-filter').contains(event.target))el('version-filter').open=false;});
-  el('reset-filters').onclick=()=>{for(const id of filters)el('filter-'+id).value='';selectedVersions.clear();updateVersions();el('search').value='';format='all';visible=40;updateFormat();catalog();};
+  el('reset-filters').onclick=()=>{for(const id of filters)el('filter-'+id).value='';selectedVersions.clear();updateVersions();el('search').value='';format='all';visible=40;writePatternFilter();updateFormat();catalog();};
   renderSort();
+  el('mapping-note').textContent=overview.patternIds.length?overview.coverage.size+' experimental pattern / trait types with supported coverage · click a tag to open its lesson.':'Pattern and Flow mappings are not available in this catalog release.';
 }
+function writePatternFilter(){const url=new URL(location.href),id=el('filter-pattern').value;if(id)url.searchParams.set('pattern-filter',id);else url.searchParams.delete('pattern-filter');history.replaceState(null,'',url);}
 function updateVersions(){
   el('version-summary').textContent=selectedVersions.size===0?'All versions':selectedVersions.size===1?versionLabel([...selectedVersions][0]):selectedVersions.size+' versions selected';
   for(const input of el('version-options').querySelectorAll('input'))input.checked=selectedVersions.has(input.value);
@@ -174,7 +175,7 @@ function activeFilters(){
   for(const id of filters){const select=el('filter-'+id);if(!select.value)continue;
     const button=make('button',({min:'From level ',max:'To level '}[id]||'')+select.selectedOptions[0].text+' ×','filter-chip');
     button.setAttribute('aria-label','Remove '+select.parentElement.firstChild.textContent+' filter');
-    button.onclick=()=>{select.value='';visible=40;catalog();select.focus();};root.append(button);
+    button.onclick=()=>{select.value='';visible=40;catalog();if(id==='pattern')writePatternFilter();select.focus();};root.append(button);
   }
 }
 function catalog(focusKey=null){
@@ -186,6 +187,7 @@ function catalog(focusKey=null){
     if(selected.genre&&folderValue(c,'genre')!==selected.genre)return false;
     if(selectedVersions.size&&!selectedVersions.has(folderValue(c,'version')))return false;
     if(selected.difficulty&&c.difficulty!==selected.difficulty)return false;
+    if(selected.pattern&&!overview.detected(c).some(t=>t.id===selected.pattern))return false;
     const level=levelNumber(c.level);
     if(selected.min&&(level==null||level<levelNumber(selected.min)))return false;
     if(selected.max&&(level==null||level>levelNumber(selected.max)))return false;
@@ -193,7 +195,7 @@ function catalog(focusKey=null){
   }).sort(compareCharts);
   const grouped=new Map();
   for(const chart of charts){const key=rowKey(chart);if(!grouped.has(key))grouped.set(key,[]);grouped.get(key).push(chart);}
-  const rows=[...grouped].map(([key,choices])=>({key,choices,chart:choices.find(c=>c.chart_id===selectedCharts.get(key))||choices[0]})).sort((a,b)=>compareCharts(a.chart,b.chart));
+  const rows=[...grouped].map(([key,choices])=>({key,choices,chart:choices.find(c=>c.chart_id===selectedCharts.get(key))||[...choices].sort((a,b)=>(values.difficulty(a)??99)-(values.difficulty(b)??99)||a.chart_id.localeCompare(b.chart_id))[0]})).sort((a,b)=>compareCharts(a.chart,b.chart));
   if(focusKey)visible=Math.max(visible,rows.findIndex(row=>row.key===focusKey)+1);
   el('songs').replaceChildren();activeFilters();
   for(const [index,{key,choices,chart:c}]of rows.slice(0,visible).entries()){
@@ -203,7 +205,7 @@ function catalog(focusKey=null){
     identity.append(title,make('span',(c.artist||'Artist not provided')+' · '+c.format,'muted'));summary.append(identity);
     summary.setAttribute('aria-label','Open '+displayTitle(c)+' · '+c.format+' '+c.difficulty+' · Level '+(c.level||'unknown'));
     const heading=make('div',undefined,'chart-row-heading'),videoLink=window.maimaiChartLinks.youtube(c);
-    heading.append(summary);if(videoLink)heading.append(videoLink);
+    heading.append(summary,overview.chips(c,3,selected.pattern));if(videoLink)heading.append(videoLink);
     const picker=make('select');picker.className='row-difficulty';picker.id='row-difficulty-'+index;picker.setAttribute('aria-label','Difficulty for '+displayTitle(c)+' '+c.format);
     for(const choice of [...choices].sort((a,b)=>(values.difficulty(a)??99)-(values.difficulty(b)??99)||a.chart_id.localeCompare(b.chart_id)))picker.append(new Option(choice.difficulty+' · '+(choice.level||'?'),choice.chart_id));
     picker.value=c.chart_id;
@@ -211,12 +213,13 @@ function catalog(focusKey=null){
     const level=make('span',c.level||'—','chart-level'),bpm=make('span',values.bpm(c)==null?'—':String(values.bpm(c)),'chart-bpm'),speed=make('span',values.speed(c)==null?'—':values.speed(c).toFixed(1),'chart-speed');
     bpm.setAttribute('aria-label',values.bpm(c)==null?'BPM unknown':values.bpm(c)+' BPM');bpm.title='Source song BPM; individual passages may change tempo.';
     level.setAttribute('aria-label','Level '+(c.level||'unknown'));speed.setAttribute('aria-label',(values.speed(c)==null?'Unknown':values.speed(c).toFixed(1))+' inputs per second');
-    header.append(heading,picker,level,bpm,speed);
+    const flow=overview.graph(c,{compact:true});header.append(heading,picker,level,bpm,speed,flow);
     header.onclick=event=>{if(!event.target.closest('button,select,label,input,a'))summary.click();};
     const panel=make('div',undefined,'chart-measurements');panel.id='chart-'+index;panel.hidden=!expandedRows.has(key);summary.setAttribute('aria-expanded',String(!panel.hidden));summary.setAttribute('aria-controls',panel.id);
     const renderDetails=()=>{
       panel.replaceChildren();panel.append(make('h3',c.format+' '+c.difficulty+' · Lv. '+(c.level||'?')),metrics(c));
       panel.append(make('p',genreLabel(folderValue(c,'genre'))+' · '+folderValue(c,'version')+' · '+(values.bpm(c)==null?'BPM unknown':values.bpm(c)+' BPM'),'muted'));
+      panel.append(overview.details(c));
       const actions=make('div',undefined,'chart-detail-actions'),compareButton=make('button','Compare this chart'),similarButton=make('button','Find similar');
       compareButton.onclick=()=>{selectView('compare');if(comparisonUI.first()&&comparisonUI.first()!==c.chart_id)comparisonUI.useAsSecond(c.chart_id);else comparisonUI.useAsFirst(c.chart_id);};
       similarButton.onclick=()=>{selectView('compare');comparisonUI.useAsFirst(c.chart_id,true);};actions.append(compareButton,similarButton);panel.append(actions);
@@ -246,12 +249,15 @@ initializeFilters();catalog();status();
 comparisonUI=window.maimaiChartComparison.mount({data,comparison,stopPlayers,eligibleIds:()=>data.catalog.filter(c=>{
   if(format!=='all'&&c.format!==format)return false;
   if(selectedVersions.size&&!selectedVersions.has(folderValue(c,'version')))return false;
+  if(el('filter-pattern').value&&!overview.detected(c).some(t=>t.id===el('filter-pattern').value))return false;
   for(const key of ['genre','difficulty']){const selected=el('filter-'+key).value;if(selected&&(key==='genre'?folderValue(c,key):c.difficulty)!==selected)return false;}
   const level=levelNumber(c.level),min=el('filter-min').value,max=el('filter-max').value;
   return(!min||(level!=null&&level>=levelNumber(min)))&&(!max||(level!=null&&level<=levelNumber(max)));
 }).map(c=>c.chart_id)});
 const params=new URLSearchParams(location.search),initialView=params.get('view'),initialPattern=params.get('pattern');
-window.maimaiPatternLibrary.setNavigation(id=>{const url=new URL(location.href);if(id)url.searchParams.set('pattern',id);else url.searchParams.delete('pattern');url.searchParams.set('view','patterns');history.replaceState(null,'',url);});
+window.maimaiPatternLibrary.setDiscovery(id=>{el('reset-filters').click();el('filter-pattern').value=id;writePatternFilter();selectView('catalog');catalog();el('filter-pattern').focus();});
+if(overview.patternIds.includes(params.get('pattern-filter'))){el('filter-pattern').value=params.get('pattern-filter');catalog();}
+window.maimaiPatternLibrary.setNavigation(id=>{const url=new URL(location.href);if(id)url.searchParams.set('pattern',id);else url.searchParams.delete('pattern');history.replaceState(null,'',url);});
 if(['catalog','patterns','compare'].includes(initialView))selectView(initialView);
-if(initialPattern&&window.maimaiPatternLibrary.has(initialPattern)){selectView('patterns');window.maimaiPatternLibrary.show(initialPattern);}
+if(initialPattern&&window.maimaiPatternLibrary.has(initialPattern)){window.maimaiPatternLibrary.show(initialPattern);}
 })();

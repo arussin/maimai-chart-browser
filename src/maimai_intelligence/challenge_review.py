@@ -31,13 +31,14 @@ def review_scripts():
             "pattern-library.js",
             "challenge-matching.js",
             "chart-links.js",
+            "chart-overview.js",
             "chart-comparison.js",
             "challenge-review.js",
         )
     )
 
 
-def render_review(package, catalog, review, snippets, benchmark, navigation=None):
+def render_review(package, catalog, review, snippets, benchmark, navigation=None, overview=None):
     data = {
         "package": package,
         "catalog": catalog,
@@ -46,6 +47,8 @@ def render_review(package, catalog, review, snippets, benchmark, navigation=None
         "benchmark_hash": benchmark["benchmark_hash"],
         "navigation": navigation or {"charts": {}, "genres": [], "versions": []},
     }
+    if overview is not None:
+        data["analysis"] = overview
     # Showing a public reference definition never assigns it to a catalog chart.
     patterns = [
         {
@@ -68,7 +71,12 @@ def render_review(package, catalog, review, snippets, benchmark, navigation=None
     assets = files("maimai_intelligence.assets")
     css = "\n".join(
         assets.joinpath(name).read_text("utf-8")
-        for name in ("challenge-review.css", "chart-visuals.css", "pattern-lessons.css")
+        for name in (
+            "challenge-review.css",
+            "chart-visuals.css",
+            "pattern-lessons.css",
+            "chart-overview.css",
+        )
     )
     html = assets.joinpath("challenge-review.html").read_text("utf-8")
     return (

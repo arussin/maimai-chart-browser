@@ -20,6 +20,24 @@ URLs use `?catalog=ID&version=VERSION&chart=EXACT_ID`, optionally `section`,
 catalog selector; missing charts/sections are reported without guessing a match.
 Older catalog releases remain available after subsequent builds.
 
+The research browser optionally includes `analysis.json` in the pinned package's
+hashed file manifest. Its `research-overview-1` format lists detector IDs and
+ordered `segment_fields` / `tag_fields` for compact array records. Each chart
+record retains the source hash; the builder rejects unmatched chart IDs or hashes.
+Segments hold start/end times, density mean/peak/coverage and estimated-demand
+mean/peak/coverage. Tags retain detection status, observed count, prevalence,
+coverage, truncation and up to four representative spans. Implementation file
+hashes record the analyzer, parser, registry and overview builder used.
+
+Unknown or missing tags never imply absence. The extension uses the existing
+synthetic-tested experimental detectors, without qualifying community-named chart
+labels or personal recommendations. `analyze_overview` shares the full analyzer's
+Flow/tag calculations and omits descriptor construction; parity fixtures check
+both paths. Flow shows 24 sections over chart time; means and peaks preserve the
+underlying 250 ms density observations. Mini plots use their own peak scale and
+paired plots share a scale. Pattern discovery URLs use `pattern-filter=PATTERN_ID`
+alongside the immutable `version`; lesson URLs continue using `pattern`.
+
 ## Downloader snapshots
 
 One store is scoped to `{provider: "kamaitachi", username, game}`. Its manifest

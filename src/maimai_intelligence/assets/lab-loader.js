@@ -18,6 +18,6 @@
     const data=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes));
     const pinned=new URL(location.href);pinned.searchParams.set('version',version);history.replaceState(null,'',pinned);
     const element=document.createElement('script');element.type='application/json';element.id='challenge-data';element.textContent=JSON.stringify(data);document.body.append(element);
-    const script=document.createElement('script');script.src='challenge-review.js';script.onload=()=>{status.textContent='';};script.onerror=()=>{status.textContent='The research browser could not start.';};document.body.append(script);
+    const script=document.createElement('script');script.src='challenge-review.js';script.onload=()=>{status.textContent='';if(version!==manifest.default){status.textContent='You are viewing an older catalog. ';const link=document.createElement('a'),latest=new URL(location.href);latest.searchParams.set('version',manifest.default);link.href=latest.href;link.textContent='Open the latest catalog';status.append(link);}};script.onerror=()=>{status.textContent='The research browser could not start.';};document.body.append(script);
   }catch(error){status.textContent=error.message;}
 })();

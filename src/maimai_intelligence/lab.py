@@ -12,6 +12,7 @@ from maimai_analyzer.dataset import SOURCE_LOCK
 
 from .challenge_review import render_review, review_scripts
 from .io import atomic_write_text
+from .research_overview import validate_overview
 from .snapshots import MAX_BYTES, atomic_json, canonical, read_json
 
 
@@ -28,7 +29,7 @@ def build_lab(package_directory, output, *, catalog_version):
         "snippets.json",
         "benchmark.json",
         "navigation.json",
-    ):
+    ) + (("analysis.json",) if "analysis.json" in records else ()):
         record = records[name]
         with (source / name).open("rb") as stream:
             raw = stream.read(MAX_BYTES + 1)
@@ -39,6 +40,9 @@ def build_lab(package_directory, output, *, catalog_version):
         ):
             raise ValueError("Challenge package integrity mismatch")
         loaded[name] = json.loads(raw)
+    overview = loaded.get("analysis.json")
+    if overview is not None:
+        validate_overview(overview, loaded["catalog.json"])
     html = render_review(
         package,
         loaded["catalog.json"],
@@ -46,6 +50,7 @@ def build_lab(package_directory, output, *, catalog_version):
         loaded["snippets.json"],
         loaded["benchmark.json"],
         loaded["navigation.json"],
+        overview,
     )
     data_match = re.search(
         r'<script id="challenge-data" type="application/json">(.*?)</script>', html, re.S
@@ -83,7 +88,9 @@ def build_lab(package_directory, output, *, catalog_version):
         + "\n"
         + assets.joinpath("chart-visuals.css").read_text("utf-8")
         + "\n"
-        + assets.joinpath("pattern-lessons.css").read_text("utf-8"),
+        + assets.joinpath("pattern-lessons.css").read_text("utf-8")
+        + "\n"
+        + assets.joinpath("chart-overview.css").read_text("utf-8"),
     )
     html = re.sub(
         r"<style>.*?</style>",

@@ -8,6 +8,7 @@ from maimai_analyzer.challenge import profile_chart, snippet
 from maimai_analyzer.challenge_similarity import POLICY, query_challenges, reference_scale
 from maimai_analyzer.dataset import SOURCE_LOCK, review_benchmark
 from maimai_analyzer.fixtures import synthetic_charts
+from maimai_intelligence.research_overview import chart_overview, overview_package
 from maimai_intelligence.snapshots import atomic_json, canonical
 
 
@@ -56,6 +57,7 @@ def write_package(directory, *, grouped=False):
         },
         "benchmark.json": review_benchmark(profiles, 4),
         "navigation.json": build_navigation(profiles, rows, bpm_by_source=bpms),
+        "analysis.json": overview_package({c["chart_id"]: chart_overview(c) for c in raw}),
     }
     records = []
     for name, value in values.items():

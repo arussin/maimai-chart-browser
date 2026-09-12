@@ -10,6 +10,24 @@ The browser shows the teaching content directly. Detector status is unchanged:
 14 experimental primitives exist, and broader or community-named detection is
 not promoted by adding these illustrations.
 
+## Current research chart mapping
+
+The browser now prepares all 6,959 retained charts with the existing 14
+experimental pattern/trait detectors and Flow calculation. Every assignment
+joins an exact chart ID and source hash. Rows, difficulty choices, pattern
+filters and dictionary discovery use those observations. Chart details include
+counts, partial-coverage labels and up to four representative time spans.
+Comparisons show shared/differing observations, occurrence rates and shared-scale
+activity graphs; an optional ranking gives pattern similarity the greater weight.
+
+This is research discovery, not independent label qualification. Nine input
+patterns have supported detections in this catalog. Five chart-trait detectors
+also exist but require an authoritative whole-song span, which the transcription
+parser does not claim; those traits remain unknown rather than absent. The other
+22 lessons, including the community-named Umiyuri family, remain unmapped. No new detector
+was enabled and no teaching illustration was treated as real-chart evidence.
+Supported non-detection, partial coverage and unknown detection remain distinct.
+
 ## Finish the teaching reference
 
 Completed in this pass:
@@ -68,12 +86,13 @@ To connect the dictionary to real charts:
    of both the development and held-out evaluation sets.
 4. Measure precision and recall on the held-out examples, inspect mistakes, and
    record the evidence and limitations for each detector.
-5. Only then run the qualified detectors over the retained catalog and expose
-   chart links, passage demos and pattern filtering for the validated coverage.
+5. Only then promote the relevant research observations to qualified labels and
+   expose validated discovery or training claims. Experimental browsing does not
+   pass this gate; new detectors need their own evaluation before promotion.
 
 The next checklist work is independent teaching review and labeled real-chart
-evaluation. Another catalog-wide processing step follows qualified detector
-evaluation. Personal recommendations still require the separate reviewed catalog
+evaluation, followed by the missing detectors and a new versioned mapping run.
+Personal recommendations still require the separate reviewed catalog
 mapping and recommendation qualifications.
 
 ## Maintaining the lessons

@@ -24,13 +24,13 @@ function createIndex(profiles){
     const largest=Object.keys(differences).sort((a,b)=>differences[b]-differences[a]||order(b,a))[0];
     return{distance:Math.round(mean(Object.values(differences))*1e6)/1e6,closest_groups:closest.slice(0,2),largest_difference:largest};
   }
-  function similar(id,{limit=8,eligibleIds=null}={}){
+  function similar(id,{limit=8,eligibleIds=null,patternCompare=null}={}){
     if(!Number.isInteger(limit)||limit<1||limit>100)throw new Error('Result limit must be 1..100');
     const query=byId.get(id);if(!query)throw new Error('Chart is not in this catalog');
     const family=query.song_family??query.song_id,allowed=eligibleIds&&new Set(eligibleIds),rows=[];
     for(const candidate of profiles){if(candidate.chart_id===id||(candidate.song_family??candidate.song_id)===family||(allowed&&!allowed.has(candidate.chart_id)))continue;
-      const result=compare(id,candidate.chart_id);if(result)rows.push({chart_id:candidate.chart_id,...result});}
-    rows.sort((a,b)=>a.distance-b.distance||order(a.chart_id,b.chart_id));
+      const result=compare(id,candidate.chart_id);if(result){const patterns=patternCompare?.(query,candidate),patternDistance=patterns?.patternDistance??null;rows.push({chart_id:candidate.chart_id,...result,...(patternCompare?{patterns,patternDistance,rankDistance:patternDistance==null?result.distance:.6*patternDistance+.4*result.distance}:{})});}}
+    rows.sort((a,b)=>patternCompare?(Number(a.patternDistance==null)-Number(b.patternDistance==null)||(a.rankDistance-b.rankDistance)||order(a.chart_id,b.chart_id)):(a.distance-b.distance||order(a.chart_id,b.chart_id)));
     const found=[],families=new Set();for(const row of rows){const candidate=byId.get(row.chart_id),key=candidate.song_family??candidate.song_id;if(families.has(key))continue;families.add(key);found.push(row);if(found.length===limit)break;}return found;
   }
   return Object.freeze({compare,similar});

@@ -4,7 +4,7 @@ const definitions=JSON.parse(document.getElementById('pattern-data').textContent
 const el=id=>document.getElementById(id),make=(tag,text,cls)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(cls)n.className=cls;return n;};
 const ns='http://www.w3.org/2000/svg',svgNode=(tag,attrs={},text)=>{const n=document.createElementNS(ns,tag);for(const[k,v]of Object.entries(attrs))n.setAttribute(k,String(v));if(text!==undefined)n.textContent=text;return n;};
 const aliases=p=>p.aliases.map(a=>typeof a==='string'?a:a.text).join(' · '),normalize=s=>s.normalize('NFKC').toLowerCase();
-const dialog=el('pattern-dialog');let dispose=()=>{},opener=null,onNavigate=()=>{};
+const dialog=el('pattern-dialog');let dispose=()=>{},opener=null,onNavigate=()=>{},onDiscover=()=>{};
 const eventTimes=model=>model.kind==='bars'?Array.from({length:model.duration+1},(_,i)=>i):[...new Set([0,model.duration,...model.notes.map(n=>n[0]),...model.holds.flatMap(h=>h.slice(0,2)),...model.slides.flatMap(s=>s.slice(0,3))])].sort((a,b)=>a-b);
 const positionLabel=p=>typeof p==='number'?'Button '+p:'Touch '+p;
 function chartArt(model,label,{animated=false,maximum=null}={}){
@@ -53,7 +53,7 @@ function render(){
   for(const p of shown){const lesson=lessons[p.pattern_id],card=make('article',undefined,'pattern-card');card.dataset.patternId=p.pattern_id;
     const open=make('button','Open lesson →','text-button');open.dataset.openPattern=p.pattern_id;open.setAttribute('aria-label','Open lesson: '+p.display_name);open.onclick=()=>show(p.pattern_id,open);
     const art=make('div',undefined,'pattern-art');art.append(chartArt(lesson.example,lesson.summary).svg);
-    card.append(make('p',p.kind==='trait'?'CHART TRAIT':'PATTERN','eyebrow'),make('h2',p.display_name),make('p',lesson.summary,'pattern-description'),art,open);root.append(card);
+      card.append(make('p',p.kind==='trait'?'CHART TRAIT':'PATTERN','eyebrow'),make('h2',p.display_name),make('p',lesson.summary,'pattern-description'),art,open);const overview=window.maimaiChartOverview,count=overview?.frequency.get(p.pattern_id)||0;if(overview?.coverage.get(p.pattern_id)){const find=make('button','Find charts · '+count,'text-button');find.dataset.findPattern=p.pattern_id;find.onclick=()=>onDiscover(p.pattern_id);card.append(find,make('p','Experimental chart detections','muted'));}else card.append(make('p',overview?.patternIds.includes(p.pattern_id)?'No supported chart coverage in this catalog':'Chart mapping not yet available','muted'));root.append(card);
   }
   if(!shown.length)root.append(make('p','No lessons match this search.','empty-state'));
 }
@@ -95,11 +95,12 @@ function show(id,button=null,navigate=true){
   const header=make('header'),identity=make('div'),title=make('h2',p.display_name);title.id='pattern-title';identity.append(make('p',p.kind==='trait'?'CHART TRAIT':'PATTERN','eyebrow'),title,make('p',aliases(p),'muted'));
   const close=make('button','Close');close.setAttribute('aria-label','Close pattern');close.onclick=()=>dialog.close();header.append(identity,close);dialog.append(header);if(!dialog.open)dialog.showModal();
   dialog.append(make('p',lesson.summary,'demo-summary'),demo(lesson),make('h3','Variants and limits','lesson-subheading'),make('p',lesson.variants,'lesson-variants'));
+  if(window.maimaiChartOverview?.coverage.get(id)){const find=make('button','Find charts with this pattern');find.onclick=()=>{dialog.close();onDiscover(id);};dialog.append(find);}
   const details=make('details'),summary=make('summary','Definition, sources and scope');details.append(summary,make('p',lesson.scope),make('p',p.definition));
   const limits=make('ul');for(const text of p.counterexamples_and_limits)limits.append(make('li',text));details.append(limits);
   for(const source of lesson.sources){const paragraph=make('p'),link=make('a',source.label);link.href=source.url;link.target='_blank';link.rel='noopener noreferrer';paragraph.append(link,document.createTextNode(' — '+source.note));details.append(paragraph);}
   details.append(make('p',(p.name_origin==='community_attested'?'Community-named entry. ':'Project/descriptive entry. ')+'Teaching examples are authored and checked, with no independent reviewer sign-off. They do not assign labels to catalog charts.','muted'));dialog.append(details);close.focus();if(navigate)onNavigate(id);return true;
 }
 dialog.addEventListener('close',()=>{dispose();if(opener?.isConnected)opener.focus();onNavigate(null);});el('pattern-search').oninput=render;el('pattern-scope').onchange=render;
-window.maimaiPatternLibrary={render,show,stop:()=>dispose(),setNavigation:callback=>{onNavigate=callback;},has:id=>definitions.some(p=>p.pattern_id===id)};
+window.maimaiPatternLibrary={render,show,stop:()=>dispose(),setNavigation:callback=>{onNavigate=callback;},setDiscovery:callback=>{onDiscover=callback;},has:id=>definitions.some(p=>p.pattern_id===id)};
 })();

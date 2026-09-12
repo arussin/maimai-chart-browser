@@ -9,13 +9,14 @@ const measurements=[
   ['spatial','single_step_buttons','Average spacing between single inputs',' buttons'],['spatial','simultaneous_span_buttons','Simultaneous-input span',' buttons'],['spatial','touch_fraction','Touch inputs','%'],
 ];
 function mount({data,comparison,stopPlayers,eligibleIds}){
+  const overview=window.maimaiChartOverview;
   const el=id=>document.getElementById(id),make=(tag,text,cls)=>{const node=document.createElement(tag);if(text!==undefined)node.textContent=text;if(cls)node.className=cls;return node;};
   const byId=new Map(data.catalog.map(c=>[c.chart_id,c])),state={left:null,right:null},pickers={},searchIndex=data.catalog.map(c=>({chart:c,text:(c.title+' '+c.artist+' '+c.format+' '+c.difficulty).normalize('NFKC').toLowerCase()}));
   const name=c=>c.title.trim()||'〈Blank title〉',label=c=>name(c)+' · '+c.format+' '+c.difficulty+' · Lv. '+(c.level||'?');
   const bpm=c=>data.navigation?.charts?.[c.chart_id]?.bpm??null,bpmText=c=>bpm(c)==null?'BPM unknown':bpm(c)+' BPM';
   let index=null,matches=null;
   const getIndex=()=>index||(index=window.maimaiChallengeMatching.createIndex(data.catalog));
-  function identity(c){const box=make('div',undefined,'chosen-chart');box.append(make('strong',name(c)),make('p',c.format+' '+c.difficulty+' · Lv. '+(c.level||'?')+' · '+bpmText(c),'muted'),make('p',c.artist,'muted'));const videoLink=window.maimaiChartLinks.youtube(c);if(videoLink)box.append(videoLink);return box;}
+  function identity(c){const box=make('div',undefined,'chosen-chart');box.append(make('strong',name(c)),make('p',c.format+' '+c.difficulty+' · Lv. '+(c.level||'?')+' · '+bpmText(c),'muted'),make('p',c.artist,'muted'),overview.chips(c),overview.graph(c,{compact:true}));const videoLink=window.maimaiChartLinks.youtube(c);if(videoLink)box.append(videoLink);return box;}
   function writeLink(){const url=new URL(location.href);for(const side of ['left','right']){if(state[side])url.searchParams.set(side,state[side]);else url.searchParams.delete(side);}history.replaceState(null,'',url);}
   function choose(side,id){
     if(!byId.has(id))return;
@@ -46,7 +47,7 @@ function mount({data,comparison,stopPlayers,eligibleIds}){
   function renderPair(){
     const root=el('direct-comparison');root.replaceChildren();
     if(!state.left||!state.right||state.left===state.right)return;
-    const left=byId.get(state.left),right=byId.get(state.right),result=getIndex().compare(state.left,state.right),heading=make('h2','Chart measurements');root.append(heading);
+    const left=byId.get(state.left),right=byId.get(state.right),result=getIndex().compare(state.left,state.right),heading=make('h2','Chart measurements');root.append(overview.pair(left,right),heading);
     if(result)root.append(make('p','Closest in '+result.closest_groups.map(g=>groups[g].toLowerCase()).join(' and ')+'. Largest difference: '+groups[result.largest_difference].toLowerCase()+'.','comparison-summary'));
     else root.append(make('p','There is not enough shared measurement coverage for a similarity summary.','muted'));
     const table=make('table',undefined,'metric-comparison'),head=make('thead'),tr=make('tr');
@@ -66,10 +67,11 @@ function mount({data,comparison,stopPlayers,eligibleIds}){
   }
   function renderMatches(){
     const root=el('similar-results');root.replaceChildren();if(matches===null)return;
-    root.append(make('h2','Similar chart demands'),make('p',matches.length+' matches · one chart per song family · select a match to compare both charts.','muted'));
+    root.append(make('h2',el('similar-priority').value==='patterns'?'Similar patterns & demands':'Similar chart demands'),make('p',matches.length+' matches · one chart per song family · select a match to compare both charts.','muted'));
     if(!matches.length)root.append(make('p','No other song families match the selected filters with enough measurement coverage. Try widening the chart filters.','empty-state'));
     for(const match of matches){const c=byId.get(match.chart_id),card=make('article',undefined,'similar-chart');card.append(identity(c));
       card.append(make('p','Similar '+match.closest_groups.map(g=>groups[g].toLowerCase()).join(' and '),'muted'));
+      if(match.patterns){const shared=match.patterns.shared;card.append(make('p',shared.length?'Shared: '+shared.map(overview.name).join(' · '):'No shared detections in supported coverage','match-patterns'));if(match.patternDistance==null)card.append(make('p','Pattern coverage insufficient; ranked by measurements','muted'));}
       const button=make('button',state.right===c.chart_id?'Comparing':'Compare');button.setAttribute('aria-label','Compare with '+label(c));button.dataset.compareChart=c.chart_id;button.onclick=()=>{choose('right',c.chart_id);el('direct-comparison').scrollIntoView({block:'start',behavior:'instant'});el('direct-comparison').tabIndex=-1;el('direct-comparison').focus({preventScroll:true});};card.append(button);root.append(card);
     }
   }
@@ -78,7 +80,8 @@ function mount({data,comparison,stopPlayers,eligibleIds}){
     el('comparison-status').textContent=state.left&&state.right?(state.left===state.right?'Both selections are the same chart. Choose another chart to compare.':'Comparing '+label(byId.get(state.left))+' with '+label(byId.get(state.right))):state.left?'Choose a second chart or find similar chart demands.':'Choose a first chart to begin.';
     renderPair();renderMatches();
   }
-  function find(){if(!state.left)return;matches=getIndex().similar(state.left,{limit:8,eligibleIds:el('similar-use-filters').checked?eligibleIds():null});render();el('similar-results').scrollIntoView({block:'start',behavior:'instant'});}
+  function find(){if(!state.left)return;matches=getIndex().similar(state.left,{limit:8,eligibleIds:el('similar-use-filters').checked?eligibleIds():null,patternCompare:el('similar-priority').value==='patterns'?overview.compare:null});render();el('similar-results').scrollIntoView({block:'start',behavior:'instant'});}
+  el('similar-priority').onchange=()=>{if(matches!==null)find();};
   el('find-similar').onclick=find;el('similar-use-filters').onchange=()=>{if(matches!==null)find();};
   el('comparison-clear').onclick=()=>{state.left=state.right=null;matches=null;for(const picker of Object.values(pickers)){picker.input.value='';picker.selection.replaceChildren();picker.results.hidden=true;picker.status.textContent='';}render();writeLink();pickers.left.input.focus();};
   const params=new URLSearchParams(location.search);let missing=false;

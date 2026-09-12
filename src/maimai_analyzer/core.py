@@ -361,6 +361,21 @@ def analysis_fingerprint(chart: dict, config: dict | None = None) -> dict:
     return _prepare_analysis(chart, config)[3]
 
 
+def analyze_overview(chart: dict, config: dict | None = None) -> dict:
+    """Build Flow and experimental tags without section or similarity descriptors."""
+    normalized, policy, registry, identity = _prepare_analysis(chart, config)
+    flow = build_flow(normalized, policy)
+    metrics = _metrics(
+        normalized,
+        flow["frames"],
+        normalized["onsets"],
+        normalized["span_start_us"],
+        normalized["span_end_us"],
+    )
+    _, tags = detect_patterns(normalized, flow, metrics, registry)
+    return {**identity, "flow": flow, "tags": tags}
+
+
 def analyze(chart: dict, config: dict | None = None) -> dict:
     """Analyze explicit normalized events into one deterministic nonpersonal profile."""
     normalized, policy, registry, identity = _prepare_analysis(chart, config)

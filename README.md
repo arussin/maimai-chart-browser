@@ -32,8 +32,10 @@ manifest. The main page links to the research browser, with three views:
   selector containing the exact charts that match the filters, including
   same-level MASTER/RE:MASTER variants. The selected difficulty colors the row
   and supplies its level, source BPM, input rate and comparison actions. Click
-  anywhere else on the row to open details. Three ordered sort rules use the
-  selected chart, including BPM. Changing sort or search retains the filters.
+  anywhere else on the row to open details. Click column headings to sort and
+  reverse; Shift-click or **Keep sort priorities** adds tie-breakers. Visible
+  priority chips can remove a rule. Sorting always uses the selected chart.
+  Changing sort or search retains the filters.
   Source song BPM is display metadata; passages may change tempo. Unknown BPM
   remains unknown and sorts last in either direction.
   **YouTube search** opens a new tab using the song title, chart format and selected
@@ -41,6 +43,10 @@ manifest. The main page links to the research browser, with three views:
   These are searches, not verified video matches; availability is not guaranteed.
   No video, thumbnail or external request loads until a visitor follows a link.
   Blank-title entries have no search link.
+  Prepared experimental pattern tags link to lessons; the pattern filter keeps
+  only matching difficulties. Details show observed counts and chart-time spans.
+  Each row has a 24-section Flow graph with density means and brief peak marks.
+  Mini graphs use their own peak scale; comparisons share one vertical scale.
 - **Pattern dictionary:** all 36 lessons have an authored example and a contrast,
   explanations, variants and limits. Play, Step, speed and progress controls work
   across 72 diagrams. Input patterns use timing and position views; chart traits
@@ -53,8 +59,13 @@ manifest. The main page links to the research browser, with three views:
   chart measurements for input speed, rhythm, simultaneous inputs, holds, slides
   and layout. Similar matches show one chart per song family; optionally apply
   the active chart filters. Links retain both chart IDs and the catalog version.
-  These are experimental demand comparisons, not named-pattern recognition or
-  personal recommendations. Synchronized passage animations remain available
+  Shared and differing patterns, occurrence counts/rates and paired Flow graphs
+  appear before the measurement table. **Patterns & measurements** prioritizes
+  experimental pattern presence, occurrence rate and time covered (60% total),
+  with measured demands contributing 40%. Rarer patterns receive more weight;
+  unsupported coverage never counts as absence. **Measurements** retains the
+  previous ranking. These are experimental comparisons, not qualified community
+  family labels or personal recommendations. Synchronized passage animations remain available
   for prepared pairs, with the original examples under **Prepared passage
   demonstrations**.
 
@@ -62,6 +73,19 @@ The interface follows the report site's white/teal presentation. Dictionary
 links retain the research catalog version and pattern ID. Research data is not
 included in the Python distribution or source repository and cannot accept
 personal results.
+
+To prepare the research pattern/Flow extension from retained inputs:
+
+```sh
+python scripts/build_research_overview.py RETAINED_SOURCE EXISTING_PACKAGE NEW_PACKAGE
+maimai-chart demo --output output/site --lab-package NEW_PACKAGE
+```
+
+This offline command runs the existing 14 experimental detectors and Flow
+calculation for each exact chart, preserving source hashes. It writes resumable
+caches and publishes a new package manifest only after all charts finish. The
+original package, rankings, archives and personal services are unchanged. The
+browser build adds an immutable release; older links retain their earlier data.
 
 ## Download and prepare personal results
 
