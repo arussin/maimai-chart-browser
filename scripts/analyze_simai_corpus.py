@@ -109,6 +109,8 @@ def _relative(root: Path, name: str) -> Path:
     if relative.is_absolute() or any(part in {"..", "."} for part in relative.parts) or ":" in name:
         raise SourceFailure("invalid_source_path", "Source path must stay inside the manifest root")
     try:
+        # Normalize both sides, including Windows short-name aliases, before containment.
+        root = root.resolve()
         path = (root / name).resolve()
     except (OSError, RuntimeError) as error:
         raise SourceFailure("invalid_source_path", "Source path cannot be resolved") from error

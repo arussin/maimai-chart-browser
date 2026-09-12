@@ -64,9 +64,18 @@ test('personal file renders prepared cards, makes no requests, clears and reload
 });
 test('invalid versions, missing charts and duplicate attempts fail without replacing valid data',async({page})=>{
   await open(page);await importValue(page,await personal());
-  for(const edit of [x=>x.schema_version='9.0.0',x=>x.catalog.version='wrong',x=>x.overlay.entries[0].chart_id='missing',x=>x.overlay.entries[0].attempts.push(x.overlay.entries[0].attempts[0])]){
+  for(const edit of [x=>x.schema_version='9.0.0',x=>x.engine_version='9.0.0',x=>x.catalog.version='wrong',x=>x.overlay.entries[0].chart_id='missing',x=>x.overlay.entries[0].attempts.push(x.overlay.entries[0].attempts[0])]){
     const data=await personal();edit(data);await importValue(page,data);await expect(page.locator('#site-status')).toHaveAttribute('data-error','true');
     await expect(page.getByRole('button',{name:'My results',exact:true})).toBeVisible();
+  }
+});
+test('personal bundles from both compatible engine releases remain usable',async({page})=>{
+  await open(page);
+  for(const version of ['0.1.0','0.2.0']){
+    const data=await personal();data.engine_version=version;await importValue(page,data);
+    await expect(page.getByRole('button',{name:'My results',exact:true})).toBeVisible();
+    await expect(page.locator('#personal-targets .explore-target').first()).toBeVisible();
+    await page.locator('#site-clear').click();
   }
 });
 test('personal metadata cannot be copied into shareable comparison URLs',async({page})=>{
@@ -402,7 +411,8 @@ test('BPM sorting keeps missing values last and completed lessons are visible',a
   await expect(page.locator('[data-pattern-id="pattern.umiyuri"] .pattern-description')).toContainText('launch the previous slide at the next pair');
 });
 
-test('all 36 lessons play, step, switch contrasts and preserve privacy',async({page})=>{
+// Keep every lesson covered while giving each small group an independent failure report.
+for(let batch=0;batch<6;batch++)test(`all 36 lessons play, step, switch contrasts and preserve privacy (group ${batch+1}/6)`,async({page})=>{
   test.setTimeout(60000);
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto('/lab/?view=patterns');await expect(page.locator('.pattern-card')).toHaveCount(36);
@@ -412,7 +422,8 @@ test('all 36 lessons play, step, switch contrasts and preserve privacy',async({p
   const ids=await page.locator('[data-open-pattern]').evaluateAll(nodes=>nodes.map(n=>n.dataset.openPattern)),requests=[];
   page.on('request',r=>requests.push(r.url()));
   const dialog=page.locator('#pattern-dialog');
-  for(const id of ids){
+  expect(ids).toHaveLength(36);
+  for(const id of ids.slice(batch*6,(batch+1)*6)){
     await page.locator('[data-open-pattern="'+id+'"]').click();
     for(const name of ['Example','Contrasting example']){
       await dialog.getByRole('button',{name,exact:true}).click();

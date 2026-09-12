@@ -45,7 +45,7 @@
     require(Object.keys(bundle).every(k=>['format','schema_version','catalog','snapshot_id','cutoff_ms','engine_version','settings','mapping_sha256','overlay','recommendations','chart_summaries'].includes(k)), 'Unknown personal-file fields');
     require(!pack.evaluation_only, 'This research catalog cannot use personal results');
     require(object(bundle.catalog) && ['id','version','sha256'].every(k=>bundle.catalog[k]===release[k]), 'This file belongs to a different catalog version. Select its catalog first.');
-    require(bundle.engine_version === '0.1.0', 'Unsupported recommendation engine version');
+    require(['0.1.0','0.2.0'].includes(bundle.engine_version), 'Unsupported recommendation engine version');
     require(typeof bundle.snapshot_id === 'string' && /^[a-f0-9]{64}$/.test(bundle.snapshot_id), 'Invalid snapshot identity');
     require(typeof bundle.mapping_sha256 === 'string' && /^[a-f0-9]{64}$/.test(bundle.mapping_sha256), 'Invalid mapping identity');
     require(Number.isSafeInteger(bundle.cutoff_ms) && bundle.cutoff_ms >= 0 && bundle.cutoff_ms < 8.64e15, 'Invalid snapshot date');

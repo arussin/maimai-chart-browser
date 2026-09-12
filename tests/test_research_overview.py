@@ -16,11 +16,21 @@ from maimai_intelligence.research_overview import (
     overview_package,
     validate_overview,
 )
+from scripts.analyze_simai_corpus import SourceFailure, _relative
 from scripts.build_challenge_package import write
 from scripts.build_research_overview import build
 
 
 class ResearchOverviewTests(unittest.TestCase):
+    def test_source_root_alias_is_resolved_without_allowing_path_escape(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory) / "parent" / ".." / "source"
+            (Path(directory) / "parent").mkdir()
+            root.mkdir()
+            self.assertEqual(_relative(root, "catalog.json"), root.resolve() / "catalog.json")
+            with self.assertRaises(SourceFailure):
+                _relative(root, "../personal.json")
+
     def test_previous_catalog_versions_remain_readable(self):
         chart = synthetic_charts()[0]
         value = overview_package({chart["chart_id"]: chart_overview(chart)})
