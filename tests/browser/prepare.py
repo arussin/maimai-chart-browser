@@ -2,9 +2,12 @@
 
 import json
 import os
+import shutil
+import tempfile
 from pathlib import Path
 
 from maimai_intelligence.lab import build_lab
+from maimai_intelligence.public_release import build_public_release
 from maimai_intelligence.site import build_site
 from maimai_intelligence.snapshots import atomic_json, read_json
 from scripts.build_challenge_package import write
@@ -22,6 +25,12 @@ build_site(pack, root, catalog_version="synthetic-v1")
 atomic_json(Path("output/personal-fixture.json"), bundle)
 build_lab(write_package(Path("output/lab-fixture")), root / "lab", catalog_version="fixture-v5")
 build_capacity_fixture(root)
+# Fixtures can be regenerated; production release directories stay immutable.
+for source, target in [("lab", "progressive"), ("capacity", "progressive-capacity")]:
+    with tempfile.TemporaryDirectory() as temporary:
+        staged = Path(temporary) / "public"
+        build_public_release(root / source, staged)
+        shutil.copytree(staged, root / target, dirs_exist_ok=True)
 build_lab(
     write_package(Path("output/grouped-fixture"), grouped=True),
     root / "grouped",

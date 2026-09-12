@@ -2,7 +2,7 @@ import {test,expect} from '@playwright/test';
 
 // Capacity budgets on a fixed synthetic dataset. These are regression checks,
 // not field Core Web Vitals or a claim about Internet download speed.
-test('7000-chart startup and interactions stay within performance budgets',async({page},testInfo)=>{
+for(const route of ['capacity','progressive-capacity'])test(route+': 7000-chart startup and interactions stay within performance budgets',async({page},testInfo)=>{
   test.skip(testInfo.project.name!=='desktop','Capacity timing uses one desktop configuration');
   await page.addInitScript(()=>{
     window.capacityTiming={parses:[],events:[]};
@@ -13,7 +13,7 @@ test('7000-chart startup and interactions stay within performance budgets',async
       const start=performance.now();requestAnimationFrame(()=>requestAnimationFrame(()=>window.capacityTiming.events.push({type,ms:performance.now()-start})));
     },true);
   });
-  await page.goto('/capacity/');
+  await page.goto('/'+route+'/');
   await expect(page.locator('#catalog-count')).toHaveText('7,000 matching charts in 1,750 song / format rows');
   await expect(page.locator('#lab-status')).toBeEmpty();
   const startup=await page.evaluate(()=>({readyMs:performance.now(),parses:window.capacityTiming.parses}));
@@ -38,7 +38,7 @@ test('7000-chart startup and interactions stay within performance budgets',async
   await expect.poll(()=>page.evaluate(()=>window.capacityTiming.events.filter(x=>x.type==='click').length)).toBe(2);
   const similarity=await page.evaluate(()=>window.capacityTiming.events.at(-1).ms);
   expect(similarity).toBeLessThan(1000);
-  const result={charts:7000,rows:1750,startup,interactions,similarity};
+  const result={route,charts:7000,rows:1750,startup,interactions,similarity};
   console.log('Browser capacity timings:',JSON.stringify(result));
   await testInfo.attach('capacity-timings.json',{body:JSON.stringify(result,null,2),contentType:'application/json'});
 });

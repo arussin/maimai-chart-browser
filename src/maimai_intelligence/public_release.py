@@ -13,6 +13,7 @@ import re
 from pathlib import Path
 
 from .artwork import MEDIA_PATH
+from .catalog_loading import progressive_catalog
 from .snapshots import MAX_BYTES, atomic_json, read_json
 
 PART_BYTES = 8 * 1024 * 1024
@@ -48,8 +49,8 @@ def build_public_release(source, output):
     pending, releases, versions = {}, [], set()
     for name in PUBLIC_FILES:
         pending[name] = _read(source, name, 2 * 1024 * 1024)
-    if b"catalog-parts/" not in pending["lab-loader.js"]:
-        raise ValueError("Rebuild the browser with catalog-part support before publishing")
+    if b"maimaiCatalogDetails" not in pending["lab-loader.js"]:
+        raise ValueError("Rebuild the browser with progressive loading before publishing")
     for entry in manifest["releases"]:
         sha, version = entry.get("sha256"), entry.get("version")
         if (
@@ -86,7 +87,9 @@ def build_public_release(source, output):
             path = f"catalog-parts/{digest}.json"
             pending[path] = part
             parts.append({"path": path, "sha256": digest, "bytes": len(part)})
-        releases.append({**entry, "parts": parts})
+        startup, derived = progressive_catalog(data, sha)
+        pending.update(derived)
+        releases.append({**entry, "parts": parts, **({"startup": startup} if startup else {})})
         for path, record in data.get("artwork", {}).get("assets", {}).items():
             if not MEDIA_PATH.fullmatch(path) or path != f"media/{record['sha256']}.webp":
                 raise ValueError("Invalid public artwork path")
@@ -108,6 +111,8 @@ def build_public_release(source, output):
     pending["lab-redirect.js"] = b"location.replace('/'+location.search+location.hash);\n"
     pending["_headers"] = (
         b"/catalog-parts/*\n  Cache-Control: public, max-age=31536000, immutable\n"
+        b"/catalog-index/*\n  Cache-Control: public, max-age=31536000, immutable\n"
+        b"/chart-details/*\n  Cache-Control: public, max-age=31536000, immutable\n"
         b"/media/*\n  Cache-Control: public, max-age=31536000, immutable\n"
         b"/manifest.json\n  Cache-Control: no-cache\n"
         b"/*\n  X-Content-Type-Options: nosniff\n  Referrer-Policy: no-referrer\n"
@@ -119,7 +124,7 @@ def build_public_release(source, output):
         with destination.open("xb") as stream:
             stream.write(raw)
     atomic_json(
-        output / "manifest.json", {**manifest, "schema_version": "1.1.0", "releases": releases}
+        output / "manifest.json", {**manifest, "schema_version": "1.2.0", "releases": releases}
     )
     return {
         "catalogs": len(releases),

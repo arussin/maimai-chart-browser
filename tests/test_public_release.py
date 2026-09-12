@@ -19,7 +19,7 @@ class PublicReleaseTests(unittest.TestCase):
         self.source, self.output = self.root / "accepted", self.root / "public"
         self.source.mkdir()
         for name in PUBLIC_FILES:
-            (self.source / name).write_text("catalog-parts/", encoding="utf-8")
+            (self.source / name).write_text("catalog-parts/ maimaiCatalogDetails", encoding="utf-8")
         self.raw = canonical({"package": {"status": "research_preview"}, "catalog": ["日本語"]})
         self.sha = hashlib.sha256(self.raw).hexdigest()
         self.path = f"catalogs/{self.sha}.json"
@@ -39,7 +39,7 @@ class PublicReleaseTests(unittest.TestCase):
             result = build_public_release(self.source, self.output)
         manifest = read_json(self.output / "manifest.json")
         entry = manifest["releases"][0]
-        self.assertEqual(manifest["schema_version"], "1.1.0")
+        self.assertEqual(manifest["schema_version"], "1.2.0")
         self.assertEqual(entry["sha256"], self.sha)
         self.assertGreater(len(entry["parts"]), 1)
         self.assertEqual(
