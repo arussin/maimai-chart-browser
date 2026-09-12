@@ -28,6 +28,12 @@ an independent-fan-project rights notice and **Credits & thanks**. See
 [attribution and source roles](THIRD_PARTY_NOTICES.md). The project repository
 remains private, and branding the preview does not deploy to the domain.
 
+The published HTTPS site includes optional Google Analytics for broad page views.
+It loads only after visitor opt-in; local previews are excluded. Personal files,
+searches, chart selections and full URLs are never analytics event data. The
+footer includes privacy details and a way to withdraw consent without clearing
+results. See [Analytics setup and launch verification](docs/ANALYTICS.md).
+
 To open the full research browser alongside Explore, add
 `--lab-package PATH/TO/challenge-v1` to the demo or site command. It verifies the
 pinned research package and externalizes its data behind an immutable release
@@ -47,7 +53,7 @@ manifest. The main page links to the research browser, with three views:
   **YouTube search** opens a new tab using the song title, chart format and selected
   difficulty. The same links appear on comparison selections and similar matches.
   These are searches, not verified video matches; availability is not guaranteed.
-  No video, thumbnail or external request loads until a visitor follows a link.
+  No YouTube video, thumbnail or request loads until a visitor follows a link.
   Blank-title entries have no search link.
   Prepared experimental pattern tags link to lessons; the pattern filter keeps
   only matching difficulties. Details show observed counts and chart-time spans.

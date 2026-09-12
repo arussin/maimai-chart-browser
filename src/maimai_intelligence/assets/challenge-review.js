@@ -47,6 +47,7 @@ function selectView(name){
   window.maimaiPatternLibrary.stop();
   if(name==='catalog')catalog();else if(name==='compare'){render();comparisonUI?.render();}else window.maimaiPatternLibrary.render();
   const url=new URL(location.href);url.searchParams.set('view',name);url.searchParams.delete('pattern');history.replaceState(null,'',url);
+  window.dispatchEvent(new Event('maimai:viewchange'));
 }
 function openSample(index){
   el('query').value=String(index);

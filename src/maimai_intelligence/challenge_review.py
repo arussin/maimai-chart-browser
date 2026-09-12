@@ -86,6 +86,7 @@ def render_review(
             "chart-filters.css",
             "support-footer.css",
             "site-brand.css",
+            "analytics.css",
         )
     )
     html = assets.joinpath("challenge-review.html").read_text("utf-8")

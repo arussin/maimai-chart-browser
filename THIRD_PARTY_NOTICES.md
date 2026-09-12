@@ -56,3 +56,13 @@ upstream tools, teaching references and tools reviewed without adoption.
 Pinned artwork URLs and hashes remain in the separately prepared artwork
 manifest. The GitHub link does not change repository visibility; hosting on
 maimai.party and any public release are separate rollout steps.
+
+## Optional website analytics
+
+[Google Analytics](https://analytics.google.com/) is an optional hosted service
+for visits and broad page views on the published maimai.party domain. The Google
+tag loads from Google's servers only after visitor opt-in. Google's script is
+not bundled or licensed under this project's MIT license. The footer links to
+Google's privacy policy, explains the data boundaries and provides withdrawal.
+Personal results, searches and chart selections are excluded. See
+[configuration and validation](docs/ANALYTICS.md).

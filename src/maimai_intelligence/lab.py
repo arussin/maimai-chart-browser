@@ -87,7 +87,7 @@ def build_lab(package_directory, output, *, catalog_version):
         manifest["releases"].append(entry)
     manifest["default"] = catalog_version
     assets = files("maimai_intelligence.assets")
-    for name in ("challenge-review.css", "lab-loader.js"):
+    for name in ("challenge-review.css", "lab-loader.js", "analytics.js"):
         atomic_write_text(root / name, assets.joinpath(name).read_text("utf-8"))
     atomic_write_text(root / "challenge-review.js", review_scripts())
     atomic_write_text(
@@ -104,7 +104,9 @@ def build_lab(package_directory, output, *, catalog_version):
         + "\n"
         + assets.joinpath("support-footer.css").read_text("utf-8")
         + "\n"
-        + assets.joinpath("site-brand.css").read_text("utf-8"),
+        + assets.joinpath("site-brand.css").read_text("utf-8")
+        + "\n"
+        + assets.joinpath("analytics.css").read_text("utf-8"),
     )
     html = re.sub(
         r"<style>.*?</style>",
@@ -123,11 +125,16 @@ def build_lab(package_directory, output, *, catalog_version):
         "<title>",
         '<meta name="referrer" content="no-referrer">'
         '<meta http-equiv="Content-Security-Policy" content="'
-        "default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; "
-        "connect-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'none'; "
+        "default-src 'none'; script-src 'self' https://www.googletagmanager.com/gtag/js; "
+        "style-src 'self' 'unsafe-inline'; "
+        "connect-src 'self' https://www.google-analytics.com https://region1.google-analytics.com; "
+        "img-src 'self' data: https://www.google-analytics.com "
+        "https://region1.google-analytics.com; "
+        "object-src 'none'; base-uri 'none'; "
         "form-action 'none'"
         '">\n<title>',
     )
+    html = html.replace("</head>", '<script defer src="analytics.js"></script></head>')
     atomic_write_text(root / "index.html", html)
     atomic_json(manifest_path, manifest)
     return root / "index.html"

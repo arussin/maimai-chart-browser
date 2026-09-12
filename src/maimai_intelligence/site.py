@@ -74,6 +74,8 @@ def build_site(pack, output, *, catalog_version, lab_package=None):
         "site.css",
         "site-brand.css",
         "support-footer.css",
+        "analytics.css",
+        "analytics.js",
         "index.html",
     ):
         content = assets.joinpath(name).read_text("utf-8")
