@@ -106,6 +106,7 @@ def render_review(
             .read_text("utf-8")
             .replace('<details class="footer-credits">', '<details class="footer-credits" open>'),
         )
+        .replace("__CREATOR_SUPPORT__", assets.joinpath("creator-support.html").read_text("utf-8"))
         .replace(
             "__ANALYTICS_CONTROLS__", assets.joinpath("analytics-controls.html").read_text("utf-8")
         )

@@ -89,6 +89,7 @@ def build_site(pack, output, *, catalog_version, lab_package=None):
             content = content.replace(
                 "__SUPPORT_FOOTER__",
                 assets.joinpath("support-footer.html").read_text("utf-8")
+                + assets.joinpath("creator-support.html").read_text("utf-8")
                 + assets.joinpath("analytics-controls.html").read_text("utf-8"),
             )
         atomic_write_text(
