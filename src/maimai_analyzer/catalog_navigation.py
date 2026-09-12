@@ -59,6 +59,14 @@ def source_bpm(text):
     return value if 1 <= value <= 2000 else None
 
 
+def source_constant(value):
+    """Retain an explicit decimal from the source, without deriving one from a label."""
+    if not isinstance(value, str) or not re.fullmatch(r"[0-9]{1,2}(?:\.[0-9])?", value):
+        return None
+    number = float(value)
+    return number if 0 < number <= 15 else None
+
+
 def build_navigation(catalog, rows, *, bpm_by_source=None):
     """Join verified source-inventory rows by exact input and body, never title.
 
@@ -91,6 +99,7 @@ def build_navigation(catalog, rows, *, bpm_by_source=None):
             "source_path": path,
             "source_hash": chart["source_hash"],
             "bpm": (bpm_by_source or {}).get(row.get("source_raw_sha256")),
+            "chart_constant": source_constant(row.get("source_level")),
         }
     present = {c["version"] for c in charts.values()}
     ordered = [v for v in reversed(VERSIONS) if v in present]
@@ -109,5 +118,10 @@ def build_navigation(catalog, rows, *, bpm_by_source=None):
         },
         "basis": (
             "Pinned pack genre folders and container version/wholebpm fields; display metadata only"
+        ),
+        "constant_basis": (
+            "Decimal lv fields from the pinned source pack, joined by exact source chart and body. "
+            "Values reflect that source revision; not independently verified current game "
+            "constants or qualified personal rating inputs."
         ),
     }

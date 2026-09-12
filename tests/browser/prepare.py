@@ -25,6 +25,11 @@ build_site(pack, root, catalog_version="synthetic-v1")
 atomic_json(Path("output/personal-fixture.json"), bundle)
 build_lab(write_package(Path("output/lab-fixture")), root / "lab", catalog_version="fixture-v5")
 build_capacity_fixture(root)
+build_lab(
+    write_package(Path("output/constant-fixture"), grouped=True, constants=True),
+    root / "constants",
+    catalog_version="constants-v1",
+)
 # Fixtures can be regenerated; production release directories stay immutable.
 for source, target in [("lab", "progressive"), ("capacity", "progressive-capacity")]:
     with tempfile.TemporaryDirectory() as temporary:
