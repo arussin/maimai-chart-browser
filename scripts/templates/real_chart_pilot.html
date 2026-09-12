@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'">
+  <title>Real-chart analysis pilot</title>
+  <style>
+    :root { color-scheme: light; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; background: #f3f8fa; color: #193e49;
+      font: 16px/1.6 system-ui, sans-serif;
+    }
+    main { max-width: 1100px; margin: auto; padding: 32px 24px; }
+    header {
+      padding: 30px; border-top: 6px solid #00a6b5; border-radius: 18px;
+      background: linear-gradient(115deg, #dff5f8, #fffce9);
+    }
+    h1, h2, h3, p { margin: 0 0 12px; }
+    h1 { max-width: 720px; font-size: 34px; line-height: 1.2; }
+    h2 { font-size: 23px; line-height: 1.35; }
+    h3 { font-size: 16px; }
+    .eyebrow { font-weight: 750; font-size: 12px; letter-spacing: .12em; }
+    .subtitle { margin-top: 16px; font-size: 18px; font-weight: 600; }
+    .cards, .slide-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .cards { gap: 18px; margin: 24px 0 12px; }
+    article, section {
+      min-width: 0; padding: 24px; border: 1px solid #ccdee3;
+      border-radius: 14px; background: white;
+    }
+    section { margin-bottom: 20px; }
+    .difficulty {
+      display: inline-block; padding: 4px 10px; border-radius: 7px;
+      color: white; font-size: 12px; font-weight: 750; letter-spacing: .03em;
+    }
+    .expert { background: $expert_color; }
+    .master { background: $master_color; }
+    .total { font-size: 40px; line-height: 1.3; font-weight: 750; }
+    .total span { margin-left: 10px; font-size: 14px; font-weight: 500; }
+    .muted { color: #526d78; font-size: 13px; }
+    .count-status { margin-top: 16px; font-size: 13px; font-weight: 600; }
+    .status {
+      display: inline-block; margin-right: 5px; padding: 2px 8px;
+      border-radius: 20px; font-size: 12px; font-weight: 750; white-space: nowrap;
+    }
+    .agrees { color: #175f43; background: #e2f4e9; }
+    .mismatch { color: #9f252b; background: #fde8e8; }
+    .flow { display: flex; height: 24px; gap: 2px; margin: 20px 0 6px; }
+    .flow span { flex: 1; min-width: 0; border-radius: 2px; }
+    .scale { display: flex; flex-wrap: wrap; gap: 14px; margin: 0 0 24px; font-size: 12px; }
+    .scale span::before {
+      content: ""; display: inline-block; width: 12px; height: 12px;
+      margin-right: 5px; vertical-align: -1px; border-radius: 2px; background: var(--color);
+    }
+    details { margin-top: 18px; }
+    .flow-detail { margin-top: 5px; font-size: 13px; }
+    summary { cursor: pointer; font-weight: 650; padding: 8px 0; }
+    summary:focus-visible, a:focus-visible { outline: 3px solid #007b8c; outline-offset: 4px; }
+    details[open] summary { margin-bottom: 12px; }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th, td { padding: 10px 8px; border-bottom: 1px solid #dfe9ed; text-align: left; }
+    th { font-weight: 600; }
+    thead th { color: #526d78; font-size: 12px; }
+    tbody th { width: 48%; }
+    code { font: 13px ui-monospace, monospace; overflow-wrap: anywhere; }
+    .slide-grid { gap: 14px; margin-top: 16px; }
+    .slide-card { padding: 16px; background: #f8fbfc; }
+    .slide-card h3 { display: flex; align-items: center; justify-content: space-between; }
+    .slide-card th, .slide-card td { padding: 8px 4px; font-size: 12px; }
+    .slide-card tbody th { width: 35%; }
+    .callout { padding: 14px 18px; border-left: 4px solid #a64ac4; background: #f8f0fb; }
+    .section-status { font-size: 18px; font-weight: 700; }
+    a { color: #006f81; text-underline-offset: 2px; }
+    li { margin-bottom: 8px; }
+    footer { padding: 0 4px 12px; }
+    @media (max-width: 700px) {
+      main { padding: 16px 12px; }
+      header, section, .chart-card { padding: 20px 16px; }
+      h1 { font-size: 28px; }
+      h2 { font-size: 21px; }
+      .cards, .slide-grid { grid-template-columns: 1fr; }
+      .cards { gap: 14px; }
+      th, td { padding: 9px 5px; font-size: 12px; }
+      tbody th { width: 44%; }
+      .slide-card { padding: 14px; }
+      .scale { gap: 8px 12px; }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <p class="eyebrow">MAIMAI · OFFLINE ANALYSIS PILOT</p>
+    <h1>Two real transcriptions, one quality check</h1>
+    <p class="subtitle">$title · Expert and Master</p>
+    <p>Public community transcriptions. Game-chart fidelity remains unverified.</p>
+    <p class="muted">No player scores or recommendation predictions.</p>
+  </header>
+
+  <div class="cards">$cards</div>
+  <div class="scale" aria-label="Flow color scale in input onsets per second">
+    $flow_legend
+    <span style="--color:#71858a">Unknown</span>
+  </div>
+
+  <section>
+    <h2>Reconstruct the chart first</h2>
+    <p>Each cell is <strong>parsed / independently published</strong>. Tap counts include star
+      heads; slide paths are counted separately. Matching totals is a useful check, not proof
+      of every position or time.</p>
+    $count_table
+    <p class="muted">Reference:
+      <a href="https://gamerch.com/maimai/533675">community chart metadata</a>.</p>
+  </section>
+
+  <section>
+    <h2>What the current analyzer measures</h2>
+    $metric_table
+    <p class="muted">Rates and occupancy use the observed event span, not an assumed audio
+      duration. They describe structure, not personal difficulty.</p>
+    <details>
+      <summary>Experimental pattern detections</summary>
+      <p>Project definitions with synthetic tests. Counts are not community-family accuracy
+        scores. A dash means no positive detection under the current grammar.</p>
+      $tag_table
+    </details>
+  </section>
+
+  <section>
+    <h2>First chorus: inspect the timing</h2>
+    <p class="section-status">$onset_passed/$onset_total onset groups ·
+      $slide_passed/$slide_total slide paths agree</p>
+    <p>Compared with a separately calculated Master rubric at 60–64s. The rubric expects
+      a first pair at 60.25s and its slide launch at 60.75s. Times are relative to the
+      notation; audio alignment is unknown.</p>
+    <details>
+      <summary>Compare each onset group</summary>
+      $onset_table
+    </details>
+    <details open>
+      <summary>Compare slide heads, movement and shape notation</summary>
+      <p class="muted">Shape symbols are preserved from notation. These checks do not
+        validate path geometry or gameplay synchronization.</p>
+      <div class="slide-grid">$slide_cards</div>
+    </details>
+    <p class="callout"><strong>Umiyuri tagging remains unavailable.</strong> Generic slide/tap
+      interactions do not recognize the full named pattern. This pilot does not validate
+      coaching recommendations.</p>
+  </section>
+
+  <section>
+    <h2>Next evidence needed</h2>
+    <ul>
+      <li>Check positions, slide shapes and timing against gameplay or an independent
+        chart source, beyond matching note totals.</li>
+      <li>Label positives and confusing alternatives on several different songs before
+        measuring pattern recognition or similarity usefulness.</li>
+      <li>Evaluate recommendation outcomes separately, after chart evidence is reliable.</li>
+    </ul>
+    <p class="muted">Input hashes and detailed measurements are in the accompanying
+      <a href="results.json">results JSON</a>. Evaluation profiles are excluded from the
+      production catalog.</p>
+  </section>
+  <footer class="muted">
+    <a href="https://w.atwiki.jp/simai/pages/336.html">Chart transcription source</a> ·
+    <a href="https://w.atwiki.jp/simai/pages/1003.html">Notation specification</a>
+  </footer>
+</main>
+</body>
+</html>

@@ -1,0 +1,160 @@
+{
+  "charts": 6959,
+  "legacy_tags_unchanged": 62631,
+  "counts": {
+    "pattern.chord_stream": {
+      "detected": 5858,
+      "not-detected-with-supported-coverage": 1101
+    },
+    "pattern.connected_slide_chain": {
+      "detected": 860,
+      "not-detected-with-supported-coverage": 6099
+    },
+    "pattern.delayed_slide_interleave": {
+      "detected": 5065,
+      "not-detected-with-supported-coverage": 1894
+    },
+    "pattern.direction_reversal": {
+      "not-detected-with-supported-coverage": 6212,
+      "detected": 747
+    },
+    "pattern.gallop_pairs": {
+      "not-detected-with-supported-coverage": 5660,
+      "detected": 1299
+    },
+    "pattern.hold_slide_overlap": {
+      "detected": 2153,
+      "not-detected-with-supported-coverage": 4806
+    },
+    "pattern.hold_tap_interleave": {
+      "detected": 3699,
+      "not-detected-with-supported-coverage": 3260
+    },
+    "pattern.moving_slide_overlap": {
+      "detected": 4869,
+      "not-detected-with-supported-coverage": 2090
+    },
+    "pattern.offbeat_onsets": {
+      "not-detected-with-supported-coverage": 6153,
+      "detected": 806
+    },
+    "pattern.perimeter_run": {
+      "not-detected-with-supported-coverage": 5337,
+      "detected": 1622
+    },
+    "pattern.same_head_slide_fan": {
+      "not-detected-with-supported-coverage": 5169,
+      "detected": 1790
+    },
+    "pattern.same_position_repetition": {
+      "detected": 5218,
+      "not-detected-with-supported-coverage": 1741
+    },
+    "pattern.simultaneous_group": {
+      "detected": 6937,
+      "not-detected-with-supported-coverage": 22
+    },
+    "pattern.slide_tap_interleave": {
+      "not-detected-with-supported-coverage": 4061,
+      "detected": 2898
+    },
+    "pattern.staggered_slide_starts": {
+      "not-detected-with-supported-coverage": 6482,
+      "detected": 477
+    },
+    "pattern.tap_staircase": {
+      "detected": 3624,
+      "not-detected-with-supported-coverage": 3335
+    },
+    "pattern.three_note_burst": {
+      "not-detected-with-supported-coverage": 5785,
+      "detected": 1174
+    },
+    "pattern.touch_tap_interleave": {
+      "not-detected-with-supported-coverage": 6931,
+      "detected": 28
+    },
+    "pattern.triplet_grid": {
+      "not-detected-with-supported-coverage": 6205,
+      "detected": 754
+    },
+    "pattern.two_position_alternation": {
+      "not-detected-with-supported-coverage": 5752,
+      "detected": 1207
+    },
+    "pattern.umiyuri": {
+      "not-detected-with-supported-coverage": 6942,
+      "detected": 17
+    },
+    "pattern.variable_slide_wait": {
+      "not-detected-with-supported-coverage": 6957,
+      "detected": 2
+    },
+    "trait.backloaded_density": {
+      "not-detected-with-supported-coverage": 6585,
+      "detected": 374
+    },
+    "trait.break_concentration": {
+      "not-detected-with-supported-coverage": 6484,
+      "detected": 475
+    },
+    "trait.bursty_density": {
+      "detected": 6921,
+      "not-detected-with-supported-coverage": 38
+    },
+    "trait.frontloaded_density": {
+      "not-detected-with-supported-coverage": 6952,
+      "detected": 7
+    },
+    "trait.high_onset_density": {
+      "not-detected-with-supported-coverage": 5448,
+      "detected": 1511
+    },
+    "trait.isolated_density_spike": {
+      "not-detected-with-supported-coverage": 6298,
+      "detected": 661
+    },
+    "trait.isolated_pattern_sections": {
+      "detected": 6804,
+      "not-detected-with-supported-coverage": 155
+    },
+    "trait.low_onset_gaps": {
+      "detected": 6338,
+      "not-detected-with-supported-coverage": 621
+    },
+    "trait.multi_peak_density": {
+      "not-detected-with-supported-coverage": 4543,
+      "detected": 2416
+    },
+    "trait.repeated_motif": {
+      "not-detected-with-supported-coverage": 4590,
+      "detected": 2369
+    },
+    "trait.rhythm_variability": {
+      "not-detected-with-supported-coverage": 5458,
+      "detected": 1501
+    },
+    "trait.slide_occupancy": {
+      "not-detected-with-supported-coverage": 6953,
+      "detected": 6
+    },
+    "trait.steady_density": {
+      "not-detected-with-supported-coverage": 6786,
+      "detected": 173
+    },
+    "trait.sustained_density": {
+      "not-detected-with-supported-coverage": 5896,
+      "detected": 1063
+    }
+  },
+  "catalog_version": "research-8295bb80a71d",
+  "detector_version": "0.2.0",
+  "source": {
+    "repository": "Neskol/Maichart-Converts",
+    "revision": "e164add85213bab150e1487d5eb15ccb631aedb9",
+    "credit": "Neskol / Maichart-Converts; converted with MaichartConverter",
+    "notice": "Upstream describes research use and prohibits commercial use. Original charts and media belong to their respective copyright holders.",
+    "url": "https://github.com/Neskol/Maichart-Converts"
+  },
+  "qualification": "Automated operational-rule coverage and regression parity, not independent label accuracy. Counts concern exact chart variants, not unique songs."
+}

@@ -1,0 +1,97 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>maimai.party · Chart browser</title><style>__CSS__</style></head><body>
+<a class="skip-link" href="#catalog">Skip to charts</a>
+<header class="site-header"><div class="brand">__SITE_BRAND__
+<span class="brand-caption">Chart browser</span></div>
+<nav aria-label="Views"><button id="catalog-tab" aria-pressed="true"><span>Charts</span></button>
+<button id="patterns-tab" aria-pressed="false"><span>Pattern dictionary</span> <small class="nav-status">experimental</small></button>
+<button id="compare-tab" aria-pressed="false"><span>Compare charts</span> <small class="nav-status">experimental</small></button></nav></header>
+<main><section id="catalog" tabindex="-1">
+<div class="page-heading"><div><p class="eyebrow">EXPLORE THE MUSIC</p><h1>Find a chart.</h1>
+<p class="lede">Choose your mix of genre, level and version. Keep every filter as you sort.</p></div>
+<p class="catalog-total"><strong id="loaded-count"></strong> charts<span id="catalog-era" title="Coverage of the retained research source, not a complete current-game song list.">Research catalog</span></p></div>
+<div class="catalog-controls"><label class="search-field">Search songs
+<input id="search" type="search" placeholder="Song, romaji title or artist…"></label>
+<div class="format-switch" role="group" aria-label="Chart format">
+<button id="format-all" aria-pressed="true">All charts</button>
+<button id="format-STD" aria-pressed="false">STD</button>
+<button id="format-DX" aria-pressed="false">DX</button></div>
+<button id="reset-filters" class="text-button">Reset filters</button></div>
+<div class="filter-row">
+<label>Genre<select id="filter-genre"><option value="">All genres</option></select></label>
+<div class="version-field"><span id="version-label">Version</span>
+<details id="version-filter"><summary id="version-summary">All versions</summary>
+<div class="version-panel"><button id="version-clear" type="button" class="text-button">All versions</button>
+<div id="version-options" role="group" aria-labelledby="version-label"></div></div></details></div>
+<div class="difficulty-field"><span id="difficulty-label">Difficulty</span>
+<details id="difficulty-filter"><summary id="difficulty-summary">All difficulties</summary>
+<div class="difficulty-panel"><button id="difficulty-clear" type="button" class="text-button">All difficulties</button>
+<div id="difficulty-options" role="group" aria-labelledby="difficulty-label"></div></div></details></div>
+<div class="level-field" role="group" aria-labelledby="level-label">
+<div class="level-heading"><span id="level-label">Level range</span><button id="level-clear" type="button" class="text-button">Reset levels</button></div>
+<div class="level-values"><label for="filter-min">From<input id="filter-min" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" aria-describedby="level-hint level-error"></label>
+<span aria-hidden="true">–</span><label for="filter-max">To<input id="filter-max" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" aria-describedby="level-hint level-error"></label></div>
+<div id="level-range" class="level-range"><div class="level-track"><span></span></div>
+<input id="level-min-slider" type="range" aria-label="Minimum level" aria-describedby="level-hint">
+<input id="level-max-slider" type="range" aria-label="Maximum level" aria-describedby="level-hint"></div>
+<p id="level-hint">Drag handles, or type 13, 13+ or 13.5.</p><p id="level-error" role="status"></p></div></div>
+<div class="sort-toolbar"><p id="catalog-count" role="status"></p>
+<label class="check"><input id="sort-keep" type="checkbox">Keep sort priorities</label></div>
+<div id="sort-rules" class="sort-priorities" role="group" aria-label="Sort priorities"></div>
+<div id="active-filters" class="active-filters" role="group" aria-label="Active filters"></div>
+<p class="row-help muted">One row per song and chart format. Choose a matching difficulty to update its measurements. Sort rules use the selected chart.</p>
+<div class="pattern-filter-row"><div class="pattern-filter-field"><span id="pattern-filter-label">Patterns or chart traits</span>
+<details id="pattern-filter"><summary id="pattern-filter-summary">All patterns</summary>
+<div class="pattern-filter-panel"><label>Find patterns<input id="pattern-filter-search" type="search" placeholder="Name or alias…" autocomplete="off" aria-controls="pattern-filter-options"></label>
+<div class="pattern-filter-toolbar"><p>Match any selected pattern.</p><button id="pattern-filter-clear" type="button" class="text-button">Clear patterns</button></div>
+<p id="pattern-filter-count" class="muted" role="status"></p><div id="pattern-filter-options" role="group" aria-labelledby="pattern-filter-label"></div>
+<p id="pattern-filter-empty" hidden>No patterns match this search.</p></div></details></div><p class="muted" id="mapping-note"></p></div>
+<p class="sort-help muted">Click a column to sort; click again to reverse. Shift-click, or turn on Keep sort priorities, to add a tie-breaker.</p>
+<div class="column-labels" role="group" aria-label="Sort by column"><button data-sort-key="title">Song / artist</button><button data-sort-key="difficulty">Difficulty</button><button data-sort-key="level">Level</button><button data-sort-key="bpm">BPM</button><button data-sort-key="speed">Inputs / s</button><button data-sort-key="peak">Flow · peak</button></div>
+<div id="songs"></div><button id="more">Show more songs</button></section>
+<section id="patterns" hidden>
+<div class="page-heading"><div><p class="eyebrow">LEARN THE SHAPES</p><h1>Pattern dictionary.</h1>
+<p class="lede">Understand a pattern, watch it unfold, then explore how it differs from others.</p></div></div>
+<div class="catalog-controls"><label class="search-field">Find a pattern
+<input id="pattern-search" type="search" placeholder="Name, alias or description…"></label>
+<label>Show<select id="pattern-scope"><option value="all">All lessons</option>
+<option value="patterns">Patterns</option><option value="traits">Chart traits</option></select></label></div>
+<p id="pattern-count" class="muted" role="status"></p>
+<p class="reference-note">Watch an example and its contrast, then find charts with the same shape. Chart matches are experimental and may miss some variants; each lesson explains the rule and its limits. Older catalogs may have fewer mapped patterns. The Umiyuri lesson and recognizer cover one documented recurring-pair form.</p>
+<div id="pattern-list" class="pattern-grid"></div>
+</section>
+<section id="compare" hidden>
+<div class="page-heading"><div><p class="eyebrow">SIDE BY SIDE</p><h1>Compare charts.</h1>
+<p class="lede">Choose any two charts, or start with one and find similar chart demands.</p></div></div>
+<div id="comparison-pickers" class="comparison-pickers"></div>
+<div class="comparison-actions"><button id="find-similar" type="button" disabled>Find similar to first chart</button>
+<label>Prioritize<select id="similar-priority"><option value="patterns">Patterns & measurements</option><option value="measurements">Measurements</option></select></label>
+<label class="check"><input id="similar-use-filters" type="checkbox">Use chart filters for matches</label>
+<button id="comparison-clear" type="button" class="text-button">Clear comparison</button></div>
+<p id="comparison-status" class="muted" role="status">Choose a first chart to begin.</p>
+<div id="direct-comparison"></div><div id="similar-results"></div>
+<details class="comparison-method"><summary>What this comparison tells you</summary>
+<p>Patterns &amp; measurements gives 60% weight to experimental pattern similarity and 40% to measured demands. Pattern similarity combines presence (50%), occurrence rate (30%) and time covered (20%); rarer detected patterns carry more weight. Only patterns with supported coverage on both charts contribute; charts with insufficient coverage fall back to measurements and follow covered matches. Measurements uses input speed, rhythm, simultaneous inputs, holds, slides and layout alone. Neither mode is a difficulty or practice-benefit estimate.</p>
+<p>Passage animations are available for the prepared pairs below. Other pairs can be compared by their chart measurements.</p></details>
+<details id="prepared-examples" class="prepared-examples"><summary>Prepared passage demonstrations</summary>
+<p id="sample-intro" class="reference-note"></p><div class="toolbar">
+<label class="query-label">Starting chart <select id="query"></select></label></div>
+<div id="query-card"></div><div id="matches"></div>
+<details class="feedback"><summary>Help improve the comparisons</summary>
+<p>Your optional judgments stay in this page until you save them.</p>
+<div class="toolbar"><label class="check"><input type="checkbox" id="feedback"> Enable feedback</label>
+<label class="check"><input type="checkbox" id="blind" disabled>Hide ranking order and reasons</label>
+<button id="download" disabled>Save judgments</button></div>
+<p id="review-status" role="status"></p></details></details></section>
+<dialog id="pattern-dialog" aria-labelledby="pattern-title"></dialog>
+<footer class="sources"><details><summary>About this research catalog</summary><p id="coverage"></p>
+<p>Source levels and categories are shown. Official constants, regional availability and chart-addition dates are not independently verified. Utage is excluded.</p>
+<p>Comparisons are experimental and are not personalized practice recommendations. Named-pattern chart labels still require independent review.</p>
+<p>Passage animation uses chart time, without audio. Straight and center-V slides are schematic. Unsupported paths are labeled.</p>
+<p id="credit"></p><p id="notice"></p><p>Maichart-Converts · Neskol/Maichart-Converts on GitHub</p>
+<p id="artwork-credit" hidden></p>
+<code id="revision"></code></details></footer>
+__SUPPORT_FOOTER__</main>
+<script id="pattern-data" type="application/json">__PATTERNS__</script>
+<script id="challenge-data" type="application/json">__DATA__</script><script>__JS__</script></body></html>

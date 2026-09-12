@@ -1,0 +1,3145 @@
+{
+  "version": "pattern-lessons-1",
+  "basis": "Authored teaching illustrations; no real-chart assignments",
+  "lessons": {
+    "pattern.two_position_alternation": {
+      "summary": "Alternate between two positions: A, B, A, B.",
+      "watch": "Follow the evenly spaced notes. Every next note changes to the other position.",
+      "contrast": "A, A, B, B repeats positions in pairs instead of alternating on every note.",
+      "variants": "The two positions and speed can change. Simultaneous notes or extra positions need a separate description.",
+      "example": {
+        "kind": "notes",
+        "duration": 4,
+        "unit": "beats",
+        "notes": [
+          [
+            0.5,
+            1,
+            "tap"
+          ],
+          [
+            1,
+            5,
+            "tap"
+          ],
+          [
+            1.5,
+            1,
+            "tap"
+          ],
+          [
+            2,
+            5,
+            "tap"
+          ],
+          [
+            2.5,
+            1,
+            "tap"
+          ],
+          [
+            3,
+            5,
+            "tap"
+          ]
+        ],
+        "slides": [],
+        "holds": [],
+        "bands": []
+      },
+      "counterexample": {
+        "kind": "notes",
+        "duration": 4,
+        "unit": "beats",
+        "notes": [
+          [
+            0.5,
+            1,
+            "tap"
+          ],
+          [
+            1,
+            1,
+            "tap"
+          ],
+          [
+            1.5,
+            5,
+            "tap"
+          ],
+          [
+            2,
+            5,
+            "tap"
+          ],
+          [
+            2.5,
+            1,
+            "tap"
+          ],
+          [
+            3,
+            1,
+            "tap"
+          ]
+        ],
+        "slides": [],
+        "holds": [],
+        "bands": []
+      },
+      "scope": "Authored illustration of this project's descriptive definition.",
+      "sources": [],
+      "review_status": "authored_and_checked_not_independently_validated"
+    },
+    "pattern.same_position_repetition": {
+      "summary": "Tap the same position repeatedly.",
+      "watch": "Each circle is a new input, even though it returns to the same place.",
+      "contrast": "One long hold has a single beginning. It is not a series of repeated taps.",
+      "variants": "Spacing may vary. Button repetition and touch repetition should keep their input type visible.",
+      "example": {
+        "kind": "notes",
+        "duration": 4,
+        "unit": "beats",
+        "notes": [
+          [
+            0.5,
+            1,
+            "tap"
+          ],
+          [
+            1,
+            1,
+            "tap"
+          ],
+          [
+            1.5,
+            1,
+            "tap"
+          ],
+          [
+            2,
+            1,
+            "tap"
+          ],
+          [
+            2.5,
+            1,
+            "tap"
+          ],
+          [
+            3,
+            1,
+            "tap"
+          ]
+        ],
+        "slides": [],
+        "holds": [],
+        "bands": []
+      },
+      "counterexample": {
+        "kind": "notes",
+        "duration": 4,
+        "unit": "beats",
+        "notes": [
+          [
+            0.5,
+            1,
+            "hold"
+          ]
+        ],
+        "slides": [],
+        "holds": [
+          [
+            0.5,
+            3,
+            1
+          ]
+        ],
+        "bands": []
+      },
+      "scope": "Authored illustration of this project's descriptive definition.",
+      "sources": [],
+      "review_status": "authored_and_checked_not_independently_validated"
+    },
+    "pattern.gallop_pairs": {
+      "summary": "Repeat short-long timing pairs.",
+      "watch": "Read the gaps: short, long, short, long. The pattern is in the spacing between inputs.",
+      "contrast": "Evenly spaced inputs have no alternating short-long gap.",
+      "variants": "Positions and the gap ratio may change. This descriptive label does not specify one musical subdivision.",
+      "example": {
+        "kind": "notes",
+        "duration": 4,
+        "unit": "beats",
+        "notes": [
+          [
+            0.5,
+            1,
+            "tap"
+          ],
+          [
+            0.75,
+            5,
+            "tap"
+          ],
+          [
+            1.5,
+            1,
+            "tap"
+          ],
+          [
+            1.75,
+            5,
+            "tap"
+          ],
+          [
+            2.5,
+            1,
+            "tap"
+          ],
+          [
+            2.75,
+            5,
+            "tap"
+          ],
+          [
+            3.5,
+            1,
+            "tap"
+          ],
+          [
+            3.75,
+            5,
+            "tap"
+          ]
+        ],
+        "slides": [],
+        "holds": [],
+        "bands": []
+      },
+      "counterexample": {
+        "kind": "notes",
+        "duration": 4,
+        "unit": "beats",
+        "notes": [
+          [
+            0.25,
+            1,
+            "tap"
+          ],
+          [
+            0.75,
+            5,
+            "tap"
+          ],
+          [
+            1.25,
+            1,
+            "tap"
+          ],
+          [
+            1.75,
+            5,
+            "tap"
+          ],
+          [
+            2.25,
+            1,
+            "tap"
+          ],
+          [
+            2.75,
+            5,
+            "tap"
+          ],
+          [
+            3.25,
+            1,
+            "tap"
+          ],
+          [
+            3.75,
+            5,
+            "tap"
+          ]
+        ],
+        "slides": [],
+        "holds": [],
+        "bands": []
+      },
+      "scope": "Authored illustration of this project's descriptive definition.",
+      "sources": [],
+      "review_status": "authored_and_checked_not_independently_validated"
+    },
+    "pattern.three_note_burst": {
+      "summary": "Three close inputs form one short burst.",
+      "watch": "Longer gaps separate each group of three from the next group.",
+      "contrast": "A continuous stream has no larger gap marking three-note groups.",
+      "variants": "A three-note burst can use many rhythms. Three notes do not automatically mean triplets.",
+      "example": {
+        "kind": "notes",
+        "duration": 4,
+        "unit": "beats",
+        "notes": [
+          [
+            0.5,
+            1,
+            "tap"
+          ],
+          [
+            0.75,
+            5,
+            "tap"
+          ],
+          [
+            1,
+            1,
+            "tap"
+          ],
+          [
+            2.5,
+            5,
+            "tap"
+          ],
+          [
+            2.75,
+            1,
+            "tap"
+          ],
+          [
+            3,
+            5,
+            "tap"
+          ]
+        ],
+        "slides": [],
+        "holds": [],
+        "bands": []
+      },
+      "counterexample": {
+        "kind": "notes",
+        "duration": 4,
+        "unit": "beats",
+        "notes": [
+          [
+            0.5,
+            1,
+            "tap"
+          ],
+          [
+            0.75,
+            5,
+            "tap"
+          ],
+          [
+            1,
+            1,
+            "tap"
+          ],
+          [
+            1.25,
+            5,
+            "tap"
+          ],
+          [
+            1.5,
+            1,
+            "tap"
+          ],
+          [
+            1.75,
+            5,
+            "tap"
+          ]
+        ],
+        "slides": [],
+        "holds": [],
+        "bands": []
+      },
+      "scope": "Authored illustration of this project's descriptive definition.",
+      "sources": [],
+      "review_status": "authored_and_checked_not_independently_validated"
+    },
+    "pattern.triplet_grid": {
+      "summary": "Divide each beat into three equal parts.",
+      "watch": "Three evenly spaced inputs fit between each pair of whole-beat guide lines.",
+      "contrast": "Four equal inputs per beat use a four-part subdivision, even if only three happen to be visible.",
+      "variants": "The beat reference matters. Counting three notes alone cannot establish a triplet rhythm.",
+      "example": {
+        "kind": "notes",
+        "duration": 4,
+        "unit": "beats",
+        "notes": [
+          [
+            1.0,
+            1,
+            "tap"
+          ],
+          [
+            1.3333333333333333,
+            5,
+            "tap"
+          ],
+          [
+            1.6666666666666665,
+            1,
+            "tap"
+          ],
+          [
+            2.0,
+            5,
+            "tap"
+          ],
+          [
+            2.333333333333333,
+            1,
+            "tap"
+          ],
+          [
+            2.666666666666667,
+            5,
+            "tap"
+          ],
+          [
+            3.0,
+            1,
+            "tap"
+          ],
+          [
+            3.3333333333333335,
+            5,
+            "tap"
+          ],
+          [
+            3.6666666666666665,
+            1,
+            "tap"
+          ]
+        ],
+        "slides": [],
+        "holds": [],
+        "bands": []
+      },
+      "counterexample": {
+        "kind": "notes",
+        "duration": 4,
+        "unit": "beats",
+        "notes": [
+          [
+            1.0,
+            1,
+            "tap"
+          ],
+          [
+            1.25,
+            5,
+            "tap"
+          ],
+          [
+            1.5,
+            1,
+            "tap"
+          ],
+          [
+            1.75,
+            5,
+            "tap"
+          ],
+          [
+            2.0,
+            1,
+            "tap"
+          ],
+          [
+            2.25,
+            5,
+            "tap"
+          ],
+          [
+            2.5,
+            1,
+            "tap"
+          ],
+          [
+            2.75,
+            5,
+            "tap"
+          ],
+          [
+            3.0,
+            1,
+            "tap"
+          ],
+          [
+            3.25,
+            5,
+            "tap"
+          ],
+          [
+            3.5,
+            1,
+            "tap"
+          ],
+          [
+            3.75,
+            5,
+            "tap"
+          ]
+        ],
+        "slides": [],
+        "holds": [],
+        "bands": []
+      },
+      "scope": "Authored illustration of this project's descriptive definition.",
+      "sources": [],
+      "review_status": "authored_and_checked_not_independently_validated"
+    },
+    "pattern.offbeat_onsets": {
+      "summary": "Repeat inputs between the main beats.",
+      "watch": "These notes land halfway between the numbered beat lines.",
+      "contrast": "Notes on the numbered lines are on the beat, not the offbeat shown here.",
+      "variants": "This lesson illustrates the half-beat offbeat. Other displaced phases should be named explicitly.",
+      "example": {
+        "kind": "notes",
+        "duration": 4,
+        "unit": "beats",
+        "notes": [
+          [
+            0.5,
+            1,
+            "tap"
+          ],
+          [
+            1.5,
+            5,
+            "tap"
+          ],
+          [
+            2.5,
+            1,
+            "tap"
+          ],
+          [
+            3.5,
+            5,
+            "tap"
+          ]
+        ],
+        "slides": [],
+        "holds": [],
+        "bands": []
+      },
+      "counterexample": {
+        "kind": "notes",
+        "duration": 4,
+        "unit": "beats",
+        "notes": [
+          [
+            0,
+            1,
+            "tap"
+          ],
+          [
+            1,
+            5,
+            "tap"
+          ],
+          [
+            2,
+            1,
+            "tap"
+          ],
+          [
+            3,
+            5,
+            "tap"
+          ]
+        ],
+        "slides": [],
+        "holds": [],
+        "bands": []
+      },
+      "scope": "Authored illustration of this project's descriptive definition.",
+      "sources": [],
+      "review_status": "authored_and_checked_not_independently_validated"
+    },
+    "pattern.simultaneous_group": {
+      "summary": "Play two or more inputs together.",
+      "watch": "Notes aligned vertically share one authored time.",
+      "contrast": "A small time gap makes these successive inputs, even if they look close together.",
+      "variants": "The input types and positions can vary. Visual proximity alone does not establish simultaneity.",
+      "example": {
+        "kind": "notes",
+        "duration": 4,
+        "unit": "beats",
+        "notes": [
+          [
+            1,
+            1,
+            "tap"
+          ],
+          [
+            1,
+            5,
+            "tap"
+          ],
+          [
+            2,
+            1,
+            "tap"
+          ],
+          [
+            2,
+            5,
+            "tap"
+          ],
+          [
+            3,
+            1,
+            "tap"
+          ],
+          [
+            3,
+            5,
+            "tap"
+          ]
+        ],
+        "slides": [],
+        "holds": [],
+        "bands": []
+      },
+      "counterexample": {
+        "kind": "notes",
+        "duration": 4,
+        "unit": "beats",
+        "notes": [
+          [
+            1,
+            1,
+            "tap"
+          ],
+          [
+            1.2,
+            5,
+            "tap"
+          ],
+          [
+            2,
+            1,
+            "tap"
+          ],
+          [
+            2.2,
+            5,
+            "tap"
+          ],
+          [
+            3,
+            1,
+            "tap"
+          ],
+          [
+            3.2,
+            5,
+            "tap"
+          ]
+        ],
+        "slides": [],
+        "holds": [],
+        "bands": []
+      },
+      "scope": "Authored illustration of this project's descriptive definition.",
+      "sources": [],
+      "review_status": "authored_and_checked_not_independently_validated"
+    },
+    "pattern.chord_stream": {
+      "summary": "Repeat groups of simultaneous inputs.",
+      "watch": "Each time column contains a pair, and the paired groups continue in sequence.",
+      "contrast": "One simultaneous pair followed by single inputs is not a stream of paired groups.",
+      "variants": "Group size, positions and spacing may change. No particular hand assignment is implied.",
+      "example": {
+        "kind": "notes",
+        "duration": 4,
+        "unit": "beats",
+        "notes": [
+          [
+            0.5,
+            1,
+            "tap"
+          ],
+          [
+            0.5,
+            5,
+            "tap"
+          ],
+          [
+            1,
+            1,
+            "tap"
+          ],
+          [
+            1,
+            5,
+            "tap"
+          ],
+          [
+            1.5,
+            1,
+            "tap"
+          ],
+          [
+            1.5,
+            5,
+            "tap"
+          ],
+          [
+            2,
+            1,
+            "tap"
+          ],
+          [
+            2,
+            5,
+            "tap"
+          ],
+          [
+            2.5,
+            1,
+            "tap"
+          ],
+          [
+            2.5,
+            5,
+            "tap"
+          ],
+          [
+            3,
+            1,
+            "tap"
+          ],
+          [
+            3,
+            5,
+            "tap"
+          ]
+        ],
+        "slides": [],
+        "holds": [],
+        "bands": []
+      },
+      "counterexample": {
+        "kind": "notes",
+        "duration": 4,
+        "unit": "beats",
+        "notes": [
+          [
+            0.5,
+            1,
+            "tap"
+          ],
+          [
+            0.5,
+            5,
+            "tap"
+          ],
+          [
+            1,
+            1,
+            "tap"
+          ],
+          [
+            1.5,
+            5,
+            "tap"
+          ],
+          [
+            2,
+            1,
+            "tap"
+          ],
+          [
+            2.5,
+            5,
+            "tap"
+          ],
+          [
+            3,
+            1,
+            "tap"
+          ]
+        ],
+        "slides": [],
+        "holds": [],
+        "bands": []
+      },
+      "scope": "Authored illustration of this project's descriptive definition.",
+      "sources": [],
+      "review_status": "authored_and_checked_not_independently_validated"
+    },
+    "pattern.tap_staircase": {
+      "summary": "Step through neighboring buttons along a short arc.",
+      "watch": "The highlighted position moves 1 → 2 → 3 → 4, one neighboring button at a time.",
+      "contrast": "The 1 → 3 → 5 → 7 sequence skips buttons; it is not this neighboring-button staircase.",
+      "variants": "A staircase can start elsewhere or reverse its direction. A long traversal is described as a perimeter run.",
+      "example": {
+        "kind": "notes",
+        "duration": 4,
+        "unit": "beats",
+        "notes": [
+          [
+            0.5,
+            1,
+            "tap"
+          ],
+          [
+            1,
+            2,
+            "tap"
+          ],
+          [
+            1.5,
+            3,
+            "tap"
+          ],
+          [
+            2,
+            4,
+            "tap"
+          ]
+        ],
+        "slides": [],
+        "holds": [],
+        "bands": []
+      },
+      "counterexample": {
+        "kind": "notes",
+        "duration": 4,
+        "unit": "beats",
+        "notes": [
+          [
+            0.5,
+            1,
+            "tap"
+          ],
+          [
+            1,
+            3,
+            "tap"
+          ],
+          [
+            1.5,
+            5,
+            "tap"
+          ],
+          [
+            2,
+            7,
+            "tap"
+          ]
+        ],
+        "slides": [],
+        "holds": [],
+        "bands": []
+      },
+      "scope": "Authored illustration of this project's descriptive definition.",
+      "sources": [],
+      "review_status": "authored_and_checked_not_independently_validated"
+    },
+    "pattern.perimeter_run": {
+      "summary": "Progress around much of the outer button ring.",
+      "watch": "The sequence visits all eight buttons in ring order.",
+      "contrast": "Alternating between two opposite buttons does not travel around the ring.",
+      "variants": "Runs can cover a partial or full circuit and begin at any position. This example makes no claim about required hands.",
+      "example": {
+        "kind": "notes",
+        "duration": 5,
+        "unit": "beats",
+        "notes": [
+          [
+            0.5,
+            1,
+            "tap"
+          ],
+          [
+            1.0,
+            2,
+            "tap"
+          ],
+          [
+            1.5,
+            3,
+            "tap"
+          ],
+          [
+            2.0,
+            4,
+            "tap"
+          ],
+          [
+            2.5,
+            5,
+            "tap"
+          ],
+          [
+            3.0,
+            6,
+            "tap"
+          ],
+          [
+            3.5,
+            7,
+            "tap"
+          ],
+          [
+            4.0,
+            8,
+            "tap"
+          ]
+        ],
+        "slides": [],
+        "holds": [],
+        "bands": []
+      },
+      "counterexample": {
+        "kind": "notes",
+        "duration": 5,
+        "unit": "beats",
+        "notes": [
+          [
+            0.5,
+            1,
+            "tap"
+          ],
+          [
+            1.0,
+            5,
+            "tap"
+          ],
+          [
+            1.5,
+            1,
+            "tap"
+          ],
+          [
+            2.0,
+            5,
+            "tap"
+          ],
+          [
+            2.5,
+            1,
+            "tap"
+          ],
+          [
+            3.0,
+            5,
+            "tap"
+          ],
+          [
+            3.5,
+            1,
+            "tap"
+          ],
+          [
+            4.0,
+            5,
+            "tap"
+          ]
+        ],
+        "slides": [],
+        "holds": [],
+        "bands": []
+      },
+      "scope": "Authored illustration of this project's descriptive definition.",
+      "sources": [],
+      "review_status": "authored_and_checked_not_independently_validated"
+    },
+    "pattern.direction_reversal": {
+      "summary": "Change direction within a button run.",
+      "watch": "The sequence goes 1 → 2 → 3 → 4, then returns through 3 → 2 → 1.",
+      "contrast": "Continuing 1 → 2 → 3 → 4 → 5 → 6 → 7 keeps the same direction.",
+      "variants": "The turn can occur anywhere. A jump across the ring is not enough to establish a reversed traversal.",
+      "example": {
+        "kind": "notes",
+        "duration": 4,
+        "unit": "beats",
+        "notes": [
+          [
+            0.5,
+            1,
+            "tap"
+          ],
+          [
+            1.0,
+            2,
+            "tap"
+          ],
+          [
+            1.5,
+            3,
+            "tap"
+          ],
+          [
+            2.0,
+            4,
+            "tap"
+          ],
+          [
+            2.5,
+            3,
+            "tap"
+          ],
+          [
+            3.0,
+            2,
+            "tap"
+          ],
+          [
+            3.5,
+            1,
+            "tap"
+          ]
+        ],
+        "slides": [],
+        "holds": [],
+        "bands": []
+      },
+      "counterexample": {
+        "kind": "notes",
+        "duration": 4,
+        "unit": "beats",
+        "notes": [
+          [
+            0.5,
+            1,
+            "tap"
+          ],
+          [
+            1.0,
+            2,
+            "tap"
+          ],
+          [
+            1.5,
+            3,
+            "tap"
+          ],
+          [
+            2.0,
+            4,
+            "tap"
+          ],
+          [
+            2.5,
+            5,
+            "tap"
+          ],
+          [
+            3.0,
+            6,
+            "tap"
+          ],
+          [
+            3.5,
+            7,
+            "tap"
+          ]
+        ],
+        "slides": [],
+        "holds": [],
+        "bands": []
+      },
+      "scope": "Authored illustration of this project's descriptive definition.",
+      "sources": [],
+      "review_status": "authored_and_checked_not_independently_validated"
+    },
+    "pattern.same_head_slide_fan": {
+      "summary": "One star starts multiple slide branches.",
+      "watch": "Both paths share the same star input at button 1. The head is pressed once.",
+      "contrast": "Two separate stars at different buttons start independent slides, not one shared-head fan.",
+      "variants": "Branch paths and timing can differ. Count the shared physical head once.",
+      "example": {
+        "kind": "notes",
+        "duration": 4,
+        "unit": "beats",
+        "notes": [
+          [
+            0.5,
+            1,
+            "star"
+          ]
+        ],
+        "slides": [
+          [
+            0.5,
+            1.5,
+            3.5,
+            [
+              1,
+              3
+            ]
+          ],
+          [
+            0.5,
+            1.5,
+            3.5,
+            [
+              1,
+              7
+            ]
+          ]
+        ],
+        "holds": [],
+        "bands": []
+      },
+      "counterexample": {
+        "kind": "notes",
+        "duration": 4,
+        "unit": "beats",
+        "notes": [
+          [
+            0.5,
+            1,
+            "star"
+          ],
+          [
+            0.5,
+            5,
+            "star"
+          ]
+        ],
+        "slides": [
+          [
+            0.5,
+            1.5,
+            3.5,
+            [
+              1,
+              3
+            ]
+          ],
+          [
+            0.5,
+            1.5,
+            3.5,
+            [
+              5,
+              7
+            ]
+          ]
+        ],
+        "holds": [],
+        "bands": []
+      },
+      "scope": "Authored illustration of this project's descriptive definition.",
+      "sources": [],
+      "review_status": "authored_and_checked_not_independently_validated"
+    },
+    "pattern.staggered_slide_starts": {
+      "summary": "Start overlapping slide movements at different times.",
+      "watch": "The second solid movement line starts while the first is still moving.",
+      "contrast": "Both movements starting together creates overlap without staggered starts.",
+      "variants": "Different star times do not guarantee different movement starts; compare the solid lines after each wait.",
+      "example": {
+        "kind": "notes",
+        "duration": 4,
+        "unit": "beats",
+        "notes": [
+          [
+            0.5,
+            1,
+            "star"
+          ],
+          [
+            1,
+            5,
+            "star"
+          ]
+        ],
+        "slides": [
+          [
+            0.5,
+            1.5,
+            3.5,
+            [
+              1,
+              3
+            ]
+          ],
+          [
+            1,
+            2,
+            3.5,
+            [
+              5,
+              7
+            ]
+          ]
+        ],
+        "holds": [],
+        "bands": []
+      },
+      "counterexample": {
+        "kind": "notes",
+        "duration": 4,
+        "unit": "beats",
+        "notes": [
+          [
+            0.5,
+            1,
+            "star"
+          ],
+          [
+            0.5,
+            5,
+            "star"
+          ]
+        ],
+        "slides": [
+          [
+            0.5,
+            1.5,
+            3.5,
+            [
+              1,
+              3
+            ]
+          ],
+          [
+            0.5,
+            1.5,
+            3.5,
+            [
+              5,
+              7
+            ]
+          ]
+        ],
+        "holds": [],
+        "bands": []
+      },
+      "scope": "Authored illustration of this project's descriptive definition.",
+      "sources": [],
+      "review_status": "authored_and_checked_not_independently_validated"
+    },
+    "pattern.moving_slide_overlap": {
+      "summary": "Two or more slide paths move at once.",
+      "watch": "The solid movement intervals overlap. Waiting paths do not count as moving.",
+      "contrast": "The first path finishes exactly when the second starts. Their movements do not overlap.",
+      "variants": "Head times and path shapes can vary; the defining feature is a shared interval of movement.",
+      "example": {
+        "kind": "notes",
+        "duration": 4,
+        "unit": "beats",
+        "notes": [
+          [
+            0.5,
+            1,
+            "star"
+          ],
+          [
+            1,
+            5,
+            "star"
+          ]
+        ],
+        "slides": [
+          [
+            0.5,
+            1.5,
+            3.5,
+            [
+              1,
+              3
+            ]
+          ],
+          [
+            1,
+            2,
+            3.75,
+            [
+              5,
+              7
+            ]
+          ]
+        ],
+        "holds": [],
+        "bands": []
+      },
+      "counterexample": {
+        "kind": "notes",
+        "duration": 4,
+        "unit": "beats",
+        "notes": [
+          [
+            0,
+            1,
+            "star"
+          ],
+          [
+            1,
+            5,
+            "star"
+          ]
+        ],
+        "slides": [
+          [
+            0,
+            0.5,
+            2,
+            [
+              1,
+              3
+            ]
+          ],
+          [
+            1,
+            2,
+            3.75,
+            [
+              5,
+              7
+            ]
+          ]
+        ],
+        "holds": [],
+        "bands": []
+      },
+      "scope": "Authored illustration of this project's descriptive definition.",
+      "sources": [],
+      "review_status": "authored_and_checked_not_independently_validated"
+    },
+    "pattern.slide_tap_interleave": {
+      "summary": "Tap while another slide is moving.",
+      "watch": "The independent tap lands inside the slide's solid movement interval.",
+      "contrast": "A tap during the dashed waiting interval is a waiting-phase interaction instead.",
+      "variants": "Many arrangements contain this broad interaction. It does not by itself identify Umiyuri.",
+      "example": {
+        "kind": "notes",
+        "duration": 4,
+        "unit": "beats",
+        "notes": [
+          [
+            0.5,
+            1,
+            "star"
+          ],
+          [
+            2,
+            5,
+            "tap"
+          ],
+          [
+            3,
+            5,
+            "tap"
+          ]
+        ],
+        "slides": [
+          [
+            0.5,
+            1.5,
+            3.5,
+            [
+              1,
+              3
+            ]
+          ]
+        ],
+        "holds": [],
+        "bands": []
+      },
+      "counterexample": {
+        "kind": "notes",
+        "duration": 4,
+        "unit": "beats",
+        "notes": [
+          [
+            0.5,
+            1,
+            "star"
+          ],
+          [
+            1,
+            5,
+            "tap"
+          ]
+        ],
+        "slides": [
+          [
+            0.5,
+            1.5,
+            3.5,
+            [
+              1,
+              3
+            ]
+          ]
+        ],
+        "holds": [],
+        "bands": []
+      },
+      "scope": "Authored illustration of this project's descriptive definition.",
+      "sources": [],
+      "review_status": "authored_and_checked_not_independently_validated"
+    },
+    "pattern.delayed_slide_interleave": {
+      "summary": "Tap during another slide's waiting interval.",
+      "watch": "The tap occurs after the star input but before the solid movement line begins.",
+      "contrast": "This tap lands after movement starts, outside the waiting interval.",
+      "variants": "Wait length can vary. The slide's own head is not an independent intervening tap.",
+      "example": {
+        "kind": "notes",
+        "duration": 4,
+        "unit": "beats",
+        "notes": [
+          [
+            0.5,
+            1,
+            "star"
+          ],
+          [
+            1,
+            5,
+            "tap"
+          ]
+        ],
+        "slides": [
+          [
+            0.5,
+            1.5,
+            3.5,
+            [
+              1,
+              3
+            ]
+          ]
+        ],
+        "holds": [],
+        "bands": []
+      },
+      "counterexample": {
+        "kind": "notes",
+        "duration": 4,
+        "unit": "beats",
+        "notes": [
+          [
+            0.5,
+            1,
+            "star"
+          ],
+          [
+            2,
+            5,
+            "tap"
+          ]
+        ],
+        "slides": [
+          [
+            0.5,
+            1.5,
+            3.5,
+            [
+              1,
+              3
+            ]
+          ]
+        ],
+        "holds": [],
+        "bands": []
+      },
+      "scope": "Authored illustration of this project's descriptive definition.",
+      "sources": [],
+      "review_status": "authored_and_checked_not_independently_validated"
+    },
+    "pattern.variable_slide_wait": {
+      "summary": "Change the delay from star input to slide movement.",
+      "watch": "Compare the dashed waits: the first lasts one beat and the second lasts half a beat.",
+      "contrast": "These two slides have the same wait. Different travel lengths alone would not change that.",
+      "variants": "Compare waits in a stated unit. A tempo change can alter seconds without changing the wait in beats.",
+      "example": {
+        "kind": "notes",
+        "duration": 5,
+        "unit": "beats",
+        "notes": [
+          [
+            0.5,
+            1,
+            "star"
+          ],
+          [
+            3,
+            5,
+            "star"
+          ]
+        ],
+        "slides": [
+          [
+            0.5,
+            1.5,
+            2.5,
+            [
+              1,
+              3
+            ]
+          ],
+          [
+            3,
+            3.5,
+            4.5,
+            [
+              5,
+              7
+            ]
+          ]
+        ],
+        "holds": [],
+        "bands": []
+      },
+      "counterexample": {
+        "kind": "notes",
+        "duration": 5,
+        "unit": "beats",
+        "notes": [
+          [
+            0.5,
+            1,
+            "star"
+          ],
+          [
+            3,
+            5,
+            "star"
+          ]
+        ],
+        "slides": [
+          [
+            0.5,
+            1.5,
+            2.5,
+            [
+              1,
+              3
+            ]
+          ],
+          [
+            3,
+            4,
+            4.75,
+            [
+              5,
+              7
+            ]
+          ]
+        ],
+        "holds": [],
+        "bands": []
+      },
+      "scope": "Authored illustration of this project's descriptive definition.",
+      "sources": [],
+      "review_status": "authored_and_checked_not_independently_validated"
+    },
+    "pattern.connected_slide_chain": {
+      "summary": "Follow several connected segments as one slide.",
+      "watch": "One star begins the continuous route 1 → 3 → 5 → 7. The intermediate points are not new inputs.",
+      "contrast": "Three separately started slides each have their own star and wait.",
+      "variants": "Real connected segments may use different shapes or speeds. The straight segments here illustrate continuity only.",
+      "example": {
+        "kind": "notes",
+        "duration": 5,
+        "unit": "beats",
+        "notes": [
+          [
+            0.5,
+            1,
+            "star"
+          ]
+        ],
+        "slides": [
+          [
+            0.5,
+            1.5,
+            4.5,
+            [
+              1,
+              3,
+              5,
+              7
+            ]
+          ]
+        ],
+        "holds": [],
+        "bands": []
+      },
+      "counterexample": {
+        "kind": "notes",
+        "duration": 5,
+        "unit": "beats",
+        "notes": [
+          [
+            0,
+            1,
+            "star"
+          ],
+          [
+            1.5,
+            3,
+            "star"
+          ],
+          [
+            3,
+            5,
+            "star"
+          ]
+        ],
+        "slides": [
+          [
+            0,
+            0.5,
+            1.5,
+            [
+              1,
+              3
+            ]
+          ],
+          [
+            1.5,
+            2,
+            3,
+            [
+              3,
+              5
+            ]
+          ],
+          [
+            3,
+            3.5,
+            4.5,
+            [
+              5,
+              7
+            ]
+          ]
+        ],
+        "holds": [],
+        "bands": []
+      },
+      "scope": "Authored illustration of this project's descriptive definition.",
+      "sources": [],
+      "review_status": "authored_and_checked_not_independently_validated"
+    },
+    "pattern.hold_tap_interleave": {
+      "summary": "Keep one input held while other taps arrive.",
+      "watch": "The long amber interval is active when the independent taps appear.",
+      "contrast": "Here the hold ends before the taps start, so they do not occur during it.",
+      "variants": "The held input can be a supported touch hold. A hold beginning is one input, not a repeated-tap stream.",
+      "example": {
+        "kind": "notes",
+        "duration": 4,
+        "unit": "beats",
+        "notes": [
+          [
+            0.5,
+            1,
+            "hold"
+          ],
+          [
+            1.5,
+            5,
+            "tap"
+          ],
+          [
+            2.5,
+            5,
+            "tap"
+          ]
+        ],
+        "slides": [],
+        "holds": [
+          [
+            0.5,
+            3,
+            1
+          ]
+        ],
+        "bands": []
+      },
+      "counterexample": {
+        "kind": "notes",
+        "duration": 4,
+        "unit": "beats",
+        "notes": [
+          [
+            0.5,
+            1,
+            "hold"
+          ],
+          [
+            1.5,
+            5,
+            "tap"
+          ],
+          [
+            2.5,
+            5,
+            "tap"
+          ]
+        ],
+        "slides": [],
+        "holds": [
+          [
+            0.5,
+            1,
+            1
+          ]
+        ],
+        "bands": []
+      },
+      "scope": "Authored illustration of this project's descriptive definition.",
+      "sources": [],
+      "review_status": "authored_and_checked_not_independently_validated"
+    },
+    "pattern.hold_slide_overlap": {
+      "summary": "A hold stays active while a slide moves.",
+      "watch": "The hold interval and solid slide movement share part of the timeline.",
+      "contrast": "The hold ends at the slide's launch, so only its waiting interval overlaps the hold.",
+      "variants": "Do not infer a required hand assignment from these intervals. Positions and geometry still matter.",
+      "example": {
+        "kind": "notes",
+        "duration": 4,
+        "unit": "beats",
+        "notes": [
+          [
+            0.5,
+            1,
+            "star"
+          ],
+          [
+            0.5,
+            5,
+            "hold"
+          ]
+        ],
+        "slides": [
+          [
+            0.5,
+            1.5,
+            3.5,
+            [
+              1,
+              3
+            ]
+          ]
+        ],
+        "holds": [
+          [
+            0.5,
+            3,
+            5
+          ]
+        ],
+        "bands": []
+      },
+      "counterexample": {
+        "kind": "notes",
+        "duration": 4,
+        "unit": "beats",
+        "notes": [
+          [
+            0.5,
+            1,
+            "star"
+          ],
+          [
+            0.5,
+            5,
+            "hold"
+          ]
+        ],
+        "slides": [
+          [
+            0.5,
+            1.5,
+            3.5,
+            [
+              1,
+              3
+            ]
+          ]
+        ],
+        "holds": [
+          [
+            0.5,
+            1.5,
+            5
+          ]
+        ],
+        "bands": []
+      },
+      "scope": "Authored illustration of this project's descriptive definition.",
+      "sources": [],
+      "review_status": "authored_and_checked_not_independently_validated"
+    },
+    "pattern.touch_tap_interleave": {
+      "summary": "Alternate inner touch inputs with button taps.",
+      "watch": "Square marks are touches in the inner screen area; circles are perimeter-button taps.",
+      "contrast": "Alternating between two perimeter buttons changes position but never changes to an inner touch.",
+      "variants": "Touch positions and order can vary. A touch at the same time as a button is a simultaneous mixed group.",
+      "example": {
+        "kind": "notes",
+        "duration": 4,
+        "unit": "beats",
+        "notes": [
+          [
+            0.5,
+            1,
+            "tap"
+          ],
+          [
+            1,
+            "C",
+            "touch"
+          ],
+          [
+            1.5,
+            5,
+            "tap"
+          ],
+          [
+            2,
+            "B1",
+            "touch"
+          ],
+          [
+            2.5,
+            1,
+            "tap"
+          ],
+          [
+            3,
+            "C",
+            "touch"
+          ]
+        ],
+        "slides": [],
+        "holds": [],
+        "bands": []
+      },
+      "counterexample": {
+        "kind": "notes",
+        "duration": 4,
+        "unit": "beats",
+        "notes": [
+          [
+            0.5,
+            1,
+            "tap"
+          ],
+          [
+            1,
+            5,
+            "tap"
+          ],
+          [
+            1.5,
+            1,
+            "tap"
+          ],
+          [
+            2,
+            5,
+            "tap"
+          ],
+          [
+            2.5,
+            1,
+            "tap"
+          ],
+          [
+            3,
+            5,
+            "tap"
+          ]
+        ],
+        "slides": [],
+        "holds": [],
+        "bands": []
+      },
+      "scope": "Authored illustration of this project's descriptive definition.",
+      "sources": [],
+      "review_status": "authored_and_checked_not_independently_validated"
+    },
+    "pattern.umiyuri": {
+      "summary": "Repeat a star-and-tap pair, an intervening tap, then launch the previous slide at the next pair.",
+      "watch": "Step through pair → intervening tap → next pair plus previous launch. The star role alternates between the two starting positions.",
+      "contrast": "One tap during one slide lacks this recurring phase relationship.",
+      "variants": "This lesson shows one regular form. Omitted taps, changed paths and phrase boundaries need variant-specific treatment; no compulsory hands are assigned.",
+      "example": {
+        "kind": "notes",
+        "duration": 5,
+        "unit": "beats",
+        "notes": [
+          [
+            0.5,
+            1,
+            "tap"
+          ],
+          [
+            0.5,
+            8,
+            "star"
+          ],
+          [
+            1,
+            7,
+            "tap"
+          ],
+          [
+            1.5,
+            1,
+            "star"
+          ],
+          [
+            1.5,
+            8,
+            "tap"
+          ],
+          [
+            2,
+            2,
+            "tap"
+          ],
+          [
+            2.5,
+            1,
+            "tap"
+          ],
+          [
+            2.5,
+            8,
+            "star"
+          ],
+          [
+            3,
+            7,
+            "tap"
+          ],
+          [
+            3.5,
+            1,
+            "star"
+          ],
+          [
+            3.5,
+            8,
+            "tap"
+          ],
+          [
+            4,
+            2,
+            "tap"
+          ]
+        ],
+        "slides": [
+          [
+            0.5,
+            1.5,
+            2,
+            [
+              8,
+              4
+            ]
+          ],
+          [
+            1.5,
+            2.5,
+            3,
+            [
+              1,
+              5
+            ]
+          ],
+          [
+            2.5,
+            3.5,
+            4,
+            [
+              8,
+              4
+            ]
+          ],
+          [
+            3.5,
+            4.5,
+            5,
+            [
+              1,
+              5
+            ]
+          ]
+        ],
+        "holds": [],
+        "bands": []
+      },
+      "counterexample": {
+        "kind": "notes",
+        "duration": 5,
+        "unit": "beats",
+        "notes": [
+          [
+            0.5,
+            1,
+            "star"
+          ],
+          [
+            2,
+            5,
+            "tap"
+          ]
+        ],
+        "slides": [
+          [
+            0.5,
+            1.5,
+            3,
+            [
+              1,
+              3
+            ]
+          ]
+        ],
+        "holds": [],
+        "bands": []
+      },
+      "scope": "Illustration inferred from the cited explanations. It is not a song transcription or a complete definition of every Umiyuri variant.",
+      "sources": [
+        {
+          "label": "なめあ: first-chorus explanation",
+          "url": "https://note.com/namea_chunibyo/n/n8c7bc59683ff",
+          "note": "Text and illustrated timing explanation; one scoped form."
+        },
+        {
+          "label": "Surone: The Umiyuri Pattern Explained",
+          "url": "https://www.youtube.com/watch?v=DQgnFASwiOM",
+          "note": "Retained transcript review: 3:59–7:12 and 12:03–13:45; automatic captions may contain errors."
+        }
+      ],
+      "review_status": "authored_and_checked_not_independently_validated"
+    },
+    "trait.high_onset_density": {
+      "summary": "Many new inputs arrive in a short time.",
+      "watch": "This example has 12 inputs per second, compared with 3 in the contrast. The vertical axes use the same scale.",
+      "contrast": "The lower rate is less dense under this stated comparison.",
+      "variants": "High density needs a stated threshold or reference group. Break value and ongoing movement do not add new onsets.",
+      "example": {
+        "kind": "bars",
+        "duration": 12,
+        "unit": "seconds",
+        "series": [
+          {
+            "label": "Inputs / s",
+            "values": [
+              12,
+              12,
+              12,
+              12,
+              12,
+              12,
+              12,
+              12,
+              12,
+              12,
+              12,
+              12
+            ]
+          }
+        ],
+        "bands": []
+      },
+      "counterexample": {
+        "kind": "bars",
+        "duration": 12,
+        "unit": "seconds",
+        "series": [
+          {
+            "label": "Inputs / s",
+            "values": [
+              3,
+              3,
+              3,
+              3,
+              3,
+              3,
+              3,
+              3,
+              3,
+              3,
+              3,
+              3
+            ]
+          }
+        ],
+        "bands": []
+      },
+      "scope": "Authored illustration of this project's descriptive definition.",
+      "sources": [],
+      "review_status": "authored_and_checked_not_independently_validated"
+    },
+    "trait.bursty_density": {
+      "summary": "Short busy bursts interrupt quieter stretches.",
+      "watch": "The isolated busy sections rise sharply above the chart's usual activity.",
+      "contrast": "An even rate has no local burst, even if its overall input count is substantial.",
+      "variants": "Bin width affects apparent burst size. A density burst is not necessarily a three-note burst.",
+      "example": {
+        "kind": "bars",
+        "duration": 12,
+        "unit": "seconds",
+        "series": [
+          {
+            "label": "Inputs / s",
+            "values": [
+              2,
+              2,
+              16,
+              14,
+              2,
+              2,
+              2,
+              15,
+              14,
+              2,
+              2,
+              2
+            ]
+          }
+        ],
+        "bands": []
+      },
+      "counterexample": {
+        "kind": "bars",
+        "duration": 12,
+        "unit": "seconds",
+        "series": [
+          {
+            "label": "Inputs / s",
+            "values": [
+              6,
+              6,
+              6,
+              6,
+              6,
+              6,
+              6,
+              6,
+              6,
+              6,
+              6,
+              6
+            ]
+          }
+        ],
+        "bands": []
+      },
+      "scope": "Authored illustration of this project's descriptive definition.",
+      "sources": [],
+      "review_status": "authored_and_checked_not_independently_validated"
+    },
+    "trait.sustained_density": {
+      "summary": "A busy rate continues across a long stretch.",
+      "watch": "Six consecutive sections stay at 10 inputs per second. Compare this run with the isolated peak.",
+      "contrast": "One busy second followed by quieter activity is a spike rather than sustained activity.",
+      "variants": "State both the rate threshold and required duration. These values illustrate the idea, not a universal difficulty cutoff.",
+      "example": {
+        "kind": "bars",
+        "duration": 12,
+        "unit": "seconds",
+        "series": [
+          {
+            "label": "Inputs / s",
+            "values": [
+              2,
+              2,
+              10,
+              10,
+              10,
+              10,
+              10,
+              10,
+              2,
+              2,
+              2,
+              2
+            ]
+          }
+        ],
+        "bands": []
+      },
+      "counterexample": {
+        "kind": "bars",
+        "duration": 12,
+        "unit": "seconds",
+        "series": [
+          {
+            "label": "Inputs / s",
+            "values": [
+              2,
+              2,
+              16,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2
+            ]
+          }
+        ],
+        "bands": []
+      },
+      "scope": "Authored illustration of this project's descriptive definition.",
+      "sources": [],
+      "review_status": "authored_and_checked_not_independently_validated"
+    },
+    "trait.backloaded_density": {
+      "summary": "More inputs arrive toward the end.",
+      "watch": "Compare equal-length early and late sections on the same scale.",
+      "contrast": "The contrasting activity is concentrated near the beginning instead.",
+      "variants": "A busier ending is not necessarily a harder ending; note types and coordination can differ.",
+      "example": {
+        "kind": "bars",
+        "duration": 12,
+        "unit": "seconds",
+        "series": [
+          {
+            "label": "Inputs / s",
+            "values": [
+              2,
+              2,
+              3,
+              3,
+              4,
+              4,
+              6,
+              7,
+              9,
+              10,
+              11,
+              12
+            ]
+          }
+        ],
+        "bands": []
+      },
+      "counterexample": {
+        "kind": "bars",
+        "duration": 12,
+        "unit": "seconds",
+        "series": [
+          {
+            "label": "Inputs / s",
+            "values": [
+              12,
+              11,
+              10,
+              9,
+              7,
+              6,
+              4,
+              4,
+              3,
+              3,
+              2,
+              2
+            ]
+          }
+        ],
+        "bands": []
+      },
+      "scope": "Authored illustration of this project's descriptive definition.",
+      "sources": [],
+      "review_status": "authored_and_checked_not_independently_validated"
+    },
+    "trait.frontloaded_density": {
+      "summary": "More inputs arrive toward the beginning.",
+      "watch": "The early sections contain more new inputs per second than the later sections.",
+      "contrast": "The contrasting activity builds toward the end.",
+      "variants": "Compare sections of equal duration. This describes activity placement, not total difficulty.",
+      "example": {
+        "kind": "bars",
+        "duration": 12,
+        "unit": "seconds",
+        "series": [
+          {
+            "label": "Inputs / s",
+            "values": [
+              12,
+              11,
+              10,
+              9,
+              7,
+              6,
+              4,
+              4,
+              3,
+              3,
+              2,
+              2
+            ]
+          }
+        ],
+        "bands": []
+      },
+      "counterexample": {
+        "kind": "bars",
+        "duration": 12,
+        "unit": "seconds",
+        "series": [
+          {
+            "label": "Inputs / s",
+            "values": [
+              2,
+              2,
+              3,
+              3,
+              4,
+              4,
+              6,
+              7,
+              9,
+              10,
+              11,
+              12
+            ]
+          }
+        ],
+        "bands": []
+      },
+      "scope": "Authored illustration of this project's descriptive definition.",
+      "sources": [],
+      "review_status": "authored_and_checked_not_independently_validated"
+    },
+    "trait.isolated_density_spike": {
+      "summary": "One separated busy peak stands out.",
+      "watch": "One section rises clearly above the quieter sections on both sides.",
+      "contrast": "Several separated peaks do not form a single isolated spike.",
+      "variants": "Peak prominence and bin width must be stated when measuring real charts.",
+      "example": {
+        "kind": "bars",
+        "duration": 12,
+        "unit": "seconds",
+        "series": [
+          {
+            "label": "Inputs / s",
+            "values": [
+              2,
+              2,
+              3,
+              2,
+              2,
+              16,
+              2,
+              3,
+              2,
+              2,
+              2,
+              2
+            ]
+          }
+        ],
+        "bands": []
+      },
+      "counterexample": {
+        "kind": "bars",
+        "duration": 12,
+        "unit": "seconds",
+        "series": [
+          {
+            "label": "Inputs / s",
+            "values": [
+              2,
+              14,
+              2,
+              2,
+              13,
+              2,
+              2,
+              15,
+              2,
+              2,
+              14,
+              2
+            ]
+          }
+        ],
+        "bands": []
+      },
+      "scope": "Authored illustration of this project's descriptive definition.",
+      "sources": [],
+      "review_status": "authored_and_checked_not_independently_validated"
+    },
+    "trait.multi_peak_density": {
+      "summary": "Several separated busy peaks recur.",
+      "watch": "Quieter sections separate the prominent peaks.",
+      "contrast": "One broad busy plateau has no quiet gaps separating multiple peaks.",
+      "variants": "Changing the analysis window can merge nearby peaks. The graph uses equal one-second sections.",
+      "example": {
+        "kind": "bars",
+        "duration": 12,
+        "unit": "seconds",
+        "series": [
+          {
+            "label": "Inputs / s",
+            "values": [
+              2,
+              14,
+              2,
+              2,
+              13,
+              2,
+              2,
+              15,
+              2,
+              2,
+              14,
+              2
+            ]
+          }
+        ],
+        "bands": []
+      },
+      "counterexample": {
+        "kind": "bars",
+        "duration": 12,
+        "unit": "seconds",
+        "series": [
+          {
+            "label": "Inputs / s",
+            "values": [
+              2,
+              2,
+              12,
+              12,
+              12,
+              12,
+              12,
+              12,
+              12,
+              2,
+              2,
+              2
+            ]
+          }
+        ],
+        "bands": []
+      },
+      "scope": "Authored illustration of this project's descriptive definition.",
+      "sources": [],
+      "review_status": "authored_and_checked_not_independently_validated"
+    },
+    "trait.steady_density": {
+      "summary": "New inputs arrive at a fairly even rate.",
+      "watch": "Each one-second section has the same number of inputs.",
+      "contrast": "Large swings between busy and quiet sections are not steady activity.",
+      "variants": "Even onset counts do not prove that note spacing, coordination or difficulty are constant.",
+      "example": {
+        "kind": "bars",
+        "duration": 12,
+        "unit": "seconds",
+        "series": [
+          {
+            "label": "Inputs / s",
+            "values": [
+              6,
+              6,
+              6,
+              6,
+              6,
+              6,
+              6,
+              6,
+              6,
+              6,
+              6,
+              6
+            ]
+          }
+        ],
+        "bands": []
+      },
+      "counterexample": {
+        "kind": "bars",
+        "duration": 12,
+        "unit": "seconds",
+        "series": [
+          {
+            "label": "Inputs / s",
+            "values": [
+              1,
+              12,
+              2,
+              10,
+              1,
+              14,
+              2,
+              10,
+              1,
+              12,
+              2,
+              10
+            ]
+          }
+        ],
+        "bands": []
+      },
+      "scope": "Authored illustration of this project's descriptive definition.",
+      "sources": [],
+      "review_status": "authored_and_checked_not_independently_validated"
+    },
+    "trait.low_onset_gaps": {
+      "summary": "Few new notes arrive, though ongoing actions may remain.",
+      "watch": "The input rate drops in the middle. The labeled interval shows a slide still moving through that gap.",
+      "contrast": "Continuing input activity provides no low-onset gap.",
+      "variants": "A gap in new inputs is not automatically a rest; retain holds and slide movement separately.",
+      "example": {
+        "kind": "bars",
+        "duration": 12,
+        "unit": "seconds",
+        "series": [
+          {
+            "label": "Inputs / s",
+            "values": [
+              6,
+              6,
+              6,
+              0,
+              0,
+              0,
+              0,
+              0,
+              6,
+              6,
+              6,
+              6
+            ]
+          }
+        ],
+        "bands": [
+          [
+            3,
+            8,
+            "Slide still moving"
+          ]
+        ]
+      },
+      "counterexample": {
+        "kind": "bars",
+        "duration": 12,
+        "unit": "seconds",
+        "series": [
+          {
+            "label": "Inputs / s",
+            "values": [
+              6,
+              6,
+              6,
+              6,
+              6,
+              6,
+              6,
+              6,
+              6,
+              6,
+              6,
+              6
+            ]
+          }
+        ],
+        "bands": []
+      },
+      "scope": "Authored illustration of this project's descriptive definition.",
+      "sources": [],
+      "review_status": "authored_and_checked_not_independently_validated"
+    },
+    "trait.break_concentration": {
+      "summary": "Break inputs cluster in particular sections.",
+      "watch": "The outlined break counts cluster in the middle; total input activity stays unchanged.",
+      "contrast": "The same total break count spread evenly across sections is less concentrated.",
+      "variants": "Break inputs are included in the total, not added to physical density. Scoring risk needs a separate interpretation.",
+      "example": {
+        "kind": "bars",
+        "duration": 12,
+        "unit": "seconds",
+        "series": [
+          {
+            "label": "Inputs / s",
+            "values": [
+              6,
+              6,
+              6,
+              6,
+              6,
+              6,
+              6,
+              6,
+              6,
+              6,
+              6,
+              6
+            ]
+          },
+          {
+            "label": "Break inputs / s",
+            "values": [
+              0,
+              0,
+              0,
+              4,
+              4,
+              4,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          }
+        ],
+        "bands": []
+      },
+      "counterexample": {
+        "kind": "bars",
+        "duration": 12,
+        "unit": "seconds",
+        "series": [
+          {
+            "label": "Inputs / s",
+            "values": [
+              6,
+              6,
+              6,
+              6,
+              6,
+              6,
+              6,
+              6,
+              6,
+              6,
+              6,
+              6
+            ]
+          },
+          {
+            "label": "Break inputs / s",
+            "values": [
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1
+            ]
+          }
+        ],
+        "bands": []
+      },
+      "scope": "Authored illustration of this project's descriptive definition.",
+      "sources": [],
+      "review_status": "authored_and_checked_not_independently_validated"
+    },
+    "trait.rhythm_variability": {
+      "summary": "The spacing between successive inputs changes.",
+      "watch": "Read the changing gaps along the beat grid, rather than just the total count.",
+      "contrast": "The same number of evenly spaced inputs has less timing variation.",
+      "variants": "Variation alone does not establish musical complexity. Tempo changes and chosen beat units affect the measurement.",
+      "example": {
+        "kind": "notes",
+        "duration": 4,
+        "unit": "beats",
+        "notes": [
+          [
+            0.25,
+            1,
+            "tap"
+          ],
+          [
+            0.5,
+            5,
+            "tap"
+          ],
+          [
+            1.25,
+            1,
+            "tap"
+          ],
+          [
+            1.5,
+            5,
+            "tap"
+          ],
+          [
+            1.75,
+            1,
+            "tap"
+          ],
+          [
+            2.75,
+            5,
+            "tap"
+          ],
+          [
+            3,
+            1,
+            "tap"
+          ],
+          [
+            3.5,
+            5,
+            "tap"
+          ]
+        ],
+        "slides": [],
+        "holds": [],
+        "bands": []
+      },
+      "counterexample": {
+        "kind": "notes",
+        "duration": 4,
+        "unit": "beats",
+        "notes": [
+          [
+            0.25,
+            1,
+            "tap"
+          ],
+          [
+            0.75,
+            5,
+            "tap"
+          ],
+          [
+            1.25,
+            1,
+            "tap"
+          ],
+          [
+            1.75,
+            5,
+            "tap"
+          ],
+          [
+            2.25,
+            1,
+            "tap"
+          ],
+          [
+            2.75,
+            5,
+            "tap"
+          ],
+          [
+            3.25,
+            1,
+            "tap"
+          ],
+          [
+            3.75,
+            5,
+            "tap"
+          ]
+        ],
+        "slides": [],
+        "holds": [],
+        "bands": []
+      },
+      "scope": "Authored illustration of this project's descriptive definition.",
+      "sources": [],
+      "review_status": "authored_and_checked_not_independently_validated"
+    },
+    "trait.slide_occupancy": {
+      "summary": "Slide movement fills much of the timeline.",
+      "watch": "The labeled movement intervals cover ten of these twelve seconds. Overlap is counted once.",
+      "contrast": "Short movement intervals occupy much less of the same span.",
+      "variants": "Waiting slides are excluded. High occupancy does not identify a particular named motif.",
+      "example": {
+        "kind": "bars",
+        "duration": 12,
+        "unit": "seconds",
+        "series": [
+          {
+            "label": "Inputs / s",
+            "values": [
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1
+            ]
+          }
+        ],
+        "bands": [
+          [
+            1,
+            7,
+            "Moving slide A"
+          ],
+          [
+            6,
+            11,
+            "Moving slide B"
+          ]
+        ]
+      },
+      "counterexample": {
+        "kind": "bars",
+        "duration": 12,
+        "unit": "seconds",
+        "series": [
+          {
+            "label": "Inputs / s",
+            "values": [
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1
+            ]
+          }
+        ],
+        "bands": [
+          [
+            1,
+            2,
+            "Moving slide A"
+          ],
+          [
+            7,
+            8,
+            "Moving slide B"
+          ]
+        ]
+      },
+      "scope": "Authored illustration of this project's descriptive definition.",
+      "sources": [],
+      "review_status": "authored_and_checked_not_independently_validated"
+    },
+    "trait.repeated_motif": {
+      "summary": "A recognizable phrase appears again.",
+      "watch": "Each labeled phrase repeats the same A, B, B, A input order and timing.",
+      "contrast": "Equal note counts with changed positions and timing do not establish the same phrase.",
+      "variants": "A real matcher must state whether rotation, reflection or tempo changes are allowed. Shared broad tags are not enough.",
+      "example": {
+        "kind": "notes",
+        "duration": 9,
+        "unit": "beats",
+        "notes": [
+          [
+            0.5,
+            1,
+            "tap"
+          ],
+          [
+            1,
+            5,
+            "tap"
+          ],
+          [
+            1.5,
+            5,
+            "tap"
+          ],
+          [
+            2,
+            1,
+            "tap"
+          ],
+          [
+            3.5,
+            1,
+            "tap"
+          ],
+          [
+            4,
+            5,
+            "tap"
+          ],
+          [
+            4.5,
+            5,
+            "tap"
+          ],
+          [
+            5,
+            1,
+            "tap"
+          ],
+          [
+            6.5,
+            1,
+            "tap"
+          ],
+          [
+            7,
+            5,
+            "tap"
+          ],
+          [
+            7.5,
+            5,
+            "tap"
+          ],
+          [
+            8,
+            1,
+            "tap"
+          ]
+        ],
+        "slides": [],
+        "holds": [],
+        "bands": [
+          [
+            0,
+            2.5,
+            "Phrase A"
+          ],
+          [
+            3,
+            5.5,
+            "Phrase A"
+          ],
+          [
+            6,
+            8.5,
+            "Phrase A"
+          ]
+        ]
+      },
+      "counterexample": {
+        "kind": "notes",
+        "duration": 9,
+        "unit": "beats",
+        "notes": [
+          [
+            0.5,
+            1,
+            "tap"
+          ],
+          [
+            1,
+            2,
+            "tap"
+          ],
+          [
+            1.5,
+            5,
+            "tap"
+          ],
+          [
+            2,
+            3,
+            "tap"
+          ],
+          [
+            3.5,
+            1,
+            "tap"
+          ],
+          [
+            3.75,
+            2,
+            "tap"
+          ],
+          [
+            4.5,
+            5,
+            "tap"
+          ],
+          [
+            5,
+            3,
+            "tap"
+          ],
+          [
+            6.5,
+            1,
+            "tap"
+          ],
+          [
+            7,
+            2,
+            "tap"
+          ],
+          [
+            7.75,
+            5,
+            "tap"
+          ],
+          [
+            8,
+            3,
+            "tap"
+          ]
+        ],
+        "slides": [],
+        "holds": [],
+        "bands": []
+      },
+      "scope": "Authored illustration of this project's descriptive definition.",
+      "sources": [],
+      "review_status": "authored_and_checked_not_independently_validated"
+    },
+    "trait.isolated_pattern_sections": {
+      "summary": "A chosen pattern has little competing activity around it.",
+      "watch": "The highlighted A/B alternation sits by itself. Compare the extra simultaneous inputs in the other example.",
+      "contrast": "The same target sequence remains, but additional inputs compete with it.",
+      "variants": "Isolation is specific to a target pattern and neighborhood. It does not by itself prove practice effectiveness.",
+      "example": {
+        "kind": "notes",
+        "duration": 6,
+        "unit": "beats",
+        "notes": [
+          [
+            2,
+            1,
+            "tap"
+          ],
+          [
+            2.5,
+            5,
+            "tap"
+          ],
+          [
+            3,
+            1,
+            "tap"
+          ],
+          [
+            3.5,
+            5,
+            "tap"
+          ],
+          [
+            4,
+            1,
+            "tap"
+          ],
+          [
+            4.5,
+            5,
+            "tap"
+          ]
+        ],
+        "slides": [],
+        "holds": [],
+        "bands": [
+          [
+            1.75,
+            4.75,
+            "Target A/B sequence"
+          ]
+        ]
+      },
+      "counterexample": {
+        "kind": "notes",
+        "duration": 6,
+        "unit": "beats",
+        "notes": [
+          [
+            2,
+            1,
+            "tap"
+          ],
+          [
+            2,
+            3,
+            "tap"
+          ],
+          [
+            2.5,
+            3,
+            "tap"
+          ],
+          [
+            2.5,
+            5,
+            "tap"
+          ],
+          [
+            3,
+            1,
+            "tap"
+          ],
+          [
+            3,
+            3,
+            "tap"
+          ],
+          [
+            3.5,
+            3,
+            "tap"
+          ],
+          [
+            3.5,
+            5,
+            "tap"
+          ],
+          [
+            4,
+            1,
+            "tap"
+          ],
+          [
+            4,
+            3,
+            "tap"
+          ],
+          [
+            4.5,
+            3,
+            "tap"
+          ],
+          [
+            4.5,
+            5,
+            "tap"
+          ]
+        ],
+        "slides": [],
+        "holds": [],
+        "bands": [
+          [
+            1.75,
+            4.75,
+            "Target plus extra inputs"
+          ]
+        ]
+      },
+      "scope": "Authored illustration of this project's descriptive definition.",
+      "sources": [],
+      "review_status": "authored_and_checked_not_independently_validated"
+    }
+  }
+}

@@ -1,0 +1,26 @@
+[build-system]
+requires = []
+build-backend = "maimai_build_backend"
+backend-path = ["build_backend"]
+
+[project]
+name = "maimai-chart-intelligence"
+version = "0.2.0"
+description = "Offline chart analysis, prepared personal recommendations and a standalone maimai browser"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+license-files = ["LICENSE", "THIRD_PARTY_NOTICES.md"]
+dependencies = []
+
+[project.scripts]
+maimai-chart = "maimai_intelligence.cli:main"
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+extend-exclude = ["output", "dist", "extract_source.py"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "S", "UP"]
+ignore = ["S101"]

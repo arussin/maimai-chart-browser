@@ -1,0 +1,11 @@
+{
+  "flow_colors": ["#ccebed", "#91cbd0", "#52a7b1", "#187988", "#064b5c"],
+  "flow_unknown": "#71858a",
+  "difficulty_colors": {
+    "basic": "#147839",
+    "advanced": "#876000",
+    "expert": "#b72857",
+    "master": "#7844a3",
+    "remaster": "#705098"
+  }
+}
