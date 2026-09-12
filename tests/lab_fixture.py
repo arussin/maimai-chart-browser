@@ -18,6 +18,8 @@ def write_package(directory):
     profiles = [profile_chart(chart) for chart in raw]
     rows = []
     for index, profile in enumerate(profiles):
+        if index == 5:
+            profile["difficulty"] = "RE:MASTER"
         profile.update(
             title=f"Fictional study {index}",
             artist="Authored fixture",

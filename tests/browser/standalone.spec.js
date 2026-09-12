@@ -54,7 +54,7 @@ test('accessible controls and mobile reflow with personal cards',async({page})=>
 });
 test('research browser combines filters and retains them while sorting',async({page})=>{
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
-  await page.goto('/lab/?version=fixture-v2');await expect(page.locator('#loaded-count')).toHaveText('6');
+  await page.goto('/lab/?version=fixture-v3');await expect(page.locator('#loaded-count')).toHaveText('6');
   await page.locator('#search').fill('Fictional study 0');await expect(page.locator('#songs')).toContainText('Fictional study 0');
   await page.locator('#search').fill('');
   await page.locator('#filter-version').selectOption({label:'DX PRiSM PLUS'});
@@ -81,14 +81,16 @@ test('three sort priorities break ties in order and reverse independently',async
   await page.locator('#sort-key-1').selectOption('difficulty');
   await page.locator('#sort-key-2').selectOption('title');await page.locator('#sort-direction-2').click();
   const titles=()=>page.locator('#songs .song-row').evaluateAll(rows=>rows.map(row=>row.dataset.title));
-  expect(await titles()).toEqual(['Fictional study 5','Fictional study 4','Fictional study 3','Fictional study 1','Fictional study 2','Fictional study 0']);
+  expect(await titles()).toEqual(['Fictional study 4','Fictional study 3','Fictional study 5','Fictional study 1','Fictional study 2','Fictional study 0']);
   await page.locator('#sort-direction-1').click();
-  expect(await titles()).toEqual(['Fictional study 4','Fictional study 3','Fictional study 5','Fictional study 2','Fictional study 0','Fictional study 1']);
+  expect(await titles()).toEqual(['Fictional study 5','Fictional study 4','Fictional study 3','Fictional study 2','Fictional study 0','Fictional study 1']);
+  await page.locator('#filter-difficulty').selectOption('RE:MASTER');
+  expect(await titles()).toEqual(['Fictional study 5']);
 });
 
 test('complete dictionary supports demos, keyboard close and stable links',async({page})=>{
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
-  await page.goto('/lab/?version=fixture-v2');await page.locator('#patterns-tab').click();
+  await page.goto('/lab/?version=fixture-v3');await page.locator('#patterns-tab').click();
   await expect(page.locator('#pattern-list .pattern-card')).toHaveCount(36);
   await expect(page.locator('#pattern-count')).toContainText('14 illustrated demos');
   const requests=[];page.on('request',r=>requests.push(r.url()));

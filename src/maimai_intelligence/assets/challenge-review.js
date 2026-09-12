@@ -106,14 +106,14 @@ function render(){
   });
   status();
 }
-const difficultyOrder=['BASIC','ADVANCED','EXPERT','MASTER','Re:MASTER'];
+const difficultyOrder=['BASIC','ADVANCED','EXPERT','MASTER','RE:MASTER'];
 const collator=new Intl.Collator(undefined,{numeric:true,sensitivity:'base'});
 const levelNumber=value=>value&&Number.isFinite(parseFloat(value))?parseFloat(value)+(value.endsWith('+')?.5:0):null;
 const sortFields={title:'Title',artist:'Artist',level:'Level',difficulty:'Difficulty',format:'Format',genre:'Genre',version:'Version',speed:'Inputs / s',peak:'Peak inputs / s'};
 let sortRules=[{key:'title',direction:1},{key:'difficulty',direction:1},{key:'format',direction:1}];
 const filters=['genre','version','difficulty','min','max'];
 const genreLabel=value=>(navigation.genres||[]).find(g=>g.id===value)?.label||'Uncategorized';
-const values={title:c=>displayTitle(c),artist:c=>c.artist,level:c=>levelNumber(c.level),difficulty:c=>difficultyOrder.indexOf(c.difficulty),format:c=>c.format,genre:c=>genreLabel(folderValue(c,'genre')),version:c=>{const v=(navigation.versions||[]).indexOf(folderValue(c,'version'));return v<0?null:v;},speed:c=>c.demand.cadence.mean_onsets_s??null,peak:c=>c.demand.cadence.peak_onsets_s??null};
+const values={title:c=>displayTitle(c),artist:c=>c.artist,level:c=>levelNumber(c.level),difficulty:c=>{const rank=difficultyOrder.indexOf(c.difficulty.toUpperCase());return rank<0?null:rank;},format:c=>c.format,genre:c=>genreLabel(folderValue(c,'genre')),version:c=>{const v=(navigation.versions||[]).indexOf(folderValue(c,'version'));return v<0?null:v;},speed:c=>c.demand.cadence.mean_onsets_s??null,peak:c=>c.demand.cadence.peak_onsets_s??null};
 function compareCharts(a,b){
   for(const rule of sortRules){if(!rule.key)continue;const av=values[rule.key](a),bv=values[rule.key](b);
     // Unknown measurements stay at the end in either direction.
@@ -140,7 +140,7 @@ function initializeFilters(){
   for(const id of filters){const select=el('filter-'+id);let options=[];
     if(id==='genre')options=(navigation.genres||[]).map(g=>[g.id,g.label]);
     if(id==='version')options=(navigation.versions||[]).map(v=>[v,v.replace(/^maimai DX /,'DX ').replace(/^maimai /,'')]);
-    if(id==='difficulty')options=difficultyOrder.filter(d=>data.catalog.some(c=>c.difficulty===d)).map(d=>[d,d]);
+    if(id==='difficulty')options=[...new Set(data.catalog.map(c=>c.difficulty))].sort((a,b)=>difficultyOrder.indexOf(a.toUpperCase())-difficultyOrder.indexOf(b.toUpperCase())).map(d=>[d,d]);
     if(id==='min'||id==='max')options=[...new Set(data.catalog.map(c=>c.level).filter(v=>levelNumber(v)!=null))].sort((a,b)=>levelNumber(a)-levelNumber(b)).map(v=>[v,v]);
     for(const [value,label]of options)select.append(new Option(label,value));
     select.onchange=()=>{visible=40;catalog();};
