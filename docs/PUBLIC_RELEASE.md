@@ -82,6 +82,11 @@ and [code-owner documentation](https://docs.github.com/en/repositories/managing-
 
 ## 4. Host the public browser
 
+The offline release builder and owner instructions are now available in
+[OWNER_PUBLICATION.md](OWNER_PUBLICATION.md). It retains all accepted catalog
+versions in verified pieces that fit static hosting limits. Live publication
+still requires working GitHub repository access and Cloudflare write access.
+
 - Confirm access to the existing repository and domain/hosting account. Prepare
   the complete static deployment and owner-only release controls before enabling
   public access. Use scoped hosting credentials outside the site and source tree.

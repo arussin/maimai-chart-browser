@@ -48,9 +48,19 @@ def main(argv=None):
     lab.add_argument("--package", required=True, type=Path)
     lab.add_argument("--output", required=True, type=Path)
     lab.add_argument("--catalog-version", required=True)
+    release = commands.add_parser(
+        "public-release", help="Prepare an allowlisted static release without publishing"
+    )
+    release.add_argument("--source", required=True, type=Path)
+    release.add_argument("--output", required=True, type=Path)
     args = parser.parse_args(argv)
     try:
-        if args.command == "lab":
+        if args.command == "public-release":
+            from .public_release import build_public_release
+
+            result = build_public_release(args.source, args.output)
+            print(f"Prepared {result['catalogs']} catalogs in {result['files']} public files")
+        elif args.command == "lab":
             from .lab import build_lab
 
             build_lab(args.package, args.output, catalog_version=args.catalog_version)
