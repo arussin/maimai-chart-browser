@@ -7,10 +7,22 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from maimai_analyzer.catalog_navigation import build_navigation, source_bpm
+from maimai_analyzer.catalog_navigation import build_navigation, source_bpm, source_constant
 
 
 class NavigationTests(unittest.TestCase):
+    def test_decimal_constants_are_retained_without_label_fallback(self):
+        charts, rows = self.fixture()
+        for value, expected in [("10.4", 10.4), ("10.5", 10.5), ("10.0", 10.0), ("15", 15.0)]:
+            self.assertEqual(source_constant(value), expected)
+            result = build_navigation(charts, [{**rows[0], "source_level": value}])
+            self.assertEqual(result["charts"]["chart:1"]["chart_constant"], expected)
+            self.assertNotIn("constant", charts[0])
+        for value in (None, "", "10+", "NaN", "10.45", "0", "15.1", "-1", True, 10.4):
+            self.assertIsNone(source_constant(value))
+        result = build_navigation(charts, [{**rows[0], "level": "10+"}])
+        self.assertIsNone(result["charts"]["chart:1"]["chart_constant"])
+
     def test_source_song_bpm_is_explicit_metadata_not_a_note_override(self):
         self.assertEqual(source_bpm("&wholebpm=128.5\n&inote_5=(180){4}1-5[240#4:1],E"), 128.5)
         for text in (

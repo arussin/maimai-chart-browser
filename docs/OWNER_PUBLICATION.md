@@ -66,9 +66,12 @@ example accepted package/version with the explicitly reviewed release when
 updating the corpus. An ordinary interface release reuses the accepted package.
 
 ```text
-maimai-chart lab --package output/challenge-patterns-v2 --output output/site/lab --catalog-version research-8295bb80a71d
+maimai-chart lab --package output/challenge-constants-v1 --output output/site/lab --catalog-version research-9fed7bd21e1f
 maimai-chart public-release --source output/site/lab --output output/public-release-next
 ```
+
+The current package restores the retained decimal chart constants; see
+[chart constant preparation](CHART_CONSTANTS.md). Existing analysis is preserved.
 
 Choose a fresh destination for every build. Existing nonempty outputs are refused.
 The builder validates all input hashes before writing and writes the manifest

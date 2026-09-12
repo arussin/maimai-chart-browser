@@ -12,7 +12,7 @@ from maimai_intelligence.research_overview import chart_overview, overview_packa
 from maimai_intelligence.snapshots import atomic_json, canonical
 
 
-def write_package(directory, *, grouped=False):
+def write_package(directory, *, grouped=False, constants=False):
     root = Path(directory)
     root.mkdir(parents=True, exist_ok=True)
     raw = synthetic_charts()
@@ -42,6 +42,9 @@ def write_package(directory, *, grouped=False):
                 "format": profile["format"],
                 "difficulty": profile["difficulty"],
                 "identity_resolved": True,
+                "source_level": ["10.5", "10.4", "9.9", "11.0", None, "11.6"][index]
+                if constants
+                else profile["level"],
                 "source_path": ("POPSアニメ" if index % 2 else "maimai")
                 + f"/{container}/maidata.txt",
                 "source_version": "maimai DX PRiSM PLUS" if index % 2 else "maimai DX",
@@ -57,6 +60,7 @@ def write_package(directory, *, grouped=False):
         },
         "benchmark.json": review_benchmark(profiles, 4),
         "navigation.json": build_navigation(profiles, rows, bpm_by_source=bpms),
+        "source-inventory.json": rows,
         "analysis.json": overview_package({c["chart_id"]: chart_overview(c) for c in raw}),
     }
     records = []

@@ -141,8 +141,8 @@ test('research browser combines filters and retains them while sorting',async({p
   await expect(page.locator('#songs .song-row')).toHaveCount(2);
   await selectDifficulties(page,['MASTER']);
   await expect(page.locator('#songs .song-row')).toHaveCount(1);
-  await page.locator('[data-sort-key=level]').click();
-  await page.locator('[data-sort-key=level]').click();
+  await page.locator('[data-sort-key=constant]').click();
+  await page.locator('[data-sort-key=constant]').click();
   await expect(page.locator('#version-summary')).toHaveText('DX PRiSM PLUS');
   await expect(page.locator('#filter-min')).toHaveValue('11');
   await page.locator('#search').fill('not found');await expect(page.locator('#songs .song-row')).toHaveCount(0);
@@ -155,7 +155,7 @@ test('research browser combines filters and retains them while sorting',async({p
 
 test('three sort priorities break ties in order and reverse independently',async({page})=>{
   await page.goto('/lab/');await expect(page.locator('#songs .song-row')).toHaveCount(6);
-  await page.locator('[data-sort-key=level]').click();await page.locator('[data-sort-key=level]').click();
+  await page.locator('[data-sort-key=constant]').click();await page.locator('[data-sort-key=constant]').click();
   await page.locator('[data-sort-key=difficulty]').click({modifiers:['Shift']});
   await page.locator('#sort-keep').check();
   await page.locator('[data-sort-key=title]').click();await page.locator('[data-sort-key=title]').click();
@@ -165,6 +165,24 @@ test('three sort priorities break ties in order and reverse independently',async
   expect(await titles()).toEqual(['Fictional study 5','Fictional study 4','Fictional study 3','Fictional study 2','Fictional study 0','Fictional study 1']);
   await selectDifficulties(page,['RE:MASTER']);
   expect(await titles()).toEqual(['Fictional study 5']);
+});
+
+test('decimal constants sort numerically with unknowns last and follow difficulty selection',async({page})=>{
+  await page.goto('/constants/');await expect(page.locator('#songs .song-row')).toHaveCount(5);
+  const requests=[];page.on('request',r=>requests.push(r.url()));
+  const values=()=>page.locator('#songs .chart-constant').allTextContents();
+  const sort=page.getByRole('button',{name:'Constant unsorted',exact:true});await sort.click();
+  expect(await values()).toEqual(['9.9','10.4','10.5','11.0','—']);
+  await page.locator('[data-sort-key=constant]').press('Enter');
+  expect(await values()).toEqual(['11.0','10.5','10.4','9.9','—']);
+  const grouped=page.locator('.song-row').filter({has:page.locator('.song-title',{hasText:'Fictional study 3'})});
+  const picker=grouped.locator('.row-difficulty');
+  const remaster=await picker.locator('option').filter({hasText:'RE:MASTER'}).getAttribute('value');
+  await picker.selectOption(remaster);await expect(picker).toBeFocused();
+  await expect(grouped.locator('.chart-constant')).toHaveText('11.6');
+  expect(await values()).toEqual(['11.6','10.5','10.4','9.9','—']);
+  await grouped.locator('.chart-constant').click();await expect(grouped.locator('.chart-measurements')).toContainText('Chart constant 11.6');
+  expect(requests).toEqual([]);expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
 });
 
 test('complete dictionary supports demos, keyboard close and stable links',async({page})=>{
@@ -383,10 +401,10 @@ test('column sorting works by keyboard and keeps explicit priority order',async(
   const bpm=page.locator('[data-sort-key=bpm]');await bpm.focus();await page.keyboard.press('Enter');
   await expect(bpm).toHaveAttribute('aria-label',/priority 1, ascending/);
   await page.keyboard.press('Space');await expect(bpm).toHaveAttribute('aria-label',/descending/);
-  await page.locator('#sort-keep').check();await page.locator('[data-sort-key=level]').click();
-  await expect(page.locator('[data-sort-key=level]')).toHaveAttribute('aria-label',/priority 2/);
+  await page.locator('#sort-keep').check();await page.locator('[data-sort-key=constant]').click();
+  await expect(page.locator('[data-sort-key=constant]')).toHaveAttribute('aria-label',/priority 2/);
   await page.getByRole('button',{name:'Remove BPM sort priority',exact:true}).click();
-  await expect(page.locator('[data-sort-key=level]')).toHaveAttribute('aria-label',/priority 1/);
+  await expect(page.locator('[data-sort-key=constant]')).toHaveAttribute('aria-label',/priority 1/);
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
 });
 
@@ -525,7 +543,7 @@ test('difficulty checkboxes combine choices and preserve matching row selections
   await selectDifficulties(page,['MASTER','RE:MASTER']);await expect(page.locator('#difficulty-summary')).toHaveText('2 difficulties selected');
   await page.locator('#search').fill('Fictional study 3');const row=page.locator('.song-row'),picker=row.locator('.row-difficulty');
   await expect(picker.locator('option')).toHaveCount(2);const remaster=await picker.locator('option').filter({hasText:'RE:MASTER'}).getAttribute('value');await picker.selectOption(remaster);
-  await page.locator('[data-sort-key=level]').click();await expect(picker).toHaveValue(remaster);
+  await page.locator('[data-sort-key=constant]').click();await expect(picker).toHaveValue(remaster);
   await page.getByRole('button',{name:'Remove difficulty MASTER',exact:true}).click();await expect(picker.locator('option')).toHaveCount(1);await expect(row).toHaveAttribute('data-difficulty','RE:MASTER');
   await page.locator('#difficulty-summary').click();const master=page.locator('#difficulty-options').getByRole('checkbox',{name:'MASTER',exact:true});await master.focus();await page.keyboard.press('Space');await page.keyboard.press('Escape');await expect(page.locator('#difficulty-summary')).toBeFocused();
   await expect(picker.locator('option')).toHaveCount(2);await expect(picker).toHaveValue(remaster);
