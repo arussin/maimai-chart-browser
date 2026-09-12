@@ -235,9 +235,9 @@ test('any chart can find similar charts and choose a result for comparison',asyn
   expect(errors).toEqual([]);
 });
 
-test('prepared passage playback still steps, plays and changes passages',async({page})=>{
+for(const route of ['lab','progressive'])test(route+': prepared passage playback still steps, plays and changes passages',async({page})=>{
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
-  await page.goto('/lab/?view=compare');await page.locator('#prepared-examples>summary').click();
+  await page.goto('/'+route+'/?view=compare');await page.locator('#prepared-examples>summary').click();
   await page.locator('#matches').getByRole('button',{name:'Compare passages',exact:true}).first().click();
   const panel=page.locator('#passages-0');await expect(panel.locator('.field svg')).toHaveCount(2);
   const before=await panel.locator('input[type=range]').inputValue();
