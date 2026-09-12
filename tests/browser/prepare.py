@@ -15,4 +15,9 @@ build_site(pack, root, catalog_version="synthetic-v2")
 # Reset default while retaining both release URLs.
 build_site(pack, root, catalog_version="synthetic-v1")
 atomic_json(Path("output/personal-fixture.json"), bundle)
-build_lab(write_package(Path("output/lab-fixture")), root / "lab", catalog_version="fixture-v3")
+build_lab(write_package(Path("output/lab-fixture")), root / "lab", catalog_version="fixture-v4")
+build_lab(
+    write_package(Path("output/grouped-fixture"), grouped=True),
+    root / "grouped",
+    catalog_version="grouped-v1",
+)

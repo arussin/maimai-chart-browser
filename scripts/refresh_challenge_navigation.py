@@ -13,7 +13,7 @@ from maimai_intelligence.challenge_review import render_review
 from maimai_intelligence.io import atomic_write_text
 from scripts.acquire_maichart_pack import sha256
 from scripts.analyze_simai_corpus import _load, _relative
-from scripts.build_challenge_package import PACKAGE_VERSION, verify_capture, write
+from scripts.build_challenge_package import PACKAGE_VERSION, source_bpms, verify_capture, write
 
 
 def refresh(source, output):
@@ -40,7 +40,9 @@ def refresh(source, output):
         loaded[item["path"]] = json.loads(raw)
     if loaded["source-inventory.json"] != rows:
         raise ValueError("Prepared source inventory differs from captured source")
-    navigation = build_navigation(loaded["catalog.json"], rows)
+    navigation = build_navigation(
+        loaded["catalog.json"], rows, bpm_by_source=source_bpms(root, rows)
+    )
     package["files"] = [x for x in package["files"] if x["path"] != "navigation.json"]
     package["files"].append(write(output, "navigation.json", navigation))
     package["navigation_builder_hash"] = sha256(

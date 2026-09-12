@@ -28,14 +28,20 @@ pinned research package and externalizes its data behind an immutable release
 manifest. The main page links to the research browser, with three views:
 
 - **Charts:** combine genre, version, difficulty, format and level-range filters.
-  Select multiple versions together. Click anywhere on a chart row to open its
-  details and choose **Compare this chart** or **Find similar**.
-  Three ordered sort rules apply to individual chart variants and break ties in
-  order. Changing sort or search retains the selected filters.
+  Select multiple versions together. Each song/format row offers a difficulty
+  selector containing the exact charts that match the filters, including
+  same-level MASTER/RE:MASTER variants. The selected difficulty colors the row
+  and supplies its level, source BPM, input rate and comparison actions. Click
+  anywhere else on the row to open details. Three ordered sort rules use the
+  selected chart, including BPM. Changing sort or search retains the filters.
+  Source song BPM is display metadata; passages may change tempo. Unknown BPM
+  remains unknown and sorts last in either direction.
 - **Pattern dictionary:** all 36 reference definitions, including 14 authored
   schematic demos with play, step, speed and progress controls. Supported input
   patterns also show an animated eight-button layout. Definitions awaiting
   review remain available without invented demos or real-chart assignments.
+  Missing demos and unresolved named definitions have distinct labels; existing
+  working definitions are shown directly. See the [dictionary completion work](docs/PATTERN_DICTIONARY.md).
 - **Compare charts:** choose any two charts using the searchable pickers, or
   choose one and **Find similar** across the catalog. Comparisons use existing
   chart measurements for input speed, rhythm, simultaneous inputs, holds, slides

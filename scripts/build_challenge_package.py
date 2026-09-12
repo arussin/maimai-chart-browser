@@ -10,7 +10,7 @@ from collections import Counter
 from importlib.resources import files as resource_files
 from pathlib import Path
 
-from maimai_analyzer.catalog_navigation import build_navigation
+from maimai_analyzer.catalog_navigation import build_navigation, source_bpm
 from maimai_analyzer.challenge import VERSION, profile_chart, snippet
 from maimai_analyzer.challenge_similarity import POLICY, query_challenges, reference_scale
 from maimai_analyzer.contracts import ChartInputError, canonical_bytes, content_hash
@@ -69,6 +69,18 @@ def parse_row(root, row, memo, work):
         },
     )
     return chart, audit
+
+
+def source_bpms(root, rows):
+    """Read retained, hash-verified container metadata without reanalyzing notes."""
+    result, memo, work = {}, {}, Counter()
+    for row in rows:
+        digest = row.get("source_raw_sha256")
+        if row.get("acquisition_status") != "available" or not digest or digest in result:
+            continue
+        raw = _verify(root, row["source_raw_file"], digest, memo, work, body=True)
+        result[digest] = source_bpm(raw.decode("utf-8"))
+    return result
 
 
 def build(source, output, *, review_count=12, previous=None):
@@ -201,7 +213,7 @@ def build(source, output, *, review_count=12, previous=None):
             if w["window_id"] in windows
         }
     public = [{k: v for k, v in p.items() if k not in {"windows"}} for p in profiles]
-    navigation = build_navigation(public, rows)
+    navigation = build_navigation(public, rows, bpm_by_source=source_bpms(root, rows))
     files = [
         write(output, "catalog.json", public),
         write(output, "reference-scale.json", scale),

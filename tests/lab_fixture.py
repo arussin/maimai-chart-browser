@@ -11,12 +11,12 @@ from maimai_analyzer.fixtures import synthetic_charts
 from maimai_intelligence.snapshots import atomic_json, canonical
 
 
-def write_package(directory):
+def write_package(directory, *, grouped=False):
     root = Path(directory)
     root.mkdir(parents=True, exist_ok=True)
     raw = synthetic_charts()
     profiles = [profile_chart(chart) for chart in raw]
-    rows = []
+    rows, bpms = [], {}
     for index, profile in enumerate(profiles):
         if index == 5:
             profile["difficulty"] = "RE:MASTER"
@@ -27,15 +27,22 @@ def write_package(directory):
             input_id=f"synthetic:{index}",
             source_container_id=str(index),
         )
+        container = 3 if grouped and index == 5 else index
+        if grouped and index == 5:
+            profile.update(title="Fictional study 3", source_container_id="3")
+        source_hash = str(container) * 64
+        bpms[source_hash] = [120, 120, 180, 160, 160, None][container]
         rows.append(
             {
                 "input_id": profile["input_id"],
-                "source_container_id": str(index),
+                "source_container_id": str(container),
+                "source_raw_sha256": source_hash,
                 "body_sha256": profile["source_hash"],
                 "format": profile["format"],
                 "difficulty": profile["difficulty"],
                 "identity_resolved": True,
-                "source_path": ("POPSアニメ" if index % 2 else "maimai") + f"/{index}/maidata.txt",
+                "source_path": ("POPSアニメ" if index % 2 else "maimai")
+                + f"/{container}/maidata.txt",
                 "source_version": "maimai DX PRiSM PLUS" if index % 2 else "maimai DX",
             }
         )
@@ -48,7 +55,7 @@ def write_package(directory):
             for c, p in zip(raw, profiles, strict=True)
         },
         "benchmark.json": review_benchmark(profiles, 4),
-        "navigation.json": build_navigation(profiles, rows),
+        "navigation.json": build_navigation(profiles, rows, bpm_by_source=bpms),
     }
     records = []
     for name, value in values.items():

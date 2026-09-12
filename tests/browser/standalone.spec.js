@@ -54,7 +54,7 @@ test('accessible controls and mobile reflow with personal cards',async({page})=>
 });
 test('research browser combines filters and retains them while sorting',async({page})=>{
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
-  await page.goto('/lab/?version=fixture-v3');await expect(page.locator('#loaded-count')).toHaveText('6');
+  await page.goto('/lab/?version=fixture-v4');await expect(page.locator('#loaded-count')).toHaveText('6');
   await page.locator('#search').fill('Fictional study 0');await expect(page.locator('#songs')).toContainText('Fictional study 0');
   await page.locator('#search').fill('');
   await page.locator('#version-summary').click();
@@ -92,7 +92,7 @@ test('three sort priorities break ties in order and reverse independently',async
 
 test('complete dictionary supports demos, keyboard close and stable links',async({page})=>{
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
-  await page.goto('/lab/?version=fixture-v3');await page.locator('#patterns-tab').click();
+  await page.goto('/lab/?version=fixture-v4');await page.locator('#patterns-tab').click();
   await expect(page.locator('#pattern-list .pattern-card')).toHaveCount(36);
   await expect(page.locator('#pattern-count')).toContainText('14 illustrated demos');
   const requests=[];page.on('request',r=>requests.push(r.url()));
@@ -106,7 +106,7 @@ test('complete dictionary supports demos, keyboard close and stable links',async
   await page.keyboard.press('Escape');await expect(dialog).toBeHidden();
   await expect(page.locator('[data-open-pattern="pattern.two_position_alternation"]')).toBeFocused();
   await page.locator('#pattern-search').fill('umiyuri');await page.locator('[data-open-pattern="pattern.umiyuri"]').click();
-  await expect(dialog).toContainText('A demo is awaiting review');await expect(dialog.getByRole('button',{name:'Play demo'})).toHaveCount(0);
+  await expect(dialog).toContainText('The exact named pattern and its variants still need review');await expect(dialog.getByRole('button',{name:'Play demo'})).toHaveCount(0);
   expect(requests).toEqual([]);expect(errors).toEqual([]);
   await page.goto(link);await expect(dialog).toBeVisible();await expect(dialog).toContainText('two-position alternation');
 });
@@ -195,4 +195,41 @@ test('prepared passage playback still steps, plays and changes passages',async({
   await panel.getByRole('button',{name:'Pause',exact:true}).click();
   const choices=panel.getByRole('combobox',{name:'Supporting passage'});if(await choices.locator('option').count()>1)await choices.selectOption('1');
   await expect(panel.locator('.field svg')).toHaveCount(2);expect(errors).toEqual([]);
+});
+
+test('song rows retain same-level difficulty choices and update exact chart actions',async({page})=>{
+  await page.goto('/grouped/');await expect(page.locator('#songs .song-row')).toHaveCount(5);
+  await page.locator('#search').fill('Fictional study 3');
+  const row=page.locator('#songs .song-row'),picker=row.locator('.row-difficulty');
+  await expect(picker.locator('option')).toHaveCount(2);
+  await expect(row.locator('.chart-bpm')).toHaveText('160');
+  await row.locator('.chart-level').click();await expect(row.locator('.chart-measurements')).toBeVisible();
+  const before=await row.evaluate(el=>getComputedStyle(el).backgroundColor);
+  const remaster=await picker.locator('option').filter({hasText:'RE:MASTER'}).getAttribute('value');
+  await picker.selectOption(remaster);await expect(picker).toBeFocused();
+  await expect(row).toHaveAttribute('data-difficulty','RE:MASTER');
+  expect(await row.evaluate(el=>getComputedStyle(el).backgroundColor)).not.toBe(before);
+  await expect(row.locator('.chart-measurements h3')).toContainText('RE:MASTER');
+  await page.locator('#filter-min').selectOption('11');await page.locator('#filter-max').selectOption('11');
+  await expect(picker.locator('option')).toHaveCount(2);await expect(picker).toHaveValue(remaster);
+  await page.locator('#filter-difficulty').selectOption('MASTER');
+  await expect(picker.locator('option')).toHaveCount(1);await expect(row).toHaveAttribute('data-difficulty','MASTER');
+  await page.locator('#filter-difficulty').selectOption('');await expect(picker).toHaveValue(remaster);
+  await row.getByRole('button',{name:'Compare this chart',exact:true}).click();
+  expect(new URL(page.url()).searchParams.get('left')).toBe(remaster);
+  await expect(page.locator('#comparison-pickers')).toContainText('RE:MASTER');
+});
+
+test('BPM sorting keeps missing values last and working definitions are visible',async({page})=>{
+  await page.goto('/lab/');await page.locator('#sort-panel summary').click();
+  await page.locator('#sort-key-0').selectOption('bpm');
+  const tempos=()=>page.locator('#songs .chart-bpm').allTextContents();
+  expect(await tempos()).toEqual(['120','120','160','160','180','—']);
+  await page.locator('#sort-direction-0').click();
+  expect(await tempos()).toEqual(['180','160','160','120','120','—']);
+  await page.locator('#patterns-tab').click();await page.locator('#pattern-search').fill('gallop');
+  await expect(page.locator('.pattern-description')).toContainText('Repeated two-onset groups');
+  await expect(page.locator('.pattern-status')).toHaveText('Working definition · Demo not yet available');
+  await page.locator('#pattern-search').fill('umiyuri');
+  await expect(page.locator('.pattern-status')).toHaveText('Named definition needs review');
 });

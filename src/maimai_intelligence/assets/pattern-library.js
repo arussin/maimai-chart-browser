@@ -4,6 +4,7 @@ const definitions=JSON.parse(document.getElementById('pattern-data').textContent
 const el=id=>document.getElementById(id),make=(tag,text,cls)=>{const node=document.createElement(tag);if(text!==undefined)node.textContent=text;if(cls)node.className=cls;return node;};
 const normalize=value=>value.normalize('NFKC').toLowerCase();
 const visuals=window.maimaiChartVisuals,hasDemo=p=>Boolean(visuals.patternSummary(p.pattern_id));
+const needsDefinition=p=>p.definition_status==='name_attested_definition_pending';
 const aliases=p=>p.aliases.map(a=>typeof a==='string'?a:a.text).join(' · ');
 const dialog=el('pattern-dialog');let dispose=()=>{},opener=null,onNavigate=()=>{};
 function drawArt(p){const wrapper=make('div',undefined,'pattern-art');wrapper.innerHTML=visuals.patternSvg(p.pattern_id);return wrapper;}
@@ -18,7 +19,8 @@ function render(){
     const type=make('p',p.kind==='trait'?'CHART TRAIT':'PATTERN','eyebrow'),heading=make('h2',p.display_name);
     const open=make('button',hasDemo(p)?'Open demo →':'Read definition →','text-button');open.dataset.openPattern=p.pattern_id;
     open.setAttribute('aria-label',(hasDemo(p)?'Open demo: ':'Read definition: ')+p.display_name);open.onclick=()=>show(p.pattern_id,open);
-    card.append(type,heading,make('p',hasDemo(p)?visuals.patternSummary(p.pattern_id):'Definition under review. An accurate demo is still pending.','pattern-description'));
+    card.append(type,heading,make('p',hasDemo(p)?visuals.patternSummary(p.pattern_id):p.definition,'pattern-description'));
+    if(!hasDemo(p))card.append(make('p',needsDefinition(p)?'Named definition needs review':'Working definition · Demo not yet available','pattern-status'));
     if(hasDemo(p))card.append(drawArt(p));else card.append(make('p',aliases(p)||p.family.replaceAll('_',' '),'definition-alias'));
     card.append(open);root.append(card);
   }
@@ -77,7 +79,7 @@ function show(id,button=null,navigate=true){
   const close=make('button','Close');close.setAttribute('aria-label','Close pattern');close.onclick=()=>dialog.close();header.append(identity,close);dialog.append(header);
   if(!dialog.open)dialog.showModal();
   if(hasDemo(p))dialog.append(make('p',visuals.patternSummary(p.pattern_id),'demo-summary'),demo(p));
-  else dialog.append(make('p','A demo is awaiting review. We have kept the definition visible without inventing a visual for it.','reference-note'));
+  else dialog.append(make('p',needsDefinition(p)?'The exact named pattern and its variants still need review before a demo can be made.':'An illustrated demo has not been authored yet. The working definition and its limits are available below.','reference-note'));
   const details=make('details'),summary=make('summary','Definition and limits');details.append(summary,make('p',p.definition));
   const list=make('ul');for(const limit of p.counterexamples_and_limits)list.append(make('li',limit));details.append(list);
   details.append(make('p',(p.name_origin==='community_attested'?'Community-attested name. ':'Project/descriptive definition. ')+'No verified chart examples are claimed here.','muted'));

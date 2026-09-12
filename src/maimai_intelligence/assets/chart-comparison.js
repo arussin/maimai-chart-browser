@@ -12,9 +12,10 @@ function mount({data,comparison,stopPlayers,eligibleIds}){
   const el=id=>document.getElementById(id),make=(tag,text,cls)=>{const node=document.createElement(tag);if(text!==undefined)node.textContent=text;if(cls)node.className=cls;return node;};
   const byId=new Map(data.catalog.map(c=>[c.chart_id,c])),state={left:null,right:null},pickers={},searchIndex=data.catalog.map(c=>({chart:c,text:(c.title+' '+c.artist+' '+c.format+' '+c.difficulty).normalize('NFKC').toLowerCase()}));
   const name=c=>c.title.trim()||'〈Blank title〉',label=c=>name(c)+' · '+c.format+' '+c.difficulty+' · Lv. '+(c.level||'?');
+  const bpm=c=>data.navigation?.charts?.[c.chart_id]?.bpm??null,bpmText=c=>bpm(c)==null?'BPM unknown':bpm(c)+' BPM';
   let index=null,matches=null;
   const getIndex=()=>index||(index=window.maimaiChallengeMatching.createIndex(data.catalog));
-  function identity(c){const box=make('div',undefined,'chosen-chart');box.append(make('strong',name(c)),make('p',c.format+' '+c.difficulty+' · Lv. '+(c.level||'?'),'muted'),make('p',c.artist,'muted'));return box;}
+  function identity(c){const box=make('div',undefined,'chosen-chart');box.append(make('strong',name(c)),make('p',c.format+' '+c.difficulty+' · Lv. '+(c.level||'?')+' · '+bpmText(c),'muted'),make('p',c.artist,'muted'));return box;}
   function writeLink(){const url=new URL(location.href);for(const side of ['left','right']){if(state[side])url.searchParams.set(side,state[side]);else url.searchParams.delete(side);}history.replaceState(null,'',url);}
   function choose(side,id){
     if(!byId.has(id))return;
@@ -51,6 +52,7 @@ function mount({data,comparison,stopPlayers,eligibleIds}){
     const table=make('table',undefined,'metric-comparison'),head=make('thead'),tr=make('tr');
     for(const text of ['Measurement',label(left),label(right)]){const th=make('th',text);th.scope='col';tr.append(th);}head.append(tr);table.append(head);
     const body=make('tbody');let lastGroup='';
+    const tempoRow=make('tr'),tempoLabel=make('th','Source song BPM');tempoLabel.scope='row';tempoRow.append(tempoLabel);for(const chart of [left,right])tempoRow.append(make('td',bpm(chart)==null?'Unknown':String(bpm(chart))));body.append(tempoRow);
     for(const [group,key,title,unit]of measurements){
       if(lastGroup!==group){const row=make('tr',undefined,'metric-group'),cell=make('th',groups[group]);cell.colSpan=3;cell.scope='rowgroup';row.append(cell);body.append(row);lastGroup=group;}
       const row=make('tr'),titleCell=make('th',title);titleCell.scope='row';row.append(titleCell);

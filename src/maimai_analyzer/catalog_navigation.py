@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from collections import Counter
 
 VERSION = "challenge-navigation-1"
@@ -45,7 +46,20 @@ VERSIONS = (
 )
 
 
-def build_navigation(catalog, rows):
+def source_bpm(text):
+    """Read the container's displayed tempo, not slide-duration tempo overrides.
+
+    Missing, duplicate and malformed metadata stays unknown. This is the source
+    song BPM, not a claim that every passage uses a constant tempo.
+    """
+    values = re.findall(r"^&wholebpm=([^\r\n]*)", text, re.M)
+    if len(values) != 1 or not re.fullmatch(r"[0-9]{1,4}(?:\.[0-9]{1,6})?", values[0].strip()):
+        return None
+    value = float(values[0])
+    return value if 1 <= value <= 2000 else None
+
+
+def build_navigation(catalog, rows, *, bpm_by_source=None):
     """Join verified source-inventory rows by exact input and body, never title.
 
     Callers verify the package/source inventory hashes before calling this. The
@@ -76,6 +90,7 @@ def build_navigation(catalog, rows):
             "version": row.get("source_version") or "unknown",
             "source_path": path,
             "source_hash": chart["source_hash"],
+            "bpm": (bpm_by_source or {}).get(row.get("source_raw_sha256")),
         }
     present = {c["version"] for c in charts.values()}
     ordered = [v for v in reversed(VERSIONS) if v in present]
@@ -92,5 +107,7 @@ def build_navigation(catalog, rows):
             "genres": dict(sorted(Counter(c["genre"] for c in charts.values()).items())),
             "versions": dict(sorted(Counter(c["version"] for c in charts.values()).items())),
         },
-        "basis": "Pinned pack genre folders and container version fields; display metadata only",
+        "basis": (
+            "Pinned pack genre folders and container version/wholebpm fields; display metadata only"
+        ),
     }

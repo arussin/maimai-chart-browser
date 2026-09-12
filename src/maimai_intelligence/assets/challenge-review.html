@@ -31,8 +31,9 @@
 <details id="sort-panel"><summary>Sort <span id="sort-summary">Title A–Z</span></summary>
 <div id="sort-rules" class="sort-rules"></div><p class="muted">Rules apply in order. The next rule breaks ties.</p></details></div>
 <div id="active-filters" class="active-filters" role="group" aria-label="Active filters"></div>
-<div class="column-labels" aria-hidden="true"><span>Song / artist</span><span>Chart</span><span>Level</span><span>Inputs / s</span></div>
-<div id="songs"></div><button id="more">Show more charts</button></section>
+<p class="row-help muted">One row per song and chart format. Choose a matching difficulty to update its measurements. Sort rules use the selected chart.</p>
+<div class="column-labels" aria-hidden="true"><span>Song / artist</span><span>Difficulty</span><span>Level</span><span>BPM</span><span>Inputs / s</span></div>
+<div id="songs"></div><button id="more">Show more songs</button></section>
 <section id="patterns" hidden>
 <div class="page-heading"><div><p class="eyebrow">LEARN THE SHAPES</p><h1>Pattern dictionary.</h1>
 <p class="lede">Understand a pattern, watch it unfold, then explore how it differs from others.</p></div></div>
@@ -41,7 +42,7 @@
 <label>Show<select id="pattern-scope"><option value="all">All definitions</option>
 <option value="demo">With a demo</option><option value="pending">Awaiting a demo</option></select></label></div>
 <p id="pattern-count" class="muted" role="status"></p>
-<p class="reference-note">Demos are simplified illustrations, not song excerpts. Definitions awaiting review stay visible; they do not label charts in this catalog.</p>
+<p class="reference-note">Demos are simplified illustrations, not song excerpts. Descriptive definitions are available to read even when a demo is missing. Named-pattern definitions needing review are marked separately. These entries do not label charts in this catalog.</p>
 <div id="pattern-list" class="pattern-grid"></div>
 <dialog id="pattern-dialog" aria-labelledby="pattern-title"></dialog></section>
 <section id="compare" hidden>

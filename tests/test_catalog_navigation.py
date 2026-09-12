@@ -7,10 +7,26 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from maimai_analyzer.catalog_navigation import build_navigation
+from maimai_analyzer.catalog_navigation import build_navigation, source_bpm
 
 
 class NavigationTests(unittest.TestCase):
+    def test_source_song_bpm_is_explicit_metadata_not_a_note_override(self):
+        self.assertEqual(source_bpm("&wholebpm=128.5\n&inote_5=(180){4}1-5[240#4:1],E"), 128.5)
+        for text in (
+            "&inote_5=(180){4}1,E",
+            "&wholebpm=NaN",
+            "&wholebpm=0",
+            "&wholebpm=2001",
+            "&wholebpm=120\n&wholebpm=160",
+        ):
+            self.assertIsNone(source_bpm(text))
+        charts, rows = self.fixture()
+        rows[0]["source_raw_sha256"] = "c" * 64
+        result = build_navigation(charts, rows, bpm_by_source={"c" * 64: 128.5})
+        self.assertEqual(result["charts"]["chart:1"]["bpm"], 128.5)
+        self.assertIsNone(build_navigation(charts, rows)["charts"]["chart:1"]["bpm"])
+
     def fixture(self):
         charts = [
             {
