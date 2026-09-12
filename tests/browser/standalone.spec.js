@@ -268,7 +268,7 @@ test('pattern mappings connect rows, lesson discovery, filters and observed sect
   const requests=[];page.on('request',r=>requests.push(r.url()));
   await expect(page.locator('#mapping-note')).toContainText('14 pattern / trait types found automatically');
   await expect(page.locator('.song-row>.chart-summary>.chart-flow svg')).toHaveCount(6);
-  const id='pattern.two_position_alternation';await page.locator('#filter-pattern').selectOption(id);
+  const id='pattern.two_position_alternation';await selectPatterns(page,[id]);
   const rows=page.locator('#songs .song-row');expect(await rows.count()).toBeGreaterThan(0);
   for(const row of await rows.all())await expect(row.locator('.chart-patterns')).toContainText('alternation');
   const first=rows.first();await first.locator('.chart-row').click();
@@ -279,7 +279,7 @@ test('pattern mappings connect rows, lesson discovery, filters and observed sect
   await page.locator('#pattern-dialog').getByRole('button',{name:'Find charts with this pattern',exact:true}).click();
   await expect(page.locator('#pattern-dialog')).toBeHidden();await expect(page.locator('#catalog')).toBeVisible();
   const link=page.url();expect(link).toContain('pattern-filter=');expect(requests).toEqual([]);
-  await page.goto(link);await expect(page.locator('#filter-pattern')).not.toHaveValue('');
+  await page.goto(link);await expect(page.locator('#pattern-filter-summary')).not.toHaveText('All patterns');
   await page.locator('#reset-filters').click();expect(page.url()).not.toContain('pattern-filter=');
   await page.locator('#patterns-tab').click();await expect(page.locator('[data-find-pattern="'+id+'"]').first()).toBeVisible();
   await expect(page.locator('[data-pattern-id="pattern.umiyuri"]')).toContainText('Song examples not connected yet');
@@ -486,4 +486,41 @@ test('similar-chart filtering uses multiple difficulties and the selected level 
   await page.locator('#compare-tab').click();await chooseComparisonChart(page,'left','Fictional study 4');await page.locator('#similar-use-filters').check();await page.locator('#find-similar').click();
   const cards=page.locator('#similar-results .similar-chart');await expect(cards).toHaveCount(1);await expect(cards).toContainText('Fictional study 2');
   await page.locator('#catalog-tab').click();await page.locator('#reset-filters').click();await page.locator('#compare-tab').click();await page.locator('#find-similar').click();expect(await cards.count()).toBeGreaterThan(1);
+});
+
+
+async function selectPatterns(page,ids){
+  if(!await page.locator('#pattern-filter').evaluate(el=>el.open))await page.locator('#pattern-filter-summary').click();
+  await page.locator('#pattern-filter-search').fill('');
+  if(await page.locator('#pattern-filter-clear').isEnabled())await page.locator('#pattern-filter-clear').click();
+  for(const id of ids)await page.locator('[data-pattern-filter="'+id+'"]').check();
+  await page.keyboard.press('Escape');
+}
+
+test('searchable pattern multi-select searches aliases, unions results and preserves links',async({page})=>{
+  await page.goto('/lab/');await expect(page.locator('.song-row')).toHaveCount(6);
+  const requests=[];page.on('request',r=>requests.push(r.url()));
+  const a='pattern.two_position_alternation',b='trait.steady_density',ids=()=>page.locator('.song-row').evaluateAll(rows=>rows.map(r=>r.dataset.chartId).sort());
+  await selectPatterns(page,[a]);const first=await ids();await selectPatterns(page,[b]);const second=await ids();expect(first.length).toBeGreaterThan(0);expect(second.length).toBeGreaterThan(0);
+  await page.locator('#pattern-filter-summary').click();await expect.poll(()=>page.locator('.pattern-filter-panel').evaluate(el=>{const b=el.getBoundingClientRect();return b.top>=0&&b.bottom<=innerHeight+1;})).toBe(true);const search=page.locator('#pattern-filter-search');await search.fill('TRILL');
+  await expect(page.locator('#pattern-filter-options label:visible')).toHaveCount(1);await search.press('ArrowDown');const trill=page.locator('[data-pattern-filter="'+a+'"]');await expect(trill).toBeFocused();await page.keyboard.press('Space');await expect(trill).toBeChecked();
+  await expect(page.locator('#pattern-filter-summary')).toHaveText('2 patterns selected');expect(await ids()).toEqual([...new Set([...first,...second])].sort());
+  await search.fill('chord');await expect(page.locator('[data-pattern-filter="pattern.simultaneous_group"]')).toBeVisible();await expect(page.locator('#pattern-filter-options label:visible')).toHaveCount(1);
+  await search.fill('no-such-pattern-xyz');await expect(page.locator('#pattern-filter-empty')).toBeVisible();await expect(page.locator('#pattern-filter-summary')).toHaveText('2 patterns selected');
+  await page.keyboard.press('Escape');await expect(page.locator('#pattern-filter-summary')).toBeFocused();const link=page.url();expect(new URL(link).searchParams.getAll('pattern-filter')).toEqual([b,a]);expect(requests).toEqual([]);
+  await page.goto(link);await expect(page.locator('#pattern-filter-summary')).toHaveText('2 patterns selected');expect(await ids()).toEqual([...new Set([...first,...second])].sort());
+  await page.getByRole('button',{name:'Remove pattern Steady density',exact:true}).click();expect(await ids()).toEqual(first);expect(new URL(page.url()).searchParams.getAll('pattern-filter')).toEqual([a]);
+  await page.locator('#reset-filters').click();await expect(page.locator('#pattern-filter-summary')).toHaveText('All patterns');await expect(page.locator('.song-row')).toHaveCount(6);expect(new URL(page.url()).searchParams.getAll('pattern-filter')).toEqual([]);
+});
+
+test('pattern search remains accessible, keeps other filters and passes selections to comparisons',async({page})=>{
+  await page.goto('/lab/');await expect(page.locator('.song-row')).toHaveCount(6);
+  await setLevel(page,'min','11');await selectPatterns(page,['pattern.two_position_alternation','pattern.simultaneous_group']);
+  const eligible=await page.locator('.song-row').evaluateAll(rows=>rows.map(r=>r.dataset.chartId));
+  await page.locator('#pattern-filter-summary').click();await page.locator('#pattern-filter-search').fill('chord');
+  expect((await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21aa']).analyze()).violations).toEqual([]);
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);await page.keyboard.press('Escape');
+  await page.locator('#compare-tab').click();await chooseComparisonChart(page,'left','Fictional study 0');await page.locator('#similar-use-filters').check();await page.locator('#find-similar').click();
+  const matches=await page.locator('#similar-results [data-compare-chart]').evaluateAll(nodes=>nodes.map(n=>n.dataset.compareChart));expect(matches.length).toBeGreaterThan(0);expect(matches.every(id=>eligible.includes(id))).toBe(true);
+  await page.locator('#catalog-tab').click();await page.locator('#pattern-filter-summary').click();await page.locator('#pattern-filter-clear').click();await expect(page.locator('#pattern-filter-summary')).toHaveText('All patterns');await expect(page.locator('#filter-min')).toHaveValue('11');await expect(page.locator('.song-row')).toHaveCount(3);
 });

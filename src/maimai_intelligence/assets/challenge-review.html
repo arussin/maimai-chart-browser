@@ -41,7 +41,12 @@
 <div id="sort-rules" class="sort-priorities" role="group" aria-label="Sort priorities"></div>
 <div id="active-filters" class="active-filters" role="group" aria-label="Active filters"></div>
 <p class="row-help muted">One row per song and chart format. Choose a matching difficulty to update its measurements. Sort rules use the selected chart.</p>
-<div class="pattern-filter-row"><label>Pattern or chart trait<select id="filter-pattern"><option value="">All patterns</option></select></label><p class="muted" id="mapping-note"></p></div>
+<div class="pattern-filter-row"><div class="pattern-filter-field"><span id="pattern-filter-label">Patterns or chart traits</span>
+<details id="pattern-filter"><summary id="pattern-filter-summary">All patterns</summary>
+<div class="pattern-filter-panel"><label>Find patterns<input id="pattern-filter-search" type="search" placeholder="Name or alias…" autocomplete="off" aria-controls="pattern-filter-options"></label>
+<div class="pattern-filter-toolbar"><p>Match any selected pattern.</p><button id="pattern-filter-clear" type="button" class="text-button">Clear patterns</button></div>
+<p id="pattern-filter-count" class="muted" role="status"></p><div id="pattern-filter-options" role="group" aria-labelledby="pattern-filter-label"></div>
+<p id="pattern-filter-empty" hidden>No patterns match this search.</p></div></details></div><p class="muted" id="mapping-note"></p></div>
 <p class="sort-help muted">Click a column to sort; click again to reverse. Shift-click, or turn on Keep sort priorities, to add a tie-breaker.</p>
 <div class="column-labels" role="group" aria-label="Sort by column"><button data-sort-key="title">Song / artist</button><button data-sort-key="difficulty">Difficulty</button><button data-sort-key="level">Level</button><button data-sort-key="bpm">BPM</button><button data-sort-key="speed">Inputs / s</button><button data-sort-key="peak">Flow · peak</button></div>
 <div id="songs"></div><button id="more">Show more songs</button></section>

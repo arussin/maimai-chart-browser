@@ -34,6 +34,7 @@ def review_scripts():
             "chart-artwork.js",
             "chart-filters.js",
             "chart-overview.js",
+            "pattern-filter.js",
             "chart-comparison.js",
             "challenge-review.js",
         )

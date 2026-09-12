@@ -156,7 +156,11 @@ Bounds use the levels present in the selected catalog. Invalid text leaves the
 applied range unchanged, and typing a bound past the other moves both to that
 level. Clear a field to restore that end of the full range. Reset levels leaves
 other filters intact. Comparisons use the same difficulty/range constraints when
-“Use chart filters for matches” is enabled.
+“Use chart filters for matches” is enabled. Patterns use a searchable checkbox menu;
+search includes aliases and selections match any chosen pattern. Selected patterns
+remain as removable chips and round-trip through repeated `pattern-filter` URL
+parameters; existing single-pattern links and dictionary discovery still work.
+Patterns without supported coverage are shown disabled.
 
 ## Optional public artwork
 

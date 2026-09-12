@@ -113,8 +113,8 @@ const collator=new Intl.Collator(undefined,{numeric:true,sensitivity:'base'});
 const levelNumber=value=>value&&Number.isFinite(parseFloat(value))?parseFloat(value)+(value.endsWith('+')?.5:0):null;
 const sortFields={title:'Title',artist:'Artist',level:'Level',bpm:'BPM',difficulty:'Difficulty',format:'Format',genre:'Genre',version:'Version',speed:'Inputs / s',peak:'Peak inputs / s'};
 let sortRules=[{key:'title',direction:1}];
-const filters=['genre','pattern'],selectedVersions=new Set();
-let chartFilters;
+const filters=['genre'],selectedVersions=new Set();
+let chartFilters,patternFilter;
 const versionLabel=value=>value.replace(/^maimai DX /,'DX ').replace(/^maimai /,'');
 const genreLabel=value=>(navigation.genres||[]).find(g=>g.id===value)?.label||'Uncategorized';
 const values={title:c=>displayTitle(c),artist:c=>c.artist,level:c=>levelNumber(c.level),bpm:c=>navigation.charts?.[c.chart_id]?.bpm??null,difficulty:c=>{const rank=difficultyOrder.indexOf(c.difficulty.toUpperCase());return rank<0?null:rank;},format:c=>c.format,genre:c=>genreLabel(folderValue(c,'genre')),version:c=>{const v=(navigation.versions||[]).indexOf(folderValue(c,'version'));return v<0?null:v;},speed:c=>c.demand.cadence.mean_onsets_s??null,peak:c=>{const peaks=(overview.get(c)?.segments||[]).filter(s=>s[3]!=null&&s[4]>0).map(s=>s[3]);return peaks.length?Math.max(...peaks):null;}};
@@ -141,11 +141,11 @@ function renderSort(){
 }
 function initializeFilters(){
   chartFilters=window.maimaiCatalogFilters.mount(data.catalog,()=>{visible=40;catalog();});
+  patternFilter=window.maimaiPatternFilter.mount(overview,()=>{visible=40;writePatternFilter();catalog();});
   for(const id of filters){const select=el('filter-'+id);let options=[];
     if(id==='genre')options=(navigation.genres||[]).map(g=>[g.id,g.label]);
-    if(id==='pattern')options=overview.patternIds.map(p=>[p,overview.name(p)+(overview.coverage.get(p)?' ('+(overview.frequency.get(p)||0)+')':' · not covered')]);
-    for(const [value,label]of options){const option=new Option(label,value);if(id==='pattern'&&!overview.coverage.get(value))option.disabled=true;select.append(option);}
-    select.onchange=()=>{visible=40;catalog();if(id==='pattern')writePatternFilter();};
+    for(const [value,label]of options){const option=new Option(label,value);select.append(option);}
+    select.onchange=()=>{visible=40;catalog();};
   }
   for(const key of ['all','STD','DX'])el('format-'+key).onclick=()=>{format=key;visible=40;updateFormat();catalog();};
   for(const version of navigation.versions||[]){
@@ -158,12 +158,12 @@ function initializeFilters(){
   el('version-clear').onclick=()=>{selectedVersions.clear();visible=40;updateVersions();catalog();};
   el('version-filter').addEventListener('keydown',event=>{if(event.key==='Escape'){el('version-filter').open=false;el('version-summary').focus();event.stopPropagation();}});
   document.addEventListener('click',event=>{if(!el('version-filter').contains(event.target))el('version-filter').open=false;});
-  el('reset-filters').onclick=()=>{for(const id of filters)el('filter-'+id).value='';selectedVersions.clear();updateVersions();chartFilters.clear();el('search').value='';format='all';visible=40;writePatternFilter();updateFormat();catalog();};
+  el('reset-filters').onclick=()=>{for(const id of filters)el('filter-'+id).value='';selectedVersions.clear();updateVersions();chartFilters.clear();patternFilter.clear();el('search').value='';format='all';visible=40;writePatternFilter();updateFormat();catalog();};
   renderSort();
   el('mapping-note').textContent=overview.patternIds.length?overview.coverage.size+' pattern / trait types found automatically · not yet reviewed. Click a tag for its lesson.':'Pattern and Flow data are not available in this catalog release.';
   const newest=(navigation.versions||[]).find(v=>data.catalog.some(c=>folderValue(c,'version')===v));el('catalog-era').textContent=newest?'Through '+versionLabel(newest):'Research catalog';
 }
-function writePatternFilter(){const url=new URL(location.href),id=el('filter-pattern').value;if(id)url.searchParams.set('pattern-filter',id);else url.searchParams.delete('pattern-filter');history.replaceState(null,'',url);}
+function writePatternFilter(){const url=new URL(location.href);url.searchParams.delete('pattern-filter');for(const id of patternFilter.ids())url.searchParams.append('pattern-filter',id);history.replaceState(null,'',url);}
 function updateVersions(){
   el('version-summary').textContent=selectedVersions.size===0?'All versions':selectedVersions.size===1?versionLabel([...selectedVersions][0]):selectedVersions.size+' versions selected';
   for(const input of el('version-options').querySelectorAll('input'))input.checked=selectedVersions.has(input.value);
@@ -175,11 +175,11 @@ function activeFilters(){
     const button=make('button',versionLabel(version)+' ×','filter-chip');button.setAttribute('aria-label','Remove version '+versionLabel(version));
     button.onclick=()=>{selectedVersions.delete(version);visible=40;updateVersions();catalog();el('version-summary').focus();};chips.push(button);
   }
-  chips.push(...chartFilters.chips());
+  chips.push(...chartFilters.chips(),...patternFilter.chips());
   for(const id of filters){const select=el('filter-'+id);if(!select.value)continue;
     const button=make('button',select.selectedOptions[0].text+' ×','filter-chip');
     button.setAttribute('aria-label','Remove '+select.parentElement.firstChild.textContent+' filter');
-    button.onclick=()=>{select.value='';visible=40;catalog();if(id==='pattern')writePatternFilter();select.focus();};chips.push(button);
+    button.onclick=()=>{select.value='';visible=40;catalog();select.focus();};chips.push(button);
   }
   // Preserve controls during text-field blur so a pending pointer click lands
   // on the same chip after the level filter updates.
@@ -196,7 +196,7 @@ function catalog(focusKey=null){
     if(selected.genre&&folderValue(c,'genre')!==selected.genre)return false;
     if(selectedVersions.size&&!selectedVersions.has(folderValue(c,'version')))return false;
     if(!chartFilters.matches(c))return false;
-    if(selected.pattern&&!overview.detected(c).some(t=>t.id===selected.pattern))return false;
+    if(!patternFilter.matches(c))return false;
     return true;
   }).sort(compareCharts);
   const grouped=new Map();
@@ -211,7 +211,7 @@ function catalog(focusKey=null){
     identity.append(title,make('span',(c.artist||'Artist not provided')+' · '+c.format,'muted'));summary.append(identity);
     summary.setAttribute('aria-label','Open '+displayTitle(c)+' · '+c.format+' '+c.difficulty+' · Level '+(c.level||'unknown'));
     const heading=make('div',undefined,'chart-row-heading'),videoLink=window.maimaiChartLinks.youtube(c);
-    heading.append(window.maimaiChartArtwork.jacket(c),summary,overview.chips(c,3,selected.pattern));if(videoLink)heading.append(videoLink);
+    heading.append(window.maimaiChartArtwork.jacket(c),summary,overview.chips(c,3,patternFilter.ids()));if(videoLink)heading.append(videoLink);
     const picker=make('select');picker.className='row-difficulty';picker.id='row-difficulty-'+index;picker.setAttribute('aria-label','Difficulty for '+displayTitle(c)+' '+c.format);
     for(const choice of [...choices].sort((a,b)=>(values.difficulty(a)??99)-(values.difficulty(b)??99)||a.chart_id.localeCompare(b.chart_id)))picker.append(new Option(choice.difficulty+' · '+(choice.level||'?'),choice.chart_id));
     picker.value=c.chart_id;
@@ -256,13 +256,12 @@ initializeFilters();catalog();status();
 comparisonUI=window.maimaiChartComparison.mount({data,comparison,stopPlayers,eligibleIds:()=>data.catalog.filter(c=>{
   if(format!=='all'&&c.format!==format)return false;
   if(selectedVersions.size&&!selectedVersions.has(folderValue(c,'version')))return false;
-  if(el('filter-pattern').value&&!overview.detected(c).some(t=>t.id===el('filter-pattern').value))return false;
+  if(!patternFilter.matches(c))return false;
   if(el('filter-genre').value&&folderValue(c,'genre')!==el('filter-genre').value)return false;
   return chartFilters.matches(c);
 }).map(c=>c.chart_id)});
 const params=new URLSearchParams(location.search),initialView=params.get('view'),initialPattern=params.get('pattern');
-window.maimaiPatternLibrary.setDiscovery(id=>{el('reset-filters').click();el('filter-pattern').value=id;writePatternFilter();selectView('catalog');catalog();el('filter-pattern').focus();});
-if(overview.patternIds.includes(params.get('pattern-filter'))){el('filter-pattern').value=params.get('pattern-filter');catalog();}
+window.maimaiPatternLibrary.setDiscovery(id=>{el('reset-filters').click();patternFilter.set([id]);writePatternFilter();selectView('catalog');catalog();el('pattern-filter-summary').focus();});
 window.maimaiPatternLibrary.setNavigation(id=>{const url=new URL(location.href);if(id)url.searchParams.set('pattern',id);else url.searchParams.delete('pattern');history.replaceState(null,'',url);});
 if(['catalog','patterns','compare'].includes(initialView))selectView(initialView);
 if(initialPattern&&window.maimaiPatternLibrary.has(initialPattern)){window.maimaiPatternLibrary.show(initialPattern);}
