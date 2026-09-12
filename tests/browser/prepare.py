@@ -5,6 +5,7 @@ from pathlib import Path
 from maimai_intelligence.lab import build_lab
 from maimai_intelligence.site import build_site
 from maimai_intelligence.snapshots import atomic_json
+from tests.artwork_fixture import add_artwork
 from tests.lab_fixture import write_package
 from tests.personal_fixture import fixture
 
@@ -21,3 +22,6 @@ build_lab(
     root / "grouped",
     catalog_version="grouped-v2",
 )
+artwork_package = write_package(Path("output/artwork-fixture"))
+add_artwork(artwork_package)
+build_lab(artwork_package, root / "artwork", catalog_version="artwork-v1")

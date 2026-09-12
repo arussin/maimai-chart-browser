@@ -31,6 +31,7 @@ def review_scripts():
             "pattern-library.js",
             "challenge-matching.js",
             "chart-links.js",
+            "chart-artwork.js",
             "chart-overview.js",
             "chart-comparison.js",
             "challenge-review.js",
@@ -38,7 +39,9 @@ def review_scripts():
     )
 
 
-def render_review(package, catalog, review, snippets, benchmark, navigation=None, overview=None):
+def render_review(
+    package, catalog, review, snippets, benchmark, navigation=None, overview=None, artwork=None
+):
     data = {
         "package": package,
         "catalog": catalog,
@@ -49,6 +52,8 @@ def render_review(package, catalog, review, snippets, benchmark, navigation=None
     }
     if overview is not None:
         data["analysis"] = overview
+    if artwork is not None:
+        data["artwork"] = artwork
     # Showing a public reference definition never assigns it to a catalog chart.
     patterns = [
         {

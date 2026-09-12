@@ -10,6 +10,7 @@ from pathlib import Path
 
 from maimai_analyzer.dataset import SOURCE_LOCK
 
+from .artwork import copy_artwork, validate_artwork
 from .challenge_review import render_review, review_scripts
 from .io import atomic_write_text
 from .research_overview import validate_overview
@@ -29,7 +30,7 @@ def build_lab(package_directory, output, *, catalog_version):
         "snippets.json",
         "benchmark.json",
         "navigation.json",
-    ) + (("analysis.json",) if "analysis.json" in records else ()):
+    ) + tuple(name for name in ("analysis.json", "artwork.json") if name in records):
         record = records[name]
         with (source / name).open("rb") as stream:
             raw = stream.read(MAX_BYTES + 1)
@@ -43,6 +44,10 @@ def build_lab(package_directory, output, *, catalog_version):
     overview = loaded.get("analysis.json")
     if overview is not None:
         validate_overview(overview, loaded["catalog.json"])
+    artwork = loaded.get("artwork.json")
+    if artwork is not None:
+        validate_artwork(artwork, loaded["catalog.json"], loaded["navigation.json"]["versions"])
+        copy_artwork(artwork, source, root)
     html = render_review(
         package,
         loaded["catalog.json"],
@@ -51,11 +56,14 @@ def build_lab(package_directory, output, *, catalog_version):
         loaded["benchmark.json"],
         loaded["navigation.json"],
         overview,
+        artwork,
     )
     data_match = re.search(
         r'<script id="challenge-data" type="application/json">(.*?)</script>', html, re.S
     )
     data = canonical(json.loads(data_match[1]))
+    if len(data) > MAX_BYTES:
+        raise ValueError("Research catalog exceeds 32 MiB")
     sha = hashlib.sha256(data).hexdigest()
     root.mkdir(parents=True, exist_ok=True)
     (root / "catalogs").mkdir(exist_ok=True)
@@ -110,7 +118,7 @@ def build_lab(package_directory, output, *, catalog_version):
         '<meta name="referrer" content="no-referrer">'
         '<meta http-equiv="Content-Security-Policy" content="'
         "default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; "
-        "connect-src 'self'; img-src data:; object-src 'none'; base-uri 'none'; "
+        "connect-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'none'; "
         "form-action 'none'"
         '">\n<title>',
     )

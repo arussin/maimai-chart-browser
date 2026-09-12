@@ -10,7 +10,7 @@
 <main><section id="catalog" tabindex="-1">
 <div class="page-heading"><div><p class="eyebrow">EXPLORE THE MUSIC</p><h1>Find a chart.</h1>
 <p class="lede">Choose your mix of genre, level and version. Keep every filter as you sort.</p></div>
-<p class="catalog-total"><strong id="loaded-count"></strong> charts<span>Research catalog</span></p></div>
+<p class="catalog-total"><strong id="loaded-count"></strong> charts<span id="catalog-era" title="Coverage of the retained research source, not a complete current-game song list.">Research catalog</span></p></div>
 <div class="catalog-controls"><label class="search-field">Search songs
 <input id="search" type="search" placeholder="Song or artist…"></label>
 <div class="format-switch" role="group" aria-label="Chart format">
@@ -44,7 +44,7 @@
 <label>Show<select id="pattern-scope"><option value="all">All lessons</option>
 <option value="patterns">Patterns</option><option value="traits">Chart traits</option></select></label></div>
 <p id="pattern-count" class="muted" role="status"></p>
-<p class="reference-note">Every lesson has an authored example and contrast, without audio. Find charts uses separately prepared experimental detections from exact chart transcriptions. Named families without a detector remain unmapped. The Umiyuri lesson illustrates one documented form.</p>
+<p class="reference-note">Every lesson has an illustrated example and contrast, without audio. “Found automatically” means the analyzer matched timing or note-shape rules; those song examples still need human review. “Song examples not connected yet” means the lesson is ready but its chart detector or reviewed assignments are still missing. It does not mean those songs were left out of the analysis. The Umiyuri lesson illustrates one documented form.</p>
 <div id="pattern-list" class="pattern-grid"></div>
 </section>
 <section id="compare" hidden>
@@ -76,6 +76,7 @@
 <p>Comparisons are experimental and are not personalized practice recommendations. Named-pattern chart labels still require independent review.</p>
 <p>Passage animation uses chart time, without audio. Straight and center-V slides are schematic. Unsupported paths are labeled.</p>
 <p id="credit"></p><p id="notice"></p><p>Maichart-Converts · Neskol/Maichart-Converts on GitHub</p>
+<p id="artwork-credit" hidden></p>
 <code id="revision"></code></details></footer></main>
 <script id="pattern-data" type="application/json">__PATTERNS__</script>
 <script id="challenge-data" type="application/json">__DATA__</script><script>__JS__</script></body></html>

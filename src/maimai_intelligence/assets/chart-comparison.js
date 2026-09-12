@@ -16,7 +16,7 @@ function mount({data,comparison,stopPlayers,eligibleIds}){
   const bpm=c=>data.navigation?.charts?.[c.chart_id]?.bpm??null,bpmText=c=>bpm(c)==null?'BPM unknown':bpm(c)+' BPM';
   let index=null,matches=null;
   const getIndex=()=>index||(index=window.maimaiChallengeMatching.createIndex(data.catalog));
-  function identity(c){const box=make('div',undefined,'chosen-chart');box.append(make('strong',name(c)),make('p',c.format+' '+c.difficulty+' · Lv. '+(c.level||'?')+' · '+bpmText(c),'muted'),make('p',c.artist,'muted'),overview.chips(c),overview.graph(c,{compact:true}));const videoLink=window.maimaiChartLinks.youtube(c);if(videoLink)box.append(videoLink);return box;}
+  function identity(c){const box=make('div',undefined,'chosen-chart');box.append(window.maimaiChartArtwork.jacket(c),make('strong',name(c)),make('p',c.format+' '+c.difficulty+' · Lv. '+(c.level||'?')+' · '+bpmText(c),'muted'),make('p',c.artist,'muted'),overview.chips(c),overview.graph(c,{compact:true}));const videoLink=window.maimaiChartLinks.youtube(c);if(videoLink)box.append(videoLink);return box;}
   function writeLink(){const url=new URL(location.href);for(const side of ['left','right']){if(state[side])url.searchParams.set(side,state[side]);else url.searchParams.delete(side);}history.replaceState(null,'',url);}
   function choose(side,id){
     if(!byId.has(id))return;

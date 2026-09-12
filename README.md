@@ -144,3 +144,30 @@ fixtures are retained.
 The existing research acquisition/build scripts and Challenge Lab renderer are
 preserved separately. They remain explicit offline/research workflows; opening
 the main browser does not run them. Attribution: [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+
+
+## Optional public artwork
+
+Prepare jackets and version logos once, then serve the generated local WebP files.
+Preparation requires Pillow (`python -m pip install Pillow`); browsing and building
+an already prepared package keep the normal dependency-free installation.
+
+```sh
+python -m scripts.prepare_public_artwork output/challenge-patterns-v1 output/challenge-artwork-v1 --cache output/artwork-cache/downloads
+maimai-chart demo --output output/site --lab-package output/challenge-artwork-v1
+```
+
+The command reads public metadata and images only. `--offline` reuses the cache
+without network access. A missing image becomes a neutral placeholder. Jackets
+require a unique normalized title **and artist** match; this display lookup does
+not establish chart identity or enable personalization. The package records source
+URLs, source hashes and converted image hashes. Browsers load only same-site assets,
+with no account information, remote image requests or third-party scripts.
+
+The retained source already includes CiRCLE (78 song/format entries, 315 charts)
+and CiRCLE PLUS (18 entries, 75 charts). Its upstream default branch was checked on
+2026-09-11: commit `e164add85213bab150e1487d5eb15ccb631aedb9` still matches the
+retained tree, with no added or changed paths. The latest upstream release is
+[v1.66_1.0.9.0](https://github.com/Neskol/Maichart-Converts/releases/tag/v1.66_1.0.9.0),
+the CiRCLE PLUS launch update; this is source coverage, not a complete current-game
+catalog. Versions in the selector show their actual song and chart counts.

@@ -263,7 +263,7 @@ test('pattern mappings connect rows, lesson discovery, filters and observed sect
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto('/lab/');await expect(page.locator('#loaded-count')).toHaveText('6');
   const requests=[];page.on('request',r=>requests.push(r.url()));
-  await expect(page.locator('#mapping-note')).toContainText('14 experimental');
+  await expect(page.locator('#mapping-note')).toContainText('14 pattern / trait types found automatically');
   await expect(page.locator('.song-row>.chart-summary>.chart-flow svg')).toHaveCount(6);
   const id='pattern.two_position_alternation';await page.locator('#filter-pattern').selectOption(id);
   const rows=page.locator('#songs .song-row');expect(await rows.count()).toBeGreaterThan(0);
@@ -279,7 +279,7 @@ test('pattern mappings connect rows, lesson discovery, filters and observed sect
   await page.goto(link);await expect(page.locator('#filter-pattern')).not.toHaveValue('');
   await page.locator('#reset-filters').click();expect(page.url()).not.toContain('pattern-filter=');
   await page.locator('#patterns-tab').click();await expect(page.locator('[data-find-pattern="'+id+'"]').first()).toBeVisible();
-  await expect(page.locator('[data-pattern-id="pattern.umiyuri"]')).toContainText('Chart mapping not yet available');
+  await expect(page.locator('[data-pattern-id="pattern.umiyuri"]')).toContainText('Song examples not connected yet');
   expect(errors).toEqual([]);
 });
 
@@ -400,4 +400,31 @@ test('lesson contrasts keep equal graph scales and work with reduced motion',asy
   await page.evaluate(()=>document.documentElement.style.fontSize='200%');
   expect(await dialog.evaluate(n=>n.scrollWidth<=n.clientWidth)).toBe(true);
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+});
+
+
+test('public artwork sits left of rows, versions retain accessible multi-select and images stay local',async({page})=>{
+  const requests=[],errors=[];page.on('request',r=>requests.push(r.url()));page.on('pageerror',e=>errors.push(e.message));
+  await page.goto('/artwork/');await expect(page.locator('#loaded-count')).toHaveText('6');
+  const row=page.locator('.song-row').filter({has:page.getByText('Fictional study 0',{exact:true})});
+  const jacket=row.locator('.song-jacket');await expect(jacket).not.toHaveClass(/artwork-missing/);
+  const bounds=await jacket.boundingBox(),title=await row.locator('.chart-row').boundingBox();expect(bounds.x+bounds.width).toBeLessThanOrEqual(title.x);
+  await jacket.click();await expect(row.locator('.chart-measurements')).toBeVisible();
+  await expect(page.locator('.song-jacket.artwork-missing')).toHaveCount(5);
+  await page.locator('#version-summary').click();
+  const versions=page.locator('#version-options'),prism=versions.getByRole('checkbox',{name:'DX PRiSM PLUS',exact:true});
+  await expect(prism.locator('..').locator('.version-logo')).not.toHaveClass(/artwork-missing/);
+  await expect(prism.locator('..').locator('.version-count')).toContainText('3 charts');
+  await prism.focus();await page.keyboard.press('Space');await expect(prism).toBeChecked();
+  await versions.getByRole('checkbox',{name:'DX',exact:true}).check();
+  await expect(page.locator('#version-summary')).toContainText('2 versions');
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+  expect(requests.filter(url=>new URL(url).origin!=='http://127.0.0.1:8766')).toEqual([]);expect(errors).toEqual([]);
+});
+
+test('unavailable jacket files fall back without breaking chart interactions',async({page})=>{
+  await page.route('**/media/*.webp',route=>route.fulfill({status:404,body:''}));
+  await page.goto('/artwork/');await expect(page.locator('#loaded-count')).toHaveText('6');
+  const row=page.locator('.song-row').first();await expect(row.locator('.song-jacket')).toHaveClass(/artwork-missing/);
+  await expect(row.locator('.song-jacket img')).toHaveCount(0);await row.locator('.chart-row').click();await expect(row.locator('.chart-measurements')).toBeVisible();
 });

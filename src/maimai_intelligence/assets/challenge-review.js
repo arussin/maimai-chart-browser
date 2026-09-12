@@ -151,14 +151,17 @@ function initializeFilters(){
   for(const version of navigation.versions||[]){
     const label=make('label'),checkbox=make('input');checkbox.type='checkbox';checkbox.value=version;
     checkbox.onchange=()=>{if(checkbox.checked)selectedVersions.add(version);else selectedVersions.delete(version);visible=40;updateVersions();catalog();};
-    label.append(checkbox,make('span',versionLabel(version)));el('version-options').append(label);
+    const charts=data.catalog.filter(c=>folderValue(c,'version')===version),count=new Set(charts.map(rowKey)).size;
+    const text=make('span',versionLabel(version),'version-name'),detail=make('small',count+' song'+(count===1?'':'s')+' · '+charts.length+' charts','version-count');detail.setAttribute('aria-hidden','true');text.append(detail);
+    label.title=count+' song / format entries, '+charts.length+' analyzed charts';label.append(checkbox,window.maimaiChartArtwork.version(version),text);el('version-options').append(label);
   }
   el('version-clear').onclick=()=>{selectedVersions.clear();visible=40;updateVersions();catalog();};
   el('version-filter').addEventListener('keydown',event=>{if(event.key==='Escape'){el('version-filter').open=false;el('version-summary').focus();event.stopPropagation();}});
   document.addEventListener('click',event=>{if(!el('version-filter').contains(event.target))el('version-filter').open=false;});
   el('reset-filters').onclick=()=>{for(const id of filters)el('filter-'+id).value='';selectedVersions.clear();updateVersions();el('search').value='';format='all';visible=40;writePatternFilter();updateFormat();catalog();};
   renderSort();
-  el('mapping-note').textContent=overview.patternIds.length?overview.coverage.size+' experimental pattern / trait types with supported coverage · click a tag to open its lesson.':'Pattern and Flow mappings are not available in this catalog release.';
+  el('mapping-note').textContent=overview.patternIds.length?overview.coverage.size+' pattern / trait types found automatically · not yet reviewed. Click a tag for its lesson.':'Pattern and Flow data are not available in this catalog release.';
+  const newest=(navigation.versions||[]).find(v=>data.catalog.some(c=>folderValue(c,'version')===v));el('catalog-era').textContent=newest?'Through '+versionLabel(newest):'Research catalog';
 }
 function writePatternFilter(){const url=new URL(location.href),id=el('filter-pattern').value;if(id)url.searchParams.set('pattern-filter',id);else url.searchParams.delete('pattern-filter');history.replaceState(null,'',url);}
 function updateVersions(){
@@ -205,7 +208,7 @@ function catalog(focusKey=null){
     identity.append(title,make('span',(c.artist||'Artist not provided')+' · '+c.format,'muted'));summary.append(identity);
     summary.setAttribute('aria-label','Open '+displayTitle(c)+' · '+c.format+' '+c.difficulty+' · Level '+(c.level||'unknown'));
     const heading=make('div',undefined,'chart-row-heading'),videoLink=window.maimaiChartLinks.youtube(c);
-    heading.append(summary,overview.chips(c,3,selected.pattern));if(videoLink)heading.append(videoLink);
+    heading.append(window.maimaiChartArtwork.jacket(c),summary,overview.chips(c,3,selected.pattern));if(videoLink)heading.append(videoLink);
     const picker=make('select');picker.className='row-difficulty';picker.id='row-difficulty-'+index;picker.setAttribute('aria-label','Difficulty for '+displayTitle(c)+' '+c.format);
     for(const choice of [...choices].sort((a,b)=>(values.difficulty(a)??99)-(values.difficulty(b)??99)||a.chart_id.localeCompare(b.chart_id)))picker.append(new Option(choice.difficulty+' · '+(choice.level||'?'),choice.chart_id));
     picker.value=c.chart_id;
@@ -242,6 +245,7 @@ for(const name of ['compare','catalog','patterns'])el(name+'-tab').onclick=()=>s
 el('download').onclick=()=>{const blob=new Blob([JSON.stringify({version:'challenge-judgments-1',benchmark_hash:data.benchmark_hash,policy:data.package.retrieval_policy,judgments:[...judgments.values()]},null,2)],{type:'application/json'});const url=URL.createObjectURL(blob),a=make('a');a.href=url;a.download='challenge-judgments.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
 el('coverage').textContent=data.catalog.length+' chart profiles · '+data.review.length+' prepared review queries · '+data.package.status.replaceAll('_',' ');el('credit').textContent=data.package.source.credit;el('notice').textContent=data.package.source.notice;el('revision').textContent=data.package.source.revision;
 el('loaded-count').textContent=data.catalog.length.toLocaleString();
+if(data.artwork?.credit){el('artwork-credit').hidden=false;el('artwork-credit').textContent=data.artwork.credit;}
 el('sample-intro').textContent='Choose from '+data.review.length+' prepared starting charts to inspect side-by-side passage demos. These are examples of structural similarity, not recommendations based on your scores.';
 if(data.package.outcomes){const o=data.package.outcomes;el('coverage').textContent+=' · '+o.excluded+' Utage slots excluded · '+o.unavailable+' source container unavailable.';}
 window.maimaiPreviewField=field;
