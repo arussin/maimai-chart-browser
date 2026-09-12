@@ -28,15 +28,23 @@ pinned research package and externalizes its data behind an immutable release
 manifest. The main page links to the research browser, with three views:
 
 - **Charts:** combine genre, version, difficulty, format and level-range filters.
+  Select multiple versions together. Click anywhere on a chart row to open its
+  details and choose **Compare this chart** or **Find similar**.
   Three ordered sort rules apply to individual chart variants and break ties in
   order. Changing sort or search retains the selected filters.
 - **Pattern dictionary:** all 36 reference definitions, including 14 authored
   schematic demos with play, step, speed and progress controls. Supported input
   patterns also show an animated eight-button layout. Definitions awaiting
   review remain available without invented demos or real-chart assignments.
-- **Compare charts:** the prepared starting-chart examples show experimental
-  structural similarity and synchronized chart passages. These are not personal
-  recommendations; only the prepared query subset has passage comparisons.
+- **Compare charts:** choose any two charts using the searchable pickers, or
+  choose one and **Find similar** across the catalog. Comparisons use existing
+  chart measurements for input speed, rhythm, simultaneous inputs, holds, slides
+  and layout. Similar matches show one chart per song family; optionally apply
+  the active chart filters. Links retain both chart IDs and the catalog version.
+  These are experimental demand comparisons, not named-pattern recognition or
+  personal recommendations. Synchronized passage animations remain available
+  for prepared pairs, with the original examples under **Prepared passage
+  demonstrations**.
 
 The interface follows the report site's white/teal presentation. Dictionary
 links retain the research catalog version and pattern ID. Research data is not
@@ -73,6 +81,9 @@ requires checking that no writer is running before manually removing it.
 Python interfaces: `maimai_analyzer.catalog.build_catalog`,
 `maimai_intelligence.snapshots.download_snapshot`,
 `maimai_intelligence.bundles.prepare_player_bundle` and `export_report_bundle`.
+For public summary matching, `maimai_analyzer.challenge_similarity.query_demands`
+accepts existing chart profiles and a reference scale without requiring passage
+windows. The browser uses equivalent percentile and distance calculations.
 See [the versioned contracts](docs/CONTRACTS.md) and
 [report integration](docs/REPORT_INTEGRATION.md).
 

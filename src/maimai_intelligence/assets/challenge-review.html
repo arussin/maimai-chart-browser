@@ -20,7 +20,10 @@
 <button id="reset-filters" class="text-button">Reset filters</button></div>
 <div class="filter-row">
 <label>Genre<select id="filter-genre"><option value="">All genres</option></select></label>
-<label>Version<select id="filter-version"><option value="">All versions</option></select></label>
+<div class="version-field"><span id="version-label">Version</span>
+<details id="version-filter"><summary id="version-summary">All versions</summary>
+<div class="version-panel"><button id="version-clear" type="button" class="text-button">All versions</button>
+<div id="version-options" role="group" aria-labelledby="version-label"></div></div></details></div>
 <label>Difficulty<select id="filter-difficulty"><option value="">All difficulties</option></select></label>
 <label>From level<select id="filter-min"><option value="">Any level</option></select></label>
 <label>To level<select id="filter-max"><option value="">Any level</option></select></label></div>
@@ -42,8 +45,18 @@
 <div id="pattern-list" class="pattern-grid"></div>
 <dialog id="pattern-dialog" aria-labelledby="pattern-title"></dialog></section>
 <section id="compare" hidden>
-<div class="page-heading"><div><p class="eyebrow">SIDE BY SIDE</p><h1>Compare chart passages.</h1>
-<p class="lede">See where two charts ask for similar timing, movement or coordination.</p></div></div>
+<div class="page-heading"><div><p class="eyebrow">SIDE BY SIDE</p><h1>Compare charts.</h1>
+<p class="lede">Choose any two charts, or start with one and find similar chart demands.</p></div></div>
+<div id="comparison-pickers" class="comparison-pickers"></div>
+<div class="comparison-actions"><button id="find-similar" type="button" disabled>Find similar to first chart</button>
+<label class="check"><input id="similar-use-filters" type="checkbox">Use chart filters for matches</label>
+<button id="comparison-clear" type="button" class="text-button">Clear comparison</button></div>
+<p id="comparison-status" class="muted" role="status">Choose a first chart to begin.</p>
+<div id="direct-comparison"></div><div id="similar-results"></div>
+<details class="comparison-method"><summary>What this comparison tells you</summary>
+<p>These comparisons use measured input speed, rhythm, simultaneous inputs, holds, slides and layout across the catalog. Similar demands do not establish the same named patterns, difficulty or practice benefit.</p>
+<p>Passage animations are available for the prepared pairs below. Other pairs can be compared by their chart measurements.</p></details>
+<details id="prepared-examples" class="prepared-examples"><summary>Prepared passage demonstrations</summary>
 <p id="sample-intro" class="reference-note"></p><div class="toolbar">
 <label class="query-label">Starting chart <select id="query"></select></label></div>
 <div id="query-card"></div><div id="matches"></div>
@@ -52,7 +65,7 @@
 <div class="toolbar"><label class="check"><input type="checkbox" id="feedback"> Enable feedback</label>
 <label class="check"><input type="checkbox" id="blind" disabled>Hide ranking order and reasons</label>
 <button id="download" disabled>Save judgments</button></div>
-<p id="review-status" role="status"></p></details></section>
+<p id="review-status" role="status"></p></details></details></section>
 <footer class="sources"><details><summary>About this research catalog</summary><p id="coverage"></p>
 <p>Source levels and categories are shown. Official constants, regional availability and chart-addition dates are not independently verified. Utage is excluded.</p>
 <p>Comparisons are experimental and are not personalized practice recommendations. Named-pattern chart labels still require independent review.</p>

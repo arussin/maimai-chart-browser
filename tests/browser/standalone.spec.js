@@ -57,20 +57,22 @@ test('research browser combines filters and retains them while sorting',async({p
   await page.goto('/lab/?version=fixture-v3');await expect(page.locator('#loaded-count')).toHaveText('6');
   await page.locator('#search').fill('Fictional study 0');await expect(page.locator('#songs')).toContainText('Fictional study 0');
   await page.locator('#search').fill('');
-  await page.locator('#filter-version').selectOption({label:'DX PRiSM PLUS'});
+  await page.locator('#version-summary').click();
+  await page.locator('#version-options').getByRole('checkbox',{name:'DX PRiSM PLUS',exact:true}).check();
+  await page.keyboard.press('Escape');
   await page.locator('#filter-min').selectOption('11');
   await expect(page.locator('#songs .song-row')).toHaveCount(2);
   await page.locator('#filter-difficulty').selectOption('MASTER');
   await expect(page.locator('#songs .song-row')).toHaveCount(1);
   await page.locator('#sort-panel summary').click();await page.locator('#sort-key-0').selectOption('level');
   await page.locator('#sort-direction-0').click();
-  await expect(page.locator('#filter-version')).toHaveValue('maimai DX PRiSM PLUS');
+  await expect(page.locator('#version-summary')).toHaveText('DX PRiSM PLUS');
   await expect(page.locator('#filter-min')).toHaveValue('11');
   await page.locator('#search').fill('not found');await expect(page.locator('#songs .song-row')).toHaveCount(0);
   await page.locator('#search').fill('');await expect(page.locator('#songs .song-row')).toHaveCount(1);
   await page.locator('#reset-filters').click();await expect(page.locator('#songs .song-row')).toHaveCount(6);
-  await page.locator('#compare-tab').click();await expect(page.locator('#query-card')).toBeVisible();
-  await expect(page.locator('#sample-intro')).toContainText('not recommendations based on your scores');
+  await page.locator('#compare-tab').click();await expect(page.locator('#comparison-pickers')).toBeVisible();
+  await expect(page.locator('#prepared-examples')).not.toHaveAttribute('open','');
   expect(errors).toEqual([]);expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
 });
 
@@ -119,4 +121,78 @@ test('research controls and pattern demos remain accessible and reflow at 200 pe
   await page.evaluate(()=>document.documentElement.style.fontSize='200%');
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
   expect(await page.locator('#pattern-dialog').evaluate(el=>el.scrollWidth<=el.clientWidth)).toBe(true);
+});
+
+test('version multi-select unions releases while retaining other filters',async({page})=>{
+  await page.goto('/lab/');await expect(page.locator('#songs .song-row')).toHaveCount(6);
+  await page.locator('#version-summary').click();
+  const options=page.locator('#version-options');await options.getByRole('checkbox',{name:'DX PRiSM PLUS',exact:true}).check();
+  await expect(page.locator('#songs .song-row')).toHaveCount(3);
+  await options.getByRole('checkbox',{name:'DX',exact:true}).check();
+  await expect(page.locator('#songs .song-row')).toHaveCount(6);
+  await expect(page.locator('#version-summary')).toHaveText('2 versions selected');
+  await page.keyboard.press('Escape');await expect(page.locator('#version-summary')).toBeFocused();
+  await page.locator('#filter-min').selectOption('11');await expect(page.locator('#songs .song-row')).toHaveCount(3);
+  await page.getByRole('button',{name:'Remove version DX PRiSM PLUS',exact:true}).click();
+  await expect(page.locator('#songs .song-row')).toHaveCount(1);await expect(page.locator('#filter-min')).toHaveValue('11');
+  await page.locator('#version-summary').click();await page.locator('#version-clear').click();
+  await expect(page.locator('#songs .song-row')).toHaveCount(3);
+});
+
+test('whole chart row responds to level, whitespace, Enter and Space',async({page})=>{
+  await page.goto('/lab/');const row=page.locator('#songs .song-row').first(),button=row.locator('.chart-row');
+  await row.locator('.chart-level').click();await expect(button).toHaveAttribute('aria-expanded','true');
+  await button.focus();await page.keyboard.press('Space');await expect(button).toHaveAttribute('aria-expanded','false');
+  await page.keyboard.press('Enter');await expect(row.locator('.chart-measurements')).toBeVisible();
+  const box=await button.boundingBox();await button.click({position:{x:box.width-5,y:5}});await expect(button).toHaveAttribute('aria-expanded','false');
+});
+
+async function chooseComparisonChart(page,side,title){
+  await page.locator('#compare-'+side+'-search').fill(title);
+  await page.locator('#compare-'+side+'-choices').getByRole('button',{name:new RegExp(title)}).first().click();
+}
+
+test('any two catalog charts compare and survive a shared link',async({page})=>{
+  const errors=[];page.on('pageerror',e=>errors.push(e.message));
+  await page.goto('/lab/?view=compare');await expect(page.locator('#loaded-count')).toHaveText('6');
+  const requests=[];page.on('request',r=>requests.push(r.url()));
+  const firstSearch=page.locator('#compare-left-search');
+  await firstSearch.fill('Fictional study');await firstSearch.press('ArrowDown');
+  await page.keyboard.press('Escape');await expect(firstSearch).toBeFocused();
+  await expect(page.locator('#compare-left-choices')).toBeHidden();
+  await chooseComparisonChart(page,'left','Fictional study 4');
+  await chooseComparisonChart(page,'right','Fictional study 2');
+  await expect(page.locator('#direct-comparison table')).toBeVisible();
+  await expect(page.locator('#direct-comparison')).toContainText('Fictional study 4');
+  await expect(page.locator('#direct-comparison')).toContainText('Fictional study 2');
+  const link=page.url();expect(link).toContain('left=');expect(link).toContain('right=');expect(requests).toEqual([]);
+  expect((await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21aa']).analyze()).violations).toEqual([]);
+  await page.goto(link);await expect(page.locator('#direct-comparison table')).toBeVisible();
+  expect(errors).toEqual([]);expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+});
+
+test('any chart can find similar charts and choose a result for comparison',async({page})=>{
+  const errors=[];page.on('pageerror',e=>errors.push(e.message));
+  await page.goto('/lab/');await page.locator('#search').fill('Fictional study 4');
+  await page.locator('#songs .chart-row').click();
+  await page.locator('#songs').getByRole('button',{name:'Find similar',exact:true}).click();
+  await expect(page.locator('#compare')).toBeVisible();
+  await expect(page.locator('#similar-results .similar-chart').first()).toBeVisible();
+  await page.locator('#similar-results [data-compare-chart]').first().click();
+  await expect(page.locator('#direct-comparison table')).toBeVisible();
+  await expect(page.locator('#direct-comparison')).toContainText('Fictional study 4');
+  expect(errors).toEqual([]);
+});
+
+test('prepared passage playback still steps, plays and changes passages',async({page})=>{
+  const errors=[];page.on('pageerror',e=>errors.push(e.message));
+  await page.goto('/lab/?view=compare');await page.locator('#prepared-examples>summary').click();
+  await page.locator('#matches').getByRole('button',{name:'Compare passages',exact:true}).first().click();
+  const panel=page.locator('#passages-0');await expect(panel.locator('.field svg')).toHaveCount(2);
+  const before=await panel.locator('input[type=range]').inputValue();
+  await panel.getByRole('button',{name:'Step',exact:true}).click();expect(await panel.locator('input[type=range]').inputValue()).not.toBe(before);
+  await panel.getByRole('button',{name:'Play',exact:true}).click();await expect(panel.getByRole('button',{name:'Pause',exact:true})).toBeVisible();
+  await panel.getByRole('button',{name:'Pause',exact:true}).click();
+  const choices=panel.getByRole('combobox',{name:'Supporting passage'});if(await choices.locator('option').count()>1)await choices.selectOption('1');
+  await expect(panel.locator('.field svg')).toHaveCount(2);expect(errors).toEqual([]);
 });

@@ -14,7 +14,7 @@ class LabTests(unittest.TestCase):
             result = build_lab(source, root / "site", catalog_version="fixture-v1")
             html = result.read_text("utf-8")
             self.assertIn('id="filter-genre"', html)
-            self.assertIn('id="filter-version"', html)
+            self.assertIn('id="version-options"', html)
             self.assertIn('id="sort-rules"', html)
             self.assertIn('id="pattern-data"', html)
             self.assertIn("pattern.umiyuri", html)

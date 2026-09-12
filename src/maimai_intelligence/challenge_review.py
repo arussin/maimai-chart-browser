@@ -22,7 +22,13 @@ def review_scripts():
     theme = assets.joinpath("chart-theme.json").read_text("utf-8")
     return "\n".join(
         assets.joinpath(name).read_text("utf-8").replace("__MAIMAI_CHART_THEME__", theme)
-        for name in ("chart-visuals.js", "pattern-library.js", "challenge-review.js")
+        for name in (
+            "chart-visuals.js",
+            "pattern-library.js",
+            "challenge-matching.js",
+            "chart-comparison.js",
+            "challenge-review.js",
+        )
     )
 
 

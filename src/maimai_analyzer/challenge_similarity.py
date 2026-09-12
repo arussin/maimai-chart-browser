@@ -58,6 +58,55 @@ def demand_distance(left, right):
     )
 
 
+def query_demands(query, profiles, scale, *, limit=8, eligible_ids=None):
+    """Interactive summary matching; no passage alignment or coaching claim.
+
+    Reuses the shared percentile/group distance calculations, and scans every
+    eligible profile. Unlike detailed retrieval this also accepts public
+    profiles whose per-passage windows were omitted from the catalog.
+    """
+    if type(limit) is not int or not 1 <= limit <= 100:
+        raise ValueError("Result limit must be 1..100")
+    if scale.get("version") != POLICY or query.get("version") != VERSION:
+        raise ValueError("Incompatible retrieval policy or profile")
+    query_vector = vector(query["demand"], scale)
+    query_family = query.get("song_family", query["song_id"])
+    rows = []
+    for candidate in profiles:
+        if eligible_ids is not None and candidate["chart_id"] not in eligible_ids:
+            continue
+        if candidate.get("version") != VERSION:
+            raise ValueError("Mixed challenge profile versions")
+        if (
+            candidate["chart_id"] == query["chart_id"]
+            or candidate.get("song_family", candidate["song_id"]) == query_family
+        ):
+            continue
+        distance, differences = demand_distance(query_vector, vector(candidate["demand"], scale))
+        if distance is not None:
+            rows.append(
+                {
+                    "chart_id": candidate["chart_id"],
+                    "distance": round(distance, 6),
+                    "closest_groups": sorted(differences, key=lambda k: (differences[k], k))[:2],
+                    "largest_difference": max(differences, key=lambda k: (differences[k], k)),
+                }
+            )
+    rows.sort(key=lambda row: (row["distance"], row["chart_id"]))
+    by_id = {p["chart_id"]: p for p in profiles}
+    selected, families = [], set()
+    for row in rows:
+        profile = by_id[row["chart_id"]]
+        family = profile.get("song_family", profile["song_id"])
+        if family in families:
+            continue
+        selected.append(row)
+        families.add(family)
+        if len(selected) == limit:
+            break
+    return selected
+
+
 def _substitution(a, b):
     # Equal roles/rhythm with a minor layout edit remain comparable. Reflection
     # is not normalized. Relative positions preserve the initial orientation.
