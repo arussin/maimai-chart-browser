@@ -87,9 +87,18 @@ def build_lab(package_directory, output, *, catalog_version):
         manifest["releases"].append(entry)
     manifest["default"] = catalog_version
     assets = files("maimai_intelligence.assets")
-    for name in ("challenge-review.css", "lab-loader.js", "analytics.js"):
+    for name in ("challenge-review.css", "analytics.js"):
         atomic_write_text(root / name, assets.joinpath(name).read_text("utf-8"))
-    atomic_write_text(root / "challenge-review.js", review_scripts())
+    scripts = review_scripts()
+    script_revision = hashlib.sha256(scripts.encode("utf-8")).hexdigest()[:16]
+    loader = (
+        assets.joinpath("lab-loader.js")
+        .read_text("utf-8")
+        .replace("challenge-review.js", f"challenge-review.js?v={script_revision}")
+    )
+    loader_revision = hashlib.sha256(loader.encode("utf-8")).hexdigest()[:16]
+    atomic_write_text(root / "challenge-review.js", scripts)
+    atomic_write_text(root / "lab-loader.js", loader)
     atomic_write_text(
         root / "challenge-review.css",
         assets.joinpath("challenge-review.css").read_text("utf-8")
@@ -116,7 +125,7 @@ def build_lab(package_directory, output, *, catalog_version):
     )
     html = (
         html[: html.index('<script id="challenge-data"')]
-        + '<script defer src="lab-loader.js"></script></body></html>'
+        + f'<script defer src="lab-loader.js?v={loader_revision}"></script></body></html>'
     )
     html = html.replace(
         "<body>", '<body><p id="lab-status" role="status">Loading research catalog…</p>'

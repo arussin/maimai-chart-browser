@@ -191,11 +191,11 @@ function activeFilters(){
   for(const node of existing.values())node.remove();
 }
 function catalog(focusKey=null){
-  const search=el('search').value.normalize('NFKC').toLowerCase();
+  const matchesSearch=window.maimaiSongSearch.query(el('search').value);
   const selected=Object.fromEntries(filters.map(id=>[id,el('filter-'+id).value]));
   const charts=data.catalog.filter(c=>{
     if(format!=='all'&&c.format!==format)return false;
-    if(!(c.title+' '+c.artist).normalize('NFKC').toLowerCase().includes(search))return false;
+    if(!matchesSearch(c))return false;
     if(selected.genre&&folderValue(c,'genre')!==selected.genre)return false;
     if(selectedVersions.size&&!selectedVersions.has(folderValue(c,'version')))return false;
     if(!chartFilters.matches(c))return false;

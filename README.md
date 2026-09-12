@@ -48,6 +48,11 @@ manifest. The main page links to the research browser, with three views:
   reverse; Shift-click or **Keep sort priorities** adds tie-breakers. Visible
   priority chips can remove a rule. Sorting always uses the selected chart.
   Changing sort or search retains the filters.
+  Song search also accepts community romaji and alternate titles: **Umiyuri**
+  finds **ウミユリ海底譚**, and **Senbonzakura** finds **千本桜**. Spaces, punctuation,
+  capitalization and full-width Latin letters are tolerated. The same aliases
+  work in Explore and both comparison pickers; original titles remain displayed.
+  [Alias coverage and source details](docs/SONG_SEARCH.md).
   Source song BPM is display metadata; passages may change tempo. Unknown BPM
   remains unknown and sorts last in either direction.
   **YouTube search** opens a new tab using the song title, chart format and selected

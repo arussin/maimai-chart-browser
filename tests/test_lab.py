@@ -1,3 +1,4 @@
+import hashlib
 import tempfile
 import unittest
 from pathlib import Path
@@ -21,6 +22,13 @@ class LabTests(unittest.TestCase):
             self.assertNotIn("Recommendation samples", html)
             self.assertNotIn('id="challenge-data"', html)
             self.assertTrue((root / "site/manifest.json").exists())
+            scripts = (root / "site/challenge-review.js").read_bytes()
+            loader = (root / "site/lab-loader.js").read_bytes()
+            self.assertIn(
+                "challenge-review.js?v=" + hashlib.sha256(scripts).hexdigest()[:16],
+                loader.decode("utf-8"),
+            )
+            self.assertIn("lab-loader.js?v=" + hashlib.sha256(loader).hexdigest()[:16], html)
             (source / "catalog.json").write_text("[]", encoding="utf-8")
             with self.assertRaisesRegex(ValueError, "integrity"):
                 build_lab(source, root / "site", catalog_version="fixture-v2")

@@ -36,3 +36,27 @@ package["files"] = [r for r in package["files"] if r["path"] != "catalog.json"]
 package["files"].append(write(level_package, "catalog.json", charts))
 atomic_json(level_package / "package.json", package)
 build_lab(level_package, root / "levels", catalog_version="levels-v1")
+
+# Authored profiles with real public title labels exercise search metadata only.
+# These are not transcriptions, analyses or qualified mappings of the named songs.
+search_package = write_package(Path("output/search-fixture").resolve())
+search_charts = json.loads((search_package / "catalog.json").read_text("utf-8"))
+search_labels = [
+    ("ウミユリ海底譚", "n-buna"),
+    ("ウミユリ海底譚", "Unrelated fictional artist"),
+    ("千本桜", "黒うさP"),
+]
+for chart, (title, artist) in zip(search_charts, search_labels, strict=False):
+    chart.update(title=title, artist=artist)
+search_charts[3]["aliases"] = ["Invented refrain"]
+search_package_manifest = read_json(search_package / "package.json")
+search_package_manifest["files"] = [
+    row for row in search_package_manifest["files"] if row["path"] != "catalog.json"
+]
+search_package_manifest["files"].append(write(search_package, "catalog.json", search_charts))
+atomic_json(search_package / "package.json", search_package_manifest)
+build_lab(search_package, root / "romaji", catalog_version="romaji-v1")
+search_pack = json.loads(json.dumps(pack))
+for chart, (title, artist) in zip(search_pack["charts"], search_labels, strict=False):
+    chart.update(title=title, artist=artist)
+build_site(search_pack, root / "romaji-explore", catalog_version="romaji-v1")

@@ -11,7 +11,7 @@ const measurements=[
 function mount({data,comparison,stopPlayers,eligibleIds}){
   const overview=window.maimaiChartOverview;
   const el=id=>document.getElementById(id),make=(tag,text,cls)=>{const node=document.createElement(tag);if(text!==undefined)node.textContent=text;if(cls)node.className=cls;return node;};
-  const byId=new Map(data.catalog.map(c=>[c.chart_id,c])),state={left:null,right:null},pickers={},searchIndex=data.catalog.map(c=>({chart:c,text:(c.title+' '+c.artist+' '+c.format+' '+c.difficulty).normalize('NFKC').toLowerCase()}));
+  const byId=new Map(data.catalog.map(c=>[c.chart_id,c])),state={left:null,right:null},pickers={};
   const name=c=>c.title.trim()||'〈Blank title〉',label=c=>name(c)+' · '+c.format+' '+c.difficulty+' · Lv. '+(c.level||'?');
   const bpm=c=>data.navigation?.charts?.[c.chart_id]?.bpm??null,bpmText=c=>bpm(c)==null?'BPM unknown':bpm(c)+' BPM';
   let index=null,matches=null;
@@ -26,13 +26,13 @@ function mount({data,comparison,stopPlayers,eligibleIds}){
   }
   for(const [side,title]of [['left','First chart'],['right','Second chart']]){
     const container=make('div',undefined,'chart-picker'),labelNode=make('label',title),input=make('input'),selection=make('div'),results=make('div',undefined,'chart-choices'),status=make('p','','muted');
-    input.type='search';input.id='compare-'+side+'-search';input.placeholder='Search any song or artist…';input.autocomplete='off';results.id='compare-'+side+'-choices';results.hidden=true;input.setAttribute('aria-controls',results.id);labelNode.append(input);
+    input.type='search';input.id='compare-'+side+'-search';input.placeholder='Song, romaji title or artist…';input.autocomplete='off';results.id='compare-'+side+'-choices';results.hidden=true;input.setAttribute('aria-controls',results.id);labelNode.append(input);
     results.setAttribute('role','group');results.setAttribute('aria-label',title+' search results');status.setAttribute('role','status');container.append(labelNode,results,status,selection);el('comparison-pickers').append(container);
     pickers[side]={input,results,status,selection};
     function search(){
-      const query=input.value.normalize('NFKC').toLowerCase().trim(),found=searchIndex.filter(x=>x.text.includes(query));
+      const matchesSearch=window.maimaiSongSearch.query(input.value),found=data.catalog.filter(c=>matchesSearch(c,[c.format,c.difficulty]));
       results.replaceChildren();results.hidden=false;
-      for(const {chart}of found.slice(0,30)){const button=make('button',label(chart),'chart-choice');button.type='button';button.dataset.choice=chart.chart_id;button.onclick=()=>{choose(side,chart.chart_id);input.focus();};results.append(button);}
+      for(const chart of found.slice(0,30)){const button=make('button',label(chart),'chart-choice');button.type='button';button.dataset.choice=chart.chart_id;button.onclick=()=>{choose(side,chart.chart_id);input.focus();};results.append(button);}
       status.textContent=found.length?(found.length>30?'Showing 30 matches. Keep typing to narrow the list.':found.length+' matching charts'):'No matching charts.';
     }
     input.oninput=()=>{if(side==='left')matches=null;state[side]=null;selection.replaceChildren();render();writeLink();search();};

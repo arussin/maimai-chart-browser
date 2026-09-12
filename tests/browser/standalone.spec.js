@@ -7,6 +7,44 @@ async function personal(){return JSON.parse(await readFile(fixtureURL,'utf8'));}
 async function open(page){await page.goto('/');await expect(page.locator('#explore-search')).toBeVisible();}
 async function importValue(page,value){await page.locator('#site-import').setInputFiles({name:'results.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(value))});}
 
+test('romaji searches share aliases across Charts and both comparison pickers',async({page})=>{
+  await page.goto('/romaji/');await expect(page.locator('#loaded-count')).toHaveText('6');
+  const requests=[];page.on('request',r=>requests.push(r.url()));
+  for(const query of ['Umiyuri','UMIYURI KAITEITAN','umi yuri','umiyuri-kaiteitan','Ｕｍｉｙｕｒｉ']){
+    await page.locator('#search').fill(query);await expect(page.locator('#songs .song-row')).toHaveCount(1);
+    await expect(page.locator('#songs')).toContainText('ウミユリ海底譚');await expect(page.locator('#songs')).not.toContainText('Unrelated fictional artist');
+  }
+  await page.locator('#search').fill('ウミユリ');await expect(page.locator('#songs .song-row')).toHaveCount(2);
+  await page.locator('#search').fill('Senbonzakura');await expect(page.locator('#songs .song-row')).toHaveCount(1);
+  await expect(page.locator('#songs')).toContainText('千本桜');
+  await page.locator('#search').fill('Invented refrain');await expect(page.locator('#songs')).toContainText('Fictional study 3');
+  await page.locator('#search').fill('Umiyuri');await setLevel(page,'min','11');await expect(page.locator('#songs .song-row')).toHaveCount(0);
+  await page.locator('#level-clear').click();await expect(page.locator('#songs .song-row')).toHaveCount(1);
+  const selectedTitle=await page.locator('#songs .chart-row').first().getAttribute('aria-label');
+  await page.locator('#compare-tab').click();
+  for(const [side,query,title]of [['left','umiyuri','ウミユリ海底譚'],['right','senbonzakura','千本桜']]){
+    const input=page.locator('#compare-'+side+'-search');await input.fill(query);
+    await expect(page.locator('#compare-'+side+'-choices button')).toHaveCount(1);
+    await input.press('ArrowDown');await page.keyboard.press('Enter');await expect(input).toHaveValue(title);
+  }
+  await expect(page.locator('#direct-comparison')).toContainText('Chart measurements');
+  expect(selectedTitle).toContain('ウミユリ海底譚');expect(page.url()).not.toContain('umiyuri');expect(requests).toEqual([]);
+});
+
+test('romaji matching works in Explore while keeping punctuation and unknown titles predictable',async({page})=>{
+  await page.goto('/romaji-explore/');await expect(page.locator('#explore-search')).toBeVisible();
+  const requests=[];page.on('request',r=>requests.push(r.url()));
+  for(const query of ['umiyuri','umi yuri kaiteitan','n-buna Umiyuri']){
+    await page.locator('#explore-search').fill(query);await expect(page.locator('#explore-count')).toContainText('1 matching');
+    await expect(page.locator('#explore-list')).toContainText('ウミユリ海底譚');
+  }
+  await page.locator('#explore-search').fill('senbon zakura');await expect(page.locator('#explore-list')).toContainText('千本桜');
+  await page.locator('#explore-search').fill('madeupnomatch');await expect(page.locator('#explore-count')).toContainText('0 matching');
+  await page.locator('#explore-search').fill('!!!');await expect(page.locator('#explore-count')).toContainText('0 matching');
+  await page.locator('#explore-search').fill('ウミユリ');await expect(page.locator('#explore-count')).toContainText('2 matching');
+  expect(requests).toEqual([]);
+});
+
 test('search, filtering, detail and keyboard close remain usable',async({page})=>{
   const errors=[];page.on('pageerror',e=>errors.push(e.message));await open(page);
   await page.locator('#explore-search').fill('orbit');await expect(page.locator('#explore-count')).toContainText('2 matching');

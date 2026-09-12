@@ -57,6 +57,17 @@ Pinned artwork URLs and hashes remain in the separately prepared artwork
 manifest. The GitHub link does not change repository visibility; hosting on
 maimai.party and any public release are separate rollout steps.
 
+## Song search aliases
+
+Public title, artist, `altTitles` and `searchTerms` metadata is derived from
+[Tachi's maimai DX seed data](https://github.com/zkldi/Tachi/blob/f08148f8644e40de9b178445df4bd59da712d3de/db/seeds/songs-maimaidx.json)
+and its [maimai seed data](https://github.com/zkldi/Tachi/blob/f08148f8644e40de9b178445df4bd59da712d3de/db/seeds/songs-maimai.json),
+pinned to commit `f08148f8644e40de9b178445df4bd59da712d3de`. Tachi's README identifies
+seed data as Unlicense. Thank you to zkldi and Tachi's community contributors.
+The derived search asset records source hashes; it includes no Tachi application
+code, chart definitions, scores or player records. Search aliases do not qualify
+personal chart mappings or establish game availability. See [song search](docs/SONG_SEARCH.md).
+
 ## Optional website analytics
 
 [Google Analytics](https://analytics.google.com/) is an optional hosted service

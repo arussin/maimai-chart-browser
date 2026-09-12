@@ -13,6 +13,7 @@ from .bundles import catalog_reference
 from .explorer import _OVERLAY, validate_exploration_pack
 from .io import atomic_write_text
 from .snapshots import SCHEMA_VERSION, atomic_json, canonical, read_json
+from .song_search import song_search_script
 
 
 def build_site(pack, output, *, catalog_version, lab_package=None):
@@ -64,6 +65,7 @@ def build_site(pack, output, *, catalog_version, lab_package=None):
     assets = files("maimai_intelligence.assets")
     asset_dir = root / "assets"
     asset_dir.mkdir(exist_ok=True)
+    atomic_write_text(asset_dir / "song-search.js", song_search_script())
     theme = json.loads(assets.joinpath("chart-theme.json").read_text("utf-8"))
     for name in (
         "explore.js",

@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import Any
 
 from .io import atomic_write_text
+from .song_search import song_search_script
 
 _METRICS = {
     key: "number?"
@@ -514,6 +515,7 @@ def explorer_assets() -> tuple[str, str]:
     visuals = assets.joinpath("chart-visuals.js").read_text(encoding="utf-8")
     js += visuals.replace("__MAIMAI_CHART_THEME__", json.dumps(theme, ensure_ascii=False)) + "\n"
     js += similarity.read_text(encoding="utf-8") if similarity.is_file() else ""
+    js += "\n" + song_search_script()
     return css, js + "\n" + assets.joinpath("explore.js").read_text(encoding="utf-8")
 
 

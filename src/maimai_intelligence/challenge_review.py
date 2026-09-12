@@ -7,6 +7,8 @@ from importlib.resources import files
 
 from maimai_analyzer.patterns import pattern_registry
 
+from .song_search import song_search_script
+
 
 def _encoded(value):
     return (
@@ -21,22 +23,26 @@ def review_scripts():
     assets = files("maimai_intelligence.assets")
     theme = assets.joinpath("chart-theme.json").read_text("utf-8")
     lessons = _encoded(json.loads(assets.joinpath("pattern-lessons.json").read_text("utf-8")))
-    return "\n".join(
-        assets.joinpath(name)
-        .read_text("utf-8")
-        .replace("__MAIMAI_CHART_THEME__", theme)
-        .replace("__MAIMAI_PATTERN_LESSONS__", lessons)
-        for name in (
-            "chart-visuals.js",
-            "pattern-library.js",
-            "challenge-matching.js",
-            "chart-links.js",
-            "chart-artwork.js",
-            "chart-filters.js",
-            "chart-overview.js",
-            "pattern-filter.js",
-            "chart-comparison.js",
-            "challenge-review.js",
+    return (
+        song_search_script()
+        + "\n"
+        + "\n".join(
+            assets.joinpath(name)
+            .read_text("utf-8")
+            .replace("__MAIMAI_CHART_THEME__", theme)
+            .replace("__MAIMAI_PATTERN_LESSONS__", lessons)
+            for name in (
+                "chart-visuals.js",
+                "pattern-library.js",
+                "challenge-matching.js",
+                "chart-links.js",
+                "chart-artwork.js",
+                "chart-filters.js",
+                "chart-overview.js",
+                "pattern-filter.js",
+                "chart-comparison.js",
+                "challenge-review.js",
+            )
         )
     )
 

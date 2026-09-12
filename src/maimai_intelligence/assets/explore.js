@@ -64,7 +64,7 @@ window.maimaiMountExplorer = ({catalog, player = null, prepared = null, onNaviga
   host.innerHTML = `<header class="explore-heading"><div><span class="explore-eyebrow">maimai DX</span><h1>Explore</h1></div><button type="button" id="explore-about" class="explore-text-button">About this catalog</button></header>
     ${evaluationOnly ? '<p class="explore-evaluation" role="note">Public chart study · unverified transcriptions</p>' : ''}<p id="explore-coverage" class="explore-note"></p>
     <div class="explore-segments-control" id="explore-scope-buttons" role="group" aria-label="Browse">${scopeButtons}</div>
-    <label class="explore-search">Search songs or patterns<input id="explore-search" type="search" placeholder="Song, artist or pattern…"></label>
+    <label class="explore-search">Search songs or patterns<input id="explore-search" type="search" placeholder="Song, romaji, artist or pattern…"></label>
     <details class="explore-quick-filter" id="explore-chart-filters"><summary>Filter level</summary><div class="explore-browse-tools" id="explore-chart-tools"><div class="explore-quick-chips" role="group" aria-label="Difficulty"><button type="button" data-difficulty="">All difficulties</button>${difficulties.map(value => `<button type="button" data-difficulty="${safe(value)}">${safe(value)}</button>`).join('')}</div>
     <div class="explore-small-controls"><label>Level<select id="explore-level">${listOptions(charts.map(chart => chart.level),'All levels')}</select></label><div class="explore-quick-chips" role="group" aria-label="Format"><button type="button" data-format="">All formats</button><button type="button" data-format="STD">STD</button><button type="button" data-format="DX">DX</button></div></div></div></details>
     <div class="explore-chips" id="explore-active"></div><div id="explore-query-tools" class="explore-quick-chips" role="group" aria-label="Similar charts" hidden></div>
@@ -125,9 +125,9 @@ window.maimaiMountExplorer = ({catalog, player = null, prepared = null, onNaviga
     const result = results.get(chart.chart_id), scope = $("scope").value;
     if (scope === "mine" && !result) return false;
     if ($("result")?.value === "yes" && !result || $("result")?.value === "no" && result) return false;
-    const search = normal($("search").value.trim());
+    const matchesSearch = window.maimaiSongSearch.query($("search").value);
     const chartPatterns=(chart.tags || []).filter(positiveTag).flatMap(tag=>{const pattern=patternById.get(tag.pattern_id);return [pattern?.display_name,...(pattern?.aliases || [])];});
-    if (search && !normal([chart.title,chart.artist,...(chart.aliases || []),...chartPatterns].join(" ")).includes(search)) return false;
+    if (!matchesSearch(chart,chartPatterns)) return false;
     for (const key of ["difficulty","format","level","release","region","availability"]) if ($(key).value && chart[key] !== $(key).value) return false;
     if ($("analysis").value && chart.analysis_status !== $("analysis").value) return false;
     if ($("min").value !== "" && (chart.constant == null || chart.constant < Number($("min").value))) return false;
