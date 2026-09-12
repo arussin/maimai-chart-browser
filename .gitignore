@@ -13,3 +13,4 @@ test-results/
 extract_source.py
 .ruff_cache/
 .pytest_cache/
+.wrangler/
