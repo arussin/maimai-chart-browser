@@ -12,7 +12,7 @@
   const storageKey = 'maimai.party.analytics.v1';
   const choiceLifetime = 180 * 86400 * 1000;
   const optOut = 'ga-disable-' + measurementId;
-  const labels = {catalog: 'Charts', patterns: 'Pattern dictionary', compare: 'Compare charts'};
+  const labels = {catalog: 'Charts', patterns: 'Pattern dictionary', compare: 'Compare charts', about: 'About'};
   const research = !!document.getElementById('catalog-tab');
   let active = false, started = false, lastView = null;
   const privacySignal = () => navigator.globalPrivacyControl === true || navigator.doNotTrack === '1';
@@ -101,6 +101,7 @@
   settings.onclick = () => { notice.hidden = true; updateStatus(); dialog.showModal(); };
   notice.querySelector('a[href="#privacy"]').onclick = event => {
     event.preventDefault(); notice.hidden = true;
+    document.getElementById('about-tab')?.click();
     const privacy = document.getElementById('privacy');
     privacy.open = true;
     privacy.querySelector('summary').focus();

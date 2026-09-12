@@ -84,9 +84,10 @@ test('analytics only counts broad views and excludes all URL, search and chart v
   await page.locator('[data-open-pattern="pattern.two_position_alternation"]').click();
   await page.keyboard.press('Escape');await page.locator('#compare-tab').click();
   await page.locator('#compare-left-search').fill('Fictional study');
+  await page.locator('#about-tab').click();
   await page.locator('#catalog-tab').click();
   const rows=await events(page);
-  expect(rows.map(x=>x[2].page_location)).toEqual(['charts','patterns','compare','charts'].map(x=>'https://maimai.party/'+x));
+  expect(rows.map(x=>x[2].page_location)).toEqual(['charts','patterns','compare','about','charts'].map(x=>'https://maimai.party/'+x));
   expect(rows.every(x=>x[1]==='page_view'&&x[2].page_referrer==='')).toBe(true);
   const queue=await page.evaluate(()=>window.dataLayer.map(x=>Array.from(x)));
   expect(JSON.stringify(queue)).not.toMatch(/PRIVATE_|Fictional|pattern\.two_position|fixture-v5/);

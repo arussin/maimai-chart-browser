@@ -87,7 +87,9 @@ def build_site(pack, output, *, catalog_version, lab_package=None):
                 "__SITE_BRAND__", assets.joinpath("site-brand.html").read_text("utf-8")
             )
             content = content.replace(
-                "__SUPPORT_FOOTER__", assets.joinpath("support-footer.html").read_text("utf-8")
+                "__SUPPORT_FOOTER__",
+                assets.joinpath("support-footer.html").read_text("utf-8")
+                + assets.joinpath("analytics-controls.html").read_text("utf-8"),
             )
         atomic_write_text(
             root / "index.html" if name == "index.html" else asset_dir / name, content

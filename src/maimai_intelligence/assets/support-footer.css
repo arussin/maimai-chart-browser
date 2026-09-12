@@ -5,6 +5,10 @@
 .creator-support-link>span[aria-hidden]{flex:none}.creator-support-link>span:not([aria-hidden]){min-width:0}
 .creator-support-link:hover{background:#f2fafb;color:#007887}.creator-support-link:focus-visible{outline:3px solid #007887;outline-offset:3px}
 .creator-support-via{font-size:11px;line-height:1.5;color:#52676d}
+.analytics-controls{padding-bottom:28px}body>.analytics-controls{max-width:1168px;margin:auto;padding:0 32px 28px}
+#about .creator-support{margin-top:0}#about .footer-rights,#about .footer-credits{font-size:13px}#about .sources{margin-top:12px}
+.site-header nav{gap:clamp(8px,2vw,24px)}.site-header nav button{min-width:0}
+@media(max-width:600px){body>.analytics-controls{padding-left:18px;padding-right:18px}}
 @media(max-width:600px){.creator-support{align-items:flex-start;flex-direction:column;gap:12px;padding:20px 0}.creator-support-action{align-items:flex-start;width:100%}.creator-support-link{width:100%}}
 @media print{.creator-support{display:none}}
 .party-footer{padding-bottom:24px}.footer-project{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px 20px;padding:18px 0 12px;border-top:1px solid #dce7e9;font-size:12px;color:#52676d}.footer-project>a{display:inline-flex;align-items:center;gap:5px;min-height:44px;font-weight:600}.repository-status{font-weight:400}

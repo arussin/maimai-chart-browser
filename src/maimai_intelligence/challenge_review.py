@@ -32,6 +32,7 @@ def review_scripts():
             .replace("__MAIMAI_CHART_THEME__", theme)
             .replace("__MAIMAI_PATTERN_LESSONS__", lessons)
             for name in (
+                "view-navigation.js",
                 "chart-visuals.js",
                 "pattern-library.js",
                 "challenge-matching.js",
@@ -99,7 +100,15 @@ def render_review(
     return (
         html.replace("__CSS__", css)
         .replace("__SITE_BRAND__", assets.joinpath("site-brand.html").read_text("utf-8"))
-        .replace("__SUPPORT_FOOTER__", assets.joinpath("support-footer.html").read_text("utf-8"))
+        .replace(
+            "__SUPPORT_FOOTER__",
+            assets.joinpath("support-footer.html")
+            .read_text("utf-8")
+            .replace('<details class="footer-credits">', '<details class="footer-credits" open>'),
+        )
+        .replace(
+            "__ANALYTICS_CONTROLS__", assets.joinpath("analytics-controls.html").read_text("utf-8")
+        )
         .replace("__PATTERNS__", _encoded(patterns))
         .replace("__DATA__", _encoded(data))
         .replace("__JS__", review_scripts())
