@@ -30,6 +30,7 @@ def review_scripts():
             "chart-visuals.js",
             "pattern-library.js",
             "challenge-matching.js",
+            "chart-links.js",
             "chart-comparison.js",
             "challenge-review.js",
         )

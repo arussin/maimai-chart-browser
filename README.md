@@ -36,6 +36,11 @@ manifest. The main page links to the research browser, with three views:
   selected chart, including BPM. Changing sort or search retains the filters.
   Source song BPM is display metadata; passages may change tempo. Unknown BPM
   remains unknown and sorts last in either direction.
+  **YouTube search** opens a new tab using the song title, chart format and selected
+  difficulty. The same links appear on comparison selections and similar matches.
+  These are searches, not verified video matches; availability is not guaranteed.
+  No video, thumbnail or external request loads until a visitor follows a link.
+  Blank-title entries have no search link.
 - **Pattern dictionary:** all 36 lessons have an authored example and a contrast,
   explanations, variants and limits. Play, Step, speed and progress controls work
   across 72 diagrams. Input patterns use timing and position views; chart traits

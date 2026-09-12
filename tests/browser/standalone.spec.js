@@ -221,6 +221,44 @@ test('song rows retain same-level difficulty choices and update exact chart acti
   await expect(page.locator('#comparison-pickers')).toContainText('RE:MASTER');
 });
 
+test('YouTube searches follow difficulty and comparisons without background requests',async({page,context})=>{
+  const errors=[];page.on('pageerror',e=>errors.push(e.message));
+  await page.goto('/grouped/');await expect(page.locator('#loaded-count')).toHaveText('6');
+  const requests=[];context.on('request',r=>requests.push({url:r.url(),referrer:r.headers().referer}));
+  await page.locator('#search').fill('Fictional study 3');
+  const row=page.locator('#songs .song-row'),link=row.locator('.youtube-search'),picker=row.locator('.row-difficulty');
+  const original=await link.getAttribute('href');
+  const remaster=await picker.locator('option').filter({hasText:'RE:MASTER'}).getAttribute('value');
+  await picker.selectOption(remaster);
+  const href=await link.getAttribute('href'),query=new URL(href).searchParams.get('search_query');
+  expect(href).not.toBe(original);expect(query).toMatch(/^maimai Fictional study 3 (STD|DX) RE:MASTER$/);
+  await expect(link).toHaveAttribute('aria-label',/YouTube search.*RE:MASTER.*new tab/);
+  expect(requests).toEqual([]);
+  // Fulfil the destination locally: exercise native navigation without contacting YouTube.
+  await context.route('https://www.youtube.com/**',route=>route.fulfill({contentType:'text/html',body:'<title>Search destination</title>'}));
+  const nextPage=context.waitForEvent('page');await link.focus();await link.press('Enter');const popup=await nextPage;
+  await popup.waitForLoadState();expect(popup.url()).toBe(href);expect(await popup.evaluate(()=>window.opener===null)).toBe(true);
+  expect(requests).toEqual([{url:href,referrer:undefined}]);await popup.close();requests.length=0;
+  await expect(row.locator('.chart-row')).toHaveAttribute('aria-expanded','false');
+  await row.locator('.chart-level').click();await row.getByRole('button',{name:'Find similar',exact:true}).click();
+  await expect(page.locator('#comparison-pickers .youtube-search')).toHaveAttribute('href',href);
+  const match=page.locator('#similar-results .similar-chart').first();await expect(match.locator('.youtube-search')).toBeVisible();
+  const matchHref=await match.locator('.youtube-search').getAttribute('href');await match.getByRole('button',{name:/^Compare/}).click();
+  await expect(page.locator('#comparison-pickers .youtube-search').nth(1)).toHaveAttribute('href',matchHref);
+  expect(requests).toEqual([]);expect(errors).toEqual([]);
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+});
+
+test('YouTube queries preserve song punctuation and omit unknown titles and private fields',async({page})=>{
+  await page.goto('/lab/');await expect(page.locator('#loaded-count')).toHaveText('6');
+  const result=await page.evaluate(()=>{
+    const link=window.maimaiChartLinks.youtube({title:'  曲 & # + ? / <test>  ',format:'STD',difficulty:'MASTER',artist:'Artist',chart_id:'internal-id',player:'private-player',achievement:99});
+    const url=new URL(link.href);
+    return {origin:url.origin,path:url.pathname,params:[...url.searchParams],hash:url.hash,blank:window.maimaiChartLinks.youtube({title:'   '}),missing:window.maimaiChartLinks.youtube({})};
+  });
+  expect(result).toEqual({origin:'https://www.youtube.com',path:'/results',params:[['search_query','maimai 曲 & # + ? / <test> STD MASTER']],hash:'',blank:null,missing:null});
+});
+
 test('BPM sorting keeps missing values last and completed lessons are visible',async({page})=>{
   await page.goto('/lab/');await page.locator('#sort-panel summary').click();
   await page.locator('#sort-key-0').selectOption('bpm');
