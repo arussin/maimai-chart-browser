@@ -134,7 +134,9 @@ function renderSort(){
   sortRules.forEach((rule,index)=>{const b=make('button',(index+1)+'. '+sortLabel(rule)+' ×','filter-chip');b.setAttribute('aria-label','Remove '+sortFields[rule.key]+' sort priority');b.onclick=()=>{sortRules.splice(index,1);if(!sortRules.length)sortRules=[{key:'title',direction:1}];renderSort();catalog();document.querySelector('[data-sort-key="'+rule.key+'"]').focus();};root.append(b);});
   for(const button of document.querySelectorAll('[data-sort-key]')){
     const key=button.dataset.sortKey,index=sortRules.findIndex(r=>r.key===key),rule=sortRules[index],label=key==='title'?'Song / artist':key==='peak'?'Flow · peak':sortFields[key];
-    button.textContent=label+(rule?' '+(rule.direction===1?'↑':'↓')+' '+(index+1):' ↕');button.setAttribute('aria-pressed',String(!!rule));
+    const indicator=make('span',rule?(rule.direction===1?'↑':'↓'):'↕','sort-indicator');indicator.setAttribute('aria-hidden','true');
+    if(rule)indicator.append(make('span',String(index+1),'sort-priority'));
+    button.replaceChildren(make('span',label,'sort-label'),indicator);button.setAttribute('aria-pressed',String(!!rule));
     button.setAttribute('aria-label',label+(rule?', priority '+(index+1)+', '+(rule.direction===1?'ascending':'descending'):' unsorted'));
     button.onclick=event=>{const keep=event.shiftKey||el('sort-keep').checked,prior=sortRules.find(r=>r.key===key);if(keep){if(prior)prior.direction*=-1;else sortRules.push({key,direction:1});}else sortRules=[{key,direction:prior&&sortRules[0]===prior?-prior.direction:1}];visible=40;renderSort();catalog();button.focus();};
   }
