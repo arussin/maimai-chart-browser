@@ -32,8 +32,10 @@ test('linked comparisons retain exact pattern results and cache verified details
   const errors=[],requests=[];page.on('pageerror',e=>errors.push(e.message));page.on('request',r=>requests.push(r.url()));
   await page.goto('/progressive/?version=fixture-v5&view=compare&left='+encodeURIComponent(original.left)+'&right='+encodeURIComponent(original.right));
   await expect(page.locator('#direct-comparison')).toContainText('Patterns in common');
-  for(const graph of await page.locator('#direct-comparison .flow-comparison .chart-flow').all()){
-    await graph.scrollIntoViewIfNeeded();
+  for(const section of await page.locator('#direct-comparison .flow-comparison > div').all()){
+    // The figure replaces its loading placeholder; scroll its stable parent.
+    await section.scrollIntoViewIfNeeded();
+    await expect(section.locator('.chart-flow svg')).toBeVisible();
   }
   await expect(page.locator('#direct-comparison .flow-comparison svg')).toHaveCount(2);
   const actual=await page.evaluate(()=>{

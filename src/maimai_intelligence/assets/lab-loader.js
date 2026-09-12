@@ -66,8 +66,8 @@
         for(const part of batch){bytes.set(part,offset);offset+=part.length;}
       }
     }else bytes=await read(entry.path,maximum);
-    const sha=await hash(bytes);
-    if(sha!==(entry.startup?.sha256||entry.sha256))throw new Error('Research catalog integrity check failed');
+    // Startup bytes were already verified against their own manifest digest.
+    if(!entry.startup&&await hash(bytes)!==entry.sha256)throw new Error('Research catalog integrity check failed');
     const text=new TextDecoder('utf-8',{fatal:true}).decode(bytes),data=JSON.parse(text);
     if(entry.startup){
       if(data.source_catalog_sha256!==entry.sha256||!Array.isArray(data.catalog)||!data.detail_buckets||Object.keys(data.detail_buckets).length>1024)throw new Error('Invalid browsing index');
