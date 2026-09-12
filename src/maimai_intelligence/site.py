@@ -72,10 +72,15 @@ def build_site(pack, output, *, catalog_version, lab_package=None):
         "chart-visuals.js",
         "site.js",
         "site.css",
+        "support-footer.css",
         "index.html",
     ):
         content = assets.joinpath(name).read_text("utf-8")
         content = content.replace("__MAIMAI_CHART_THEME__", json.dumps(theme))
+        if name == "index.html":
+            content = content.replace(
+                "__SUPPORT_FOOTER__", assets.joinpath("support-footer.html").read_text("utf-8")
+            )
         atomic_write_text(
             root / "index.html" if name == "index.html" else asset_dir / name, content
         )
