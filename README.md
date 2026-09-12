@@ -5,7 +5,7 @@ read-only Kamaitachi downloader. Personal recommendations are calculated during
 download/export; searching, filtering, Flow and structural comparisons are interactive.
 
 Requires Python 3.11+. The package has no runtime dependencies and does not require
-the report library. Install from this private checkout with `python -m pip install .`.
+the report library. Install from this checkout with `python -m pip install .`.
 
 ## Preview
 
@@ -27,8 +27,9 @@ contributions and owner-only official corpus publication. See [contributing](CON
 Both browser pages use the maimai.party wordmark, with Deluxe-inspired colors
 on `.party`. Their shared footer includes creator support, the GitHub link,
 an independent-fan-project rights notice and **Credits & thanks**. See
-[attribution and source roles](THIRD_PARTY_NOTICES.md). The project repository
-remains private, and branding the preview does not deploy to the domain.
+[attribution and source roles](THIRD_PARTY_NOTICES.md). The project repository is
+public; contributions use issues and pull requests. Official site publication is
+an explicit owner operation described in [the owner guide](docs/OWNER_PUBLICATION.md).
 
 The published HTTPS site includes optional Google Analytics for broad page views.
 It loads only after visitor opt-in; local previews are excluded. Personal files,
@@ -142,7 +143,7 @@ windows. The browser uses equivalent percentile and distance calculations.
 See [the versioned contracts](docs/CONTRACTS.md) and
 [report integration](docs/REPORT_INTEGRATION.md).
 
-Normal report installations need neither this private repository nor the engine.
+Normal report installations need neither this repository nor the engine.
 Prepared cards and catalog-specific links are an optional report feature.
 Existing archives require no migration or historical backfill.
 

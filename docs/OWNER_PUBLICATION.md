@@ -2,18 +2,20 @@
 
 The official site is a static Cloudflare Pages Direct Upload project named
 `maimai-party`, with `main` as its production branch and `maimai.party` as its
-custom domain. These are intended settings, not a claim that deployment exists.
-On 12 September 2026 the connected Cloudflare API could read the active domain,
-but rejected project creation with authentication error 10000. GitHub returned
-404 for the private `arussin/maimai-chart-browser` repository. Resolve those
-access issues before completing the public launch.
+custom domain. The project and domain association were created on 12 September
+2026. The repository is public. The owner completed GitHub and Cloudflare login;
+the first hosted review build is at
+[a08671c1.maimai-party.pages.dev](https://a08671c1.maimai-party.pages.dev).
+Production deployment, required checks and rollback must be verified before
+declaring launch complete.
 
 ## Ownership boundary
 
 Only arussin should hold hosting write permission and official corpus publication
 credentials. Keep those credentials in the owner's local authentication store,
 outside this repository and all site assets. Review Cloudflare account members
-and tokens before launch. The public repository's tests use synthetic data and
+and tokens before launch. The account-member check found only the owner's
+accepted Super Administrator membership. The public repository's tests use synthetic data and
 read-only permissions; they have no automatic hosting job or corpus writer.
 Forks and pull requests can propose engine improvements without publishing data.
 The website itself has no server, upload endpoint or catalog-update endpoint.
@@ -54,16 +56,15 @@ limit is too small. Cloudflare documents [Direct Upload and its limits](https://
 
 ## Publish after owner access is available
 
-Use current Wrangler 4 from the official npm registry, authenticated as the
+Use Wrangler 4.131.1 from the official npm registry, authenticated as the
 owner. Confirm the selected Cloudflare account and project before sending files.
-The initial creation command is needed only if the project does not already exist.
+The `maimai-party` project already exists; do not recreate it.
 These commands publish only the named prepared directory; they do not download,
 import game data, recalculate the corpus, or touch report history.
 
 ```text
-npx wrangler@4 whoami
-npx wrangler@4 pages project create maimai-party --production-branch main
-npx wrangler@4 pages deploy output/public-release-20260912 --project-name maimai-party --branch main
+npx wrangler@4.131.1 whoami
+npx wrangler@4.131.1 pages deploy output/public-release-20260912 --project-name maimai-party --branch main
 ```
 
 Record the deployment ID, immutable preview URL, source commit, catalog version,
