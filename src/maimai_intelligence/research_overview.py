@@ -2,15 +2,46 @@
 
 from maimai_analyzer.contracts import content_hash
 from maimai_analyzer.core import analyze_overview
-from maimai_analyzer.patterns import IMPLEMENTED
+from maimai_analyzer.patterns import (
+    DETECTOR_VERSION,
+    IMPLEMENTED,
+    REGISTRY_VERSION,
+    pattern_registry,
+)
 
-VERSION = "research-overview-1"
+VERSION = "research-overview-2"
 PATTERNS = sorted(IMPLEMENTED)
+LEGACY_PATTERNS = sorted(
+    [
+        "pattern.two_position_alternation",
+        "pattern.same_position_repetition",
+        "pattern.simultaneous_group",
+        "pattern.same_head_slide_fan",
+        "pattern.moving_slide_overlap",
+        "pattern.slide_tap_interleave",
+        "pattern.delayed_slide_interleave",
+        "pattern.connected_slide_chain",
+        "pattern.hold_tap_interleave",
+        "trait.backloaded_density",
+        "trait.frontloaded_density",
+        "trait.bursty_density",
+        "trait.steady_density",
+        "trait.slide_occupancy",
+    ]
+)
 
 
 def chart_overview(chart):
     result = analyze_overview(chart)
     flow = result["flow"]
+    evidence = {
+        o["occurrence_id"]: {
+            key: value
+            for key, value in o["measurements"].items()
+            if key in {"target_pattern_id", "form", "repeat_count", "motif_id", "span_basis"}
+        }
+        for o in result["occurrences"]
+    }
     return {
         "source_hash": chart["source"].get("byte_hash") or content_hash(chart),
         "span": [flow["span_start_us"], flow["span_end_us"]],
@@ -33,6 +64,7 @@ def chart_overview(chart):
                 t["coverage"],
                 t["occurrences_truncated"],
                 [[s["start_us"], s["end_us"]] for s in t["representative_sections"]],
+                [evidence[s["occurrence_id"]] for s in t["representative_sections"]],
             ]
             for t in result["tags"]
             if t["pattern_id"] in PATTERNS
@@ -44,6 +76,20 @@ def overview_package(charts):
     return {
         "version": VERSION,
         "patterns": PATTERNS,
+        "detector_version": DETECTOR_VERSION,
+        "registry_version": REGISTRY_VERSION,
+        "definitions": {
+            entry["pattern_id"]: {
+                key: entry[key]
+                for key in (
+                    "definition",
+                    "definition_version",
+                    "required_capabilities",
+                    "name_origin",
+                )
+            }
+            for entry in pattern_registry()["entries"]
+        },
         "segment_fields": [
             "start_us",
             "end_us",
@@ -62,6 +108,7 @@ def overview_package(charts):
             "coverage",
             "occurrences_truncated",
             "representative_spans_us",
+            "representative_evidence",
         ],
         "charts": charts,
         "qualification": (
@@ -72,7 +119,8 @@ def overview_package(charts):
 
 
 def validate_overview(value, catalog):
-    if value.get("version") != VERSION or value.get("patterns") != PATTERNS:
+    expected = {"research-overview-1": LEGACY_PATTERNS, VERSION: PATTERNS}.get(value.get("version"))
+    if expected is None or value.get("patterns") != expected:
         raise ValueError("Incompatible research overview")
     by_id = {c["chart_id"]: c for c in catalog}
     for chart_id, record in value["charts"].items():

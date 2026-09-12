@@ -1,16 +1,18 @@
-"""Evidence taxonomy and a narrow compound-motif research candidate.
+"""Evidence taxonomy and the retained phased-pair research grammar.
 
-The candidate is NOT an enabled Umiyuri detector or a community chart tag.
-It operationalizes the phased-pair hypothesis recorded in CHART_SOURCE_AUDIT.
+The legacy candidate API does not qualify community labels. The experimental
+Umiyuri recognizer uses its stricter form through pattern_compounds; neither
+API claims independent review or coverage of the entire community family.
 """
 
 from __future__ import annotations
 
+from bisect import bisect_left, bisect_right
 from collections import defaultdict
 from fractions import Fraction
 
 from .contracts import content_hash, normalize_chart
-from .patterns import pattern_registry
+from .flow import is_known
 from .rational import decode_rational, encode_rational
 
 VERSION = "pattern-evidence-1"
@@ -18,12 +20,16 @@ CANDIDATE = "research.phased_slide_pairs"
 
 
 def registry_evidence():
+    from .patterns import pattern_registry
+
     entries = []
     for original in pattern_registry()["entries"]:
         entry = dict(original)
         entry["evidence_kind"] = (
             "chart_trait"
             if entry["id"].startswith("trait.")
+            else "scoped_compound"
+            if entry["id"] == "pattern.umiyuri"
             else "structural_primitive"
             if entry["automatic_tagging_enabled"]
             else "compound_candidate"
@@ -56,6 +62,11 @@ def phased_pairs(raw):
     constraints of this deliberately narrower project-defined research grammar.
     """
     chart = normalize_chart(raw)
+    return phased_pairs_normalized(chart)
+
+
+def phased_pairs_normalized(chart, *, strict=False):
+    """Evaluate the retained grammar; strict mode rejects extra intervening inputs."""
     required = {"beat_grid", "positions", "authored_simultaneity", "slide_movement", "slide_wait"}
     if not required <= set(chart["capabilities"]):
         return {"pattern_id": CANDIDATE, "status": "unknown", "occurrences": []}
@@ -87,11 +98,18 @@ def phased_pairs(raw):
         if len(by_beat[beat]) != 2:
             continue
         pairs[beat] = (head, other, paths[head["event_id"]][0])
+    ordered_beats = sorted(by_beat)
     links = {}
     for beat, (head, other, path) in pairs.items():
         following = pairs.get(beat + 1)
         between = by_beat.get(beat + Fraction(1, 2), [])
         if following is None or len(between) != 1 or between[0]["role"] != "tap":
+            continue
+        if strict and not is_known(head["time_us"], following[0]["time_us"] + 1, chart):
+            continue
+        if strict and ordered_beats[
+            bisect_right(ordered_beats, beat) : bisect_left(ordered_beats, beat + 1)
+        ] != [beat + Fraction(1, 2)]:
             continue
         if (
             following[0]["position"] != other["position"]
@@ -110,7 +128,13 @@ def phased_pairs(raw):
             end = links[end]
         if end - start < 3:
             continue
-        selected = [e for beat, events in by_beat.items() if start <= beat <= end for e in events]
+        selected = [
+            e
+            for beat in ordered_beats[
+                bisect_left(ordered_beats, start) : bisect_right(ordered_beats, end)
+            ]
+            for e in by_beat[beat]
+        ]
         selected.sort(key=lambda e: (e["time_us"], e["event_id"]))
         occurrence = {
             "pattern_id": CANDIDATE,

@@ -305,16 +305,22 @@ class AnalyzerContractTests(unittest.TestCase):
 
 
 class AnalyzerPatternTests(unittest.TestCase):
-    def test_registry_seed_is_not_blanket_enabled(self):
+    def test_registry_requires_explicit_rules_and_preserves_experimental_qualification(self):
         entries = pattern_registry()["entries"]
         self.assertEqual(len(entries), 36)
         enabled = [entry for entry in entries if entry["automatic_tagging_enabled"]]
-        self.assertEqual(len(enabled), 14)
-        self.assertTrue(all(entry["name_origin"] == "project_defined" for entry in enabled))
+        from maimai_analyzer.patterns import IMPLEMENTED
+
+        self.assertEqual({entry["pattern_id"] for entry in enabled}, set(IMPLEMENTED))
+        self.assertTrue(
+            all(entry["grammar"] and entry["required_capabilities"] for entry in enabled)
+        )
         self.assertTrue(all(entry["detector_status"] == "experimental" for entry in enabled))
         self.assertTrue(all(not entry["verified_chart_examples"] for entry in entries))
         umiyuri = next(entry for entry in entries if entry["pattern_id"] == "pattern.umiyuri")
-        self.assertFalse(umiyuri["automatic_tagging_enabled"])
+        self.assertTrue(umiyuri["automatic_tagging_enabled"])
+        self.assertEqual(umiyuri["name_origin"], "community_attested")
+        self.assertIn("outside this version", umiyuri["grammar"])
 
     def test_one_long_alternation_is_one_evidenced_occurrence(self):
         profile = analyze(synthetic_charts()[0])
@@ -376,7 +382,9 @@ class AnalyzerPatternTests(unittest.TestCase):
         self.assertEqual(profile["metrics"]["onset_count"], 32)
         self.assertEqual(tag(profile, "pattern.same_head_slide_fan")["occurrence_count"], 1)
         self.assertEqual(tag(profile, "pattern.connected_slide_chain")["occurrence_count"], 1)
-        self.assertEqual(tag(profile, "pattern.umiyuri")["status"], "unknown")
+        self.assertEqual(
+            tag(profile, "pattern.umiyuri")["status"], "not-detected-with-supported-coverage"
+        )
 
     def test_wait_movement_boundary_and_own_head_exclusion(self):
         chart = synthetic_charts()[3]

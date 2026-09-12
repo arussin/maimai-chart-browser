@@ -223,6 +223,7 @@ _PATTERN = {
             "detector_status",
             "description",
             "definition_version",
+            "recognition_scope",
         )
     },
     "aliases": ["string"],
@@ -346,7 +347,13 @@ def validate_exploration_pack(pack: Mapping[str, Any]) -> dict[str, Any]:
     experimental_project_ids = {
         pattern.get("pattern_id")
         for pattern in checked["patterns"]
-        if pattern.get("naming_origin") == "project_defined"
+        if (
+            pattern.get("naming_origin") == "project_defined"
+            or (
+                pattern.get("pattern_id") == "pattern.umiyuri"
+                and pattern.get("recognition_scope") == "scoped_community_form"
+            )
+        )
         and pattern.get("detector_status") == "experimental"
     }
     if evaluation_only and (

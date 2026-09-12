@@ -5,7 +5,7 @@ backend-path = ["build_backend"]
 
 [project]
 name = "maimai-chart-intelligence"
-version = "0.1.0"
+version = "0.2.0"
 description = "Offline chart analysis, prepared personal recommendations and a standalone maimai browser"
 readme = "README.md"
 requires-python = ">=3.11"

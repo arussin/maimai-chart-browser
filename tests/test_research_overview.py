@@ -10,6 +10,7 @@ from maimai_analyzer.core import analyze, analyze_overview
 from maimai_analyzer.dataset import SOURCE_LOCK
 from maimai_analyzer.fixtures import synthetic_charts
 from maimai_intelligence.research_overview import (
+    LEGACY_PATTERNS,
     PATTERNS,
     chart_overview,
     overview_package,
@@ -20,6 +21,31 @@ from scripts.build_research_overview import build
 
 
 class ResearchOverviewTests(unittest.TestCase):
+    def test_previous_catalog_versions_remain_readable(self):
+        chart = synthetic_charts()[0]
+        value = overview_package({chart["chart_id"]: chart_overview(chart)})
+        record = value["charts"][chart["chart_id"]]
+        record["tags"] = [
+            [LEGACY_PATTERNS.index(PATTERNS[t[0]]), *t[1:7]]
+            for t in record["tags"]
+            if PATTERNS[t[0]] in LEGACY_PATTERNS
+        ]
+        value.update(version="research-overview-1", patterns=LEGACY_PATTERNS)
+        self.assertIs(validate_overview(value, [profile_chart(chart)]), value)
+
+    def test_release_retains_rule_versions_and_target_specific_evidence(self):
+        chart = synthetic_charts()[0]
+        value = overview_package({chart["chart_id"]: chart_overview(chart)})
+        self.assertEqual(set(value["definitions"]), set(PATTERNS))
+        self.assertEqual(value["detector_version"], "0.2.0")
+        tag = next(
+            t
+            for t in value["charts"][chart["chart_id"]]["tags"]
+            if PATTERNS[t[0]] == "trait.isolated_pattern_sections"
+        )
+        self.assertEqual(len(tag[6]), len(tag[7]))
+        self.assertIn("pattern.two_position_alternation", [e["target_pattern_id"] for e in tag[7]])
+
     def test_interrupted_preparation_resumes_and_rejects_corrupt_cache(self):
         charts = synthetic_charts()[:2]
         with tempfile.TemporaryDirectory() as directory:
@@ -83,7 +109,7 @@ class ResearchOverviewTests(unittest.TestCase):
                             )
                         ],
                     )
-                self.assertNotIn("pattern.umiyuri", PATTERNS)
+                self.assertIn("pattern.umiyuri", PATTERNS)
 
     def test_exact_chart_and_source_join_rejects_mismatches(self):
         chart = synthetic_charts()[0]

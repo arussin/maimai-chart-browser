@@ -107,4 +107,6 @@ class PatternLessonTests(unittest.TestCase):
         entry = next(
             p for p in pattern_registry()["entries"] if p["pattern_id"] == "pattern.umiyuri"
         )
-        self.assertFalse(entry["automatic_tagging_enabled"])
+        self.assertTrue(entry["automatic_tagging_enabled"])
+        self.assertEqual(entry["detector_status"], "experimental")
+        self.assertIsNone(entry["reviewer"])

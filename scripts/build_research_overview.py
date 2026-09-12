@@ -9,6 +9,8 @@ from pathlib import Path
 
 from maimai_analyzer.contracts import content_hash
 from maimai_analyzer.dataset import SOURCE_LOCK
+from maimai_intelligence.artwork import copy_artwork, validate_artwork
+from maimai_intelligence.overview_codec import compact_overview
 from maimai_intelligence.research_overview import (
     chart_overview,
     overview_package,
@@ -37,16 +39,10 @@ def build(source, package_path, output):
     rows = {r["input_id"]: r for r in loaded["source-inventory.json"]}
     implementation = {
         name: hashlib.sha256(files("maimai_analyzer").joinpath(name).read_bytes()).hexdigest()
-        for name in (
-            "core.py",
-            "flow.py",
-            "patterns.py",
-            "contracts.py",
-            "simai_subset.py",
-            "simai_notation.py",
-            "simai_timing.py",
-            "rational.py",
-            "pattern_registry.seed.json",
+        for name in sorted(
+            asset.name
+            for asset in files("maimai_analyzer").iterdir()
+            if asset.is_file() and asset.name.endswith((".py", ".json"))
         )
     }
     implementation["overview"] = hashlib.sha256(
@@ -71,10 +67,17 @@ def build(source, package_path, output):
         records[item["chart_id"]] = record
         if index % 100 == 0:
             print(json.dumps({"prepared": index, "total": len(loaded["catalog.json"])}), flush=True)
-    overview = validate_overview(overview_package(records), loaded["catalog.json"])
+    overview = validate_overview(
+        compact_overview(overview_package(records)), loaded["catalog.json"]
+    )
     overview["implementation"] = implementation
     # A failed run writes caches only. Publish the new package after all charts finish.
     output.mkdir(parents=True, exist_ok=True)
+    if "artwork.json" in loaded:
+        artwork = validate_artwork(
+            loaded["artwork.json"], loaded["catalog.json"], loaded["navigation.json"]["versions"]
+        )
+        copy_artwork(artwork, package_path, output)
     entries = [
         write(output, name, value) for name, value in loaded.items() if name != "analysis.json"
     ]

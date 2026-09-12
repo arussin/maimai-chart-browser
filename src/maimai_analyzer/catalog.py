@@ -149,6 +149,11 @@ def _pattern(entry: Mapping) -> dict:
         "detector_status": entry["detector_status"],
         "description": entry.get("description", entry.get("definition", "")),
         "definition_version": entry.get("definition_version", "proposed"),
+        **(
+            {"recognition_scope": entry["recognition_scope"]}
+            if "recognition_scope" in entry
+            else {}
+        ),
         "limitations": entry.get("counterexamples_and_limits", entry.get("limitations", [])),
         "source_ids": entry.get("source_ids", []),
     }
@@ -317,7 +322,13 @@ def _build_catalog(
     experimental_project_ids = {
         entry.get("pattern_id", entry.get("id"))
         for entry in registry["entries"]
-        if entry.get("naming_origin", entry.get("name_origin")) == "project_defined"
+        if (
+            entry.get("naming_origin", entry.get("name_origin")) == "project_defined"
+            or (
+                entry.get("pattern_id", entry.get("id")) == "pattern.umiyuri"
+                and entry.get("recognition_scope") == "scoped_community_form"
+            )
+        )
         and entry.get("detector_status") == "experimental"
     }
     coverage = {

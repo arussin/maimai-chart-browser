@@ -372,8 +372,8 @@ def analyze_overview(chart: dict, config: dict | None = None) -> dict:
         normalized["span_start_us"],
         normalized["span_end_us"],
     )
-    _, tags = detect_patterns(normalized, flow, metrics, registry)
-    return {**identity, "flow": flow, "tags": tags}
+    occurrences, tags = detect_patterns(normalized, flow, metrics, registry)
+    return {**identity, "flow": flow, "tags": tags, "occurrences": occurrences}
 
 
 def analyze(chart: dict, config: dict | None = None) -> dict:

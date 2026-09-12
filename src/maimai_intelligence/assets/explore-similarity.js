@@ -50,7 +50,7 @@
     for(const o of selected) {
       const start=o.start_us,end=o.end_us,count=o.measurements?.onset_count,oid=o.occurrence_id;
       if(typeof oid!=='string'||!oid||seen.has(oid)||o.definition_version!=='0.1.0'||
-        o.detector_version!=='0.1.0'||o.evidence?.timing!=='supported_section'||
+        !['0.1.0','0.2.0'].includes(o.detector_version)||o.evidence?.timing!=='supported_section'||
         !Number.isInteger(count)||count<2||count>100000||!Number.isInteger(start)||
         !Number.isInteger(end)||start<0||start>=end-1||end-1>3600000000) return null;
       seen.add(oid);

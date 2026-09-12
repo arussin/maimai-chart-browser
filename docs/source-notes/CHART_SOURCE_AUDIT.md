@@ -113,3 +113,13 @@ remain separate commands. Exact source snapshots, parser rejections, pattern
 prevalence and sampled-neighbor results are local research evidence. Bulk parse
 success does not extend the pilot's independently checked sections or establish
 community-family accuracy, reuse permission, game fidelity or coaching outcomes.
+
+## Scoped experimental recognition 0.2.0 — 12 September 2026
+
+The newer [recognition report](../patterns/RECOGNITION_0.2.0.md) adds an
+explicit recurring-pair Umiyuri recognizer while retaining these evidence limits.
+Its four six-pair runs in the Master transcription and same-title negative
+variants are saved as a [development regression](../patterns/umiyuri-regression.json).
+These are not independent held-out labels. The legacy candidate API remains
+separate, and neither API claims complete community-family coverage, reviewed
+game fidelity or recommendation qualification.

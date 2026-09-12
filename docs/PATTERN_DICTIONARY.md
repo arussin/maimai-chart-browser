@@ -5,28 +5,33 @@ an authored example and a contrasting example, explanatory text, variants and
 limits, and interactive playback. This completes the authored teaching pass;
 independent teaching review and real-chart labeling remain outstanding.
 
-Missing demo, draft definition and unvalidated detection are separate states.
-The browser shows the teaching content directly. Detector status is unchanged:
-14 experimental primitives exist, and broader or community-named detection is
-not promoted by adding these illustrations.
+All 36 entries now have explicit experimental recognition rules and authored
+positive/negative checks. Independent teaching review and held-out real-passage
+accuracy evaluation remain separate qualifications. See the complete
+[0.2.0 recognition report](patterns/RECOGNITION_0.2.0.md).
 
 ## Current research chart mapping
 
-The browser now prepares all 6,959 retained charts with the existing 14
-experimental pattern/trait detectors and Flow calculation. Every assignment
+The browser prepares all 6,959 retained charts with 36 experimental pattern/trait
+detectors and Flow calculation. Every assignment
 joins an exact chart ID and source hash. Rows, difficulty choices, pattern
 filters and dictionary discovery use those observations. Chart details include
 counts, partial-coverage labels and up to four representative time spans.
 Comparisons show shared/differing observations, occurrence rates and shared-scale
 activity graphs; an optional ranking gives pattern similarity the greater weight.
 
-This is research discovery, not independent label qualification. Nine input
-patterns have supported detections in this catalog. Five chart-trait detectors
-also exist but require an authoritative whole-song span, which the transcription
-parser does not claim; those traits remain unknown rather than absent. The other
-22 lessons, including the community-named Umiyuri family, remain unmapped. No new detector
-was enabled and no teaching illustration was treated as real-chart evidence.
+The new release is `research-8295bb80a71d`. All 36 types have matching chart
+variants. Shape traits explicitly use the observed chart span without inventing
+leading or trailing audio silence. Umiyuri covers one documented recurring-pair
+form and finds 17 chart variants; it does not claim every community variant.
+Isolated sections identify their target pattern, and repeated motifs retain
+their phrase identities. All original Flow data and 62,631 results from the
+original nine input detectors are unchanged.
+
+This remains research discovery, not independent label qualification.
 Supported non-detection, partial coverage and unknown detection remain distinct.
+Compact storage preserves all results and keeps the public payload within the
+existing 32 MiB limit. Earlier immutable catalog versions remain available.
 
 ## Finish the teaching reference
 
@@ -68,8 +73,9 @@ intervening taps, alternating head roles and previous-slide launches at the next
 pair. It matches the existing narrow research detector in a synthetic fixture;
 generic tap/slide overlap is its contrast. It does not define all omissions,
 geometries or phrase boundaries and is not presented as a song transcription.
-The source article was reread for this pass; the tutorial transcript remains the
-retained audit evidence. This work required no full-catalog analysis run.
+The source article and tutorial transcript remain retained audit evidence.
+The 0.2.0 mapping run uses the same retained, hash-verified corpus; it requires
+no new downloads, personal-score imports or historical backfill.
 
 ## Add reliable chart examples and discovery
 
@@ -81,17 +87,18 @@ To connect the dictionary to real charts:
 2. Review the labels independently, preserving disagreements. For Umiyuri, the
    earlier proposed starting set of 20 positives and 20 hard negatives remains
    unfulfilled; those counts alone would not validate the detector.
-3. Implement missing detectors and test recurrence, timing tolerances, boundaries,
-   permitted transformations and misleading overlaps. Keep related passages out
-   of both the development and held-out evaluation sets.
+3. Maintain the implemented detectors' checks for recurrence, timing tolerances,
+   boundaries, permitted transformations and misleading overlaps. Keep related
+   passages out of both the development and held-out evaluation sets.
 4. Measure precision and recall on the held-out examples, inspect mistakes, and
    record the evidence and limitations for each detector.
 5. Only then promote the relevant research observations to qualified labels and
    expose validated discovery or training claims. Experimental browsing does not
    pass this gate; new detectors need their own evaluation before promotion.
 
-The next checklist work is independent teaching review and labeled real-chart
-evaluation, followed by the missing detectors and a new versioned mapping run.
+The operational recognition and versioned mapping pass is complete. Independent
+teaching review and labeled real-chart evaluation remain the next qualification
+work; they must not be presented as finished or assigned invented accuracy scores.
 Personal recommendations still require the separate reviewed catalog
 mapping and recommendation qualifications.
 

@@ -1,0 +1,72 @@
+{
+  "source": {
+    "repository": "Neskol/Maichart-Converts",
+    "revision": "e164add85213bab150e1487d5eb15ccb631aedb9",
+    "credit": "Neskol / Maichart-Converts; converted with MaichartConverter",
+    "notice": "Upstream describes research use and prohibits commercial use. Original charts and media belong to their respective copyright holders.",
+    "url": "https://github.com/Neskol/Maichart-Converts"
+  },
+  "pattern_id": "pattern.umiyuri",
+  "rule": "alternating-pairs-with-intervening-taps-v1",
+  "qualification": "Retained-source regression, not an independent human-labeled benchmark. The four Master passages were identified during development; other family variants remain outside scope.",
+  "charts": [
+    {
+      "chart_id": "evaluation:corpus:0179afba6cdbeec6717287c7:9ccfe9897dc1",
+      "difficulty": "BASIC",
+      "title": "ウミユリ海底譚",
+      "input_id": "maichart:0306b04e93a113a30c39:inote_2",
+      "source_hash": "1c7c24503762db4a6735b64536ba9fcb3a51b7040dd9e64648a29ccfe9897dc1",
+      "spans": [],
+      "pairs": []
+    },
+    {
+      "chart_id": "evaluation:corpus:4aa68b787c699147dcf48716:6d8d98ebaaaa",
+      "difficulty": "ADVANCED",
+      "title": "ウミユリ海底譚",
+      "input_id": "maichart:0306b04e93a113a30c39:inote_3",
+      "source_hash": "8447074c3c7c3494d1617bd3dfb43761c6e4f7f3bfe8412fa3f56d8d98ebaaaa",
+      "spans": [],
+      "pairs": []
+    },
+    {
+      "chart_id": "evaluation:corpus:dc2c65afe7565ea5b8c2ac7a:cc53326a507b",
+      "difficulty": "EXPERT",
+      "title": "ウミユリ海底譚",
+      "input_id": "maichart:0306b04e93a113a30c39:inote_4",
+      "source_hash": "eb063ce7b9f6a348e2572453b6095cc3be3ad731e281b11b87e8cc53326a507b",
+      "spans": [],
+      "pairs": []
+    },
+    {
+      "chart_id": "evaluation:corpus:afdc8557f507242f40d17879:a3564b56f3dd",
+      "difficulty": "MASTER",
+      "title": "ウミユリ海底譚",
+      "input_id": "maichart:0306b04e93a113a30c39:inote_5",
+      "source_hash": "fb6de52809fbf6c64e916933fcef3cb9b47412e73f09873c2b4da3564b56f3dd",
+      "spans": [
+        [
+          62250000,
+          64750001
+        ],
+        [
+          70250000,
+          72750001
+        ],
+        [
+          106250000,
+          108750001
+        ],
+        [
+          109750000,
+          112250001
+        ]
+      ],
+      "pairs": [
+        6,
+        6,
+        6,
+        6
+      ]
+    }
+  ]
+}

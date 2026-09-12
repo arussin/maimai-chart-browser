@@ -304,7 +304,7 @@ test('pattern mappings connect rows, lesson discovery, filters and observed sect
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto('/lab/');await expect(page.locator('#loaded-count')).toHaveText('6');
   const requests=[];page.on('request',r=>requests.push(r.url()));
-  await expect(page.locator('#mapping-note')).toContainText('14 pattern / trait types found automatically');
+  await expect(page.locator('#mapping-note')).toContainText('36 pattern / trait types checked');
   await expect(page.locator('.song-row>.chart-summary>.chart-flow svg')).toHaveCount(6);
   const id='pattern.two_position_alternation';await selectPatterns(page,[id]);
   const rows=page.locator('#songs .song-row');expect(await rows.count()).toBeGreaterThan(0);
@@ -320,7 +320,7 @@ test('pattern mappings connect rows, lesson discovery, filters and observed sect
   await page.goto(link);await expect(page.locator('#pattern-filter-summary')).not.toHaveText('All patterns');
   await page.locator('#reset-filters').click();expect(page.url()).not.toContain('pattern-filter=');
   await page.locator('#patterns-tab').click();await expect(page.locator('[data-find-pattern="'+id+'"]').first()).toBeVisible();
-  await expect(page.locator('[data-pattern-id="pattern.umiyuri"]')).toContainText('Song examples not connected yet');
+  await expect(page.locator('[data-pattern-id="pattern.umiyuri"]')).toContainText('Find charts · 0');
   expect(errors).toEqual([]);
 });
 
@@ -360,7 +360,7 @@ test('unknown pattern coverage is not treated as absence or a pattern match',asy
   });
   expect(result.record).toBeNull();expect(result.comparison.patternDistance).toBeNull();
   expect(result.comparison.first).toEqual([]);expect(result.comparison.second).toEqual([]);
-  expect(result.patterns).not.toContain('pattern.umiyuri');
+  expect(result.patterns).toContain('pattern.umiyuri');
 });
 
 test('pattern priority can promote a structural match and leaves unknown coverage last',async({page})=>{
@@ -543,7 +543,7 @@ test('searchable pattern multi-select searches aliases, unions results and prese
   await page.locator('#pattern-filter-summary').click();await expect.poll(()=>page.locator('.pattern-filter-panel').evaluate(el=>{const b=el.getBoundingClientRect();return b.top>=0&&b.bottom<=innerHeight+1;})).toBe(true);const search=page.locator('#pattern-filter-search');await search.fill('TRILL');
   await expect(page.locator('#pattern-filter-options label:visible')).toHaveCount(1);await search.press('ArrowDown');const trill=page.locator('[data-pattern-filter="'+a+'"]');await expect(trill).toBeFocused();await page.keyboard.press('Space');await expect(trill).toBeChecked();
   await expect(page.locator('#pattern-filter-summary')).toHaveText('2 patterns selected');expect(await ids()).toEqual([...new Set([...first,...second])].sort());
-  await search.fill('chord');await expect(page.locator('[data-pattern-filter="pattern.simultaneous_group"]')).toBeVisible();await expect(page.locator('#pattern-filter-options label:visible')).toHaveCount(1);
+  await search.fill('chord');await expect(page.locator('[data-pattern-filter="pattern.simultaneous_group"]')).toBeVisible();await expect(page.locator('[data-pattern-filter="pattern.chord_stream"]')).toBeVisible();
   await search.fill('no-such-pattern-xyz');await expect(page.locator('#pattern-filter-empty')).toBeVisible();await expect(page.locator('#pattern-filter-summary')).toHaveText('2 patterns selected');
   await page.keyboard.press('Escape');await expect(page.locator('#pattern-filter-summary')).toBeFocused();const link=page.url();expect(new URL(link).searchParams.getAll('pattern-filter')).toEqual([b,a]);expect(requests).toEqual([]);
   await page.goto(link);await expect(page.locator('#pattern-filter-summary')).toHaveText('2 patterns selected');expect(await ids()).toEqual([...new Set([...first,...second])].sort());

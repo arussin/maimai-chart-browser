@@ -1,4 +1,4 @@
-"""A disabled design seed, independently promoted project-defined primitives."""
+"""Explicit versioned experimental rules; independent qualification is separate."""
 
 from __future__ import annotations
 
@@ -9,10 +9,18 @@ from importlib.resources import files
 
 from .contracts import content_hash
 from .flow import is_known, quantize
+from .pattern_compounds import DEFINITIONS as COMPOUND_DEFINITIONS
+from .pattern_compounds import detect_compounds
+from .pattern_intervals import DEFINITIONS as INTERVAL_DEFINITIONS
+from .pattern_intervals import detect_intervals
+from .pattern_sequences import DEFINITIONS as SEQUENCE_DEFINITIONS
+from .pattern_sequences import detect_sequences
+from .pattern_traits import DEFINITIONS as TRAIT_DEFINITIONS
+from .pattern_traits import detect_traits
 from .rational import decode_rational
 
-REGISTRY_VERSION = "0.1.0-synthetic-experimental"
-DETECTOR_VERSION = "0.1.0"
+REGISTRY_VERSION = "0.2.0-synthetic-experimental"
+DETECTOR_VERSION = "0.2.0"
 MAX_OCCURRENCES = 4096
 IMPLEMENTED = {
     "pattern.two_position_alternation": (
@@ -84,6 +92,26 @@ IMPLEMENTED = {
         "overlapping paths do not double the occupied duration.",
     ),
 }
+LEGACY_INPUT_PATTERNS = frozenset(p for p in IMPLEMENTED if p.startswith("pattern."))
+IMPLEMENTED.update(SEQUENCE_DEFINITIONS)
+IMPLEMENTED.update(INTERVAL_DEFINITIONS)
+IMPLEMENTED.update(TRAIT_DEFINITIONS)
+IMPLEMENTED.update(COMPOUND_DEFINITIONS)
+# A fully observed transcription has a measurable event span even when audio
+# duration is unavailable. Preserve that basis explicitly, never invent silence.
+for _pattern_id in (
+    "trait.backloaded_density",
+    "trait.frontloaded_density",
+    "trait.bursty_density",
+    "trait.steady_density",
+    "trait.slide_occupancy",
+):
+    _required, _grammar = IMPLEMENTED[_pattern_id]
+    IMPLEMENTED[_pattern_id] = (
+        [cap for cap in _required if cap != "span"],
+        _grammar + " Measured over the observed chart span; "
+        "unknown leading/trailing audio silence is excluded.",
+    )
 
 
 def pattern_registry() -> dict:
@@ -95,7 +123,7 @@ def pattern_registry() -> dict:
         entry = {
             **original,
             "pattern_id": original["id"],
-            "definition_version": "0.1.0",
+            "definition_version": "0.1.0" if original["id"] in LEGACY_INPUT_PATTERNS else "0.2.0",
             "definition_sources": original["source_ids"],
             "reference_sections": [],
             "detector_evaluation": {
@@ -112,8 +140,13 @@ def pattern_registry() -> dict:
             required, grammar = IMPLEMENTED[original["id"]]
             entry.update(
                 {
-                    "name_origin": "project_defined",
+                    "name_origin": original["name_origin"]
+                    if original["id"] in COMPOUND_DEFINITIONS
+                    else "project_defined",
                     "definition_status": "operational_experimental",
+                    "recognition_scope": "scoped_community_form"
+                    if original["id"] in COMPOUND_DEFINITIONS
+                    else "operational_rule",
                     "detector_status": "experimental",
                     "automatic_tagging_enabled": True,
                     "required_capabilities": required,
@@ -322,6 +355,16 @@ def detect_patterns(chart: dict, flow: dict, metrics: dict, registry: dict) -> t
     found["pattern.delayed_slide_interleave"] = _interactions(chart, "wait")
     found["pattern.hold_tap_interleave"] = _interactions(chart, "hold")
     found["pattern.moving_slide_overlap"] = _moving_overlap(chart)
+    found.update(detect_sequences(chart))
+    found.update(detect_intervals(chart))
+    found.update(detect_compounds(chart))
+    eligible = {
+        definition["pattern_id"]
+        for definition in registry["entries"]
+        if definition["automatic_tagging_enabled"]
+        and set(definition["required_capabilities"]) <= caps
+    }
+    found.update(detect_traits(chart, found, eligible))
     start, end = chart["span_start_us"], chart["span_end_us"]
     duration = end - start
     if duration and is_known(start, end, chart):
@@ -356,6 +399,7 @@ def detect_patterns(chart: dict, flow: dict, metrics: dict, registry: dict) -> t
                     {
                         "first_third_onset_rate": quantize(front),
                         "last_third_onset_rate": quantize(back),
+                        "span_basis": chart["span_basis"],
                         "event_evidence_truncated": len(times) > 64,
                     },
                 )
@@ -367,6 +411,30 @@ def detect_patterns(chart: dict, flow: dict, metrics: dict, registry: dict) -> t
             definition["automatic_tagging_enabled"]
             and set(definition["required_capabilities"]) <= caps
             and chart["source"]["identity_status"] in {"exact", "reviewed"}
+            and (
+                pattern_id != "pattern.variable_slide_wait"
+                or (
+                    bool(chart["bpm_segments"])
+                    and all(
+                        s["wait_start_us"] >= chart["bpm_segments"][0]["time_us"]
+                        for s in chart["slides"]
+                    )
+                )
+            )
+            and (
+                pattern_id != "trait.repeated_motif"
+                or not (chart["holds"] or chart["slides"])
+                or (
+                    bool(chart["bpm_segments"])
+                    and all(
+                        s["path"] and s["wait_start_us"] >= chart["bpm_segments"][0]["time_us"]
+                        for s in chart["slides"]
+                    )
+                    and all(
+                        h["start_us"] >= chart["bpm_segments"][0]["time_us"] for h in chart["holds"]
+                    )
+                )
+            )
         )
         matches = found.get(pattern_id, []) if supported else []
         own = []
@@ -374,6 +442,9 @@ def detect_patterns(chart: dict, flow: dict, metrics: dict, registry: dict) -> t
         seen = set()
         for left, right, event_ids, path_ids, measurements in matches[:MAX_OCCURRENCES]:
             if not is_known(left, right, chart):
+                continue
+            context = measurements.get("context_span_us")
+            if context and not is_known(*context, chart):
                 continue
             identity = [
                 chart["chart_id"],
@@ -383,6 +454,8 @@ def detect_patterns(chart: dict, flow: dict, metrics: dict, registry: dict) -> t
                 sorted(event_ids),
                 sorted(path_ids),
             ]
+            if "target_pattern_id" in measurements:
+                identity.append(measurements["target_pattern_id"])
             key = content_hash(identity)
             if key in seen:
                 continue

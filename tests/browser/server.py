@@ -1,5 +1,6 @@
 """Quiet, bounded localhost fixture server for concurrent browser checks."""
 
+import os
 from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -16,5 +17,15 @@ class Server(ThreadingHTTPServer):
 
 Server(
     ("127.0.0.1", 8766),
-    partial(Handler, directory=str(Path(__file__).resolve().parents[2] / "output/browser-tests")),
+    partial(
+        Handler,
+        directory=str(
+            Path(
+                os.environ.get(
+                    "MAIMAI_BROWSER_OUTPUT",
+                    str(Path(__file__).resolve().parents[2] / "output/browser-tests"),
+                )
+            ).resolve()
+        ),
+    ),
 ).serve_forever()

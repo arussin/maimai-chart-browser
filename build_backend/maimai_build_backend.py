@@ -13,7 +13,7 @@ from pathlib import Path
 
 NAME = "maimai_chart_intelligence"
 DISPLAY_NAME = "maimai-chart-intelligence"
-VERSION = "0.1.0"
+VERSION = "0.2.0"
 DIST_INFO = f"{NAME}-{VERSION}.dist-info"
 
 

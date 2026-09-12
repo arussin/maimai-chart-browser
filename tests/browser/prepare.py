@@ -1,6 +1,7 @@
 """Generate only synthetic public assets; personal fixture is outside served root."""
 
 import json
+import os
 from pathlib import Path
 
 from maimai_intelligence.lab import build_lab
@@ -12,7 +13,7 @@ from tests.lab_fixture import write_package
 from tests.personal_fixture import fixture
 
 pack, snapshot, mapping, settings, bundle = fixture()
-root = Path("output/browser-tests")
+root = Path(os.environ.get("MAIMAI_BROWSER_OUTPUT", "output/browser-tests"))
 build_site(pack, root, catalog_version="synthetic-v1")
 build_site(pack, root, catalog_version="synthetic-v2")
 # Reset default while retaining both release URLs.

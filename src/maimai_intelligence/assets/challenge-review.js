@@ -163,7 +163,7 @@ function initializeFilters(){
   document.addEventListener('click',event=>{if(!el('version-filter').contains(event.target))el('version-filter').open=false;});
   el('reset-filters').onclick=()=>{for(const id of filters)el('filter-'+id).value='';selectedVersions.clear();updateVersions();chartFilters.clear();patternFilter.clear();el('search').value='';format='all';visible=40;writePatternFilter();updateFormat();catalog();};
   renderSort();
-  el('mapping-note').textContent=overview.patternIds.length?overview.coverage.size+' pattern / trait types found automatically · not yet reviewed. Click a tag for its lesson.':'Pattern and Flow data are not available in this catalog release.';
+  el('mapping-note').textContent=overview.patternIds.length?overview.coverage.size+' pattern / trait types checked · '+overview.frequency.size+' found automatically. Click a tag for its lesson.':'Pattern and Flow data are not available in this catalog release.';
   const newest=(navigation.versions||[]).find(v=>data.catalog.some(c=>folderValue(c,'version')===v));el('catalog-era').textContent=newest?'Through '+versionLabel(newest):'Research catalog';
 }
 function writePatternFilter(){const url=new URL(location.href);url.searchParams.delete('pattern-filter');for(const id of patternFilter.ids())url.searchParams.append('pattern-filter',id);history.replaceState(null,'',url);}

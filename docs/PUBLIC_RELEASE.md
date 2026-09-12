@@ -20,10 +20,14 @@ repository protection is already configured.
   dictionary song examples, chart details and comparison weighting together.
 - Preserve the experimental labels until evidence supports changing them.
 
-At the time of this plan, the code enables 14 experimental primitives, nine of
-which produce observations in the retained corpus. All 36 teaching lessons have
-demos, but that does not finish recognition. The active goal is still incomplete.
-See [the pattern checklist](PATTERN_DICTIONARY.md).
+Recognition 0.2.0 now covers all 36 dictionary entries with versioned operational
+rules, authored positive/negative checks, and a new mapping of all 6,959 retained
+charts. Every type has matches; original input-detector results and Flow are
+unchanged. See [the recognition report](patterns/RECOGNITION_0.2.0.md).
+
+Independent held-out label accuracy and teaching sign-off remain pending. The
+release must preserve experimental browsing and research qualifications; it must
+not claim qualified community labels or personal recommendation mappings.
 
 ## 2. Publish the standalone code in reviewable units
 
