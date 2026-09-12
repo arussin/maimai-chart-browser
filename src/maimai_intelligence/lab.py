@@ -102,7 +102,9 @@ def build_lab(package_directory, output, *, catalog_version):
         + "\n"
         + assets.joinpath("chart-filters.css").read_text("utf-8")
         + "\n"
-        + assets.joinpath("support-footer.css").read_text("utf-8"),
+        + assets.joinpath("support-footer.css").read_text("utf-8")
+        + "\n"
+        + assets.joinpath("site-brand.css").read_text("utf-8"),
     )
     html = re.sub(
         r"<style>.*?</style>",

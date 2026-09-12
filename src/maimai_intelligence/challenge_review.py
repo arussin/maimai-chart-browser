@@ -85,11 +85,13 @@ def render_review(
             "chart-overview.css",
             "chart-filters.css",
             "support-footer.css",
+            "site-brand.css",
         )
     )
     html = assets.joinpath("challenge-review.html").read_text("utf-8")
     return (
         html.replace("__CSS__", css)
+        .replace("__SITE_BRAND__", assets.joinpath("site-brand.html").read_text("utf-8"))
         .replace("__SUPPORT_FOOTER__", assets.joinpath("support-footer.html").read_text("utf-8"))
         .replace("__PATTERNS__", _encoded(patterns))
         .replace("__DATA__", _encoded(data))

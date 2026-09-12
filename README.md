@@ -1,4 +1,4 @@
-# maimai Chart Browser
+# maimai.party · Chart Browser
 
 A standalone static chart browser, reusable Python intelligence engine and
 read-only Kamaitachi downloader. Personal recommendations are calculated during
@@ -21,6 +21,12 @@ Catalog versions are immutable; repeated builds retain older releases and links.
 Serve the generated directory as static files, including its manifest and assets.
 No account service, upload endpoint or application server is required.
 Permanent hosting is a separate rollout.
+
+Both browser pages use the maimai.party wordmark, with Deluxe-inspired colors
+on `.party`. Their shared footer includes creator support, the GitHub link,
+an independent-fan-project rights notice and **Credits & thanks**. See
+[attribution and source roles](THIRD_PARTY_NOTICES.md). The project repository
+remains private, and branding the preview does not deploy to the domain.
 
 To open the full research browser alongside Explore, add
 `--lab-package PATH/TO/challenge-v1` to the demo or site command. It verifies the

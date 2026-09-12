@@ -22,3 +22,37 @@ MIT license. The generated artwork manifest records every source URL and hash.
 No upstream artwork or code from that logo repository is included in this source
 package. Exact title/artist matching follows arussin/maimai-session-report's
 artwork helper, without taking a runtime dependency on the report library.
+
+## Website identity and visible credits
+
+The browser is branded **maimai.party**. Its custom text wordmark uses the five
+Deluxe-inspired colors for `.party`; no additional game logo asset is bundled.
+The site is an independent fan project, not affiliated with or endorsed by SEGA
+or the projects below. The code license grants no rights to third-party game
+content. Game names, logos, charts, music and artwork belong to SEGA and their
+respective creators, publishers and rights holders.
+
+Both browser pages include a visible rights notice, a link to the private
+[project repository](https://github.com/arussin/maimai-chart-browser), and an
+expandable **Credits & thanks** reference. Attribution does not resolve reuse
+or publication permissions. The research source's stated research-use and
+noncommercial restrictions remain in effect.
+
+| Contributor or source | Role in this project |
+| --- | --- |
+| [SEGA / maimai](https://maimai.sega.jp/) and the creators credited in the game | Original game and licensed content; [public song metadata](https://maimai.sega.jp/data/maimai_songs.json) and maimai DX NET jackets. |
+| [Neskol / Maichart-Converts](https://github.com/Neskol/Maichart-Converts) | Retained research chart corpus at `e164add85213bab150e1487d5eb15ccb631aedb9`; upstream describes research use and prohibits commercial use. |
+| [MaichartConverter](https://github.com/Neskol/MaichartConverter) and [MaiLib](https://github.com/Neskol/MaiLib) | Upstream conversion tools credited by the corpus; neither is bundled or executed by this package. |
+| [Matsuk1 / JiETNG-maimai-dx-bot](https://github.com/Matsuk1/JiETNG-maimai-dx-bot) | Version-logo collection at the pinned revision above, with original game ownership retained. |
+| [Simai community](https://w.atwiki.jp/simai/), [notation documentation](https://w.atwiki.jp/simai/pages/1002.html) and [chart collection](https://w.atwiki.jp/simai/pages/32.html) | Notation references for the independently written parser, and public transcriptions used in early research studies. |
+| [Surone](https://www.youtube.com/watch?v=DQgnFASwiOM) and [なめあ](https://note.com/namea_chunibyo/n/n8c7bc59683ff) | Tutorial transcript and illustrated explanation informing the scoped, authored Umiyuri lesson; no copied video or article illustrations are bundled. |
+| [Kamaitachi](https://kamai.tachi.ac/) / [Tachi](https://docs.tachi.ac/) contributors | Optional read-only score acquisition. Personal data is never included in public catalog assets. |
+| [arussin / maimai-session-report](https://github.com/arussin/maimai-session-report) | Original code and test foundations, with extraction history preserved above. |
+| [PySimaiParser](https://github.com/Choimoe/PySimaiParser), [MajSimai](https://github.com/TeamMajdata/MajSimai), [MaiMuriDX](https://github.com/Minepig/MaiMuriDX), [MaiDiffPredictor](https://github.com/Choimoe/MaiDiffPredictor) | Research references reviewed in the [source audit](docs/source-notes/CHART_SOURCE_AUDIT.md); no code, model, weight or label from these projects was adopted. |
+| [Python](https://www.python.org/), [Node.js](https://nodejs.org/), [Pillow](https://python-pillow.github.io/), [Ruff](https://github.com/astral-sh/ruff), [Playwright](https://playwright.dev/) and [axe-core](https://github.com/dequelabs/axe-core) | Runtime, optional local artwork preparation, development and accessibility checks. The Python package still has no third-party runtime dependency. |
+
+The website credits distinguish original content ownership, retained data,
+upstream tools, teaching references and tools reviewed without adoption.
+Pinned artwork URLs and hashes remain in the separately prepared artwork
+manifest. The GitHub link does not change repository visibility; hosting on
+maimai.party and any public release are separate rollout steps.
