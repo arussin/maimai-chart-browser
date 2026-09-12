@@ -31,7 +31,7 @@ test('About links work even when the catalog cannot load',async({page})=>{
   await page.route('**/manifest.json',route=>route.fulfill({status:503,body:'Unavailable'}));
   await page.goto('/progressive/?view=about');
   await expect(page.locator('#about')).toBeVisible();
-  await expect(page.locator('#about h1')).toHaveText('About maimai.party.');
+  await expect(page.locator('#about h1')).toHaveText('About maimai.party');
   await expect(page.getByRole('link',{name:'Buy the creator a maimai credit',exact:true})).toBeVisible();
   await page.locator('#catalog-tab').click();await expect(page.locator('#catalog')).toBeVisible();
   await page.locator('#about-tab').click();await expect(page.locator('#about')).toBeVisible();
