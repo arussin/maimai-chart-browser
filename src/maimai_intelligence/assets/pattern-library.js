@@ -88,7 +88,7 @@ function demo(lesson){
   }
   function setup(){
     stop();time=0;
-    if(model.kind==='bars')root.append(make('p','Bars count new inputs in equal one-second sections. Labeled bands show ongoing movement.'+(model.series.length>1?' Gold inset bars are break inputs already included in the total.':''),'lesson-legend'));
+    if(model.kind==='bars'&&model.series.length>1)root.append(make('p','Gold inset bars are break inputs already included in the total.','lesson-legend'));
     stage.replaceChildren();const max=model.kind==='bars'?Math.max(1,...model.series.flatMap(s=>s.values)):null;
     art=chartArt(model,'Example: '+lesson.summary,{animated:true,maximum:max});stage.append(art.svg);
     cabinet=model.kind==='notes'?window.maimaiPreviewField(cabinetModel(model),'Input positions',1):null;
