@@ -72,12 +72,13 @@ manifest. The main page links to the research browser, with three views:
   only matching difficulties. Details show observed counts and chart-time spans.
   Each row has a 24-section Flow graph with density means and brief peak marks.
   Mini graphs use their own peak scale; comparisons share one vertical scale.
-- **Pattern dictionary:** all 56 lessons have an authored example and a contrast,
-  explanations, variants and limits. Play, Step, speed and progress controls work
-  across the 56 primary demos; contrasting cases remain in the lesson data.
+- **Pattern dictionary:** 56 lessons sorted alphabetically, with authored examples
+  and explanations. Play, Step, speed and progress controls work across all demos,
+  including 0.1×, 0.25×, 0.5× and 1× playback. Contrasting cases, variants and limits
+  remain in the lesson data. Simultaneous inputs are gold in diagrams and playback.
   Input patterns use timing and position views; chart traits
   use activity graphs or highlighted phrases. A current-event readout describes
-  each step. Umiyuri has a scoped, source-linked illustration of one recurring
+  each step. Umiyuri has a scoped, source-informed illustration of one recurring
   form. Teaching examples do not assign real-chart labels or validate detectors.
   English aliases include jacks, sweeps, spins and connected slides. Ten added
   community motifs and ten related structural forms have English lessons,

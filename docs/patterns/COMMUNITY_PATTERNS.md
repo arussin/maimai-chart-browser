@@ -135,8 +135,10 @@ original pattern-definition requirements.
 Browser checks exercise all 56 primary demos, all 20 new alias-to-chart paths,
 keyboard controls, privacy, accessibility and narrow layouts. Simultaneous
 inputs are gold in the small diagrams, lesson timelines and simulator; a shared
-slide head is counted once. Lessons contain no Pattern references section.
-Research citations remain in this document and the authored lesson data.
+slide head is counted once. The dictionary is alphabetical, and demos offer
+0.1×, 0.25×, 0.5× and 1× playback. Lessons omit the Pattern references and
+Variants and limits sections and the general diagram-reading instructions.
+Research citations and variant notes remain in the documentation and lesson data.
 
 Publication requires a new immutable catalogue version. This document does not
 claim deployment. Independent teaching review and a held-out labeled corpus
