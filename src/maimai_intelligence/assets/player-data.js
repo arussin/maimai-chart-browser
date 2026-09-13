@@ -94,7 +94,12 @@ function badges(r){
   for(const entry of [lamp[r.lamp],sync[syncKey(r.sync)]])if(entry){const icon=make('span',undefined,'player-icon');icon.dataset.icon=entry[0];icon.setAttribute('role','img');icon.setAttribute('aria-label',entry[1]);icon.title=entry[1];fragment.append(icon);}return fragment;
 }
 function summary(c){const root=make('div',undefined,'player-achievement');root.hidden=!active||!visible;if(root.hidden)return root;root.append(make('span','You','player-personal-label'));const r=record(c);if(!r){root.append(make('span',providerID(c)?'No recorded PB':'Personal chart match unavailable'));return root;}
-  root.append(make('strong',r.achievement==null?'Achievement unknown':(r.achievement/10000).toFixed(4)+'%'),gradeNode(r.grade),make(r.rate==null?'span':'strong',r.rate==null?'Rating unknown':r.rate+' RT','player-chart-rating'),badges(r));return root;
+  const score=make('span',undefined,'player-score'),achievement=make(r.achievement==null?'span':'strong',r.achievement==null?'Achievement unknown':undefined,'player-achievement-value');
+  if(r.achievement!=null){const [whole,fraction]=(r.achievement/10000).toFixed(4).split('.');achievement.append(make('span',whole),make('span','.'+fraction,'player-achievement-decimal'),make('span','%','player-score-unit'));}
+  score.append(achievement,gradeNode(r.grade));
+  const rating=make(r.rate==null?'span':'strong',r.rate==null?'Rating unknown':String(r.rate),'player-chart-rating');
+  if(r.rate!=null){rating.append(document.createTextNode(' '),make('span','RT','player-score-unit'));rating.title='Chart rating';}
+  root.append(score,rating,badges(r));return root;
 }
 function details(c){const group=window.maimaiChartOverview.section('player','Your data'),root=group.root,body=group.content;root.classList.add('player-history');root.hidden=!active||!visible;if(root.hidden)return root;body.append(summary(c));const cid=providerID(c);if(!cid)return root;
   const entries=[];for(const [id,ref]of Object.entries(active.plays)){const r=active.records[ref];if((reverse.get(c.chart_id)||[]).includes(r.chartID))entries.push({kind:'Recorded play',time:r.timeAchieved,r,id});}
