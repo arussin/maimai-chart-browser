@@ -13,6 +13,34 @@ const forms=[
   ['amazing_mightyyy','Amemai Expert'],['magic_circle','rotating diagonal slides'],
 ];
 
+test('dictionary stays alphabetical and both slower speeds advance playback proportionally',async({page})=>{
+  await page.clock.install({time:new Date('2026-09-13T12:00:00Z')});
+  await page.goto('/community/?view=patterns');await expect(page.locator('.pattern-card')).toHaveCount(56);
+  await expect(page.locator('#patterns-tab')).toHaveText('Pattern dictionary');
+  await expect(page.locator('#compare-tab')).toHaveText('Compare charts');
+  const names=await page.locator('.pattern-card h2').allTextContents();
+  expect(names).toEqual([...names].sort((a,b)=>a.localeCompare(b,'en',{sensitivity:'base'})));
+  await page.clock.pauseAt(new Date('2026-09-13T12:01:00Z'));
+  const dialog=page.locator('#pattern-dialog');
+  for(const[id,unit,perSecond]of [['pattern.two_position_alternation','beats',2],['trait.high_onset_density','seconds',1]]){
+    await page.locator(`[data-open-pattern="${id}"]`).click();
+    const speed=dialog.getByRole('combobox',{name:'Demo speed'});
+    await expect(speed.locator('option')).toHaveText(['0.1×','0.25×','0.5×','1×']);
+    await expect(speed).toHaveValue('1');
+    for(const value of ['0.1','0.25']){
+      await speed.selectOption(value);await dialog.getByRole('button',{name:'Play demo',exact:true}).click();
+      await page.clock.runFor(2000);
+      await dialog.getByRole('button',{name:'Pause demo',exact:true}).click();
+      const progress=await dialog.locator('.demo-progress').textContent();
+      expect(Number(progress.split(' · ')[1].split(' ')[0])).toBeCloseTo(2*Number(value)*perSecond,1);
+      expect(progress).toContain(unit.replace(/s$/,''));
+      await dialog.getByRole('button',{name:'Restart',exact:true}).click();
+      await expect(dialog.locator('input[type=range]')).toHaveValue('0');
+    }
+    await dialog.getByRole('button',{name:'Close pattern'}).click();
+  }
+});
+
 for(let batch=0;batch<2;batch++)test(`new patterns connect English alias search, lessons and chart matches (${batch+1}/2)`,async({page})=>{
   test.setTimeout(60000);
   const errors=[];page.on('pageerror',e=>errors.push(e.message));

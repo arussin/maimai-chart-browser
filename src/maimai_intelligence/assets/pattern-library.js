@@ -54,7 +54,7 @@ function cabinetModel(model){
 function render(){
   const search=normalize(el('pattern-search').value),scope=el('pattern-scope').value;
   const shown=definitions.filter(p=>normalize([p.display_name,aliases(p),lessons[p.pattern_id].summary,p.definition].join(' ')).includes(search)&&(scope==='all'||(p.kind==='trait')===(scope==='traits')));
-  shown.sort((a,b)=>Number(a.kind==='trait')-Number(b.kind==='trait')||definitions.indexOf(a)-definitions.indexOf(b));
+  shown.sort((a,b)=>a.display_name.localeCompare(b.display_name,'en',{sensitivity:'base'}));
   const root=el('pattern-list');root.replaceChildren();el('pattern-count').textContent=shown.length+' lessons found';
   for(const p of shown){const lesson=lessons[p.pattern_id],card=make('article',undefined,'pattern-card');card.dataset.patternId=p.pattern_id;
     const open=make('button','Open lesson →','text-button');open.dataset.openPattern=p.pattern_id;open.setAttribute('aria-label','Open lesson: '+p.display_name);open.onclick=()=>show(p.pattern_id,open);
@@ -69,10 +69,10 @@ function render(){
   if(!shown.length)root.append(make('p','No lessons match this search.','empty-state'));
 }
 function demo(lesson){
-  const root=make('div',undefined,'pattern-demo'),stage=make('div',undefined,'demo-stage'),caption=make('p',lesson.watch,'lesson-caption'),reading=make('p','','lesson-reading'),legend=make('p','','lesson-legend');caption.setAttribute('role','status');reading.setAttribute('role','status');
+  const root=make('div',undefined,'pattern-demo'),stage=make('div',undefined,'demo-stage'),caption=make('p',lesson.watch,'lesson-caption'),reading=make('p','','lesson-reading');caption.setAttribute('role','status');reading.setAttribute('role','status');
   const controls=make('div',undefined,'play-controls'),play=make('button','Play demo'),step=make('button','Step'),restart=make('button','Restart'),rate=make('select'),rateLabel=make('label','Speed'),scrub=make('input'),progress=make('span','','demo-progress');
-  rate.setAttribute('aria-label','Demo speed');rate.append(new Option('0.5×','0.5'),new Option('1×','1'));rate.value='1';rateLabel.append(rate);scrub.type='range';scrub.min='0';scrub.max='1000';scrub.step='1';scrub.value='0';scrub.setAttribute('aria-label','Demo progress');progress.setAttribute('aria-live','off');
-  controls.append(play,step,restart,rateLabel,scrub,progress);root.append(caption,stage,controls,reading,legend);
+  rate.setAttribute('aria-label','Demo speed');rate.append(new Option('0.1×','0.1'),new Option('0.25×','0.25'),new Option('0.5×','0.5'),new Option('1×','1'));rate.value='1';rateLabel.append(rate);scrub.type='range';scrub.min='0';scrub.max='1000';scrub.step='1';scrub.value='0';scrub.setAttribute('aria-label','Demo progress');progress.setAttribute('aria-live','off');
+  controls.append(play,step,restart,rateLabel,scrub,progress);root.append(caption,stage,controls,reading);
   let model=lesson.example,time=0,playing=false,raf=0,last=0,art,cabinet;
   function stop(){playing=false;cancelAnimationFrame(raf);play.textContent='Play demo';}
   function draw(){
@@ -88,7 +88,7 @@ function demo(lesson){
   }
   function setup(){
     stop();time=0;
-    legend.textContent=model.kind==='bars'?'Bars count new inputs in equal one-second sections. Labeled bands show ongoing movement.'+(model.series.length>1?' Gold inset bars are break inputs already included in the total.':''):'Read left to right. Circles = taps; stars = slide heads; squares = touches; bars = holds. Gold notes start together. Dashed gold = slide wait; solid teal = movement. Beat demos use an illustrative 120 BPM without audio. Position diagrams are schematic.';
+    if(model.kind==='bars')root.append(make('p','Bars count new inputs in equal one-second sections. Labeled bands show ongoing movement.'+(model.series.length>1?' Gold inset bars are break inputs already included in the total.':''),'lesson-legend'));
     stage.replaceChildren();const max=model.kind==='bars'?Math.max(1,...model.series.flatMap(s=>s.values)):null;
     art=chartArt(model,'Example: '+lesson.summary,{animated:true,maximum:max});stage.append(art.svg);
     cabinet=model.kind==='notes'?window.maimaiPreviewField(cabinetModel(model),'Input positions',1):null;
@@ -104,7 +104,7 @@ function show(id,button=null,navigate=true){
   const p=definitions.find(p=>p.pattern_id===id);if(!p)return false;const lesson=lessons[id];dispose();opener=button||opener;dialog.replaceChildren();
   const header=make('header'),identity=make('div'),title=make('h2',p.display_name);title.id='pattern-title';identity.append(make('p',p.kind==='trait'?'CHART TRAIT':'PATTERN','eyebrow'),title,make('p',aliases(p),'muted'));
   const close=make('button','Close');close.setAttribute('aria-label','Close pattern');close.onclick=()=>dialog.close();header.append(identity,close);dialog.append(header);if(!dialog.open)dialog.showModal();
-  dialog.append(make('p',lesson.summary,'demo-summary'),demo(lesson),make('h3','Variants and limits','lesson-subheading'),make('p',lesson.variants,'lesson-variants'));
+  dialog.append(make('p',lesson.summary,'demo-summary'),demo(lesson));
   if(window.maimaiChartOverview?.coverage.get(id)){const find=make('button','Find charts with this pattern');find.onclick=()=>{dialog.close();onDiscover(id);};dialog.append(find);}
   close.focus();if(navigate)onNavigate(id);return true;
 }

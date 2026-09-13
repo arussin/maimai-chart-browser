@@ -535,6 +535,8 @@ for(let batch=0;batch<8;batch++)test(`all 56 primary lessons play, step and pres
     {
       await expect(dialog.getByRole('button',{name:'Contrasting example',exact:true})).toHaveCount(0);
       await expect(dialog.locator('details,summary')).toHaveCount(0);
+      await expect(dialog).not.toContainText('Variants and limits');
+      await expect(dialog).not.toContainText('Read left to right.');
       const art=dialog.locator('.demo-stage>.lesson-art');await expect(art).toBeVisible();
       const before=await art.locator('.lesson-playhead').getAttribute('x1');
       await dialog.getByRole('button',{name:'Step',exact:true}).click();expect(await art.locator('.lesson-playhead').getAttribute('x1')).not.toBe(before);
