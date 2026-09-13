@@ -54,7 +54,7 @@ test('romaji searches share aliases across Charts and both comparison pickers',a
   await page.locator('#compare-tab').click();
   for(const [side,query,title]of [['left','umiyuri','ウミユリ海底譚'],['right','senbonzakura','千本桜']]){
     const input=page.locator('#compare-'+side+'-search');await input.fill(query);
-    await expect(page.locator('#compare-'+side+'-choices button')).toHaveCount(1);
+    await expect(page.locator('#compare-'+side+'-choices [role=option]')).toHaveCount(1);
     await input.press('ArrowDown');await page.keyboard.press('Enter');await expect(input).toHaveValue(title);
   }
   await expect(page.locator('#direct-comparison')).toContainText('Chart measurements');
@@ -270,7 +270,7 @@ test('whole chart row responds to level, whitespace, Enter and Space',async({pag
 
 async function chooseComparisonChart(page,side,title){
   await page.locator('#compare-'+side+'-search').fill(title);
-  await page.locator('#compare-'+side+'-choices').getByRole('button',{name:new RegExp(title)}).first().click();
+  await page.locator('#compare-'+side+'-choices').getByRole('option',{name:new RegExp(title)}).first().click();
 }
 
 test('any two catalog charts compare and survive a shared link',async({page})=>{
