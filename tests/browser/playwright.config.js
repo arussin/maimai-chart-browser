@@ -6,5 +6,6 @@ export default defineConfig({
   webServer:process.env.MAIMAI_TEST_SERVER === '1' ? undefined : {command:`"${process.env.PYTHON || 'python'}" server.py`,url:baseURL,reuseExistingServer:false},
   projects:[{name:'desktop',use:{...devices['Desktop Chrome'],viewport:{width:1280,height:900}}},
     {name:'mobile',use:{...devices['iPhone 13'],defaultBrowserType:'chromium'}},
-    {name:'narrow',use:{...devices['Desktop Chrome'],viewport:{width:320,height:800}}}],
+    {name:'narrow',use:{...devices['Desktop Chrome'],viewport:{width:320,height:800}}},
+    {name:'webkit-comparison',testMatch:['comparison-search.spec.js'],use:{...devices['iPhone 13']}}],
 });

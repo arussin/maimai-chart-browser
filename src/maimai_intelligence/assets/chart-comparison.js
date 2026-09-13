@@ -40,7 +40,7 @@ function mount({data,eligibleIds}){
       const end=Math.min(shown+20,found.length);
       for(let index=shown;index<end;index++){
         const chart=found[index],option=make('div',label(chart),'chart-choice');option.id=results.id+'-'+index;option.dataset.choice=chart.chart_id;option.setAttribute('role','option');option.setAttribute('aria-selected','false');option.setAttribute('aria-posinset',String(index+1));option.setAttribute('aria-setsize',String(found.length));
-        option.onpointerdown=event=>event.preventDefault();option.onclick=()=>{choose(side,chart.chart_id);input.focus();};results.append(option);
+        option.onmousedown=event=>event.preventDefault();option.onclick=()=>{choose(side,chart.chart_id);input.focus();};results.append(option);
       }
       shown=end;more.hidden=shown>=found.length;status.textContent=found.length?(shown<found.length?'Showing '+shown+' of '+found.length.toLocaleString()+' matching charts. Keep typing or show more.':found.length.toLocaleString()+' matching charts.'):'No matching charts. Try another song, artist or difficulty.';
     }
@@ -65,6 +65,8 @@ function mount({data,eligibleIds}){
       }else if(event.key==='Enter'&&!results.hidden&&active>=0){choose(side,found[active].chart_id);event.preventDefault();}
       else if(event.key==='Escape'){close();event.preventDefault();}
     };
+    // Keep input focus through a click without suppressing Safari's touch-generated click.
+    more.onmousedown=event=>event.preventDefault();
     more.onclick=()=>{const next=shown;appendMatches();input.focus();activate(next);};
     container.addEventListener('focusout',event=>{if(!container.contains(event.relatedTarget))close();});
     document.addEventListener('pointerdown',event=>{if(!container.contains(event.target))close();});

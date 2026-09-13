@@ -26,11 +26,12 @@ test('comparison autocomplete starts empty and reaches every chart independently
   await right.fill('Capacity study');
   await expect(page.locator('#comparison-pickers').getByRole('option')).toHaveCount(20);
   await expect(page.locator('#compare-right-search-status')).toContainText('20 of 7,000');
-  await page.getByRole('button',{name:'Show more matches',exact:true}).click();
+  const more=page.getByRole('button',{name:'Show more matches',exact:true});
+  if(isMobile)await more.tap();else await more.click();
   await expect(page.locator('#comparison-pickers').getByRole('option')).toHaveCount(40);
   const choice=page.locator('#comparison-pickers').getByRole('option').nth(35);
   if(isMobile)await choice.tap();else await choice.click();
-  expect(new URL(page.url()).searchParams.get('right')).toBe('synthetic:capacity:35');
+  await expect(page).toHaveURL(url=>url.searchParams.get('right')==='synthetic:capacity:35');
   await expect(page.locator('#direct-comparison .metric-comparison')).toBeVisible();
   await page.locator('#comparison-clear').click();
   await expect(left).toBeFocused();await expect(left).toHaveValue('');

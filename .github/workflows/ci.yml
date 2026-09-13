@@ -47,7 +47,7 @@ jobs:
           PYTHONPATH: .
       - run: npm ci
         working-directory: tests/browser
-      - run: npx playwright install --with-deps chromium
+      - run: npx playwright install --with-deps chromium webkit
         working-directory: tests/browser
       - run: npm test
         working-directory: tests/browser
