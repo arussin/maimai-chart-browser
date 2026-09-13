@@ -27,7 +27,9 @@ The limits are 32 MiB compressed, 128 MiB expanded, and one million entries per 
 
 ## Personal browsing
 
-Settings contains Import player data, Hide/Show personal results, and Forget remembered player data. The import dialog identifies the player and date. Same-player imports retain both histories; a different player replaces the active selection without merging records.
+Settings contains Import player data, Hide/Show player data, and Forget remembered player data. The import dialog identifies the player and date. Same-player imports retain both histories; a different player replaces the active selection without merging records.
+
+Expanded cards keep chart measurements and pattern activity together, followed by player achievements and history. The two section controls share their expanded/collapsed preferences across songs, tabs and visits. These presentation preferences store only two booleans, independently of the choice to remember player records. Comparison actions and version artwork stay in the primary card.
 
 Remember on this device is explicit and uses IndexedDB. Otherwise the compressed dataset is stored for the tab session, including reloads, in sessionStorage. Browser quota or storage denial produces an explicit error before replacement. Remembered imports use a transactional revision check so a stale tab cannot overwrite another tab's update. Forget removes the remembered copy; the current in-memory view remains until the tab closes or reloads.
 

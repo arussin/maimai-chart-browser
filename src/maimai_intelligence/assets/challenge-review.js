@@ -147,20 +147,24 @@ function catalog(focusKey=null){
     const level=make('span',constantLabel(c),'chart-level chart-constant'),bpm=make('span',values.bpm(c)==null?'—':String(values.bpm(c)),'chart-bpm'),speed=make('span',values.speed(c)==null?'—':values.speed(c).toFixed(1),'chart-speed');
     bpm.setAttribute('aria-label',values.bpm(c)==null?'BPM unknown':values.bpm(c)+' BPM');bpm.title='Source song BPM; individual passages may change tempo.';
     level.setAttribute('aria-label','Chart constant '+(chartConstant(c)==null?'unknown':constantLabel(c)));level.title=chartConstant(c)==null?'No decimal constant is available in this catalog release.':'Chart constant from the retained source revision; game updates may change it.';speed.setAttribute('aria-label',(values.speed(c)==null?'Unknown':values.speed(c).toFixed(1))+' inputs per second');
-    const flow=overview.graph(c,{compact:true});header.append(heading,picker,level,bpm,speed,flow);if(personal)header.append(personal.summary(c));
+    const flow=overview.graph(c,{compact:true});header.append(heading,picker,level,bpm,speed,flow);
+    const footer=make('div',undefined,'chart-card-footer'),version=folderValue(c,'version'),metadata=make('div',undefined,'chart-card-metadata');
+    const versionArt=window.maimaiChartArtwork.version(version);versionArt.title=version;
+    metadata.append(versionArt,make('span',genreLabel(folderValue(c,'genre')),'chart-card-genre'),make('span',version,'chart-card-version'));
+    const actions=make('div',undefined,'chart-detail-actions'),compareButton=make('button','Compare this chart'),similarButton=make('button','Find similar');
+    compareButton.type=similarButton.type='button';
+    compareButton.onclick=()=>{selectView('compare');if(comparisonUI.first()&&comparisonUI.first()!==c.chart_id)comparisonUI.useAsSecond(c.chart_id);else comparisonUI.useAsFirst(c.chart_id);};
+    similarButton.onclick=()=>{selectView('compare');comparisonUI.useAsFirst(c.chart_id,true);};actions.append(compareButton,similarButton);footer.append(metadata,actions);header.append(footer);
+    if(personal)header.append(personal.summary(c));
     header.onclick=event=>{if(!event.target.closest('button,select,label,input,a'))summary.click();};
-    const panel=make('div',undefined,'chart-measurements');panel.id='chart-'+index;panel.hidden=!expandedRows.has(key);summary.setAttribute('aria-expanded',String(!panel.hidden));summary.setAttribute('aria-controls',panel.id);
+    const panel=make('div',undefined,'chart-measurements');panel.id='chart-'+index;panel.hidden=!expandedRows.has(key);row.classList.toggle('is-expanded',!panel.hidden);summary.setAttribute('aria-expanded',String(!panel.hidden));summary.setAttribute('aria-controls',panel.id);
     const renderDetails=()=>{
-      panel.replaceChildren();panel.append(make('h3',c.format+' '+c.difficulty+' · Lv. '+(c.level||'?')),metrics(c));
-      panel.append(make('p','Chart constant '+(chartConstant(c)==null?'not available':constantLabel(c))+' · '+(chartConstant(c)==null?'This catalog has no retained decimal value.':'From the retained source revision.'),'muted'));
-      panel.append(make('p',genreLabel(folderValue(c,'genre'))+' · '+folderValue(c,'version')+' · '+(values.bpm(c)==null?'BPM unknown':values.bpm(c)+' BPM'),'muted'));
-      if(personal)panel.append(personal.details(c));panel.append(overview.details(c));
-      const actions=make('div',undefined,'chart-detail-actions'),compareButton=make('button','Compare this chart'),similarButton=make('button','Find similar');
-      compareButton.onclick=()=>{selectView('compare');if(comparisonUI.first()&&comparisonUI.first()!==c.chart_id)comparisonUI.useAsSecond(c.chart_id);else comparisonUI.useAsFirst(c.chart_id);};
-      similarButton.onclick=()=>{selectView('compare');comparisonUI.useAsFirst(c.chart_id,true);};actions.append(compareButton,similarButton);panel.append(actions);
-      const link=make('button','Explore the pattern dictionary','text-button');link.onclick=()=>selectView('patterns');panel.append(link);
+      const identity=make('span',undefined,'chart-detail-identity'),formatBadge=make('span',c.format,'chart-format-badge');formatBadge.dataset.format=c.format;
+      identity.append(formatBadge,make('span',c.difficulty,'chart-difficulty-badge'),make('span',c.level||'?','chart-detail-level'));
+      const track=overview.section('chart','Chart details',identity);track.content.append(metrics(c),overview.details(c));
+      panel.replaceChildren(track.root);if(personal)panel.append(personal.details(c));
     };
-    summary.onclick=()=>{panel.hidden=!panel.hidden;summary.setAttribute('aria-expanded',String(!panel.hidden));if(panel.hidden)expandedRows.delete(key);else{expandedRows.add(key);renderDetails();}};
+    summary.onclick=()=>{panel.hidden=!panel.hidden;row.classList.toggle('is-expanded',!panel.hidden);summary.setAttribute('aria-expanded',String(!panel.hidden));if(panel.hidden)expandedRows.delete(key);else{expandedRows.add(key);renderDetails();}};
     if(!panel.hidden)renderDetails();row.append(header,panel);el('songs').append(row);
   }
   el('catalog-count').textContent=charts.length.toLocaleString()+' charts found';

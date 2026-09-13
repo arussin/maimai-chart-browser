@@ -18,6 +18,10 @@ Data stays in your browser; remembering it on the device is optional.
 Personal filters collapse without clearing your choices. Colored grade letters
 and compact combo/sync icons accompany a quiet **You** label on each recorded
 chart. Player identity, capture coverage and storage controls live in Settings.
+Open charts group measurements and patterns under **Chart details**, followed by
+**Your data** and retained history. Both groups remember their expanded state
+across songs and visits. Compare and Find similar stay on the main card beside
+the chart's version artwork.
 See [personal data, exact links and the public matching interface](docs/PLAYER_DATA.md).
 
 ## Preview

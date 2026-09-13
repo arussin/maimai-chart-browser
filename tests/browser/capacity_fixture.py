@@ -52,6 +52,8 @@ def build_capacity_fixture(root: Path, count: int = 7000):
         "settings-menu.js",
         "support-checkout.js",
         "view-navigation.js",
+        "player-data-core.js",
+        "player-data.js",
     ]:
         shutil.copyfile(source / name, target / name)
     (target / "catalogs").mkdir(exist_ok=True)
