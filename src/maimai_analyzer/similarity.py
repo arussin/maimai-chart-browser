@@ -160,7 +160,7 @@ def _local_run_rates(chart: Mapping, pattern_id: str, section: Mapping | None = 
             or not oid
             or oid in seen
             or occurrence.get("definition_version") != "0.1.0"
-            or occurrence.get("detector_version") not in {"0.1.0", "0.2.0"}
+            or occurrence.get("detector_version") not in {"0.1.0", "0.2.0", "0.3.0"}
             or occurrence.get("evidence", {}).get("timing") != "supported_section"
             or type(count) is not int
             or not 2 <= count <= 100_000

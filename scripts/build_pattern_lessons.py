@@ -6,6 +6,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from scripts.community_pattern_lessons import community_lessons
+
 
 def timeline(notes=(), *, slides=(), holds=(), duration=8, bands=()):
     events = [list(n) if len(n) == 3 else [*n, "tap"] for n in notes]
@@ -436,8 +438,9 @@ def build_lessons():
             bands=[(1.75, 4.75, "Target plus extra inputs")],
         ),
     )
+    lessons.update(community_lessons())
     return {
-        "version": "pattern-lessons-1",
+        "version": "pattern-lessons-2",
         "basis": "Authored teaching illustrations; no real-chart assignments",
         "lessons": lessons,
     }

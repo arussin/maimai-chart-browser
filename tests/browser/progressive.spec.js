@@ -49,7 +49,7 @@ test('linked comparisons retain exact pattern results and cache verified details
   const detailRequests=requests.filter(url=>url.includes('/chart-details/'));
   expect(new Set(detailRequests).size).toBe(detailRequests.length);
   expect(requests.some(url=>/\/(catalog-parts|catalogs)\//.test(url))).toBe(false);
-  expect(requests.every(url=>new URL(url).origin==='http://127.0.0.1:8766')).toBe(true);
+  expect(requests.every(url=>new URL(url).origin===new URL(page.url()).origin)).toBe(true);
   expect(errors).toEqual([]);
 });
 

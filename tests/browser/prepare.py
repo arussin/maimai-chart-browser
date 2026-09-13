@@ -17,6 +17,8 @@ from tests.browser.capacity_fixture import build_capacity_fixture
 from tests.lab_fixture import write_package
 from tests.mai_notes_fixture import encoded as mai_notes_index
 from tests.personal_fixture import fixture
+from tests.test_pattern_community import CASES
+from tests.test_pattern_sequences import chart_for
 
 pack, snapshot, mapping, settings, bundle = fixture()
 root = Path(os.environ.get("MAIMAI_BROWSER_OUTPUT", "output/browser-tests"))
@@ -26,6 +28,16 @@ build_site(pack, root, catalog_version="synthetic-v2")
 build_site(pack, root, catalog_version="synthetic-v1")
 atomic_json(Path("output/personal-fixture.json"), bundle)
 build_lab(write_package(Path("output/lab-fixture")), root / "lab", catalog_version="fixture-v5")
+community_charts = []
+for key, (body, _) in CASES.items():
+    chart = chart_for(body)
+    chart.update(chart_id="community-" + key, song_id="community-" + key)
+    community_charts.append(chart)
+build_lab(
+    write_package(Path("output/community-fixture"), charts=community_charts),
+    root / "community",
+    catalog_version="community-v1",
+)
 build_capacity_fixture(root)
 build_lab(
     write_package(Path("output/constant-fixture"), grouped=True, constants=True),

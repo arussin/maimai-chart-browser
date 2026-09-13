@@ -350,7 +350,7 @@ def validate_exploration_pack(pack: Mapping[str, Any]) -> dict[str, Any]:
         if (
             pattern.get("naming_origin") == "project_defined"
             or (
-                pattern.get("pattern_id") == "pattern.umiyuri"
+                pattern.get("naming_origin") == "community_attested"
                 and pattern.get("recognition_scope") == "scoped_community_form"
             )
         )

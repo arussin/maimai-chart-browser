@@ -1,0 +1,132 @@
+{
+  "version": "community-pattern-audit-1",
+  "baseline_package_sha256": "92c136e47806db7b1ff35c19209399969b20214b14c145562a8cadd5a016e660",
+  "candidate_package_sha256": "9193ba44a25e98df827d6137c5cedf638a4a9d270c1c0bd40f8c5014caea1ad8",
+  "charts": 6959,
+  "detector_version": "0.3.0",
+  "patterns_and_traits": 56,
+  "retained_public_values_unchanged": [
+    "artwork.json",
+    "benchmark.json",
+    "catalog.json",
+    "mai-notes.json",
+    "navigation.json",
+    "outcomes.json",
+    "reference-scale.json",
+    "review.json",
+    "snippets.json",
+    "source-inventory.json"
+  ],
+  "json_encoding_only_changes": [
+    "mai-notes.json"
+  ],
+  "flow_unchanged": true,
+  "baseline_occurrences": 1348730,
+  "changed_baseline_tags": {
+    "trait.isolated_pattern_sections": 1190
+  },
+  "change_note": "Isolated sections can now name added target patterns.",
+  "new_patterns": {
+    "pattern.anchored_trill": {
+      "not-detected-with-supported-coverage": 6697,
+      "occurrences": 536,
+      "detected": 262
+    },
+    "pattern.scattered_taps": {
+      "not-detected-with-supported-coverage": 4948,
+      "occurrences": 7702,
+      "detected": 2011
+    },
+    "pattern.touch_stream": {
+      "not-detected-with-supported-coverage": 6419,
+      "occurrences": 1155,
+      "detected": 540
+    },
+    "pattern.touch_sweep": {
+      "not-detected-with-supported-coverage": 6679,
+      "occurrences": 652,
+      "detected": 280
+    },
+    "pattern.touch_rotation": {
+      "not-detected-with-supported-coverage": 6751,
+      "occurrences": 313,
+      "detected": 208
+    },
+    "pattern.repeated_slide_heads": {
+      "not-detected-with-supported-coverage": 6681,
+      "occurrences": 523,
+      "detected": 278
+    },
+    "pattern.alternating_slide_heads": {
+      "not-detected-with-supported-coverage": 6468,
+      "occurrences": 981,
+      "detected": 491
+    },
+    "pattern.different_slide_speeds": {
+      "not-detected-with-supported-coverage": 6942,
+      "occurrences": 21,
+      "detected": 17
+    },
+    "pattern.extended_slide_wait": {
+      "not-detected-with-supported-coverage": 6834,
+      "occurrences": 631,
+      "detected": 125
+    },
+    "pattern.return_slides": {
+      "not-detected-with-supported-coverage": 6634,
+      "occurrences": 954,
+      "detected": 325
+    },
+    "pattern.cycles": {
+      "not-detected-with-supported-coverage": 6940,
+      "occurrences": 42,
+      "detected": 19
+    },
+    "pattern.slip_flip": {
+      "not-detected-with-supported-coverage": 6957,
+      "occurrences": 4,
+      "detected": 2
+    },
+    "pattern.death_scythe": {
+      "not-detected-with-supported-coverage": 6899,
+      "occurrences": 109,
+      "detected": 60
+    },
+    "pattern.sugarbitter": {
+      "not-detected-with-supported-coverage": 6952,
+      "occurrences": 11,
+      "detected": 7
+    },
+    "pattern.future": {
+      "not-detected-with-supported-coverage": 6514,
+      "occurrences": 1037,
+      "detected": 445
+    },
+    "pattern.gekishou": {
+      "not-detected-with-supported-coverage": 6949,
+      "occurrences": 13,
+      "detected": 10
+    },
+    "pattern.hoshizora": {
+      "not-detected-with-supported-coverage": 6954,
+      "occurrences": 10,
+      "detected": 5
+    },
+    "pattern.outlaw": {
+      "not-detected-with-supported-coverage": 6957,
+      "occurrences": 5,
+      "detected": 2
+    },
+    "pattern.amazing_mightyyy": {
+      "not-detected-with-supported-coverage": 6404,
+      "occurrences": 1781,
+      "detected": 555
+    },
+    "pattern.magic_circle": {
+      "not-detected-with-supported-coverage": 6905,
+      "occurrences": 75,
+      "detected": 54
+    }
+  },
+  "qualification": "Experimental discovery; not independent precision or recall."
+}

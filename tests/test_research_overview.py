@@ -47,7 +47,7 @@ class ResearchOverviewTests(unittest.TestCase):
         chart = synthetic_charts()[0]
         value = overview_package({chart["chart_id"]: chart_overview(chart)})
         self.assertEqual(set(value["definitions"]), set(PATTERNS))
-        self.assertEqual(value["detector_version"], "0.2.0")
+        self.assertEqual(value["detector_version"], "0.3.0")
         tag = next(
             t
             for t in value["charts"][chart["chart_id"]]["tags"]

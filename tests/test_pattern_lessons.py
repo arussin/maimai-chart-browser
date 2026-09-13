@@ -44,7 +44,13 @@ class PatternLessonTests(unittest.TestCase):
                         self.assertTrue(0 <= time <= model["duration"])
                         self.assertIn(role, ("tap", "star", "hold", "touch"))
                         self.assertTrue(
-                            type(position) is int and 1 <= position <= 8 or position in ("C", "B1")
+                            type(position) is int
+                            and 1 <= position <= 8
+                            or position == "C"
+                            or isinstance(position, str)
+                            and len(position) == 2
+                            and position[0] in "ABDE"
+                            and position[1] in "12345678"
                         )
                     for head, start, end, path in model["slides"]:
                         self.assertTrue(0 <= head <= start < end <= model["duration"])
@@ -53,6 +59,32 @@ class PatternLessonTests(unittest.TestCase):
                     for start, end, position in model["holds"]:
                         self.assertTrue(0 <= start < end <= model["duration"])
                         self.assertIn([start, position, "hold"], model["notes"])
+                    for path in model.get("slide_points", []):
+                        self.assertGreaterEqual(len(path), 2)
+                        self.assertTrue(
+                            all(
+                                len(p) == 2 and all(math.isfinite(x) and abs(x) <= 1 for x in p)
+                                for p in path
+                            )
+                        )
+
+    def test_community_illustrations_match_the_stated_forms(self):
+        from maimai_analyzer.core import analyze_overview
+        from scripts.community_pattern_lessons import LESSONS
+
+        for key, values in LESSONS.items():
+            for body, expected in [
+                (values[-2], "detected"),
+                (values[-1], "not-detected-with-supported-coverage"),
+            ]:
+                chart, _ = parse("(120)" + body + "E")
+                actual = next(
+                    t
+                    for t in analyze_overview(chart)["tags"]
+                    if t["pattern_id"] == "pattern." + key
+                )
+                with self.subTest(pattern=key, expected=expected):
+                    self.assertEqual(actual["status"], expected)
 
     def test_timing_contrasts_keep_the_claimed_phase_distinctions(self):
         lessons = self.lessons

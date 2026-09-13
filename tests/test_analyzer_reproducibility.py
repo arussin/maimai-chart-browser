@@ -13,8 +13,8 @@ class AnalyzerReproducibilityTests(unittest.TestCase):
         # Linux 3.11/3.13 and Windows 3.13 independently assert identical bytes.
         # A deliberate grammar/config change needs its own version and review of
         # the semantic regressions before updating this compatibility reference.
-        self.assertEqual(ANALYZER_VERSION, "0.2.0-experimental")
+        self.assertEqual(ANALYZER_VERSION, "0.3.0-experimental")
         self.assertEqual(
             hashlib.sha256(canonical_bytes(synthetic_profiles())).hexdigest(),
-            "32ab8db3f34b4a39b212c17f9d6a3a75173a84654896e43b1fbafdda9508263a",
+            "e6b565c6ee3d33c46a5ea885addc168429b72a98d0a18ab3eacfc684ea867bb4",
         )
