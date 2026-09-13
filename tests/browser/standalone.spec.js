@@ -401,7 +401,7 @@ test('pattern mappings connect rows, lesson discovery, filters and observed sect
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto('/lab/');await expect(page.locator('#loaded-count')).toHaveText('6');
   const requests=[];page.on('request',r=>requests.push(r.url()));
-  await expect(page.locator('#mapping-note')).toContainText('36 pattern / trait types checked');
+  await expect(page.locator('#mapping-note')).toHaveCount(0);
   await expect(page.locator('.song-row>.chart-summary>.chart-flow svg')).toHaveCount(6);
   const id='pattern.two_position_alternation';await selectPatterns(page,[id]);
   const rows=page.locator('#songs .song-row');expect(await rows.count()).toBeGreaterThan(0);

@@ -173,7 +173,8 @@ test('analytics notice, privacy text and settings support keyboard, screen reade
   await page.keyboard.press('Escape');await expect(page.locator('#settings-toggle')).toBeFocused();
   await page.keyboard.press('Enter');await page.keyboard.press('Escape');await expect(page.locator('#settings-menu')).toBeHidden();
   await expect(page.locator('#settings-toggle')).toBeFocused();
-  await page.keyboard.press('Enter');await page.locator('#about h1').click();await expect(page.locator('#settings-menu')).toBeHidden();
+  await page.keyboard.press('Enter');await page.locator('.footer-project p').click();await expect(page.locator('#settings-menu')).toBeHidden();
+  await expect(page.locator('#analytics-dialog')).toBeHidden();
 });
 
 test('analytics Google tag serializes safe pages and honors opt-out, including a delayed script',async({page,context})=>{
