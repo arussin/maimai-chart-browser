@@ -14,6 +14,15 @@ does not establish official identity, availability or permission to redistribute
 
 maimai is a SEGA game. This project is independent of SEGA and Kamaitachi.
 
+The optional provider mapping includes a minimal chart/song identity registry
+derived from public Kamaitachi seed data at Tachi revision
+`f08148f8644e40de9b178445df4bd59da712d3de`. Its source URLs, input hashes and
+derived registry hash are recorded in
+`src/maimai_intelligence/assets/provider-registry-source.json`. It contains
+chart metadata, current/legacy IDs and availability, with no player records,
+chart notation, music or artwork. The exact mapping remains separate from
+personalized report recommendations.
+
 Optional, separately prepared public artwork uses SEGA's maimai song metadata
 and static jackets. Version logos are retained from Matsuk1/JiETNG-maimai-dx-bot,
 revision `f6eb5ebc6e1f3200b9769060a34325b2ea4e1eb7`. Jackets and logos belong to

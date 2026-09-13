@@ -12,6 +12,11 @@ YouTube as **mai-notes simai player**, specific to the selected difficulty.
 Requires Python 3.11+. The package has no runtime dependencies and does not require
 the report library. Install from this checkout with `python -m pip install .`.
 
+The public browser can optionally show your own achievements and retained chart
+history. Import a player file from Settings or accept a Session Report handoff.
+Data stays in your browser; remembering it on the device is optional.
+See [personal data, exact links and the public matching interface](docs/PLAYER_DATA.md).
+
 ## Preview
 
 ```sh

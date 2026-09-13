@@ -6,7 +6,7 @@
   const menu = document.getElementById('settings-menu');
   if (!toggle || !menu) return;
   const control = toggle.parentElement;
-  const items = () => [...menu.querySelectorAll('[role="menuitem"]')];
+  const items = () => [...menu.querySelectorAll('[role="menuitem"]')].filter(item => !item.hidden);
   function close(focus = false) {
     menu.hidden = true;
     toggle.setAttribute('aria-expanded', 'false');

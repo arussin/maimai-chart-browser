@@ -7,6 +7,7 @@ const el=id=>document.getElementById(id),make=(tag,text,cls)=>{const e=document.
 let visible=40,format='all',comparisonUI=null;
 const navigation=data.navigation||{charts:{},genres:[],versions:[]};
 const overview=window.maimaiChartOverview;
+const personal=window.maimaiPersonal;personal?.configure(data,data.provider_mapping);
 function folderValue(c,mode){
   if(mode==='level')return c.level||'unknown';
   const n=navigation.charts[c.chart_id];
@@ -36,11 +37,13 @@ const chartConstant=c=>{const record=navigation.charts?.[c.chart_id],value=recor
 const constantLabel=c=>chartConstant(c)==null?'—':chartConstant(c).toFixed(1);
 const sortFields={title:'Title',artist:'Artist',constant:'Constant',bpm:'BPM',difficulty:'Difficulty',format:'Format',genre:'Genre',version:'Version',speed:'Inputs / s',peak:'Peak inputs / s'};
 let sortRules=[{key:'title',direction:1}];
+const personalSorts={achievement:'Your achievement',grade:'Your grade',rating:'Your chart rating',lastPlayed:'Last recorded play'};
 const filters=['genre'],selectedVersions=new Set();
 let chartFilters,patternFilter;
 const versionLabel=value=>value.replace(/^maimai DX /,'DX ').replace(/^maimai /,'');
 const genreLabel=value=>(navigation.genres||[]).find(g=>g.id===value)?.label||'Uncategorized';
 const values={title:c=>displayTitle(c),artist:c=>c.artist,constant:chartConstant,bpm:c=>navigation.charts?.[c.chart_id]?.bpm??null,difficulty:c=>{const rank=difficultyOrder.indexOf(c.difficulty.toUpperCase());return rank<0?null:rank;},format:c=>c.format,genre:c=>genreLabel(folderValue(c,'genre')),version:c=>{const v=(navigation.versions||[]).indexOf(folderValue(c,'version'));return v<0?null:v;},speed:c=>c.demand.cadence.mean_onsets_s??null,peak:c=>{const record=overview.get(c);if(record&&Object.hasOwn(record,'flow_peak'))return record.flow_peak;const peaks=(record?.segments||[]).filter(s=>s[3]!=null&&s[4]>0).map(s=>s[3]);return peaks.length?Math.max(...peaks):null;}};
+Object.assign(values,{achievement:c=>personal?.record(c)?.achievement??null,grade:c=>personal?.gradeIndex(c)??null,rating:c=>personal?.record(c)?.rate??null,lastPlayed:c=>personal?.lastPlayed(c)??null});
 const selectedCharts=new Map(),expandedRows=new Set();
 const rowKey=c=>JSON.stringify([navigation.charts?.[c.chart_id]?.source_path||c.source_container_id||c.song_id,c.format]);
 function compareCharts(a,b){
@@ -121,6 +124,7 @@ function catalog(focusKey=null){
     if(selectedVersions.size&&!selectedVersions.has(folderValue(c,'version')))return false;
     if(!chartFilters.matches(c))return false;
     if(!patternFilter.matches(c))return false;
+    if(personal&&!personal.matches(c))return false;
     return true;
   });
   const grouped=new Map();
@@ -143,14 +147,14 @@ function catalog(focusKey=null){
     const level=make('span',constantLabel(c),'chart-level chart-constant'),bpm=make('span',values.bpm(c)==null?'—':String(values.bpm(c)),'chart-bpm'),speed=make('span',values.speed(c)==null?'—':values.speed(c).toFixed(1),'chart-speed');
     bpm.setAttribute('aria-label',values.bpm(c)==null?'BPM unknown':values.bpm(c)+' BPM');bpm.title='Source song BPM; individual passages may change tempo.';
     level.setAttribute('aria-label','Chart constant '+(chartConstant(c)==null?'unknown':constantLabel(c)));level.title=chartConstant(c)==null?'No decimal constant is available in this catalog release.':'Chart constant from the retained source revision; game updates may change it.';speed.setAttribute('aria-label',(values.speed(c)==null?'Unknown':values.speed(c).toFixed(1))+' inputs per second');
-    const flow=overview.graph(c,{compact:true});header.append(heading,picker,level,bpm,speed,flow);
+    const flow=overview.graph(c,{compact:true});header.append(heading,picker,level,bpm,speed,flow);if(personal)header.append(personal.summary(c));
     header.onclick=event=>{if(!event.target.closest('button,select,label,input,a'))summary.click();};
     const panel=make('div',undefined,'chart-measurements');panel.id='chart-'+index;panel.hidden=!expandedRows.has(key);summary.setAttribute('aria-expanded',String(!panel.hidden));summary.setAttribute('aria-controls',panel.id);
     const renderDetails=()=>{
       panel.replaceChildren();panel.append(make('h3',c.format+' '+c.difficulty+' · Lv. '+(c.level||'?')),metrics(c));
       panel.append(make('p','Chart constant '+(chartConstant(c)==null?'not available':constantLabel(c))+' · '+(chartConstant(c)==null?'This catalog has no retained decimal value.':'From the retained source revision.'),'muted'));
       panel.append(make('p',genreLabel(folderValue(c,'genre'))+' · '+folderValue(c,'version')+' · '+(values.bpm(c)==null?'BPM unknown':values.bpm(c)+' BPM'),'muted'));
-      panel.append(overview.details(c));
+      if(personal)panel.append(personal.details(c));panel.append(overview.details(c));
       const actions=make('div',undefined,'chart-detail-actions'),compareButton=make('button','Compare this chart'),similarButton=make('button','Find similar');
       compareButton.onclick=()=>{selectView('compare');if(comparisonUI.first()&&comparisonUI.first()!==c.chart_id)comparisonUI.useAsSecond(c.chart_id);else comparisonUI.useAsFirst(c.chart_id);};
       similarButton.onclick=()=>{selectView('compare');comparisonUI.useAsFirst(c.chart_id,true);};actions.append(compareButton,similarButton);panel.append(actions);
@@ -169,17 +173,22 @@ el('more').onclick=()=>{visible+=40;catalog();};
 for(const name of ['compare','catalog','patterns','about'])el(name+'-tab').onclick=()=>selectView(name);
 el('loaded-count').textContent=data.catalog.length.toLocaleString();
 window.maimaiPreviewField=field;
-initializeFilters();catalog();
+initializeFilters();
+const personalControls=personal?.controls(el('active-filters').parentElement,()=>{visible=40;catalog();});
+function personalChanged(){for(const key of Object.keys(personalSorts))delete sortFields[key];if(personal?.enabled())Object.assign(sortFields,personalSorts);else sortRules=sortRules.filter(r=>!Object.hasOwn(personalSorts,r.key));if(!sortRules.length)sortRules=[{key:'title',direction:1}];renderSort();catalog();comparisonUI?.render();}
+window.addEventListener('maimai-personal-change',personalChanged);personalChanged();
 comparisonUI=window.maimaiChartComparison.mount({data,eligibleIds:()=>data.catalog.filter(c=>{
   if(format!=='all'&&c.format!==format)return false;
   if(selectedVersions.size&&!selectedVersions.has(folderValue(c,'version')))return false;
   if(!patternFilter.matches(c))return false;
+    if(personal&&!personal.matches(c))return false;
   if(el('filter-genre').value&&folderValue(c,'genre')!==el('filter-genre').value)return false;
   return chartFilters.matches(c);
 }).map(c=>c.chart_id)});
 const params=new URLSearchParams(location.search),initialView=params.get('view'),initialPattern=params.get('pattern');
 window.maimaiPatternLibrary.setDiscovery(id=>{el('reset-filters').click();patternFilter.set([id]);writePatternFilter();selectView('catalog');catalog();el('pattern-filter-summary').focus();});
 window.maimaiPatternLibrary.setNavigation(id=>{const url=new URL(location.href);if(id)url.searchParams.set('pattern',id);else url.searchParams.delete('pattern');history.replaceState(null,'',url);});
-if(['catalog','patterns','compare','about'].includes(initialView))selectView(initialView);
+function applyRoute(){const p=new URLSearchParams(location.search),id=p.get('chart');if(id&&p.get('view')==='catalog'){const c=byId.get(id);if(c){const key=rowKey(c);selectedCharts.set(key,id);expandedRows.add(key);selectView('catalog');catalog(key);const findRow=()=>[...el('songs').children].find(n=>n.dataset.chartId===id);let row=findRow();if(!row){el('reset-filters').click();personalControls?.clear();catalog(key);row=findRow();}row?.scrollIntoView({block:'center'});}else{el('catalog-count').textContent='The linked chart is unavailable in this catalog version. Search for the song below.';}}else if(['catalog','patterns','compare','about'].includes(p.get('view')))selectView(p.get('view'));if(p.get('search')){el('search').value=p.get('search');catalog();}}
+window.addEventListener('popstate',applyRoute);applyRoute();
 if(initialPattern&&window.maimaiPatternLibrary.has(initialPattern)){window.maimaiPatternLibrary.show(initialPattern);}
 })();

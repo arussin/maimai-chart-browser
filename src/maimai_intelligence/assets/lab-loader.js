@@ -3,6 +3,7 @@
   'use strict';
   const status=document.getElementById('lab-status');
   const maximum=32*1024*1024;
+  const catalogMaximum=64*1024*1024;
   const hash=async bytes=>[...new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))].map(x=>x.toString(16).padStart(2,'0')).join('');
   async function read(path,limit){
     const response=await fetch(path,{credentials:'omit',redirect:'error'});
@@ -58,14 +59,14 @@
       if(!['1.1.0','1.2.0'].includes(manifest.schema_version)||!Array.isArray(entry.parts)||!entry.parts.length||entry.parts.length>8)throw new Error('Invalid catalog parts');
       let total=0;
       for(const p of entry.parts){if(!/^[a-f0-9]{64}$/.test(p.sha256)||p.path!==`catalog-parts/${p.sha256}.json`||!Number.isInteger(p.bytes)||p.bytes<1||p.bytes>8*1024*1024)throw new Error('Invalid catalog part');total+=p.bytes;}
-      if(total>maximum)throw new Error('Research catalog exceeds 32 MiB');
+      if(total>catalogMaximum)throw new Error('Full research catalog exceeds 64 MiB');
       bytes=new Uint8Array(total);let offset=0;
       // Two bounded reads overlap network latency without fetching every part at once.
       for(let i=0;i<entry.parts.length;i+=2){
         const batch=await Promise.all(entry.parts.slice(i,i+2).map(async p=>{const part=await read(p.path,p.bytes);if(part.length!==p.bytes||await hash(part)!==p.sha256)throw new Error('Catalog part integrity check failed');return part;}));
         for(const part of batch){bytes.set(part,offset);offset+=part.length;}
       }
-    }else bytes=await read(entry.path,maximum);
+    }else bytes=await read(entry.path,catalogMaximum);
     // Startup bytes were already verified against their own manifest digest.
     if(!entry.startup&&await hash(bytes)!==entry.sha256)throw new Error('Research catalog integrity check failed');
     const text=new TextDecoder('utf-8',{fatal:true}).decode(bytes),data=JSON.parse(text);
@@ -76,6 +77,7 @@
     const pinned=new URL(location.href);pinned.searchParams.set('version',version);history.replaceState(null,'',pinned);
     // Public catalog only. All interface modules share this one parsed object.
     window.maimaiResearchCatalog=data;
+    window.maimaiPersonal?.configure(data,data.provider_mapping);
     const element=document.createElement('script');element.type='application/json';element.id='challenge-data';element.textContent=text;document.body.append(element);
     const script=document.createElement('script');script.src='challenge-review.js';script.onload=()=>{status.textContent='';if(version!==manifest.default){status.textContent='You are viewing an older catalog. ';const link=document.createElement('a'),latest=new URL(location.href);latest.searchParams.set('version',manifest.default);link.href=latest.href;link.textContent='Open the latest catalog';status.append(link);}};script.onerror=()=>{status.textContent='The research browser could not start.';};document.body.append(script);
   }catch(error){status.textContent=error.message;}

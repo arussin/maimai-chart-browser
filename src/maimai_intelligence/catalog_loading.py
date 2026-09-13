@@ -9,6 +9,10 @@ from copy import deepcopy
 
 from .snapshots import MAX_BYTES, canonical
 
+# Full immutable releases are delivered in 8 MiB parts. The startup projection
+# remains bounded separately at 32 MiB and does not need provider coaching metadata.
+MAX_CATALOG_BYTES = 64 * 1024 * 1024
+
 PROFILE_FIELDS = {
     "version",
     "chart_id",
@@ -30,6 +34,15 @@ def progressive_catalog(data, catalog_sha):
     if not data.get("catalog") or not all(isinstance(c, dict) for c in data["catalog"]):
         return None, {}
     index = deepcopy(data)
+    if "provider_mapping" in index:
+        index["provider_mapping"]["charts"] = {
+            cid: {
+                k: v
+                for k, v in row.items()
+                if k in {"chart_id", "source_hash", "format", "difficulty", "aliasOf"}
+            }
+            for cid, row in index["provider_mapping"]["charts"].items()
+        }
     index["catalog"] = []
     index["snippets"] = {}
     index["detail_buckets"] = {}

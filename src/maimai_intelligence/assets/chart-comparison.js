@@ -16,13 +16,13 @@ function mount({data,eligibleIds}){
   const bpm=c=>data.navigation?.charts?.[c.chart_id]?.bpm??null,bpmText=c=>bpm(c)==null?'BPM unknown':bpm(c)+' BPM';
   let index=null,matches=null;
   const getIndex=()=>index||(index=window.maimaiChallengeMatching.createIndex(data.catalog));
-  function identity(c){const box=make('div',undefined,'chosen-chart');box.append(window.maimaiChartArtwork.jacket(c),make('strong',name(c)),make('p',c.format+' '+c.difficulty+' · Lv. '+(c.level||'?')+' · '+bpmText(c),'muted'),make('p',c.artist,'muted'),overview.chips(c),overview.graph(c,{compact:true}));const videoLink=window.maimaiChartLinks.group(c);if(videoLink)box.append(videoLink);return box;}
+  function identity(c){const box=make('div',undefined,'chosen-chart');box.append(window.maimaiChartArtwork.jacket(c),make('strong',name(c)),make('p',c.format+' '+c.difficulty+' · Lv. '+(c.level||'?')+' · '+bpmText(c),'muted'),make('p',c.artist,'muted'),overview.chips(c),overview.graph(c,{compact:true}));const videoLink=window.maimaiChartLinks.group(c);if(videoLink)box.append(videoLink);if(window.maimaiPersonal)box.append(window.maimaiPersonal.summary(c));return box;}
   function writeLink(){const url=new URL(location.href);for(const side of ['left','right']){if(state[side])url.searchParams.set(side,state[side]);else url.searchParams.delete(side);}history.replaceState(null,'',url);}
-  function choose(side,id){
+  function choose(side,id,write=true){
     if(!byId.has(id))return;
     if(side==='left'&&state.left!==id)matches=null;
     state[side]=id;const picker=pickers[side];picker.input.value=name(byId.get(id));picker.results.hidden=true;picker.status.textContent='';picker.selection.replaceChildren(identity(byId.get(id)));
-    render();writeLink();
+    render();if(write)writeLink();
   }
   for(const [side,title]of [['left','First chart'],['right','Second chart']]){
     const container=make('div',undefined,'chart-picker'),labelNode=make('label',title),input=make('input'),selection=make('div'),results=make('div',undefined,'chart-choices'),status=make('p','','muted');
@@ -73,18 +73,21 @@ function mount({data,eligibleIds}){
     }
   }
   function render(){
+    for(const side of ['left','right'])if(state[side])pickers[side].selection.replaceChildren(identity(byId.get(state[side])));
     el('find-similar').disabled=!state.left;
     el('comparison-status').textContent=state.left&&state.right?(state.left===state.right?'Both selections are the same chart. Choose another chart to compare.':'Comparing '+label(byId.get(state.left))+' with '+label(byId.get(state.right))):state.left?'Choose a second chart or find similar chart demands.':'Choose a first chart to begin.';
     renderPair();renderMatches();
   }
   function find(){if(!state.left)return;matches=getIndex().similar(state.left,{limit:8,eligibleIds:el('similar-use-filters').checked?eligibleIds():null,patternCompare:el('similar-priority').value==='patterns'?overview.compare:null});render();el('similar-results').scrollIntoView({block:'start',behavior:'instant'});}
   el('similar-priority').onchange=()=>{if(matches!==null)find();};
-  el('find-similar').onclick=find;el('similar-use-filters').onchange=()=>{if(matches!==null)find();};
+  el('find-similar').onclick=()=>{const u=new URL(location.href);u.searchParams.set('similar','1');history.replaceState(null,'',u);find();};el('similar-use-filters').onchange=()=>{if(matches!==null)find();};
   el('comparison-clear').onclick=()=>{state.left=state.right=null;matches=null;for(const picker of Object.values(pickers)){picker.input.value='';picker.selection.replaceChildren();picker.results.hidden=true;picker.status.textContent='';}render();writeLink();pickers.left.input.focus();};
-  const params=new URLSearchParams(location.search);let missing=false;
-  for(const side of ['left','right']){const id=params.get(side);if(id){if(byId.has(id))choose(side,id);else missing=true;}}
-  render();if(missing)el('comparison-status').textContent='A linked chart is not available in this catalog version. Choose a chart below.';
-  return{render,first:()=>state.left,useAsFirst:(id,findNow=false)=>{state.right=null;pickers.right.input.value='';pickers.right.selection.replaceChildren();choose('left',id);if(findNow)find();},useAsSecond:id=>choose('right',id)};
+  function restore(){const params=new URLSearchParams(location.search);let missing=false;matches=null;
+    for(const side of ['left','right']){const id=params.get(side);state[side]=null;pickers[side].input.value='';pickers[side].selection.replaceChildren();if(id){if(byId.has(id))choose(side,id,false);else missing=true;}}
+    render();if(params.get('similar')==='1'&&state.left)find();if(missing)el('comparison-status').textContent='A linked chart is not available in this catalog version. Choose a chart below.';
+  }
+  window.addEventListener('popstate',restore);restore();
+  return{render,first:()=>state.left,useAsFirst:(id,findNow=false)=>{state.right=null;pickers.right.input.value='';pickers.right.selection.replaceChildren();choose('left',id);if(findNow){const u=new URL(location.href);u.searchParams.set('similar','1');history.replaceState(null,'',u);find();}},useAsSecond:id=>choose('right',id)};
 }
 window.maimaiChartComparison=Object.freeze({mount});
 })();
