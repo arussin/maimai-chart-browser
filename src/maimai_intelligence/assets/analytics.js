@@ -64,7 +64,7 @@
       script.async = true; script.referrerPolicy = 'no-referrer';
       script.src = 'https://www.googletagmanager.com/gtag/js?id=' + measurementId;
       script.onerror = () => { document.getElementById('analytics-status').textContent =
-        'Analytics could not load. Your browser remains fully usable.'; };
+        'Google Analytics could not load. Your browser remains fully usable.'; };
       document.head.append(script);
     }
     trackView();
@@ -84,8 +84,8 @@
   function updateStatus() {
     const blocked = privacySignal();
     document.getElementById('analytics-status').textContent = blocked ?
-      'Analytics is off because your browser requests privacy.' :
-      active ? 'Analytics is on. You can turn it off at any time.' : 'Analytics is off.';
+      'Google Analytics is off because your browser requests privacy.' :
+      active ? 'Google Analytics is on. You can turn it off at any time.' : 'Google Analytics is off.';
     for (const button of document.querySelectorAll('[data-analytics-choice="granted"]'))
       button.disabled = blocked;
   }

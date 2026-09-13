@@ -151,9 +151,12 @@ def build_lab(package_directory, output, *, catalog_version):
         "<title>",
         '<meta name="referrer" content="no-referrer">'
         '<meta http-equiv="Content-Security-Policy" content="'
-        "default-src 'none'; script-src 'self' https://www.googletagmanager.com/gtag/js; "
+        "default-src 'none'; script-src 'self' https://www.googletagmanager.com/gtag/js "
+        "https://static.cloudflareinsights.com/beacon.min.js "
+        "https://static.cloudflareinsights.com/beacon.min.js/; "
         "style-src 'self' 'unsafe-inline'; "
-        "connect-src 'self' https://www.google-analytics.com https://region1.google-analytics.com; "
+        "connect-src 'self' https://www.google-analytics.com https://region1.google-analytics.com "
+        "https://cloudflareinsights.com; "
         "img-src 'self' data: https://www.google-analytics.com "
         "https://region1.google-analytics.com; "
         "object-src 'none'; base-uri 'none'; frame-src https://buymeacoffee.com; "
