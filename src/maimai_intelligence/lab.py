@@ -87,8 +87,12 @@ def build_lab(package_directory, output, *, catalog_version):
         manifest["releases"].append(entry)
     manifest["default"] = catalog_version
     assets = files("maimai_intelligence.assets")
-    for name in ("analytics.js", "settings-menu.js"):
-        atomic_write_text(root / name, assets.joinpath(name).read_text("utf-8"))
+    early_scripts = []
+    for name in ("settings-menu.js", "analytics.js"):
+        content = assets.joinpath(name).read_text("utf-8")
+        atomic_write_text(root / name, content)
+        revision = hashlib.sha256(content.encode("utf-8")).hexdigest()[:16]
+        early_scripts.append(f'<script defer src="{name}?v={revision}"></script>')
     view_script = assets.joinpath("view-navigation.js").read_text("utf-8")
     view_revision = hashlib.sha256(view_script.encode("utf-8")).hexdigest()[:16]
     atomic_write_text(root / "view-navigation.js", view_script)
@@ -151,8 +155,8 @@ def build_lab(package_directory, output, *, catalog_version):
         "</head>",
         f'<link rel="preload" as="script" href="challenge-review.js?v={script_revision}">'
         f'<script defer src="view-navigation.js?v={view_revision}"></script>'
-        '<script defer src="settings-menu.js"></script>'
-        '<script defer src="analytics.js"></script></head>',
+        + "".join(early_scripts)
+        + "</head>",
     )
     atomic_write_text(root / "index.html", html)
     atomic_json(manifest_path, manifest)
