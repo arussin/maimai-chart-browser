@@ -15,6 +15,9 @@ the report library. Install from this checkout with `python -m pip install .`.
 The public browser can optionally show your own achievements and retained chart
 history. Import a player file from Settings or accept a Session Report handoff.
 Data stays in your browser; remembering it on the device is optional.
+Personal filters collapse without clearing your choices. Colored grade letters
+and compact combo/sync icons accompany a quiet **You** label on each recorded
+chart. Player identity, capture coverage and storage controls live in Settings.
 See [personal data, exact links and the public matching interface](docs/PLAYER_DATA.md).
 
 ## Preview

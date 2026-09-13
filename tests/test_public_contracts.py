@@ -86,6 +86,10 @@ vm.runInThisContext(fs.readFileSync(process.argv[1],'utf8'));
 (async()=>{const core=maimaiPlayerData,inputs=JSON.parse(fs.readFileSync(0,'utf8'));
 const data=await Promise.all(inputs.map(x=>core.decode(Buffer.from(x,'base64'))));
 const merged=await core.merge(data[1],data[0]);await core.validate(merged);
+const legacy=core.offer(merged);delete legacy.profile;core.validateOffer(legacy);
+let rejected=false;
+try{core.validateOffer({...legacy,profile:{rating:-1,sessionCount:0}})}catch{rejected=true;}
+if(!rejected)throw new Error('Invalid profile metadata was accepted');
 process.stdout.write(JSON.stringify({merged,offer:core.offer(merged)}));
 })().catch(e=>{console.error(e);process.exitCode=1;});
 """

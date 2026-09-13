@@ -150,6 +150,8 @@ def build_lab(package_directory, output, *, catalog_version):
         + assets.joinpath("analytics.css").read_text("utf-8")
         + "\n"
         + assets.joinpath("player-data.css").read_text("utf-8")
+        + "\n"
+        + assets.joinpath("player-artwork.css").read_text("utf-8")
     )
     style_revision = hashlib.sha256(styles.encode("utf-8")).hexdigest()[:16]
     atomic_write_text(root / "challenge-review.css", styles)

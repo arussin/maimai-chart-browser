@@ -1,0 +1,153 @@
+{
+  "source": "https://github.com/shedaniel/tomomai",
+  "revision": "7608b9c250f4a8778cdfd4768cdecb7628cd5889",
+  "files": [
+    {
+      "source": "badge/13/fc.png",
+      "source_sha256": "0c30f7dacdf2a100685cb4e4535137ec641d723da39b64e79768d7a1c6794c69",
+      "packaged_sha256": "b8d10debe1bf7e76fe3249b9994358265bfc8b3790d57e6b94c8a4977d1d889f",
+      "width": 42,
+      "height": 47
+    },
+    {
+      "source": "badge/13/fc+.png",
+      "source_sha256": "3f894f9b2f4b43d519efd7ce5286757b3bc78ad0290c0f882c31bee044846e85",
+      "packaged_sha256": "9c9f115812c479aad0c77b9ea3c2e2848871634ea04bc919d71d337bda401742",
+      "width": 42,
+      "height": 47
+    },
+    {
+      "source": "badge/13/ap.png",
+      "source_sha256": "d6de88f5e4ab2b7fa7bc772e5c82747c84b3ac4ef6406e4dce21526cbd58019f",
+      "packaged_sha256": "8ea4288431fb8ad45050469f5280e28b98829f41f95b45e747cd6fcf1c6ad2df",
+      "width": 42,
+      "height": 47
+    },
+    {
+      "source": "badge/13/ap+.png",
+      "source_sha256": "79f5482946eb5ac1ed13c2618abea67db77c0adbcafb4454714d19e808168699",
+      "packaged_sha256": "6b2773a6fad320d507a022c604bfce7d8436bafb0370352b6387896b97d91c4c",
+      "width": 42,
+      "height": 47
+    },
+    {
+      "source": "badge/13/fs.png",
+      "source_sha256": "11cf63031ce4809432feec35c65168422615ffea8d1a144c1ea809f6f0fbbf51",
+      "packaged_sha256": "85bb39786d39df029ade595cb085e0ae4a3e61d0b0700668e529e97fd0447521",
+      "width": 42,
+      "height": 47
+    },
+    {
+      "source": "badge/13/fs+.png",
+      "source_sha256": "24115750c4fa9ca18d6e9ee9486f5028d4c8dbecc48733d23565083bb98450b0",
+      "packaged_sha256": "bf1d463d3ec81665c526bfb2f154852cc639ae858edcd9a3f038ce266c15de17",
+      "width": 42,
+      "height": 47
+    },
+    {
+      "source": "badge/13/fdx.png",
+      "source_sha256": "0e11a8dfbc341e5a46112af17f04a7b54541c9f5f824b5c14c22e4f3c42efad7",
+      "packaged_sha256": "98f6371402c1adf95ffd5949a69ab8b95dd0aafcd0e6f6ebf9729736c24dab4c",
+      "width": 42,
+      "height": 47
+    },
+    {
+      "source": "badge/13/fdx+.png",
+      "source_sha256": "7fd8c8feabc93eab119345361d53c50bdfb5f15ff3d21a2fcb87362e5f68092a",
+      "packaged_sha256": "4797d357b38a862325b12b21ceb3bee8499dd54a061f0694e3c1f1f68ddb8150",
+      "width": 42,
+      "height": 47
+    },
+    {
+      "source": "badge/13/sync.png",
+      "source_sha256": "02013d1adfd8155bb7f96afc065b34ba23ea7d056982bf6f99e884461c00d58e",
+      "packaged_sha256": "c7a143a0939ab222b45c61de6a29e7b53a611572327d36661c9baf869bcbf74d",
+      "width": 42,
+      "height": 47
+    },
+    {
+      "source": "rating/normal.png",
+      "source_sha256": "3b163004f1c3e86291d16d90273a382b27e05c6d9ed7b39988504c0c26d07c0c",
+      "packaged_sha256": "edd52526b0363eb090433c973c18b326c735d2a3f813f60583a8c6709e50fd66",
+      "width": 296,
+      "height": 86
+    },
+    {
+      "source": "rating/blue.png",
+      "source_sha256": "0d0304254fe54cd7a88c26c696ebad9c5e32b25a3ce756ff2f956cedc94bcd6b",
+      "packaged_sha256": "5af6aa8db05811da6aa95b7ff2b949643f0641325c47ece7cb63629162a752e7",
+      "width": 296,
+      "height": 86
+    },
+    {
+      "source": "rating/green.png",
+      "source_sha256": "32a321a1289131e2c0ae8813ac5186029019669889d0a0fc1cfacf33c59c0597",
+      "packaged_sha256": "81cf1435b451be89f882103c01152982436fd9401536aa74fae0cd1c7709489a",
+      "width": 296,
+      "height": 86
+    },
+    {
+      "source": "rating/orange.png",
+      "source_sha256": "b597b6a56a97970e6ba46df8fa08edb689453db1dbce900177c27d5b74e1dfb4",
+      "packaged_sha256": "b3ff5a077ee5b8b63cc8148cdfb86142b9ed22a606117ef8a00555627a39dd38",
+      "width": 296,
+      "height": 86
+    },
+    {
+      "source": "rating/red.png",
+      "source_sha256": "6e799aa2d22d334a1427ac2be293d50d007596d1b58ab3405ab65224f636e7e0",
+      "packaged_sha256": "7dd6105769b4e4890da551b4557ff46db492970d1661c09cc9183787e140b280",
+      "width": 296,
+      "height": 86
+    },
+    {
+      "source": "rating/purple.png",
+      "source_sha256": "d4824289345e224adb6cc397ef4141e334e930ef138245a18236cdcc7ec90589",
+      "packaged_sha256": "53381e202f7f9c3a6ba9d1746ae9120c9054d61d6d79fa044c182ca5ab0fc337",
+      "width": 296,
+      "height": 86
+    },
+    {
+      "source": "rating/bronze.png",
+      "source_sha256": "d407fd69d2c922bc006f95c05ad6213067c48776c46f5440562c792bfae5fe00",
+      "packaged_sha256": "dd421d15727ad5ff127994322a9621fc0dc65f72eab22d3f781dd9577a4fa07a",
+      "width": 296,
+      "height": 86
+    },
+    {
+      "source": "rating/silver.png",
+      "source_sha256": "32d6553f189304e319d4be9bdee02f6e5d07ae265a3894dc7123b933db7f5183",
+      "packaged_sha256": "8e2874afb63efecf5d62a99130a7fa019d3533db78e08590aa43c8fceff8eb3d",
+      "width": 296,
+      "height": 86
+    },
+    {
+      "source": "rating/gold.png",
+      "source_sha256": "62970a734ca15ed234f73e42746ecef2ee8a5f1df97f46ce285f69676eb69ce6",
+      "packaged_sha256": "9c1d24195189d1414d2a70d85dc5dc2f82873d9cbbc90b4b4609f9ab589014e8",
+      "width": 296,
+      "height": 86
+    },
+    {
+      "source": "rating/platinum.png",
+      "source_sha256": "f84159dcca3cfd4022fa93fb2621e886c19c50dbdc36c34ba10c835ecb3cda8d",
+      "packaged_sha256": "1c4be9f15e9650172fb8da03d69c392439fe64177c9f7aad72d22fca23ddec7c",
+      "width": 296,
+      "height": 86
+    },
+    {
+      "source": "rating/rainbow.png",
+      "source_sha256": "59432ba044b40fc0d5d19488b621ff0bce991b575a0565af217139668749e228",
+      "packaged_sha256": "9a051b4625a72e34d8479db4e4669a867ecd4b6f1f9bf1e6645c553a324b8f93",
+      "width": 296,
+      "height": 86
+    },
+    {
+      "source": "rating/kiwami.png",
+      "source_sha256": "804acca3df0cf981685dc61590194b1b43fd52737829b3048017f3f1f0348414",
+      "packaged_sha256": "2efc7061f29c0de01104fc40cb91f48d0879fde077fd9b7f3143dad95c0e1e65",
+      "width": 296,
+      "height": 86
+    }
+  ]
+}
