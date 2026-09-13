@@ -193,6 +193,38 @@ test('analytics notice, privacy text and settings support keyboard, screen reade
   await expect(page.locator('#analytics-dialog')).toBeHidden();
 });
 
+test('issue reporting supports keyboard access in public and personal browsers without sending page data',async({page,context})=>{
+  const external=await hosted(context),issueURL='https://github.com/arussin/maimai-chart-browser/issues/new',requests=[];
+  await context.route(issueURL,async route=>{
+    const request=route.request();
+    requests.push({url:request.url(),headers:await request.allHeaders(),body:request.postData()});
+    await route.fulfill({contentType:'text/html',body:'<!doctype html><title>New issue fixture</title>'});
+  });
+  for(const [origin,path] of [['https://maimai.party','/lab/'],['https://preview.invalid','/']]){
+    await ready(page,path+'?search=PRIVATE_SEARCH#PRIVATE_HASH',origin);
+    const link=page.locator('#report-issue');
+    await page.locator('#settings-toggle').focus();await page.keyboard.press('ArrowUp');
+    await expect(link).toBeFocused();await expect(link).toBeEnabled();
+    await expect(link).toHaveAttribute('href',issueURL);
+    await expect(link).toHaveAttribute('rel','noopener noreferrer');
+    await page.keyboard.press('ArrowUp');await expect(page.locator('#analytics-settings')).toBeFocused();
+    await page.keyboard.press('End');await expect(link).toBeFocused();
+    await page.keyboard.press('Home');await expect(page.locator('#analytics-settings')).toBeFocused();
+    await page.keyboard.press('ArrowDown');await expect(link).toBeFocused();
+    await page.keyboard.press('Escape');await expect(page.locator('#settings-toggle')).toBeFocused();
+    await page.keyboard.press('ArrowUp');
+    const opened=context.waitForEvent('page');await page.keyboard.press('Enter');
+    const popup=await opened;await expect(popup).toHaveURL(issueURL);
+    await expect(popup).toHaveTitle('New issue fixture');
+    expect(await popup.evaluate(()=>window.opener===null)).toBe(true);
+    await popup.close();await expect(page.locator('#settings-menu')).toBeHidden();
+    await expect(page.locator('#settings-toggle')).toBeFocused();
+  }
+  expect(requests).toHaveLength(2);
+  expect(requests.every(request=>request.url===issueURL&&!request.headers.referer&&!request.body)).toBe(true);
+  expect(external).toEqual([]);
+});
+
 test('analytics Google tag serializes safe pages and honors opt-out, including a delayed script',async({page,context})=>{
   test.skip(!process.env.GA_SDK_PATH,'Optional local audit using the official tag; all outgoing hits are intercepted.');
   const sdk=await readFile(process.env.GA_SDK_PATH,'utf8');
@@ -227,6 +259,8 @@ test('settings work before the catalog loads and after a catalog failure',async(
   await settings(page);await expect(page.locator('#analytics-dialog')).toBeVisible();
   await page.keyboard.press('Escape');await expect(page.locator('#settings-toggle')).toBeFocused();
   release();await expect(page.locator('#lab-status')).toContainText('could not be loaded');
+  await page.locator('#settings-toggle').press('ArrowUp');await expect(page.locator('#report-issue')).toBeFocused();
+  await expect(page.locator('#report-issue')).toBeEnabled();await page.keyboard.press('Escape');
   await settings(page);await expect(page.locator('#analytics-dialog')).toBeVisible();
   expect(external).toEqual([]);
 });

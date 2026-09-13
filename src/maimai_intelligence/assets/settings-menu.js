@@ -12,17 +12,21 @@
     toggle.setAttribute('aria-expanded', 'false');
     if (focus) toggle.focus();
   }
-  function open() {
+  function open(last = false) {
     menu.hidden = false;
     toggle.setAttribute('aria-expanded', 'true');
-    items()[0]?.focus();
+    const entries = items();
+    entries[last ? entries.length - 1 : 0]?.focus();
   }
   toggle.onclick = () => menu.hidden ? open() : close(true);
   toggle.onkeydown = event => {
     if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
-      event.preventDefault(); open();
+      event.preventDefault(); open(event.key === 'ArrowUp');
     }
   };
+  menu.addEventListener('click', event => {
+    if (event.target.closest('a[role="menuitem"]')) close(true);
+  });
   menu.onkeydown = event => {
     const entries = items(), index = entries.indexOf(document.activeElement);
     if (['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) {
