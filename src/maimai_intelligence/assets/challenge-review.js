@@ -1,6 +1,7 @@
 /* Public chart browsing and authored pattern previews. */
 (()=>{'use strict';
 const data=window.maimaiResearchCatalog??=JSON.parse(document.getElementById('challenge-data').textContent);
+window.maimaiChartLinks.configure(data.mai_notes);
 const byId=new Map(data.catalog.map(c=>[c.chart_id,c]));
 const el=id=>document.getElementById(id),make=(tag,text,cls)=>{const e=document.createElement(tag);if(text!==undefined)e.textContent=text;if(cls)e.className=cls;return e;};
 let visible=40,format='all',comparisonUI=null;
@@ -133,7 +134,7 @@ function catalog(focusKey=null){
     const summary=make('button',undefined,'chart-row'),identity=make('span',undefined,'song-identity'),title=make('span',displayTitle(c),'song-title');summary.type='button';
     identity.append(title,make('span',(c.artist||'Artist not provided')+' · '+c.format,'muted'));summary.append(identity);
     summary.setAttribute('aria-label','Open '+displayTitle(c)+' · '+c.format+' '+c.difficulty+' · Chart constant '+(chartConstant(c)==null?'unknown':constantLabel(c)));
-    const heading=make('div',undefined,'chart-row-heading'),videoLink=window.maimaiChartLinks.youtube(c);
+    const heading=make('div',undefined,'chart-row-heading'),videoLink=window.maimaiChartLinks.group(c);
     heading.append(window.maimaiChartArtwork.jacket(c),summary,overview.chips(c,3,patternFilter.ids()));if(videoLink)heading.append(videoLink);
     const picker=make('select');picker.className='row-difficulty';picker.id='row-difficulty-'+index;picker.setAttribute('aria-label','Difficulty for '+displayTitle(c)+' '+c.format);
     for(const choice of [...choices].sort((a,b)=>(values.difficulty(a)??99)-(values.difficulty(b)??99)||a.chart_id.localeCompare(b.chart_id)))picker.append(new Option(choice.difficulty+' · '+(choice.level||'?'),choice.chart_id));

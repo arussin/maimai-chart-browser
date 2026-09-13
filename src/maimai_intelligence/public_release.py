@@ -14,6 +14,7 @@ from pathlib import Path
 
 from .artwork import MEDIA_PATH
 from .catalog_loading import progressive_catalog
+from .mai_notes import validate_links
 from .snapshots import MAX_BYTES, atomic_json, read_json
 
 PART_BYTES = 8 * 1024 * 1024
@@ -81,8 +82,11 @@ def build_public_release(source, output):
             "navigation",
             "analysis",
             "artwork",
+            "mai_notes",
         }:
             raise ValueError("Unexpected fields in public research catalog")
+        if "mai_notes" in data:
+            validate_links(data["mai_notes"], data["catalog"])
         parts = []
         for start in range(0, len(raw), PART_BYTES):
             part = raw[start : start + PART_BYTES]

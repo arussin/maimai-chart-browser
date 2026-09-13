@@ -51,7 +51,15 @@ def review_scripts():
 
 
 def render_review(
-    package, catalog, review, snippets, benchmark, navigation=None, overview=None, artwork=None
+    package,
+    catalog,
+    review,
+    snippets,
+    benchmark,
+    navigation=None,
+    overview=None,
+    artwork=None,
+    mai_notes=None,
 ):
     data = {
         "package": package,
@@ -65,6 +73,8 @@ def render_review(
         data["analysis"] = overview
     if artwork is not None:
         data["artwork"] = artwork
+    if mai_notes is not None:
+        data["mai_notes"] = mai_notes
     # Showing a public reference definition never assigns it to a catalog chart.
     patterns = [
         {

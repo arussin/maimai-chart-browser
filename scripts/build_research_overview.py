@@ -20,10 +20,15 @@ from maimai_intelligence.snapshots import atomic_json, read_json
 from scripts.build_challenge_package import parse_row, write
 
 
-def build(source, package_path, output):
+def build(source, package_path, output, *, cache_directory=None):
     source, package_path, output = map(lambda p: Path(p).resolve(), (source, package_path, output))
     if output == package_path or output.is_relative_to(source) or source.is_relative_to(output):
         raise ValueError("Overview output must be separate from retained inputs")
+    if cache_directory:
+        shared_cache = Path(cache_directory).resolve()
+        for retained in (source, package_path):
+            if shared_cache.is_relative_to(retained) or retained.is_relative_to(shared_cache):
+                raise ValueError("Overview cache must be separate from retained inputs")
     package = read_json(package_path / "package.json")
     if package["source"] != SOURCE_LOCK or package["status"] != "research_preview":
         raise ValueError("Expected pinned research source")
@@ -52,7 +57,10 @@ def build(source, package_path, output):
     for index, item in enumerate(loaded["catalog.json"], 1):
         row = rows[item["input_id"]]
         key = content_hash({"row": row, "implementation": implementation})
-        cache = output / "overview-cache" / (key + ".json")
+        cache_root = (
+            Path(cache_directory).resolve() if cache_directory else output / "overview-cache"
+        )
+        cache = cache_root / (key + ".json")
         if cache.exists():
             envelope = read_json(cache)
             record = envelope["record"]

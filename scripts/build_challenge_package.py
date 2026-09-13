@@ -83,11 +83,15 @@ def source_bpms(root, rows):
     return result
 
 
-def build(source, output, *, review_count=12, previous=None):
+def build(source, output, *, review_count=12, previous=None, cache_directory=None):
     output = Path(output).resolve()
     root, manifest, rows, manifest_hash = _load(Path(source) / "manifest.json", output)
     if output.is_relative_to(root):
         raise ValueError("Package output must be outside the source directory")
+    if cache_directory:
+        shared_cache = Path(cache_directory).resolve()
+        if shared_cache.is_relative_to(root) or root.is_relative_to(shared_cache):
+            raise ValueError("Profile cache must be separate from retained sources")
     output.mkdir(parents=True, exist_ok=True)
     capture = verify_capture(root, manifest)
     started = time.perf_counter()
@@ -123,7 +127,8 @@ def build(source, output, *, review_count=12, previous=None):
                     "implementation": implementation,
                 }
             )
-            cache = _relative(output, f"profiles/{key}.json")
+            cache_root = Path(cache_directory).resolve() if cache_directory else output
+            cache = _relative(cache_root, f"profiles/{key}.json")
             try:
                 if cache.exists():
                     if cache.stat().st_size > 8 * 1024 * 1024:
@@ -157,11 +162,17 @@ def build(source, output, *, review_count=12, previous=None):
                         )[:24]
                     )
                     write(
-                        output,
+                        cache_root,
                         f"profiles/{key}.json",
                         {**profile, "package_profile_hash": content_hash(profile)},
                     )
                     work["analyzed"] += 1
+                if cache_root != output:
+                    write(
+                        output,
+                        f"profiles/{key}.json",
+                        {**profile, "package_profile_hash": content_hash(profile)},
+                    )
                 profiles.append(profile)
                 index[profile["chart_id"]] = row
                 outcome.update(
