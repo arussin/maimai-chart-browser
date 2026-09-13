@@ -7,6 +7,7 @@ import tempfile
 from pathlib import Path
 
 from maimai_intelligence.lab import build_lab
+from maimai_intelligence.mai_notes import prepare_links
 from maimai_intelligence.public_release import build_public_release
 from maimai_intelligence.site import build_site
 from maimai_intelligence.snapshots import atomic_json, read_json
@@ -14,6 +15,7 @@ from scripts.build_challenge_package import write
 from tests.artwork_fixture import add_artwork
 from tests.browser.capacity_fixture import build_capacity_fixture
 from tests.lab_fixture import write_package
+from tests.mai_notes_fixture import encoded as mai_notes_index
 from tests.personal_fixture import fixture
 
 pack, snapshot, mapping, settings, bundle = fixture()
@@ -73,6 +75,23 @@ search_package_manifest["files"] = [
 search_package_manifest["files"].append(write(search_package, "catalog.json", search_charts))
 atomic_json(search_package / "package.json", search_package_manifest)
 build_lab(search_package, root / "romaji", catalog_version="romaji-v1")
+
+# Provider UUIDs and chart identities are authored fixtures; the provider is never fetched.
+player_package = write_package(Path("output/mai-notes-fixture"), grouped=True)
+player_charts = json.loads((player_package / "catalog.json").read_bytes())
+player_links, _ = prepare_links(
+    player_charts,
+    mai_notes_index(player_charts, unavailable={1}),
+    captured_at="2026-09-13T00:00:00Z",
+)
+player_manifest = read_json(player_package / "package.json")
+player_manifest["files"].append(write(player_package, "mai-notes.json", player_links))
+atomic_json(player_package / "package.json", player_manifest)
+build_lab(player_package, root / "mai-notes", catalog_version="mai-notes-v1")
+with tempfile.TemporaryDirectory() as temporary:
+    staged = Path(temporary) / "public"
+    build_public_release(root / "mai-notes", staged)
+    shutil.copytree(staged, root / "mai-notes-progressive", dirs_exist_ok=True)
 search_pack = json.loads(json.dumps(pack))
 for chart, (title, artist) in zip(search_pack["charts"], search_labels, strict=False):
     chart.update(title=title, artist=artist)

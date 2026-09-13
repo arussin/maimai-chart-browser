@@ -13,6 +13,7 @@ from maimai_analyzer.dataset import SOURCE_LOCK
 from .artwork import copy_artwork, validate_artwork
 from .challenge_review import render_review, review_scripts
 from .io import atomic_write_text
+from .mai_notes import validate_links
 from .research_overview import validate_overview
 from .snapshots import MAX_BYTES, atomic_json, canonical, read_json
 
@@ -30,7 +31,9 @@ def build_lab(package_directory, output, *, catalog_version):
         "snippets.json",
         "benchmark.json",
         "navigation.json",
-    ) + tuple(name for name in ("analysis.json", "artwork.json") if name in records):
+    ) + tuple(
+        name for name in ("analysis.json", "artwork.json", "mai-notes.json") if name in records
+    ):
         record = records[name]
         with (source / name).open("rb") as stream:
             raw = stream.read(MAX_BYTES + 1)
@@ -48,6 +51,9 @@ def build_lab(package_directory, output, *, catalog_version):
     if artwork is not None:
         validate_artwork(artwork, loaded["catalog.json"], loaded["navigation.json"]["versions"])
         copy_artwork(artwork, source, root)
+    mai_notes = loaded.get("mai-notes.json")
+    if mai_notes is not None:
+        validate_links(mai_notes, loaded["catalog.json"])
     html = render_review(
         package,
         loaded["catalog.json"],
@@ -57,6 +63,7 @@ def build_lab(package_directory, output, *, catalog_version):
         loaded["navigation.json"],
         overview,
         artwork,
+        mai_notes,
     )
     data_match = re.search(
         r'<script id="challenge-data" type="application/json">(.*?)</script>', html, re.S

@@ -32,7 +32,7 @@ or the projects below. The code license grants no rights to third-party game
 content. Game names, logos, charts, music and artwork belong to SEGA and their
 respective creators, publishers and rights holders.
 
-Both browser pages include a visible rights notice, a link to the private
+Both browser pages include a visible rights notice, a link to the public
 [project repository](https://github.com/arussin/maimai-chart-browser), and an
 expandable **Credits & thanks** reference. Attribution does not resolve reuse
 or publication permissions. The research source's stated research-use and
@@ -77,3 +77,12 @@ not bundled or licensed under this project's MIT license. The footer links to
 Google's privacy policy, explains the data boundaries and provides withdrawal.
 Personal results, searches and chart selections are excluded. See
 [configuration and validation](docs/ANALYTICS.md).
+
+## mai-notes player links
+
+[mai-notes (maiノーツ)](https://mai-notes.com/) and its creator provide the chart
+simulator and public chart-availability metadata used for external player links.
+The owner update workflow retains the index source URL, capture/generation times
+and checksum, and publishes only exact chart-link identities. No simulator code,
+chart text, music, account records or scores from mai-notes are redistributed.
+The site and its contributors are also thanked in About.
