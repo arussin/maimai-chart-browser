@@ -21,7 +21,7 @@ function maiNotes(chart){
   const link=document.createElement('a');link.className='mai-notes-player';
   link.href='https://mai-notes.com/player.html?chart='+record.id;
   link.target='_blank';link.rel='noopener noreferrer';link.referrerPolicy='no-referrer';
-  link.textContent='mai-notes simai player';
+  link.textContent='mai-notes simai player ↗';
   link.setAttribute('aria-label','mai-notes simai player for '+[chart.title,chart.format,chart.difficulty].join(' ')+' (opens in a new tab)');
   return link;
 }
