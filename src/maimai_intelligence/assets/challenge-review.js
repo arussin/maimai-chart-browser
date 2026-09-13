@@ -55,6 +55,7 @@ function compareCharts(a,b){
   return collator.compare(displayTitle(a),displayTitle(b))||a.chart_id.localeCompare(b.chart_id);
 }
 function sortLabel(rule){return sortFields[rule.key]+(['title','artist','genre','format'].includes(rule.key)?(rule.direction===1?' A–Z':' Z–A'):(rule.direction===1?' ↑':' ↓'));}
+const defaultSortDirection=key=>Object.hasOwn(personalSorts,key)?-1:1;
 function renderSort(){
   const root=el('sort-rules');root.replaceChildren();
   sortRules.forEach((rule,index)=>{const b=make('button',(index+1)+'. '+sortLabel(rule)+' ×','filter-chip');b.setAttribute('aria-label','Remove '+sortFields[rule.key]+' sort priority');b.onclick=()=>{sortRules.splice(index,1);if(!sortRules.length)sortRules=[{key:'title',direction:1}];renderSort();catalog();document.querySelector('[data-sort-key="'+rule.key+'"]').focus();};root.append(b);});
@@ -64,7 +65,7 @@ function renderSort(){
     if(rule)indicator.append(make('span',String(index+1),'sort-priority'));
     button.replaceChildren(make('span',label,'sort-label'),indicator);button.setAttribute('aria-pressed',String(!!rule));
     button.setAttribute('aria-label',label+(rule?', priority '+(index+1)+', '+(rule.direction===1?'ascending':'descending'):' unsorted'));
-    button.onclick=event=>{const keep=event.shiftKey||el('sort-keep').checked,prior=sortRules.find(r=>r.key===key);if(keep){if(prior)prior.direction*=-1;else sortRules.push({key,direction:1});}else sortRules=[{key,direction:prior&&sortRules[0]===prior?-prior.direction:1}];visible=40;renderSort();catalog();button.focus();};
+    button.onclick=event=>{const keep=event.shiftKey||el('sort-keep').checked,prior=sortRules.find(r=>r.key===key);if(keep){if(prior)prior.direction*=-1;else sortRules.push({key,direction:defaultSortDirection(key)});}else sortRules=[{key,direction:prior&&sortRules[0]===prior?-prior.direction:defaultSortDirection(key)}];if(sortRules.some(r=>Object.hasOwn(personalSorts,r.key)))selectedCharts.clear();visible=40;renderSort();catalog();button.focus();};
   }
 }
 function initializeFilters(){
@@ -129,7 +130,17 @@ function catalog(focusKey=null){
   });
   const grouped=new Map();
   for(const chart of charts){const key=rowKey(chart);if(!grouped.has(key))grouped.set(key,[]);grouped.get(key).push(chart);}
-  const rows=[...grouped].map(([key,choices])=>({key,choices,chart:choices.find(c=>c.chart_id===selectedCharts.get(key))||[...choices].sort((a,b)=>(values.difficulty(a)??99)-(values.difficulty(b)??99)||a.chart_id.localeCompare(b.chart_id))[0]})).sort((a,b)=>compareCharts(a.chart,b.chart));
+  const personalSort=sortRules.some(r=>Object.hasOwn(personalSorts,r.key));
+  function chooseChart(key,choices){
+    const selected=choices.find(c=>c.chart_id===selectedCharts.get(key));
+    if(selected)return selected;
+    // Personal sorting chooses from every matching difficulty before song grouping
+    // and pagination. A default BASIC chart must not hide a MASTER PB or recent play.
+    if(personalSort)return [...choices].sort(compareCharts)[0];
+    const scored=personal?.enabled()?choices.filter(c=>personal.record(c)):[];
+    return [...(scored.length?scored:choices)].sort((a,b)=>(values.difficulty(a)??99)-(values.difficulty(b)??99)||a.chart_id.localeCompare(b.chart_id))[0];
+  }
+  const rows=[...grouped].map(([key,choices])=>({key,choices,chart:chooseChart(key,choices)})).sort((a,b)=>compareCharts(a.chart,b.chart));
   if(focusKey)visible=Math.max(visible,rows.findIndex(row=>row.key===focusKey)+1);
   el('songs').replaceChildren();activeFilters();
   for(const [index,{key,choices,chart:c}]of rows.slice(0,visible).entries()){
