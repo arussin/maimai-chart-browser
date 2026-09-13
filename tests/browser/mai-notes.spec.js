@@ -8,7 +8,7 @@ for(const route of ['/mai-notes/','/mai-notes-progressive/']){
     await page.goto(route);await expect(page.locator('#loaded-count')).toHaveText('6');
     await page.locator('#search').fill('Fictional study 3');
     const row=page.locator('#songs .song-row'),link=row.locator('.mai-notes-player'),picker=row.locator('.row-difficulty');
-    await expect(link).toHaveText('mai-notes simai player');
+    await expect(link).toHaveText('mai-notes simai player ↗');
     const first=await link.getAttribute('href');
     await expect(row.locator('.chart-external-links .youtube-search')).toBeVisible();
     const remaster=await picker.locator('option').filter({hasText:'RE:MASTER'}).getAttribute('value');
