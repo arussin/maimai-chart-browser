@@ -49,6 +49,22 @@ async function importPersonal(page){
   await expect(page.locator('#site-clear')).toBeVisible();
 }
 
+test('versioned settings scripts refresh returning visitors with an older cached analytics file',async({page,context})=>{
+  await hosted(context);
+  for(const path of ['/lab/','/']){
+    const asset=path==='/lab/'?'lab/analytics.js':'assets/analytics.js';
+    await page.route('https://maimai.party/'+asset,route=>route.fulfill({contentType:'application/javascript',body:'window.__staleAnalyticsUsed=true;'}));
+    await ready(page,path);
+    expect(await page.evaluate(()=>window.__staleAnalyticsUsed===true)).toBe(false);
+    for(const name of ['analytics.js','settings-menu.js']){
+      const src=await page.locator('script[src*="'+name+'"]').getAttribute('src');
+      expect(new URL(src,page.url()).searchParams.get('v')).toMatch(/^[a-f0-9]{16}$/);
+    }
+    await settings(page);await expect(page.locator('#analytics-dialog')).toBeVisible();
+    await page.keyboard.press('Escape');await expect(page.locator('#settings-toggle')).toBeFocused();
+  }
+});
+
 test('analytics never loads on local, insecure or unrelated preview origins',async({page,context})=>{
   const external=await hosted(context);
   for(const origin of ['http://127.0.0.1:8766','http://maimai.party','https://preview.invalid']){
