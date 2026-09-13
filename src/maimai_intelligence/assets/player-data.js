@@ -27,16 +27,26 @@ function changed(){pbs=active?core.current(active).pbs:new Map();pbDates=new Map
   status.hidden=!active;if(active){const o=core.offer(active);const card=profileCard(o);card.classList.add('player-profile-compact');card.title=`Captured ${date(o.capturedAt)} · ${o.pbCoverage==='complete'?'Complete PB snapshot':'Partial PB collection'} · Earlier history may be missing`;status.replaceChildren(card,make('small',`${visible?'': 'Hidden · '}${remembered?'Remembered on this device':'This tab only'}`,'player-storage-label'));}
   document.querySelectorAll('[data-personal-controls]').forEach(n=>n.hidden=!active||!visible);window.dispatchEvent(new Event('maimai-personal-change'));
 }
-function message(title,body){dialog.replaceChildren();const h=make('h2',title);h.id='player-dialog-title';const close=make('button','Close');close.onclick=()=>dialog.close();dialog.append(h,make('p',body),close);if(!dialog.open)dialog.showModal();}
+function message(title,body,{success=false}={}){
+  dialog.replaceChildren();dialog.classList.add('player-message');dialog.setAttribute('aria-describedby','player-message-body');
+  const icon=make('span',success?'✓':'i','player-message-icon'),h=make('h2',title),copy=make('p',body),actions=make('div',undefined,'player-message-actions'),close=make('button',success?'Okay!':'Close');
+  icon.setAttribute('aria-hidden','true');h.id='player-dialog-title';copy.id='player-message-body';close.type='button';close.onclick=()=>{dialog.close();window.maimaiSettings?.focus();};actions.append(close);dialog.append(icon,h,copy,actions);if(!dialog.open)dialog.showModal();close.focus();
+}
 function profileCard(offer){
   const card=make('div',undefined,'player-profile'),name=make('strong',offer.player.displayName,'player-profile-name');card.append(name);
   const rating=offer.profile?.rating;
-  if(rating!=null){const tiers=[[0,'white'],[1000,'blue'],[2000,'green'],[4000,'yellow'],[7000,'red'],[10000,'purple'],[12000,'bronze'],[13000,'silver'],[14000,'gold'],[14500,'platinum'],[15000,'rainbow'],[16000,'rainbow-ex']],badge=make('div',undefined,'player-rating');badge.dataset.tier=tiers.findLast(([floor])=>rating>=floor)[1];badge.setAttribute('role','img');badge.setAttribute('aria-label','Reconstructed rating '+rating);const digits=make('strong',String(rating));digits.setAttribute('aria-hidden','true');badge.append(digits);card.append(badge,make('small','Reconstructed rating','player-profile-rating-label'));}
+  if(rating!=null){
+    const tiers=[[0,'white'],[1000,'blue'],[2000,'green'],[4000,'yellow'],[7000,'red'],[10000,'purple'],[12000,'bronze'],[13000,'silver'],[14000,'gold'],[14500,'platinum'],[15000,'rainbow'],[16000,'rainbow-ex']],badge=make('div',undefined,rating<=99999?'player-rating':'player-rating-plain');
+    badge.dataset.tier=tiers.findLast(([floor])=>rating>=floor)[1];badge.setAttribute('role','img');badge.setAttribute('aria-label','Reconstructed rating '+rating);
+    const digits=make('strong');digits.setAttribute('aria-hidden','true');
+    if(rating<=99999)for(const digit of String(rating).padStart(5,' '))digits.append(make('span',digit===' '?'':digit));else digits.textContent=String(rating);
+    badge.append(digits);card.append(badge,make('small','Reconstructed rating','player-profile-rating-label'));
+  }
   const count=offer.profile?.sessionCount;
   card.append(make('span',count?`${count.toLocaleString()} retained ${count===1?'session':'sessions'}`:`${offer.playCount.toLocaleString()} retained plays`,'player-profile-history'));
   return card;
 }
-function ask(offer,{file=false,stale=false}={}){return new Promise(resolve=>{dialog.replaceChildren();const h=make('h2','Import this profile?');h.id='player-dialog-title';dialog.append(h,profileCard(offer),make('p',`Captured ${date(offer.capturedAt)}`,'player-capture-date'));
+function ask(offer,{file=false,stale=false}={}){return new Promise(resolve=>{dialog.replaceChildren();dialog.classList.remove('player-message');dialog.removeAttribute('aria-describedby');const h=make('h2','Import this profile?');h.id='player-dialog-title';dialog.append(h,profileCard(offer),make('p',`Captured ${date(offer.capturedAt)}`,'player-capture-date'));
   if(stale)dialog.append(make('p','The hosted update was unavailable. This is the snapshot saved in the report.'));
   if(active&&active.player.key!==offer.player.key)dialog.append(make('p','This switches the active player. Different players’ records will not be combined.'));
   if(active&&active.player.key===offer.player.key&&core.offer(active).capturedAt>offer.capturedAt)dialog.append(make('p','Your newer results will be kept. This adds any missing retained history.'));
@@ -45,7 +55,7 @@ function ask(offer,{file=false,stale=false}={}){return new Promise(resolve=>{dia
   let finished=false;function finish(accept){if(finished)return;finished=true;dialog.removeEventListener('cancel',cancel);dialog.close();resolve({accept,remember:check.checked});}function cancel(e){e.preventDefault();finish(false);}dialog.addEventListener('cancel',cancel);yes.onclick=()=>finish(true);no.onclick=()=>finish(false);if(!dialog.open)dialog.showModal();yes.focus();
 });}
 async function commit(data,remember){const next=active?.player.key===data.player.key?await core.merge(active,data):data;const bytes=await core.encode(next);if(remember){await persist({revision:next.revision,bytes});try{sessionStorage.removeItem('maimai-player-session');}catch{}}else saveTab(bytes);active=next;remembered=remember;visible=true;saveVisibility();changed();}
-async function forget(){if(busy)return;busy=true;try{await persist(null);remembered=false;changed();message('Remembered data removed','Personal results are still available in this tab. They will not be restored when you return.');}catch(e){message('Could not forget data',e.message);}finally{busy=false;}}
+async function forget(){if(busy)return;busy=true;try{await persist(null);remembered=false;changed();message('Player data forgotten','Your saved profile has been removed from this device. You can keep using it in this tab.',{success:true});}catch(e){message('Could not forget data',e.message);}finally{busy=false;}}
 const ready=(async()=>{let failed=false,saved;try{saved=await stored();storedRevision=saved?.revision??null;}catch{failed=true;}try{const temporary=sessionStorage.getItem('maimai-player-session');if(temporary){if(temporary.length>Math.ceil(core.MAX_COMPRESSED*4/3)+4)throw new Error('Oversized temporary data');active=await core.decode(Uint8Array.from(atob(temporary),c=>c.charCodeAt(0)));}else if(saved){active=await core.decode(saved.bytes);remembered=true;}}catch{failed=true;}changed();if(failed&&!active){status.hidden=false;status.textContent='Saved data could not be loaded. You can still import a player file for this tab.';}})();
 input.onchange=async()=>{const file=input.files[0];input.value='';if(!file||busy)return;busy=true;try{await ready;if(file.size>core.MAX_COMPRESSED)throw new Error('Player file exceeds 32 MiB.');const data=await core.decode(await file.arrayBuffer()),choice=await ask(core.offer(data),{file:true});if(choice.accept)await commit(data,choice.remember);}catch(e){message('Player data could not be imported',e.message);}finally{busy=false;}};
 
