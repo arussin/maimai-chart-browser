@@ -133,8 +133,10 @@ identities change for new analysis. Existing similarity rules retain their
 original pattern-definition requirements.
 
 Browser checks exercise all 56 primary demos, all 20 new alias-to-chart paths,
-keyboard controls, privacy, accessibility and narrow layouts. No external
-reference request is made unless a visitor follows a reference link.
+keyboard controls, privacy, accessibility and narrow layouts. Simultaneous
+inputs are gold in the small diagrams, lesson timelines and simulator; a shared
+slide head is counted once. Lessons contain no Pattern references section.
+Research citations remain in this document and the authored lesson data.
 
 Publication requires a new immutable catalogue version. This document does not
 claim deployment. Independent teaching review and a held-out labeled corpus

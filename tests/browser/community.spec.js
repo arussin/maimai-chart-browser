@@ -26,7 +26,7 @@ for(let batch=0;batch<2;batch++)test(`new patterns connect English alias search,
     await expect(card).toBeVisible();await expect(card).not.toContainText('Find charts · 0');
     await card.locator('[data-open-pattern]').click();await expect(dialog).toBeVisible();
     await expect(dialog.locator('h2')).toHaveText(/^[\x00-\x7F]+$/);
-    await dialog.locator('summary').click();await expect(dialog.getByRole('link',{name:/mai-notes/})).toHaveAttribute('href','https://mai-notes.com/tag');
+    await expect(dialog.locator('details,summary')).toHaveCount(0);await expect(dialog).not.toContainText('Pattern references');
     await dialog.getByRole('button',{name:'Find charts with this pattern',exact:true}).click();
     await expect(page.locator(`.song-row[data-chart-id="community-${key}"]`)).toBeVisible();
     expect(new URL(page.url()).searchParams.getAll('pattern-filter')).toEqual([id]);
@@ -48,4 +48,40 @@ test('community slide lessons retain curved geometry and accessible mobile layou
   await page.evaluate(()=>document.documentElement.style.fontSize='200%');
   expect(await dialog.evaluate(n=>n.scrollWidth<=n.clientWidth)).toBe(true);
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+});
+
+test('simultaneous inputs stay gold in thumbnails, timelines and the simulator',async({page})=>{
+  await page.goto('/community/?view=patterns');
+  const dialog=page.locator('#pattern-dialog');
+  const card=id=>page.locator(`[data-pattern-id="pattern.${id}"]`);
+  const colors=notes=>notes.evaluateAll(nodes=>nodes.map(n=>({stroke:getComputedStyle(n).stroke,fill:getComputedStyle(n).fill})));
+  const each=card('simultaneous_group').locator('.lesson-note');
+  await expect(each).toHaveCount(6);
+  expect(await colors(each)).toEqual(Array(6).fill({stroke:'rgb(148, 112, 0)',fill:'rgb(255, 241, 172)'}));
+  await card('simultaneous_group').locator('[data-open-pattern]').click();
+  await dialog.getByRole('button',{name:'Step',exact:true}).click();
+  await expect(dialog.locator('.field svg circle[fill="#f4c430"]')).toHaveCount(2);
+  const played=await colors(dialog.locator('.lesson-note.lesson-passed'));
+  expect(played).toEqual(Array(2).fill({stroke:'rgb(148, 112, 0)',fill:'rgb(244, 196, 48)'}));
+  await expect(dialog.locator('.field svg circle[fill="#b82d75"]')).toHaveCount(0);
+  await dialog.getByRole('button',{name:'Close pattern'}).click();
+
+  // A mixed star/tap pair uses gold for both; its next separate tap stays pink.
+  await card('umiyuri').locator('[data-open-pattern]').click();
+  await dialog.getByRole('button',{name:'Step',exact:true}).click();
+  await expect(dialog.locator('.field svg circle[fill="#f4c430"]')).toHaveCount(2);
+  expect((await colors(dialog.locator('.lesson-note.lesson-each'))).every(n=>n.stroke==='rgb(148, 112, 0)')).toBe(true);
+  await dialog.getByRole('button',{name:'Step',exact:true}).click();
+  await expect(dialog.locator('.field svg circle[fill="#f4c430"]')).toHaveCount(0);
+  await expect(dialog.locator('.field svg circle[fill="#b82d75"]')).toHaveCount(1);
+  await dialog.getByRole('button',{name:'Close pattern'}).click();
+
+  // Multiple paths from one physical star, or overlapping activity, are not EACH inputs.
+  for(const id of ['same_head_slide_fan','moving_slide_overlap']){
+    await expect(card(id).locator('.lesson-each')).toHaveCount(0);
+    await card(id).locator('[data-open-pattern]').click();
+    await dialog.getByRole('button',{name:'Step',exact:true}).click();
+    await expect(dialog.locator('.field svg circle[fill="#f4c430"]')).toHaveCount(0);
+    await dialog.getByRole('button',{name:'Close pattern'}).click();
+  }
 });

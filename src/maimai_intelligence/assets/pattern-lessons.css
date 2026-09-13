@@ -2,3 +2,5 @@
 @media(max-width:600px){.pattern-demo .demo-stage.with-cabinet{grid-template-columns:minmax(0,1fr);gap:14px}.pattern-demo .field svg{max-height:190px}.pattern-demo .play-controls input{flex-basis:100%}.lesson-caption{min-height:0}.pattern-card .lesson-art{max-height:200px}}
 @media(forced-colors:active){.lesson-art{background:Canvas}.lesson-art text{fill:CanvasText}.lesson-art line,.lesson-art path,.lesson-art rect,.lesson-art circle,.lesson-art polygon{stroke:CanvasText}.lesson-note{fill:Canvas}.lesson-note.lesson-passed,.lesson-bar,.lesson-current{fill:Highlight}.lesson-playhead{stroke:Highlight}}
 .lesson-reading{font-size:13px;padding:10px 12px;margin:0 0 12px;border-left:3px solid #8cbcc4;background:#f1f9fa;min-height:40px}
+.lesson-note.lesson-each,.lesson-hold.lesson-each{fill:#fff1ac;stroke:#947000}.lesson-note.lesson-each.lesson-passed{fill:#f4c430}
+@media(forced-colors:active){.lesson-note.lesson-each,.lesson-hold.lesson-each{fill:Canvas;stroke:CanvasText}.lesson-note.lesson-each.lesson-passed{fill:Highlight}}

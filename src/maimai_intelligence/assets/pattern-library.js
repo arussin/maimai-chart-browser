@@ -7,7 +7,13 @@ const aliases=p=>p.aliases.map(a=>typeof a==='string'?a:a.text).join(' · '),nor
 const dialog=el('pattern-dialog');let dispose=()=>{},opener=null,onNavigate=()=>{},onDiscover=()=>{};
 const eventTimes=model=>model.kind==='bars'?Array.from({length:model.duration+1},(_,i)=>i):[...new Set([0,model.duration,...model.notes.map(n=>n[0]),...model.holds.flatMap(h=>h.slice(0,2)),...model.slides.flatMap(s=>s.slice(0,3))])].sort((a,b)=>a-b);
 const positionLabel=p=>typeof p==='number'?'Button '+p:'Touch '+p;
+function simultaneousTimes(model){
+  const groups=new Map();
+  for(const[t,position]of model.notes||[]){if(!groups.has(t))groups.set(t,new Set());groups.get(t).add(position);}
+  return new Set([...groups].filter(([,positions])=>positions.size>1).map(([t])=>t));
+}
 function chartArt(model,label,{animated=false,maximum=null}={}){
+  const each=simultaneousTimes(model);
   const left=74,right=456,x=t=>left+t/model.duration*(right-left),positions=model.kind==='notes'?[...new Set(model.notes.map(n=>n[1]))].sort((a,b)=>String(a).localeCompare(String(b),undefined,{numeric:true})):[];
   const rows=positions.length+(model.slides?.length||0),height=model.kind==='notes'?Math.max(120,rows*26+68+(model.bands.length?24:0)):190+model.bands.length*22;
   const svg=svgNode('svg',{viewBox:'0 0 480 '+height,role:'img','aria-label':label+' Authored illustration.','class':'lesson-art'});svg.append(svgNode('title',{},label));
@@ -17,7 +23,7 @@ function chartArt(model,label,{animated=false,maximum=null}={}){
   if(model.kind==='notes'){
     const y=p=>32+positions.indexOf(p)*26;
     positions.forEach(p=>svg.append(svgNode('text',{x:5,y:y(p)+4,'class':'lesson-label'},positionLabel(p))));
-    for(const[start,end,p]of model.holds)svg.append(svgNode('rect',{x:x(start),y:y(p)-6,width:x(end)-x(start),height:12,rx:4,'class':'lesson-hold'}));
+    for(const[start,end,p]of model.holds)svg.append(svgNode('rect',{x:x(start),y:y(p)-6,width:x(end)-x(start),height:12,rx:4,'class':'lesson-hold'+(each.has(start)?' lesson-each':'')}));
     model.slides.forEach(([head,start,end,path],i)=>{
       const sy=32+(positions.length+i)*26;
       svg.append(svgNode('text',{x:5,y:sy+4,'class':'lesson-label'},path.join('→')+(model.slide_labels?.[i]?' '+model.slide_labels[i]:'')),
@@ -26,7 +32,7 @@ function chartArt(model,label,{animated=false,maximum=null}={}){
         svgNode('path',{d:`M${x(end)-5} ${sy-5}L${x(end)} ${sy}L${x(end)-5} ${sy+5}`,'class':'lesson-arrow'}));
     });
     for(const[t,p,role]of model.notes){
-      const sx=x(t),sy=y(p),attrs={'class':'lesson-note lesson-'+role,'data-time':t};
+      const sx=x(t),sy=y(p),attrs={'class':'lesson-note lesson-'+role+(each.has(t)?' lesson-each':''),'data-time':t};
       if(role==='star')svg.append(svgNode('polygon',{...attrs,points:[[0,-8],[2,-2],[8,-2],[3,2],[5,8],[0,4],[-5,8],[-3,2],[-8,-2],[-2,-2]].map(([dx,dy])=>`${sx+dx},${sy+dy}`).join(' ')}));
       else if(role==='touch')svg.append(svgNode('rect',{...attrs,x:sx-5,y:sy-5,width:10,height:10,rx:1}));
       else svg.append(svgNode('circle',{...attrs,cx:sx,cy:sy,r:5}));
@@ -42,8 +48,8 @@ function chartArt(model,label,{animated=false,maximum=null}={}){
   return{svg,draw:t=>{cursor.setAttribute('x1',x(t));cursor.setAttribute('x2',x(t));for(const note of svg.querySelectorAll('[data-time]'))note.classList.toggle('lesson-passed',Number(note.dataset.time)<=t);for(const bar of svg.querySelectorAll('[data-bin]'))bar.classList.toggle('lesson-current',Math.floor(t)===Number(bar.dataset.bin));}};
 }
 function cabinetModel(model){
-  const unit=500000,point=p=>{const a=(p-.5)*Math.PI/4;return[Math.sin(a),-Math.cos(a)];};
-  return{events:model.notes.map(([t,position,role])=>({time_us:t*unit,position,role:role==='star'?'star_tap':'tap'})),holds:model.holds.map(([start,end,position])=>({start_us:start*unit,end_us:end*unit,position})),slides:model.slides.map(([head,start,end,path],i)=>({wait_start_us:head*unit,movement_start_us:start*unit,movement_end_us:end*unit,geometry:{points:model.slide_points?.[i]||path.map(point)}}))};
+  const each=simultaneousTimes(model),unit=500000,point=p=>{const a=(p-.5)*Math.PI/4;return[Math.sin(a),-Math.cos(a)];};
+  return{events:model.notes.map(([t,position,role])=>({time_us:t*unit,position,role:role==='star'?'star_tap':'tap',simultaneous:each.has(t)})),holds:model.holds.map(([start,end,position])=>({start_us:start*unit,end_us:end*unit,position,simultaneous:each.has(start)})),slides:model.slides.map(([head,start,end,path],i)=>({wait_start_us:head*unit,movement_start_us:start*unit,movement_end_us:end*unit,geometry:{points:model.slide_points?.[i]||path.map(point)}}))};
 }
 function render(){
   const search=normalize(el('pattern-search').value),scope=el('pattern-scope').value;
@@ -82,7 +88,7 @@ function demo(lesson){
   }
   function setup(){
     stop();time=0;
-    legend.textContent=model.kind==='bars'?'Bars count new inputs in equal one-second sections. Labeled bands show ongoing movement.'+(model.series.length>1?' Gold inset bars are break inputs already included in the total.':''):'Read left to right. Circles = taps; stars = slide heads; squares = touches; amber bars = holds. Dashed gold = slide wait; solid teal = movement. Beat demos use an illustrative 120 BPM without audio. Position diagrams are schematic.';
+    legend.textContent=model.kind==='bars'?'Bars count new inputs in equal one-second sections. Labeled bands show ongoing movement.'+(model.series.length>1?' Gold inset bars are break inputs already included in the total.':''):'Read left to right. Circles = taps; stars = slide heads; squares = touches; bars = holds. Gold notes start together. Dashed gold = slide wait; solid teal = movement. Beat demos use an illustrative 120 BPM without audio. Position diagrams are schematic.';
     stage.replaceChildren();const max=model.kind==='bars'?Math.max(1,...model.series.flatMap(s=>s.values)):null;
     art=chartArt(model,'Example: '+lesson.summary,{animated:true,maximum:max});stage.append(art.svg);
     cabinet=model.kind==='notes'?window.maimaiPreviewField(cabinetModel(model),'Input positions',1):null;
@@ -99,7 +105,6 @@ function show(id,button=null,navigate=true){
   const header=make('header'),identity=make('div'),title=make('h2',p.display_name);title.id='pattern-title';identity.append(make('p',p.kind==='trait'?'CHART TRAIT':'PATTERN','eyebrow'),title,make('p',aliases(p),'muted'));
   const close=make('button','Close');close.setAttribute('aria-label','Close pattern');close.onclick=()=>dialog.close();header.append(identity,close);dialog.append(header);if(!dialog.open)dialog.showModal();
   dialog.append(make('p',lesson.summary,'demo-summary'),demo(lesson),make('h3','Variants and limits','lesson-subheading'),make('p',lesson.variants,'lesson-variants'));
-  if(lesson.sources?.length){const details=make('details'),list=make('ul');details.append(make('summary','Pattern references'));for(const source of lesson.sources){if(!source.url?.startsWith('https://'))continue;const item=make('li'),link=make('a',source.label);link.href=source.url;link.target='_blank';link.rel='noopener noreferrer';link.referrerPolicy='no-referrer';item.append(link);list.append(item);}details.append(list);dialog.append(details);}
   if(window.maimaiChartOverview?.coverage.get(id)){const find=make('button','Find charts with this pattern');find.onclick=()=>{dialog.close();onDiscover(id);};dialog.append(find);}
   close.focus();if(navigate)onNavigate(id);return true;
 }

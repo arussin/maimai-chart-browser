@@ -202,7 +202,7 @@ test('complete dictionary supports demos, keyboard close and stable links',async
   await expect(page.locator('[data-open-pattern="pattern.two_position_alternation"]')).toBeFocused();
   await page.locator('#pattern-search').fill('umiyuri');await page.locator('[data-open-pattern="pattern.umiyuri"]').click();
   await expect(dialog).toContainText('pair → intervening tap → next pair');await expect(dialog.getByRole('button',{name:'Play demo'})).toBeVisible();
-  await expect(dialog.getByRole('button',{name:'Contrasting example',exact:true})).toHaveCount(0);await expect(dialog.locator('summary')).toHaveText('Pattern references');
+  await expect(dialog.getByRole('button',{name:'Contrasting example',exact:true})).toHaveCount(0);await expect(dialog.locator('details,summary')).toHaveCount(0);
   expect(requests).toEqual([]);expect(errors).toEqual([]);
   await page.goto(link);await expect(dialog).toBeVisible();await expect(dialog).toContainText('two-position alternation');
 });
@@ -534,6 +534,7 @@ for(let batch=0;batch<8;batch++)test(`all 56 primary lessons play, step and pres
     await page.locator('[data-open-pattern="'+id+'"]').click();
     {
       await expect(dialog.getByRole('button',{name:'Contrasting example',exact:true})).toHaveCount(0);
+      await expect(dialog.locator('details,summary')).toHaveCount(0);
       const art=dialog.locator('.demo-stage>.lesson-art');await expect(art).toBeVisible();
       const before=await art.locator('.lesson-playhead').getAttribute('x1');
       await dialog.getByRole('button',{name:'Step',exact:true}).click();expect(await art.locator('.lesson-playhead').getAttribute('x1')).not.toBe(before);
