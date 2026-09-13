@@ -148,7 +148,7 @@ def build_lab(package_directory, output, *, catalog_version):
         "<body>", '<body><p id="lab-status" role="status">Loading research catalog…</p>'
     )
     # Pages supplies its own (possibly versioned) beacon after owner activation.
-    # Native collection uses /cdn-cgi/rum, already covered by connect-src 'self'.
+    # Pages uses the external RUM endpoint; zone injection can use /cdn-cgi/rum.
     # A CSP allowance alone neither installs a beacon nor changes GA consent.
     html = html.replace(
         "<title>",
@@ -157,7 +157,8 @@ def build_lab(package_directory, output, *, catalog_version):
         "default-src 'none'; script-src 'self' https://www.googletagmanager.com/gtag/js "
         "https://static.cloudflareinsights.com; "
         "style-src 'self' 'unsafe-inline'; "
-        "connect-src 'self' https://www.google-analytics.com https://region1.google-analytics.com; "
+        "connect-src 'self' https://www.google-analytics.com https://region1.google-analytics.com "
+        "https://cloudflareinsights.com/cdn-cgi/rum; "
         "img-src 'self' data: https://www.google-analytics.com "
         "https://region1.google-analytics.com; "
         "object-src 'none'; base-uri 'none'; frame-src https://buymeacoffee.com; "

@@ -88,9 +88,12 @@ Do not commit API credentials or change the owner-only publication boundary.
 
 The generated browser CSP allows `https://static.cloudflareinsights.com` in
 `script-src`. This covers Cloudflare's unversioned and versioned beacon paths.
-Native injection reports to the same-origin `/cdn-cgi/rum` endpoint, already
-allowed by `connect-src 'self'`. No new external collection origin, wildcard,
-`unsafe-inline` script permission or `unsafe-eval` is added. Local builds do not
+Pages' native token-only snippet reports to
+`https://cloudflareinsights.com/cdn-cgi/rum`, allowed at that exact path in
+`connect-src`. Zone-level automatic injection instead uses same-origin
+`/cdn-cgi/rum`, already allowed by `'self'`. These injection methods must not be
+confused: the current Pages snippet needs the external collection permission.
+No wildcard, `unsafe-inline` script permission or `unsafe-eval` is added. Local builds do not
 embed a Cloudflare script; a CSP allowance alone collects nothing. The `/lab/`
 redirect in a public release remains script-restricted to `'self'` so that the
 redirect page cannot create an extra beacon before the destination loads.
@@ -122,7 +125,8 @@ bodies and headers before activation, and recheck when the vendor changes.
    deployment hooks or put Cloudflare credentials in CI.
 3. With synthetic data in an isolated browser profile, inspect the deployed root
    page and an older-catalog deep link. Verify one Cloudflare beacon script, no CSP
-   errors, and successful same-origin `POST /cdn-cgi/rum` collection. Confirm that
+   errors, and successful `POST https://cloudflareinsights.com/cdn-cgi/rum`
+   collection from the native Pages snippet. Confirm that
    the `/lab/` redirect does not add a second measurement. Do not relax the global
    referrer policy or add broad CSP permissions to mask a failed request.
 4. Before Google opt-in and after **No thanks**, verify no Google tag requests,
@@ -186,10 +190,19 @@ revocation, privacy signals, cookie removal, personal import isolation, fixed
 page fields, keyboard access, accessibility and mobile layout.
 
 `tests/test_cloudflare_analytics.py` checks both browser CSPs and a generated public
-release, including the uninstrumented redirect. The browser Cloudflare test
-injects a local stub at Cloudflare's script origin to exercise the **browser's**
-CSP enforcement and a stub same-origin collection request after Google refusal.
-Neither test contacts Cloudflare or proves a live account has been enabled.
+release, including the uninstrumented redirect. The browser Cloudflare tests
+insert a synthetic Pages snippet into HTML before the browser parses it. They
+exercise CSP enforcement for both collection endpoints, refusal across reloads,
+uninstrumented local/preview builds, and the public `/lab/` redirect. They are
+included in the normal Playwright test list. No test contacts an analytics provider.
+
+For an additional Cloudflare audit, download the public vendor script from
+`https://static.cloudflareinsights.com/beacon.min.js` into ignored `output/`, set
+`CF_SDK_PATH` to its absolute path, and run the browser suite. This checks actual
+serialized request bodies and headers after synthetic imports, searches, chart
+selection, navigation and page exit, including Google opt-in and withdrawal.
+The current vendor code removes URL queries and fragments; this audit does not
+prove the contents of future vendor payloads. Recheck on vendor changes.
 
 For an additional local Google audit, download the official public script from
 `https://www.googletagmanager.com/gtag/js?id=G-FP9V9NF63J` into ignored `output/`,

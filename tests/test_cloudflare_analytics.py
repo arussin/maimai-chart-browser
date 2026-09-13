@@ -44,6 +44,7 @@ class CloudflareAnalyticsTests(unittest.TestCase):
                 "'self'",
                 "https://www.google-analytics.com",
                 "https://region1.google-analytics.com",
+                "https://cloudflareinsights.com/cdn-cgi/rum",
             ],
         )
         self.assertEqual(policy["default-src"], ["'none'"])
@@ -68,9 +69,12 @@ class CloudflareAnalyticsTests(unittest.TestCase):
             published = root / "public"
             build_public_release(preview, published)
             self.assert_native_policy((published / "index.html").read_text("utf-8"))
-            original = files("maimai_intelligence.assets").joinpath("analytics.js").read_bytes()
-            self.assertEqual((preview / "analytics.js").read_bytes(), original)
-            self.assertEqual((published / "analytics.js").read_bytes(), original)
+            # Asset builds normalize platform newlines; compare complete source text.
+            original = (
+                files("maimai_intelligence.assets").joinpath("analytics.js").read_text("utf-8")
+            )
+            self.assertEqual((preview / "analytics.js").read_text("utf-8"), original)
+            self.assertEqual((published / "analytics.js").read_text("utf-8"), original)
             redirect = PagePolicy((published / "lab/index.html").read_text("utf-8"))
             self.assertEqual(redirect.policies[0]["script-src"], ["'self'"])
             self.assertEqual(redirect.scripts, ["/lab-redirect.js"])
