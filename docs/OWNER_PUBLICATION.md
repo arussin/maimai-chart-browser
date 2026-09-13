@@ -1,5 +1,10 @@
 # Owner publication and rollback
 
+For catalog and mai-notes updates, use the [owner-run catalog workflow](CATALOG_UPDATES.md).
+It joins the source, metadata, analysis, link preparation, change report and
+verified Direct Upload stages. Ordinary interface-only releases can still reuse
+the accepted package with the commands below.
+
 The official site is a static Cloudflare Pages Direct Upload project named
 `maimai-party`, with `main` as its production branch and `maimai.party` as its
 custom domain. The site launched on 12 September 2026 at

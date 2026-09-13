@@ -64,7 +64,7 @@ def logo_filename(version):
     return name.lower().replace(" ", "_") + ".png"
 
 
-def prepare(package_directory, output, cache, *, offline=False):
+def prepare(package_directory, output, cache, *, offline=False, refresh_metadata=False):
     source, output, cache = [Path(p).resolve() for p in (package_directory, output, cache)]
     if output == source or output.is_relative_to(source) or source.is_relative_to(output):
         raise ValueError("Artwork output must be separate from the existing package")
@@ -84,7 +84,7 @@ def prepare(package_directory, output, cache, *, offline=False):
 
     def cached(url):
         path = cache / (hashlib.sha256(url.encode()).hexdigest() + ".source")
-        if path.exists():
+        if path.exists() and not (refresh_metadata and not offline and url == CATALOGUE_URL):
             return path.read_bytes()
         if offline:
             raise ValueError("Public artwork missing from offline cache")
