@@ -95,6 +95,30 @@ example measure numbers and retained transcription bar offsets can differ.
 
 ## Validation and release behavior
 
+The prepared catalogue is `research-9193ba44a25e`, based on accepted catalogue
+`research-92c136e47806`. All 6,959 exact charts, source metadata, artwork,
+constants and 2,665 mai-notes links are preserved. Every added form has matches.
+The [machine-readable coverage audit](coverage-0.3.0.json) retains full counts
+and package hashes; replay it with `scripts/audit_community_patterns.py`.
+
+| Added named motif | Matching chart variants |
+|---|---:|
+| CYCLES | 19 |
+| Slip Flip | 2 |
+| Death Scythe | 60 |
+| Sugarbitter | 7 |
+| Future Re:MASTER | 445 |
+| Gekishou | 10 |
+| Hoshizora Spectacle | 5 |
+| Outlaw | 2 |
+| AMAZING MIGHTYYYY!!!! EXPERT | 555 |
+| Magic-circle | 54 |
+
+Flow graphs and all observations for 35 original entries are unchanged.
+The remaining original entry, isolated pattern sections, changes on 1,190
+charts because it can now identify the added target patterns. The new mapping
+does not turn these research observations into reviewed labels.
+
 Each addition has a positive and confusing negative, plus capability/identity
 checks. Tests also cover minima, paired-launch timing, beat-based waits,
 equal-shape speed comparisons, rotation/reflection, tempo rounding, incomplete
