@@ -4,7 +4,7 @@ import {readFile} from 'node:fs/promises';
 import {resolve,extname,sep} from 'node:path';
 import {fileURLToPath} from 'node:url';
 
-const root=fileURLToPath(new URL('../../output/browser-tests/',import.meta.url));
+const root=resolve(process.env.MAIMAI_BROWSER_OUTPUT||fileURLToPath(new URL('../../output/browser-tests/',import.meta.url)));
 const storageKey='maimai.party.analytics.v1',measurementId='G-FP9V9NF63J';
 const sdkURL='https://www.googletagmanager.com/gtag/js?id='+measurementId;
 const granted={choice:'granted',expires:Date.now()+86400000};
@@ -209,8 +209,9 @@ test('issue reporting supports keyboard access in public and personal browsers w
     await expect(link).toHaveAttribute('rel','noopener noreferrer');
     await page.keyboard.press('ArrowUp');await expect(page.locator('#analytics-settings')).toBeFocused();
     await page.keyboard.press('End');await expect(link).toBeFocused();
-    await page.keyboard.press('Home');await expect(page.locator('#analytics-settings')).toBeFocused();
-    await page.keyboard.press('ArrowDown');await expect(link).toBeFocused();
+    const hasPlayerImport=await page.locator('#player-import').count()>0;
+    await page.keyboard.press('Home');await expect(page.locator(hasPlayerImport?'#player-import':'#analytics-settings')).toBeFocused();
+    await page.keyboard.press('ArrowDown');await expect(hasPlayerImport?page.locator('.player-import-help'):link).toBeFocused();
     await page.keyboard.press('Escape');await expect(page.locator('#settings-toggle')).toBeFocused();
     await page.keyboard.press('ArrowUp');
     const opened=context.waitForEvent('page');
