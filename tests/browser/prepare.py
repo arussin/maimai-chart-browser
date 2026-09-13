@@ -20,6 +20,7 @@ from tests.mai_notes_fixture import encoded as mai_notes_index
 from tests.personal_fixture import fixture
 from tests.test_pattern_community import CASES
 from tests.test_pattern_sequences import chart_for
+from tests.test_player_reconciliation import fixture as reconciliation_fixture
 
 pack, snapshot, mapping, settings, bundle = fixture()
 root = Path(os.environ.get("MAIMAI_BROWSER_OUTPUT", "output/browser-tests"))
@@ -28,6 +29,7 @@ build_site(pack, root, catalog_version="synthetic-v2")
 # Reset default while retaining both release URLs.
 build_site(pack, root, catalog_version="synthetic-v1")
 atomic_json(Path("output/personal-fixture.json"), bundle)
+atomic_json(Path("output/reconciliation-fixture.json"), reconciliation_fixture())
 player_data.write(
     Path("output/player-accessibility.gz"),
     player_data.seal(
