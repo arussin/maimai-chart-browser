@@ -25,7 +25,7 @@
     }
   };
   menu.addEventListener('click', event => {
-    if (event.target.closest('a[role="menuitem"]')) close(true);
+    if (event.target.closest('a[role="menuitem"]')) setTimeout(() => close(true), 0);
   });
   menu.onkeydown = event => {
     const entries = items(), index = entries.indexOf(document.activeElement);
@@ -42,8 +42,10 @@
   document.addEventListener('pointerdown', event => {
     if (!control.contains(event.target)) close();
   });
-  control.addEventListener('focusout', () => queueMicrotask(() => {
-    if (!control.contains(document.activeElement)) close();
-  }));
+  control.addEventListener('focusout', event => {
+    // Some browsers blur the current item before focusing a clicked link.
+    // A null destination must not hide that link between pointerdown and click.
+    if (event.relatedTarget && !control.contains(event.relatedTarget)) close();
+  });
   window.maimaiSettings = Object.freeze({close, focus: () => toggle.focus()});
 })();

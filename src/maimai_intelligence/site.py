@@ -76,6 +76,8 @@ def build_site(pack, output, *, catalog_version, lab_package=None):
         "site.css",
         "site-brand.css",
         "support-footer.css",
+        "support-checkout.css",
+        "support-checkout.js",
         "analytics.css",
         "analytics.js",
         "settings-menu.js",
@@ -84,11 +86,16 @@ def build_site(pack, output, *, catalog_version, lab_package=None):
         content = assets.joinpath(name).read_text("utf-8")
         content = content.replace("__MAIMAI_CHART_THEME__", json.dumps(theme))
         if name == "index.html":
-            for script in ("settings-menu.js", "analytics.js"):
+            for script in ("settings-menu.js", "analytics.js", "support-checkout.js"):
                 revision = hashlib.sha256(
                     assets.joinpath(script).read_text("utf-8").encode("utf-8")
                 ).hexdigest()[:16]
                 content = content.replace(f"assets/{script}", f"assets/{script}?v={revision}")
+            style = assets.joinpath("support-checkout.css").read_text("utf-8")
+            revision = hashlib.sha256(style.encode("utf-8")).hexdigest()[:16]
+            content = content.replace(
+                "assets/support-checkout.css", f"assets/support-checkout.css?v={revision}"
+            )
             content = content.replace(
                 "__SETTINGS_MENU__", assets.joinpath("settings-menu.html").read_text("utf-8")
             )

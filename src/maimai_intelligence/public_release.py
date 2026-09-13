@@ -24,6 +24,7 @@ PUBLIC_FILES = (
     "lab-loader.js",
     "analytics.js",
     "settings-menu.js",
+    "support-checkout.js",
     "view-navigation.js",
 )
 
@@ -118,6 +119,7 @@ def build_public_release(source, output):
         b"/media/*\n  Cache-Control: public, max-age=31536000, immutable\n"
         b"/manifest.json\n  Cache-Control: no-cache\n"
         b"/*\n  X-Content-Type-Options: nosniff\n  Referrer-Policy: no-referrer\n"
+        b'  Permissions-Policy: payment=(self "https://buymeacoffee.com")\n'
     )
     # Do all validation before writing; the manifest is always written last.
     for name, raw in pending.items():

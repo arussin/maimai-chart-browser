@@ -213,7 +213,14 @@ test('issue reporting supports keyboard access in public and personal browsers w
     await page.keyboard.press('ArrowDown');await expect(link).toBeFocused();
     await page.keyboard.press('Escape');await expect(page.locator('#settings-toggle')).toBeFocused();
     await page.keyboard.press('ArrowUp');
-    const opened=context.waitForEvent('page');await page.keyboard.press('Enter');
+    const opened=context.waitForEvent('page');
+    if(path==='/lab/'){
+      // Reproduce browsers that blur the current item without focusing a clicked link.
+      await link.evaluate(node=>node.addEventListener('mousedown',event=>{
+        event.preventDefault();document.activeElement.blur();
+      },{once:true}));
+      await link.click();
+    }else await page.keyboard.press('Enter');
     const popup=await opened;await expect(popup).toHaveURL(issueURL);
     await expect(popup).toHaveTitle('New issue fixture');
     expect(await popup.evaluate(()=>window.opener===null)).toBe(true);

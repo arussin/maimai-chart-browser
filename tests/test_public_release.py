@@ -50,6 +50,10 @@ class PublicReleaseTests(unittest.TestCase):
         self.assertFalse((self.output / "raw-response.json").exists())
         self.assertFalse((self.output / "catalogs").exists())
         self.assertIn(
+            'Permissions-Policy: payment=(self "https://buymeacoffee.com")',
+            (self.output / "_headers").read_text("utf-8"),
+        )
+        self.assertIn(
             "location.search+location.hash", (self.output / "lab-redirect.js").read_text("utf-8")
         )
 
