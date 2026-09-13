@@ -46,6 +46,18 @@ class ProgressiveCatalogTests(unittest.TestCase):
                 "catalog": [profile_chart(c) for c in charts],
                 "analysis": overview,
                 "snippets": {charts[0]["chart_id"]: {"example": {"events": []}}},
+                "provider_mapping": {
+                    "charts": {
+                        "synthetic-provider": {
+                            "chart_id": charts[0]["chart_id"],
+                            "source_hash": "a" * 64,
+                            "format": "STD",
+                            "difficulty": "EXPERT",
+                            "title": "Provider title used by report generation",
+                        }
+                    },
+                    "unmatched": [{"chartID": "unmatched-provider", "reason": "unmatched"}],
+                },
             }
             before = canonical(data)
             digest = hashlib.sha256(before).hexdigest()
@@ -55,6 +67,11 @@ class ProgressiveCatalogTests(unittest.TestCase):
             self.assertLess(startup["bytes"], len(before))
             self.assertEqual(index["source_catalog_sha256"], digest)
             self.assertEqual(index["snippets"], {})
+            self.assertNotIn("unmatched", index["provider_mapping"])
+            self.assertEqual(
+                index["provider_mapping"]["charts"]["synthetic-provider"]["chart_id"],
+                charts[0]["chart_id"],
+            )
             for original, summary in zip(data["catalog"], index["catalog"], strict=True):
                 for key in ("demand", "song_family", "source_hash", "chart_id", "version"):
                     self.assertEqual(summary.get(key), original.get(key))

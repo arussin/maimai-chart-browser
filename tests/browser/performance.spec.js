@@ -32,7 +32,7 @@ for(const route of ['capacity','progressive-capacity'])test(route+': 7000-chart 
   const interactions=await page.evaluate(()=>window.capacityTiming.events);
   expect(Math.max(...interactions.map(x=>x.ms))).toBeLessThan(350);
   await page.locator('#songs .chart-row').first().click();
-  await page.getByRole('button',{name:'Compare this chart',exact:true}).click();
+  await page.locator('#songs .song-row').first().getByRole('button',{name:'Compare this chart',exact:true}).click();
   await page.locator('#find-similar').click();
   await expect(page.locator('#similar-results .similar-chart')).toHaveCount(8);
   await expect.poll(()=>page.evaluate(()=>window.capacityTiming.events.filter(x=>x.type==='click').length)).toBe(2);

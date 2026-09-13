@@ -126,7 +126,7 @@ def build_sdist(sdist_directory, config_settings=None):
                 "playwright-report",
             }.intersection(p.parts)
             and p.suffix
-            in {".py", ".json", ".jsonl", ".js", ".mjs", ".css", ".html", ".md", ".toml"}
+            in {".py", ".json", ".jsonl", ".js", ".mjs", ".css", ".html", ".md", ".toml", ".gz"}
         )
     with (
         target.open("wb") as stream,

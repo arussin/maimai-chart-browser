@@ -4,7 +4,7 @@ import {readFile} from 'node:fs/promises';
 import {resolve,extname,sep} from 'node:path';
 import {fileURLToPath} from 'node:url';
 
-const root=fileURLToPath(new URL('../../output/browser-tests/',import.meta.url));
+const root=resolve(process.env.MAIMAI_BROWSER_OUTPUT||fileURLToPath(new URL('../../output/browser-tests/',import.meta.url)));
 const storageKey='maimai.party.analytics.v1',measurementId='G-FP9V9NF63J';
 const sdkURL='https://www.googletagmanager.com/gtag/js?id='+measurementId;
 const granted={choice:'granted',expires:Date.now()+86400000};
@@ -179,6 +179,8 @@ test('analytics notice, privacy text and settings support keyboard, screen reade
   await expect(page.locator('#privacy')).toHaveAttribute('open','');
   await expect(page.locator('#privacy summary')).toBeFocused();
   await page.locator('#settings-toggle').focus();await page.keyboard.press('Enter');
+  await expect(page.locator('#player-import')).toBeFocused();
+  await page.keyboard.press('ArrowDown');await page.keyboard.press('ArrowDown');
   await expect(page.locator('#analytics-settings')).toBeFocused();
   expect((await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21aa']).analyze()).violations).toEqual([]);
   await page.keyboard.press('Enter');
@@ -189,8 +191,19 @@ test('analytics notice, privacy text and settings support keyboard, screen reade
   await page.keyboard.press('Escape');await expect(page.locator('#settings-toggle')).toBeFocused();
   await page.keyboard.press('Enter');await page.keyboard.press('Escape');await expect(page.locator('#settings-menu')).toBeHidden();
   await expect(page.locator('#settings-toggle')).toBeFocused();
-  await page.keyboard.press('Enter');await page.locator('.footer-project p').click();await expect(page.locator('#settings-menu')).toBeHidden();
+  await page.keyboard.press('Enter');await page.mouse.click(2,2);await expect(page.locator('#settings-menu')).toBeHidden();
   await expect(page.locator('#analytics-dialog')).toBeHidden();
+});
+
+test('imported player card remains accessible outside the Settings action menu',async({page,context})=>{
+  await hosted(context);await ready(page);
+  await page.locator('input[type=file]').setInputFiles(fileURLToPath(new URL('../../output/player-accessibility.gz',import.meta.url)));
+  await page.getByRole('button',{name:'Import data',exact:true}).click();
+  await expect(page.locator('.player-dialog')).toBeHidden();
+  await page.locator('#settings-toggle').click();
+  await expect(page.locator('#player-status')).toBeVisible();
+  await expect(page.getByRole('menu',{name:'Settings'})).toBeVisible();
+  expect((await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21aa']).analyze()).violations).toEqual([]);
 });
 
 test('issue reporting supports keyboard access in public and personal browsers without sending page data',async({page,context})=>{
@@ -209,8 +222,9 @@ test('issue reporting supports keyboard access in public and personal browsers w
     await expect(link).toHaveAttribute('rel','noopener noreferrer');
     await page.keyboard.press('ArrowUp');await expect(page.locator('#analytics-settings')).toBeFocused();
     await page.keyboard.press('End');await expect(link).toBeFocused();
-    await page.keyboard.press('Home');await expect(page.locator('#analytics-settings')).toBeFocused();
-    await page.keyboard.press('ArrowDown');await expect(link).toBeFocused();
+    const hasPlayerImport=await page.locator('#player-import').count()>0;
+    await page.keyboard.press('Home');await expect(page.locator(hasPlayerImport?'#player-import':'#analytics-settings')).toBeFocused();
+    await page.keyboard.press('ArrowDown');await expect(hasPlayerImport?page.locator('.player-import-help'):link).toBeFocused();
     await page.keyboard.press('Escape');await expect(page.locator('#settings-toggle')).toBeFocused();
     await page.keyboard.press('ArrowUp');
     const opened=context.waitForEvent('page');

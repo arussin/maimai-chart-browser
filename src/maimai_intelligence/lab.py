@@ -11,9 +11,11 @@ from pathlib import Path
 from maimai_analyzer.dataset import SOURCE_LOCK
 
 from .artwork import copy_artwork, validate_artwork
+from .catalog_loading import MAX_CATALOG_BYTES
 from .challenge_review import render_review, review_scripts
 from .io import atomic_write_text
 from .mai_notes import validate_links
+from .provider_mapping import integration_catalog
 from .research_overview import validate_overview
 from .snapshots import MAX_BYTES, atomic_json, canonical, read_json
 
@@ -69,8 +71,8 @@ def build_lab(package_directory, output, *, catalog_version):
         r'<script id="challenge-data" type="application/json">(.*?)</script>', html, re.S
     )
     data = canonical(json.loads(data_match[1]))
-    if len(data) > MAX_BYTES:
-        raise ValueError("Research catalog exceeds 32 MiB")
+    if len(data) > MAX_CATALOG_BYTES:
+        raise ValueError("Full research catalog exceeds 64 MiB")
     sha = hashlib.sha256(data).hexdigest()
     root.mkdir(parents=True, exist_ok=True)
     (root / "catalogs").mkdir(exist_ok=True)
@@ -87,6 +89,15 @@ def build_lab(package_directory, output, *, catalog_version):
         else {"schema_version": "1.0.0", "releases": []}
     )
     entry = {"version": catalog_version, "sha256": sha, "path": f"catalogs/{sha}.json"}
+    integration = canonical(integration_catalog(json.loads(data), catalog_version))
+    integration_sha = hashlib.sha256(integration).hexdigest()
+    (root / "integration").mkdir(exist_ok=True)
+    (root / "integration" / f"{integration_sha}.json").write_bytes(integration)
+    entry["integration"] = {
+        "path": f"integration/{integration_sha}.json",
+        "sha256": integration_sha,
+        "bytes": len(integration),
+    }
     prior = [r for r in manifest["releases"] if r["version"] == catalog_version]
     if prior and prior != [entry]:
         raise ValueError("Research release version already names different content")
@@ -95,7 +106,13 @@ def build_lab(package_directory, output, *, catalog_version):
     manifest["default"] = catalog_version
     assets = files("maimai_intelligence.assets")
     early_scripts = []
-    for name in ("settings-menu.js", "analytics.js", "support-checkout.js"):
+    for name in (
+        "settings-menu.js",
+        "player-data-core.js",
+        "player-data.js",
+        "analytics.js",
+        "support-checkout.js",
+    ):
         content = assets.joinpath(name).read_text("utf-8")
         atomic_write_text(root / name, content)
         revision = hashlib.sha256(content.encode("utf-8")).hexdigest()[:16]
@@ -131,6 +148,10 @@ def build_lab(package_directory, output, *, catalog_version):
         + assets.joinpath("site-brand.css").read_text("utf-8")
         + "\n"
         + assets.joinpath("analytics.css").read_text("utf-8")
+        + "\n"
+        + assets.joinpath("player-data.css").read_text("utf-8")
+        + "\n"
+        + assets.joinpath("player-artwork.css").read_text("utf-8")
     )
     style_revision = hashlib.sha256(styles.encode("utf-8")).hexdigest()[:16]
     atomic_write_text(root / "challenge-review.css", styles)

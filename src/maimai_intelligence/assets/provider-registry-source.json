@@ -1,0 +1,18 @@
+{
+  "provider": "kamaitachi",
+  "game": "maimaidx",
+  "ref": "f08148f8644e40de9b178445df4bd59da712d3de",
+  "sources": {
+    "charts": {
+      "url": "https://raw.githubusercontent.com/zkldi/Tachi/f08148f8644e40de9b178445df4bd59da712d3de/db/seeds/charts-maimaidx.json",
+      "sha256": "380e3f076f1596f82899c2380c3c2b3fdda83389107b9e1c88633fa1a16f8a8f",
+      "count": 6844
+    },
+    "songs": {
+      "url": "https://raw.githubusercontent.com/zkldi/Tachi/f08148f8644e40de9b178445df4bd59da712d3de/db/seeds/songs-maimaidx.json",
+      "sha256": "8b55708ec0812860773a731ebcaacff2d3266a12c59ba17dbd11a5df322418d1",
+      "count": 1593
+    }
+  },
+  "registry_sha256": "39b17c78b94cc767461e48aacd6842c16a31a04e703e099e38460230c164a167"
+}

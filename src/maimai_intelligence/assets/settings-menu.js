@@ -6,19 +6,25 @@
   const menu = document.getElementById('settings-menu');
   if (!toggle || !menu) return;
   const control = toggle.parentElement;
-  const items = () => [...menu.querySelectorAll('[role="menuitem"]')];
+  const items = () => [...menu.querySelectorAll('[role="menuitem"]')].filter(item => !item.hidden);
   function close(focus = false) {
     menu.hidden = true;
     toggle.setAttribute('aria-expanded', 'false');
     if (focus) toggle.focus();
   }
-  function open(last = false) {
+  function open(last = false, focus = true) {
     menu.hidden = false;
     toggle.setAttribute('aria-expanded', 'true');
+    fitMenu();
     const entries = items();
-    entries[last ? entries.length - 1 : 0]?.focus();
+    if (focus) entries[last ? entries.length - 1 : 0]?.focus();
+    else toggle.focus({preventScroll: true});
   }
-  toggle.onclick = () => menu.hidden ? open() : close(true);
+  function fitMenu() {
+    if (!menu.hidden) menu.style.maxHeight = Math.max(0, window.innerHeight - menu.getBoundingClientRect().top - 12) + 'px';
+  }
+  window.addEventListener('resize', fitMenu);
+  toggle.onclick = event => menu.hidden ? open(false, event.detail === 0) : close(true);
   toggle.onkeydown = event => {
     if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
       event.preventDefault(); open(event.key === 'ArrowUp');

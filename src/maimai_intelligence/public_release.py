@@ -13,8 +13,9 @@ import re
 from pathlib import Path
 
 from .artwork import MEDIA_PATH
-from .catalog_loading import progressive_catalog
+from .catalog_loading import MAX_CATALOG_BYTES, progressive_catalog
 from .mai_notes import validate_links
+from .provider_mapping import validate_mapping
 from .snapshots import MAX_BYTES, atomic_json, read_json
 
 PART_BYTES = 8 * 1024 * 1024
@@ -27,6 +28,8 @@ PUBLIC_FILES = (
     "settings-menu.js",
     "support-checkout.js",
     "view-navigation.js",
+    "player-data-core.js",
+    "player-data.js",
 )
 
 
@@ -67,7 +70,7 @@ def build_public_release(source, output):
         ):
             raise ValueError("Invalid or duplicate research release identity")
         versions.add(version)
-        raw = _read(source, entry["path"], MAX_BYTES)
+        raw = _read(source, entry["path"], MAX_CATALOG_BYTES)
         if hashlib.sha256(raw).hexdigest() != sha:
             raise ValueError("Accepted catalog integrity mismatch")
         data = json.loads(raw)
@@ -83,10 +86,31 @@ def build_public_release(source, output):
             "analysis",
             "artwork",
             "mai_notes",
+            "provider_mapping",
         }:
             raise ValueError("Unexpected fields in public research catalog")
         if "mai_notes" in data:
             validate_links(data["mai_notes"], data["catalog"])
+        if "provider_mapping" in data:
+            validate_mapping(data["provider_mapping"], data["catalog"])
+        if "integration" in entry:
+            ref = entry["integration"]
+            if ref.get("path") != f"integration/{ref.get('sha256')}.json" or not re.fullmatch(
+                r"[a-f0-9]{64}", ref.get("sha256", "")
+            ):
+                raise ValueError("Invalid integration catalog reference")
+            integration = _read(source, ref["path"], MAX_BYTES)
+            if (
+                len(integration) != ref.get("bytes")
+                or hashlib.sha256(integration).hexdigest() != ref["sha256"]
+            ):
+                raise ValueError("Integration catalog integrity mismatch")
+            from .provider_mapping import integration_catalog
+            from .snapshots import canonical
+
+            if integration != canonical(integration_catalog(data, version)):
+                raise ValueError("Integration data differs from public chart catalog")
+            pending[ref["path"]] = integration
         parts = []
         for start in range(0, len(raw), PART_BYTES):
             part = raw[start : start + PART_BYTES]
@@ -117,6 +141,7 @@ def build_public_release(source, output):
     )
     pending["lab-redirect.js"] = b"location.replace('/'+location.search+location.hash);\n"
     pending["_headers"] = (
+        b"/integration/*\n  Cache-Control: public, max-age=31536000, immutable\n"
         b"/catalog-parts/*\n  Cache-Control: public, max-age=31536000, immutable\n"
         b"/catalog-index/*\n  Cache-Control: public, max-age=31536000, immutable\n"
         b"/chart-details/*\n  Cache-Control: public, max-age=31536000, immutable\n"

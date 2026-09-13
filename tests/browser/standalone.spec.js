@@ -181,8 +181,30 @@ test('decimal constants sort numerically with unknowns last and follow difficult
   await picker.selectOption(remaster);await expect(picker).toBeFocused();
   await expect(grouped.locator('.chart-constant')).toHaveText('11.6');
   expect(await values()).toEqual(['11.6','10.5','10.4','9.9','—']);
-  await grouped.locator('.chart-constant').click();await expect(grouped.locator('.chart-measurements')).toContainText('Chart constant 11.6');
+  await grouped.locator('.chart-constant').click();await expect(grouped.locator('.chart-measurements')).toBeVisible();await expect(grouped.locator('.chart-summary .chart-constant')).toHaveText('11.6');
   expect(requests).toEqual([]);expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+});
+
+test('chart detail preferences follow other songs, sorting and reloads',async({page})=>{
+  await page.goto('/constants/');
+  const rows=page.locator('#songs .song-row'),first=rows.nth(0),second=rows.nth(1);
+  await first.locator('.chart-row').click();
+  const toggle=first.locator('[data-chart-section=chart] .chart-section-toggle');
+  await toggle.press('Enter');await expect(toggle).toHaveAttribute('aria-expanded','false');
+  await expect(first.locator('[data-chart-section=chart] .chart-section-body')).toHaveAttribute('inert','');
+  await second.locator('.chart-row').click();
+  await expect(second.locator('[data-chart-section=chart] .chart-section-toggle')).toHaveAttribute('aria-expanded','false');
+  await page.locator('[data-sort-key=bpm]').click();
+  for(const button of await page.locator('[data-chart-section=chart] .chart-section-toggle').all())await expect(button).toHaveAttribute('aria-expanded','false');
+  await page.reload();await first.locator('.chart-row').click();
+  await expect(toggle).toHaveAttribute('aria-expanded','false');
+  await toggle.press('Enter');await expect(toggle).toHaveAttribute('aria-expanded','true');
+  await first.locator('.chart-row').click();
+  await expect(first.locator('.chart-summary .chart-detail-actions')).toBeVisible();
+  await expect(first.locator('.chart-measurements')).toBeHidden();
+  await first.getByRole('button',{name:'Find similar',exact:true}).click();
+  await expect(page.locator('#similar-results h2')).toBeVisible();
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
 });
 
 test('complete dictionary supports demos, keyboard close and stable links',async({page})=>{
@@ -367,7 +389,7 @@ test('song rows retain same-level difficulty choices and update exact chart acti
   await picker.selectOption(remaster);await expect(picker).toBeFocused();
   await expect(row).toHaveAttribute('data-difficulty','RE:MASTER');
   expect(await row.evaluate(el=>getComputedStyle(el).backgroundColor)).not.toBe(before);
-  await expect(row.locator('.chart-measurements>h3')).toContainText('RE:MASTER');
+  await expect(row.locator('[data-chart-section=chart]>h3')).toContainText('RE:MASTER');
   await setLevel(page,'min','11');await setLevel(page,'max','11');
   await expect(picker.locator('option')).toHaveCount(2);await expect(picker).toHaveValue(remaster);
   await selectDifficulties(page,['MASTER']);

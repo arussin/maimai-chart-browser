@@ -7,6 +7,7 @@ from importlib.resources import files
 
 from maimai_analyzer.patterns import pattern_registry
 
+from .provider_mapping import default_mapping
 from .song_search import song_search_script
 
 
@@ -34,6 +35,8 @@ def review_scripts():
             for name in (
                 "view-navigation.js",
                 "settings-menu.js",
+                "player-data-core.js",
+                "player-data.js",
                 "support-checkout.js",
                 "chart-visuals.js",
                 "pattern-library.js",
@@ -68,6 +71,7 @@ def render_review(
         "snippets": snippets,
         "benchmark_hash": benchmark["benchmark_hash"],
         "navigation": navigation or {"charts": {}, "genres": [], "versions": []},
+        "provider_mapping": default_mapping(catalog),
     }
     if overview is not None:
         data["analysis"] = overview
@@ -107,6 +111,7 @@ def render_review(
             "support-checkout.css",
             "site-brand.css",
             "analytics.css",
+            "player-data.css",
         )
     )
     html = assets.joinpath("challenge-review.html").read_text("utf-8")

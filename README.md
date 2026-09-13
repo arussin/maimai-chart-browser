@@ -12,6 +12,18 @@ YouTube as **mai-notes simai player**, specific to the selected difficulty.
 Requires Python 3.11+. The package has no runtime dependencies and does not require
 the report library. Install from this checkout with `python -m pip install .`.
 
+The public browser can optionally show your own achievements and retained chart
+history. Import a player file from Settings or accept a Session Report handoff.
+Data stays in your browser; remembering it on the device is optional.
+Personal filters collapse without clearing your choices. Colored grade letters
+and compact combo/sync icons accompany a quiet **You** label on each recorded
+chart. Player identity, capture coverage and storage controls live in Settings.
+Open charts group measurements and patterns under **Chart details**, followed by
+**Your data** and retained history. Both groups remember their expanded state
+across songs and visits. Compare and Find similar stay on the main card beside
+the chart's version artwork.
+See [personal data, exact links and the public matching interface](docs/PLAYER_DATA.md).
+
 ## Preview
 
 ```sh

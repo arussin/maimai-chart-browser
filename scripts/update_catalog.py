@@ -21,6 +21,7 @@ from uuid import uuid4
 from maimai_analyzer.contracts import content_hash
 from maimai_analyzer.dataset import SOURCE_LOCK
 from maimai_intelligence.artwork import MEDIA_PATH
+from maimai_intelligence.catalog_loading import MAX_CATALOG_BYTES
 from maimai_intelligence.lab import build_lab
 from maimai_intelligence.mai_notes import MAX_INDEX_BYTES, download_index, prepare_links
 from maimai_intelligence.public_release import _read, build_public_release
@@ -95,13 +96,27 @@ def retain_history(source, destination):
         if version in versions:
             raise ValueError("Duplicate retained catalog version")
         versions.add(version)
-        raw = _read(source, entry["path"], MAX_BYTES)
+        raw = _read(source, entry["path"], MAX_CATALOG_BYTES)
         if hashlib.sha256(raw).hexdigest() != sha:
             raise ValueError("Retained catalog hash mismatch")
         data = json.loads(raw)
         if data.get("package", {}).get("status") != "research_preview":
             raise ValueError("Previous catalog is not a public research catalog")
         pending[entry["path"]] = raw
+        if "integration" in entry:
+            ref = entry["integration"]
+            if (
+                not re.fullmatch(r"[a-f0-9]{64}", ref.get("sha256", ""))
+                or ref.get("path") != f"integration/{ref['sha256']}.json"
+            ):
+                raise ValueError("Invalid retained integration catalog reference")
+            integration = _read(source, ref["path"], MAX_BYTES)
+            if (
+                len(integration) != ref.get("bytes")
+                or hashlib.sha256(integration).hexdigest() != ref["sha256"]
+            ):
+                raise ValueError("Retained integration catalog hash mismatch")
+            pending[ref["path"]] = integration
         if version == manifest["default"]:
             latest = data
         for path, record in data.get("artwork", {}).get("assets", {}).items():

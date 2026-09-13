@@ -3,6 +3,23 @@
 const data=window.maimaiResearchCatalog??=JSON.parse(document.getElementById('challenge-data').textContent),pack=data.analysis;
 const definitions=new Map(JSON.parse(document.getElementById('pattern-data').textContent).map(p=>[p.pattern_id,p]));
 const make=(tag,text,cls)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(cls)n.className=cls;return n;};
+// Only presentation choices are remembered here, independently of player records.
+const sectionKey='maimai-chart-sections-v1',sectionState={chart:true,player:true};let sectionSerial=0;
+function readSections(){try{const saved=JSON.parse(localStorage.getItem(sectionKey));for(const key of Object.keys(sectionState))if(typeof saved?.[key]==='boolean')sectionState[key]=saved[key];}catch{}}
+function syncSections(){for(const root of document.querySelectorAll('[data-chart-section]')){
+  const expanded=sectionState[root.dataset.chartSection],button=root.querySelector('.chart-section-toggle'),body=root.querySelector('.chart-section-body');
+  if(!expanded&&body.contains(document.activeElement))button.focus();
+  button.setAttribute('aria-expanded',String(expanded));root.classList.toggle('is-section-collapsed',!expanded);body.inert=!expanded;
+}}
+readSections();window.addEventListener?.('storage',event=>{if(event.key===sectionKey){readSections();syncSections();}});
+function section(kind,title,decoration){
+  const root=make('section',undefined,'chart-section'),heading=make('h3'),button=make('button',undefined,'chart-section-toggle'),name=make('span',title,'chart-section-name'),chevron=make('span','⌄','chart-section-chevron');
+  root.dataset.chartSection=kind;button.type='button';button.append(name);if(decoration)button.append(decoration);chevron.setAttribute('aria-hidden','true');button.append(chevron);heading.append(button);
+  const reveal=make('div',undefined,'chart-section-reveal'),body=make('div',undefined,'chart-section-body'),content=make('div',undefined,'chart-section-content');reveal.id='chart-section-'+(++sectionSerial);button.setAttribute('aria-controls',reveal.id);body.append(content);reveal.append(body);root.append(heading,reveal);
+  button.setAttribute('aria-expanded',String(sectionState[kind]));root.classList.toggle('is-section-collapsed',!sectionState[kind]);body.inert=!sectionState[kind];
+  button.onclick=()=>{sectionState[kind]=!sectionState[kind];try{localStorage.setItem(sectionKey,JSON.stringify(sectionState));}catch{}syncSections();};
+  return {root,content};
+}
 const svg=(tag,attrs,text)=>{const n=document.createElementNS('http://www.w3.org/2000/svg',tag);for(const[k,v]of Object.entries(attrs))n.setAttribute(k,String(v));if(text!==undefined)n.textContent=text;return n;};
 const get=c=>['research-overview-1','research-overview-2'].includes(pack?.version)&&[undefined,'sparse-tags-1','sparse-tags-2','sparse-tags-3'].includes(pack?.representation)&&pack.charts[c.chart_id]?.source_hash===c.source_hash?pack.charts[c.chart_id]:null;
 const name=id=>definitions.get(id)?.display_name||id;
@@ -42,16 +59,15 @@ function graph(c,{compact=false,maximum=null,span=null}={}){
   box.append(art);box.append(make('figcaption',compact?'Peak '+peak.toFixed(1)+' /s · own scale': 'Inputs / s · mean bars, 250 ms peak marks · chart time','muted'));return box;
 }
 function details(c){
-  const box=make('section',undefined,'chart-pattern-detail');box.append(make('h3','Patterns & activity'));
+  const box=make('section',undefined,'chart-pattern-detail');box.append(make('h4','Patterns & activity'));
   if(delivery&&!delivery.ready(c)){loadInto(box,c,()=>details(c),true)();return box;}
-  const found=detected(c),flow=make('div'),reading=make('p','','flow-reading');flow.append(graph(c));reading.setAttribute('role','status');box.append(flow,reading);
-  box.append(make('p','Experimental detections from this exact chart transcription. Counts describe observed occurrences; unsupported patterns remain unknown.','muted'));
+  const found=detected(c),layout=make('div',undefined,'chart-pattern-content'),activity=make('div',undefined,'chart-activity'),evidenceList=make('div',undefined,'chart-evidence-list'),flow=make('div'),reading=make('p','','flow-reading');flow.append(graph(c));reading.setAttribute('role','status');activity.append(flow,reading);layout.append(activity,evidenceList);box.append(layout);
   if(!get(c)){box.append(make('p','This catalog release has no prepared pattern mappings.'));return box;}
-  if(!found.length)box.append(make('p','No patterns detected in supported coverage. This does not establish that other dictionary patterns are absent.','muted'));
+  if(!found.length)evidenceList.append(make('p','No patterns detected in supported coverage.','muted'));
   for(const tag of found){const row=make('div',undefined,'pattern-evidence');row.append(patternButton(tag.id),make('span',tag.count+' observed'+(tag.coverage==='partial'||tag.truncated?' · partial coverage':'') ,'muted'));
     const seen=new Set();tag.spans.forEach((span,i)=>{const evidence=tag.evidence[i]||{},target=evidence.target_pattern_id,key=span.join(':')+':'+(target||'');if(seen.has(key))return;seen.add(key);const label=(target?name(target)+' · ':'')+clock(span[0])+'–'+clock(span[1]),button=make('button',label,'span-button');button.type='button';button.setAttribute('aria-label','Highlight '+name(tag.id)+' · '+label);button.onclick=()=>{flow.replaceChildren(graph(c,{span}));reading.textContent=name(tag.id)+' · '+label+' · highlighted in activity chart';};row.append(button);});
     if(tag.id==='pattern.umiyuri')row.append(make('span','Recurring-pair form · other variants may not be detected','muted'));
-    box.append(row);}
+    evidenceList.append(row);}
   return box;
 }
 function compare(left,right){
@@ -78,5 +94,5 @@ function pair(left,right){
   const max=Math.max(1,...[left,right].map(c=>get(c)?.flow_peak??Math.max(0,...(get(c)?.segments||[]).map(s=>s[3]||0))));
   for(const c of [left,right]){const figure=make('div');figure.append(make('h3',(c.title.trim()||'Untitled')+' · '+c.difficulty),graph(c,{maximum:max}));graphs.append(figure);}box.append(graphs);return box;
 }
-window.maimaiChartOverview=Object.freeze({get,tags,detected,name,chips,graph,details,compare,pair,frequency,coverage,patternIds:pack?.patterns||[],definition:id=>pack?.definitions?.[id]||null});
+window.maimaiChartOverview=Object.freeze({get,tags,detected,name,chips,graph,details,section,compare,pair,frequency,coverage,patternIds:pack?.patterns||[],definition:id=>pack?.definitions?.[id]||null});
 })();
