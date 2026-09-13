@@ -1,0 +1,23 @@
+/* Checkout presentation adapted from maimai-session-report (MIT, Copyright 2026 arussin). */
+body.support-dialog-open{overflow:hidden}
+.support-dialog{box-sizing:border-box;width:min(420px,calc(100vw - 32px));height:min(680px,calc(100dvh - 48px));max-width:none;max-height:none;margin:auto;padding:0;overflow:hidden;border:0;border-radius:24px;background:#fff;color:#183b43;box-shadow:0 30px 90px #05293657}
+.support-dialog[open]{display:grid;grid-template-rows:auto minmax(0,1fr) auto;animation:support-dialog-in .22s ease both}
+.support-dialog::backdrop{background:#03232f94;backdrop-filter:blur(5px)}
+.support-dialog .support-dialog-header{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;margin:0;padding:17px 17px 14px 20px;border-bottom:1px solid #dce7e9;background:linear-gradient(135deg,#f8feff,#fff9fc)}
+.support-dialog-heading{min-width:0}
+.support-dialog .support-dialog-title{margin:0;font-size:18px;font-weight:650;line-height:1.25;color:#183b43}
+.support-dialog .support-dialog-close{display:grid;place-items:center;flex:0 0 44px;width:44px;height:44px;min-height:44px;margin:0;padding:0;border:1px solid #dce7e9;border-radius:50%;background:#fff;color:#52676d;cursor:pointer;font:inherit;font-size:24px;font-weight:500;line-height:1}
+.support-dialog .support-dialog-close:hover{background:#f2fafb;color:#183b43}
+.support-dialog-close:focus-visible,.support-fallback:focus-visible{outline:3px solid #007887;outline-offset:3px}
+.support-frame-wrap{position:relative;min-height:0;overflow:hidden;background:#fff}
+.support-frame{display:block;width:100%;height:100%;border:0;background:#fff}
+.support-loading{position:absolute;inset:0;z-index:1;display:grid;place-items:center;align-content:center;gap:14px;padding:20px;background:#fff;color:#52676d;font-size:13px;line-height:1.5;text-align:center}
+.support-loading[hidden],.support-loading-ring[hidden]{display:none}
+.support-loading-ring{width:46px;height:46px;border:5px solid #dce7e9;border-top-color:#007887;border-radius:50%;animation:support-spin .9s linear infinite}
+.support-dialog-footer{display:flex;align-items:center;justify-content:center;padding:6px 18px;border-top:1px solid #dce7e9;background:#fbfeff}.support-dialog-footer[hidden]{display:none}
+.support-fallback{display:inline-flex;align-items:center;flex:none;min-height:44px;color:#007887;font-size:12px;font-weight:600;text-underline-offset:3px}
+@keyframes support-spin{to{transform:rotate(360deg)}}
+@keyframes support-dialog-in{from{opacity:0;transform:translateY(12px) scale(.985)}to{opacity:1;transform:none}}
+@media(max-width:620px){.support-dialog{width:100vw;height:100dvh;border-radius:0}.support-dialog .support-dialog-header{padding-top:max(17px,env(safe-area-inset-top))}.support-dialog-footer{padding-bottom:max(12px,env(safe-area-inset-bottom))}}
+@media(prefers-reduced-motion:reduce){.support-dialog[open],.support-loading-ring{animation:none}}
+@media print{.support-dialog{display:none!important}}

@@ -34,6 +34,7 @@ def review_scripts():
             for name in (
                 "view-navigation.js",
                 "settings-menu.js",
+                "support-checkout.js",
                 "chart-visuals.js",
                 "pattern-library.js",
                 "challenge-matching.js",
@@ -93,6 +94,7 @@ def render_review(
             "chart-overview.css",
             "chart-filters.css",
             "support-footer.css",
+            "support-checkout.css",
             "site-brand.css",
             "analytics.css",
         )

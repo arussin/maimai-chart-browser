@@ -88,7 +88,7 @@ def build_lab(package_directory, output, *, catalog_version):
     manifest["default"] = catalog_version
     assets = files("maimai_intelligence.assets")
     early_scripts = []
-    for name in ("settings-menu.js", "analytics.js"):
+    for name in ("settings-menu.js", "analytics.js", "support-checkout.js"):
         content = assets.joinpath(name).read_text("utf-8")
         atomic_write_text(root / name, content)
         revision = hashlib.sha256(content.encode("utf-8")).hexdigest()[:16]
@@ -119,6 +119,8 @@ def build_lab(package_directory, output, *, catalog_version):
         + "\n"
         + assets.joinpath("support-footer.css").read_text("utf-8")
         + "\n"
+        + assets.joinpath("support-checkout.css").read_text("utf-8")
+        + "\n"
         + assets.joinpath("site-brand.css").read_text("utf-8")
         + "\n"
         + assets.joinpath("analytics.css").read_text("utf-8")
@@ -147,7 +149,7 @@ def build_lab(package_directory, output, *, catalog_version):
         "connect-src 'self' https://www.google-analytics.com https://region1.google-analytics.com; "
         "img-src 'self' data: https://www.google-analytics.com "
         "https://region1.google-analytics.com; "
-        "object-src 'none'; base-uri 'none'; "
+        "object-src 'none'; base-uri 'none'; frame-src https://buymeacoffee.com; "
         "form-action 'none'"
         '">\n<title>',
     )
