@@ -13,6 +13,7 @@ function mount({data,eligibleIds}){
   const el=id=>document.getElementById(id),make=(tag,text,cls)=>{const node=document.createElement(tag);if(text!==undefined)node.textContent=text;if(cls)node.className=cls;return node;};
   const byId=new Map(data.catalog.map(c=>[c.chart_id,c])),state={left:null,right:null},pickers={};
   const name=c=>c.title.trim()||'〈Blank title〉',label=c=>name(c)+' · '+c.format+' '+c.difficulty+' · Lv. '+(c.level||'?');
+  const collator=new Intl.Collator(undefined,{numeric:true,sensitivity:'base'}),difficultyOrder=['BASIC','ADVANCED','EXPERT','MASTER','RE:MASTER'];
   const bpm=c=>data.navigation?.charts?.[c.chart_id]?.bpm??null,bpmText=c=>bpm(c)==null?'BPM unknown':bpm(c)+' BPM';
   let index=null,matches=null;
   const getIndex=()=>index||(index=window.maimaiChallengeMatching.createIndex(data.catalog));
@@ -21,24 +22,52 @@ function mount({data,eligibleIds}){
   function choose(side,id,write=true){
     if(!byId.has(id))return;
     if(side==='left'&&state.left!==id)matches=null;
-    state[side]=id;const picker=pickers[side];picker.input.value=name(byId.get(id));picker.results.hidden=true;picker.status.textContent='';picker.selection.replaceChildren(identity(byId.get(id)));
+    state[side]=id;const picker=pickers[side];picker.input.value=name(byId.get(id));picker.close();picker.selection.replaceChildren(identity(byId.get(id)));
     render();if(write)writeLink();
   }
   for(const [side,title]of [['left','First chart'],['right','Second chart']]){
-    const container=make('div',undefined,'chart-picker'),labelNode=make('label',title),input=make('input'),selection=make('div'),results=make('div',undefined,'chart-choices'),status=make('p','','muted');
-    input.type='search';input.id='compare-'+side+'-search';input.placeholder='Song, romaji title or artist…';input.autocomplete='off';results.id='compare-'+side+'-choices';results.hidden=true;input.setAttribute('aria-controls',results.id);labelNode.append(input);
-    results.setAttribute('role','group');results.setAttribute('aria-label',title+' search results');status.setAttribute('role','status');container.append(labelNode,results,status,selection);el('comparison-pickers').append(container);
-    pickers[side]={input,results,status,selection};
+    const container=make('div',undefined,'chart-picker'),labelNode=make('label',title),input=make('input'),selection=make('div'),results=make('div',undefined,'chart-choices'),more=make('button','Show more matches','chart-choices-more'),status=make('p','','muted');
+    input.type='search';input.id='compare-'+side+'-search';input.placeholder='Song, romaji title or artist…';input.autocomplete='off';results.id='compare-'+side+'-choices';results.hidden=true;input.setAttribute('role','combobox');input.setAttribute('aria-autocomplete','list');input.setAttribute('aria-expanded','false');input.setAttribute('aria-controls',results.id);labelNode.append(input);
+    results.setAttribute('role','listbox');results.setAttribute('aria-label',title+' search results');more.type='button';more.hidden=true;more.setAttribute('aria-controls',results.id);status.id='compare-'+side+'-search-status';status.setAttribute('role','status');input.setAttribute('aria-describedby',status.id);container.append(labelNode,results,more,status,selection);el('comparison-pickers').append(container);
+    let found=[],shown=0,active=-1;
+    const hint='Search all '+data.catalog.length.toLocaleString()+' charts by song, artist or difficulty.';
+    function close(){results.hidden=true;more.hidden=true;input.setAttribute('aria-expanded','false');input.removeAttribute('aria-activedescendant');active=-1;status.textContent=state[side]?'':hint;}
+    function activate(position){
+      active=position;[...results.children].forEach((option,index)=>option.setAttribute('aria-selected',String(index===active)));
+      const option=results.children[active];if(option){input.setAttribute('aria-activedescendant',option.id);option.scrollIntoView({block:'nearest'});}else input.removeAttribute('aria-activedescendant');
+    }
+    function appendMatches(){
+      const end=Math.min(shown+20,found.length);
+      for(let index=shown;index<end;index++){
+        const chart=found[index],option=make('div',label(chart),'chart-choice');option.id=results.id+'-'+index;option.dataset.choice=chart.chart_id;option.setAttribute('role','option');option.setAttribute('aria-selected','false');option.setAttribute('aria-posinset',String(index+1));option.setAttribute('aria-setsize',String(found.length));
+        option.onpointerdown=event=>event.preventDefault();option.onclick=()=>{choose(side,chart.chart_id);input.focus();};results.append(option);
+      }
+      shown=end;more.hidden=shown>=found.length;status.textContent=found.length?(shown<found.length?'Showing '+shown+' of '+found.length.toLocaleString()+' matching charts. Keep typing or show more.':found.length.toLocaleString()+' matching charts.'):'No matching charts. Try another song, artist or difficulty.';
+    }
+    pickers[side]={input,results,status,selection,close};close();
     function search(){
-      const matchesSearch=window.maimaiSongSearch.query(input.value),found=data.catalog.filter(c=>matchesSearch(c,[c.format,c.difficulty]));
-      results.replaceChildren();results.hidden=false;
-      for(const chart of found.slice(0,30)){const button=make('button',label(chart),'chart-choice');button.type='button';button.dataset.choice=chart.chart_id;button.onclick=()=>{choose(side,chart.chart_id);input.focus();};results.append(button);}
-      status.textContent=found.length?(found.length>30?'Showing 30 matches. Keep typing to narrow the list.':found.length+' matching charts'):'No matching charts.';
+      results.replaceChildren();found=[];shown=0;active=-1;input.removeAttribute('aria-activedescendant');
+      if(!input.value.trim()){close();return;}
+      const matchesSearch=window.maimaiSongSearch.query(input.value),query=input.value.normalize('NFKC').toLowerCase().trim();
+      const rank=c=>{const title=name(c).normalize('NFKC').toLowerCase();return title===query?0:title.startsWith(query)?1:2;};
+      found=data.catalog.filter(c=>matchesSearch(c,[c.format,c.difficulty,c.level]));
+      found.sort((a,b)=>rank(a)-rank(b)||collator.compare(name(a),name(b))||collator.compare(a.format,b.format)||difficultyOrder.indexOf(a.difficulty)-difficultyOrder.indexOf(b.difficulty)||a.chart_id.localeCompare(b.chart_id));
+      results.hidden=!found.length;input.setAttribute('aria-expanded',String(!!found.length));appendMatches();
     }
     input.oninput=()=>{if(side==='left')matches=null;state[side]=null;selection.replaceChildren();render();writeLink();search();};
-    input.onfocus=()=>{if(!state[side])search();};
-    input.onkeydown=event=>{if(event.key==='ArrowDown'){if(results.hidden)search();results.querySelector('button')?.focus();event.preventDefault();}else if(event.key==='Enter'&&!results.hidden){results.querySelector('button')?.click();event.preventDefault();}else if(event.key==='Escape'){results.hidden=true;status.textContent='';}};
-    results.onkeydown=event=>{const buttons=[...results.querySelectorAll('button')],position=buttons.indexOf(document.activeElement);if(event.key==='ArrowDown'||event.key==='ArrowUp'){buttons[(position+(event.key==='ArrowDown'?1:-1)+buttons.length)%buttons.length]?.focus();event.preventDefault();}else if(event.key==='Escape'){input.focus();results.hidden=true;status.textContent='';}};
+    input.onfocus=()=>{if(!state[side]&&results.hidden)search();};
+    input.onkeydown=event=>{
+      if(event.isComposing)return;
+      if(event.key==='ArrowDown'||event.key==='ArrowUp'){
+        if(results.hidden)search();if(!found.length)return;
+        const next=active<0?(event.key==='ArrowDown'?0:shown-1):Math.max(0,Math.min(found.length-1,active+(event.key==='ArrowDown'?1:-1)));
+        if(next>=shown)appendMatches();activate(next);event.preventDefault();
+      }else if(event.key==='Enter'&&!results.hidden&&active>=0){choose(side,found[active].chart_id);event.preventDefault();}
+      else if(event.key==='Escape'){close();event.preventDefault();}
+    };
+    more.onclick=()=>{const next=shown;appendMatches();input.focus();activate(next);};
+    container.addEventListener('focusout',event=>{if(!container.contains(event.relatedTarget))close();});
+    document.addEventListener('pointerdown',event=>{if(!container.contains(event.target))close();});
   }
   function renderPair(){
     const root=el('direct-comparison');root.replaceChildren();
@@ -81,13 +110,13 @@ function mount({data,eligibleIds}){
   function find(){if(!state.left)return;matches=getIndex().similar(state.left,{limit:8,eligibleIds:el('similar-use-filters').checked?eligibleIds():null,patternCompare:el('similar-priority').value==='patterns'?overview.compare:null});render();el('similar-results').scrollIntoView({block:'start',behavior:'instant'});}
   el('similar-priority').onchange=()=>{if(matches!==null)find();};
   el('find-similar').onclick=()=>{const u=new URL(location.href);u.searchParams.set('similar','1');history.replaceState(null,'',u);find();};el('similar-use-filters').onchange=()=>{if(matches!==null)find();};
-  el('comparison-clear').onclick=()=>{state.left=state.right=null;matches=null;for(const picker of Object.values(pickers)){picker.input.value='';picker.selection.replaceChildren();picker.results.hidden=true;picker.status.textContent='';}render();writeLink();pickers.left.input.focus();};
+  el('comparison-clear').onclick=()=>{state.left=state.right=null;matches=null;for(const picker of Object.values(pickers)){picker.input.value='';picker.selection.replaceChildren();picker.close();}render();writeLink();pickers.left.input.focus();};
   function restore(){const params=new URLSearchParams(location.search);let missing=false;matches=null;
-    for(const side of ['left','right']){const id=params.get(side);state[side]=null;pickers[side].input.value='';pickers[side].selection.replaceChildren();if(id){if(byId.has(id))choose(side,id,false);else missing=true;}}
+    for(const side of ['left','right']){const id=params.get(side);state[side]=null;pickers[side].input.value='';pickers[side].selection.replaceChildren();pickers[side].close();if(id){if(byId.has(id))choose(side,id,false);else missing=true;}}
     render();if(params.get('similar')==='1'&&state.left)find();if(missing)el('comparison-status').textContent='A linked chart is not available in this catalog version. Choose a chart below.';
   }
   window.addEventListener('popstate',restore);restore();
-  return{render,first:()=>state.left,useAsFirst:(id,findNow=false)=>{state.right=null;pickers.right.input.value='';pickers.right.selection.replaceChildren();choose('left',id);if(findNow){const u=new URL(location.href);u.searchParams.set('similar','1');history.replaceState(null,'',u);find();}},useAsSecond:id=>choose('right',id)};
+  return{render,first:()=>state.left,useAsFirst:(id,findNow=false)=>{state.right=null;pickers.right.input.value='';pickers.right.selection.replaceChildren();pickers.right.close();choose('left',id);if(findNow){const u=new URL(location.href);u.searchParams.set('similar','1');history.replaceState(null,'',u);find();}},useAsSecond:id=>choose('right',id)};
 }
 window.maimaiChartComparison=Object.freeze({mount});
 })();

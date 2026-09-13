@@ -24,6 +24,16 @@ difficulty/format. Punctuation-only searches still require literal matches.
 Each chart's search text is cached in memory. Typing does not fetch data, write
 storage, modify chart records, or send search terms to Analytics.
 
+Comparison pickers show suggestions only after typing. They search every chart
+in the loaded catalog version, independently of chart-browser filters and visible
+song rows. Exact titles and title prefixes come first, followed by alphabetical
+matches with difficulties in game order. Results include their format, difficulty
+and level. The total match count stays visible; Show more matches and arrow-key
+navigation can reach results beyond the first batch. Arrow keys highlight an
+option, Enter selects it, and Escape or leaving the picker dismisses suggestions.
+Empty fields never show a starter list. Selecting a chart or clearing the pair
+also closes suggestions.
+
 ## Source and refresh
 
 The public Tachi files are pinned to commit
