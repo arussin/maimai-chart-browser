@@ -49,21 +49,25 @@ function render(){
   const search=normalize(el('pattern-search').value),scope=el('pattern-scope').value;
   const shown=definitions.filter(p=>normalize([p.display_name,aliases(p),lessons[p.pattern_id].summary,p.definition].join(' ')).includes(search)&&(scope==='all'||(p.kind==='trait')===(scope==='traits')));
   shown.sort((a,b)=>Number(a.kind==='trait')-Number(b.kind==='trait')||definitions.indexOf(a)-definitions.indexOf(b));
-  const root=el('pattern-list');root.replaceChildren();el('pattern-count').textContent=shown.length+' of '+definitions.length+' lessons · '+Object.keys(lessons).length+' illustrated demos with contrasts';
+  const root=el('pattern-list');root.replaceChildren();el('pattern-count').textContent=shown.length+' lessons found';
   for(const p of shown){const lesson=lessons[p.pattern_id],card=make('article',undefined,'pattern-card');card.dataset.patternId=p.pattern_id;
     const open=make('button','Open lesson →','text-button');open.dataset.openPattern=p.pattern_id;open.setAttribute('aria-label','Open lesson: '+p.display_name);open.onclick=()=>show(p.pattern_id,open);
     const art=make('div',undefined,'pattern-art');art.append(chartArt(lesson.example,lesson.summary).svg);
-      card.append(make('p',p.kind==='trait'?'CHART TRAIT':'PATTERN','eyebrow'),make('h2',p.display_name),make('p',lesson.summary,'pattern-description'),art,open);const overview=window.maimaiChartOverview,count=overview?.frequency.get(p.pattern_id)||0;if(overview?.coverage.get(p.pattern_id)){const find=make('button','Find charts · '+count,'text-button');find.dataset.findPattern=p.pattern_id;find.onclick=()=>onDiscover(p.pattern_id);card.append(find,make('p',count?'Found automatically · not yet reviewed':'No matches under this rule in this catalog','muted'));}else card.append(make('p',overview?.patternIds.includes(p.pattern_id)?'Not enough chart information to find examples':'Song examples not connected yet','muted'));root.append(card);
+    card.append(make('p',p.kind==='trait'?'CHART TRAIT':'PATTERN','eyebrow'),make('h2',p.display_name),make('p',lesson.summary,'pattern-description'),art);
+    const overview=window.maimaiChartOverview,count=overview?.frequency.get(p.pattern_id)||0,covered=!!overview?.coverage.get(p.pattern_id);
+    const actions=make('div',undefined,'pattern-actions'),find=make('button',covered?'Find charts · '+count:'Find charts','text-button');
+    find.dataset.findPattern=p.pattern_id;find.disabled=!covered;find.onclick=()=>onDiscover(p.pattern_id);
+    if(!covered){const reason=make('span','Chart matching unavailable','sr-only');reason.id='unavailable-'+p.pattern_id;find.setAttribute('aria-describedby',reason.id);find.title=reason.textContent;actions.append(reason);}
+    actions.append(open,find);card.append(actions);root.append(card);
   }
   if(!shown.length)root.append(make('p','No lessons match this search.','empty-state'));
 }
 function demo(lesson){
-  const root=make('div',undefined,'pattern-demo'),switches=make('div',undefined,'lesson-switch'),stage=make('div',undefined,'demo-stage'),caption=make('p',lesson.watch,'lesson-caption'),reading=make('p','','lesson-reading'),legend=make('p','','lesson-legend');caption.setAttribute('role','status');reading.setAttribute('role','status');switches.setAttribute('role','group');switches.setAttribute('aria-label','Lesson example');
+  const root=make('div',undefined,'pattern-demo'),stage=make('div',undefined,'demo-stage'),caption=make('p',lesson.watch,'lesson-caption'),reading=make('p','','lesson-reading'),legend=make('p','','lesson-legend');caption.setAttribute('role','status');reading.setAttribute('role','status');
   const controls=make('div',undefined,'play-controls'),play=make('button','Play demo'),step=make('button','Step'),restart=make('button','Restart'),rate=make('select'),rateLabel=make('label','Speed'),scrub=make('input'),progress=make('span','','demo-progress');
   rate.setAttribute('aria-label','Demo speed');rate.append(new Option('0.5×','0.5'),new Option('1×','1'));rate.value='1';rateLabel.append(rate);scrub.type='range';scrub.min='0';scrub.max='1000';scrub.step='1';scrub.value='0';scrub.setAttribute('aria-label','Demo progress');progress.setAttribute('aria-live','off');
-  controls.append(play,step,restart,rateLabel,scrub,progress);root.append(switches,caption,stage,controls,reading,legend);
-  let active='example',model=lesson.example,time=0,playing=false,raf=0,last=0,art,cabinet;
-  const options={};for(const[key,text]of [['example','Example'],['counterexample','Contrasting example']]){const button=make('button',text);button.type='button';button.onclick=()=>{active=key;setup();};options[key]=button;switches.append(button);}
+  controls.append(play,step,restart,rateLabel,scrub,progress);root.append(caption,stage,controls,reading,legend);
+  let model=lesson.example,time=0,playing=false,raf=0,last=0,art,cabinet;
   function stop(){playing=false;cancelAnimationFrame(raf);play.textContent='Play demo';}
   function draw(){
     art.draw(time);cabinet?.draw(time*500000);scrub.value=String(Math.round(time/model.duration*1000));progress.textContent=Math.round(time/model.duration*100)+'% · '+Number(time.toFixed(2))+' '+(time===1?model.unit.slice(0,-1):model.unit);
@@ -77,10 +81,10 @@ function demo(lesson){
     reading.setAttribute('aria-live',playing?'off':'polite');reading.textContent=text;scrub.setAttribute('aria-valuetext',progress.textContent+' · '+text);
   }
   function setup(){
-    stop();time=0;model=lesson[active];caption.textContent=active==='example'?lesson.watch:lesson.contrast;for(const[key,button]of Object.entries(options))button.setAttribute('aria-pressed',String(key===active));
-    legend.textContent=model.kind==='bars'?'Bars count new inputs in equal one-second sections. Labeled bands show ongoing movement. The same vertical scale is used for the example and contrast.'+(model.series.length>1?' Gold inset bars are break inputs already included in the total.':''):'Read left to right. Circles = taps; stars = slide heads; squares = touches; amber bars = holds. Dashed gold = slide wait; solid teal = movement. Beat demos use an illustrative 120 BPM without audio. Position diagrams are schematic.';
-    stage.replaceChildren();const max=model.kind==='bars'?Math.max(1,...[lesson.example,lesson.counterexample].flatMap(m=>m.series.flatMap(s=>s.values))):null;
-    art=chartArt(model,(active==='example'?'Example: ':'Contrast: ')+lesson.summary,{animated:true,maximum:max});stage.append(art.svg);
+    stop();time=0;
+    legend.textContent=model.kind==='bars'?'Bars count new inputs in equal one-second sections. Labeled bands show ongoing movement.'+(model.series.length>1?' Gold inset bars are break inputs already included in the total.':''):'Read left to right. Circles = taps; stars = slide heads; squares = touches; amber bars = holds. Dashed gold = slide wait; solid teal = movement. Beat demos use an illustrative 120 BPM without audio. Position diagrams are schematic.';
+    stage.replaceChildren();const max=model.kind==='bars'?Math.max(1,...model.series.flatMap(s=>s.values)):null;
+    art=chartArt(model,'Example: '+lesson.summary,{animated:true,maximum:max});stage.append(art.svg);
     cabinet=model.kind==='notes'?window.maimaiPreviewField(cabinetModel(model),'Input positions',1):null;
     stage.classList.toggle('with-cabinet',!!cabinet);if(cabinet){cabinet.box.querySelector('svg').setAttribute('aria-label','Authored input positions');stage.append(cabinet.box);}draw();
   }
@@ -96,11 +100,7 @@ function show(id,button=null,navigate=true){
   const close=make('button','Close');close.setAttribute('aria-label','Close pattern');close.onclick=()=>dialog.close();header.append(identity,close);dialog.append(header);if(!dialog.open)dialog.showModal();
   dialog.append(make('p',lesson.summary,'demo-summary'),demo(lesson),make('h3','Variants and limits','lesson-subheading'),make('p',lesson.variants,'lesson-variants'));
   if(window.maimaiChartOverview?.coverage.get(id)){const find=make('button','Find charts with this pattern');find.onclick=()=>{dialog.close();onDiscover(id);};dialog.append(find);}
-  const details=make('details'),summary=make('summary','Definition, sources and scope'),rule=window.maimaiChartOverview?.definition(id);details.append(summary,make('p',lesson.scope),make('p',rule?.definition||p.definition));
-  if(rule)details.append(make('p','Chart recognition rule '+rule.definition_version+' · experimental','muted'));
-  const limits=make('ul');for(const text of p.counterexamples_and_limits)limits.append(make('li',text));details.append(limits);
-  for(const source of lesson.sources){const paragraph=make('p'),link=make('a',source.label);link.href=source.url;link.target='_blank';link.rel='noopener noreferrer';paragraph.append(link,document.createTextNode(' — '+source.note));details.append(paragraph);}
-  details.append(make('p',(p.name_origin==='community_attested'?'Community-named entry. ':'Project/descriptive entry. ')+'Teaching examples are authored and checked, with no independent reviewer sign-off. They do not assign labels to catalog charts.','muted'));dialog.append(details);close.focus();if(navigate)onNavigate(id);return true;
+  close.focus();if(navigate)onNavigate(id);return true;
 }
 dialog.addEventListener('close',()=>{dispose();if(opener?.isConnected)opener.focus();onNavigate(null);});el('pattern-search').oninput=render;el('pattern-scope').onchange=render;
 window.maimaiPatternLibrary={render,show,stop:()=>dispose(),setNavigation:callback=>{onNavigate=callback;},setDiscovery:callback=>{onDiscover=callback;},has:id=>definitions.some(p=>p.pattern_id===id)};

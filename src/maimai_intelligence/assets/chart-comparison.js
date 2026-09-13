@@ -8,7 +8,7 @@ const measurements=[
   ['holds','occupancy','Average active holds',''],['slides','occupancy','Average moving slides',''],['slides','wait_occupancy','Average waiting slides',''],
   ['spatial','single_step_buttons','Average spacing between single inputs',' buttons'],['spatial','simultaneous_span_buttons','Simultaneous-input span',' buttons'],['spatial','touch_fraction','Touch inputs','%'],
 ];
-function mount({data,comparison,stopPlayers,eligibleIds}){
+function mount({data,eligibleIds}){
   const overview=window.maimaiChartOverview;
   const el=id=>document.getElementById(id),make=(tag,text,cls)=>{const node=document.createElement(tag);if(text!==undefined)node.textContent=text;if(cls)node.className=cls;return node;};
   const byId=new Map(data.catalog.map(c=>[c.chart_id,c])),state={left:null,right:null},pickers={};
@@ -40,15 +40,16 @@ function mount({data,comparison,stopPlayers,eligibleIds}){
     input.onkeydown=event=>{if(event.key==='ArrowDown'){if(results.hidden)search();results.querySelector('button')?.focus();event.preventDefault();}else if(event.key==='Enter'&&!results.hidden){results.querySelector('button')?.click();event.preventDefault();}else if(event.key==='Escape'){results.hidden=true;status.textContent='';}};
     results.onkeydown=event=>{const buttons=[...results.querySelectorAll('button')],position=buttons.indexOf(document.activeElement);if(event.key==='ArrowDown'||event.key==='ArrowUp'){buttons[(position+(event.key==='ArrowDown'?1:-1)+buttons.length)%buttons.length]?.focus();event.preventDefault();}else if(event.key==='Escape'){input.focus();results.hidden=true;status.textContent='';}};
   }
-  function prepared(left,right){
-    const direct=data.review.find(r=>r.query_id===left)?.candidates.find(c=>c.chart_id===right);if(direct)return direct.passages;
-    const reverse=data.review.find(r=>r.query_id===right)?.candidates.find(c=>c.chart_id===left);return reverse?.passages.map(p=>({...p,query_window:p.candidate_window,candidate_window:p.query_window}))||[];
-  }
   function renderPair(){
     const root=el('direct-comparison');root.replaceChildren();
     if(!state.left||!state.right||state.left===state.right)return;
     const left=byId.get(state.left),right=byId.get(state.right),result=getIndex().compare(state.left,state.right),heading=make('h2','Chart measurements');root.append(overview.pair(left,right),heading);
-    if(result)root.append(make('p','Closest in '+result.closest_groups.map(g=>groups[g].toLowerCase()).join(' and ')+'. Largest difference: '+groups[result.largest_difference].toLowerCase()+'.','comparison-summary'));
+    if(result){
+      const summary=make('div',undefined,'comparison-summary');
+      for(const [title,value,kind]of [['Closest in',result.closest_groups.map(g=>groups[g].toLowerCase()).join(' and '),'closest'],['Furthest in',groups[result.largest_difference].toLowerCase(),'furthest']]){
+        const item=make('p',undefined,'comparison-'+kind);item.append(make('strong',title),make('span',value));summary.append(item);
+      }root.append(summary);
+    }
     else root.append(make('p','There is not enough shared measurement coverage for a similarity summary.','muted'));
     const table=make('table',undefined,'metric-comparison'),head=make('thead'),tr=make('tr');
     for(const text of ['Measurement',label(left),label(right)]){const th=make('th',text);th.scope='col';tr.append(th);}head.append(tr);table.append(head);
@@ -60,10 +61,6 @@ function mount({data,comparison,stopPlayers,eligibleIds}){
       for(const chart of [left,right]){let value=chart.demand[group]?.[key];if(unit==='%'&&value!=null)value*=100;const text=value==null?'Unknown':(Number.isInteger(value)?String(value):value.toFixed(2))+unit;row.append(make('td',text));}body.append(row);
     }
     table.append(body);root.append(table);
-    const passages=prepared(state.left,state.right);
-    if(passages.length){const details=make('details',undefined,'pair-passages');details.append(make('summary','Play available passage animations'));let initialized=false;
-      details.ontoggle=()=>{if(details.open&&!initialized){details.append(comparison(state.left,state.right,passages));initialized=true;}if(!details.open)stopPlayers(false);};root.append(details);
-    }else root.append(make('p','A passage animation has not been prepared for this pair. The measurements above cover both charts.','muted pair-coverage'));
   }
   function renderMatches(){
     const root=el('similar-results');root.replaceChildren();if(matches===null)return;
@@ -76,7 +73,7 @@ function mount({data,comparison,stopPlayers,eligibleIds}){
     }
   }
   function render(){
-    stopPlayers();el('find-similar').disabled=!state.left;
+    el('find-similar').disabled=!state.left;
     el('comparison-status').textContent=state.left&&state.right?(state.left===state.right?'Both selections are the same chart. Choose another chart to compare.':'Comparing '+label(byId.get(state.left))+' with '+label(byId.get(state.right))):state.left?'Choose a second chart or find similar chart demands.':'Choose a first chart to begin.';
     renderPair();renderMatches();
   }

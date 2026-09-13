@@ -59,7 +59,7 @@ test('capacity startup fetches a smaller index and only requests visible chart e
   page.on('request',r=>requests.push(r.url()));
   page.on('response',r=>{if(r.url().includes('/catalog-index/'))sizes.push(Number(r.headers()['content-length']));});
   await page.goto('/progressive-capacity/');
-  await expect(page.locator('#catalog-count')).toHaveText('7,000 matching charts in 1,750 song / format rows');
+  await expect(page.locator('#catalog-count')).toHaveText('7,000 charts found');
   await expect(page.locator('#songs .chart-flow svg').first()).toBeVisible();
   expect(sizes).toHaveLength(1);expect(sizes[0]).toBeLessThan(10*1024*1024);
   expect(requests.filter(url=>url.includes('/chart-details/')).length).toBeLessThanOrEqual(40);

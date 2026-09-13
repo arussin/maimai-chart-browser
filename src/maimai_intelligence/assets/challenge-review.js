@@ -1,10 +1,9 @@
-/* Sealed review; no network, account access, automatic storage or imported scores. */
+/* Public chart browsing and authored pattern previews. */
 (()=>{'use strict';
 const data=window.maimaiResearchCatalog??=JSON.parse(document.getElementById('challenge-data').textContent);
 const byId=new Map(data.catalog.map(c=>[c.chart_id,c]));
 const el=id=>document.getElementById(id),make=(tag,text,cls)=>{const e=document.createElement(tag);if(text!==undefined)e.textContent=text;if(cls)e.className=cls;return e;};
-const names={cadence:'Input speed',rhythm:'Rhythm',coordination:'Simultaneous inputs',holds:'Hold interactions',slides:'Slide timing',spatial:'Layout'};
-const judgments=new Map();let cleanup=[],visible=40,format='all',comparisonUI=null;
+let visible=40,format='all',comparisonUI=null;
 const navigation=data.navigation||{charts:{},genres:[],versions:[]};
 const overview=window.maimaiChartOverview;
 function folderValue(c,mode){
@@ -13,7 +12,6 @@ function folderValue(c,mode){
   return n&&n.source_hash===c.source_hash?(n[mode]||'unknown'):'unknown';
 }
 const displayTitle=c=>c.title.trim()?c.title:'〈Blank title〉';
-function meta(c){const e=make('div',undefined,'meta');e.append(make('span',c.format,'badge'),make('span',c.difficulty,'badge '+c.difficulty.replace(':','')),make('span','Lv. '+(c.level||'?')));return e;}
 function metrics(c){const root=make('div',undefined,'demand');for(const [group,key,label,unit] of [['cadence','mean_onsets_s','Average input speed',' /s'],['cadence','peak_onsets_s','Busiest 1 s',' inputs'],['coordination','simultaneous_fraction','Simultaneous inputs','%'],['holds','occupancy','Avg active holds',''],['slides','occupancy','Avg moving slides',''],['spatial','single_step_buttons','Single-input spacing',' buttons']]){let value=c.demand[group][key];if(value!==undefined&&unit==='%')value*=100;const e=make('div',label,'metric');e.append(make('strong',value===undefined?'Unknown':value.toFixed(1)+unit));root.append(e);}return root;}
 function xy(pos){if(pos==='C')return[0,0];let n,r=1,offset=0;if(typeof pos==='number')n=pos;else if(/^[ABDE][1-8]$/.test(pos||'')){n=+pos[1];r='BE'.includes(pos[0])?.55:1;offset='DE'.includes(pos[0])?-.5:0;}else return null;let a=(n-.5+offset)*Math.PI/4;return[Math.sin(a)*r,-Math.cos(a)*r];}
 const ns='http://www.w3.org/2000/svg';
@@ -26,87 +24,10 @@ for(const h of snippet.holds){let p=xy(h.position);if(p&&t>=h.start_us&&t<h.end_
 for(const e of snippet.events){let dt=e.time_us-t;if(dt< -120000||dt>lead)continue;let p=xy(e.position);if(!p)continue;let r=Math.max(.05,Math.min(.16,.16-dt/600000*.10));svg.append(svgNode('circle',{cx:p[0],cy:p[1],r,fill:e.role==='star_tap'?'#007d88':'#b82d75',opacity:dt<0?.5:1}));}
 note.textContent=(t/1000000).toFixed(2)+' s · '+(unknown?unknown+' active path(s) not rendered':'Wait: dashed gold · Move: solid teal');}
 return{box,draw};}
-function beatAt(s,t){let a=s.bpm_segments[0];for(const x of s.bpm_segments){if(x.time_us>t)break;a=x;}return Number(a.beat[0])/Number(a.beat[1])+(t-a.time_us)/60000000*Number(a.bpm[0])/Number(a.bpm[1]);}
-function timeAt(s,b){let a=s.bpm_segments[0];for(const x of s.bpm_segments){if(Number(x.beat[0])/Number(x.beat[1])>b)break;a=x;}return a.time_us+(b-Number(a.beat[0])/Number(a.beat[1]))*60000000/(Number(a.bpm[0])/Number(a.bpm[1]));}
-function comparison(qid,cid,pairs){const container=make('div');if(!pairs.length){container.append(make('p','No supporting passage is available.'));return container;}
-const delivery=window.maimaiCatalogDetails;
-if(delivery&&[qid,cid].some(id=>!delivery.ready(byId.get(id)))){
-  const load=()=>{container.replaceChildren(make('p','Loading passage animations…','muted'));Promise.all([qid,cid].map(id=>delivery.ensure(byId.get(id),true))).then(()=>{if(container.isConnected)container.replaceWith(comparison(qid,cid,pairs));}).catch(()=>{const retry=make('button','Retry loading passages');retry.onclick=load;container.replaceChildren(make('p','Passages could not be loaded.','muted'),retry);});};load();return container;
-}
-let selected=0,playing=false,position=0,previous=0,raf=0,speed=1,beatSync=true;const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
-const selector=make('select');selector.setAttribute('aria-label','Supporting passage');pairs.forEach((p,i)=>selector.append(new Option('Passage '+(i+1),String(i))));
-const controls=make('div',undefined,'play-controls'),play=make('button','Play'),step=make('button','Step'),rate=make('button','0.5×'),sync=make('button','Beat sync'),range=make('input');range.type='range';range.min='0';range.max='1000';range.value='0';range.setAttribute('aria-label','Passage position');sync.setAttribute('aria-pressed','true');controls.append(selector,play,step,rate,sync,range);container.append(controls);const pairbox=make('div',undefined,'pair');container.append(pairbox);let q,c,left,right;
-function setup(){playing=false;play.textContent='Play';position=0;const p=pairs[selected];q=data.snippets[qid]?.[p.query_window];c=data.snippets[cid]?.[p.candidate_window];pairbox.replaceChildren();if(!q||!c)return;left=field(q,'Selected chart');right=field(c,'Candidate chart');pairbox.append(left.box,right.box);draw();}
-function draw(){if(!q||!c)return;let qt=q.start_us+position;let ct=beatSync?timeAt(c,beatAt(c,c.start_us)+beatAt(q,qt)-beatAt(q,q.start_us)):c.start_us+position;left.draw(Math.min(qt,q.end_us));right.draw(Math.min(ct,c.end_us));range.value=String(position/(q.end_us-q.start_us)*1000);}
-function tick(now){if(!playing)return;position+=(now-previous)*1000*speed;previous=now;position%=q.end_us-q.start_us;draw();raf=requestAnimationFrame(tick);}
-play.onclick=()=>{if(!q)return;playing=!playing;play.textContent=playing?'Pause':'Play';cancelAnimationFrame(raf);if(playing){previous=performance.now();raf=requestAnimationFrame(tick);}};step.onclick=()=>{playing=false;play.textContent='Play';position=(position+125000)%(q.end_us-q.start_us);draw();};rate.onclick=()=>{speed=speed===1?.5:1;rate.textContent=speed===1?'0.5×':'1×';};sync.onclick=()=>{beatSync=!beatSync;sync.setAttribute('aria-pressed',String(beatSync));draw();};range.oninput=()=>{playing=false;play.textContent='Play';position=+range.value/1000*(q.end_us-q.start_us);draw();};selector.onchange=()=>{selected=+selector.value;setup();};cleanup.push(()=>{playing=false;play.textContent='Play';cancelAnimationFrame(raf);});setup();if(reduced){container.append(make('p','Reduced motion: paused diagrams; use Step to inspect.','muted'));play.hidden=true;}return container;}
-function status(){el('review-status').textContent=judgments.size+' / '+data.review.reduce((n,q)=>n+q.candidates.length,0)+' pairs judged · judgments stay here until you save them.';}
-function stopPlayers(clear=true){cleanup.forEach(f=>f());if(clear)cleanup=[];}
 function selectView(name){
-  stopPlayers();
   window.maimaiViews.show(name);
   window.maimaiPatternLibrary.stop();
-  if(name==='catalog')catalog();else if(name==='compare'){render();comparisonUI?.render();}else if(name==='patterns')window.maimaiPatternLibrary.render();
-}
-function openSample(index){
-  el('query').value=String(index);
-  selectView('compare');
-  el('prepared-examples').open=true;
-  el('query').focus();
-}
-function render(){
-  stopPlayers();
-  const item=data.review[+el('query').value];
-  el('matches').replaceChildren();el('query-card').replaceChildren();
-  if(!item){el('matches').append(make('p','No chart comparisons are prepared in this catalog yet.'));return;}
-  const q=byId.get(item.query_id),query=make('article',undefined,'card source-card');
-  query.append(make('span','STARTING CHART','eyebrow'),make('h3',displayTitle(q)),meta(q));
-  el('query-card').append(query);
-  const feedback=el('feedback').checked,blind=feedback&&el('blind').checked;
-  let candidates=[...item.candidates];
-  if(blind)candidates.sort((a,b)=>a.chart_id.localeCompare(b.chart_id));
-  el('matches').append(make('h3',blind?'Charts to compare':'Charts with similar passages'));
-  if(!candidates.length)el('matches').append(make('p','No candidates are prepared for this starting chart.'));
-  candidates.forEach((m,i)=>{
-    const c=byId.get(m.chart_id),card=make('article',undefined,'card candidate');
-    const heading=make('div',undefined,'candidate-heading');
-    heading.append(make('span',blind?String.fromCharCode(65+i):String(i+1),'rank'));
-    const identity=make('div');identity.append(make('h4',displayTitle(c)),meta(c));heading.append(identity);card.append(heading);
-    if(!blind){
-      const pills=make('div',undefined,'pills');
-      m.closest_groups.slice(0,2).forEach(g=>pills.append(make('span','Similar '+names[g].toLowerCase(),'pill')));
-      card.append(pills,make('p','Main difference: '+names[m.largest_difference].toLowerCase()+'.','muted'));
-    }
-    const toggle=make('button','Compare passages'),panel=make('div',undefined,'passage-panel');
-    panel.id='passages-'+i;panel.hidden=true;toggle.setAttribute('aria-expanded','false');toggle.setAttribute('aria-controls',panel.id);
-    let initialized=false;
-    toggle.onclick=()=>{
-      panel.hidden=!panel.hidden;toggle.setAttribute('aria-expanded',String(!panel.hidden));
-      toggle.textContent=panel.hidden?'Compare passages':'Close comparison';
-      if(!panel.hidden&&!initialized){
-        const demands=make('div',undefined,'pair measurement-pair');
-        for(const [chart,label] of [[q,'Starting chart'],[c,'Suggested chart']]){
-          const box=make('div');box.append(make('h5',label+' · '+displayTitle(chart)),metrics(chart));demands.append(box);
-        }
-        panel.append(comparison(q.chart_id,c.chart_id,m.passages),demands);initialized=true;
-      }
-      if(panel.hidden)stopPlayers(false);
-    };
-    card.append(toggle,panel);
-    if(feedback){
-      const controls=make('div',undefined,'judgment');controls.append(make('span','Similar challenge?'));
-      const key=q.chart_id+'|'+c.chart_id;
-      for(const label of ['Useful','Partly','Not useful','Uncertain']){
-        const b=make('button',label);b.setAttribute('aria-pressed',String(judgments.get(key)?.judgment===label));
-        b.onclick=()=>{judgments.set(key,{query_id:q.chart_id,candidate_id:c.chart_id,judgment:label});
-          for(const x of controls.querySelectorAll('button'))x.setAttribute('aria-pressed',String(x===b));status();};
-        controls.append(b);
-      }
-      card.append(controls);
-    }
-    el('matches').append(card);
-  });
-  status();
+  if(name==='catalog')catalog();else if(name==='compare')comparisonUI?.render();else if(name==='patterns')window.maimaiPatternLibrary.render();
 }
 const difficultyOrder=['BASIC','ADVANCED','EXPERT','MASTER','RE:MASTER'];
 const collator=new Intl.Collator(undefined,{numeric:true,sensitivity:'base'});
@@ -163,7 +84,6 @@ function initializeFilters(){
   document.addEventListener('click',event=>{if(!el('version-filter').contains(event.target))el('version-filter').open=false;});
   el('reset-filters').onclick=()=>{for(const id of filters)el('filter-'+id).value='';selectedVersions.clear();updateVersions();chartFilters.clear();patternFilter.clear();el('search').value='';format='all';visible=40;writePatternFilter();updateFormat();catalog();};
   renderSort();
-  el('mapping-note').textContent=overview.patternIds.length?overview.coverage.size+' pattern / trait types checked · '+overview.frequency.size+' found automatically. Click a tag for its lesson.':'Pattern and Flow data are not available in this catalog release.';
   const newest=(navigation.versions||[]).find(v=>data.catalog.some(c=>folderValue(c,'version')===v));el('catalog-era').textContent=newest?'Through '+versionLabel(newest):'Research catalog';
 }
 function writePatternFilter(){const url=new URL(location.href);url.searchParams.delete('pattern-filter');for(const id of patternFilter.ids())url.searchParams.append('pattern-filter',id);history.replaceState(null,'',url);}
@@ -238,26 +158,18 @@ function catalog(focusKey=null){
     summary.onclick=()=>{panel.hidden=!panel.hidden;summary.setAttribute('aria-expanded',String(!panel.hidden));if(panel.hidden)expandedRows.delete(key);else{expandedRows.add(key);renderDetails();}};
     if(!panel.hidden)renderDetails();row.append(header,panel);el('songs').append(row);
   }
-  el('catalog-count').textContent=charts.length.toLocaleString()+' matching charts in '+rows.length.toLocaleString()+' song / format rows';
+  el('catalog-count').textContent=charts.length.toLocaleString()+' charts found';
   if(!charts.length)el('songs').append(make('p','No charts match this combination. Remove a filter or try another search.','empty-state'));
   el('more').hidden=rows.length<=visible;
 }
 
-data.review.forEach((r,i)=>{const c=byId.get(r.query_id);el('query').append(new Option(displayTitle(c)+' · '+c.format+' '+c.difficulty+' · Lv. '+(c.level||'?'),String(i)));});
-el('query').onchange=render;el('blind').onchange=render;
-el('feedback').onchange=()=>{el('blind').disabled=!el('feedback').checked;el('download').disabled=!el('feedback').checked;render();};
 el('search').oninput=()=>{visible=40;catalog();};
 el('more').onclick=()=>{visible+=40;catalog();};
 for(const name of ['compare','catalog','patterns','about'])el(name+'-tab').onclick=()=>selectView(name);
-el('download').onclick=()=>{const blob=new Blob([JSON.stringify({version:'challenge-judgments-1',benchmark_hash:data.benchmark_hash,policy:data.package.retrieval_policy,judgments:[...judgments.values()]},null,2)],{type:'application/json'});const url=URL.createObjectURL(blob),a=make('a');a.href=url;a.download='challenge-judgments.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
-el('coverage').textContent=data.catalog.length+' chart profiles · '+data.review.length+' prepared review queries · '+data.package.status.replaceAll('_',' ');el('credit').textContent=data.package.source.credit;el('notice').textContent=data.package.source.notice;el('revision').textContent=data.package.source.revision;
 el('loaded-count').textContent=data.catalog.length.toLocaleString();
-if(data.artwork?.credit){el('artwork-credit').hidden=false;el('artwork-credit').textContent=data.artwork.credit;}
-el('sample-intro').textContent='Choose from '+data.review.length+' prepared starting charts to inspect side-by-side passage demos. These are examples of structural similarity, not recommendations based on your scores.';
-if(data.package.outcomes){const o=data.package.outcomes;el('coverage').textContent+=' · '+o.excluded+' Utage slots excluded · '+o.unavailable+' source container unavailable.';}
 window.maimaiPreviewField=field;
-initializeFilters();catalog();status();
-comparisonUI=window.maimaiChartComparison.mount({data,comparison,stopPlayers,eligibleIds:()=>data.catalog.filter(c=>{
+initializeFilters();catalog();
+comparisonUI=window.maimaiChartComparison.mount({data,eligibleIds:()=>data.catalog.filter(c=>{
   if(format!=='all'&&c.format!==format)return false;
   if(selectedVersions.size&&!selectedVersions.has(folderValue(c,'version')))return false;
   if(!patternFilter.matches(c))return false;

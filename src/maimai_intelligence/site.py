@@ -78,11 +78,15 @@ def build_site(pack, output, *, catalog_version, lab_package=None):
         "support-footer.css",
         "analytics.css",
         "analytics.js",
+        "settings-menu.js",
         "index.html",
     ):
         content = assets.joinpath(name).read_text("utf-8")
         content = content.replace("__MAIMAI_CHART_THEME__", json.dumps(theme))
         if name == "index.html":
+            content = content.replace(
+                "__SETTINGS_MENU__", assets.joinpath("settings-menu.html").read_text("utf-8")
+            )
             content = content.replace(
                 "__SITE_BRAND__", assets.joinpath("site-brand.html").read_text("utf-8")
             )

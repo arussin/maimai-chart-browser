@@ -23,6 +23,7 @@ PUBLIC_FILES = (
     "challenge-review.js",
     "lab-loader.js",
     "analytics.js",
+    "settings-menu.js",
     "view-navigation.js",
 )
 
