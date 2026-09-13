@@ -319,6 +319,25 @@ test('clean headings, filter placement and lesson actions align without overflow
   await expect(page).toHaveTitle('maimai.party');
   await expect(page.locator('.page-heading .eyebrow,.page-heading .lede,.brand-caption,.row-help,.sort-help,#mapping-note')).toHaveCount(0);
   expect(await page.locator('#pattern-filter').evaluate(node=>!!node.closest('.browser-filters'))).toBe(true);
+  const layout=await page.evaluate(()=>{
+    const rect=selector=>{const {top,left,right,bottom}=document.querySelector(selector).getBoundingClientRect();return {top,left,right,bottom};};
+    return {width:innerWidth,genre:rect('#filter-genre'),level:rect('.level-field'),pattern:rect('.pattern-filter-row'),
+      priorities:rect('#sort-rules'),keep:rect('.sort-toolbar .check'),
+      tabs:[...document.querySelectorAll('.site-header nav>button')].map(button=>({
+        bottom:button.getBoundingClientRect().bottom,
+        textBottom:button.lastElementChild.getBoundingClientRect().bottom,
+      }))};
+  });
+  expect(layout.keep.top).toBeGreaterThanOrEqual(layout.priorities.bottom);
+  expect(layout.keep.top-layout.priorities.bottom).toBeLessThanOrEqual(8);
+  expect(Math.abs(layout.keep.left-layout.priorities.left)).toBeLessThan(1);
+  if(layout.width>800){
+    expect(layout.level.top).toBeGreaterThan(layout.genre.bottom);
+    expect(Math.abs(layout.level.left-layout.genre.left)).toBeLessThan(1);
+    expect(Math.abs(layout.level.top-layout.pattern.top)).toBeLessThan(1);
+    expect(layout.pattern.left).toBeGreaterThan(layout.level.right);
+  }
+  for(const tab of layout.tabs)expect(tab.bottom-tab.textBottom).toBeLessThanOrEqual(10);
   await page.locator('#patterns-tab').click();await expect(page.locator('.pattern-card')).toHaveCount(36);
   const positions=await page.locator('.pattern-card').evaluateAll(cards=>cards.map(card=>({
     row:Math.round(card.getBoundingClientRect().top),
