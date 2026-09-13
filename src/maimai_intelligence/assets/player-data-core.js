@@ -39,6 +39,16 @@ async function bounded(stream,maximum){const reader=stream.getReader(),chunks=[]
 async function decode(input){const bytes=input instanceof Uint8Array?input:new Uint8Array(input);if(bytes.length>MAX_COMPRESSED)fail('Player file exceeds 32 MiB.');if(typeof DecompressionStream==='undefined')fail('This browser cannot read compressed player files. Please update your browser.');try{const raw=await bounded(new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip')),MAX_DECODED);return await validate(JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(raw)));}catch(e){throw new Error(e.message||'Invalid compressed player file.');}}
 async function encode(d){structure(d);const raw=new TextEncoder().encode(canonical(d));if(raw.length>MAX_DECODED)fail('Expanded player history exceeds 128 MiB.');return bounded(new Blob([raw]).stream().pipeThrough(new CompressionStream('gzip')),MAX_COMPRESSED);}
 function current(d){let refs={},snapshot=null;for(const [id,s]of Object.entries(d.snapshots).sort(([a,x],[b,y])=>x.capturedAt-y.capturedAt||Number(x.phase==='after')-Number(y.phase==='after')||(a<b?-1:a>b?1:0))){if(s.complete)refs={};Object.assign(refs,s.pbs);snapshot=s;}return {pbs:new Map(Object.entries(refs).map(([cid,ref])=>[cid,d.records[ref]])),snapshot};}
+function chartHistory(d,chartIDs){
+  const ids=new Set(chartIDs),plays=Object.entries(d.plays).map(([id,ref])=>({id,r:d.records[ref]})).filter(e=>ids.has(e.r.chartID)).map(e=>({...e,time:e.r.timeAchieved}));
+  plays.sort((a,b)=>(b.time??-1)-(a.time??-1)||a.id.localeCompare(b.id));
+  const changes=[];let previous=null;
+  for(const [id,s] of Object.entries(d.snapshots).sort(([a,x],[b,y])=>x.capturedAt-y.capturedAt||Number(x.phase==='after')-Number(y.phase==='after')||a.localeCompare(b))){
+    const cid=chartIDs.find(cid=>s.pbs[cid]);if(!cid)continue;const r=d.records[s.pbs[cid]],key=canonical([r.achievement,r.grade,r.rate,r.lamp,r.sync]);
+    if(key!==previous)changes.push({id,time:s.capturedAt,r});previous=key;
+  }
+  return {plays,changes:changes.reverse()};
+}
 function profile(d,pbs,snapshot){
   let rating=null;const rows=[...pbs.values()];
   if(snapshot?.complete&&snapshot.versions.length&&rows.every(r=>r.rate!==null&&r.displayVersion))rating=[[false,35],[true,15]].reduce((sum,[isNew,slots])=>sum+rows.filter(r=>snapshot.versions.includes(r.displayVersion)===isNew).map(r=>r.rate).sort((a,b)=>b-a).slice(0,slots).reduce((a,b)=>a+b,0),0);
@@ -48,10 +58,30 @@ function offer(d){const {pbs,snapshot}=current(d);return {format:d.format,schema
 function validateOffer(o){if(!object(o)||o.format!=='maimai-player-data'||o.schemaVersion!==1||!HEX.test(o.revision)||!keys(o.player,['key','provider','game','username','displayName'])||!Object.values(o.player).every(v=>text(v,200))||o.player.provider!=='kamaitachi'||o.player.game!=='maimaidx'||o.player.key!=='kamaitachi:maimaidx:'+o.player.username.toLowerCase()||!integer(o.capturedAt)||!integer(o.pbCount,1000000)||!['complete','partial'].includes(o.pbCoverage)||o.historyCoverage!=='retained-only'||!integer(o.playCount,1000000))fail('Invalid report data offer.');for(const k of ['snapshotIDs','captureIDs'])if(!Array.isArray(o[k])||o[k].length>100000||!o[k].every(x=>typeof x==='string'&&HEX.test(x)))fail('Invalid report history offer.');if(Object.hasOwn(o,'profile')&&(!keys(o.profile,['rating','sessionCount'])||!integer(o.profile.rating,undefined,true)||!integer(o.profile.sessionCount,1000000)))fail('Invalid player profile.');return o;}
 function needsUpdate(d,o){validateOffer(o);if(!d||d.player.key!==o.player.key)return true;if(d.revision===o.revision)return false;return o.snapshotIDs.some(id=>!Object.hasOwn(d.snapshots,id))||o.captureIDs.some(id=>!Object.hasOwn(d.captures,id));}
 function observationDates(d){const dates={charts:{},plays:{}};for(const c of Object.values(d.captures))for(const id of c.playIDs)dates.plays[id]=Math.max(dates.plays[id]||0,c.capturedAt);for(const [id,time]of Object.entries(dates.plays)){const cid=d.records[d.plays[id]].chartID;dates.charts[cid]=Math.max(dates.charts[cid]||0,time);}for(const s of Object.values(d.snapshots))for(const cid of Object.keys(s.pbs))dates.charts[cid]=Math.max(dates.charts[cid]||0,s.capturedAt);return dates;}
+async function reconcile(d){
+  const proposals=new Map(),blocked=new Set(),legacy=/^legacy:[a-f0-9]{64}$/;
+  for(const capture of Object.values(d.captures)){
+    const groups=new Map();
+    for(const id of capture.playIDs){const r=d.records[d.plays[id]];if(!r.timeAchieved||r.achievement===null)continue;const key=canonical([r.chartID,r.timeAchieved,r.achievement]);if(!groups.has(key))groups.set(key,[[],[]]);groups.get(key)[Number(legacy.test(id))].push(id);}
+    for(const [sources,summaries] of groups.values()){
+      if(sources.length>64||summaries.length>64){summaries.forEach(id=>blocked.add(id));continue;}
+      const matches=new Map();
+      for(const id of summaries){const weak=d.records[d.plays[id]],candidates=sources.filter(source=>Object.entries(weak).every(([field,value])=>value===null||value===''||value===d.records[d.plays[source]][field]));
+        if(candidates.length===1){const source=candidates[0];if(!matches.has(source))matches.set(source,[]);matches.get(source).push(id);}else if(candidates.length>1)blocked.add(id);
+      }
+      for(const [source,ids] of matches){if(ids.length===1){if(!proposals.has(ids[0]))proposals.set(ids[0],new Set());proposals.get(ids[0]).add(source);}else ids.forEach(id=>blocked.add(id));}
+    }
+  }
+  const aliases=new Map([...proposals].filter(([id,ids])=>ids.size===1&&!blocked.has(id)).map(([id,ids])=>[id,[...ids][0]]));
+  if(!aliases.size)return d;
+  const result=structuredClone(d);for(const id of aliases.keys())delete result.plays[id];result.captures={};
+  for(const c of Object.values(d.captures)){const updated={...c,playIDs:[...new Set(c.playIDs.map(id=>aliases.get(id)||id))].sort()};result.captures[await digest(updated)]=updated;}
+  const {revision,...body}=result;result.revision=await digest(body);return structure(result);
+}
 async function merge(a,b){structure(a);structure(b);if(a.player.key!==b.player.key)fail('Different players cannot be merged.');const d=structuredClone(a),at=offer(a).capturedAt,bt=offer(b).capturedAt,ad=observationDates(a),bd=observationDates(b);if(bt>at||(bt===at&&canonical(b.player)>=canonical(a.player)))d.player=structuredClone(b.player);
   for(const name of ['records','snapshots','captures'])for(const [id,row]of Object.entries(b[name])){if(Object.hasOwn(d[name],id)&&canonical(d[name][id])!==canonical(row))fail('Conflicting retained observation.');d[name][id]=row;}
   for(const name of ['charts','plays'])for(const [id,row]of Object.entries(b[name])){const old=d[name][id];if(old===undefined||(bd[name][id]||0)>(ad[name][id]||0)||((bd[name][id]||0)===(ad[name][id]||0)&&canonical(row)>=canonical(old)))d[name][id]=row;}
-  const {revision,...body}=d;d.revision=await digest(body);return structure(d);
+  const {revision,...body}=d;d.revision=await digest(body);return reconcile(structure(d));
 }
-globalThis.maimaiPlayerData=Object.freeze({validate,structure,decode,encode,current,offer,validateOffer,needsUpdate,merge,hash,digest,canonical,bounded,MAX_COMPRESSED,MAX_DECODED});
+globalThis.maimaiPlayerData=Object.freeze({validate,structure,decode,encode,current,offer,validateOffer,needsUpdate,merge,reconcile,chartHistory,hash,digest,canonical,bounded,MAX_COMPRESSED,MAX_DECODED});
 })();
