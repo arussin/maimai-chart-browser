@@ -179,6 +179,8 @@ test('analytics notice, privacy text and settings support keyboard, screen reade
   await expect(page.locator('#privacy')).toHaveAttribute('open','');
   await expect(page.locator('#privacy summary')).toBeFocused();
   await page.locator('#settings-toggle').focus();await page.keyboard.press('Enter');
+  await expect(page.locator('#player-import')).toBeFocused();
+  await page.keyboard.press('ArrowDown');await page.keyboard.press('ArrowDown');
   await expect(page.locator('#analytics-settings')).toBeFocused();
   expect((await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21aa']).analyze()).violations).toEqual([]);
   await page.keyboard.press('Enter');
@@ -189,7 +191,7 @@ test('analytics notice, privacy text and settings support keyboard, screen reade
   await page.keyboard.press('Escape');await expect(page.locator('#settings-toggle')).toBeFocused();
   await page.keyboard.press('Enter');await page.keyboard.press('Escape');await expect(page.locator('#settings-menu')).toBeHidden();
   await expect(page.locator('#settings-toggle')).toBeFocused();
-  await page.keyboard.press('Enter');await page.locator('.footer-project p').click();await expect(page.locator('#settings-menu')).toBeHidden();
+  await page.keyboard.press('Enter');await page.mouse.click(2,2);await expect(page.locator('#settings-menu')).toBeHidden();
   await expect(page.locator('#analytics-dialog')).toBeHidden();
 });
 

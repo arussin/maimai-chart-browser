@@ -35,6 +35,9 @@ def progressive_catalog(data, catalog_sha):
         return None, {}
     index = deepcopy(data)
     if "provider_mapping" in index:
+        # Unmatched provider diagnostics belong to the full retained catalog,
+        # not the first page load. Browsing only needs verified chart matches.
+        index["provider_mapping"].pop("unmatched", None)
         index["provider_mapping"]["charts"] = {
             cid: {
                 k: v

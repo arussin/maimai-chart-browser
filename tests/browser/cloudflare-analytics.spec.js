@@ -3,7 +3,7 @@ import {readFile} from 'node:fs/promises';
 import {resolve,extname,sep} from 'node:path';
 import {fileURLToPath} from 'node:url';
 
-const root=fileURLToPath(new URL('../../output/browser-tests/',import.meta.url));
+const root=resolve(process.env.MAIMAI_BROWSER_OUTPUT||fileURLToPath(new URL('../../output/browser-tests/',import.meta.url)));
 const cfOrigin='https://static.cloudflareinsights.com';
 const collector='https://cloudflareinsights.com/cdn-cgi/rum';
 const storageKey='maimai.party.analytics.v1';
