@@ -149,7 +149,7 @@ test('research browser combines filters and retains them while sorting',async({p
   await page.locator('#search').fill('');await expect(page.locator('#songs .song-row')).toHaveCount(1);
   await page.locator('#reset-filters').click();await expect(page.locator('#songs .song-row')).toHaveCount(6);
   await page.locator('#compare-tab').click();await expect(page.locator('#comparison-pickers')).toBeVisible();
-  await expect(page.locator('#prepared-examples')).not.toHaveAttribute('open','');
+  await expect(page.locator('#prepared-examples')).toHaveCount(0);
   expect(errors).toEqual([]);expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
 });
 
@@ -189,7 +189,7 @@ test('complete dictionary supports demos, keyboard close and stable links',async
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto('/lab/?version=fixture-v5');await page.locator('#patterns-tab').click();
   await expect(page.locator('#pattern-list .pattern-card')).toHaveCount(36);
-  await expect(page.locator('#pattern-count')).toContainText('36 illustrated demos with contrasts');
+  await expect(page.locator('#pattern-count')).toHaveText('36 lessons found');
   const requests=[];page.on('request',r=>requests.push(r.url()));
   await page.locator('#pattern-search').fill('two-position');
   await page.locator('[data-open-pattern="pattern.two_position_alternation"]').click();
@@ -202,7 +202,7 @@ test('complete dictionary supports demos, keyboard close and stable links',async
   await expect(page.locator('[data-open-pattern="pattern.two_position_alternation"]')).toBeFocused();
   await page.locator('#pattern-search').fill('umiyuri');await page.locator('[data-open-pattern="pattern.umiyuri"]').click();
   await expect(dialog).toContainText('pair → intervening tap → next pair');await expect(dialog.getByRole('button',{name:'Play demo'})).toBeVisible();
-  await dialog.getByRole('button',{name:'Contrasting example',exact:true}).click();await expect(dialog.locator('.lesson-caption')).toContainText('lacks this recurring phase relationship');
+  await expect(dialog.getByRole('button',{name:'Contrasting example',exact:true})).toHaveCount(0);await expect(dialog.locator('details')).toHaveCount(0);
   expect(requests).toEqual([]);expect(errors).toEqual([]);
   await page.goto(link);await expect(dialog).toBeVisible();await expect(dialog).toContainText('two-position alternation');
 });
@@ -283,17 +283,57 @@ test('any chart can find similar charts and choose a result for comparison',asyn
   expect(errors).toEqual([]);
 });
 
-for(const route of ['lab','progressive'])test(route+': prepared passage playback still steps, plays and changes passages',async({page})=>{
-  const errors=[];page.on('pageerror',e=>errors.push(e.message));
-  await page.goto('/'+route+'/?view=compare');await page.locator('#prepared-examples>summary').click();
-  await page.locator('#matches').getByRole('button',{name:'Compare passages',exact:true}).first().click();
-  const panel=page.locator('#passages-0');await expect(panel.locator('.field svg')).toHaveCount(2);
-  const before=await panel.locator('input[type=range]').inputValue();
-  await panel.getByRole('button',{name:'Step',exact:true}).click();expect(await panel.locator('input[type=range]').inputValue()).not.toBe(before);
-  await panel.getByRole('button',{name:'Play',exact:true}).click();await expect(panel.getByRole('button',{name:'Pause',exact:true})).toBeVisible();
-  await panel.getByRole('button',{name:'Pause',exact:true}).click();
-  const choices=panel.getByRole('combobox',{name:'Supporting passage'});if(await choices.locator('option').count()>1)await choices.selectOption('1');
-  await expect(panel.locator('.field svg')).toHaveCount(2);expect(errors).toEqual([]);
+for(const route of ['lab','progressive'])test(route+': comparisons omit retired passage UI while retaining patterns and activity',async({page})=>{
+  const errors=[],requests=[];page.on('pageerror',e=>errors.push(e.message));page.on('request',r=>requests.push(r.url()));
+  await page.goto('/lab/');await expect(page.locator('#loaded-count')).toHaveText('6');
+  const pairs=await page.evaluate(()=>{
+    const data=window.maimaiResearchCatalog,prepared=data.review.flatMap(r=>r.candidates.filter(c=>c.passages.length).map(c=>[r.query_id,c.chart_id]));
+    const known=new Set(prepared.flatMap(([a,b])=>[a+'|'+b,b+'|'+a]));
+    const missing=data.catalog.flatMap(a=>data.catalog.filter(b=>b.chart_id!==a.chart_id&&!known.has(a.chart_id+'|'+b.chart_id)).map(b=>[a.chart_id,b.chart_id]))[0];
+    return [prepared[0],missing];
+  });
+  expect(pairs.every(Boolean)).toBe(true);
+  for(const [left,right]of pairs){
+    requests.length=0;
+    await page.goto('/'+route+'/?'+new URLSearchParams({view:'compare',left,right}));
+    await expect(page.locator('#direct-comparison .metric-comparison')).toBeVisible();
+    await expect(page.locator('.comparison-closest')).toContainText('Closest in');
+    await expect(page.locator('.comparison-furthest')).toContainText('Furthest in');
+    for(const figure of await page.locator('#direct-comparison .flow-comparison>div').all()){
+      await figure.scrollIntoViewIfNeeded();await expect(figure.locator('.chart-flow svg')).toBeVisible();
+    }
+    await expect(page.locator('#direct-comparison')).toContainText('Shared patterns');
+    await expect(page.locator('#prepared-examples,.pair-passages,.pair-coverage,.comparison-method,.feedback')).toHaveCount(0);
+    await expect(page.locator('#compare')).not.toContainText('A passage animation');
+    await expect(page.locator('#compare')).not.toContainText('Experimental pattern observations');
+    await expect(page.locator('#compare')).not.toContainText('Observed occurrences and rate');
+    await expect(page.locator('#compare')).not.toContainText('Shared vertical scale');
+    expect(requests.some(url=>/\/(snippets|catalog-parts|catalogs)\//.test(url))).toBe(route==='lab');
+    expect(requests.some(url=>url.includes('/snippets/'))).toBe(false);
+  }
+  expect(errors).toEqual([]);
+});
+
+test('clean headings, filter placement and lesson actions align without overflow',async({page})=>{
+  await page.goto('/lab/');await expect(page.locator('#loaded-count')).toHaveText('6');
+  await expect(page).toHaveTitle('maimai.party');
+  await expect(page.locator('.page-heading .eyebrow,.page-heading .lede,.brand-caption,.row-help,.sort-help,#mapping-note')).toHaveCount(0);
+  expect(await page.locator('#pattern-filter').evaluate(node=>!!node.closest('.browser-filters'))).toBe(true);
+  await page.locator('#patterns-tab').click();await expect(page.locator('.pattern-card')).toHaveCount(36);
+  const positions=await page.locator('.pattern-card').evaluateAll(cards=>cards.map(card=>({
+    row:Math.round(card.getBoundingClientRect().top),
+    open:card.querySelector('[data-open-pattern]').getBoundingClientRect().top,
+    find:card.querySelector('[data-find-pattern]').getBoundingClientRect().top,
+  })));
+  for(const row of new Set(positions.map(p=>p.row))){
+    const cards=positions.filter(p=>p.row===row);
+    for(const key of ['open','find'])expect(Math.max(...cards.map(p=>p[key]))-Math.min(...cards.map(p=>p[key]))).toBeLessThan(1);
+  }
+  await expect(page.locator('#patterns')).not.toContainText('Found automatically');
+  await page.locator('#about-tab').click();await expect(page.locator('.footer-rights,.sources')).toHaveCount(0);
+  await expect(page.getByRole('link',{name:'View on GitHub'})).toHaveAttribute('href','https://github.com/arussin/maimai-chart-browser');
+  expect(await page.locator('#about').evaluate(node=>node.lastElementChild.classList.contains('creator-support'))).toBe(true);
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
 });
 
 test('song rows retain same-level difficulty choices and update exact chart actions',async({page})=>{
@@ -361,7 +401,7 @@ test('pattern mappings connect rows, lesson discovery, filters and observed sect
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto('/lab/');await expect(page.locator('#loaded-count')).toHaveText('6');
   const requests=[];page.on('request',r=>requests.push(r.url()));
-  await expect(page.locator('#mapping-note')).toContainText('36 pattern / trait types checked');
+  await expect(page.locator('#mapping-note')).toHaveCount(0);
   await expect(page.locator('.song-row>.chart-summary>.chart-flow svg')).toHaveCount(6);
   const id='pattern.two_position_alternation';await selectPatterns(page,[id]);
   const rows=page.locator('#songs .song-row');expect(await rows.count()).toBeGreaterThan(0);
@@ -460,7 +500,7 @@ test('BPM sorting keeps missing values last and completed lessons are visible',a
 });
 
 // Keep every lesson covered while giving each small group an independent failure report.
-for(let batch=0;batch<6;batch++)test(`all 36 lessons play, step, switch contrasts and preserve privacy (group ${batch+1}/6)`,async({page})=>{
+for(let batch=0;batch<6;batch++)test(`all 36 primary lessons play, step and preserve privacy (group ${batch+1}/6)`,async({page})=>{
   test.setTimeout(60000);
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto('/lab/?view=patterns');await expect(page.locator('.pattern-card')).toHaveCount(36);
@@ -473,8 +513,8 @@ for(let batch=0;batch<6;batch++)test(`all 36 lessons play, step, switch contrast
   expect(ids).toHaveLength(36);
   for(const id of ids.slice(batch*6,(batch+1)*6)){
     await page.locator('[data-open-pattern="'+id+'"]').click();
-    for(const name of ['Example','Contrasting example']){
-      await dialog.getByRole('button',{name,exact:true}).click();
+    {
+      await expect(dialog.getByRole('button',{name:'Contrasting example',exact:true})).toHaveCount(0);
       const art=dialog.locator('.demo-stage>.lesson-art');await expect(art).toBeVisible();
       const before=await art.locator('.lesson-playhead').getAttribute('x1');
       await dialog.getByRole('button',{name:'Step',exact:true}).click();expect(await art.locator('.lesson-playhead').getAttribute('x1')).not.toBe(before);
@@ -488,14 +528,13 @@ for(let batch=0;batch<6;batch++)test(`all 36 lessons play, step, switch contrast
   expect(errors).toEqual([]);expect(requests).toEqual([]);
 });
 
-test('lesson contrasts keep equal graph scales and work with reduced motion',async({page})=>{
+test('primary lesson charts retain readable scales and work with reduced motion',async({page})=>{
   await page.emulateMedia({reducedMotion:'reduce'});await page.goto('/lab/?view=patterns&pattern=trait.high_onset_density');
   const dialog=page.locator('#pattern-dialog');await expect(dialog).toBeVisible();
   await expect(dialog.getByRole('button',{name:'Play demo',exact:true})).toBeHidden();
-  const labels=()=>dialog.locator('.lesson-art .lesson-axis').allTextContents(),scale=await labels();
-  await dialog.getByRole('button',{name:'Contrasting example',exact:true}).click();expect(await labels()).toEqual(scale);
+  await expect(dialog.getByRole('button',{name:'Contrasting example',exact:true})).toHaveCount(0);
   await dialog.getByRole('button',{name:'Step',exact:true}).click();await expect(dialog.locator('.demo-progress')).toContainText('1 second');
-  await expect(dialog.locator('.lesson-reading')).toContainText('3 inputs / s');
+  await expect(dialog.locator('.lesson-reading')).toContainText('12 inputs / s');
   expect((await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21aa']).analyze()).violations).toEqual([]);
   await page.evaluate(()=>document.documentElement.style.fontSize='200%');
   expect(await dialog.evaluate(n=>n.scrollWidth<=n.clientWidth)).toBe(true);

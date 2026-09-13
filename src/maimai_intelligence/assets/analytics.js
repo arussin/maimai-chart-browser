@@ -97,8 +97,9 @@
     notice.hidden = true; updateStatus();
     if (dialog.open) dialog.close();
   }
-  settings.hidden = false;
-  settings.onclick = () => { notice.hidden = true; updateStatus(); dialog.showModal(); };
+  settings.removeAttribute('aria-disabled');
+  document.getElementById('analytics-unavailable').hidden = true;
+  settings.onclick = () => { window.maimaiSettings.close(); notice.hidden = true; updateStatus(); dialog.showModal(); };
   notice.querySelector('a[href="#privacy"]').onclick = event => {
     event.preventDefault(); notice.hidden = true;
     document.getElementById('about-tab')?.click();
@@ -108,7 +109,7 @@
     privacy.scrollIntoView({block: 'start'});
   };
   document.getElementById('analytics-close').onclick = () => dialog.close();
-  dialog.addEventListener('close', () => settings.focus());
+  dialog.addEventListener('close', () => window.maimaiSettings.focus());
   for (const button of document.querySelectorAll('[data-analytics-choice]'))
     button.onclick = () => choose(button.dataset.analyticsChoice);
   window.addEventListener('maimai:viewchange', trackView);

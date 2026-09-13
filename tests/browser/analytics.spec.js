@@ -36,8 +36,9 @@ async function ready(page,path='/lab/',origin='https://maimai.party'){
   else await expect(page.locator('#explore-search')).toBeVisible();
 }
 async function allow(page){await page.locator('#analytics-notice [data-analytics-choice=granted]').click();}
+async function settings(page){await page.locator('#settings-toggle').click();await page.locator('#analytics-settings').click();}
 async function off(page){
-  await page.locator('#analytics-settings').click();
+  await settings(page);
   await page.locator('#analytics-dialog [data-analytics-choice=denied]').click();
 }
 async function events(page){return page.evaluate(()=>(window.dataLayer||[]).filter(x=>x[0]==='event').map(x=>Array.from(x)));}
@@ -53,7 +54,9 @@ test('analytics never loads on local, insecure or unrelated preview origins',asy
   for(const origin of ['http://127.0.0.1:8766','http://maimai.party','https://preview.invalid']){
     await page.goto(origin+'/');
     await expect(page.locator('.party-footer')).toBeAttached();
-    await expect(page.locator('#analytics-settings')).toBeHidden();
+    await page.locator('#settings-toggle').click();
+    await expect(page.locator('#analytics-settings')).toHaveAttribute('aria-disabled','true');
+    await expect(page.locator('#analytics-unavailable')).toBeVisible();
     await expect(page.locator('#analytics-notice')).toBeHidden();
     expect(await page.evaluate(()=>({storage:localStorage.length,tag:!!window.dataLayer}))).toEqual({storage:0,tag:false});
   }
@@ -120,7 +123,7 @@ for(const signal of ['globalPrivacyControl','doNotTrack'])test('analytics honors
   },{key:storageKey,record:granted,signal});
   const external=await hosted(context);await ready(page);
   await expect(page.locator('#analytics-notice')).toBeHidden();
-  await page.locator('#analytics-settings').click();
+  await settings(page);
   await expect(page.locator('#analytics-status')).toContainText('your browser requests privacy');
   await expect(page.locator('#analytics-dialog [data-analytics-choice=granted]')).toBeDisabled();
   expect(external).toEqual([]);
@@ -145,7 +148,7 @@ test('analytics choice is synchronized across tabs and may be enabled again',asy
   await other.waitForFunction(()=>window.__analyticsStubLoaded);
   await off(page);await other.waitForFunction(id=>window['ga-disable-'+id]===true,measurementId);
   const before=await events(other);await other.locator('#patterns-tab').click();expect(await events(other)).toEqual(before);
-  await page.locator('#analytics-settings').click();await page.locator('#analytics-dialog [data-analytics-choice=granted]').click();
+  await settings(page);await page.locator('#analytics-dialog [data-analytics-choice=granted]').click();
   await other.waitForFunction(id=>window['ga-disable-'+id]===false,measurementId);
   expect((await events(other)).at(-1)[2].page_location).toBe('https://maimai.party/patterns');
   expect(external.filter(x=>x.url===sdkURL)).toHaveLength(2);
@@ -159,12 +162,19 @@ test('analytics notice, privacy text and settings support keyboard, screen reade
   await page.locator('#analytics-notice a').focus();await page.keyboard.press('Enter');
   await expect(page.locator('#privacy')).toHaveAttribute('open','');
   await expect(page.locator('#privacy summary')).toBeFocused();
-  await page.locator('#analytics-settings').focus();await page.keyboard.press('Enter');
+  await page.locator('#settings-toggle').focus();await page.keyboard.press('Enter');
+  await expect(page.locator('#analytics-settings')).toBeFocused();
+  expect((await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21aa']).analyze()).violations).toEqual([]);
+  await page.keyboard.press('Enter');
   await expect(page.locator('#analytics-dialog')).toBeVisible();
   expect((await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21aa']).analyze()).violations).toEqual([]);
   expect(await page.locator('#analytics-dialog').evaluate(el=>el.scrollWidth<=el.clientWidth)).toBe(true);
   await page.screenshot({path:testInfo.outputPath('analytics-settings.png')});
-  await page.keyboard.press('Escape');await expect(page.locator('#analytics-settings')).toBeFocused();
+  await page.keyboard.press('Escape');await expect(page.locator('#settings-toggle')).toBeFocused();
+  await page.keyboard.press('Enter');await page.keyboard.press('Escape');await expect(page.locator('#settings-menu')).toBeHidden();
+  await expect(page.locator('#settings-toggle')).toBeFocused();
+  await page.keyboard.press('Enter');await page.locator('.footer-project p').click();await expect(page.locator('#settings-menu')).toBeHidden();
+  await expect(page.locator('#analytics-dialog')).toBeHidden();
 });
 
 test('analytics Google tag serializes safe pages and honors opt-out, including a delayed script',async({page,context})=>{
@@ -186,9 +196,21 @@ test('analytics Google tag serializes safe pages and honors opt-out, including a
   const deferred=await context.newPage();let release;
   const gate=new Promise(resolve=>{release=resolve;});
   await deferred.route(sdkURL,async route=>{await gate;await route.fulfill({contentType:'application/javascript',body:sdk});});
-  await ready(deferred);await deferred.locator('#analytics-settings').click();
+  await ready(deferred);await settings(deferred);
   await deferred.locator('#analytics-dialog [data-analytics-choice=granted]').click();
   await off(deferred);release();
   await deferred.waitForTimeout(6500);await deferred.goto('about:blank');
   expect(external).toHaveLength(count);
+});
+
+test('settings work before the catalog loads and after a catalog failure',async({page,context})=>{
+  const external=await hosted(context);
+  let release;const gate=new Promise(resolve=>{release=resolve;});
+  await page.route('**/manifest.json',async route=>{await gate;await route.fulfill({status:503,body:'Unavailable'});});
+  await page.goto('https://maimai.party/lab/?view=about',{waitUntil:'domcontentloaded'});
+  await settings(page);await expect(page.locator('#analytics-dialog')).toBeVisible();
+  await page.keyboard.press('Escape');await expect(page.locator('#settings-toggle')).toBeFocused();
+  release();await expect(page.locator('#lab-status')).toContainText('could not be loaded');
+  await settings(page);await expect(page.locator('#analytics-dialog')).toBeVisible();
+  expect(external).toEqual([]);
 });

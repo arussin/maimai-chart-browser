@@ -1,4 +1,4 @@
-"""Public chart browsing, pattern reference and experimental passage comparisons."""
+"""Public chart browsing, pattern reference and chart comparisons."""
 
 from __future__ import annotations
 
@@ -33,6 +33,7 @@ def review_scripts():
             .replace("__MAIMAI_PATTERN_LESSONS__", lessons)
             for name in (
                 "view-navigation.js",
+                "settings-menu.js",
                 "chart-visuals.js",
                 "pattern-library.js",
                 "challenge-matching.js",
@@ -99,6 +100,7 @@ def render_review(
     html = assets.joinpath("challenge-review.html").read_text("utf-8")
     return (
         html.replace("__CSS__", css)
+        .replace("__SETTINGS_MENU__", assets.joinpath("settings-menu.html").read_text("utf-8"))
         .replace("__SITE_BRAND__", assets.joinpath("site-brand.html").read_text("utf-8"))
         .replace(
             "__SUPPORT_FOOTER__",
