@@ -6,6 +6,7 @@ import shutil
 import tempfile
 from pathlib import Path
 
+from maimai_intelligence import player_data
 from maimai_intelligence.lab import build_lab
 from maimai_intelligence.mai_notes import prepare_links
 from maimai_intelligence.public_release import build_public_release
@@ -27,6 +28,20 @@ build_site(pack, root, catalog_version="synthetic-v2")
 # Reset default while retaining both release URLs.
 build_site(pack, root, catalog_version="synthetic-v1")
 atomic_json(Path("output/personal-fixture.json"), bundle)
+player_data.write(
+    Path("output/player-accessibility.gz"),
+    player_data.seal(
+        player_data.empty(
+            {
+                "provider": "kamaitachi",
+                "game": "maimaidx",
+                "username": "fixture",
+                "displayName": "Synthetic Player",
+                "key": "kamaitachi:maimaidx:fixture",
+            }
+        )
+    ),
+)
 build_lab(write_package(Path("output/lab-fixture")), root / "lab", catalog_version="fixture-v5")
 community_charts = []
 for key, (body, _) in CASES.items():

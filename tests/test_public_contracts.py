@@ -111,6 +111,10 @@ process.stdout.write(JSON.stringify({merged,offer:core.offer(merged)}));
             timeout=20,
         )
         merged = player_data.merge(newer, older)
+        packed = player_data.encode(merged)
+        self.assertEqual(packed[4:8], b"\0\0\0\0")
+        self.assertEqual(packed[9], 255, "Exports must not depend on the host OS")
+        self.assertEqual(player_data.decode(packed), merged)
         self.assertEqual(
             json.loads(result.stdout), {"merged": merged, "offer": player_data.offer(merged)}
         )

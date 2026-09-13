@@ -195,6 +195,17 @@ test('analytics notice, privacy text and settings support keyboard, screen reade
   await expect(page.locator('#analytics-dialog')).toBeHidden();
 });
 
+test('imported player card remains accessible outside the Settings action menu',async({page,context})=>{
+  await hosted(context);await ready(page);
+  await page.locator('input[type=file]').setInputFiles(fileURLToPath(new URL('../../output/player-accessibility.gz',import.meta.url)));
+  await page.getByRole('button',{name:'Import data',exact:true}).click();
+  await expect(page.locator('.player-dialog')).toBeHidden();
+  await page.locator('#settings-toggle').click();
+  await expect(page.locator('#player-status')).toBeVisible();
+  await expect(page.getByRole('menu',{name:'Settings'})).toBeVisible();
+  expect((await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21aa']).analyze()).violations).toEqual([]);
+});
+
 test('issue reporting supports keyboard access in public and personal browsers without sending page data',async({page,context})=>{
   const external=await hosted(context),issueURL='https://github.com/arussin/maimai-chart-browser/issues/new',requests=[];
   await context.route(issueURL,async route=>{
