@@ -188,8 +188,8 @@ test('decimal constants sort numerically with unknowns last and follow difficult
 test('complete dictionary supports demos, keyboard close and stable links',async({page})=>{
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto('/lab/?version=fixture-v5');await page.locator('#patterns-tab').click();
-  await expect(page.locator('#pattern-list .pattern-card')).toHaveCount(36);
-  await expect(page.locator('#pattern-count')).toHaveText('36 lessons found');
+  await expect(page.locator('#pattern-list .pattern-card')).toHaveCount(56);
+  await expect(page.locator('#pattern-count')).toHaveText('56 lessons found');
   const requests=[];page.on('request',r=>requests.push(r.url()));
   await page.locator('#pattern-search').fill('two-position');
   await page.locator('[data-open-pattern="pattern.two_position_alternation"]').click();
@@ -202,7 +202,7 @@ test('complete dictionary supports demos, keyboard close and stable links',async
   await expect(page.locator('[data-open-pattern="pattern.two_position_alternation"]')).toBeFocused();
   await page.locator('#pattern-search').fill('umiyuri');await page.locator('[data-open-pattern="pattern.umiyuri"]').click();
   await expect(dialog).toContainText('pair → intervening tap → next pair');await expect(dialog.getByRole('button',{name:'Play demo'})).toBeVisible();
-  await expect(dialog.getByRole('button',{name:'Contrasting example',exact:true})).toHaveCount(0);await expect(dialog.locator('details')).toHaveCount(0);
+  await expect(dialog.getByRole('button',{name:'Contrasting example',exact:true})).toHaveCount(0);await expect(dialog.locator('summary')).toHaveText('Pattern references');
   expect(requests).toEqual([]);expect(errors).toEqual([]);
   await page.goto(link);await expect(dialog).toBeVisible();await expect(dialog).toContainText('two-position alternation');
 });
@@ -338,7 +338,7 @@ test('clean headings, filter placement and lesson actions align without overflow
     expect(layout.pattern.left).toBeGreaterThan(layout.level.right);
   }
   for(const tab of layout.tabs)expect(tab.bottom-tab.textBottom).toBeLessThanOrEqual(10);
-  await page.locator('#patterns-tab').click();await expect(page.locator('.pattern-card')).toHaveCount(36);
+  await page.locator('#patterns-tab').click();await expect(page.locator('.pattern-card')).toHaveCount(56);
   const positions=await page.locator('.pattern-card').evaluateAll(cards=>cards.map(card=>({
     row:Math.round(card.getBoundingClientRect().top),
     open:card.querySelector('[data-open-pattern]').getBoundingClientRect().top,
@@ -519,18 +519,18 @@ test('BPM sorting keeps missing values last and completed lessons are visible',a
 });
 
 // Keep every lesson covered while giving each small group an independent failure report.
-for(let batch=0;batch<6;batch++)test(`all 36 primary lessons play, step and preserve privacy (group ${batch+1}/6)`,async({page})=>{
+for(let batch=0;batch<8;batch++)test(`all 56 primary lessons play, step and preserve privacy (group ${batch+1}/8)`,async({page})=>{
   test.setTimeout(60000);
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
-  await page.goto('/lab/?view=patterns');await expect(page.locator('.pattern-card')).toHaveCount(36);
+  await page.goto('/lab/?view=patterns');await expect(page.locator('.pattern-card')).toHaveCount(56);
   await page.locator('#pattern-scope').selectOption('traits');await expect(page.locator('.pattern-card')).toHaveCount(14);
-  await page.locator('#pattern-scope').selectOption('patterns');await expect(page.locator('.pattern-card')).toHaveCount(22);
+  await page.locator('#pattern-scope').selectOption('patterns');await expect(page.locator('.pattern-card')).toHaveCount(42);
   await page.locator('#pattern-scope').selectOption('all');
   const ids=await page.locator('[data-open-pattern]').evaluateAll(nodes=>nodes.map(n=>n.dataset.openPattern)),requests=[];
   page.on('request',r=>requests.push(r.url()));
   const dialog=page.locator('#pattern-dialog');
-  expect(ids).toHaveLength(36);
-  for(const id of ids.slice(batch*6,(batch+1)*6)){
+  expect(ids).toHaveLength(56);
+  for(const id of ids.slice(batch*7,(batch+1)*7)){
     await page.locator('[data-open-pattern="'+id+'"]').click();
     {
       await expect(dialog.getByRole('button',{name:'Contrasting example',exact:true})).toHaveCount(0);
@@ -577,7 +577,7 @@ test('public artwork sits left of rows, versions retain accessible multi-select 
   await versions.getByRole('checkbox',{name:'DX',exact:true}).check();
   await expect(page.locator('#version-summary')).toContainText('2 versions');
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
-  expect(requests.filter(url=>new URL(url).origin!=='http://127.0.0.1:8766')).toEqual([]);expect(errors).toEqual([]);
+  expect(requests.filter(url=>new URL(url).origin!==new URL(page.url()).origin)).toEqual([]);expect(errors).toEqual([]);
 });
 
 test('unavailable jacket files fall back without breaking chart interactions',async({page})=>{
@@ -658,7 +658,7 @@ test('searchable pattern multi-select searches aliases, unions results and prese
   const a='pattern.two_position_alternation',b='trait.steady_density',ids=()=>page.locator('.song-row').evaluateAll(rows=>rows.map(r=>r.dataset.chartId).sort());
   await selectPatterns(page,[a]);const first=await ids();await selectPatterns(page,[b]);const second=await ids();expect(first.length).toBeGreaterThan(0);expect(second.length).toBeGreaterThan(0);
   await page.locator('#pattern-filter-summary').click();await expect.poll(()=>page.locator('.pattern-filter-panel').evaluate(el=>{const b=el.getBoundingClientRect();return b.top>=0&&b.bottom<=innerHeight+1;})).toBe(true);const search=page.locator('#pattern-filter-search');await search.fill('TRILL');
-  await expect(page.locator('#pattern-filter-options label:visible')).toHaveCount(1);await search.press('ArrowDown');const trill=page.locator('[data-pattern-filter="'+a+'"]');await expect(trill).toBeFocused();await page.keyboard.press('Space');await expect(trill).toBeChecked();
+  await expect(page.locator('#pattern-filter-options label:visible')).toHaveCount(2);await search.fill('two-position');await search.press('ArrowDown');const trill=page.locator('[data-pattern-filter="'+a+'"]');await expect(trill).toBeFocused();await page.keyboard.press('Space');await expect(trill).toBeChecked();
   await expect(page.locator('#pattern-filter-summary')).toHaveText('2 patterns selected');expect(await ids()).toEqual([...new Set([...first,...second])].sort());
   await search.fill('chord');await expect(page.locator('[data-pattern-filter="pattern.simultaneous_group"]')).toBeVisible();await expect(page.locator('[data-pattern-filter="pattern.chord_stream"]')).toBeVisible();
   await search.fill('no-such-pattern-xyz');await expect(page.locator('#pattern-filter-empty')).toBeVisible();await expect(page.locator('#pattern-filter-summary')).toHaveText('2 patterns selected');

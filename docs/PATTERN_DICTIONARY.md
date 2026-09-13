@@ -1,5 +1,18 @@
 # Completing the pattern dictionary
 
+The current implementation has **56 English lessons: 42 patterns and 14 chart
+traits**, with English search aliases shared by dictionary and chart discovery.
+The 0.3.0 extension adds ten named community motifs and ten structural forms,
+each with an authored positive, confusing negative, and explicit experimental
+recognition scope. Named forms retain community attribution. Neither their
+names nor their reference songs substitute for event-based recognition.
+See [the additions, reference passages and validation](patterns/COMMUNITY_PATTERNS.md).
+
+The remaining sections document the earlier 0.2.0 pass and its baseline mapping;
+they are historical results, not claims about a newly published release.
+
+## Original 0.2.0 teaching pass
+
 The dictionary has 36 lessons: 22 patterns and 14 chart traits. All 36 now have
 an authored example and a contrasting example, explanatory text, variants and
 limits, and interactive playback. This completes the authored teaching pass;

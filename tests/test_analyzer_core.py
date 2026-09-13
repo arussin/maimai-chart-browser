@@ -307,7 +307,7 @@ class AnalyzerContractTests(unittest.TestCase):
 class AnalyzerPatternTests(unittest.TestCase):
     def test_registry_requires_explicit_rules_and_preserves_experimental_qualification(self):
         entries = pattern_registry()["entries"]
-        self.assertEqual(len(entries), 36)
+        self.assertEqual(len(entries), 56)
         enabled = [entry for entry in entries if entry["automatic_tagging_enabled"]]
         from maimai_analyzer.patterns import IMPLEMENTED
 

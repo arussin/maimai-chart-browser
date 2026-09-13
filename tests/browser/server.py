@@ -16,7 +16,7 @@ class Server(ThreadingHTTPServer):
 
 
 Server(
-    ("127.0.0.1", 8766),
+    ("127.0.0.1", int(os.environ.get("MAIMAI_TEST_PORT", "8766"))),
     partial(
         Handler,
         directory=str(

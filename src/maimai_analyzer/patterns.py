@@ -9,18 +9,23 @@ from importlib.resources import files
 
 from .contracts import content_hash
 from .flow import is_known, quantize
+from .pattern_community import CATALOG as COMMUNITY_CATALOG
+from .pattern_community import DEFINITIONS as COMMUNITY_DEFINITIONS
+from .pattern_community import detect_community, registry_entries
+from .pattern_community import supported as community_supported
 from .pattern_compounds import DEFINITIONS as COMPOUND_DEFINITIONS
 from .pattern_compounds import detect_compounds
 from .pattern_intervals import DEFINITIONS as INTERVAL_DEFINITIONS
 from .pattern_intervals import detect_intervals
+from .pattern_names import english_aliases
 from .pattern_sequences import DEFINITIONS as SEQUENCE_DEFINITIONS
 from .pattern_sequences import detect_sequences
 from .pattern_traits import DEFINITIONS as TRAIT_DEFINITIONS
 from .pattern_traits import detect_traits
 from .rational import decode_rational
 
-REGISTRY_VERSION = "0.2.0-synthetic-experimental"
-DETECTOR_VERSION = "0.2.0"
+REGISTRY_VERSION = "0.3.0-synthetic-experimental"
+DETECTOR_VERSION = "0.3.0"
 MAX_OCCURRENCES = 4096
 IMPLEMENTED = {
     "pattern.two_position_alternation": (
@@ -97,6 +102,7 @@ IMPLEMENTED.update(SEQUENCE_DEFINITIONS)
 IMPLEMENTED.update(INTERVAL_DEFINITIONS)
 IMPLEMENTED.update(TRAIT_DEFINITIONS)
 IMPLEMENTED.update(COMPOUND_DEFINITIONS)
+IMPLEMENTED.update(COMMUNITY_DEFINITIONS)
 # A fully observed transcription has a measurable event span even when audio
 # duration is unavailable. Preserve that basis explicitly, never invent silence.
 for _pattern_id in (
@@ -119,11 +125,20 @@ def pattern_registry() -> dict:
         files("maimai_analyzer").joinpath("pattern_registry.seed.json").read_text("utf-8")
     )
     entries = []
-    for original in seed["entries"]:
+    for original in [*seed["entries"], *registry_entries()]:
+        community = original["id"] in COMMUNITY_DEFINITIONS
+        named = original["id"] in COMPOUND_DEFINITIONS or (
+            community and COMMUNITY_CATALOG[original["id"].removeprefix("pattern.")][2]
+        )
         entry = {
             **original,
+            "aliases": english_aliases(original),
             "pattern_id": original["id"],
-            "definition_version": "0.1.0" if original["id"] in LEGACY_INPUT_PATTERNS else "0.2.0",
+            "definition_version": "0.3.0"
+            if community
+            else "0.1.0"
+            if original["id"] in LEGACY_INPUT_PATTERNS
+            else "0.2.0",
             "definition_sources": original["source_ids"],
             "reference_sections": [],
             "detector_evaluation": {
@@ -140,13 +155,9 @@ def pattern_registry() -> dict:
             required, grammar = IMPLEMENTED[original["id"]]
             entry.update(
                 {
-                    "name_origin": original["name_origin"]
-                    if original["id"] in COMPOUND_DEFINITIONS
-                    else "project_defined",
+                    "name_origin": original["name_origin"] if named else "project_defined",
                     "definition_status": "operational_experimental",
-                    "recognition_scope": "scoped_community_form"
-                    if original["id"] in COMPOUND_DEFINITIONS
-                    else "operational_rule",
+                    "recognition_scope": "scoped_community_form" if named else "operational_rule",
                     "detector_status": "experimental",
                     "automatic_tagging_enabled": True,
                     "required_capabilities": required,
@@ -358,11 +369,13 @@ def detect_patterns(chart: dict, flow: dict, metrics: dict, registry: dict) -> t
     found.update(detect_sequences(chart))
     found.update(detect_intervals(chart))
     found.update(detect_compounds(chart))
+    found.update(detect_community(chart))
     eligible = {
         definition["pattern_id"]
         for definition in registry["entries"]
         if definition["automatic_tagging_enabled"]
         and set(definition["required_capabilities"]) <= caps
+        and community_supported(chart, definition["pattern_id"])
     }
     found.update(detect_traits(chart, found, eligible))
     start, end = chart["span_start_us"], chart["span_end_us"]
@@ -411,6 +424,7 @@ def detect_patterns(chart: dict, flow: dict, metrics: dict, registry: dict) -> t
             definition["automatic_tagging_enabled"]
             and set(definition["required_capabilities"]) <= caps
             and chart["source"]["identity_status"] in {"exact", "reviewed"}
+            and community_supported(chart, pattern_id)
             and (
                 pattern_id != "pattern.variable_slide_wait"
                 or (

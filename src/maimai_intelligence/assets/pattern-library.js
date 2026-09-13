@@ -20,7 +20,7 @@ function chartArt(model,label,{animated=false,maximum=null}={}){
     for(const[start,end,p]of model.holds)svg.append(svgNode('rect',{x:x(start),y:y(p)-6,width:x(end)-x(start),height:12,rx:4,'class':'lesson-hold'}));
     model.slides.forEach(([head,start,end,path],i)=>{
       const sy=32+(positions.length+i)*26;
-      svg.append(svgNode('text',{x:5,y:sy+4,'class':'lesson-label'},path.join('→')),
+      svg.append(svgNode('text',{x:5,y:sy+4,'class':'lesson-label'},path.join('→')+(model.slide_labels?.[i]?' '+model.slide_labels[i]:'')),
         svgNode('line',{x1:x(head),x2:x(start),y1:sy,y2:sy,'class':'lesson-wait'}),
         svgNode('line',{x1:x(start),x2:x(end),y1:sy,y2:sy,'class':'lesson-move'}),
         svgNode('path',{d:`M${x(end)-5} ${sy-5}L${x(end)} ${sy}L${x(end)-5} ${sy+5}`,'class':'lesson-arrow'}));
@@ -43,7 +43,7 @@ function chartArt(model,label,{animated=false,maximum=null}={}){
 }
 function cabinetModel(model){
   const unit=500000,point=p=>{const a=(p-.5)*Math.PI/4;return[Math.sin(a),-Math.cos(a)];};
-  return{events:model.notes.map(([t,position,role])=>({time_us:t*unit,position,role:role==='star'?'star_tap':'tap'})),holds:model.holds.map(([start,end,position])=>({start_us:start*unit,end_us:end*unit,position})),slides:model.slides.map(([head,start,end,path])=>({wait_start_us:head*unit,movement_start_us:start*unit,movement_end_us:end*unit,geometry:{points:path.map(point)}}))};
+  return{events:model.notes.map(([t,position,role])=>({time_us:t*unit,position,role:role==='star'?'star_tap':'tap'})),holds:model.holds.map(([start,end,position])=>({start_us:start*unit,end_us:end*unit,position})),slides:model.slides.map(([head,start,end,path],i)=>({wait_start_us:head*unit,movement_start_us:start*unit,movement_end_us:end*unit,geometry:{points:model.slide_points?.[i]||path.map(point)}}))};
 }
 function render(){
   const search=normalize(el('pattern-search').value),scope=el('pattern-scope').value;
@@ -99,6 +99,7 @@ function show(id,button=null,navigate=true){
   const header=make('header'),identity=make('div'),title=make('h2',p.display_name);title.id='pattern-title';identity.append(make('p',p.kind==='trait'?'CHART TRAIT':'PATTERN','eyebrow'),title,make('p',aliases(p),'muted'));
   const close=make('button','Close');close.setAttribute('aria-label','Close pattern');close.onclick=()=>dialog.close();header.append(identity,close);dialog.append(header);if(!dialog.open)dialog.showModal();
   dialog.append(make('p',lesson.summary,'demo-summary'),demo(lesson),make('h3','Variants and limits','lesson-subheading'),make('p',lesson.variants,'lesson-variants'));
+  if(lesson.sources?.length){const details=make('details'),list=make('ul');details.append(make('summary','Pattern references'));for(const source of lesson.sources){if(!source.url?.startsWith('https://'))continue;const item=make('li'),link=make('a',source.label);link.href=source.url;link.target='_blank';link.rel='noopener noreferrer';link.referrerPolicy='no-referrer';item.append(link);list.append(item);}details.append(list);dialog.append(details);}
   if(window.maimaiChartOverview?.coverage.get(id)){const find=make('button','Find charts with this pattern');find.onclick=()=>{dialog.close();onDiscover(id);};dialog.append(find);}
   close.focus();if(navigate)onNavigate(id);return true;
 }

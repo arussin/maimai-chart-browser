@@ -12,10 +12,10 @@ from maimai_intelligence.research_overview import chart_overview, overview_packa
 from maimai_intelligence.snapshots import atomic_json, canonical
 
 
-def write_package(directory, *, grouped=False, constants=False):
+def write_package(directory, *, grouped=False, constants=False, charts=None):
     root = Path(directory)
     root.mkdir(parents=True, exist_ok=True)
-    raw = synthetic_charts()
+    raw = synthetic_charts() if charts is None else charts
     profiles = [profile_chart(chart) for chart in raw]
     rows, bpms = [], {}
     for index, profile in enumerate(profiles):
@@ -31,8 +31,12 @@ def write_package(directory, *, grouped=False, constants=False):
         container = 3 if grouped and index == 5 else index
         if grouped and index == 5:
             profile.update(title="Fictional study 3", source_container_id="3")
-        source_hash = str(container) * 64
-        bpms[source_hash] = [120, 120, 180, 160, 160, None][container]
+        source_hash = (
+            str(container) * 64
+            if container < 10
+            else hashlib.sha256(str(container).encode()).hexdigest()
+        )
+        bpms[source_hash] = [120, 120, 180, 160, 160, None][container % 6]
         rows.append(
             {
                 "input_id": profile["input_id"],

@@ -16,7 +16,7 @@ from .rational import RationalEncodingError, RationalPair, decode_rational, enco
 SCHEMA_VERSION = "1.0.0"
 EXACT_RATIONAL_SCHEMA_VERSION = "1.1.0"
 SUPPORTED_SCHEMA_VERSIONS = frozenset({SCHEMA_VERSION, EXACT_RATIONAL_SCHEMA_VERSION})
-ANALYZER_VERSION = "0.2.0-experimental"
+ANALYZER_VERSION = "0.3.0-experimental"
 MAX_EVENTS = 100_000
 MAX_DURATION_US = 3_600_000_000
 MAX_INPUT_BYTES = 32 * 1024 * 1024
@@ -504,7 +504,7 @@ def validate_profile(profile: dict, expected_identity: dict | None = None) -> No
             or profile["schema_version"] not in SUPPORTED_SCHEMA_VERSIONS
         ):
             raise ChartInputError("Unsupported profile schema")
-        if profile["analyzer_version"] != ANALYZER_VERSION:
+        if profile["analyzer_version"] not in {ANALYZER_VERSION, "0.2.0-experimental"}:
             raise ChartInputError("Unsupported analyzer artifact version")
         if profile["format"] not in {"STD", "DX"}:
             raise ChartInputError("Invalid profile format identity")
@@ -559,7 +559,17 @@ def validate_profile(profile: dict, expected_identity: dict | None = None) -> No
                     raise ChartInputError("Unknown Flow mean cannot claim a known peak")
         if flow["segments"] and previous_end != end:
             raise ChartInputError("Flow segments must cover their stated span")
-        if not isinstance(profile["tags"], list) or len(profile["tags"]) != 36:
+        # Local imports avoid the contracts/patterns dependency cycle. Keep the
+        # earlier registry readable without accepting arbitrary tag identities.
+        from .pattern_community import DEFINITIONS as community_definitions
+        from .patterns import REGISTRY_VERSION, pattern_registry
+
+        expected_patterns = {p["pattern_id"] for p in pattern_registry()["entries"]}
+        if profile["registry_version"] == "0.2.0-synthetic-experimental":
+            expected_patterns -= community_definitions.keys()
+        elif profile["registry_version"] != REGISTRY_VERSION:
+            raise ChartInputError("Unsupported pattern registry version")
+        if not isinstance(profile["tags"], list) or len(profile["tags"]) != len(expected_patterns):
             raise ChartInputError("Profile must retain each registry truth state")
         pattern_ids = set()
         for tag in profile["tags"]:
@@ -575,6 +585,8 @@ def validate_profile(profile: dict, expected_identity: dict | None = None) -> No
                 raise ChartInputError("Invalid chart tag truth state")
             if tag["status"] == "unknown" and tag["occurrence_count"] is not None:
                 raise ChartInputError("Unknown tag cannot claim zero occurrences")
+        if pattern_ids != expected_patterns:
+            raise ChartInputError("Profile pattern identities differ from its registry")
         occurrence_ids = set()
         for occurrence in profile["occurrences"]:
             if (

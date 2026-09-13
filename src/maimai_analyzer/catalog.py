@@ -325,7 +325,7 @@ def _build_catalog(
         if (
             entry.get("naming_origin", entry.get("name_origin")) == "project_defined"
             or (
-                entry.get("pattern_id", entry.get("id")) == "pattern.umiyuri"
+                entry.get("name_origin") == "community_attested"
                 and entry.get("recognition_scope") == "scoped_community_form"
             )
         )
