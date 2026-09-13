@@ -18,6 +18,7 @@
     fitMenu();
     const entries = items();
     if (focus) entries[last ? entries.length - 1 : 0]?.focus();
+    else toggle.focus({preventScroll: true});
   }
   function fitMenu() {
     if (!menu.hidden) menu.style.maxHeight = Math.max(0, window.innerHeight - menu.getBoundingClientRect().top - 12) + 'px';
