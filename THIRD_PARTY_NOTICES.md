@@ -105,3 +105,10 @@ The owner update workflow retains the index source URL, capture/generation times
 and checksum, and publishes only exact chart-link identities. No simulator code,
 chart text, music, account records or scores from mai-notes are redistributed.
 The site and its contributors are also thanked in About.
+
+## Derakkuma microscope favicon
+
+The embedded favicon is AI-generated fan artwork created for maimai.party with
+OpenAI's image-generation tool. Derakkuma and maimai character rights remain
+with SEGA. This is not official SEGA artwork or an endorsement, and the software
+license does not relicense the underlying character rights.

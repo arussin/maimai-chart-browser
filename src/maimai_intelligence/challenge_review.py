@@ -117,6 +117,7 @@ def render_review(
     html = assets.joinpath("challenge-review.html").read_text("utf-8")
     return (
         html.replace("__CSS__", css)
+        .replace("__FAVICON__", assets.joinpath("favicon.html").read_text("utf-8"))
         .replace("__SETTINGS_MENU__", assets.joinpath("settings-menu.html").read_text("utf-8"))
         .replace("__SITE_BRAND__", assets.joinpath("site-brand.html").read_text("utf-8"))
         .replace(
