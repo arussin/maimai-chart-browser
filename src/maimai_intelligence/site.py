@@ -86,6 +86,9 @@ def build_site(pack, output, *, catalog_version, lab_package=None):
         content = assets.joinpath(name).read_text("utf-8")
         content = content.replace("__MAIMAI_CHART_THEME__", json.dumps(theme))
         if name == "index.html":
+            content = content.replace(
+                "__FAVICON__", assets.joinpath("favicon.html").read_text("utf-8")
+            )
             for script in ("settings-menu.js", "analytics.js", "support-checkout.js"):
                 revision = hashlib.sha256(
                     assets.joinpath(script).read_text("utf-8").encode("utf-8")
