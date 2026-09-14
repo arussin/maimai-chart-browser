@@ -32,6 +32,7 @@ function selectView(name){
   if(name==='catalog')catalog();else if(name==='compare')comparisonUI?.render();else if(name==='patterns')window.maimaiPatternLibrary.render();
 }
 const difficultyOrder=['BASIC','ADVANCED','EXPERT','MASTER','RE:MASTER'];
+const difficultyRank=c=>{const rank=difficultyOrder.indexOf(c.difficulty.toUpperCase());return rank<0?null:rank;};
 const collator=new Intl.Collator(undefined,{numeric:true,sensitivity:'base'});
 const chartConstant=c=>{const record=navigation.charts?.[c.chart_id],value=record?.chart_constant;return record?.source_hash===c.source_hash&&Number.isFinite(value)&&value>0&&value<=15?value:null;};
 const constantLabel=c=>chartConstant(c)==null?'—':chartConstant(c).toFixed(1);
@@ -42,7 +43,7 @@ const filters=['genre'],selectedVersions=new Set();
 let chartFilters,patternFilter;
 const versionLabel=value=>value.replace(/^maimai DX /,'DX ').replace(/^maimai /,'');
 const genreLabel=value=>(navigation.genres||[]).find(g=>g.id===value)?.label||'Uncategorized';
-const values={title:c=>displayTitle(c),artist:c=>c.artist,constant:chartConstant,bpm:c=>navigation.charts?.[c.chart_id]?.bpm??null,difficulty:c=>{const rank=difficultyOrder.indexOf(c.difficulty.toUpperCase());return rank<0?null:rank;},format:c=>c.format,genre:c=>genreLabel(folderValue(c,'genre')),version:c=>{const v=(navigation.versions||[]).indexOf(folderValue(c,'version'));return v<0?null:v;},speed:c=>c.demand.cadence.mean_onsets_s??null,peak:c=>{const record=overview.get(c);if(record&&Object.hasOwn(record,'flow_peak'))return record.flow_peak;const peaks=(record?.segments||[]).filter(s=>s[3]!=null&&s[4]>0).map(s=>s[3]);return peaks.length?Math.max(...peaks):null;}};
+const values={title:c=>displayTitle(c),artist:c=>c.artist,constant:chartConstant,bpm:c=>navigation.charts?.[c.chart_id]?.bpm??null,difficulty:c=>window.maimaiCatalogFilters.levelNumber(c.level),format:c=>c.format,genre:c=>genreLabel(folderValue(c,'genre')),version:c=>{const v=(navigation.versions||[]).indexOf(folderValue(c,'version'));return v<0?null:v;},speed:c=>c.demand.cadence.mean_onsets_s??null,peak:c=>{const record=overview.get(c);if(record&&Object.hasOwn(record,'flow_peak'))return record.flow_peak;const peaks=(record?.segments||[]).filter(s=>s[3]!=null&&s[4]>0).map(s=>s[3]);return peaks.length?Math.max(...peaks):null;}};
 Object.assign(values,{achievement:c=>personal?.record(c)?.achievement??null,grade:c=>personal?.gradeIndex(c)??null,rating:c=>personal?.record(c)?.rate??null,lastPlayed:c=>personal?.lastPlayed(c)??null});
 const selectedCharts=new Map(),expandedRows=new Set();
 const rowKey=c=>JSON.stringify([navigation.charts?.[c.chart_id]?.source_path||c.source_container_id||c.song_id,c.format]);
@@ -138,7 +139,7 @@ function catalog(focusKey=null){
     // and pagination. A default BASIC chart must not hide a MASTER PB or recent play.
     if(personalSort)return [...choices].sort(compareCharts)[0];
     const scored=personal?.enabled()?choices.filter(c=>personal.record(c)):[];
-    return [...(scored.length?scored:choices)].sort((a,b)=>(values.difficulty(a)??99)-(values.difficulty(b)??99)||a.chart_id.localeCompare(b.chart_id))[0];
+    return [...(scored.length?scored:choices)].sort((a,b)=>(difficultyRank(a)??99)-(difficultyRank(b)??99)||a.chart_id.localeCompare(b.chart_id))[0];
   }
   const rows=[...grouped].map(([key,choices])=>({key,choices,chart:chooseChart(key,choices)})).sort((a,b)=>compareCharts(a.chart,b.chart));
   if(focusKey)visible=Math.max(visible,rows.findIndex(row=>row.key===focusKey)+1);
@@ -152,7 +153,7 @@ function catalog(focusKey=null){
     const heading=make('div',undefined,'chart-row-heading'),videoLink=window.maimaiChartLinks.group(c);
     heading.append(window.maimaiChartArtwork.jacket(c),summary,overview.chips(c,3,patternFilter.ids()));if(videoLink)heading.append(videoLink);
     const picker=make('select');picker.className='row-difficulty';picker.id='row-difficulty-'+index;picker.setAttribute('aria-label','Difficulty for '+displayTitle(c)+' '+c.format);
-    for(const choice of [...choices].sort((a,b)=>(values.difficulty(a)??99)-(values.difficulty(b)??99)||a.chart_id.localeCompare(b.chart_id)))picker.append(new Option(choice.difficulty+' · '+(choice.level||'?'),choice.chart_id));
+    for(const choice of [...choices].sort((a,b)=>(difficultyRank(a)??99)-(difficultyRank(b)??99)||a.chart_id.localeCompare(b.chart_id)))picker.append(new Option(choice.difficulty+' · '+(choice.level||'?'),choice.chart_id));
     picker.value=c.chart_id;
     picker.onchange=()=>{selectedCharts.set(key,picker.value);catalog(key);[...el('songs').querySelectorAll('.row-difficulty')].find(p=>p.value===selectedCharts.get(key))?.focus();};
     const level=make('span',constantLabel(c),'chart-level chart-constant'),bpm=make('span',values.bpm(c)==null?'—':String(values.bpm(c)),'chart-bpm'),speed=make('span',values.speed(c)==null?'—':values.speed(c).toFixed(1),'chart-speed');
