@@ -3,6 +3,8 @@ import shutil
 import subprocess
 import tempfile
 import unittest
+import xml.etree.ElementTree as ET
+from html.parser import HTMLParser
 from importlib.resources import files
 from pathlib import Path
 from unittest.mock import patch
@@ -20,6 +22,11 @@ class PublicReleaseTests(unittest.TestCase):
         self.source.mkdir()
         for name in PUBLIC_FILES:
             (self.source / name).write_text("catalog-parts/ maimaiCatalogDetails", encoding="utf-8")
+        (self.source / "index.html").write_text(
+            "<!doctype html><html><head><title>maimai.party</title></head>"
+            '<body><h1>Find a chart</h1><div id="songs"></div></body></html>',
+            encoding="utf-8",
+        )
         self.raw = canonical({"package": {"status": "research_preview"}, "catalog": ["日本語"]})
         self.sha = hashlib.sha256(self.raw).hexdigest()
         self.path = f"catalogs/{self.sha}.json"
@@ -64,6 +71,40 @@ class PublicReleaseTests(unittest.TestCase):
         manifest = read_json(self.output / "manifest.json")
         self.assertEqual(manifest["default"], "accepted-v1")
         self.assertEqual([r["version"] for r in manifest["releases"]], ["accepted-v1", "older"])
+
+    def test_search_metadata_and_crawler_files_leave_visible_content_unchanged(self):
+        original = (self.source / "index.html").read_text("utf-8")
+        build_public_release(self.source, self.output)
+        published = (self.output / "index.html").read_text("utf-8")
+        self.assertEqual(original.split("</head>", 1)[1], published.split("</head>", 1)[1])
+
+        class HeadParser(HTMLParser):
+            def __init__(self):
+                super().__init__()
+                self.tags = []
+
+            def handle_starttag(self, tag, attrs):
+                self.tags.append((tag, dict(attrs)))
+
+        head = HeadParser()
+        head.feed(published.split("</head>", 1)[0])
+        descriptions = [a["content"] for t, a in head.tags if a.get("name") == "description"]
+        self.assertEqual(len(descriptions), 1)
+        self.assertIn("chart constants", descriptions[0])
+        self.assertEqual(
+            [a["href"] for t, a in head.tags if a.get("rel") == "canonical"],
+            ["https://maimai.party/"],
+        )
+        self.assertIn("maimai Chart Database &amp; Patterns", published)
+        # Parse only the fixed sitemap generated locally by the release builder.
+        sitemap = ET.parse(self.output / "sitemap.xml")  # noqa: S314
+        self.assertEqual(
+            [node.text for node in sitemap.findall(".//{*}loc")], ["https://maimai.party/"]
+        )
+        robots = (self.output / "robots.txt").read_text("utf-8")
+        self.assertIn("User-agent: *\nAllow: /", robots)
+        self.assertIn("Sitemap: https://maimai.party/sitemap.xml", robots)
+        self.assertNotIn("Disallow:", robots)
 
     def test_integrity_failure_does_not_write_any_output(self):
         (self.source / self.path).write_bytes(self.raw + b" ")

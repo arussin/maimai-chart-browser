@@ -38,7 +38,7 @@ const chartConstant=c=>{const record=navigation.charts?.[c.chart_id],value=recor
 const constantLabel=c=>chartConstant(c)==null?'—':chartConstant(c).toFixed(1);
 const sortFields={title:'Title',artist:'Artist',constant:'Constant',bpm:'BPM',difficulty:'Difficulty',format:'Format',genre:'Genre',version:'Version',speed:'Inputs / s',peak:'Peak inputs / s'};
 let sortRules=[{key:'title',direction:1}];
-const personalSorts={achievement:'Your achievement',grade:'Your grade',rating:'Your chart rating',lastPlayed:'Last recorded play'};
+const personalSorts={rating:'Your RT',achievement:'Your achievement',grade:'Your grade',lastPlayed:'Last recorded play'};
 const filters=['genre'],selectedVersions=new Set();
 let chartFilters,patternFilter;
 const versionLabel=value=>value.replace(/^maimai DX /,'DX ').replace(/^maimai /,'');

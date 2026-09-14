@@ -19,6 +19,12 @@ from .provider_mapping import validate_mapping
 from .snapshots import MAX_BYTES, atomic_json, read_json
 
 PART_BYTES = 8 * 1024 * 1024
+SEARCH_TITLE = "maimai Chart Database & Patterns | maimai.party"
+SEARCH_DESCRIPTION = (
+    "Explore maimai and maimai DX song data, chart constants, BPM, and chart patterns. "
+    "Compare charts and view your imported personal results."
+)
+CANONICAL_URL = "https://maimai.party/"
 PUBLIC_FILES = (
     "index.html",
     "challenge-review.css",
@@ -31,6 +37,30 @@ PUBLIC_FILES = (
     "player-data-core.js",
     "player-data.js",
 )
+
+
+def _search_metadata(raw):
+    """Describe the public app without adding or changing any page-body content."""
+    from html import escape
+
+    html = raw.decode("utf-8")
+    if html.count("</head>") != 1 or len(re.findall(r"<title>.*?</title>", html, re.S)) != 1:
+        raise ValueError("Expected a single public page head and title")
+    title, description = escape(SEARCH_TITLE, quote=True), escape(SEARCH_DESCRIPTION, quote=True)
+    html = re.sub(r"<title>.*?</title>", f"<title>{title}</title>", html, count=1, flags=re.S)
+    metadata = (
+        f'<meta name="description" content="{description}">\n'
+        f'<link rel="canonical" href="{CANONICAL_URL}">\n'
+        '<meta property="og:type" content="website">\n'
+        '<meta property="og:site_name" content="maimai.party">\n'
+        f'<meta property="og:title" content="{title}">\n'
+        f'<meta property="og:description" content="{description}">\n'
+        f'<meta property="og:url" content="{CANONICAL_URL}">\n'
+        '<meta name="twitter:card" content="summary">\n'
+        f'<meta name="twitter:title" content="{title}">\n'
+        f'<meta name="twitter:description" content="{description}">\n'
+    )
+    return html.replace("</head>", metadata + "</head>").encode("utf-8")
 
 
 def _read(source, name, limit):
@@ -56,6 +86,18 @@ def build_public_release(source, output):
     pending, releases, versions = {}, [], set()
     for name in PUBLIC_FILES:
         pending[name] = _read(source, name, 2 * 1024 * 1024)
+    pending["index.html"] = _search_metadata(pending["index.html"])
+    # The current public app has one canonical document. Do not submit every
+    # filter, comparison pair, personal state, or retained catalog version.
+    pending["robots.txt"] = (
+        f"User-agent: *\nAllow: /\n\nSitemap: {CANONICAL_URL}sitemap.xml\n".encode()
+    )
+    pending["sitemap.xml"] = (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+        f"  <url><loc>{CANONICAL_URL}</loc></url>\n"
+        "</urlset>\n"
+    ).encode()
     if b"maimaiCatalogDetails" not in pending["lab-loader.js"]:
         raise ValueError("Rebuild the browser with progressive loading before publishing")
     for entry in manifest["releases"]:
@@ -147,6 +189,8 @@ def build_public_release(source, output):
         b"/chart-details/*\n  Cache-Control: public, max-age=31536000, immutable\n"
         b"/media/*\n  Cache-Control: public, max-age=31536000, immutable\n"
         b"/manifest.json\n  Cache-Control: no-cache\n"
+        b"/robots.txt\n  Content-Type: text/plain; charset=utf-8\n  Cache-Control: no-cache\n"
+        b"/sitemap.xml\n  Content-Type: application/xml; charset=utf-8\n  Cache-Control: no-cache\n"
         b"/*\n  X-Content-Type-Options: nosniff\n  Referrer-Policy: no-referrer\n"
         b'  Permissions-Policy: payment=(self "https://buymeacoffee.com")\n'
     )

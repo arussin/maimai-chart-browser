@@ -44,6 +44,9 @@ test('personal sorts rank offscreen PB difficulties across the complete catalog 
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   await importOffscreenPBs(page);
   const rows=page.locator('#songs .song-row'),sort=key=>page.locator('.player-sorting [data-sort-key='+key+']');
+  await expect(page.locator('.player-sorting button').first()).toHaveAttribute('data-sort-key','rating');
+  await expect(sort('rating')).toHaveAccessibleName('Your RT unsorted');
+  await expect(sort('rating').locator('.sort-label')).toHaveText('Your RT');
   for(const [key,id]of [['achievement',6798],['grade',6798],['rating',6799],['lastPlayed',6799]]){
     await sort(key).click();
     await expect(sort(key)).toHaveAttribute('aria-label',/descending/);
