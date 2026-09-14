@@ -2,7 +2,8 @@
 
 This engine is opt-in. Every call requires an explicit `RatingPolicy`; it never
 guesses a current release, region, applicable version group, or lamp bonus.
-`calculations.py`, historical inputs, and the legacy selector remain unchanged.
+The engine uses the existing calculations and does not modify historical inputs
+or the legacy selector.
 
 Pass all eligible PBs, including uncounted entries, as `PersonalBest` values and
 exact chart variants as `RatingChart` values. Recorded rates are the immutable
@@ -43,7 +44,7 @@ and an `alternative_query` for the reusable Explore component.
 private `PracticeGoal`/`Prerequisite` inputs and attempt-only reachability heuristic.
 Selection ranks conservative score bounds and recomputes context diversity.
 Unknown observations retain null values and explicit scoring-term coverage.
-See [the full scoring audit and contract](../../../docs/SCORING_ENGINE_STATUS.md)
+See [the full scoring audit and contract](../../../docs/source-notes/SCORING_ENGINE_STATUS.md)
 for weights, thresholds, CLI inputs, synthetic review fixtures and remaining gaps.
 
 ## Source check, 2026-09-10
@@ -54,11 +55,11 @@ for weights, thresholds, CLI inputs, synthetic review fixtures and remaining gap
   region or earlier release uses that policy. The
   [CiRCLE PLUS announcement](https://info-maimai.sega.jp/8674/) was also checked;
   it does not provide a complete numeric coefficient table.
-- The author's [mai-tools rank definitions](https://github.com/myjian/mai-tools/blob/gh-pages/src/common/rank-functions.ts)
-  were read through the GitHub connector, blob
-  `8daceb4b520951c006d1c5f2a3d0253991f03eb8`.
-  [Rating functions](https://github.com/myjian/mai-tools/blob/gh-pages/src/common/rating-functions.ts)
-  were also read, blob `834e3df8de302f43c5926557f3316767bb14e76a`.
+- The [mai-tools rank definitions](https://github.com/myjian/mai-tools/blob/gh-pages/src/common/rank-functions.ts)
+  and [rating functions](https://github.com/myjian/mai-tools/blob/gh-pages/src/common/rating-functions.ts)
+  provide a community reference. The reviewed source blobs are
+  `8daceb4b520951c006d1c5f2a3d0253991f03eb8` and
+  `834e3df8de302f43c5926557f3316767bb14e76a`, respectively.
   This is a community-maintained primary implementation, **not an official SEGA
   numeric formula publication**. It has distinct jumps at 79.9999, 96.9999,
   98.9999, 99.9999 and 100.4999, as well as ordinary rank thresholds; the old
