@@ -43,7 +43,7 @@ and an `alternative_query` for the reusable Explore component.
 private `PracticeGoal`/`Prerequisite` inputs and attempt-only reachability heuristic.
 Selection ranks conservative score bounds and recomputes context diversity.
 Unknown observations retain null values and explicit scoring-term coverage.
-See [the full scoring audit and contract](../../../docs/SCORING_ENGINE_STATUS.md)
+See [the full scoring audit and contract](../../../docs/source-notes/SCORING_ENGINE_STATUS.md)
 for weights, thresholds, CLI inputs, synthetic review fixtures and remaining gaps.
 
 ## Source check, 2026-09-10

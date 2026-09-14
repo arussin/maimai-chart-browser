@@ -1,43 +1,29 @@
-# Optional report integration
+# Report integration
 
-The report library remains independently installable. Its adapter accepts the
-prepared JSON contract without importing this package. The optional engine is
-needed only when calculating/exporting a new bundle inside the report process.
-While this repository is private, authorized installations use a reviewed wheel
-or commit pin; public/default report installs must not add a private dependency.
+The public [maimai Session Report](https://github.com/arussin/maimai-session-report)
+product and this chart browser remain independently installable.
 
-```python
-from maimai_report.browser import export_browser_bundle
-from maimai_report.render import build_html
+## Current integration
 
-bundle = export_browser_bundle(
-    report,
-    retained_after_pbs,
-    reviewed_mapping,
-    catalog,
-    catalog_version="reviewed-release",
-    attempts=retained_attempts,
-    settings=recommendation_settings,
-)
-html = build_html(
-    report,
-    recommendation_bundle=bundle,
-    browser_url="https://your-chart-browser.example/",
-)
-```
+Session Report ships Open in Party links and reusable player files. Use its
+[Party integration guide](https://github.com/arussin/maimai-session-report/blob/main/docs/MAIMAI_PARTY.md)
+and [player-file guide](https://github.com/arussin/maimai-session-report/blob/main/docs/PLAYER_FILE.md)
+for the supported report interface. The browser's [player-data contract](PLAYER_DATA.md)
+describes validation, matching, merging and local personal mode.
 
-Alternatively load an existing bundle and pass it directly to `build_html` or
-`render_report`; this works without the engine installed. Browser links are
-optional. They contain public catalog/chart identities, never player identifiers
-or tokens. Opening a link is explicit user navigation and does not upload scores.
+The report vendors the small public interfaces it needs; generating reports does
+not require installing the full chart-browser engine. Importing a player file
+reads and merges it in the browser; no score account or upload service is created.
+The report guide describes the explicit handoff and its validation.
 
-Only compact, validated card fields are embedded. The complete catalog and
-personal overlay are not copied into a dashboard. Recommendations cannot postdate
-the report cutoff, and their own prepared date stays visible. Empty shortlists
-leave the original Targets view in place; successful shortlists retain original
-session suggestions in an expandable section.
+## Separate prepared-card draft
 
-This is an additive integration for new builds. No historical report regeneration,
-live Worker change, archive migration, score import or automatic publication is
-part of the repository separation. The installed private report core should adopt
-the adapter through its own reviewed release after this milestone.
+[Session Report draft PR #2](https://github.com/arussin/maimai-session-report/pull/2)
+proposes optional prepared recommendation cards. Its
+[original integration design](https://github.com/arussin/maimai-session-report/blob/9218148366f465ade5b373cc4bcecd6135016011/docs/BROWSER_INTEGRATION.md)
+documents the proposed adapter and arguments.
+
+The draft's `maimai_report.browser.export_browser_bundle`,
+`recommendation_bundle` and `browser_url` interfaces are not part of current
+Session Report main. Review any remaining value against the shipped Party
+integration before porting the draft; do not merge the stale branch wholesale.
