@@ -67,6 +67,8 @@ manifest. The main page links to the research browser, with three views:
   anywhere else on the row to open details. Click column headings to sort and
   reverse; Shift-click or **Keep sort priorities** adds tie-breakers. Visible
   priority chips can remove a rule. Sorting always uses the selected chart.
+  **Difficulty** sorts by displayed level (10, 10+, 11); **Constant** sorts by
+  the retained decimal constant. Unknown values sort last in either direction.
   Changing sort or search retains the filters.
   Song search also accepts community romaji and alternate titles: **Umiyuri**
   finds **ウミユリ海底譚**, and **Senbonzakura** finds **千本桜**. Spaces, punctuation,
