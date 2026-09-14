@@ -153,18 +153,57 @@ test('research browser combines filters and retains them while sorting',async({p
   expect(errors).toEqual([]);expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
 });
 
-test('three sort priorities break ties in order and reverse independently',async({page})=>{
+test('three sort priorities preserve level ties and reverse independently',async({page})=>{
   await page.goto('/lab/');await expect(page.locator('#songs .song-row')).toHaveCount(6);
   await page.locator('[data-sort-key=constant]').click();await page.locator('[data-sort-key=constant]').click();
   await page.locator('[data-sort-key=difficulty]').click({modifiers:['Shift']});
   await page.locator('#sort-keep').check();
   await page.locator('[data-sort-key=title]').click();await page.locator('[data-sort-key=title]').click();
   const titles=()=>page.locator('#songs .song-row').evaluateAll(rows=>rows.map(row=>row.dataset.title));
-  expect(await titles()).toEqual(['Fictional study 4','Fictional study 3','Fictional study 5','Fictional study 1','Fictional study 2','Fictional study 0']);
+  expect(await titles()).toEqual(['Fictional study 5','Fictional study 4','Fictional study 3','Fictional study 2','Fictional study 1','Fictional study 0']);
   await page.locator('[data-sort-key=difficulty]').click();
-  expect(await titles()).toEqual(['Fictional study 5','Fictional study 4','Fictional study 3','Fictional study 2','Fictional study 0','Fictional study 1']);
+  expect(await titles()).toEqual(['Fictional study 5','Fictional study 4','Fictional study 3','Fictional study 2','Fictional study 1','Fictional study 0']);
   await selectDifficulties(page,['RE:MASTER']);
   expect(await titles()).toEqual(['Fictional study 5']);
+});
+
+test('difficulty sorts displayed levels numerically across chart types in both directions and through filters',async({page})=>{
+  await page.goto('/levels/');
+  const sort=page.locator('[data-sort-key=difficulty]');
+  const levels=()=>page.locator('#songs .song-row').evaluateAll(rows=>rows.map(row=>row.dataset.level));
+  await sort.click();
+  expect(await levels()).toEqual(['10','10+','11','12','13+','14']);
+  await sort.press('Enter');
+  expect(await levels()).toEqual(['14','13+','12','11','10+','10']);
+  await setLevel(page,'max','11');
+  expect(await levels()).toEqual(['11','10+','10']);
+  await selectDifficulties(page,['EXPERT']);
+  expect(await levels()).toEqual(['11','10']);
+  await page.locator('#reset-filters').click();
+  expect(await levels()).toEqual(['14','13+','12','11','10+','10']);
+});
+
+test('difficulty sorting keeps unknown levels last, honors tie-breakers and follows selected charts',async({page})=>{
+  await page.goto('/difficulty-sort/');
+  await expect(page.locator('#songs .song-row')).toHaveCount(5);
+  const rows=page.locator('#songs .song-row'),sort=page.locator('[data-sort-key=difficulty]');
+  const levels=()=>rows.evaluateAll(nodes=>nodes.map(row=>row.dataset.level));
+  const grouped=rows.filter({has:page.locator('.song-title',{hasText:'Fictional study 3'})});
+  const picker=grouped.locator('.row-difficulty');
+  expect(await picker.locator('option').allTextContents()).toEqual(['MASTER · 11','RE:MASTER · 10+']);
+  await sort.click();
+  expect(await levels()).toEqual(['9+','10','10+','11','']);
+  await sort.click();
+  expect(await levels()).toEqual(['11','10+','10','9+','']);
+  const remaster=await picker.locator('option').filter({hasText:'RE:MASTER'}).getAttribute('value');
+  await picker.selectOption(remaster);await expect(picker).toBeFocused();
+  expect(await levels()).toEqual(['10+','10+','10','9+','']);
+  await page.locator('#sort-keep').check();
+  await page.locator('[data-sort-key=title]').click();await page.locator('[data-sort-key=title]').click();
+  expect(await rows.evaluateAll(nodes=>nodes.slice(0,2).map(row=>row.dataset.title))).toEqual(['Fictional study 3','Fictional study 1']);
+  await sort.click();
+  expect(await levels()).toEqual(['9+','10','10+','10+','']);
+  await expect(grouped).toHaveAttribute('data-difficulty','RE:MASTER');
 });
 
 test('decimal constants sort numerically with unknowns last and follow difficulty selection',async({page})=>{

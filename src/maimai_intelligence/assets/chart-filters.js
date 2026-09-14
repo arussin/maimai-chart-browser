@@ -97,5 +97,5 @@ function mount(charts,onChange){
     }
   };
 }
-window.maimaiCatalogFilters=Object.freeze({mount});
+window.maimaiCatalogFilters=Object.freeze({mount,levelNumber:number});
 })();

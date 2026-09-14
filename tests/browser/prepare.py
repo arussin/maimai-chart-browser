@@ -85,6 +85,18 @@ package["files"].append(write(level_package, "catalog.json", charts))
 atomic_json(level_package / "package.json", package)
 build_lab(level_package, root / "levels", catalog_version="levels-v1")
 
+# Cross-category levels, an unknown level and a grouped RE:MASTER whose level
+# is lower than MASTER distinguish row sorting from chart-picker ordering.
+difficulty_package = write_package(Path("output/difficulty-sort-fixture").resolve(), grouped=True)
+charts = json.loads((difficulty_package / "catalog.json").read_bytes())
+for chart, level in zip(charts, ["10", "10+", "9+", "11", None, "10+"], strict=True):
+    chart["level"] = level
+package = read_json(difficulty_package / "package.json")
+package["files"] = [r for r in package["files"] if r["path"] != "catalog.json"]
+package["files"].append(write(difficulty_package, "catalog.json", charts))
+atomic_json(difficulty_package / "package.json", package)
+build_lab(difficulty_package, root / "difficulty-sort", catalog_version="difficulty-sort-v1")
+
 # Authored profiles with real public title labels exercise search metadata only.
 # These are not transcriptions, analyses or qualified mappings of the named songs.
 search_package = write_package(Path("output/search-fixture").resolve())
