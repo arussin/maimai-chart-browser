@@ -11,6 +11,8 @@ Tachi's public maimai and maimai DX song metadata. At the current research
 release, 1,069 distinct title/artist pairs gain additional aliases. These include
 romaji, alternate titles and community shorthand. Coverage follows the source;
 an unlisted reading, especially for a newer song, may still need an alias.
+The persistent registry additionally carries reviewed per-song aliases; the
+September 17 review adds `Soteria` for ソテリア. These survive package refreshes.
 No automatic kanji pronunciation guessing or live translation service is used.
 
 Aliases attach only when normalized **title and artist both match**. A different

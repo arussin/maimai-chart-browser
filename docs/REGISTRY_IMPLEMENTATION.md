@@ -18,8 +18,8 @@ charts and adds 292 explicit ordinary chart slots: 7,251 charts across 1,694
 active songs. All 51 titles in the missing CiRCLE PLUS audit are represented
 (205 chart slots). The registry also includes 17 MAGiCAL titles and additional
 chart variants for existing songs. The new slots have metadata but no prepared
-analysis. None receives a placeholder source hash, decimal constant or demand
-profile.
+analysis. None receives a placeholder source hash or demand profile. Missing numeric
+metadata was subsequently filled from the reviewed metadata waterfall.
 
 | Retained official capture | Ordinary songs | Explicit slots | Utage rows outside scope |
 |---|---:|---:|---:|
@@ -115,9 +115,10 @@ The listing selector offers All known, Japan and International. Each regional
 view uses that region's last observed printed level, genre and introduction
 version. Default metadata prefers Japan, then International, then retained
 metadata; a missing regional level falls back independently for that exact
-variant. Details distinguish listing observation from availability. Source
-constants remain explicitly unscoped values from the pinned transcription
-source; no regional inference, decimal guessing or Tachi fallback is used.
+variant. The verbose metadata detail block was removed after user review. Existing source
+constants retain their scope; missing BPM and constants now follow the reviewed
+[metadata waterfall](METADATA_WATERFALL.md). Supplemental Japanese constants are
+scoped separately, and no decimal is guessed from a printed level.
 
 The Session Report adapter exports only genuine legacy experimental profiles,
 their original IDs and body hashes, and their matching analysis. Its

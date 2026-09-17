@@ -12,7 +12,9 @@ test('metadata-only search, difficulty selection, comparison and detail absence 
   await expect(row.locator('.chart-constant')).toHaveText('—');
   await expect(row.getByRole('button',{name:'Find similar',exact:true})).toBeDisabled();
   await row.locator('.chart-row').click();
-  await expect(row.locator('.chart-measurements')).toContainText('Chart analysis is not prepared');
+  await expect(row.locator('.registry-metadata')).toHaveCount(0);
+  await expect(row.locator('.chart-measurements')).not.toContainText('Metadata:');
+  await expect(row.locator('.chart-measurements')).toContainText('Unknown');
   await expect(row.getByRole('button',{name:'Retry loading chart'})).toHaveCount(0);
   expect(requests).toEqual([]);
   await row.getByRole('button',{name:'Compare this chart'}).click();

@@ -10,6 +10,7 @@ from maimai_analyzer.dataset import SOURCE_LOCK
 
 from .artwork import copy_artwork, validate_artwork
 from .catalog_loading import PROFILE_FIELDS
+from .metadata_waterfall import project as project_metadata
 from .registry import STATES, digest, resolve, validate
 from .research_overview import validate_overview
 from .research_package import read_package
@@ -114,11 +115,14 @@ def project_registry(value, legacy):
     validate(value)
     profiles = {c["chart_id"]: c for c in legacy.get("catalog", [])}
     observations = defaultdict(dict)
+    metrics = defaultdict(list)
     for entry in sorted(
         value["observations"].values(), key=lambda o: (o["observed_at"], o["observation_id"])
     ):
         subject = resolve(value, entry["subject_id"])
         observations[subject][entry["region"], entry["field"]] = entry
+        if entry.get("policy") == "metadata-waterfall-1":
+            metrics[subject].append(entry)
     data = {
         "schema_version": SCHEMA,
         "catalog": [],
@@ -218,7 +222,7 @@ def project_registry(value, legacy):
             **{
                 k: old_nav[k]
                 for k in ("bpm", "chart_constant", "source_path", "source_hash", "genre", "version")
-                if k in old_nav
+                if k in old_nav and k not in old_nav.get("metric_sources", {})
             },
         }
         if meta.get("catcode"):
@@ -232,6 +236,7 @@ def project_registry(value, legacy):
         if nav.get("version"):
             versions.add(nav["version"])
         nav["chart_id"] = cid
+        project_metadata(nav, metrics[cid], value["sources"])
         data["navigation"]["charts"][cid] = nav
         unavailable = (
             chart.get("analysis_state")

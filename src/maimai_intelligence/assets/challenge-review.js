@@ -159,7 +159,7 @@ function catalog(focusKey=null){
     picker.onchange=()=>{selectedCharts.set(key,picker.value);catalog(key);[...el('songs').querySelectorAll('.row-difficulty')].find(p=>p.value===selectedCharts.get(key))?.focus();};
     const level=make('span',constantLabel(c),'chart-level chart-constant'),bpm=make('span',values.bpm(c)==null?'—':String(values.bpm(c)),'chart-bpm'),speed=make('span',values.speed(c)==null?'—':values.speed(c).toFixed(1),'chart-speed');
     bpm.setAttribute('aria-label',values.bpm(c)==null?'BPM unknown':values.bpm(c)+' BPM');bpm.title='Source song BPM; individual passages may change tempo.';
-    level.setAttribute('aria-label','Chart constant '+(chartConstant(c)==null?'unknown':constantLabel(c)));level.title=chartConstant(c)==null?'No Neskol source constant is available.':'Neskol source constant · e164add85213bab150e1487d5eb15ccb631aedb9 · regional and game-release scope unknown.';speed.setAttribute('aria-label',(values.speed(c)==null?'Unknown':values.speed(c).toFixed(1))+' inputs per second');
+    level.setAttribute('aria-label','Chart constant '+(chartConstant(c)==null?'unknown':constantLabel(c)));level.title=chartConstant(c)==null?'No verified source constant is available for this context.':(()=>{const source=navigation.charts?.[c.chart_id]?.metric_sources?.chart_constant;return source?[source.provider,source.region,source.release||'game version unspecified'].filter(Boolean).join(' · '):'Neskol source constant · regional and game-version scope unspecified.';})();speed.setAttribute('aria-label',(values.speed(c)==null?'Unknown':values.speed(c).toFixed(1))+' inputs per second');
     const flow=overview.graph(c,{compact:true});header.append(heading,picker,level,bpm,speed,flow);
     const footer=make('div',undefined,'chart-card-footer'),version=folderValue(c,'version'),metadata=make('div',undefined,'chart-card-metadata');
     const versionArt=window.maimaiChartArtwork.version(version);versionArt.title=version;
@@ -175,7 +175,7 @@ function catalog(focusKey=null){
     const renderDetails=()=>{
       const identity=make('span',undefined,'chart-detail-identity'),formatBadge=make('span',c.format,'chart-format-badge');formatBadge.dataset.format=c.format;
       identity.append(formatBadge,make('span',c.difficulty,'chart-difficulty-badge'),make('span',c.level||'?','chart-detail-level'));
-      const track=overview.section('chart','Chart details',identity);track.content.append(window.maimaiRegistryBrowser.details(c,data),metrics(c),overview.details(c));
+      const track=overview.section('chart','Chart details',identity);track.content.append(metrics(c),overview.details(c));
       panel.replaceChildren(track.root);if(personal)panel.append(personal.details(c));
     };
     summary.onclick=()=>{panel.hidden=!panel.hidden;row.classList.toggle('is-expanded',!panel.hidden);summary.setAttribute('aria-expanded',String(!panel.hidden));if(panel.hidden)expandedRows.delete(key);else{expandedRows.add(key);renderDetails();}};

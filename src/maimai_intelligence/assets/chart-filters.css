@@ -26,5 +26,5 @@
 #pattern-filter.opens-up .pattern-filter-panel{top:auto;bottom:calc(100% + 6px)}
 
 /* Four inventory controls stay balanced at desktop and mobile widths. */
-.filter-row.registry-filters{grid-template-columns:repeat(4,minmax(0,1fr))}.registry-metadata p{margin:6px 0;overflow-wrap:anywhere}
+.filter-row.registry-filters{grid-template-columns:repeat(4,minmax(0,1fr))}
 @media(max-width:800px){.filter-row.registry-filters{grid-template-columns:repeat(2,minmax(0,1fr))}.filter-row.registry-filters>label:first-child{grid-column:auto}}

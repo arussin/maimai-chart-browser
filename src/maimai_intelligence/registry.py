@@ -97,6 +97,19 @@ def validate(value):
             raise ValueError("Orphaned registry observation")
         counts = source_counts.setdefault(observation["snapshot_id"], {})
         counts[observation["field"]] = counts.get(observation["field"], 0) + 1
+        if observation.get("policy") == "metadata-waterfall-1":
+            from .metadata_waterfall import FIELDS, PRIORITY, number
+
+            provider = value["sources"][observation["snapshot_id"]].get("provider")
+            if (
+                provider not in PRIORITY
+                or observation["field"] not in FIELDS
+                or observation.get("priority") != PRIORITY[provider]
+                or number(observation["value"], observation["field"]) is None
+                or observation["subject_id"] not in value["charts"]
+                or not observation.get("evidence")
+            ):
+                raise ValueError("Invalid supplemental metadata observation")
         if observation["field"] == "listing":
             if observation["value"] not in {
                 "listed",
