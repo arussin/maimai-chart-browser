@@ -20,6 +20,7 @@ function mount({data,eligibleIds}){
   function identity(c){const box=make('div',undefined,'chosen-chart');box.append(window.maimaiChartArtwork.jacket(c),make('strong',name(c)),make('p',c.format+' '+c.difficulty+' · Lv. '+(c.level||'?')+' · '+bpmText(c),'muted'),make('p',c.artist,'muted'),overview.chips(c),overview.graph(c,{compact:true}));const videoLink=window.maimaiChartLinks.group(c);if(videoLink)box.append(videoLink);if(window.maimaiPersonal)box.append(window.maimaiPersonal.summary(c));return box;}
   function writeLink(){const url=new URL(location.href);for(const side of ['left','right']){if(state[side])url.searchParams.set(side,state[side]);else url.searchParams.delete(side);}history.replaceState(null,'',url);}
   function choose(side,id,write=true){
+    id=window.maimaiRegistryBrowser.resolve(data,id);
     if(!byId.has(id))return;
     if(side==='left'&&state.left!==id)matches=null;
     state[side]=id;const picker=pickers[side];picker.input.value=name(byId.get(id));picker.close();picker.selection.replaceChildren(identity(byId.get(id)));
@@ -74,7 +75,7 @@ function mount({data,eligibleIds}){
   function renderPair(){
     const root=el('direct-comparison');root.replaceChildren();
     if(!state.left||!state.right||state.left===state.right)return;
-    const left=byId.get(state.left),right=byId.get(state.right),result=getIndex().compare(state.left,state.right),heading=make('h2','Chart measurements');root.append(overview.pair(left,right),heading);
+    const left=byId.get(state.left),right=byId.get(state.right),result=left.demand&&right.demand?getIndex().compare(state.left,state.right):null,heading=make('h2','Chart measurements');root.append(overview.pair(left,right),heading);
     if(result){
       const summary=make('div',undefined,'comparison-summary');
       for(const [title,value,kind]of [['Closest in',result.closest_groups.map(g=>groups[g].toLowerCase()).join(' and '),'closest'],['Furthest in',groups[result.largest_difference].toLowerCase(),'furthest']]){
@@ -89,7 +90,7 @@ function mount({data,eligibleIds}){
     for(const [group,key,title,unit]of measurements){
       if(lastGroup!==group){const row=make('tr',undefined,'metric-group'),cell=make('th',groups[group]);cell.colSpan=3;cell.scope='rowgroup';row.append(cell);body.append(row);lastGroup=group;}
       const row=make('tr'),titleCell=make('th',title);titleCell.scope='row';row.append(titleCell);
-      for(const chart of [left,right]){let value=chart.demand[group]?.[key];if(unit==='%'&&value!=null)value*=100;const text=value==null?'Unknown':(Number.isInteger(value)?String(value):value.toFixed(2))+unit;row.append(make('td',text));}body.append(row);
+      for(const chart of [left,right]){let value=chart.demand?.[group]?.[key];if(unit==='%'&&value!=null)value*=100;const text=value==null?'Unknown':(Number.isInteger(value)?String(value):value.toFixed(2))+unit;row.append(make('td',text));}body.append(row);
     }
     table.append(body);root.append(table);
   }
@@ -105,16 +106,16 @@ function mount({data,eligibleIds}){
   }
   function render(){
     for(const side of ['left','right'])if(state[side])pickers[side].selection.replaceChildren(identity(byId.get(state[side])));
-    el('find-similar').disabled=!state.left;
+    el('find-similar').disabled=!state.left||!byId.get(state.left)?.demand;
     el('comparison-status').textContent=state.left&&state.right?(state.left===state.right?'Both selections are the same chart. Choose another chart to compare.':'Comparing '+label(byId.get(state.left))+' with '+label(byId.get(state.right))):state.left?'Choose a second chart or find similar chart demands.':'Choose a first chart to begin.';
     renderPair();renderMatches();
   }
-  function find(){if(!state.left)return;matches=getIndex().similar(state.left,{limit:8,eligibleIds:el('similar-use-filters').checked?eligibleIds():null,patternCompare:el('similar-priority').value==='patterns'?overview.compare:null});render();el('similar-results').scrollIntoView({block:'start',behavior:'instant'});}
+  function find(){if(!state.left||!byId.get(state.left)?.demand)return;matches=getIndex().similar(state.left,{limit:8,eligibleIds:el('similar-use-filters').checked?eligibleIds():null,patternCompare:el('similar-priority').value==='patterns'?overview.compare:null});render();el('similar-results').scrollIntoView({block:'start',behavior:'instant'});}
   el('similar-priority').onchange=()=>{if(matches!==null)find();};
   el('find-similar').onclick=()=>{const u=new URL(location.href);u.searchParams.set('similar','1');history.replaceState(null,'',u);find();};el('similar-use-filters').onchange=()=>{if(matches!==null)find();};
   el('comparison-clear').onclick=()=>{state.left=state.right=null;matches=null;for(const picker of Object.values(pickers)){picker.input.value='';picker.selection.replaceChildren();picker.close();}render();writeLink();pickers.left.input.focus();};
   function restore(){const params=new URLSearchParams(location.search);let missing=false;matches=null;
-    for(const side of ['left','right']){const id=params.get(side);state[side]=null;pickers[side].input.value='';pickers[side].selection.replaceChildren();pickers[side].close();if(id){if(byId.has(id))choose(side,id,false);else missing=true;}}
+    for(const side of ['left','right']){const id=window.maimaiRegistryBrowser.resolve(data,params.get(side));state[side]=null;pickers[side].input.value='';pickers[side].selection.replaceChildren();pickers[side].close();if(id){if(byId.has(id))choose(side,id,false);else missing=true;}}
     render();if(params.get('similar')==='1'&&state.left)find();if(missing)el('comparison-status').textContent='A linked chart is not available in this catalog version. Choose a chart below.';
   }
   window.addEventListener('popstate',restore);restore();

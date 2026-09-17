@@ -77,7 +77,7 @@ if(nonce&&/^[a-f0-9-]{36}$/.test(nonce)&&window.opener){
 }
 
 function configure(data,providerMapping){catalog=data;mapping=providerMapping||data.provider_mapping||null;reverse=new Map();const byId=new Map(data.catalog.map(c=>[c.chart_id,c]));
-  if(mapping?.schema_version==='provider-mapping-1')for(const [cid,row]of Object.entries(mapping.charts||{})){const c=byId.get(row.chart_id);if(c&&c.source_hash===row.source_hash){if(!reverse.has(c.chart_id))reverse.set(c.chart_id,[]);reverse.get(c.chart_id).push(cid);}}
+  if(['provider-mapping-1','provider-mapping-2'].includes(mapping?.schema_version))for(const [cid,row]of Object.entries(mapping.charts||{})){const c=byId.get(row.chart_id);if(c&&(mapping.schema_version==='provider-mapping-1'?c.source_hash===row.source_hash:['reviewed','legacy_published'].includes(row.acceptance_basis)&&c.format===row.format&&c.difficulty===row.difficulty)){if(!reverse.has(c.chart_id))reverse.set(c.chart_id,[]);reverse.get(c.chart_id).push(cid);}}
   changed();
 }
 function providerID(c){const ids=reverse.get(c.chart_id)||[];return ids.filter(id=>pbs.has(id)).sort((a,b)=>(pbDates.get(b)||0)-(pbDates.get(a)||0)||Number(!!mapping.charts[a].aliasOf)-Number(!!mapping.charts[b].aliasOf)||a.localeCompare(b))[0]||ids[0]||null;}

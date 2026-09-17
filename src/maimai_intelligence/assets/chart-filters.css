@@ -24,3 +24,7 @@
 @media(max-width:600px){.pattern-filter-field{width:100%}.pattern-filter-panel{width:100%}.pattern-filter-toolbar{flex-wrap:wrap;gap:2px 10px}}
 
 #pattern-filter.opens-up .pattern-filter-panel{top:auto;bottom:calc(100% + 6px)}
+
+/* Regional preference is separate from the genre, version and difficulty controls. */
+.international-data-option{min-height:44px;margin:0 0 10px;gap:10px;color:var(--ink)}
+.international-data-option input{padding:0;width:18px;height:18px;min-height:18px;flex-shrink:0;accent-color:var(--aqua)}

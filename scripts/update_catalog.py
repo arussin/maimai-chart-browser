@@ -58,7 +58,7 @@ def implementation_hash(root=REPO_ROOT):
     root = Path(root)
     paths = sorted(
         p
-        for area in ("src", "scripts")
+        for area in ("src", "scripts", "registry")
         for p in (root / area).rglob("*")
         if p.is_file() and "__pycache__" not in p.parts and p.suffix != ".pyc"
     )
@@ -205,18 +205,28 @@ def prepare_update(
     revision=None,
     artwork_cache=None,
     mai_notes_snapshot=None,
+    registry=None,
     overrides=None,
     offline=False,
     fetcher=download_index,
 ):
     store, previous_browser = Path(store).resolve(), Path(previous_browser).resolve()
-    if (package is None) == (revision is None):
+    if (package is not None and revision is not None) or (
+        package is None and revision is None and registry is None
+    ):
         raise ValueError("Choose an accepted package or an explicit reviewed source revision")
     if revision is not None and artwork_cache is None:
         raise ValueError("Source updates require an artwork cache")
-    if offline and mai_notes_snapshot is None:
+    if offline and mai_notes_snapshot is None and registry is None:
         raise ValueError("Offline preparation needs an explicit retained mai-notes snapshot")
-    for value in (previous_browser, package, mai_notes_snapshot, overrides, artwork_cache):
+    for value in (
+        previous_browser,
+        package,
+        mai_notes_snapshot,
+        registry,
+        overrides,
+        artwork_cache,
+    ):
         if value is not None and (
             Path(value).resolve() == store or store.is_relative_to(Path(value).resolve())
         ):
@@ -227,33 +237,64 @@ def prepare_update(
         atomic_json(run / "state.json", {"status": "preparing"})
         try:
             before = retain_history(previous_browser, run / "browser")
-            if package is None:
+            if package is None and revision is not None:
                 package = source_package(run, store, revision, Path(artwork_cache), offline=offline)
-            from scripts.prepare_chart_constants import prepare as constants
+            if registry is not None:
+                from maimai_intelligence.registry import read_registry
+                from maimai_intelligence.registry_catalog import build_registry_package
 
-            constants(package, run / "constants")
-            descriptor, retained = read_package(run / "constants")
-            charts = json.loads(retained["catalog.json"])
-            captured_at = datetime.now(UTC).isoformat()
-            if mai_notes_snapshot is None:
-                raw = fetcher()
+                accepted = read_registry(registry)
+                regions = {
+                    s.get("region")
+                    for s in accepted["sources"].values()
+                    if s.get("acquisition") == "complete_validated_capture"
+                }
+                if not {"JP", "INTL"} <= regions:
+                    raise ValueError(
+                        "Registry preparation requires complete accepted captures "
+                        "for JP and International"
+                    )
+                prepared = build_registry_package(
+                    accepted,
+                    package,
+                    run / "package",
+                    published=before if revision is None else None,
+                )
+                descriptor, _ = read_package(run / "package")
+                charts = prepared["catalog"]
+                links = prepared.get("mai_notes", {"charts": {}})
+                audit = {"counts": {"retained_accepted_links": len(links["charts"])}}
+                atomic_json(
+                    run / "registry-provenance.json",
+                    {"registry": prepared["registry"], "sources": prepared["sources"]},
+                )
+                atomic_json(run / "mai-notes-audit.json", audit)
             else:
-                with Path(mai_notes_snapshot).open("rb") as stream:
-                    raw = stream.read(MAX_INDEX_BYTES + 1)
-                # A retained file is a replay, not a fresh network verification.
-                captured_at = datetime.fromtimestamp(
-                    Path(mai_notes_snapshot).stat().st_mtime, UTC
-                ).isoformat()
-            links, audit = prepare_links(
-                charts,
-                raw,
-                captured_at=captured_at,
-                overrides=json.loads(Path(overrides).read_bytes()) if overrides else (),
-            )
-            (run / "inputs").mkdir()
-            (run / "inputs" / "mai-notes.json").write_bytes(raw)
-            atomic_json(run / "mai-notes-audit.json", audit)
-            extend_package(run / "constants", run / "package", {"mai-notes.json": links})
+                from scripts.prepare_chart_constants import prepare as constants
+
+                constants(package, run / "constants")
+                descriptor, retained = read_package(run / "constants")
+                charts = json.loads(retained["catalog.json"])
+                captured_at = datetime.now(UTC).isoformat()
+                if mai_notes_snapshot is None:
+                    raw = fetcher()
+                else:
+                    with Path(mai_notes_snapshot).open("rb") as stream:
+                        raw = stream.read(MAX_INDEX_BYTES + 1)
+                    # A retained file is a replay, not a fresh network verification.
+                    captured_at = datetime.fromtimestamp(
+                        Path(mai_notes_snapshot).stat().st_mtime, UTC
+                    ).isoformat()
+                links, audit = prepare_links(
+                    charts,
+                    raw,
+                    captured_at=captured_at,
+                    overrides=json.loads(Path(overrides).read_bytes()) if overrides else (),
+                )
+                (run / "inputs").mkdir()
+                (run / "inputs" / "mai-notes.json").write_bytes(raw)
+                atomic_json(run / "mai-notes-audit.json", audit)
+                extend_package(run / "constants", run / "package", {"mai-notes.json": links})
             version = (
                 "research-"
                 + hashlib.sha256((run / "package" / "package.json").read_bytes()).hexdigest()[:12]
@@ -262,6 +303,13 @@ def prepare_update(
             release = build_public_release(run / "browser", run / "public")
             changes = chart_changes(before["catalog"], charts)
             old_links = before.get("mai_notes", {}).get("charts", {})
+            if registry:
+                aliases = prepared.get("legacy_ids", {})
+                old_links = {aliases.get(cid, cid): row for cid, row in old_links.items()}
+                from maimai_intelligence.official_inventory import coverage
+                from maimai_intelligence.registry_catalog import coverage_report
+
+                changes["registry"] = coverage(accepted) | coverage_report(prepared)
             changes["mai_notes"] = {
                 **audit["counts"],
                 "added": sorted(links["charts"].keys() - old_links.keys()),
@@ -269,9 +317,16 @@ def prepare_update(
                 "changed": sorted(
                     cid
                     for cid in links["charts"].keys() & old_links.keys()
-                    if links["charts"][cid] != old_links[cid]
+                    if any(
+                        links["charts"][cid].get(field) != old_links[cid].get(field)
+                        for field in ("id", "format", "difficulty", "available")
+                    )
                 ),
-                "source_mode": "retained_snapshot" if mai_notes_snapshot else "downloaded",
+                "source_mode": "accepted_registry"
+                if registry
+                else "retained_snapshot"
+                if mai_notes_snapshot
+                else "downloaded",
             }
             atomic_json(run / "changes.json", changes)
             report = [
@@ -289,6 +344,18 @@ def prepare_update(
                 "Preview browser/ before publishing public/. Captures and audits stay private.",
                 "",
             ]
+            if registry:
+                report += [
+                    "## Persistent inventory",
+                    "",
+                    f"Prepared analysis: {changes['registry']['analysis_available']:,} charts. "
+                    f"Metadata only: {changes['registry']['metadata_only']:,} charts.",
+                    "Regional listing counts and capture provenance are in changes.json "
+                    "and registry-provenance.json. Absence from a capture is not removal.",
+                    "The integration asset retains Session Report's v1 profile contract. "
+                    "Metadata-only charts do not receive fabricated measurements or hashes.",
+                    "",
+                ]
             (run / "report.md").write_text("\n".join(report), "utf-8")
             receipt = {
                 "version": "catalog-update-1",
@@ -440,13 +507,18 @@ def main(argv=None):
     )
     prepare.add_argument("--store", type=Path, required=True)
     prepare.add_argument("--previous-browser", type=Path, required=True)
-    source = prepare.add_mutually_exclusive_group(required=True)
+    source = prepare.add_mutually_exclusive_group()
     source.add_argument("--package", type=Path, help="Reuse an accepted package without reanalysis")
     source.add_argument(
         "--revision", help="Acquire the reviewed SOURCE_LOCK commit and analyze changes"
     )
     prepare.add_argument("--artwork-cache", type=Path)
     prepare.add_argument("--mai-notes-snapshot", type=Path)
+    prepare.add_argument(
+        "--registry",
+        type=Path,
+        help="Use an accepted persistent inventory and optional retained enrichments",
+    )
     prepare.add_argument("--overrides", type=Path)
     prepare.add_argument("--offline", action="store_true")
     publish = commands.add_parser("publish", help="Publish a reviewed candidate as the owner")

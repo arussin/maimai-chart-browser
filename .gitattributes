@@ -1,0 +1,2 @@
+# Registry manifest digests bind exact file bytes on every platform.
+registry/*.json -text

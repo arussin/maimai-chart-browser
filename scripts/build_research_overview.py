@@ -9,15 +9,17 @@ from pathlib import Path
 
 from maimai_analyzer.contracts import content_hash
 from maimai_analyzer.dataset import SOURCE_LOCK
+from maimai_analyzer.simai_subset import PARSER_VERSION
 from maimai_intelligence.artwork import copy_artwork, validate_artwork
 from maimai_intelligence.overview_codec import compact_overview
+from maimai_intelligence.registry import analysis_fingerprint
 from maimai_intelligence.research_overview import (
     chart_overview,
     overview_package,
     validate_overview,
 )
 from maimai_intelligence.snapshots import atomic_json, read_json
-from scripts.build_challenge_package import parse_row, write
+from scripts.build_challenge_package import PARSE_ROW_IMPLEMENTATION, parse_row, write
 
 
 def build(source, package_path, output, *, cache_directory=None):
@@ -53,10 +55,13 @@ def build(source, package_path, output, *, cache_directory=None):
     implementation["overview"] = hashlib.sha256(
         files("maimai_intelligence").joinpath("research_overview.py").read_bytes()
     ).hexdigest()
+    implementation["parse_row"] = PARSE_ROW_IMPLEMENTATION
     records, memo, work = {}, {}, Counter()
     for index, item in enumerate(loaded["catalog.json"], 1):
         row = rows[item["input_id"]]
-        key = content_hash({"row": row, "implementation": implementation})
+        key = analysis_fingerprint(
+            row, implementation, parser=PARSER_VERSION, analyzer="research-overview-2"
+        )
         cache_root = (
             Path(cache_directory).resolve() if cache_directory else output / "overview-cache"
         )

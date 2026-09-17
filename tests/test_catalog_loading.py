@@ -36,6 +36,67 @@ class ProgressiveCatalogTests(unittest.TestCase):
             )
             self.assertEqual(result.returncode, 0, result.stderr)
 
+    def test_inventory_startup_keeps_regional_choices_without_duplicate_audit_fields(self):
+        data = {
+            "schema_version": "maimai-browser-catalog-2",
+            "catalog": [
+                {
+                    "chart_id": "official-chart",
+                    "title": "Japan title",
+                    "aliases": ["romaji"],
+                    "regional": {
+                        region: {
+                            "listing": "listed",
+                            "level": level,
+                            "genre": "pop",
+                            "version": "latest",
+                            "observed_at": "2026-09-17",
+                            "snapshot_id": "a" * 64,
+                            "metadata": {
+                                "title": title,
+                                "artist": "Artist",
+                                "catcode": "POPS",
+                                "version": "12345",
+                                "title_kana": "reading",
+                                "image_url": "https://example.org/jacket.png",
+                            },
+                        }
+                        for region, level, title in (
+                            ("JP", "8", "Japan title"),
+                            ("INTL", "7", "International title"),
+                        )
+                    },
+                }
+            ],
+            "navigation": {
+                "charts": {
+                    "official-chart": {
+                        "regional_metrics": {"constant": {"JP": 8.2, "INTL": 7.4}},
+                        "regional_metric_sources": {
+                            "constant": {"JP": "reviewed-jp", "INTL": "reviewed-intl"}
+                        },
+                    }
+                }
+            },
+        }
+        before = canonical(data)
+        startup, assets = progressive_catalog(data, hashlib.sha256(before).hexdigest())
+        index = json.loads(assets[startup["path"]])
+        self.assertEqual(canonical(data), before)
+        self.assertEqual(index["navigation"], data["navigation"])
+        chart = index["catalog"][0]
+        self.assertEqual(chart["aliases"], ["romaji"])
+        for region, original in data["catalog"][0]["regional"].items():
+            projected = chart["regional"][region]
+            for field in ("listing", "level", "genre", "version"):
+                self.assertEqual(projected[field], original[field])
+            for field in ("title", "artist", "catcode", "version"):
+                self.assertEqual(projected["metadata"][field], original["metadata"][field])
+            self.assertNotIn("snapshot_id", projected)
+            self.assertNotIn("observed_at", projected)
+            self.assertNotIn("image_url", projected["metadata"])
+        self.assertLess(startup["bytes"], len(before))
+
     def test_index_preserves_rankings_coverage_and_all_details_losslessly(self):
         charts = synthetic_charts()
         for sparse in (False, True):

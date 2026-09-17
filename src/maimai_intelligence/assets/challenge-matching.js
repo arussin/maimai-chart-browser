@@ -5,6 +5,7 @@ const mean=values=>values.reduce((a,b)=>a+b,0)/values.length;
 const order=(a,b)=>a<b?-1:a>b?1:0;
 function bound(values,x,upper){let lo=0,hi=values.length;while(lo<hi){const mid=(lo+hi)>>>1;if(values[mid]<x||(upper&&values[mid]===x))lo=mid+1;else hi=mid;}return lo;}
 function createIndex(profiles){
+  profiles=profiles.filter(c=>c.version!=='registry-chart-1');
   const byId=new Map(),scale=new Map();
   for(const profile of profiles){
     if(profile.version!=='challenge-profile-1-experimental'||byId.has(profile.chart_id))throw new Error('Incompatible comparison profile');

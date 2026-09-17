@@ -4,12 +4,18 @@ import json
 import os
 import shutil
 import tempfile
+from hashlib import sha256
 from pathlib import Path
 
 from maimai_intelligence import player_data
 from maimai_intelligence.lab import build_lab
 from maimai_intelligence.mai_notes import prepare_links
+from maimai_intelligence.metadata_waterfall import accept as accept_metadata
+from maimai_intelligence.metadata_waterfall import propose as propose_metadata
+from maimai_intelligence.official_inventory import assertion
 from maimai_intelligence.public_release import build_public_release
+from maimai_intelligence.registry import accept_mapping, digest
+from maimai_intelligence.registry_catalog import build_registry_package
 from maimai_intelligence.site import build_site
 from maimai_intelligence.snapshots import atomic_json, read_json
 from scripts.build_challenge_package import write
@@ -18,6 +24,8 @@ from tests.browser.capacity_fixture import build_capacity_fixture
 from tests.lab_fixture import write_package
 from tests.mai_notes_fixture import encoded as mai_notes_index
 from tests.personal_fixture import fixture
+from tests.registry_fixture import admit, official_row
+from tests.registry_fixture import fixture as registry_fixture
 from tests.test_pattern_community import CASES
 from tests.test_pattern_sequences import chart_for
 from tests.test_player_reconciliation import fixture as reconciliation_fixture
@@ -137,3 +145,93 @@ search_pack = json.loads(json.dumps(pack))
 for chart, (title, artist) in zip(search_pack["charts"], search_labels, strict=False):
     chart.update(title=title, artist=artist)
 build_site(search_pack, root / "romaji-explore", catalog_version="romaji-v1")
+
+with tempfile.TemporaryDirectory() as temporary:
+    staging = Path(temporary)
+    inventory, _, package = registry_fixture(staging)
+    master = next(
+        c
+        for c in inventory["charts"].values()
+        if c["difficulty"] == "MASTER"
+        and inventory["songs"][c["song_id"]]["metadata"]["title"] == "ソテリア"
+    )
+    # Controlled International-only inventory and differing constants exercise
+    # preference independently from membership. These numbers are fictional.
+    international_only = official_row("International fixture song", "Synthetic artist")
+    inventory, _ = admit(
+        inventory,
+        [official_row(dx_lev_adv="7", version="26005"), international_only],
+        region="INTL",
+        when="2026-09-17T06:00:00Z",
+        decisions={
+            assertion(official_row()): {
+                "action": "link",
+                "song_id": master["song_id"],
+                "evidence": "Authored regional fixture",
+            },
+            assertion(international_only): {"action": "admit", "evidence": "Authored Intl fixture"},
+        },
+    )
+    metadata = {
+        "schema_version": "reviewed-public-metadata-1",
+        "charts": [
+            {
+                "title": "ソテリア",
+                "artist": "Rafutsuri feat.桜あおい",
+                "format": "DX",
+                "difficulty": difficulty,
+                "bpm": 160,
+                "chart_constant": constant,
+                "region": region,
+                "release": "Synthetic release",
+                "source_url": "https://example.org/fixture-" + region,
+                "evidence": "Authored fixture, no real constant assertion",
+            }
+            for difficulty, region, constant in [
+                ("ADVANCED", "JP", 8.2),
+                ("ADVANCED", "INTL", 7.4),
+                ("EXPERT", "JP", 12.1),
+            ]
+        ],
+    }
+    captures = []
+    for region in ("JP", "INTL"):
+        raw = json.dumps(
+            {**metadata, "charts": [c for c in metadata["charts"] if c["region"] == region]}
+        ).encode()
+        captures.append(
+            (
+                "reviewed-page",
+                raw,
+                {
+                    "url": "https://example.org/metadata-fixture-" + region + ".json",
+                    "bytes": len(raw),
+                    "sha256": sha256(raw).hexdigest(),
+                    "captured_at": "2026-09-17T12:00:00Z",
+                },
+            )
+        )
+    proposal = propose_metadata(inventory, captures)
+    inventory = accept_metadata(
+        inventory,
+        proposal,
+        {
+            "proposal_sha256": digest(proposal),
+            "evidence": "Authored fixture review",
+            "accept": [c["observation_id"] for c in proposal["claims"]],
+        },
+    )
+    source = next(key for key, s in inventory["sources"].items() if s.get("region") == "JP")
+    accept_mapping(
+        inventory,
+        provider="kamaitachi",
+        provider_id="chart",
+        subject_id=master["chart_id"],
+        snapshot_id=source,
+        evidence="Synthetic player fixture, no real account",
+    )
+    build_lab(package, staging / "browser", catalog_version="legacy-fixture")
+    build_registry_package(inventory, package, staging / "package")
+    build_lab(staging / "package", staging / "browser", catalog_version="registry-fixture")
+    build_public_release(staging / "browser", staging / "public")
+    shutil.copytree(staging / "public", root / "registry", dirs_exist_ok=True)

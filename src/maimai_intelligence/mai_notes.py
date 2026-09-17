@@ -196,7 +196,7 @@ def prepare_links(charts, raw, *, overrides=(), captured_at=None):
 def validate_links(data, charts):
     if (
         set(data) != {"version", "source", "source_sha256", "generated_at", "captured_at", "charts"}
-        or data["version"] != VERSION
+        or data["version"] not in {VERSION, "mai-notes-links-2"}
         or data["source"] != SOURCE_URL
         or not re.fullmatch(r"[0-9a-f]{64}", data["source_sha256"])
         or not isinstance(data["charts"], dict)
@@ -205,14 +205,19 @@ def validate_links(data, charts):
     _timestamp(data["generated_at"])
     _timestamp(data["captured_at"])
     by_id, seen = {chart["chart_id"]: chart for chart in charts}, set()
+    identity = (
+        ("format", "difficulty")
+        if data["version"] == "mai-notes-links-2"
+        else ("source_hash", "format", "difficulty")
+    )
     for cid, record in data["charts"].items():
         chart = by_id.get(cid)
         if (
-            set(record) != {"id", "source_hash", "format", "difficulty"}
+            set(record) != {"id", *identity}
             or not UUID.fullmatch(record["id"])
             or record["id"] in seen
             or chart is None
-            or any(record[k] != chart[k] for k in ("source_hash", "format", "difficulty"))
+            or any(record[k] != chart.get(k) for k in identity)
         ):
             raise ValueError("mai-notes link does not belong to this exact catalog chart")
         seen.add(record["id"])

@@ -45,6 +45,42 @@ def integration_catalog(data, version):
 
     from .catalog_loading import PROFILE_FIELDS
 
+    if data.get("schema_version") == "maimai-browser-catalog-2":
+        # Session Report v1 consumes genuine experimental profiles and legacy IDs.
+        # Inventory membership alone never becomes recommendation qualification.
+        legacy = {}
+        for c in data["catalog"]:
+            if c.get("legacy_identity") and c.get("version") == "challenge-profile-1-experimental":
+                original = deepcopy(c["legacy_identity"])
+                original["demand"] = deepcopy(c["demand"])
+                legacy[c["chart_id"]] = original
+        translated = {
+            "catalog": list(legacy.values()),
+            "analysis": deepcopy(data.get("analysis", {})),
+            "provider_mapping": {
+                "schema_version": "provider-mapping-1",
+                "provider": "kamaitachi",
+                "game": "maimaidx",
+                "charts": {},
+            },
+        }
+        translated["analysis"]["charts"] = {
+            legacy[cid]["chart_id"]: row
+            for cid, row in translated["analysis"].get("charts", {}).items()
+            if cid in legacy
+        }
+        for pid, row in data.get("provider_mapping", {}).get("charts", {}).items():
+            c = legacy.get(row["chart_id"])
+            if c is not None:
+                translated["provider_mapping"]["charts"][pid] = {
+                    **{
+                        k: v for k, v in row.items() if k not in {"acceptance_basis", "snapshot_id"}
+                    },
+                    "chart_id": c["chart_id"],
+                    "source_hash": c["source_hash"],
+                }
+        return integration_catalog(translated, version)
+
     analysis = deepcopy(data.get("analysis", {}))
     for row in analysis.get("charts", {}).values():
         sparse = analysis.get("representation") in {"sparse-tags-2", "sparse-tags-3"}
@@ -139,7 +175,7 @@ def build_mapping(catalog, charts, songs, *, overrides=None):
 
 def validate_mapping(mapping, catalog):
     if (
-        mapping.get("schema_version") != "provider-mapping-1"
+        mapping.get("schema_version") not in {"provider-mapping-1", "provider-mapping-2"}
         or mapping.get("provider") != "kamaitachi"
         or mapping.get("game") != "maimaidx"
     ):
@@ -149,7 +185,14 @@ def validate_mapping(mapping, catalog):
         c = by_id.get(row.get("chart_id"))
         if (
             not c
-            or c["source_hash"] != row.get("source_hash")
+            or (
+                mapping["schema_version"] == "provider-mapping-1"
+                and c.get("source_hash") != row.get("source_hash")
+            )
+            or (
+                mapping["schema_version"] == "provider-mapping-2"
+                and row.get("acceptance_basis") not in {"reviewed", "legacy_published"}
+            )
             or (c["format"], c["difficulty"].upper()) != (row.get("format"), row.get("difficulty"))
         ):
             raise ValueError("Provider mapping belongs to another chart revision")

@@ -4,6 +4,11 @@ A standalone static chart browser, reusable Python intelligence engine and
 read-only Kamaitachi downloader. Personal recommendations are calculated during
 download/export; searching, filtering, Flow and structural comparisons are interactive.
 
+The [persistent official inventory](docs/REGISTRY_IMPLEMENTATION.md) separates
+known songs and chart variants from optional transcription and analysis. Its
+reviewed Japan and International captures include metadata-only charts, retain
+legacy links, and preserve Session Report's existing integration contract.
+
 The [owner-run catalog update workflow](docs/CATALOG_UPDATES.md) prepares source
 updates, cached analysis, metadata and exact mai-notes player links together,
 with a change report and verified publication. Playable matches appear beside
