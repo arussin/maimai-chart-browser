@@ -63,7 +63,7 @@ noncommercial restrictions remain in effect.
 | [Neskol / Maichart-Converts](https://github.com/Neskol/Maichart-Converts) | Retained research chart corpus at `e164add85213bab150e1487d5eb15ccb631aedb9`; upstream describes research use and prohibits commercial use. |
 | [MaichartConverter](https://github.com/Neskol/MaichartConverter) and [MaiLib](https://github.com/Neskol/MaiLib) | Upstream conversion tools credited by the corpus; neither is bundled or executed by this package. |
 | [Matsuk1 / JiETNG-maimai-dx-bot](https://github.com/Matsuk1/JiETNG-maimai-dx-bot) | Version-logo collection at the pinned revision above, with original game ownership retained. |
-| [Simai community](https://w.atwiki.jp/simai/), [notation documentation](https://w.atwiki.jp/simai/pages/1002.html) and [chart collection](https://w.atwiki.jp/simai/pages/32.html) | Notation references for the independently written parser, and public transcriptions used in early research studies. |
+| [Simai community](https://w.atwiki.jp/simai/), [notation documentation](https://w.atwiki.jp/simai/pages/1002.html) and [chart collection](https://w.atwiki.jp/simai/pages/32.html) | Notation references for the independently written parser, and public transcriptions used in early studies and the automated analysis fallback. |
 | [Surone](https://www.youtube.com/watch?v=DQgnFASwiOM) and [なめあ](https://note.com/namea_chunibyo/n/n8c7bc59683ff) | Tutorial transcript and illustrated explanation informing the scoped, authored Umiyuri lesson; no copied video or article illustrations are bundled. |
 | [Kamaitachi](https://kamai.tachi.ac/) / [Tachi](https://docs.tachi.ac/) contributors | Optional read-only score acquisition. Personal data is never included in public catalog assets. |
 | [arussin / maimai-session-report](https://github.com/arussin/maimai-session-report) | Original code and test foundations, with extraction history preserved above. |
@@ -97,14 +97,31 @@ Google's privacy policy, explains the data boundaries and provides withdrawal.
 Personal results, searches and chart selections are excluded. See
 [configuration and validation](docs/ANALYTICS.md).
 
-## mai-notes player links
+## Supplemental catalog sources
 
 [mai-notes (maiノーツ)](https://mai-notes.com/) and its creator provide the chart
-simulator and public chart-availability metadata used for external player links.
-The owner update workflow retains the index source URL, capture/generation times
-and checksum, and publishes only exact chart-link identities. No simulator code,
-chart text, music, account records or scores from mai-notes are redistributed.
-The site and its contributors are also thanked in About.
+simulator, public metadata and note counts. The updater uses these to fill
+missing fields and link exact difficulties, and checks its public chart-text
+endpoint for additional experimental analysis. It tries the [Simai community chart collection](https://w.atwiki.jp/simai/pages/32.html)
+when a mai-notes transcription is unavailable or unsupported. Analysis requires
+resolved identity, supported notation and matching counts for all five note
+categories. These checks do not establish exact game fidelity.
+
+[Arcade Songs / zetaraku](https://arcade-songs.zetaraku.dev/maimai/),
+[OTOGE DB / zvuc](https://github.com/zvuc/otoge-db), and the
+[maimai Wiki on Gamerch](https://gamerch.com/maimai/) and their contributors
+supply supplemental BPM, constants and chart reference data. SEGA's
+[Japan](https://maimai.sega.jp/data/maimai_songs.json) and
+[International](https://maimai.sega.com/assets/data/maimai_songs.json) listings
+supply accepted regional inventory observations. Numeric metadata and
+transcriptions have separate provenance; metadata does not create analysis.
+
+The update store retains source URLs, captured bytes, timestamps and checksums.
+Raw chart text, simulator code, music, account records and scores are excluded
+from public assets. Public metadata and derived measurements retain their source
+attribution and experimental qualifications. This project's MIT license does not
+license third-party datasets or original game content. About thanks these sources
+and distinguishes their actual roles.
 
 ## Party ring favicon
 

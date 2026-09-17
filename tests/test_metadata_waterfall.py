@@ -160,7 +160,12 @@ class WaterfallTests(unittest.TestCase):
     def test_newer_snapshot_replaces_same_source_field_but_keeps_other_source_disagreement(self):
         _, proposal, _ = self.accepted([capture()])
         rows = [c for c in proposal["claims"] if c["field"] == "chart_constant"]
-        newer = {**rows[0], "value": 14.1, "observed_at": "2026-09-18T00:00:00Z"}
+        newer = {
+            **rows[0],
+            "value": 14.1,
+            "release": "New release",
+            "observed_at": "2026-09-18T00:00:00Z",
+        }
         nav = project({}, [*rows, newer], proposal["sources"])
         self.assertEqual(nav["chart_constant"], 14.1)
         self.assertNotIn("metadata_alternatives", nav)

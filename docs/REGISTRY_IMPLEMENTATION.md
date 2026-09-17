@@ -187,7 +187,10 @@ Run the following from the repository with the package installed, or set
 
    Omitting `--package` intentionally produces inventory without prepared
    measurements; known chart identities, source metadata and accepted links
-   remain. No mai-notes network refresh is performed in the registry path.
+   remain. Online preparation also runs the [sustainable source waterfall](CATALOG_WATERFALL.md)
+   for metadata and validated supplemental transcriptions. The resulting registry
+   is saved in the run and reused by `update_catalog refresh`. Offline preparation
+   retains the registry unless explicit source replay is requested.
    When the retained package's profiles exactly match the previous published
    profile set, the latest verified published overview is preserved.
 

@@ -140,7 +140,10 @@ def retain_history(source, destination):
 def chart_changes(before, after):
     def index(charts):
         # The upstream input identity survives a changed chart body/hash.
-        pairs = [(c.get("input_id", c["chart_id"]), c) for c in charts]
+        pairs = [
+            (c["chart_id"] if "capabilities" in c else c.get("input_id", c["chart_id"]), c)
+            for c in charts
+        ]
         if len(dict(pairs)) != len(pairs):
             raise ValueError("Duplicate input identity in change report")
         return dict(pairs)
@@ -209,12 +212,16 @@ def prepare_update(
     overrides=None,
     offline=False,
     fetcher=download_index,
+    replay_sources=None,
+    source_fetcher=None,
 ):
     store, previous_browser = Path(store).resolve(), Path(previous_browser).resolve()
     if (package is not None and revision is not None) or (
         package is None and revision is None and registry is None
     ):
         raise ValueError("Choose an accepted package or an explicit reviewed source revision")
+    if replay_sources is not None and (not offline or registry is None):
+        raise ValueError("Source replay requires --offline and a registry")
     if revision is not None and artwork_cache is None:
         raise ValueError("Source updates require an artwork cache")
     if offline and mai_notes_snapshot is None and registry is None:
@@ -254,11 +261,29 @@ def prepare_update(
                         "Registry preparation requires complete accepted captures "
                         "for JP and International"
                     )
+                additions = None
+                if not offline or replay_sources:
+                    from maimai_intelligence.catalog_refresh import refresh
+
+                    accepted, additions, source_audit = refresh(
+                        accepted,
+                        before,
+                        store / "cache" / "waterfall",
+                        run,
+                        offline=offline,
+                        replay=replay_sources,
+                        fetcher=source_fetcher,
+                    )
+                else:
+                    from maimai_intelligence.registry import write_registry
+
+                    write_registry(accepted, run / "registry")
                 prepared = build_registry_package(
                     accepted,
                     package,
                     run / "package",
                     published=before if revision is None else None,
+                    additions=additions,
                 )
                 descriptor, _ = read_package(run / "package")
                 charts = prepared["catalog"]
@@ -310,6 +335,8 @@ def prepare_update(
                 from maimai_intelligence.registry_catalog import coverage_report
 
                 changes["registry"] = coverage(accepted) | coverage_report(prepared)
+                if additions is not None:
+                    changes["sources"] = source_audit["counts"]
             changes["mai_notes"] = {
                 **audit["counts"],
                 "added": sorted(links["charts"].keys() - old_links.keys()),
@@ -356,6 +383,20 @@ def prepare_update(
                     "Metadata-only charts do not receive fabricated measurements or hashes.",
                     "",
                 ]
+            if registry and additions is not None:
+                report += [
+                    "## Automatic source refresh",
+                    "",
+                    "Metadata observations added: "
+                    + str(source_audit["metadata"]["observations_added"]),
+                    "Transcription outcomes: " + json.dumps(source_audit["counts"]),
+                    "Charts with remaining numeric gaps: "
+                    + str(len(source_audit["metadata"]["remaining"])),
+                    "Provider failures: " + str(len(source_audit["failures"])),
+                    "See source-audit.json for failures, held changes and unresolved charts.",
+                    "source-captures.json pins inputs; registry/ is the next accepted state.",
+                    "",
+                ]
             (run / "report.md").write_text("\n".join(report), "utf-8")
             receipt = {
                 "version": "catalog-update-1",
@@ -366,6 +407,7 @@ def prepare_update(
                 "implementation_hash": implementation_hash(),
                 "release": release,
                 "files": file_inventory(run / "public"),
+                **({"registry_files": file_inventory(run / "registry")} if registry else {}),
             }
             atomic_json(run / "state.json", {"status": "ready"})
             # Last write is the sole marker that a complete candidate can be published.
@@ -385,6 +427,10 @@ def verify_candidate(run):
         or receipt.get("source") != SOURCE_LOCK
         or receipt.get("implementation_hash") != implementation_hash()
         or receipt.get("files") != file_inventory(run / "public")
+        or (
+            "registry_files" in receipt
+            and receipt["registry_files"] != file_inventory(run / "registry")
+        )
     ):
         raise ValueError("Candidate changed or was prepared by different code; prepare it again")
     return receipt
@@ -499,6 +545,34 @@ def publish_update(
         return publication
 
 
+def refresh_latest(store, *, offline=False, replay_sources=None):
+    """Continue from the last verified publication, including its accepted registry."""
+    store = Path(store).resolve()
+    latest = read_json(store / "latest.json")
+    name = latest["run"]
+    if not re.fullmatch(r"[0-9]{8}T[0-9]{6}Z-[a-f0-9]{8}", name):
+        raise ValueError("Invalid published run identity")
+    previous = store / "runs" / name
+    if read_json(previous / "publication.json") != latest:
+        raise ValueError("Latest update is not a verified publication")
+    registry = previous / "registry"
+    receipt = read_json(previous / "ready.json")
+    if "registry_files" in receipt:
+        if receipt["registry_files"] != file_inventory(registry):
+            raise ValueError("Published registry changed; restore the verified update state")
+    elif not registry.is_dir():
+        # First migration from the earlier updater's versioned accepted registry.
+        registry = REPO_ROOT / "registry"
+    return prepare_update(
+        store,
+        previous / "browser",
+        package=previous / "package",
+        registry=registry,
+        offline=offline,
+        replay_sources=replay_sources,
+    )
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
@@ -521,6 +595,15 @@ def main(argv=None):
     )
     prepare.add_argument("--overrides", type=Path)
     prepare.add_argument("--offline", action="store_true")
+    prepare.add_argument(
+        "--replay-sources", type=Path, help="Replay a retained source-captures.json offline"
+    )
+    refresh = commands.add_parser(
+        "refresh", help="Refresh sources from the last verified publication"
+    )
+    refresh.add_argument("--store", type=Path, required=True)
+    refresh.add_argument("--offline", action="store_true")
+    refresh.add_argument("--replay-sources", type=Path)
     publish = commands.add_parser("publish", help="Publish a reviewed candidate as the owner")
     publish.add_argument("run", type=Path)
     publish.add_argument("--gh", default="gh")
@@ -529,7 +612,9 @@ def main(argv=None):
     publish.add_argument("--wrangler", default="node_modules/wrangler/bin/wrangler.js")
     args = vars(parser.parse_args(argv))
     action = args.pop("command")
-    result = prepare_update(**args) if action == "prepare" else publish_update(**args)
+    result = {"prepare": prepare_update, "refresh": refresh_latest, "publish": publish_update}[
+        action
+    ](**args)
     print(str(result) if isinstance(result, Path) else json.dumps(result))
 
 

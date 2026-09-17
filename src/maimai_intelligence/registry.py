@@ -354,7 +354,16 @@ def analysis_fingerprint(row, implementation, *, parser, analyzer):
 
 
 def select_transcription(
-    value, chart_id, row, *, snapshot_id, evidence, legacy_chart_id, analysis_state="not_prepared"
+    value,
+    chart_id,
+    row,
+    *,
+    snapshot_id,
+    evidence,
+    legacy_chart_id,
+    analysis_state="not_prepared",
+    provider="neskol-input",
+    acceptance_basis="reviewed",
 ):
     """Select a reviewed source revision while keeping the persistent chart identity."""
     chart_id = resolve(value, chart_id)
@@ -391,7 +400,8 @@ def select_transcription(
     history[digest(selected)] = deepcopy(selected)
     accept_mapping(
         value,
-        provider="neskol-input",
+        provider=provider,
+        acceptance_basis=acceptance_basis,
         provider_id=row["input_id"],
         subject_id=chart_id,
         snapshot_id=snapshot_id,
