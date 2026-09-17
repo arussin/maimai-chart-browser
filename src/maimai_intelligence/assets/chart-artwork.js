@@ -1,6 +1,7 @@
 /* Display-only artwork from the verified public catalog, with same-site images only. */
 (()=>{'use strict';
 const data=window.maimaiResearchCatalog??=JSON.parse(document.getElementById('challenge-data').textContent),art=data.artwork;
+const jackets=new Map(data.catalog.filter(c=>{const item=art?.songs?.[c.song_id];return item?.title===c.title&&item?.artist===c.artist;}).map(c=>[c.chart_id,{songId:c.song_id,path:art.songs[c.song_id].path}]));
 function image(path,className,label){
   const box=document.createElement('span');box.className=className+' artwork-missing';
   box.title=label+' unavailable';box.setAttribute('role','img');box.setAttribute('aria-label',label+' unavailable');
@@ -11,7 +12,7 @@ function image(path,className,label){
   img.onerror=()=>{img.remove();box.classList.add('artwork-missing');box.title=label+' unavailable';box.setAttribute('aria-label',label+' unavailable');if(className==='song-jacket')box.textContent='♪';};
   box.replaceChildren(img);img.src=path;return box;
 }
-function jacket(chart){const item=art?.songs?.[chart.song_id];return image(item?.title===chart.title&&item?.artist===chart.artist?item.path:null,'song-jacket','Jacket for '+chart.title);}
+function jacket(chart){const item=jackets.get(chart.chart_id);return image(item?.songId===chart.song_id?item.path:null,'song-jacket','Jacket for '+chart.title);}
 function version(name){const box=image(art?.versions?.[name],'version-logo',name+' logo');box.setAttribute('aria-hidden','true');box.removeAttribute('role');box.removeAttribute('aria-label');return box;}
 window.maimaiChartArtwork=Object.freeze({jacket,version});
 })();

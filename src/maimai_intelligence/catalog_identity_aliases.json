@@ -1,0 +1,41 @@
+[
+  {
+    "source_url": "https://gamerch.com/maimai/994160",
+    "format": "DX",
+    "source": {
+      "title": "Cryogenic",
+      "artist": "Camellia ft. Petra Gurin"
+    },
+    "catalog": {
+      "title": "Cryogenic",
+      "artist": "Camellia ft. Petra Gurin「In Falsus」"
+    },
+    "evidence": "Reviewed matching song and DX difficulty table; provider artist credit differs in album annotation, credited units or composer/vocalist separators. No numeric values overridden."
+  },
+  {
+    "source_url": "https://gamerch.com/maimai/994142",
+    "format": "DX",
+    "source": {
+      "title": "Here the Our MIRAI!",
+      "artist": "イロドリミドリ/HaNaMiNa/S.S.L."
+    },
+    "catalog": {
+      "title": "Here the Our MIRAI!",
+      "artist": "イロドリミドリ"
+    },
+    "evidence": "Reviewed matching song and DX difficulty table; provider artist credit differs in album annotation, credited units or composer/vocalist separators. No numeric values overridden."
+  },
+  {
+    "source_url": "https://gamerch.com/maimai/977508",
+    "format": "DX",
+    "source": {
+      "title": "キミは“見ていたね”？",
+      "artist": "曲：篠崎あやと、橘亮祐 歌：結城 莉玖(CV：朝日奈 丸佳)、東雲 つむぎ(CV：和泉 風花)"
+    },
+    "catalog": {
+      "title": "キミは“見ていたね”？",
+      "artist": "曲：篠崎あやと、橘亮祐／歌：結城 莉玖(CV：朝日奈 丸佳)、東雲 つむぎ(CV：和泉 風花)"
+    },
+    "evidence": "Reviewed matching song and DX difficulty table; provider artist credit differs in album annotation, credited units or composer/vocalist separators. No numeric values overridden."
+  }
+]

@@ -1,6 +1,7 @@
 """Validate and cache supplemental transcriptions using the existing analysis engine."""
 
 import hashlib
+import re
 from copy import deepcopy
 from importlib.resources import files
 from pathlib import Path
@@ -11,6 +12,7 @@ from maimai_analyzer.simai_subset import PARSER_VERSION, parse_simai_subset
 from scripts.analyze_simai_corpus import _identity
 from scripts.evaluate_simai_pilot import COUNT_CONVENTION, count_comparison, note_counts
 
+from .metadata_waterfall import number
 from .overview_codec import compact_overview
 from .registry import analysis_fingerprint
 from .research_overview import chart_overview, overview_package
@@ -31,6 +33,30 @@ def implementation():
             files("scripts").joinpath("evaluate_simai_pilot.py").read_bytes()
         ).hexdigest()
     }
+
+
+def prepare_body(body, reference):
+    """Supply a missing initial tempo from the same identity-checked reference row.
+
+    Keep the original source hash and reference capture in the transformation audit.
+    The prepared body hash binds this tempo into analysis and subsequent refreshes.
+    Explicit in-body tempo always wins; never repair arbitrary notation.
+    """
+    text = body.decode("utf-8")
+    prefix = re.match(r"\s*(?:&inote_[1-6]=\s*)?(?:(?:\|\|[^\n]*\n)\s*)*", text)
+    position = prefix.end()
+    bpm = number(reference.get("bpm"), "bpm")
+    source = reference.get("reference_source")
+    if text[position : position + 1] != "{" or bpm is None or not source:
+        return body, None
+    transform = {
+        "kind": "initial_bpm_from_reference",
+        "bpm": bpm,
+        "original_body_sha256": hashlib.sha256(body).hexdigest(),
+        "reference_source": source,
+    }
+    prepared = (text[:position] + "(" + format(bpm, ".15g") + ")" + text[position:]).encode("utf-8")
+    return prepared, transform
 
 
 def qualify(body, row, expected_counts, cache, *, fingerprints=None):

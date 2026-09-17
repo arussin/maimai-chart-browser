@@ -9,8 +9,10 @@ from pathlib import Path
 from unittest.mock import patch
 
 from maimai_intelligence.catalog_capture import CaptureStore
+from maimai_intelligence.catalog_identity import key, rules
 from maimai_intelligence.catalog_refresh import METADATA_URLS, refresh
-from maimai_intelligence.catalog_sources import WIKI, mai_catalog, wiki_catalog
+from maimai_intelligence.catalog_sources import WIKI, discovery_pages, mai_catalog, wiki_catalog
+from maimai_intelligence.catalog_transcriptions import prepare_body
 from maimai_intelligence.lab import build_lab
 from maimai_intelligence.overview_codec import compact_overview
 from maimai_intelligence.registry import read_registry, write_registry
@@ -173,8 +175,14 @@ class WaterfallTests(unittest.TestCase):
     def test_count_mismatch_tries_wiki_and_retains_unknown_on_failure(self):
         for chart in self.manifest["charts"]:
             chart["taps"] = 999
+
+        def mismatch(url, headers):
+            if url == WIKI + "1234":
+                return 200, wiki().replace(b"<td>4</td><td>4</td>", b"<td>999</td><td>999</td>"), {}
+            return self.fetch(url, headers)
+
         value, additions, audit = refresh(
-            self.value, self.legacy, self.cache, self.root / "run", fetcher=self.fetch
+            self.value, self.legacy, self.cache, self.root / "run", fetcher=mismatch
         )
         self.assertEqual(additions["profiles"], [])
         statuses = [
@@ -365,6 +373,81 @@ class WaterfallTests(unittest.TestCase):
         self.assertFalse(additions["profiles"])
         self.assertTrue(any("Malformed mai-notes" in f["reason"] for f in audit["failures"]))
 
+    def test_homepage_discovery_spacing_and_bpm_context_persist_on_next_run(self):
+        # Future song absent from mai-notes; only a homepage link exists.
+        def fetch(url, headers):
+            if url == WIKI:
+                return 200, b'<a href="/maimai/1234">Future Song</a>', {}
+            if url == WIKI + "1234":
+                return 200, wiki(title="FutureSong", artist="FutureArtist"), {}
+            if url == "https://w.atwiki.jp/simai/pages/1234.html":
+                html = (
+                    '<div id="wikibody"><h2>でらっくす譜面</h2>'
+                    + "".join(
+                        f"<h3>{d}</h3><pre>{{4}}1,2,3,4,E</pre>"
+                        for d in ("BASIC", "ADVANCED", "EXPERT", "MASTER")
+                    )
+                    + "</div>"
+                )
+                return 200, html.encode(), {}
+            raise OSError("Provider has no future entry")
+
+        value, additions, audit = refresh(
+            self.value, self.legacy, self.cache, self.root / "discovery", fetcher=fetch
+        )
+        self.assertEqual(audit["counts"]["analyzed"], 4)
+        self.assertTrue(
+            all(
+                r["transformation"]["bpm"] == 120
+                for r in audit["transcriptions"]
+                if r["status"] == "analyzed"
+            )
+        )
+        data = build_registry_package(
+            value, self.package, self.root / "discovery-package", additions=additions
+        )
+        again, added, second = refresh(
+            value, data, self.cache, self.root / "discovery-next", fetcher=fetch
+        )
+        self.assertEqual(second["counts"]["retained_unchanged"], 4)
+        self.assertEqual(second["metadata"]["observations_added"], 0)
+        self.assertEqual(added["profiles"], [])
+        self.assertEqual(again, value)
+
+    def test_missing_dx_variant_does_not_reuse_standard_reference(self):
+        self.manifest["songs"] = {}
+        self.manifest["charts"] = []
+        self.manifest["charts_count"] = 0
+
+        def fetch(url, headers):
+            if url == WIKI:
+                return 200, b'<a href="/maimai/1234">Future Song</a>', {}
+            if url == WIKI + "1234":
+                body = wiki().replace("でらっくす譜面".encode(), "スタンダード譜面".encode())
+                return (
+                    200,
+                    body.replace(b"<th>TOUCH</th>", b"").replace(b"<td>0</td></tr>", b"</tr>"),
+                    {},
+                )
+            raise OSError("No DX source")
+
+        _, added, audit = refresh(
+            self.value, self.legacy, self.cache, self.root / "std-only", fetcher=fetch
+        )
+        self.assertFalse(added["profiles"])
+        rows = [r for r in audit["transcriptions"] if r["title"] == "Future Song"]
+        self.assertEqual(len(rows), 4)
+        self.assertTrue(all(r["reference_status"] == "variant_not_published" for r in rows))
+
+    def test_conflicting_reference_counts_do_not_qualify_analysis(self):
+        for chart in self.manifest["charts"]:
+            chart["taps"] = 999
+        _, additions, audit = refresh(
+            self.value, self.legacy, self.cache, self.root / "conflict", fetcher=self.fetch
+        )
+        self.assertEqual(audit["counts"]["reference_counts_conflict"], 4)
+        self.assertFalse(additions["profiles"])
+
     def test_adapter_drops_unrelated_fields(self):
         targets, _ = mai_catalog(json.dumps(self.manifest).encode())
         self.assertNotIn("UNRELATED_SCORE_SENTINEL", json.dumps(targets))
@@ -386,3 +469,64 @@ class WaterfallTests(unittest.TestCase):
                 for at in r["attempts"]
             )
         )
+
+
+class ImportIdentityTests(unittest.TestCase):
+    def test_typography_keeps_editions_and_unique_artists(self):
+        base = {
+            "title": "Song (Short ver.)",
+            "artist": "Unit A｜Unit B",
+            "format": "DX",
+            "difficulty": "MASTER",
+        }
+        self.assertEqual(
+            key(base), key(base | {"title": "Song(Short ver.)", "artist": "Unit A / Unit B"})
+        )
+        self.assertNotEqual(key(base), key(base | {"title": "Song"}))
+        self.assertNotEqual(key(base), key(base | {"artist": "Unit C"}))
+        self.assertNotEqual(key(base), key(base | {"format": "STD"}))
+
+    def test_reviewed_credits_require_both_exact_assertions_and_page(self):
+        for rule in rules():
+            source = rule["source"] | {
+                "source_url": rule["source_url"],
+                "format": rule["format"],
+                "difficulty": "MASTER",
+            }
+            own = rule["catalog"] | {"format": rule["format"], "difficulty": "MASTER"}
+            self.assertEqual(key(source), key(own))
+            self.assertNotEqual(key(source | {"source_url": WIKI + "99999"}), key(own))
+            self.assertNotEqual(key(source | {"artist": source["artist"] + " remix"}), key(own))
+
+    def test_release_menu_discovery_is_not_bound_to_a_current_release_name(self):
+        html = (
+            '<div><a href="/maimai/11">配信順</a><li><span>'
+            '<a href="/maimai/12#260917" title="Future Releaseの配信順楽曲リスト">'
+            "Future Release</a>"
+            '</span></li><a href="https://example.com/maimai/13" title="別の配信順楽曲リスト">'
+            "Other</a></div>"
+        )
+        self.assertEqual(discovery_pages(html.encode()), {WIKI + "11", WIKI + "12"})
+
+    def test_wiki_footnotes_are_not_part_of_identity_or_numbers(self):
+        page = wiki().replace(
+            b"Future Artist</td>", b'Future<br>Artist<a href="#notes_foot_2">*2</a></td>'
+        )
+        page = page.replace(b"<td>2.1</td>", b'<td>2.1<a href="#notes_foot_3">*3</a></td>')
+        page = page.replace("定数調査:".encode(), "定数調査 ".encode())
+        rows, _ = wiki_catalog(page, WIKI + "1234")
+        self.assertEqual(rows[0]["artist"], "Future Artist")
+        self.assertEqual(rows[0]["chart_constant"], 2.1)
+        self.assertEqual(rows[0]["release"], "Future Release")
+
+    def test_reference_tempo_is_audited_and_does_not_rewrite_explicit_tempo(self):
+        source = {"url": WIKI + "1234", "sha256": "a" * 64}
+        ref = {"bpm": 120, "reference_source": source}
+        body = b"&inote_2=\n|| comment\n{4}1,2,3,4,E"
+        prepared, evidence = prepare_body(body, ref)
+        self.assertIn(b"(120){4}", prepared)
+        self.assertEqual(evidence["original_body_sha256"], hashlib.sha256(body).hexdigest())
+        self.assertEqual(evidence["reference_source"], source)
+        self.assertEqual(prepare_body(BODY, ref), (BODY, None))
+        self.assertEqual(prepare_body(body, {"bpm": 120}), (body, None))
+        self.assertNotEqual(prepare_body(body, ref | {"bpm": 150})[0], prepared)
