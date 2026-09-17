@@ -127,6 +127,10 @@ class WaterfallTests(unittest.TestCase):
                 self.assertEqual(chart["capabilities"]["flow"], "available")
                 self.assertEqual(chart["capabilities"]["patterns"], "available")
                 self.assertEqual(chart["capabilities"]["similarity"], "available")
+                navigation = data["navigation"]["charts"][chart["chart_id"]]
+                self.assertEqual(navigation["source_hash"], chart["source_hash"])
+                self.assertEqual(navigation["genre"], "maimai")
+                self.assertTrue(navigation["version"].startswith("maimai"))
                 self.assertEqual(data["navigation"]["charts"][chart["chart_id"]]["bpm"], 120)
         with patch(
             "maimai_intelligence.catalog_transcriptions.profile_chart",

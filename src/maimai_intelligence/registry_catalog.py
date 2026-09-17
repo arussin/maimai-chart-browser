@@ -238,6 +238,8 @@ def project_registry(value, legacy):
         if nav.get("version"):
             versions.add(nav["version"])
         nav["chart_id"] = cid
+        if profile:
+            nav["source_hash"] = profile["source_hash"]
         project_metadata(nav, metrics[cid], value["sources"])
         data["navigation"]["charts"][cid] = nav
         unavailable = (
