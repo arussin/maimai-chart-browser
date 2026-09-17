@@ -51,6 +51,8 @@ class ComparisonIndex:
         self.profiles = {}
         scale = {}
         for c in profiles:
+            if c.get("version") == "registry-chart-1":
+                continue
             if (
                 c.get("version") != "challenge-profile-1-experimental"
                 or c["chart_id"] in self.profiles

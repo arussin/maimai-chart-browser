@@ -129,8 +129,16 @@ def build_public_release(source, output):
             "artwork",
             "mai_notes",
             "provider_mapping",
+            "schema_version",
+            "registry",
+            "legacy_ids",
+            "sources",
         }:
             raise ValueError("Unexpected fields in public research catalog")
+        if "schema_version" in data:
+            from .registry_catalog import validate_catalog
+
+            validate_catalog(data)
         if "mai_notes" in data:
             validate_links(data["mai_notes"], data["catalog"])
         if "provider_mapping" in data:
@@ -201,7 +209,14 @@ def build_public_release(source, output):
         with destination.open("xb") as stream:
             stream.write(raw)
     atomic_json(
-        output / "manifest.json", {**manifest, "schema_version": "1.2.0", "releases": releases}
+        output / "manifest.json",
+        {
+            **manifest,
+            "schema_version": "1.3.0"
+            if any(r.get("inventory_schema") for r in releases)
+            else "1.2.0",
+            "releases": releases,
+        },
     )
     return {
         "catalogs": len(releases),

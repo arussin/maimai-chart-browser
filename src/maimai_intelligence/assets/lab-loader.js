@@ -24,7 +24,7 @@
     async function fetchBucket(bucket){
       const raw=await verified(data.detail_buckets[bucket],'chart-details',8*1024*1024);
       const detail=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(raw));
-      if(detail.schema_version!=='chart-details-1'||detail.source_catalog_sha256!==sourceHash)throw new Error('Chart details belong to another catalog');
+      if(detail.schema_version!==(data.index_schema_version==='catalog-index-2'?'chart-details-2':'chart-details-1')||detail.source_catalog_sha256!==sourceHash)throw new Error('Chart details belong to another catalog');
       const expected=[...charts.values()].filter(c=>c.detail_bucket===bucket);
       if(!detail.identities||Object.keys(detail.identities).length!==expected.length||expected.some(c=>detail.identities[c.chart_id]!==c.source_hash))throw new Error('Chart detail identity mismatch');
       for(const [id,record]of Object.entries(detail.charts||{}))if(charts.get(id)?.detail_bucket!==bucket||record.source_hash!==charts.get(id).source_hash)throw new Error('Chart detail identity mismatch');
@@ -45,18 +45,18 @@
       job={bucket};job.promise=new Promise((resolve,reject)=>Object.assign(job,{resolve,reject}));jobs.set(bucket,job);
       if(priority)queue.unshift(job);else queue.push(job);pump();return job.promise;
     }
-    return Object.freeze({ensure,ready:chart=>loaded.has(chart.detail_bucket)});
+    return Object.freeze({ensure,ready:chart=>!chart.detail_bucket||loaded.has(chart.detail_bucket)});
   }
   try{
     const manifest=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(await read('manifest.json',1024*1024))),version=new URLSearchParams(location.search).get('version')||manifest.default;
     const entry=Array.isArray(manifest.releases)&&manifest.releases.find(r=>r.version===version);
-    if(!['1.0.0','1.1.0','1.2.0'].includes(manifest.schema_version)||!entry||!/^[a-f0-9]{64}$/.test(entry.sha256)||entry.path!==`catalogs/${entry.sha256}.json`)throw new Error('This research catalog version is unavailable');
+    if(!['1.0.0','1.1.0','1.2.0','1.3.0'].includes(manifest.schema_version)||!entry||!/^[a-f0-9]{64}$/.test(entry.sha256)||entry.path!==`catalogs/${entry.sha256}.json`)throw new Error('This research catalog version is unavailable');
     let bytes;
     if(entry.startup!==undefined){
-      if(manifest.schema_version!=='1.2.0')throw new Error('Unsupported browsing index');
+      if(!['1.2.0','1.3.0'].includes(manifest.schema_version))throw new Error('Unsupported browsing index');
       bytes=await verified(entry.startup,'catalog-index');
     }else if(entry.parts!==undefined){
-      if(!['1.1.0','1.2.0'].includes(manifest.schema_version)||!Array.isArray(entry.parts)||!entry.parts.length||entry.parts.length>8)throw new Error('Invalid catalog parts');
+      if(!['1.1.0','1.2.0','1.3.0'].includes(manifest.schema_version)||!Array.isArray(entry.parts)||!entry.parts.length||entry.parts.length>8)throw new Error('Invalid catalog parts');
       let total=0;
       for(const p of entry.parts){if(!/^[a-f0-9]{64}$/.test(p.sha256)||p.path!==`catalog-parts/${p.sha256}.json`||!Number.isInteger(p.bytes)||p.bytes<1||p.bytes>8*1024*1024)throw new Error('Invalid catalog part');total+=p.bytes;}
       if(total>catalogMaximum)throw new Error('Full research catalog exceeds 64 MiB');
@@ -70,7 +70,9 @@
     // Startup bytes were already verified against their own manifest digest.
     if(!entry.startup&&await hash(bytes)!==entry.sha256)throw new Error('Research catalog integrity check failed');
     const text=new TextDecoder('utf-8',{fatal:true}).decode(bytes),data=JSON.parse(text);
+    if(entry.inventory_schema&&data.schema_version!==entry.inventory_schema)throw new Error('Inventory schema mismatch');
     if(entry.startup){
+      if(entry.inventory_schema&&data.index_schema_version!=='catalog-index-2')throw new Error('Unsupported inventory index');
       if(data.source_catalog_sha256!==entry.sha256||!Array.isArray(data.catalog)||!data.detail_buckets||Object.keys(data.detail_buckets).length>1024)throw new Error('Invalid browsing index');
       window.maimaiCatalogDetails=details(data,entry.sha256);
     }

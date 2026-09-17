@@ -65,7 +65,20 @@ class ResearchOverviewTests(unittest.TestCase):
             catalog = [{**profile_chart(c), "input_id": str(i)} for i, c in enumerate(charts)]
             entries = [
                 write(package, "catalog.json", catalog),
-                write(package, "source-inventory.json", [{"input_id": "0"}, {"input_id": "1"}]),
+                write(
+                    package,
+                    "source-inventory.json",
+                    [
+                        {
+                            "input_id": str(i),
+                            "body_sha256": c["source_hash"],
+                            "source_raw_sha256": str(i) * 64,
+                            "format": c["format"],
+                            "difficulty": c["difficulty"],
+                        }
+                        for i, c in enumerate(catalog)
+                    ],
+                ),
             ]
             write(
                 package,

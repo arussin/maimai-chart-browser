@@ -210,7 +210,7 @@ test('decimal constants sort numerically with unknowns last and follow difficult
   await page.goto('/constants/');await expect(page.locator('#songs .song-row')).toHaveCount(5);
   const requests=[];page.on('request',r=>requests.push(r.url()));
   const values=()=>page.locator('#songs .chart-constant').allTextContents();
-  const sort=page.getByRole('button',{name:'Constant unsorted',exact:true});await sort.click();
+  const sort=page.getByRole('button',{name:'Source constant unsorted',exact:true});await sort.click();
   expect(await values()).toEqual(['9.9','10.4','10.5','11.0','—']);
   await page.locator('[data-sort-key=constant]').press('Enter');
   expect(await values()).toEqual(['11.0','10.5','10.4','9.9','—']);

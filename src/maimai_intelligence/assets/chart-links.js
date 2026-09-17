@@ -1,7 +1,7 @@
 /* Searches use public chart metadata; no video is fetched or presumed verified. */
 (()=>{'use strict';
-let playerLinks=null;
-function configure(index){playerLinks=index?.version==='mai-notes-links-1'?index.charts:null;}
+let playerLinks=null,identityVersion=1;
+function configure(index){identityVersion=index?.version==='mai-notes-links-2'?2:1;playerLinks=['mai-notes-links-1','mai-notes-links-2'].includes(index?.version)?index.charts:null;}
 function youtube(chart){
   const title=chart.title?.trim();if(!title)return null;
   const description=[title,chart.format,chart.difficulty].filter(Boolean).join(' ');
@@ -16,7 +16,7 @@ function youtube(chart){
 }
 function maiNotes(chart){
   const record=playerLinks?.[chart.chart_id];
-  if(!record||!chart.source_hash||record.source_hash!==chart.source_hash||record.format!==chart.format||record.difficulty!==chart.difficulty||
+  if(!record||(identityVersion===1&&(!chart.source_hash||record.source_hash!==chart.source_hash))||record.format!==chart.format||record.difficulty!==chart.difficulty||
       typeof record.id!=='string'||!(/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/).test(record.id))return null;
   const link=document.createElement('a');link.className='mai-notes-player';
   link.href='https://mai-notes.com/player.html?chart='+record.id;

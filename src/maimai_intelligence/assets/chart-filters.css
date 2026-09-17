@@ -24,3 +24,7 @@
 @media(max-width:600px){.pattern-filter-field{width:100%}.pattern-filter-panel{width:100%}.pattern-filter-toolbar{flex-wrap:wrap;gap:2px 10px}}
 
 #pattern-filter.opens-up .pattern-filter-panel{top:auto;bottom:calc(100% + 6px)}
+
+/* Four inventory controls stay balanced at desktop and mobile widths. */
+.filter-row.registry-filters{grid-template-columns:repeat(4,minmax(0,1fr))}.registry-metadata p{margin:6px 0;overflow-wrap:anywhere}
+@media(max-width:800px){.filter-row.registry-filters{grid-template-columns:repeat(2,minmax(0,1fr))}.filter-row.registry-filters>label:first-child{grid-column:auto}}

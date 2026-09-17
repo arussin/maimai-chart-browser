@@ -1,5 +1,12 @@
 # Catalog updates
 
+For the current persistent inventory workflow, begin with
+[Persistent official inventory](REGISTRY_IMPLEMENTATION.md#owner-preparation).
+Pass `--registry registry` to prepare from accepted regional observations and
+reviewed mappings. That path retains accepted mai-notes links without fetching
+the index and permits an inventory-only build without a chart package. The
+acquisition and source-hash link rules below describe the legacy package path.
+
 `python -m scripts.update_catalog` is the owner-run preparation and publication
 workflow. It has no schedule, public endpoint, GitHub deployment workflow or
 automatic trigger. Contributions continue through ordinary pull requests; only

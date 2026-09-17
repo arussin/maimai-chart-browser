@@ -46,6 +46,7 @@ def review_scripts():
                 "chart-filters.js",
                 "chart-overview.js",
                 "pattern-filter.js",
+                "registry-browser.js",
                 "chart-comparison.js",
                 "challenge-review.js",
             )
@@ -63,6 +64,8 @@ def render_review(
     overview=None,
     artwork=None,
     mai_notes=None,
+    provider_mapping=None,
+    browser_metadata=None,
 ):
     data = {
         "package": package,
@@ -71,7 +74,9 @@ def render_review(
         "snippets": snippets,
         "benchmark_hash": benchmark["benchmark_hash"],
         "navigation": navigation or {"charts": {}, "genres": [], "versions": []},
-        "provider_mapping": default_mapping(catalog),
+        "provider_mapping": provider_mapping
+        if provider_mapping is not None
+        else default_mapping(catalog),
     }
     if overview is not None:
         data["analysis"] = overview
@@ -79,6 +84,13 @@ def render_review(
         data["artwork"] = artwork
     if mai_notes is not None:
         data["mai_notes"] = mai_notes
+    if browser_metadata is not None:
+        if set(browser_metadata) != {"schema_version", "registry", "legacy_ids", "sources"}:
+            raise ValueError("Unexpected browser registry metadata")
+        data.update(browser_metadata)
+        from .registry_catalog import validate_catalog
+
+        validate_catalog(data)
     # Showing a public reference definition never assigns it to a catalog chart.
     patterns = [
         {

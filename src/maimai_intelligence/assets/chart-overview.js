@@ -39,7 +39,7 @@ function loadInto(box,c,render,priority=false){
   return run;
 }
 function patternButton(id,text=name(id)){const b=make('button',text,'pattern-chip');b.type='button';b.dataset.pattern=id;b.onclick=()=>window.maimaiPatternLibrary.show(id,b);return b;}
-function chips(c,limit=3,focus=null){const box=make('div',undefined,'chart-patterns'),found=detected(c);const priorities=new Set(Array.isArray(focus)?focus:focus?[focus]:[]);if(priorities.size)found.sort((a,b)=>Number(priorities.has(b.id))-Number(priorities.has(a.id)));for(const t of found.slice(0,limit)){const b=patternButton(t.id);b.title=t.count+' observed occurrences · experimental detection';box.append(b);}if(found.length>limit)box.append(make('span','+'+(found.length-limit),'muted'));if(!found.length)box.append(make('span',get(c)?'No patterns detected in supported coverage':'Patterns not prepared for this release','muted'));return box;}
+function chips(c,limit=3,focus=null){const box=make('div',undefined,'chart-patterns'),found=detected(c);const priorities=new Set(Array.isArray(focus)?focus:focus?[focus]:[]);if(priorities.size)found.sort((a,b)=>Number(priorities.has(b.id))-Number(priorities.has(a.id)));for(const t of found.slice(0,limit)){const b=patternButton(t.id);b.title=t.count+' observed occurrences · experimental detection';box.append(b);}if(found.length>limit)box.append(make('span','+'+(found.length-limit),'muted'));if(!found.length)box.append(make('span',get(c)?'No patterns detected in supported coverage':'Patterns not prepared for this chart','muted'));return box;}
 function graph(c,{compact=false,maximum=null,span=null}={}){
   const record=get(c),box=make('figure',undefined,'chart-flow'+(compact?' compact':''));
   if(record&&delivery&&!delivery.ready(c)){box.append(make('span','Loading activity…','muted'));onVisible(box,loadInto(box,c,()=>graph(c,{compact,maximum,span})));return box;}
@@ -60,9 +60,9 @@ function graph(c,{compact=false,maximum=null,span=null}={}){
 }
 function details(c){
   const box=make('section',undefined,'chart-pattern-detail');box.append(make('h4','Patterns & activity'));
-  if(delivery&&!delivery.ready(c)){loadInto(box,c,()=>details(c),true)();return box;}
+  if(get(c)&&delivery&&!delivery.ready(c)){loadInto(box,c,()=>details(c),true)();return box;}
   const found=detected(c),layout=make('div',undefined,'chart-pattern-content'),activity=make('div',undefined,'chart-activity'),evidenceList=make('div',undefined,'chart-evidence-list'),flow=make('div'),reading=make('p','','flow-reading');flow.append(graph(c));reading.setAttribute('role','status');activity.append(flow,reading);layout.append(activity,evidenceList);box.append(layout);
-  if(!get(c)){box.append(make('p','This catalog release has no prepared pattern mappings.'));return box;}
+  if(!get(c)){box.append(make('p','This chart has no prepared pattern analysis.'));return box;}
   if(!found.length)evidenceList.append(make('p','No patterns detected in supported coverage.','muted'));
   for(const tag of found){const row=make('div',undefined,'pattern-evidence');row.append(patternButton(tag.id),make('span',tag.count+' observed'+(tag.coverage==='partial'||tag.truncated?' · partial coverage':'') ,'muted'));
     const seen=new Set();tag.spans.forEach((span,i)=>{const evidence=tag.evidence[i]||{},target=evidence.target_pattern_id,key=span.join(':')+':'+(target||'');if(seen.has(key))return;seen.add(key);const label=(target?name(target)+' · ':'')+clock(span[0])+'–'+clock(span[1]),button=make('button',label,'span-button');button.type='button';button.setAttribute('aria-label','Highlight '+name(tag.id)+' · '+label);button.onclick=()=>{flow.replaceChildren(graph(c,{span}));reading.textContent=name(tag.id)+' · '+label+' · highlighted in activity chart';};row.append(button);});

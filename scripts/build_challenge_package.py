@@ -8,6 +8,7 @@ import time
 import unicodedata
 from collections import Counter
 from importlib.resources import files as resource_files
+from inspect import getsource
 from pathlib import Path
 
 from maimai_analyzer.catalog_navigation import build_navigation, source_bpm
@@ -17,6 +18,7 @@ from maimai_analyzer.contracts import ChartInputError, canonical_bytes, content_
 from maimai_analyzer.dataset import SOURCE_LOCK, inventory_delta, review_benchmark
 from maimai_analyzer.simai_subset import PARSER_VERSION, parse_simai_subset
 from maimai_intelligence.io import atomic_write_text
+from maimai_intelligence.registry import analysis_fingerprint
 from scripts.acquire_maichart_pack import selected_entries, sha256
 from scripts.analyze_simai_corpus import _identity, _load, _relative, _verify
 from scripts.prepare_maichart_pack import _verify_file
@@ -71,6 +73,9 @@ def parse_row(root, row, memo, work):
     return chart, audit
 
 
+PARSE_ROW_IMPLEMENTATION = sha256(getsource(parse_row).encode("utf-8"))
+
+
 def source_bpms(root, rows):
     """Read retained, hash-verified container metadata without reanalyzing notes."""
     result, memo, work = {}, {}, Counter()
@@ -107,6 +112,7 @@ def build(source, output, *, review_count=12, previous=None, cache_directory=Non
             "rational.py",
         )
     }
+    implementation["parse_row"] = PARSE_ROW_IMPLEMENTATION
     memo, work, profiles, outcomes = {}, Counter(), [], []
     index = {}
     for number, row in enumerate(rows, 1):
@@ -119,14 +125,7 @@ def build(source, output, *, review_count=12, previous=None, cache_directory=Non
         )
         outcome = {"input_id": row["input_id"], "status": status}
         if row.get("body_file") and row["format"] in {"STD", "DX"} and row.get("identity_resolved"):
-            key = content_hash(
-                {
-                    "row": row,
-                    "version": VERSION,
-                    "parser": PARSER_VERSION,
-                    "implementation": implementation,
-                }
-            )
+            key = analysis_fingerprint(row, implementation, parser=PARSER_VERSION, analyzer=VERSION)
             cache_root = Path(cache_directory).resolve() if cache_directory else output
             cache = _relative(cache_root, f"profiles/{key}.json")
             try:
@@ -147,32 +146,33 @@ def build(source, output, *, review_count=12, previous=None, cache_directory=Non
                 else:
                     chart, _ = parse_row(root, row, memo, work)
                     profile = profile_chart(chart)
-                    profile.update(
-                        title=row["title"],
-                        artist=row["artist"],
-                        level=row.get("level"),
-                        input_id=row["input_id"],
-                        source_container_id=row["source_container_id"],
-                    )
-                    # Conservative evaluation grouping only; never an account identity join.
-                    profile["song_family"] = (
-                        "title-family:"
-                        + content_hash(
-                            unicodedata.normalize("NFKC", row["title"]).casefold().strip()
-                        )[:24]
-                    )
                     write(
                         cache_root,
                         f"profiles/{key}.json",
                         {**profile, "package_profile_hash": content_hash(profile)},
                     )
                     work["analyzed"] += 1
+                artifact_hash = content_hash(profile)
                 if cache_root != output:
                     write(
                         output,
                         f"profiles/{key}.json",
                         {**profile, "package_profile_hash": content_hash(profile)},
                     )
+                # Cached measurements are immutable; display metadata is projected anew.
+                profile.update(
+                    title=row["title"],
+                    artist=row["artist"],
+                    level=row.get("level"),
+                    input_id=row["input_id"],
+                    source_container_id=row["source_container_id"],
+                )
+                profile["song_family"] = (
+                    "title-family:"
+                    + content_hash(unicodedata.normalize("NFKC", row["title"]).casefold().strip())[
+                        :24
+                    ]
+                )
                 profiles.append(profile)
                 index[profile["chart_id"]] = row
                 outcome.update(
@@ -180,7 +180,7 @@ def build(source, output, *, review_count=12, previous=None, cache_directory=Non
                     profile_path=f"profiles/{key}.json",
                     chart_id=profile["chart_id"],
                     source_hash=row["body_sha256"],
-                    profile_content_hash=content_hash(profile),
+                    profile_content_hash=artifact_hash,
                 )
             except ChartInputError as error:
                 outcome.update(status="unsupported", reason=str(error))

@@ -34,6 +34,13 @@ def progressive_catalog(data, catalog_sha):
     if not data.get("catalog") or not all(isinstance(c, dict) for c in data["catalog"]):
         return None, {}
     index = deepcopy(data)
+    inventory = data.get("schema_version") == "maimai-browser-catalog-2"
+    fields = PROFILE_FIELDS
+    if inventory:
+        from .registry_catalog import CHART_FIELDS
+
+        fields = CHART_FIELDS - {"legacy_identity", "transcription"}
+        index["index_schema_version"] = "catalog-index-2"
     if "provider_mapping" in index:
         # Unmatched provider diagnostics belong to the full retained catalog,
         # not the first page load. Browsing only needs verified chart matches.
@@ -42,7 +49,15 @@ def progressive_catalog(data, catalog_sha):
             cid: {
                 k: v
                 for k, v in row.items()
-                if k in {"chart_id", "source_hash", "format", "difficulty", "aliasOf"}
+                if k
+                in {
+                    "chart_id",
+                    "source_hash",
+                    "format",
+                    "difficulty",
+                    "aliasOf",
+                    "acceptance_basis",
+                }
             }
             for cid, row in index["provider_mapping"]["charts"].items()
         }
@@ -55,10 +70,14 @@ def progressive_catalog(data, catalog_sha):
     representation = analysis.get("representation", "")
     for chart in data["catalog"]:
         cid = chart["chart_id"]
+        record = data.get("analysis", {}).get("charts", {}).get(cid)
+        if inventory and record is None and cid not in data.get("snippets", {}):
+            index["catalog"].append({k: v for k, v in chart.items() if k in fields})
+            continue
         # At most 1,024 small shards per version, independent of source ordering.
         bucket = f"{int(hashlib.sha256(cid.encode()).hexdigest()[:3], 16) // 4:03x}"
         index["catalog"].append(
-            {**{k: v for k, v in chart.items() if k in PROFILE_FIELDS}, "detail_bucket": bucket}
+            {**{k: v for k, v in chart.items() if k in fields}, "detail_bucket": bucket}
         )
         detail = buckets.setdefault(bucket, {"charts": {}, "snippets": {}})
         record = data.get("analysis", {}).get("charts", {}).get(cid)
@@ -72,10 +91,14 @@ def progressive_catalog(data, catalog_sha):
             summary["tags"] = [t[:evidence_start] + [[], []] for t in record["tags"]]
         if cid in data.get("snippets", {}):
             detail["snippets"][cid] = data["snippets"][cid]
-        detail.setdefault("identities", {})[cid] = chart["source_hash"]
+        detail.setdefault("identities", {})[cid] = chart.get("source_hash")
     for bucket, detail in buckets.items():
         raw = canonical(
-            {"schema_version": "chart-details-1", "source_catalog_sha256": catalog_sha, **detail}
+            {
+                "schema_version": "chart-details-2" if inventory else "chart-details-1",
+                "source_catalog_sha256": catalog_sha,
+                **detail,
+            }
         )
         if len(raw) > 8 * 1024 * 1024:
             raise ValueError("Chart detail shard exceeds 8 MiB")

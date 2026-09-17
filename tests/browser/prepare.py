@@ -10,6 +10,8 @@ from maimai_intelligence import player_data
 from maimai_intelligence.lab import build_lab
 from maimai_intelligence.mai_notes import prepare_links
 from maimai_intelligence.public_release import build_public_release
+from maimai_intelligence.registry import accept_mapping
+from maimai_intelligence.registry_catalog import build_registry_package
 from maimai_intelligence.site import build_site
 from maimai_intelligence.snapshots import atomic_json, read_json
 from scripts.build_challenge_package import write
@@ -18,6 +20,7 @@ from tests.browser.capacity_fixture import build_capacity_fixture
 from tests.lab_fixture import write_package
 from tests.mai_notes_fixture import encoded as mai_notes_index
 from tests.personal_fixture import fixture
+from tests.registry_fixture import fixture as registry_fixture
 from tests.test_pattern_community import CASES
 from tests.test_pattern_sequences import chart_for
 from tests.test_player_reconciliation import fixture as reconciliation_fixture
@@ -137,3 +140,27 @@ search_pack = json.loads(json.dumps(pack))
 for chart, (title, artist) in zip(search_pack["charts"], search_labels, strict=False):
     chart.update(title=title, artist=artist)
 build_site(search_pack, root / "romaji-explore", catalog_version="romaji-v1")
+
+with tempfile.TemporaryDirectory() as temporary:
+    staging = Path(temporary)
+    inventory, _, package = registry_fixture(staging)
+    master = next(
+        c
+        for c in inventory["charts"].values()
+        if c["difficulty"] == "MASTER"
+        and inventory["songs"][c["song_id"]]["metadata"]["title"] == "ソテリア"
+    )
+    source = next(key for key, s in inventory["sources"].items() if s.get("region") == "JP")
+    accept_mapping(
+        inventory,
+        provider="kamaitachi",
+        provider_id="chart",
+        subject_id=master["chart_id"],
+        snapshot_id=source,
+        evidence="Synthetic player fixture, no real account",
+    )
+    build_lab(package, staging / "browser", catalog_version="legacy-fixture")
+    build_registry_package(inventory, package, staging / "package")
+    build_lab(staging / "package", staging / "browser", catalog_version="registry-fixture")
+    build_public_release(staging / "browser", staging / "public")
+    shutil.copytree(staging / "public", root / "registry", dirs_exist_ok=True)

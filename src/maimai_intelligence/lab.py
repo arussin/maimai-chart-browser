@@ -34,7 +34,15 @@ def build_lab(package_directory, output, *, catalog_version):
         "benchmark.json",
         "navigation.json",
     ) + tuple(
-        name for name in ("analysis.json", "artwork.json", "mai-notes.json") if name in records
+        name
+        for name in (
+            "analysis.json",
+            "artwork.json",
+            "mai-notes.json",
+            "provider-mapping.json",
+            "browser-metadata.json",
+        )
+        if name in records
     ):
         record = records[name]
         with (source / name).open("rb") as stream:
@@ -66,6 +74,8 @@ def build_lab(package_directory, output, *, catalog_version):
         overview,
         artwork,
         mai_notes,
+        loaded.get("provider-mapping.json"),
+        loaded.get("browser-metadata.json"),
     )
     data_match = re.search(
         r'<script id="challenge-data" type="application/json">(.*?)</script>', html, re.S
@@ -89,6 +99,8 @@ def build_lab(package_directory, output, *, catalog_version):
         else {"schema_version": "1.0.0", "releases": []}
     )
     entry = {"version": catalog_version, "sha256": sha, "path": f"catalogs/{sha}.json"}
+    if loaded.get("browser-metadata.json"):
+        entry["inventory_schema"] = "maimai-browser-catalog-2"
     integration = canonical(integration_catalog(json.loads(data), catalog_version))
     integration_sha = hashlib.sha256(integration).hexdigest()
     (root / "integration").mkdir(exist_ok=True)
