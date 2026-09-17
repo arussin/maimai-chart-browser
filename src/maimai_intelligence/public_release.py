@@ -16,9 +16,12 @@ from .artwork import MEDIA_PATH
 from .catalog_loading import MAX_CATALOG_BYTES, progressive_catalog
 from .mai_notes import validate_links
 from .provider_mapping import validate_mapping
-from .snapshots import MAX_BYTES, atomic_json, read_json
+from .snapshots import MAX_BYTES, atomic_json, canonical, read_json
 
 PART_BYTES = 8 * 1024 * 1024
+# Cloudflare Pages Direct Upload limits, including retained releases.
+MAX_PUBLIC_FILE_BYTES = 25 * 1024 * 1024
+MAX_PUBLIC_FILES = 20_000
 SEARCH_TITLE = "maimai Chart Database & Patterns | maimai.party"
 SEARCH_DESCRIPTION = (
     "Explore maimai and maimai DX song data, chart constants, BPM, and chart patterns. "
@@ -156,7 +159,6 @@ def build_public_release(source, output):
             ):
                 raise ValueError("Integration catalog integrity mismatch")
             from .provider_mapping import integration_catalog
-            from .snapshots import canonical
 
             if integration != canonical(integration_catalog(data, version)):
                 raise ValueError("Integration data differs from public chart catalog")
@@ -202,25 +204,28 @@ def build_public_release(source, output):
         b"/*\n  X-Content-Type-Options: nosniff\n  Referrer-Policy: no-referrer\n"
         b'  Permissions-Policy: payment=(self "https://buymeacoffee.com")\n'
     )
+    public_manifest = {
+        **manifest,
+        "schema_version": "1.3.0" if any(r.get("inventory_schema") for r in releases) else "1.2.0",
+        "releases": releases,
+    }
+    sizes = {name: len(raw) for name, raw in pending.items()}
+    sizes["manifest.json"] = len(canonical(public_manifest)) + 1
+    if len(sizes) > MAX_PUBLIC_FILES:
+        raise ValueError("Public release exceeds the Cloudflare Pages file count limit")
+    for name, size in sizes.items():
+        if size > MAX_PUBLIC_FILE_BYTES:
+            raise ValueError(f"Public asset exceeds the Cloudflare Pages file size limit: {name}")
     # Do all validation before writing; the manifest is always written last.
     for name, raw in pending.items():
         destination = output / name
         destination.parent.mkdir(parents=True, exist_ok=True)
         with destination.open("xb") as stream:
             stream.write(raw)
-    atomic_json(
-        output / "manifest.json",
-        {
-            **manifest,
-            "schema_version": "1.3.0"
-            if any(r.get("inventory_schema") for r in releases)
-            else "1.2.0",
-            "releases": releases,
-        },
-    )
+    atomic_json(output / "manifest.json", public_manifest)
     return {
         "catalogs": len(releases),
         "files": len(pending) + 1,
         "default": manifest["default"],
-        "largest_file_bytes": max(map(len, pending.values())),
+        "largest_file_bytes": max(sizes.values()),
     }

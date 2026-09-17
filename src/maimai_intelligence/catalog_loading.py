@@ -71,14 +71,32 @@ def progressive_catalog(data, catalog_sha):
     for chart in data["catalog"]:
         cid = chart["chart_id"]
         record = data.get("analysis", {}).get("charts", {}).get(cid)
+        row = {k: v for k, v in chart.items() if k in fields}
+        if inventory:
+            # Keep regional choices needed by the preference checkbox. Observation
+            # timestamps, snapshot IDs, readings and image URLs remain in the full
+            # immutable catalog; aliases and artwork already serve browsing.
+            row["regional"] = {
+                region: {
+                    **{
+                        k: v
+                        for k, v in entry.items()
+                        if k in {"listing", "level", "genre", "version"}
+                    },
+                    "metadata": {
+                        k: v
+                        for k, v in (entry.get("metadata") or {}).items()
+                        if k in {"title", "artist", "catcode", "version"}
+                    },
+                }
+                for region, entry in chart.get("regional", {}).items()
+            }
         if inventory and record is None and cid not in data.get("snippets", {}):
-            index["catalog"].append({k: v for k, v in chart.items() if k in fields})
+            index["catalog"].append(row)
             continue
         # At most 1,024 small shards per version, independent of source ordering.
         bucket = f"{int(hashlib.sha256(cid.encode()).hexdigest()[:3], 16) // 4:03x}"
-        index["catalog"].append(
-            {**{k: v for k, v in chart.items() if k in fields}, "detail_bucket": bucket}
-        )
+        index["catalog"].append({**row, "detail_bucket": bucket})
         detail = buckets.setdefault(bucket, {"charts": {}, "snippets": {}})
         record = data.get("analysis", {}).get("charts", {}).get(cid)
         if record is not None:

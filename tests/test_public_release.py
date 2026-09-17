@@ -112,6 +112,23 @@ class PublicReleaseTests(unittest.TestCase):
             build_public_release(self.source, self.output)
         self.assertFalse(self.output.exists())
 
+    def test_hosting_file_size_limit_is_checked_before_any_write(self):
+        (self.source / "challenge-review.js").write_bytes(b" " * 4096)
+        with patch("maimai_intelligence.public_release.MAX_PUBLIC_FILE_BYTES", 4095):
+            with self.assertRaisesRegex(ValueError, "file size limit: challenge-review.js"):
+                build_public_release(self.source, self.output)
+        self.assertFalse(self.output.exists())
+        with patch("maimai_intelligence.public_release.MAX_PUBLIC_FILE_BYTES", 4096):
+            result = build_public_release(self.source, self.output)
+        self.assertEqual(result["largest_file_bytes"], 4096)
+
+    def test_hosting_file_count_includes_manifest_and_prevents_partial_output(self):
+        result = build_public_release(self.source, self.root / "baseline")
+        with patch("maimai_intelligence.public_release.MAX_PUBLIC_FILES", result["files"] - 1):
+            with self.assertRaisesRegex(ValueError, "file count limit"):
+                build_public_release(self.source, self.output)
+        self.assertFalse(self.output.exists())
+
     def test_completed_and_partial_outputs_cannot_be_overwritten(self):
         build_public_release(self.source, self.output)
         with self.assertRaisesRegex(ValueError, "fresh release"):

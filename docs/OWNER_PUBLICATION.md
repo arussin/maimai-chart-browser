@@ -92,9 +92,12 @@ and data remain unchanged. Both old 1.0 and new 1.1 manifests are supported.
 The `/lab/` compatibility page preserves query parameters and fragments while
 redirecting to the real browser at `/`.
 
-The current build contains 1,475 files, seven catalog versions and at most 8 MiB
-per file. Use Wrangler rather than the dashboard uploader, whose 1,000-file
-limit is too small. Cloudflare documents [Direct Upload and its limits](https://developers.cloudflare.com/pages/get-started/direct-upload/).
+The builder checks Cloudflare Pages' limits before writing any release files:
+no more than 20,000 files and no file larger than 25 MiB. Full catalogs retain
+their original bytes in 8 MiB parts. The startup index omits duplicate regional
+observation details while keeping every field needed by the data preference.
+Use Wrangler rather than the dashboard uploader, whose 1,000-file limit is too
+small for retained history. Cloudflare documents [Direct Upload and its limits](https://developers.cloudflare.com/pages/get-started/direct-upload/).
 
 ## Publish an update
 
