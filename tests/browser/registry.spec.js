@@ -29,23 +29,47 @@ test('metadata-only search, difficulty selection, comparison and detail absence 
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
 });
 
-test('listing context keeps regional levels separate and restores All known',async({page})=>{
-  await page.goto('/registry/');await expect(page.locator('#catalog-count')).toHaveText('22 charts found');
-  await page.locator('#filter-region').selectOption('INTL');
-  await expect(page.locator('#catalog-count')).toHaveText('4 charts found');
-  const row=page.locator('#songs .song-row');
-  await row.locator('.row-difficulty').selectOption({label:'ADVANCED · 7'});
+test('regional preference keeps every chart, prefers Japan by default and falls back per field',async({page})=>{
+  const errors=[];page.on('pageerror',error=>errors.push(error.message));
+  await page.goto('/registry/');await expect(page.locator('#catalog-count')).toHaveText('26 charts found');
+  const preference=page.getByRole('checkbox',{name:'Use maimai international data',exact:true});
+  await expect(preference).not.toBeChecked();
+  await expect(page.locator('#filter-region')).toHaveCount(0);
+  const row=page.locator('#songs .song-row').filter({hasText:'ソテリア'});
+  const japanOnly=page.locator('#songs .song-row').filter({hasText:'ANiMA'});
+  const internationalOnly=page.locator('#songs .song-row').filter({hasText:'International fixture song'});
+  await expect(japanOnly).toBeVisible();await expect(internationalOnly).toBeVisible();
+  await row.locator('.row-difficulty').selectOption({label:'ADVANCED · 8'});
+  await expect(row).toHaveAttribute('data-version','maimai DX CiRCLE PLUS');
+  await expect(row.locator('.chart-constant')).toHaveText('8.2');
+  await expect(row.locator('.chart-constant')).toHaveAttribute('title',/JP/);
+  const original=await page.evaluate(()=>JSON.stringify({catalog:maimaiResearchCatalog.catalog,navigation:maimaiResearchCatalog.navigation}));
+  await preference.focus();await preference.press('Space');
+  await expect(preference).toBeChecked();
+  await expect(page.locator('#catalog-count')).toHaveText('26 charts found');
+  await expect(japanOnly).toBeVisible();await expect(internationalOnly).toBeVisible();
   await expect(row).toHaveAttribute('data-level','7');
   await expect(row).toHaveAttribute('data-version','maimai DX CiRCLE');
-  await page.locator('#filter-region').selectOption('JP');
-  await expect(row.filter({hasText:'ソテリア'})).toHaveAttribute('data-level','8');
-  await page.locator('#reset-filters').click();
-  await expect(page.locator('#filter-region')).toHaveValue('');
-  await expect(page.locator('#catalog-count')).toHaveText('22 charts found');
+  await expect(row.locator('.chart-constant')).toHaveText('7.4');
+  await expect(row.locator('.chart-constant')).toHaveAttribute('title',/INTL/);
+  await expect(japanOnly).toHaveAttribute('data-version','maimai DX CiRCLE PLUS');
+  await row.locator('.row-difficulty').selectOption({label:'EXPERT · 12'});
+  await expect(row.locator('.chart-constant')).toHaveText('12.1');
+  await expect(row.locator('.chart-constant')).toHaveAttribute('title',/JP/);
+  await expect(row.locator('.chart-bpm')).toHaveText('160');
+  await preference.uncheck();
+  expect(await page.evaluate(()=>JSON.stringify({catalog:maimaiResearchCatalog.catalog,navigation:maimaiResearchCatalog.navigation}))).toBe(original);
+  await row.locator('.row-difficulty').selectOption({label:'ADVANCED · 8'});
+  await expect(row.locator('.chart-constant')).toHaveText('8.2');
+  await preference.check();await page.locator('#reset-filters').click();
+  await expect(preference).not.toBeChecked();
+  await expect(page.locator('#catalog-count')).toHaveText('26 charts found');
+  expect(errors).toEqual([]);
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
 });
 
 test('legacy chart and pair links resolve in current inventory and remain unchanged in old releases',async({page})=>{
-  await page.goto('/registry/');await expect(page.locator('#catalog-count')).toHaveText('22 charts found');
+  await page.goto('/registry/');await expect(page.locator('#catalog-count')).toHaveText('26 charts found');
   const [old,id]=await page.evaluate(()=>Object.entries(maimaiResearchCatalog.legacy_ids)[0]);
   await page.goto('/registry/?view=catalog&chart='+encodeURIComponent(old));
   await expect(page.locator('#songs .song-row[data-chart-id="'+id+'"] .chart-measurements')).toBeVisible();

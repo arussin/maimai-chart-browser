@@ -211,7 +211,9 @@ def project_registry(value, legacy):
                 regions[region]["version"] = version_label(meta["value"].get("version"))
                 versions.add(regions[region]["version"])
         preferred = next((r for r in ("JP", "INTL") if regions[r]["metadata"]), None)
-        meta = regions[preferred]["metadata"] if preferred else song["metadata"]
+        meta = dict(song["metadata"])
+        for region in ("INTL", "JP"):
+            meta.update({k: v for k, v in regions[region]["metadata"].items() if v})
         old_nav = (
             legacy.get("navigation", {}).get("charts", {}).get(profile["chart_id"], {})
             if profile

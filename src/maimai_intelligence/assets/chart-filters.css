@@ -25,6 +25,6 @@
 
 #pattern-filter.opens-up .pattern-filter-panel{top:auto;bottom:calc(100% + 6px)}
 
-/* Four inventory controls stay balanced at desktop and mobile widths. */
-.filter-row.registry-filters{grid-template-columns:repeat(4,minmax(0,1fr))}
-@media(max-width:800px){.filter-row.registry-filters{grid-template-columns:repeat(2,minmax(0,1fr))}.filter-row.registry-filters>label:first-child{grid-column:auto}}
+/* Regional preference is separate from the genre, version and difficulty controls. */
+.international-data-option{min-height:44px;margin:0 0 10px;gap:10px;color:var(--ink)}
+.international-data-option input{padding:0;width:18px;height:18px;min-height:18px;flex-shrink:0;accent-color:var(--aqua)}

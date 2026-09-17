@@ -111,14 +111,19 @@ remain unknown. They cannot seed similarity or contribute fabricated zeros.
 Progressive loading does not request a nonexistent analysis bucket or offer an
 endless retry for an intentionally unprepared chart.
 
-The listing selector offers All known, Japan and International. Each regional
-view uses that region's last observed printed level, genre and introduction
-version. Default metadata prefers Japan, then International, then retained
-metadata; a missing regional level falls back independently for that exact
-variant. The verbose metadata detail block was removed after user review. Existing source
-constants retain their scope; missing BPM and constants now follow the reviewed
-[metadata waterfall](METADATA_WATERFALL.md). Supplemental Japanese constants are
-scoped separately, and no decimal is guessed from a printed level.
+The catalog always includes every retained chart, including International-only
+and historical entries. The unchecked **Use maimai international data** checkbox
+prefers Japan values, falling back to International and then retained metadata
+per field. Checking it prefers available International titles, artists, printed
+levels, genre, introduction version and supplemental constants; missing values
+keep the default fallback. It never filters regional membership. Reset filters
+also restores the unchecked preference. Constant hover text follows the actual
+selected source, including when a Japanese value is used as a fallback.
+The genre/version/difficulty controls keep their original three-column layout.
+The verbose metadata detail block was removed after user review. Existing source
+constants retain their scope; missing BPM and constants follow the reviewed
+[metadata waterfall](METADATA_WATERFALL.md). No decimal is guessed from a printed
+level.
 
 The Session Report adapter exports only genuine legacy experimental profiles,
 their original IDs and body hashes, and their matching analysis. Its

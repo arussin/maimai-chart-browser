@@ -39,14 +39,17 @@ Each field falls through separately. Only an exact unique normalized title,
 artist, format and difficulty match creates a proposal. Duplicate matches stay
 unresolved. Source hashes, capture timestamps, exact public URLs, acceptance
 evidence, region and known release are retained. Each provider's latest accepted
-observation competes by the explicit priority above; competing values remain in
-the owner data. Failure or absence never deletes an accepted observation.
+observation competes by the explicit priority above within its region. The
+default supplemental constant prefers Japan, then International, then an
+unscoped observation; competing values remain in the owner data. Failure or absence never deletes an accepted observation.
 
 Only explicit `internalLevel` (Arcade Songs) and `*_i` (OTOGE DB) constants are
 read. Arcade Songs' `internalLevelValue` can be generated from a printed level;
 it is deliberately excluded. Empty values, zero, ranges, NaN and infinity remain
-unknown. Japanese supplemental constants are not reused in the International
-listing view. Existing unscoped Neskol constants keep their existing behavior.
+unknown. The International preference changes available values without hiding
+charts. When an International constant is missing, the known Japanese or retained
+constant remains visible with its actual source and region in the hover text.
+Existing unscoped Neskol constants keep their existing behavior.
 
 Capture once per provider, with bounded reads, a timeout and no redirects:
 
@@ -109,9 +112,10 @@ need evaluation before adopting mai-notes for routine bulk collection.
 
 ## UI changes in the local registry branch
 
-- Added Listing context: All known / Japan / International, with regional
-  printed levels, genre and introduction version. Filter spacing changed to
-  four columns on desktop and two on mobile.
+- Added an unchecked **Use maimai international data** checkbox. Both states
+  include all charts; default values prefer Japan, while checking it prefers
+  available International values and keeps known fallbacks. Genre, version and
+  difficulty retain three columns on desktop and two on mobile.
 - Renamed the constant heading/sort label to Source constant; its hover text
   now identifies supplemental source/context without a provenance paragraph.
 - Included metadata-only charts in search, grouping, filters, difficulty

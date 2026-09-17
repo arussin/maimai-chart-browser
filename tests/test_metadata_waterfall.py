@@ -92,6 +92,31 @@ class WaterfallTests(unittest.TestCase):
         preserved = project({"bpm": 150, "chart_constant": 13.9}, rows, proposal["sources"])
         self.assertEqual(preserved, {"bpm": 150, "chart_constant": 13.9})
 
+    def test_japan_preference_preserves_international_choice_and_its_provenance(self):
+        _, proposal, _ = self.accepted([capture()])
+        japan = next(c for c in proposal["claims"] if c["field"] == "chart_constant")
+        international = {
+            **japan,
+            "region": "INTL",
+            "value": 13.8,
+            "priority": 10,
+            "snapshot_id": "international",
+            "release": "Intl fixture",
+            "source_url": "https://example.org/international",
+        }
+        sources = {**proposal["sources"], "international": {"provider": "reviewed-page"}}
+        nav = project({}, [japan, international], sources)
+        self.assertEqual(nav["chart_constant"], 14)
+        self.assertEqual(nav["metric_sources"]["chart_constant"]["region"], "JP")
+        self.assertEqual(nav["regional_metrics"]["chart_constant"], {"JP": 14, "INTL": 13.8})
+        source = nav["regional_metric_sources"]["chart_constant"]["INTL"]
+        self.assertEqual(source["region"], "INTL")
+        self.assertEqual(source["release"], "Intl fixture")
+        self.assertEqual(source["url"], "https://example.org/international")
+        only_international = project({}, [international], sources)
+        self.assertEqual(only_international["chart_constant"], 13.8)
+        self.assertIsNone(only_international["regional_metrics"]["chart_constant"]["JP"])
+
     def test_otoge_fills_missing_bpm_without_inventing_a_constant(self):
         row = {**official_row(), "bpm": "160", "dx_lev_mas_i": ""}
         raw = json.dumps([row]).encode()

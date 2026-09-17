@@ -121,7 +121,6 @@ function catalog(focusKey=null){
   const selected=Object.fromEntries(filters.map(id=>[id,el('filter-'+id).value]));
   const charts=data.catalog.filter(c=>{
     if(format!=='all'&&c.format!==format)return false;
-    if(!window.maimaiRegistryBrowser.matches(c))return false;
     if(!matchesSearch(c))return false;
     if(selected.genre&&folderValue(c,'genre')!==selected.genre)return false;
     if(selectedVersions.size&&!selectedVersions.has(folderValue(c,'version')))return false;
@@ -198,7 +197,6 @@ function personalChanged(){for(const key of Object.keys(personalSorts))delete so
 window.addEventListener('maimai-personal-change',personalChanged);personalChanged();
 comparisonUI=window.maimaiChartComparison.mount({data,eligibleIds:()=>data.catalog.filter(c=>{
   if(format!=='all'&&c.format!==format)return false;
-  if(!window.maimaiRegistryBrowser.matches(c))return false;
   if(selectedVersions.size&&!selectedVersions.has(folderValue(c,'version')))return false;
   if(!patternFilter.matches(c))return false;
     if(personal&&!personal.matches(c))return false;

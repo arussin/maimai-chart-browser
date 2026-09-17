@@ -1,20 +1,37 @@
-/* Inventory context and explicit absence of optional prepared measurements. */
+/* Regional data preference never restricts catalog membership. */
 (()=>{'use strict';
-let region='';
 const make=(tag,text)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;return n;};
+const known=value=>value!=null&&value!==''&&value!=='unknown';
 function resolve(data,id){return data.legacy_ids?.[id]||id;}
-function matches(chart){return !region||chart.regional?.[region]?.listing==='listed';}
 function mount(data,changed){
   if(data.schema_version!=='maimai-browser-catalog-2')return;
-  const label=make('label','Listing context'),select=make('select');select.id='filter-region';
-  for(const [value,title]of [['','All known'],['JP','Japan listing'],['INTL','International listing']])select.append(new Option(title,value));
-  label.append(select);document.getElementById('filter-genre').parentElement.after(label);
-  label.parentElement.classList.add('registry-filters');
+  const label=make('label'),checkbox=make('input');checkbox.type='checkbox';checkbox.id='use-international-data';checkbox.checked=false;
+  label.className='check international-data-option';label.append(checkbox,make('span','Use maimai international data'));
+  document.getElementById('filter-genre').closest('.filter-row').before(label);
   const navigation=new Map(Object.entries(data.navigation.charts).map(([id,row])=>[id,{...row}]));
   const originals=new Map(data.catalog.map(c=>[c.chart_id,{title:c.title,artist:c.artist,level:c.level,metadata_region:c.metadata_region}]));
-  function apply(){region=select.value;for(const c of data.catalog){const original=originals.get(c.chart_id),entry=c.regional?.[region];Object.assign(c,original);const nav=data.navigation.charts[c.chart_id];Object.assign(nav,navigation.get(c.chart_id));if(region){for(const[field,scopes]of Object.entries(nav.regional_metrics||{}))nav[field]=scopes[region]??null;nav.genre=entry?.genre||'unknown';nav.version=entry?.version||'unknown';c.level=entry?.level??null;if(entry?.metadata?.title){c.title=entry.metadata.title;c.artist=entry.metadata.artist;c.metadata_region=region;}}}changed();}
-  select.onchange=apply;
-  document.getElementById('reset-filters').addEventListener('click',()=>{select.value='';apply();});
+  function apply(){
+    for(const c of data.catalog){
+      Object.assign(c,originals.get(c.chart_id));
+      const nav=data.navigation.charts[c.chart_id],original=navigation.get(c.chart_id);
+      Object.assign(nav,original);
+      if(!checkbox.checked)continue;
+      const entry=c.regional?.INTL;
+      for(const field of ['title','artist'])if(known(entry?.metadata?.[field]))c[field]=entry.metadata[field];
+      if(known(entry?.metadata?.title))c.metadata_region='INTL';
+      if(known(entry?.level))c.level=entry.level;
+      for(const field of ['genre','version'])if(known(entry?.metadata?.[field==='genre'?'catcode':'version'])&&known(entry?.[field]))nav[field]=entry[field];
+      for(const [field,scopes] of Object.entries(original.regional_metrics||{})){
+        if(!known(scopes.INTL))continue;
+        nav[field]=scopes.INTL;
+        const source=original.regional_metric_sources?.[field]?.INTL;
+        if(source)nav.metric_sources={...nav.metric_sources,[field]:source};
+      }
+    }
+    changed();
+  }
+  checkbox.onchange=apply;
+  document.getElementById('reset-filters').addEventListener('click',()=>{checkbox.checked=false;apply();});
 }
-window.maimaiRegistryBrowser=Object.freeze({resolve,matches,mount});
+window.maimaiRegistryBrowser=Object.freeze({resolve,mount});
 })();

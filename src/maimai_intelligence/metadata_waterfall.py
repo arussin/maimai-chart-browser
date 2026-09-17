@@ -240,7 +240,18 @@ def accept(value, proposal, review):
 
 def project(nav, claims, sources):
     """Retain accepted primary metrics; choose supplemental fields independently."""
-    metric_sources, scoped, conflicts = {}, {}, {}
+
+    def provenance(claim):
+        src = sources[claim["snapshot_id"]]
+        return {
+            "provider": src.get("label", LABELS.get(src["provider"], src["provider"])),
+            "snapshot_id": claim["snapshot_id"],
+            "region": claim["region"],
+            "release": claim.get("release"),
+            "url": claim["source_url"],
+        }
+
+    metric_sources, scoped, scoped_sources, conflicts = {}, {}, {}, {}
     for field in FIELDS:
         primary = number(nav.get(field), field)
         if primary is not None:
@@ -256,24 +267,25 @@ def project(nav, claims, sources):
             if claim["field"] == field:
                 src = sources[claim["snapshot_id"]]
                 current[src["provider"], claim["region"], claim.get("release")] = claim
-        candidates = sorted(current.values(), key=lambda c: (c["priority"], c["snapshot_id"]))
+        candidates = sorted(
+            current.values(),
+            key=lambda c: (
+                {"JP": 0, "INTL": 1, None: 2}[c["region"]],
+                c["priority"],
+                c["snapshot_id"],
+            ),
+        )
         if not candidates:
             continue
         chosen = candidates[0]
-        src = sources[chosen["snapshot_id"]]
         nav[field] = chosen["value"]
-        metric_sources[field] = {
-            "provider": src.get("label", LABELS.get(src["provider"], src["provider"])),
-            "snapshot_id": chosen["snapshot_id"],
-            "region": chosen["region"],
-            "release": chosen.get("release"),
-            "url": chosen["source_url"],
-        }
+        metric_sources[field] = provenance(chosen)
         if field == "chart_constant":
-            scoped[field] = {
-                r: next((c["value"] for c in candidates if c["region"] in (None, r)), None)
-                for r in ("JP", "INTL")
+            regional = {
+                r: next((c for c in candidates if c["region"] == r), None) for r in ("JP", "INTL")
             }
+            scoped[field] = {r: c["value"] if c else None for r, c in regional.items()}
+            scoped_sources[field] = {r: provenance(c) if c else None for r, c in regional.items()}
         others = [c for c in candidates[1:] if c["value"] != chosen["value"]]
         if others:
             conflicts[field] = [
@@ -284,6 +296,7 @@ def project(nav, claims, sources):
         nav["metric_sources"] = metric_sources
     if scoped:
         nav["regional_metrics"] = scoped
+        nav["regional_metric_sources"] = scoped_sources
     if conflicts:
         nav["metadata_alternatives"] = conflicts
     return nav
