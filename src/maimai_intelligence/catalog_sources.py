@@ -6,9 +6,9 @@ from urllib.parse import parse_qs, urljoin, urlsplit
 
 from scripts.simai_collection import _Document, _label, _Node, _walk
 
+from .catalog_identity import label as identity_label
 from .mai_notes import parse_index
 from .metadata_waterfall import number
-from .provider_mapping import normalized
 
 WIKI = "https://gamerch.com/maimai/"
 SIMAI = "https://w.atwiki.jp/simai/pages/"
@@ -53,16 +53,66 @@ def mai_catalog(raw):
     return targets, generated
 
 
+def wiki_url(href):
+    parsed = urlsplit(urljoin(WIKI, href))
+    url = parsed._replace(fragment="").geturl()
+    return url if re.fullmatch(r"https://gamerch\.com/maimai/[1-9][0-9]{0,8}", url) else None
+
+
 def page_links(raw):
     root = _Document(raw.decode("utf-8")).root
     result = {}
     for node in _walk(root):
         if node.tag != "a":
             continue
-        url = urljoin(WIKI, node.attrs.get("href", ""))
-        if re.fullmatch(r"https://gamerch\.com/maimai/[1-9][0-9]{0,8}", url):
-            result.setdefault(normalized(_label(node)), set()).add(url)
+        url = wiki_url(node.attrs.get("href", ""))
+        if url:
+            result.setdefault(identity_label(_label(node)), set()).add(url)
     return result
+
+
+def discovery_pages(raw):
+    """Discover genre and release indexes from their semantic link labels/titles."""
+    labels = {
+        identity_label(s)
+        for s in (
+            "POPS&アニメ",
+            "niconico&ボーカロイド",
+            "東方Project",
+            "ゲーム&バラエティ",
+            "maimai",
+            "オンゲキ&CHUNITHM",
+            "配信順",
+        )
+    }
+    root = _Document(raw.decode("utf-8")).root
+    urls = set()
+    for node in _walk(root):
+        if node.tag != "a":
+            continue
+        url = wiki_url(node.attrs.get("href", ""))
+        if url and (
+            identity_label(_label(node)) in labels
+            or "配信順楽曲リスト" in node.attrs.get("title", "")
+        ):
+            urls.add(url)
+    if len(urls) > 40:
+        raise ValueError("Wiki index budget exceeded")
+    return urls
+
+
+def wiki_label(node):
+    # Footnote markers are annotations, not part of title/artist/number identities.
+    def text(part):
+        if isinstance(part, str):
+            return part
+        if part.tag == "br":
+            return " "
+        if part.tag == "a" and re.fullmatch(r"#notes_foot_[0-9]+", part.attrs.get("href", "")):
+            return ""
+        return "".join(text(child) for child in part.children)
+
+    return " ".join(text(node).split())
 
 
 def wiki_catalog(raw, url):
@@ -79,7 +129,7 @@ def wiki_catalog(raw, url):
                 field = _label(cells[0])
                 if field in metadata:
                     raise ValueError("Ambiguous Wiki song metadata")
-                metadata[field] = _label(cells[1])
+                metadata[field] = wiki_label(cells[1])
     if not metadata.get("タイトル") or not metadata.get("アーティスト"):
         raise ValueError("Wiki page lacks explicit song identity")
     rows, formats, current_format = [], set(), None
@@ -96,7 +146,7 @@ def wiki_catalog(raw, url):
             continue
         table = [n for n in _walk(node) if n.tag == "tr"]
         labels = [
-            [_label(c) for c in tr.children if isinstance(c, _Node) and c.tag in {"td", "th"}]
+            [wiki_label(c) for c in tr.children if isinstance(c, _Node) and c.tag in {"td", "th"}]
             for tr in table
         ]
         if not any("定数" in cells and "Lv" in cells for cells in labels):
@@ -143,7 +193,7 @@ def wiki_catalog(raw, url):
             if following.tag in {"h2", "h3"}:
                 break
             if following.tag == "p":
-                match = re.search(r"定数調査\s*[:：]\s*(.+)", _label(following))
+                match = re.search(r"定数調査(?:\s*[:：]\s*|\s+)(.+)", _label(following))
                 if match:
                     release = match[1].strip()
                     break

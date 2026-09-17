@@ -9,16 +9,16 @@ from pathlib import Path
 from scripts.simai_collection import extract_chart
 
 from .catalog_capture import CaptureStore
-from .catalog_sources import WIKI, mai_catalog, page_links, wiki_catalog
-from .catalog_transcriptions import implementation, qualify
+from .catalog_identity import discovery_labels
+from .catalog_sources import WIKI, discovery_pages, mai_catalog, page_links, wiki_catalog
+from .catalog_transcriptions import implementation, prepare_body, qualify
 from .mai_notes import SOURCE_URL
 from .metadata_waterfall import FIELDS, accept, key, number, propose
-from .provider_mapping import normalized
 from .registry import accept_mapping, digest, resolve, select_transcription, write_registry
 from .registry_catalog import _legacy_enrichment, project_registry
 from .snapshots import atomic_json
 
-POLICY = "catalog-waterfall-1"
+POLICY = "catalog-waterfall-2"
 METADATA_URLS = {
     "arcade-songs": "https://dp4p6x0xfi5o9.cloudfront.net/maimai/data.json",
     "otoge-db": "https://raw.githubusercontent.com/zvuc/otoge-db/main/maimai/data/music-ex.json",
@@ -44,7 +44,14 @@ def refresh(value, published, cache, output, *, offline=False, replay=None, fetc
     own_keys = defaultdict(list)
     for cid, chart in own.items():
         own_keys[key(chart)].append(cid)
-    audit = {"version": POLICY, "metadata": {}, "links": [], "transcriptions": [], "failures": []}
+    audit = {
+        "version": POLICY,
+        "metadata": {},
+        "links": [],
+        "transcriptions": [],
+        "failures": [],
+        "identity_mismatches": [],
+    }
     additions = {"profiles": [], "records": {}, "inventory": [], "sources": {}}
 
     def view():
@@ -154,15 +161,15 @@ def refresh(value, published, cache, output, *, offline=False, replay=None, fetc
         if candidate:
             evidence = prior.get("evidence")
             credit = evidence if isinstance(evidence, dict) else {}
-            artist_matches = normalized(candidate["artist"]) == normalized(chart["artist"])
+            artist_matches = key(candidate)[1] == key(chart)[1]
             artist_matches |= (
                 credit.get("provider_artist") == candidate["artist"]
                 and credit.get("official_artist") == chart["artist"]
             )
-            if (candidate["format"], candidate["difficulty"], normalized(candidate["title"])) != (
+            if (candidate["format"], candidate["difficulty"], key(candidate)[0]) != (
                 chart["format"],
                 chart["difficulty"],
-                normalized(chart["title"]),
+                key(chart)[0],
             ) or not artist_matches:
                 prior["available"] = False
                 audit["links"].append({"chart_id": cid, "status": "changed_identity_review"})
@@ -200,6 +207,7 @@ def refresh(value, published, cache, output, *, offline=False, replay=None, fetc
 
     wiki_inputs, wiki_rows, wiki_simai = [], {}, {}
     checked_urls = set()
+    wiki_song_pages = set()
 
     def read_wiki(url):
         if url in checked_urls:
@@ -211,7 +219,19 @@ def refresh(value, published, cache, output, *, offline=False, replay=None, fetc
         rows, simai = wiki_catalog(raw, url)
         wiki_inputs.append(("gamerch-wiki", raw, metadata))
         for row in rows:
+            wiki_song_pages.add(key(row)[:2])
             ids = own_keys.get(key(row), [])
+            if len(ids) != 1:
+                audit["identity_mismatches"].append(
+                    {
+                        "source_url": url,
+                        "title": row["title"],
+                        "artist": row["artist"],
+                        "format": row["format"],
+                        "difficulty": row["difficulty"],
+                        "reason": "ambiguous_identity" if ids else "no_accepted_identity",
+                    }
+                )
             if len(ids) == 1:
                 wiki_rows[ids[0]] = {
                     **row,
@@ -231,8 +251,7 @@ def refresh(value, published, cache, output, *, offline=False, replay=None, fetc
     }
     for cid, target in matches.items():
         if target.get("wiki_url") and (
-            cid in missing
-            or (not value["charts"][cid].get("transcription") and not target.get("note_counts"))
+            cid in missing or not value["charts"][cid].get("transcription")
         ):
             try:
                 read_wiki(target["wiki_url"])
@@ -251,37 +270,43 @@ def refresh(value, published, cache, output, *, offline=False, replay=None, fetc
             read_wiki(url)
         except ValueError as error:
             audit["failures"].append({"provider": "gamerch-wiki", "url": url, "reason": str(error)})
-    # Discover pages for future songs absent from the current mai-notes index.
-    undiscovered = {normalized(own[cid]["title"]) for cid in missing if cid not in matches}
+    # Aliases discover candidate pages; full identity still gates every value/body.
+    undiscovered = set()
+    for cid, chart in own.items():
+        if cid not in wiki_rows and (
+            cid in missing or not value["charts"][cid].get("transcription")
+        ):
+            undiscovered.update(discovery_labels(chart))
     if undiscovered:
         try:
-            links = page_links(capture.get(WIKI)[0])
-            categories = {
-                "pops&アニメ",
-                "niconico&ボーカロイド",
-                "東方project",
-                "ゲーム&バラエティ",
-                "maimai",
-                "オンゲキ&chunithm",
-            }
-            urls = {u for label, found in links.items() if label in categories for u in found}
+            root_page = capture.get(WIKI)[0]
+            links = page_links(root_page)
             discovered = defaultdict(set)
-            for url in sorted(urls):
-                for label, found in page_links(capture.get(url)[0]).items():
-                    if label in undiscovered:
-                        discovered[label].update(found)
-            for label, urls in discovered.items():
-                if len(urls) == 1:
+            for name, found in links.items():
+                if name in undiscovered:
+                    discovered[name].update(found)
+            for url in sorted(discovery_pages(root_page)):
+                try:
+                    for name, found in page_links(capture.get(url)[0]).items():
+                        if name in undiscovered:
+                            discovered[name].update(found)
+                except ValueError as error:
+                    audit["failures"].append(
+                        {"provider": "gamerch-wiki-discovery", "url": url, "reason": str(error)}
+                    )
+            for name, urls in discovered.items():
+                for url in sorted(urls):
                     try:
-                        read_wiki(next(iter(urls)))
+                        read_wiki(url)
                     except ValueError as error:
                         audit["failures"].append(
-                            {"provider": "gamerch-wiki", "title": label, "reason": str(error)}
+                            {
+                                "provider": "gamerch-wiki",
+                                "title": name,
+                                "url": url,
+                                "reason": str(error),
+                            }
                         )
-                else:
-                    audit["metadata"]["ambiguous"].append(
-                        {"provider": "gamerch-wiki", "title": label}
-                    )
         except ValueError as error:
             audit["failures"].append({"provider": "gamerch-wiki-discovery", "reason": str(error)})
 
@@ -329,7 +354,24 @@ def refresh(value, published, cache, output, *, offline=False, replay=None, fetc
             "status": "no_transcription_source",
             "attempts": [],
         }
+        if reference and target.get("note_counts") and reference != target["note_counts"]:
+            outcome.update(
+                status="reference_counts_conflict",
+                references=[
+                    {"counts": reference, "source": reference_row.get("reference_source")},
+                    {"counts": target["note_counts"], "source": target.get("reference_source")},
+                ],
+            )
+            audit["transcriptions"].append(outcome)
+            continue
         if not reference:
+            outcome["reference_status"] = (
+                "counts_not_published"
+                if cid in wiki_rows
+                else "variant_not_published"
+                if key(chart)[:2] in wiki_song_pages
+                else "no_verified_reference_identity"
+            )
             outcome["status"] = "reference_counts_missing"
             audit["transcriptions"].append(outcome)
             continue
@@ -357,6 +399,7 @@ def refresh(value, published, cache, output, *, offline=False, replay=None, fetc
                             "Chart-text endpoint returned HTML instead of a transcription"
                         )
                     body = raw
+                body, transformation = prepare_body(body, reference_row)
                 body_hash = hashlib.sha256(body).hexdigest()
                 if selected:
                     unchanged = (
@@ -382,6 +425,7 @@ def refresh(value, published, cache, output, *, offline=False, replay=None, fetc
                     "source_path": url,
                     "body_sha256": body_hash,
                     "source_raw_sha256": metadata["sha256"],
+                    "transformation": transformation,
                     "acquisition_status": "available",
                     "identity_resolved": True,
                 }
@@ -409,6 +453,7 @@ def refresh(value, published, cache, output, *, offline=False, replay=None, fetc
                         "note_counts": reference,
                         "reference_source": reference_row["reference_source"],
                         "count_match": True,
+                        "transformation": transformation,
                         "source_identity": "accepted mapping or unique Wiki identity",
                         "game_fidelity": "unverified",
                     },
@@ -421,7 +466,13 @@ def refresh(value, published, cache, output, *, offline=False, replay=None, fetc
                 additions["records"][profile["chart_id"]] = record
                 additions["inventory"].append(row)
                 additions["sources"][snapshot] = value["sources"][snapshot]
-                outcome.update(status="analyzed", provider=provider, source_url=url, **validation)
+                outcome.update(
+                    status="analyzed",
+                    provider=provider,
+                    source_url=url,
+                    transformation=transformation,
+                    **validation,
+                )
                 break
             except (ValueError, KeyError, UnicodeError) as error:
                 outcome["attempts"].append({"provider": provider, "url": url, "reason": str(error)})
@@ -441,6 +492,11 @@ def refresh(value, published, cache, output, *, offline=False, replay=None, fetc
     audit["metadata"]["remaining"] = [
         {
             "chart_id": c["chart_id"],
+            "wiki_status": "field_not_published"
+            if c["chart_id"] in wiki_rows
+            else "variant_not_published"
+            if key(c)[:2] in wiki_song_pages
+            else "no_verified_page_identity",
             "fields": [
                 f
                 for f in FIELDS

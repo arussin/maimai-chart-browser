@@ -7,7 +7,7 @@ from collections import defaultdict
 from copy import deepcopy
 from datetime import datetime
 
-from .provider_mapping import normalized
+from .catalog_identity import key
 from .registry import digest, validate
 
 VERSION = "metadata-waterfall-1"
@@ -38,10 +38,6 @@ def number(value, field):
         return None
     ceiling = 15 if field == "chart_constant" else 2000
     return result if math.isfinite(result) and 0 < result <= ceiling else None
-
-
-def key(row):
-    return (normalized(row["title"]), normalized(row["artist"]), row["format"], row["difficulty"])
 
 
 def parse(raw, provider):

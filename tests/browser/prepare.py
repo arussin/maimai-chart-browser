@@ -19,7 +19,7 @@ from maimai_intelligence.registry_catalog import build_registry_package
 from maimai_intelligence.site import build_site
 from maimai_intelligence.snapshots import atomic_json, read_json
 from scripts.build_challenge_package import write
-from tests.artwork_fixture import add_artwork
+from tests.artwork_fixture import IMAGE, add_artwork
 from tests.browser.capacity_fixture import build_capacity_fixture
 from tests.lab_fixture import write_package
 from tests.mai_notes_fixture import encoded as mai_notes_index
@@ -157,14 +157,17 @@ with tempfile.TemporaryDirectory() as temporary:
     )
     # Controlled International-only inventory and differing constants exercise
     # preference independently from membership. These numbers are fictional.
+    international_jacket = official_row(
+        "Soteria fixture", "Regional fixture artist", dx_lev_adv="7", version="26005"
+    )
     international_only = official_row("International fixture song", "Synthetic artist")
     inventory, _ = admit(
         inventory,
-        [official_row(dx_lev_adv="7", version="26005"), international_only],
+        [international_jacket, international_only],
         region="INTL",
         when="2026-09-17T06:00:00Z",
         decisions={
-            assertion(official_row()): {
+            assertion(international_jacket): {
                 "action": "link",
                 "song_id": master["song_id"],
                 "evidence": "Authored regional fixture",
@@ -232,6 +235,28 @@ with tempfile.TemporaryDirectory() as temporary:
     )
     build_lab(package, staging / "browser", catalog_version="legacy-fixture")
     build_registry_package(inventory, package, staging / "package")
+    # Authored jacket tied to canonical song identity, before regional labels change.
+    prepared = staging / "package"
+    charts = json.loads((prepared / "catalog.json").read_text("utf-8"))
+    song = next(c for c in charts if c["title"] == "ソテリア")
+    digest_image = sha256(IMAGE).hexdigest()
+    image_path = "media/" + digest_image + ".webp"
+    (prepared / "media").mkdir(exist_ok=True)
+    (prepared / image_path).write_bytes(IMAGE)
+    art = {
+        "version": "public-artwork-1",
+        "songs": {
+            song["song_id"]: {"title": song["title"], "artist": song["artist"], "path": image_path}
+        },
+        "versions": {},
+        "assets": {
+            image_path: {"bytes": len(IMAGE), "sha256": digest_image, "source": "authored-fixture"}
+        },
+    }
+    descriptor = read_json(prepared / "package.json")
+    descriptor["files"] = [f for f in descriptor["files"] if f["path"] != "artwork.json"]
+    descriptor["files"].append(write(prepared, "artwork.json", art))
+    atomic_json(prepared / "package.json", descriptor)
     build_lab(staging / "package", staging / "browser", catalog_version="registry-fixture")
     build_public_release(staging / "browser", staging / "public")
     shutil.copytree(staging / "public", root / "registry", dirs_exist_ok=True)

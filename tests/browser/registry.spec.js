@@ -37,7 +37,7 @@ test('regional preference keeps every chart, prefers Japan by default and falls 
   const preference=page.getByRole('checkbox',{name:'Use maimai international data',exact:true});
   await expect(preference).not.toBeChecked();
   await expect(page.locator('#filter-region')).toHaveCount(0);
-  const row=page.locator('#songs .song-row').filter({hasText:'ソテリア'});
+  const row=page.locator('#songs .song-row').filter({hasText:/ソテリア|Soteria fixture/});
   const japanOnly=page.locator('#songs .song-row').filter({hasText:'ANiMA'});
   const internationalOnly=page.locator('#songs .song-row').filter({hasText:'International fixture song'});
   await expect(japanOnly).toBeVisible();await expect(internationalOnly).toBeVisible();
@@ -93,4 +93,28 @@ test('a schema-1 synthetic player file maps to a metadata-only chart without qua
   await expect(row).toHaveAttribute('data-difficulty','MASTER');
   await expect(row.locator('.player-achievement')).toContainText('97.0000%');
   await expect(row.getByRole('button',{name:'Find similar',exact:true})).toBeDisabled();
+});
+
+
+test('regional labels preserve the jacket through repeated preference, difficulty and comparison changes',async({page})=>{
+  await page.goto('/registry/?search=ソテリア');
+  const row=page.locator('#songs .song-row'),preference=page.getByRole('checkbox',{name:'Use maimai international data',exact:true});
+  await expect(row).toHaveCount(1);
+  const jacket=row.locator('.song-jacket');
+  await expect(jacket).not.toHaveClass(/artwork-missing/);
+  const source=await jacket.locator('img').getAttribute('src');
+  for(let i=0;i<2;i++){
+    await preference.check();await expect(row).toContainText('Soteria fixture');
+    await expect(jacket).not.toHaveClass(/artwork-missing/);
+    await expect(jacket.locator('img')).toHaveAttribute('src',source);
+    await row.locator('.row-difficulty').selectOption({label:'MASTER · 14'});
+    await expect(jacket).not.toHaveClass(/artwork-missing/);
+    await row.getByRole('button',{name:'Compare this chart'}).click();
+    await expect(page.locator('#compare-left-search')).toHaveValue(/Soteria fixture/);
+    await page.locator('#catalog-tab').click();await preference.uncheck();
+    await expect(row).toContainText('ソテリア');await expect(jacket).not.toHaveClass(/artwork-missing/);
+  }
+  await preference.check();await page.locator('#reset-filters').click();
+  await expect(preference).not.toBeChecked();
+  await expect(page.locator('#songs .song-row').filter({hasText:'ソテリア'}).locator('.song-jacket')).not.toHaveClass(/artwork-missing/);
 });
