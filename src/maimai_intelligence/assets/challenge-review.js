@@ -81,10 +81,10 @@ function initializeFilters(){
   for(const version of navigation.versions||[]){
     const label=make('label'),checkbox=make('input');checkbox.type='checkbox';checkbox.value=version;
     checkbox.onchange=()=>{if(checkbox.checked)selectedVersions.add(version);else selectedVersions.delete(version);visible=40;updateVersions();catalog();};
-    const charts=data.catalog.filter(c=>folderValue(c,'version')===version),count=new Set(charts.map(rowKey)).size;
-    const text=make('span',versionLabel(version),'version-name'),detail=make('small',count+' song'+(count===1?'':'s')+' · '+charts.length+' charts','version-count');detail.setAttribute('aria-hidden','true');text.append(detail);
-    label.title=count+' song / format entries, '+charts.length+' charts';label.append(checkbox,window.maimaiChartArtwork.version(version),text);el('version-options').append(label);
+    const text=make('span',versionLabel(version),'version-name'),detail=make('small','','version-count');detail.setAttribute('aria-hidden','true');text.append(detail);
+    label.append(checkbox,window.maimaiChartArtwork.version(version),text);el('version-options').append(label);
   }
+  updateVersionCounts();
   el('version-clear').onclick=()=>{selectedVersions.clear();visible=40;updateVersions();catalog();};
   el('version-filter').addEventListener('keydown',event=>{if(event.key==='Escape'){el('version-filter').open=false;el('version-summary').focus();event.stopPropagation();}});
   document.addEventListener('click',event=>{if(!el('version-filter').contains(event.target))el('version-filter').open=false;});
@@ -93,6 +93,15 @@ function initializeFilters(){
   const newest=(navigation.versions||[]).find(v=>data.catalog.some(c=>folderValue(c,'version')===v));el('catalog-era').textContent=newest?'Through '+versionLabel(newest):'Research catalog';
 }
 function writePatternFilter(){const url=new URL(location.href);url.searchParams.delete('pattern-filter');for(const id of patternFilter.ids())url.searchParams.append('pattern-filter',id);history.replaceState(null,'',url);}
+function updateVersionCounts(){
+  const counts=new Map();
+  for(const chart of data.catalog){const version=folderValue(chart,'version');if(!counts.has(version))counts.set(version,{charts:0,songs:new Set()});const count=counts.get(version);count.charts++;count.songs.add(rowKey(chart));}
+  for(const label of el('version-options').querySelectorAll('label')){
+    const count=counts.get(label.querySelector('input').value),songs=count?.songs.size||0,charts=count?.charts||0;
+    label.querySelector('.version-count').textContent=songs+' song'+(songs===1?'':'s')+' · '+charts+' charts';
+    label.title=songs+' song / format entries, '+charts+' charts';
+  }
+}
 function updateVersions(){
   el('version-summary').textContent=selectedVersions.size===0?'All versions':selectedVersions.size===1?versionLabel([...selectedVersions][0]):selectedVersions.size+' versions selected';
   for(const input of el('version-options').querySelectorAll('input'))input.checked=selectedVersions.has(input.value);
@@ -191,7 +200,7 @@ for(const name of ['compare','catalog','patterns','about'])el(name+'-tab').oncli
 el('loaded-count').textContent=data.catalog.length.toLocaleString();
 window.maimaiPreviewField=field;
 initializeFilters();
-window.maimaiRegistryBrowser.mount(data,()=>{visible=40;catalog();comparisonUI?.render();});
+window.maimaiRegistryBrowser.mount(data,()=>{updateVersionCounts();visible=40;catalog();comparisonUI?.render();});
 const personalControls=personal?.controls(el('active-filters').parentElement,()=>{visible=40;catalog();});
 function personalChanged(){for(const key of Object.keys(personalSorts))delete sortFields[key];if(personal?.enabled())Object.assign(sortFields,personalSorts);else sortRules=sortRules.filter(r=>!Object.hasOwn(personalSorts,r.key));if(!sortRules.length)sortRules=[{key:'title',direction:1}];renderSort();catalog();comparisonUI?.render();}
 window.addEventListener('maimai-personal-change',personalChanged);personalChanged();

@@ -209,5 +209,5 @@ Registry cases cover persistent identity, regional disagreement, missing
 analysis, reviewed mapping without transcription, corrected-body invalidation,
 older-alias import, capture failure, retained release integrity, and the genuine
 v1 integration adapter. Browser cases cover metadata-only search and comparison,
-regional filters, legacy links, synthetic schema-1 player data, responsive
+regional preferences, legacy links, synthetic schema-1 player data, responsive
 layout and Chromium/WebKit. Personal score files are not needed for validation.

@@ -32,6 +32,8 @@ test('metadata-only search, difficulty selection, comparison and detail absence 
 test('regional preference keeps every chart, prefers Japan by default and falls back per field',async({page})=>{
   const errors=[];page.on('pageerror',error=>errors.push(error.message));
   await page.goto('/registry/');await expect(page.locator('#catalog-count')).toHaveText('26 charts found');
+  const circlePlus=page.locator('#version-options label').filter({hasText:'DX CiRCLE PLUS'});
+  await expect(circlePlus).toHaveAttribute('title','5 song / format entries, 20 charts');
   const preference=page.getByRole('checkbox',{name:'Use maimai international data',exact:true});
   await expect(preference).not.toBeChecked();
   await expect(page.locator('#filter-region')).toHaveCount(0);
@@ -46,6 +48,7 @@ test('regional preference keeps every chart, prefers Japan by default and falls 
   const original=await page.evaluate(()=>JSON.stringify({catalog:maimaiResearchCatalog.catalog,navigation:maimaiResearchCatalog.navigation}));
   await preference.focus();await preference.press('Space');
   await expect(preference).toBeChecked();
+  await expect(circlePlus).toHaveAttribute('title','4 song / format entries, 16 charts');
   await expect(page.locator('#catalog-count')).toHaveText('26 charts found');
   await expect(japanOnly).toBeVisible();await expect(internationalOnly).toBeVisible();
   await expect(row).toHaveAttribute('data-level','7');
@@ -63,6 +66,7 @@ test('regional preference keeps every chart, prefers Japan by default and falls 
   await expect(row.locator('.chart-constant')).toHaveText('8.2');
   await preference.check();await page.locator('#reset-filters').click();
   await expect(preference).not.toBeChecked();
+  await expect(circlePlus).toHaveAttribute('title','5 song / format entries, 20 charts');
   await expect(page.locator('#catalog-count')).toHaveText('26 charts found');
   expect(errors).toEqual([]);
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
