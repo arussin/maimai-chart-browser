@@ -45,7 +45,7 @@ for(const personal of [false,true])test(`support checkout is lazy, isolated and 
   expect(await dialog.evaluate(node=>{const r=node.getBoundingClientRect();return r.left>=0&&r.right<=innerWidth&&r.top>=0&&r.bottom<=innerHeight&&node.scrollWidth<=node.clientWidth;})).toBe(true);
   await page.screenshot({path:testInfo.outputPath('support-checkout.png')});
   await page.keyboard.press('Escape');await expect(dialog).toBeHidden();await expect(opener).toBeFocused();
-  expect(await page.locator('body').evaluate(node=>node.classList.contains('support-dialog-open'))).toBe(false);
+  await expect(page.locator('body')).not.toHaveClass(/support-dialog-open/);
   await opener.click();await expect(dialog).toBeVisible();expect(requests).toHaveLength(1);
   await page.getByRole('button',{name:'Close support checkout'}).click();await expect(opener).toBeFocused();
   if(personal)await expect(page.locator('#site-clear')).toBeVisible();

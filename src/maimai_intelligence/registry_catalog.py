@@ -238,6 +238,8 @@ def project_registry(value, legacy):
         if nav.get("version"):
             versions.add(nav["version"])
         nav["chart_id"] = cid
+        if profile:
+            nav["source_hash"] = profile["source_hash"]
         project_metadata(nav, metrics[cid], value["sources"])
         data["navigation"]["charts"][cid] = nav
         unavailable = (
@@ -485,7 +487,7 @@ def _legacy_enrichment(data):
     return result
 
 
-def build_registry_package(value, source, output, *, published=None):
+def build_registry_package(value, source, output, *, published=None, additions=None):
     """Adapter retains accepted artifacts; inventory never depends on profile count."""
     if source is None:
         descriptor = {
@@ -537,6 +539,22 @@ def build_registry_package(value, source, output, *, published=None):
         if identities == published_identities:
             validate_overview(published["analysis"], legacy["catalog"])
             legacy["analysis"] = deepcopy(published["analysis"])
+    if additions and additions["profiles"]:
+        from .catalog_transcriptions import merge_overviews
+
+        known = {c["chart_id"] for c in legacy["catalog"]}
+        incoming = [c["chart_id"] for c in additions["profiles"]]
+        if known.intersection(incoming) or len(set(incoming)) != len(incoming):
+            raise ValueError("Supplemental profiles must have new, unique identities")
+        legacy["catalog"].extend(deepcopy(additions["profiles"]))
+        legacy["analysis"] = merge_overviews(legacy.get("analysis"), additions["records"])
+        retained["source-inventory.json"] = canonical(
+            json.loads(retained["source-inventory.json"]) + additions["inventory"]
+        )
+        descriptor["supplemental_sources"] = {
+            **descriptor.get("supplemental_sources", {}),
+            **additions["sources"],
+        }
     # Matching a body hash alone is insufficient when its selected container
     # timing/extraction context changed. Keep the inventory and discard stale analysis.
     inventory = {r["input_id"]: r for r in json.loads(retained["source-inventory.json"])}

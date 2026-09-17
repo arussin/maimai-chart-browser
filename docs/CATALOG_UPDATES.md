@@ -1,11 +1,21 @@
 # Catalog updates
 
-For the current persistent inventory workflow, begin with
-[Persistent official inventory](REGISTRY_IMPLEMENTATION.md#owner-preparation).
-Pass `--registry registry` to prepare from accepted regional observations and
-reviewed mappings. That path retains accepted mai-notes links without fetching
-the index and permits an inventory-only build without a chart package. The
-acquisition and source-hash link rules below describe the legacy package path.
+The persistent inventory updater refreshes metadata and supplemental transcriptions
+as part of every online `prepare --registry` invocation. This is the normal
+product pipeline, not a separate backfill script. See
+[the source waterfall](CATALOG_WATERFALL.md) for matching, validation and cache rules.
+
+For subsequent runs, continue from the last verified publication:
+
+```text
+python -m scripts.update_catalog refresh --store output/registry-updates
+```
+
+This resolves the published run's browser, package and accepted registry, then
+prepares a new candidate. The first migration can use the versioned seed registry
+when the older published run predates saved registries. Preparation never publishes.
+New official inventory admissions and primary corpus pin changes still follow
+[the accepted inventory workflow](REGISTRY_IMPLEMENTATION.md#owner-preparation).
 
 `python -m scripts.update_catalog` is the owner-run preparation and publication
 workflow. It has no schedule, public endpoint, GitHub deployment workflow or
@@ -53,7 +63,10 @@ Each invocation creates a fresh `STORE/runs/RUN_ID/` containing:
 
 - `report.md`: counts and review instructions.
 - `changes.json`: chart additions/removals/changes and player-link changes.
-- `mai-notes-audit.json`: matched, unavailable, ambiguous and unmatched charts.
+- `mai-notes-audit.json`: retained and new player-link coverage.
+- `registry/`: the accepted registry for the next update.
+- `source-captures.json` and `source-audit.json`: reproducible inputs, metadata gaps,
+  validation outcomes and provider failures for online registry updates.
 - `package/`: the complete versioned research package with its link index.
 - `browser/`: a preview retaining earlier catalog versions and deep links.
 - `public/`: only allowlisted public assets, ready for static hosting.
@@ -99,10 +112,11 @@ is needed. After a rollback, use the restored catalog's browser as the next base
 
 ## mai-notes link rules
 
-The only acquisition is one bounded request to
+The legacy package-only link path makes one bounded request to
 <https://mai-notes.com/data/manifest.json> per online preparation, with no retries,
 redirect following, account access or chart/audio downloads. HTTP errors and
-invalid index schemas stop preparation. This is a public site asset, not a
+invalid index schemas stop that legacy path. Registry updates use the resilient
+[waterfall](CATALOG_WATERFALL.md), including public transcription acquisition. This is a public site asset, not a
 documented stable integration API; recheck the source contract if it changes.
 
 Link discovery requires a unique normalized title **and artist**, STD/DX format,

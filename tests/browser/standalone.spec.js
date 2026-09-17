@@ -17,6 +17,10 @@ test('About exposes support and credits while preserving chart filters and keybo
   await expect(page.getByRole('link',{name:'Buy the creator a maimai credit',exact:true})).toHaveAttribute('href','https://buymeacoffee.com/russin');
   await expect(page.locator('#about .footer-credits')).toHaveAttribute('open','');
   await expect(page.locator('#about')).toContainText('Neskol · Maichart-Converts');
+  for(const credit of ['mai-notes metadata, transcriptions & player','Arcade Songs · zetaraku','OTOGE DB · zvuc','maimai Wiki on Gamerch','International catalog','community transcriptions']){
+    await expect(page.locator('#about')).toContainText(credit);
+  }
+  await expect(page.locator('#about')).toContainText('matching note counts does not establish exact game fidelity');
   expect(new URL(page.url()).searchParams.get('view')).toBe('about');
   expect((await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21aa']).analyze()).violations).toEqual([]);
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);

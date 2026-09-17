@@ -12,9 +12,17 @@ from .registry import digest, validate
 
 VERSION = "metadata-waterfall-1"
 FIELDS = ("bpm", "chart_constant")
-PRIORITY = {"reviewed-page": 10, "arcade-songs": 20, "otoge-db": 30}
+PRIORITY = {
+    "reviewed-page": 10,
+    "gamerch-wiki": 15,
+    "arcade-songs": 20,
+    "otoge-db": 30,
+    "mai-notes": 40,
+}
 LABELS = {
     "reviewed-page": "Reviewed public page",
+    "gamerch-wiki": "maimai Wiki (Gamerch)",
+    "mai-notes": "mai-notes",
     "arcade-songs": "Arcade Songs",
     "otoge-db": "OTOGE DB",
 }
@@ -41,7 +49,13 @@ def parse(raw, provider):
         raise ValueError("Unsupported metadata source or size")
     data = json.loads(raw)
     rows = []
-    if provider == "reviewed-page":
+    if provider == "mai-notes":
+        from .catalog_sources import mai_catalog
+
+        rows = list(mai_catalog(raw)[0].values())
+    elif provider == "gamerch-wiki":
+        raise ValueError("Wiki HTML requires its exact page URL; use propose with a captured page")
+    elif provider == "reviewed-page":
         if data.get("schema_version") != "reviewed-public-metadata-1":
             raise ValueError("Expected reviewed public metadata extraction")
         for row in data["charts"]:
@@ -159,8 +173,13 @@ def propose(value, captures):
     for provider, raw, metadata in captures:
         try:
             captured = source(raw, provider, metadata)
-            rows = parse(raw, provider)
-        except (ValueError, TypeError, KeyError) as error:
+            if provider == "gamerch-wiki":
+                from .catalog_sources import wiki_catalog
+
+                rows, _ = wiki_catalog(raw, metadata["url"])
+            else:
+                rows = parse(raw, provider)
+        except (ValueError, TypeError, KeyError, AttributeError) as error:
             failures.append({"provider": provider, "reason": str(error)})
             continue
         sid = provider + ":" + captured["sha256"]
@@ -266,7 +285,7 @@ def project(nav, claims, sources):
         ):
             if claim["field"] == field:
                 src = sources[claim["snapshot_id"]]
-                current[src["provider"], claim["region"], claim.get("release")] = claim
+                current[src["provider"], claim["region"]] = claim
         candidates = sorted(
             current.values(),
             key=lambda c: (
