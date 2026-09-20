@@ -77,7 +77,10 @@ def build_site(pack, output, *, catalog_version, lab_package=None):
         "site-brand.css",
         "support-footer.css",
         "support-checkout.css",
-        "support-checkout.js",
+        "support-config.js",
+        "support-client.js",
+        "support-stripe.js",
+        "stripe-wordmark.svg",
         "analytics.css",
         "analytics.js",
         "settings-menu.js",
@@ -89,7 +92,13 @@ def build_site(pack, output, *, catalog_version, lab_package=None):
             content = content.replace(
                 "__FAVICON__", assets.joinpath("favicon.html").read_text("utf-8")
             )
-            for script in ("settings-menu.js", "analytics.js", "support-checkout.js"):
+            for script in (
+                "settings-menu.js",
+                "analytics.js",
+                "support-config.js",
+                "support-client.js",
+                "support-stripe.js",
+            ):
                 revision = hashlib.sha256(
                     assets.joinpath(script).read_text("utf-8").encode("utf-8")
                 ).hexdigest()[:16]
@@ -107,8 +116,12 @@ def build_site(pack, output, *, catalog_version, lab_package=None):
             )
             content = content.replace(
                 "__SUPPORT_FOOTER__",
-                assets.joinpath("support-footer.html").read_text("utf-8")
-                + assets.joinpath("creator-support.html").read_text("utf-8")
+                assets.joinpath("support-footer.html")
+                .read_text("utf-8")
+                .replace(
+                    "__CREATOR_SUPPORT__",
+                    assets.joinpath("creator-support.html").read_text("utf-8"),
+                )
                 + assets.joinpath("analytics-controls.html").read_text("utf-8"),
             )
         atomic_write_text(

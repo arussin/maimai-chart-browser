@@ -113,6 +113,12 @@
   for (const button of document.querySelectorAll('[data-analytics-choice]'))
     button.onclick = () => choose(button.dataset.analyticsChoice);
   window.addEventListener('maimai:viewchange', trackView);
+  window.addEventListener('maimai:support', event => {
+    if (!active || privacySignal() || readChoice() !== 'granted' ||
+        !['support_opened', 'support_checkout_started', 'support_success_return'].includes(event.detail)) return;
+    // Enum-only events: no amount, Stripe identifier, payer or player information.
+    tag('event', event.detail, {...pageFields(), send_to: measurementId});
+  });
   window.addEventListener('popstate', () => queueMicrotask(trackView));
   window.addEventListener('storage', event => {
     if (event.key !== storageKey && event.key !== null) return;

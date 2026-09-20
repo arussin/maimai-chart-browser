@@ -37,7 +37,17 @@ class CloudflareAnalyticsTests(unittest.TestCase):
         page = PagePolicy(html)
         self.assertEqual(len(page.policies), 1)
         policy = page.policies[0]
-        self.assertEqual(policy["script-src"], ["'self'", GA_SCRIPT, CF_ORIGIN])
+        self.assertEqual(
+            policy["script-src"],
+            [
+                "'self'",
+                GA_SCRIPT,
+                CF_ORIGIN,
+                "https://js.stripe.com",
+                "https://*.js.stripe.com",
+                "https://checkout.stripe.com",
+            ],
+        )
         self.assertEqual(
             policy["connect-src"],
             [
@@ -45,6 +55,10 @@ class CloudflareAnalyticsTests(unittest.TestCase):
                 "https://www.google-analytics.com",
                 "https://region1.google-analytics.com",
                 "https://cloudflareinsights.com/cdn-cgi/rum",
+                "https://api.stripe.com",
+                "https://checkout.stripe.com",
+                "https://link.com",
+                "https://*.link.com",
             ],
         )
         self.assertEqual(policy["default-src"], ["'none'"])
@@ -53,6 +67,7 @@ class CloudflareAnalyticsTests(unittest.TestCase):
         # Permissions alone must not add a tracker to a local/preview build.
         self.assertFalse(any("cloudflareinsights.com" in src for src in page.scripts))
         self.assertFalse(any("googletagmanager.com" in src for src in page.scripts))
+        self.assertFalse(any("stripe.com" in src for src in page.scripts))
         self.assertIn('name="referrer" content="no-referrer"', html)
 
     def test_site_template_permits_only_native_collection_without_installing_a_tag(self):
@@ -78,6 +93,14 @@ class CloudflareAnalyticsTests(unittest.TestCase):
             redirect = PagePolicy((published / "lab/index.html").read_text("utf-8"))
             self.assertEqual(redirect.policies[0]["script-src"], ["'self'"])
             self.assertEqual(redirect.scripts, ["/lab-redirect.js"])
+            checkout_return = PagePolicy((published / "support-return.html").read_text("utf-8"))
+            self.assertEqual(checkout_return.policies[0]["script-src"], ["'self'"])
+            self.assertEqual(checkout_return.policies[0]["connect-src"], ["'self'"])
+            self.assertEqual(
+                checkout_return.scripts,
+                ["support-config.js", "support-client.js", "support-return.js"],
+            )
+            self.assertNotIn("support-worker", str(list(published.rglob("*"))))
             self.assertIn(
                 "Referrer-Policy: no-referrer", (published / "_headers").read_text("utf-8")
             )

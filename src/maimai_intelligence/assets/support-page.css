@@ -1,0 +1,7 @@
+body.support-page{margin:0;background:#f4fafb;color:#183b43;font:16px/1.6 system-ui,sans-serif}
+.support-page main{box-sizing:border-box;max-width:540px;margin:8vh auto;padding:24px}
+.support-page h1{font-size:22px;font-weight:600;margin:24px 0 12px}
+.support-page .support-button-group{width:fit-content;max-width:100%}
+.support-page #support-page-status{margin:16px 0;color:#52676d}
+.support-page #support-page-status[hidden]{display:none}
+@media(max-width:600px){.support-page .support-button-group{width:100%}}

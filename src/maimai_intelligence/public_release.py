@@ -35,7 +35,18 @@ PUBLIC_FILES = (
     "lab-loader.js",
     "analytics.js",
     "settings-menu.js",
-    "support-checkout.js",
+    "support-config.js",
+    "support-client.js",
+    "support-stripe.js",
+    "support-checkout.css",
+    "support.html",
+    "support-page.js",
+    "support-page.css",
+    "site-brand.css",
+    "support-footer.css",
+    "support-return.html",
+    "support-return.js",
+    "stripe-wordmark.svg",
     "view-navigation.js",
     "player-data-core.js",
     "player-data.js",
@@ -201,8 +212,20 @@ def build_public_release(source, output):
         b"/manifest.json\n  Cache-Control: no-cache\n"
         b"/robots.txt\n  Content-Type: text/plain; charset=utf-8\n  Cache-Control: no-cache\n"
         b"/sitemap.xml\n  Content-Type: application/xml; charset=utf-8\n  Cache-Control: no-cache\n"
+        b"/support-*\n  Cache-Control: no-store\n"
+        b"/support\n  Cache-Control: no-store\n  X-Robots-Tag: noindex, nofollow\n"
+        b"  Content-Security-Policy: frame-ancestors 'none'\n"
+        b"/support.html\n  Cache-Control: no-store\n  X-Robots-Tag: noindex, nofollow\n"
+        b"  Content-Security-Policy: frame-ancestors 'none'\n"
+        b"/support-return\n  Cache-Control: no-store\n  X-Robots-Tag: noindex, nofollow\n"
+        b"  Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self'; "
+        b"connect-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'\n"
+        b"/support-return.html\n  X-Robots-Tag: noindex, nofollow\n"
+        b"  Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self'; "
+        b"connect-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'\n"
         b"/*\n  X-Content-Type-Options: nosniff\n  Referrer-Policy: no-referrer\n"
-        b'  Permissions-Policy: payment=(self "https://buymeacoffee.com")\n'
+        b"  Permissions-Policy: payment=(self "
+        b'"https://checkout.stripe.com" "https://js.stripe.com" "https://hooks.stripe.com")\n'
     )
     public_manifest = {
         **manifest,
