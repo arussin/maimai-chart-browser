@@ -103,12 +103,19 @@ test('compact Support errors keep flags and translated controls inside the dialo
   await hosted(context,{failScript:true});await page.goto('https://maimai.party/');await open(page);
   const dialog=page.locator('#support-checkout-dialog');
   await expect(dialog).toHaveAttribute('data-stage','result');
-  for(const locale of ['en','ko','zh-Hans','ja']){
-    await dialog.locator('[data-language="'+locale+'"]').click();
-    expect(await dialog.evaluate(node=>node.scrollWidth<=node.clientWidth+1)).toBe(true);
-    const bounds=await dialog.boundingBox();
-    for(const button of await dialog.locator('.language-controls button,.support-dialog-close').all()){
-      const box=await button.boundingBox();expect(box.x+box.width).toBeLessThanOrEqual(bounds.x+bounds.width+1);
+  // Fallback font metrics differ between Windows and the Linux CI runner.
+  for(const font of ['', 'Verdana, sans-serif']){
+    await dialog.locator('.support-dialog-title').evaluate((node,value)=>node.style.fontFamily=value,font);
+    for(const locale of ['en','ko','zh-Hans','ja']){
+      await dialog.locator('[data-language="'+locale+'"]').click();
+      const widths=await dialog.evaluate(node=>({scroll:node.scrollWidth,client:node.clientWidth}));
+      expect(widths.scroll,JSON.stringify({locale,font,widths})).toBeLessThanOrEqual(widths.client+1);
+      const bounds=await dialog.boundingBox();
+      const title=await dialog.locator('.support-dialog-title').boundingBox();
+      for(const button of await dialog.locator('.language-controls button,.support-dialog-close').all()){
+        const box=await button.boundingBox();expect(box.x+box.width).toBeLessThanOrEqual(bounds.x+bounds.width+1);
+        expect(box.x>=title.x+title.width-1 || box.y>=title.y+title.height-1).toBe(true);
+      }
     }
   }
 });
