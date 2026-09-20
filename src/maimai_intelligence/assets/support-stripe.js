@@ -154,5 +154,9 @@
   });
   // Only an explicit return-page action resumes automatically. Ordinary reloads wait for a click.
   const returning = read();
+  if (config.returnHash && location.hash === config.returnHash) {
+    history.replaceState(null, '', location.pathname + location.search);
+    if (returning?.session) { returning.resume = true; save(returning); }
+  }
   if (returning?.resume) { delete returning.resume; save(returning); open(); }
 })();

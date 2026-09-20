@@ -3,7 +3,7 @@
   'use strict';
   if (window.maimaiSupportClient) return;
   const config = window.maimaiSupportConfig;
-  if (!config || location.protocol !== 'https:' || location.origin !== config.origin ||
+  if (!config || (location.protocol !== 'https:' && !['localhost', '127.0.0.1'].includes(location.hostname)) || location.origin !== config.origin ||
       !/^pk_(test|live)_[A-Za-z0-9]+$/.test(config.publishableKey)) return;
   const key = 'support.checkout.v2.' + config.project;
   const uuid = /^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/;
@@ -24,7 +24,7 @@
     } catch { return null; }
   };
   async function request(action, value) {
-    const response = await fetch('/api/support/' + action, {method: 'POST',
+    const response = await fetch((config.apiOrigin || '') + '/api/support/' + action, {method: 'POST',
       headers: {'Content-Type': 'application/json'}, credentials: 'omit', cache: 'no-store',
       referrerPolicy: 'no-referrer', redirect: 'error', signal: AbortSignal.timeout(20000),
       body: JSON.stringify({project: config.project, attempt: value.attempt,
