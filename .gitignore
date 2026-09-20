@@ -10,6 +10,9 @@ dist/
 playwright-report/
 test-results/
 .env
+.env.*
+.dev.vars
+.dev.vars.*
 extract_source.py
 .ruff_cache/
 .pytest_cache/

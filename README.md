@@ -47,8 +47,9 @@ pattern-detection goal. It covers public source, maimai.party hosting, community
 contributions and owner-only official corpus publication. See [contributing](CONTRIBUTING.md).
 
 Both browser pages use the maimai.party wordmark, with Deluxe-inspired colors
-on `.party`. Their shared footer includes creator support, the GitHub link,
-an independent-fan-project rights notice and **Credits & thanks**. See
+on `.party`. About pairs **View on GitHub** with **Support maimai.party** when
+Stripe is enabled. The footer retains the independent-fan-project rights notice
+and **Credits & thanks**. See
 [attribution and source roles](THIRD_PARTY_NOTICES.md). The project repository is
 public; contributions use issues and pull requests. Official site publication is
 an explicit owner operation described in [the owner guide](docs/OWNER_PUBLICATION.md).

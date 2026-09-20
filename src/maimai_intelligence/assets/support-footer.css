@@ -1,16 +1,8 @@
-.creator-support{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;margin-top:28px;padding:24px 0;border-top:1px solid #dce7e9;color:#183b43}
-.creator-support>p{margin:0;font-size:15px;font-weight:500}
-.creator-support-action{display:flex;flex-direction:column;align-items:flex-end;gap:6px;max-width:100%}
-.creator-support-link{display:inline-flex;align-items:center;justify-content:center;gap:8px;box-sizing:border-box;max-width:100%;min-height:44px;padding:9px 12px;border:1px solid #adcad0;border-radius:6px;background:#fff;color:#007887;font-size:13px;font-weight:600;line-height:1.5;text-decoration:none}
-.creator-support-link>span[aria-hidden]{flex:none}.creator-support-link>span:not([aria-hidden]){min-width:0}
-.creator-support-link:hover{background:#f2fafb;color:#007887}.creator-support-link:focus-visible{outline:3px solid #007887;outline-offset:3px}
-.creator-support-via{font-size:11px;line-height:1.5;color:#52676d}
+.support-stripe-logo{display:block;flex:none;width:45px;height:auto}
 
 #about .footer-credits{font-size:13px}#about .sources{margin-top:12px}
 .site-header nav{gap:clamp(8px,2vw,24px)}.site-header nav button{min-width:0}
 @media(max-width:600px){body>.analytics-controls{padding-left:18px;padding-right:18px}}
-@media(max-width:600px){.creator-support{align-items:flex-start;flex-direction:column;gap:12px;padding:20px 0}.creator-support-action{align-items:flex-start;width:100%}.creator-support-link{width:100%}}
-@media print{.creator-support{display:none}}
 .party-footer{padding-bottom:24px}.footer-project{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px 20px;padding:18px 0 12px;border-top:1px solid #dce7e9;font-size:12px;color:#52676d}.footer-project>a{display:inline-flex;align-items:center;gap:5px;min-height:44px;font-weight:600}.repository-status{font-weight:400}
 .party-footer a:not(.creator-support-link):not(.github-button){color:#007887;text-underline-offset:3px}.party-footer a:focus-visible{outline:3px solid #007887;outline-offset:3px;border-radius:2px}
 .footer-rights,.footer-credits{color:#52676d;font-size:12px;line-height:1.7}.footer-rights{margin:0;max-width:960px}.footer-credits{margin-top:12px}.footer-credits summary{cursor:pointer;min-height:44px;padding:11px 0;color:#007887;font-size:13px;font-weight:600}.footer-credits>p{margin:8px 0 16px}
@@ -18,3 +10,13 @@
 @media(max-width:600px){.credits-grid{grid-template-columns:minmax(0,1fr);gap:18px}.footer-project{align-items:flex-start;flex-direction:column;gap:2px}}
 
 .party-footer .github-button{display:inline-flex;gap:9px;padding:10px 16px;background:#24292f;color:#fff;border:1px solid #24292f;border-radius:7px;text-decoration:none;font-size:14px;min-height:44px}.party-footer .github-button:hover{background:#3b434c}.github-button svg{flex:none}.footer-project{gap:16px 24px;padding:18px 0 20px}.footer-project p{margin:0;font-size:13px;line-height:1.7}
+.project-actions{display:flex;align-items:flex-start;flex-wrap:wrap;gap:10px;max-width:100%}
+.project-action{display:inline-flex;align-items:center;justify-content:center;gap:9px;box-sizing:border-box;min-height:44px;max-width:100%;padding:10px 16px;border:1px solid #24292f;border-radius:7px;background:#24292f;color:#fff;font-family:inherit;font-size:14px;font-weight:600;line-height:1.5;text-decoration:none;cursor:pointer}
+.project-action:hover{background:#3b434c;color:#fff}.project-action:focus-visible{outline:3px solid #007887;outline-offset:3px}.project-action svg{flex:none}
+.project-action.creator-support-link{border-color:#171717;background:#fff;color:#171717}.project-action.creator-support-link:hover{background:#f6f7f8;color:#171717}
+.support-button-group{display:flex;flex-direction:column;align-items:stretch;gap:5px;max-width:100%}
+.support-button-group[hidden]{display:none}
+.support-button-provider{display:flex;align-items:center;justify-content:center;gap:4px;min-height:20px;color:#52676d;font-size:11px;font-weight:400;line-height:1.4}.support-button-provider[hidden]{display:none}.support-button-provider .support-stripe-logo{width:35px;height:auto}
+@media(forced-colors:active){.creator-support-heart path{fill:ButtonText}}
+@media(max-width:600px){.project-actions{width:100%;flex-direction:column}.project-action,.support-button-group{width:100%}}
+@media print{.project-actions{display:none}}

@@ -123,12 +123,26 @@ def build_lab(package_directory, output, *, catalog_version):
         "player-data-core.js",
         "player-data.js",
         "analytics.js",
-        "support-checkout.js",
+        "support-config.js",
+        "support-client.js",
+        "support-stripe.js",
     ):
         content = assets.joinpath(name).read_text("utf-8")
         atomic_write_text(root / name, content)
         revision = hashlib.sha256(content.encode("utf-8")).hexdigest()[:16]
         early_scripts.append(f'<script defer src="{name}?v={revision}"></script>')
+    for name in (
+        "support.html",
+        "support-page.js",
+        "support-page.css",
+        "site-brand.css",
+        "support-footer.css",
+        "support-return.html",
+        "support-return.js",
+        "support-checkout.css",
+        "stripe-wordmark.svg",
+    ):
+        atomic_write_text(root / name, assets.joinpath(name).read_text("utf-8"))
     view_script = assets.joinpath("view-navigation.js").read_text("utf-8")
     view_revision = hashlib.sha256(view_script.encode("utf-8")).hexdigest()[:16]
     atomic_write_text(root / "view-navigation.js", view_script)
@@ -188,13 +202,17 @@ def build_lab(package_directory, output, *, catalog_version):
         '<meta name="referrer" content="no-referrer">'
         '<meta http-equiv="Content-Security-Policy" content="'
         "default-src 'none'; script-src 'self' https://www.googletagmanager.com/gtag/js "
-        "https://static.cloudflareinsights.com; "
+        "https://static.cloudflareinsights.com https://js.stripe.com "
+        "https://*.js.stripe.com https://checkout.stripe.com; "
         "style-src 'self' 'unsafe-inline'; "
         "connect-src 'self' https://www.google-analytics.com https://region1.google-analytics.com "
-        "https://cloudflareinsights.com/cdn-cgi/rum; "
+        "https://cloudflareinsights.com/cdn-cgi/rum https://api.stripe.com "
+        "https://checkout.stripe.com https://link.com https://*.link.com; "
         "img-src 'self' data: https://www.google-analytics.com "
-        "https://region1.google-analytics.com; "
-        "object-src 'none'; base-uri 'none'; frame-src https://buymeacoffee.com; "
+        "https://region1.google-analytics.com https://*.stripe.com https://*.link.com; "
+        "object-src 'none'; base-uri 'none'; frame-src "
+        "https://js.stripe.com https://*.js.stripe.com https://hooks.stripe.com "
+        "https://checkout.stripe.com https://link.com https://*.link.com; "
         "form-action 'none'"
         '">\n<title>',
     )

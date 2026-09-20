@@ -7,14 +7,14 @@ async function personal(){return JSON.parse(await readFile(fixtureURL,'utf8'));}
 async function open(page){await page.goto('/');await expect(page.locator('#explore-search')).toBeVisible();}
 async function importValue(page,value){await page.locator('#site-import').setInputFiles({name:'results.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(value))});}
 
-test('About exposes support and credits while preserving chart filters and keyboard navigation',async({page},testInfo)=>{
+test('About exposes credits and hides unconfigured support while preserving chart filters and keyboard navigation',async({page},testInfo)=>{
   await page.goto('/lab/');await expect(page.locator('#loaded-count')).toHaveText('6');
   await page.locator('#search').fill('Fictional study 0');
   await page.locator('[data-sort-key=bpm]').click();
   await page.locator('#about-tab').focus();await page.keyboard.press('Enter');
   await expect(page.locator('#about')).toBeVisible();await expect(page.locator('#catalog')).toBeHidden();
   await expect(page.locator('#about-tab')).toHaveAttribute('aria-pressed','true');
-  await expect(page.getByRole('link',{name:'Buy the creator a maimai credit',exact:true})).toHaveAttribute('href','https://buymeacoffee.com/russin');
+  await expect(page.locator('#support-open')).toBeHidden();
   await expect(page.locator('#about .footer-credits')).toHaveAttribute('open','');
   await expect(page.locator('#about')).toContainText('Neskol · Maichart-Converts');
   for(const credit of ['mai-notes metadata, transcriptions & player','Arcade Songs · zetaraku','OTOGE DB · zvuc','maimai Wiki on Gamerch','International catalog','community transcriptions']){
@@ -36,7 +36,7 @@ test('About links work even when the catalog cannot load',async({page})=>{
   await page.goto('/progressive/?view=about');
   await expect(page.locator('#about')).toBeVisible();
   await expect(page.locator('#about h1')).toHaveText('About maimai.party');
-  await expect(page.getByRole('link',{name:'Buy the creator a maimai credit',exact:true})).toBeVisible();
+  await expect(page.getByRole('link',{name:'Support maimai.party',exact:true})).toBeVisible();
   await page.locator('#catalog-tab').click();await expect(page.locator('#catalog')).toBeVisible();
   await page.locator('#about-tab').click();await expect(page.locator('#about')).toBeVisible();
 });
@@ -416,7 +416,9 @@ test('clean headings, filter placement and lesson actions align without overflow
   await expect(page.locator('#patterns')).not.toContainText('Found automatically');
   await page.locator('#about-tab').click();await expect(page.locator('.footer-rights,.sources')).toHaveCount(0);
   await expect(page.getByRole('link',{name:'View on GitHub'})).toHaveAttribute('href','https://github.com/arussin/maimai-chart-browser');
-  expect(await page.locator('#about').evaluate(node=>node.lastElementChild.classList.contains('creator-support'))).toBe(true);
+  await expect(page.locator('.project-actions #support-open')).toBeHidden();
+  await expect(page.locator('.party-footer #support-open')).toHaveCount(0);
+  await expect(page.locator('.creator-support')).toHaveCount(0);
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
 });
 

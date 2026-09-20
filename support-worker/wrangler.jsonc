@@ -1,0 +1,19 @@
+{
+  "name": "maimai-support",
+  "main": "index.mjs",
+  "compatibility_date": "2026-09-19",
+  "workers_dev": false,
+  "preview_urls": false,
+  // No route, credential, or active payment setting is provisioned by this example.
+  "vars": {
+    "SUPPORT_ENABLED": "false",
+    "SUPPORT_ELIGIBILITY_CONFIRMED": "false",
+    "STRIPE_MODE": "test",
+    "PAYMENT_METHOD_CONFIGURATION": "",
+    "SUPPORT_PRICE_ID": "",
+    "TEST_LOCATION_COUNTRY": ""
+  },
+  // Owner assigns a unique account namespace before provisioning this binding.
+  "ratelimits": [],
+  "observability": {"enabled": false}
+}
