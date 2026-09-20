@@ -1,5 +1,7 @@
 /* Multiple difficulties and an inclusive level interval, shared with comparison filtering. */
 (()=>{'use strict';
+const i18n=window.maimaiI18n||{text:(node,value)=>node.textContent=value,attribute:(node,key,value)=>node.setAttribute(key,value),option:(...args)=>new Option(...args),literal:(node,value)=>node.textContent=value};
+
 const el=id=>document.getElementById(id);
 const number=value=>{
   const text=String(value??'').normalize('NFKC').trim();
@@ -15,12 +17,12 @@ function mount(charts,onChange){
   const fields=[el('filter-min'),el('filter-max')],sliders=[el('level-min-slider'),el('level-max-slider')];
   const menu=el('difficulty-filter'),summary=el('difficulty-summary');
   function updateDifficulties(){
-    summary.textContent=selected.size===0?'All difficulties':selected.size===1?[...selected][0]:selected.size+' difficulties selected';
+    i18n.text(summary, selected.size===0?'All difficulties':selected.size===1?[...selected][0]:selected.size+' difficulties selected');
     for(const checkbox of el('difficulty-options').querySelectorAll('input'))checkbox.checked=selected.has(checkbox.value);
   }
   for(const difficulty of difficulties){
     const row=document.createElement('label'),input=document.createElement('input'),text=document.createElement('span');
-    row.dataset.difficulty=difficulty;input.type='checkbox';input.value=difficulty;text.textContent=difficulty;
+    row.dataset.difficulty=difficulty;input.type='checkbox';input.value=difficulty;i18n.text(text, difficulty);
     input.onchange=()=>{if(input.checked)selected.add(difficulty);else selected.delete(difficulty);updateDifficulties();onChange();};
     row.append(input,text);el('difficulty-options').append(row);
   }
@@ -30,9 +32,9 @@ function mount(charts,onChange){
   el('version-filter').addEventListener('toggle',()=>{if(el('version-filter').open)menu.open=false;});
   document.addEventListener('click',event=>{if(!menu.contains(event.target))menu.open=false;});
   function sync(){
-    el('level-error').textContent='';
+    i18n.text(el('level-error'), '');
     fields.forEach((field,i)=>{field.value=levels.length?label(levels[i?high:low]):'';field.removeAttribute('aria-invalid');});
-    sliders.forEach((slider,i)=>{slider.value=String(i?high:low);slider.setAttribute('aria-valuetext',levels.length?'Level '+label(levels[i?high:low]):'No levels available');});
+    sliders.forEach((slider,i)=>{slider.value=String(i?high:low);i18n.attribute(slider, 'aria-valuetext', levels.length?'Level '+label(levels[i?high:low]):'No levels available');});
     sliders[0].setAttribute('aria-valuemax',String(high));sliders[1].setAttribute('aria-valuemin',String(low));
     const scale=Math.max(1,levels.length-1);
     el('level-range').style.setProperty('--level-low',low/scale*100+'%');
@@ -49,7 +51,7 @@ function mount(charts,onChange){
     const text=fields[side].value.trim(),value=number(text),index=text===''?(side?levels.length-1:0):levels.indexOf(value);
     if(index<0){
       fields[side].setAttribute('aria-invalid','true');
-      el('level-error').textContent='Enter an available level from '+label(levels[0])+' to '+label(levels.at(-1))+'. Use + for a plus level.';
+      i18n.text(el('level-error'), 'Enter an available level from '+label(levels[0])+' to '+label(levels.at(-1))+'. Use + for a plus level.');
       return;
     }
     // Enter followed by blur must not render a second time and discard the
@@ -89,7 +91,7 @@ function mount(charts,onChange){
     clear(){selected.clear();updateDifficulties();clearLevels();},
     chips(){
       const result=[];
-      function chip(text,aria,remove){const button=document.createElement('button');button.className='filter-chip';button.textContent=text+' ×';button.setAttribute('aria-label',aria);button.onclick=remove;result.push(button);}
+      function chip(text,aria,remove){const button=document.createElement('button');button.className='filter-chip';i18n.text(button, text+' ×');i18n.attribute(button, 'aria-label', aria);button.onclick=remove;result.push(button);}
       for(const difficulty of selected)chip(difficulty,'Remove difficulty '+difficulty,()=>{selected.delete(difficulty);updateDifficulties();onChange();summary.focus();});
       if(low>0)chip('From level '+label(levels[low]),'Remove minimum level filter',()=>{low=0;sync();onChange();fields[0].focus();});
       if(high<levels.length-1)chip('To level '+label(levels[high]),'Remove maximum level filter',()=>{high=levels.length-1;sync();onChange();fields[1].focus();});

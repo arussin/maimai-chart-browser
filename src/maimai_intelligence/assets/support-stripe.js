@@ -1,12 +1,14 @@
 (() => {
   'use strict';
+const i18n=window.maimaiI18n||{text:(node,value)=>node.textContent=value,attribute:(node,key,value)=>node.setAttribute(key,value),option:(...args)=>new Option(...args),literal:(node,value)=>node.textContent=value};
+
   const client = window.maimaiSupportClient, opener = document.getElementById('support-open');
   if (!client?.config.enabled || !opener || opener.dataset.checkoutReady ||
       typeof HTMLDialogElement === 'undefined' || !HTMLDialogElement.prototype.showModal) return;
   const {config, read, save, clear, request} = client;
   const element = (tag, className, text) => {
     const node = document.createElement(tag); node.className = className;
-    if (text) node.textContent = text; return node;
+    if (text) i18n.text(node, text); return node;
   };
   const event = name => window.dispatchEvent(new CustomEvent('maimai:support', {detail: name}));
   const dialog = element('dialog', 'support-dialog support-stripe-dialog');
@@ -17,10 +19,10 @@
   const brand = document.querySelector('.party-brand > span');
   if (brand) {
     title.replaceChildren(brand.cloneNode(true)); title.classList.add('party-brand');
-    title.setAttribute('aria-label', config.title);
+    i18n.attribute(title, 'aria-label', config.title);
   }
   const close = element('button', 'support-dialog-close', '×'); close.type = 'button';
-  close.setAttribute('aria-label', 'Close support checkout'); header.append(title, close);
+  i18n.attribute(close, 'aria-label', 'Close support checkout'); header.append(title, close);
   const body = element('div', 'support-stripe-body');
   const message = element('p', 'support-stripe-status'); message.setAttribute('role', 'status');
   const invitation = element('p', 'support-invitation', config.invitation);
@@ -29,12 +31,13 @@
   const again = element('button', 'support-secondary', 'Start a new checkout'); again.type = 'button'; again.hidden = true;
   body.append(invitation, message, mount, retry, again);
   dialog.append(header, body); document.body.append(dialog);
+  window.maimaiI18n?.controls(header);
   opener.dataset.checkoutReady = 'stripe'; opener.setAttribute('aria-haspopup', 'dialog');
   const provider = opener.parentElement.querySelector('.support-button-provider');
   if (provider) provider.hidden = false;
   opener.parentElement.hidden = false;
   opener.setAttribute('aria-controls', dialog.id);
-  opener.querySelector('span:last-child').textContent = config.title;
+  i18n.text(opener.querySelector('span:last-child'), config.title);
   let instance = null, generation = 0, busy = false, scriptPromise = null;
   const destroy = () => { instance?.destroy(); instance = null; mount.replaceChildren(); };
   function loadStripe() {
@@ -57,15 +60,15 @@
     dialog.dataset.stage = 'result';
     destroy(); invitation.hidden = true; retry.hidden = true; again.hidden = status === 'pending';
     if (status === 'paid') {
-      message.textContent = config.thanks;
-      again.textContent = 'Support again';
+      i18n.text(message, config.thanks);
+      i18n.text(again, 'Support again');
       if (!value.successTracked) { value.successTracked = true; save(value); event('support_success_return'); }
     } else if (status === 'pending') {
-      message.textContent = 'Your payment is still processing. Please check its status before trying another payment.';
-      retry.textContent = 'Check payment status'; retry.hidden = false;
+      i18n.text(message, 'Your payment is still processing. Please check its status before trying another payment.');
+      i18n.text(retry, 'Check payment status'); retry.hidden = false;
     } else {
-      message.textContent = 'This checkout has expired. You can start a new checkout.';
-      again.textContent = 'Start a new checkout';
+      i18n.text(message, 'This checkout has expired. You can start a new checkout.');
+      i18n.text(again, 'Start a new checkout');
     }
     return true;
   }
@@ -88,7 +91,7 @@
     const token = ++generation;
     dialog.dataset.stage = 'checkout';
     busy = true; invitation.hidden = false; retry.hidden = true; again.hidden = true;
-    destroy(); message.textContent = value.session ? 'Checking your checkout…' : 'Opening secure checkout…';
+    destroy(); i18n.text(message, value.session ? 'Checking your checkout…' : 'Opening secure checkout…');
     try {
       save(value);
       if (value.session) {
@@ -124,12 +127,12 @@
       } finally { clearTimeout(initializationTimer); }
       if (!checkout) return;
       if (token !== generation) { checkout.destroy(); return; }
-      instance = checkout; checkout.mount(mount); message.textContent = '';
+      instance = checkout; checkout.mount(mount); i18n.text(message, '');
       if (!value.startedTracked) { value.startedTracked = true; save(value); event('support_checkout_started'); }
     } catch (error) {
       if (token !== generation) return;
-      destroy(); dialog.dataset.stage = 'result'; message.textContent = errorMessage(error);
-      retry.textContent = 'Try again'; retry.hidden = false;
+      destroy(); dialog.dataset.stage = 'result'; i18n.text(message, errorMessage(error));
+      i18n.text(retry, 'Try again'); retry.hidden = false;
     } finally { if (token === generation) busy = false; }
   }
   function open() {

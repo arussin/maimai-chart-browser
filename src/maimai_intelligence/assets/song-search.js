@@ -5,12 +5,15 @@
   const compact = value => normalize(value).replace(/[\p{P}\p{Z}\s]/gu, '');
   const entries = __MAIMAI_SONG_ALIASES__;
   const aliases = new Map(entries.map(([title, artist, names]) => [JSON.stringify([normalize(title), normalize(artist)]), names]));
+  const multilingual = __MAIMAI_MULTILINGUAL_ALIASES__;
   const cached = new WeakMap();
   function fields(chart) {
-    if (!cached.has(chart)) {
+    const prior=cached.get(chart);
+    if (!prior || prior.title!==chart.title || prior.artist!==chart.artist || prior.aliases!==chart.aliases) {
       const identity = JSON.stringify([normalize(chart.title), normalize(chart.artist)]);
-      const names = [chart.title, chart.artist, ...(chart.aliases || []), ...(aliases.get(identity) || [])];
-      cached.set(chart, {text: names.map(normalize).join(' '), compact: names.map(compact)});
+      const regional = Object.values(chart.regional || {}).flatMap(row => [row.metadata?.title,row.metadata?.artist,row.metadata?.title_kana]);
+      const names = [chart.title, chart.artist, ...regional, ...(chart.aliases || []), ...(aliases.get(identity) || []), ...(multilingual[chart.song_id] || [])];
+      cached.set(chart, {title:chart.title,artist:chart.artist,aliases:chart.aliases,text: names.map(normalize).join(' '), compact: names.map(compact)});
     }
     return cached.get(chart);
   }

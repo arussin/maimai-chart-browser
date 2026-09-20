@@ -7,6 +7,7 @@ from importlib.resources import files
 
 from maimai_analyzer.patterns import pattern_registry
 
+from .localization import localization_script
 from .provider_mapping import default_mapping
 from .song_search import song_search_script
 
@@ -25,7 +26,9 @@ def review_scripts():
     theme = assets.joinpath("chart-theme.json").read_text("utf-8")
     lessons = _encoded(json.loads(assets.joinpath("pattern-lessons.json").read_text("utf-8")))
     return (
-        song_search_script()
+        localization_script()
+        + "\n"
+        + song_search_script()
         + "\n"
         + "\n".join(
             assets.joinpath(name)
@@ -117,6 +120,7 @@ def render_review(
         assets.joinpath(name).read_text("utf-8")
         for name in (
             "challenge-review.css",
+            "localization.css",
             "chart-visuals.css",
             "pattern-lessons.css",
             "chart-overview.css",

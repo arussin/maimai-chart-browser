@@ -1,0 +1,3 @@
+# Offline data-builder dependencies, never downloaded by the browser.
+pypinyin==0.55.0
+opencc-python-reimplemented==0.1.7

@@ -1,4 +1,10 @@
+Windows development: read [DEVELOPMENT.md](DEVELOPMENT.md). Use the DevCache workspace for the relative-output examples below; the existing output snapshots are retained evidence.
+
 # maimai.party · Chart Browser
+
+[English](README.md) · [简体中文](README.zh-Hans.md) · [한국어](README.ko.md) · [日本語](README.ja.md)
+
+Localization maintenance: [canonical UI copy, game terms and multilingual search rebuilds](docs/LOCALIZATION.md).
 
 A standalone static chart browser, reusable Python intelligence engine and
 read-only Kamaitachi downloader. Personal recommendations are calculated during

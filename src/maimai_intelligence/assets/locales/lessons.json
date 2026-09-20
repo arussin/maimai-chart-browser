@@ -1,0 +1,564 @@
+{
+  "messages": {
+    "Alternate slide launches between two starting buttons.": {
+      "zh-Hans": "在两个起始按钮之间交替发射滑动。",
+      "ko": "두 시작 버튼에서 번갈아 슬라이드를 시작합니다.",
+      "ja": "2つの始点ボタンから交互にスライドを始めます。"
+    },
+    "The head sequence returns to 1, then 5, then 1, then 5.": {
+      "zh-Hans": "头部输入顺序为 1、5、1、5。",
+      "ko": "머리 입력 순서는 1, 5, 1, 5로 반복됩니다.",
+      "ja": "始点は 1、5、1、5 と繰り返します。"
+    },
+    "Repeat inputs three quarters of a beat apart.": {
+      "zh-Hans": "以四分之三拍的间隔重复输入。",
+      "ko": "4분의 3박 간격으로 입력을 반복합니다.",
+      "ja": "4分の3拍間隔で入力を繰り返します。"
+    },
+    "Count three sixteenth-note slots between groups. The inputs drift across the main beats.": {
+      "zh-Hans": "组间按三个十六分音符计数。输入会逐渐偏离主拍位置。",
+      "ko": "묶음 사이를 16분음표 세 칸으로 셉니다. 입력 위치가 정박을 가로질러 이동합니다.",
+      "ja": "各組の間を16分音符3つ分で数えます。入力位置が拍をまたいでずれていきます。"
+    },
+    "Return to one anchor between taps at changing positions.": {
+      "zh-Hans": "在不断变化的位置输入之间回到同一个固定点。",
+      "ko": "위치가 바뀌는 탭 사이마다 같은 축으로 돌아옵니다.",
+      "ja": "変わるタップ位置の間で、同じ軸に戻ります。"
+    },
+    "Button 1 repeats on every other input. The intervening input moves through buttons 3, 4, 5 and 6.": {
+      "zh-Hans": "每隔一次输入回到按钮 1。中间的输入依次经过按钮 3、4、5、6。",
+      "ko": "한 번 건너마다 버튼 1을 누릅니다. 사이의 입력은 버튼 3, 4, 5, 6으로 이동합니다.",
+      "ja": "1回おきにボタン1を押します。間の入力はボタン3、4、5、6へ移ります。"
+    },
+    "Repeat groups of simultaneous inputs.": {
+      "zh-Hans": "重复同时输入组。",
+      "ko": "동시 입력 묶음을 반복합니다.",
+      "ja": "同時入力の組を繰り返します。"
+    },
+    "Each time column contains a pair, and the paired groups continue in sequence.": {
+      "zh-Hans": "每个时间列包含一对输入，各对依次连续出现。",
+      "ko": "각 시간 열에 한 쌍이 있으며, 입력 쌍이 연속으로 이어집니다.",
+      "ja": "各時刻の列に入力のペアがあり、それが順に続きます。"
+    },
+    "Follow several connected segments as one slide.": {
+      "zh-Hans": "将多个连接段作为一条滑动轨迹完成。",
+      "ko": "여러 연결 구간을 하나의 슬라이드로 따라갑니다.",
+      "ja": "複数のつながった区間を1本のスライドとしてなぞります。"
+    },
+    "One star begins the continuous route 1 → 3 → 5 → 7. The intermediate points are not new inputs.": {
+      "zh-Hans": "一个星星启动连续路径 1 → 3 → 5 → 7。中间点不是新的输入。",
+      "ko": "별 하나로 1 → 3 → 5 → 7의 연속 경로를 시작합니다. 중간 지점은 새로운 입력이 아닙니다.",
+      "ja": "1つの星から 1 → 3 → 5 → 7 の連続した軌跡が始まります。途中の点は新しい入力ではありません。"
+    },
+    "Alternate a pair of arc slides with a pair of loop slides.": {
+      "zh-Hans": "交替出现一对弧线滑动和一对环形滑动。",
+      "ko": "원호 슬라이드 쌍과 루프 슬라이드 쌍을 번갈아 처리합니다.",
+      "ja": "弧のスライド2本とループのスライド2本を交互に処理します。"
+    },
+    "The first pair contains two arcs. The next contains two p loops, followed by another arc pair.": {
+      "zh-Hans": "第一对为两条弧线，接着是两个 p 形环，再接一对弧线。",
+      "ko": "첫 쌍은 원호 두 개, 다음은 p자 루프 두 개이며, 그다음에 다시 원호 쌍이 옵니다.",
+      "ja": "最初は弧2本、次はp型ループ2本、その後また弧2本が続きます。"
+    },
+    "Follow rotating taps while arc slides move the other way.": {
+      "zh-Hans": "单点沿圆周移动时，弧线滑动向相反方向移动。",
+      "ko": "탭이 회전하는 동안 원호 슬라이드는 반대 방향으로 이동합니다.",
+      "ja": "タップが回転する間、弧のスライドは反対方向へ動きます。"
+    },
+    "New inputs advance clockwise. The arc slides travel counterclockwise during that run.": {
+      "zh-Hans": "新输入顺时针前进，同时弧线滑动逆时针移动。",
+      "ko": "새 입력은 시계 방향으로 진행하고, 원호 슬라이드는 반시계 방향으로 이동합니다.",
+      "ja": "新しい入力は時計回りに進み、その間スライドは反時計回りに動きます。"
+    },
+    "Tap during another slide's waiting interval.": {
+      "zh-Hans": "在另一条滑动的等待期间进行单点输入。",
+      "ko": "다른 슬라이드의 대기 구간에 탭을 입력합니다.",
+      "ja": "別のスライドの待機時間中にタップします。"
+    },
+    "The tap occurs after the star input but before the solid movement line begins.": {
+      "zh-Hans": "单点发生在星星输入之后、实线移动开始之前。",
+      "ko": "별 입력 후, 실선으로 표시된 이동이 시작되기 전에 탭이 옵니다.",
+      "ja": "星を押した後、実線の移動が始まる前にタップが入ります。"
+    },
+    "Trace paired slides that move at different speeds.": {
+      "zh-Hans": "沿不同速度移动的一对滑动轨迹操作。",
+      "ko": "서로 다른 속도로 움직이는 슬라이드 쌍을 따라갑니다.",
+      "ja": "異なる速度で動く2本のスライドをなぞります。"
+    },
+    "Both equal-length paths launch together. One finishes while the other is still moving.": {
+      "zh-Hans": "两条等长路径同时开始，一条结束时另一条仍在移动。",
+      "ko": "길이가 같은 두 경로가 함께 출발합니다. 하나가 끝나도 다른 하나는 계속 이동합니다.",
+      "ja": "同じ長さの2本が同時に始まります。一方が終わっても、もう一方は動いています。"
+    },
+    "Change direction within a button run.": {
+      "zh-Hans": "在连续按钮输入中改变方向。",
+      "ko": "버튼 연타 도중 방향을 바꿉니다.",
+      "ja": "ボタンの連打途中で方向を変えます。"
+    },
+    "The sequence goes 1 → 2 → 3 → 4, then returns through 3 → 2 → 1.": {
+      "zh-Hans": "顺序为 1 → 2 → 3 → 4，再沿 3 → 2 → 1 返回。",
+      "ko": "1 → 2 → 3 → 4로 진행한 뒤 3 → 2 → 1로 돌아옵니다.",
+      "ja": "1 → 2 → 3 → 4 と進み、3 → 2 → 1 と戻ります。"
+    },
+    "Wait longer than one beat before tracing the slide.": {
+      "zh-Hans": "等待超过一拍后再开始滑动。",
+      "ko": "한 박보다 길게 기다린 후 슬라이드를 따라갑니다.",
+      "ja": "1拍より長く待ってからスライドをなぞります。"
+    },
+    "The dashed wait lasts two beats. The movement begins only after that delay.": {
+      "zh-Hans": "虚线等待持续两拍，延迟结束后才开始移动。",
+      "ko": "점선 대기는 두 박 동안 이어집니다. 그 지연이 끝난 뒤에만 이동을 시작합니다.",
+      "ja": "破線の待機は2拍続き、その後に移動が始まります。"
+    },
+    "Tap the previous slide head as the next star-and-tap pair arrives.": {
+      "zh-Hans": "下一组星星与单点同时到来时，单点按在上一条滑动的起点。",
+      "ko": "다음 별과 탭 쌍이 올 때 이전 슬라이드 머리 위치를 탭합니다.",
+      "ja": "次の星とタップのペアで、前のスライドの始点をタップします。"
+    },
+    "Pairs arrive one beat apart. The tap returns to the previous head while its slide launches.": {
+      "zh-Hans": "各对相隔一拍。上一条滑动开始时，单点回到其起点。",
+      "ko": "쌍은 한 박 간격으로 옵니다. 이전 슬라이드가 시작될 때 탭이 그 머리 위치로 돌아갑니다.",
+      "ja": "ペアは1拍間隔で来ます。前のスライドが動き始めるときに、その始点へタップが戻ります。"
+    },
+    "Repeat short-long timing pairs.": {
+      "zh-Hans": "重复短间隔与长间隔组成的节奏对。",
+      "ko": "짧고 긴 간격의 쌍을 반복합니다.",
+      "ja": "短い間隔と長い間隔のペアを繰り返します。"
+    },
+    "Read the gaps: short, long, short, long. The pattern is in the spacing between inputs.": {
+      "zh-Hans": "注意间隔：短、长、短、长。此配置的特征在于输入间距。",
+      "ko": "간격을 짧게, 길게, 짧게, 길게 읽으세요. 입력 사이의 간격이 핵심입니다.",
+      "ja": "短、長、短、長という間隔を読み取ります。入力間隔に特徴があります。"
+    },
+    "Link short opposing sweeps through simultaneous endpoints.": {
+      "zh-Hans": "通过端点同时押连接方向相反的短扫动。",
+      "ko": "동시 입력 끝점을 통해 반대 방향의 짧은 쓸기를 연결합니다.",
+      "ja": "端点の同時押しで、逆方向の短いなぞりをつなぎます。"
+    },
+    "Follow 8, 7, 6, then 1, 2, 3. Each ending is paired with the start of the other sweep.": {
+      "zh-Hans": "按 8、7、6，再按 1、2、3。每段的终点与另一段起点同时输入。",
+      "ko": "8, 7, 6 다음 1, 2, 3을 따라갑니다. 각 끝점은 반대쪽 쓸기의 시작과 동시에 입력합니다.",
+      "ja": "8、7、6、次に1、2、3と進みます。各終点は反対側の始点と同時押しです。"
+    },
+    "A hold stays active while a slide moves.": {
+      "zh-Hans": "滑动移动期间仍保持长按。",
+      "ko": "슬라이드가 이동하는 동안 홀드를 유지합니다.",
+      "ja": "スライドが動く間もホールドを保持します。"
+    },
+    "The hold interval and solid slide movement share part of the timeline.": {
+      "zh-Hans": "长按区间与实线滑动移动区间在时间上部分重叠。",
+      "ko": "홀드 구간과 실선 슬라이드 이동 구간이 시간상 일부 겹칩니다.",
+      "ja": "ホールドの区間と実線のスライド移動が一部重なります。"
+    },
+    "Keep one input held while other taps arrive.": {
+      "zh-Hans": "其他单点到来时继续保持一个长按。",
+      "ko": "다른 탭이 오는 동안 하나의 홀드를 유지합니다.",
+      "ja": "他のタップが来る間も1つのホールドを保持します。"
+    },
+    "The long amber interval is active when the independent taps appear.": {
+      "zh-Hans": "独立单点出现时，琥珀色长区间仍在持续。",
+      "ko": "독립적인 탭이 나타날 때 긴 호박색 구간이 유지되고 있습니다.",
+      "ja": "独立したタップが来るとき、長い琥珀色の区間は継続しています。"
+    },
+    "Read a six-input stream that jumps back across its earlier positions.": {
+      "zh-Hans": "读取一个跳回先前位置的六输入序列。",
+      "ko": "앞서 지나간 위치로 되돌아가는 여섯 입력의 흐름을 읽습니다.",
+      "ja": "前の位置をまたいで戻る、6入力の流れを読み取ります。"
+    },
+    "Follow 3, 5, 7, then 3, 1, 7. Some inputs begin short holds, but their onset order stays the same.": {
+      "zh-Hans": "依次按 3、5、7，再按 3、1、7。部分输入是短长按的起点，但输入先后顺序不变。",
+      "ko": "3, 5, 7 다음 3, 1, 7을 따라갑니다. 일부는 짧은 홀드지만 입력 시작 순서는 같습니다.",
+      "ja": "3、5、7、次に3、1、7と進みます。一部は短いホールドですが、入力の順序は同じです。"
+    },
+    "Advance diagonal slides around the ring one starting button at a time.": {
+      "zh-Hans": "沿圆周逐个移动起始按钮，连续进行对角滑动。",
+      "ko": "시작 버튼을 하나씩 옮기며 대각선 슬라이드를 원 주위로 진행합니다.",
+      "ja": "始点を1ボタンずつずらし、対角線スライドを外周に沿って進めます。"
+    },
+    "The heads move from 1 to 2 to 3 to 4. Every straight slide points to the opposite button.": {
+      "zh-Hans": "起点从 1 移到 2、3、4。每条直线滑动都指向对面的按钮。",
+      "ko": "머리는 1에서 2, 3, 4로 이동합니다. 모든 직선 슬라이드는 맞은편 버튼을 향합니다.",
+      "ja": "始点は1、2、3、4へ移ります。直線スライドはすべて対角のボタンへ向かいます。"
+    },
+    "Two or more slide paths move at once.": {
+      "zh-Hans": "两条或更多滑动路径同时移动。",
+      "ko": "두 개 이상의 슬라이드 경로가 동시에 이동합니다.",
+      "ja": "2本以上のスライドが同時に動きます。"
+    },
+    "The solid movement intervals overlap. Waiting paths do not count as moving.": {
+      "zh-Hans": "实线移动区间重叠。等待中的路径不计为移动。",
+      "ko": "실선 이동 구간이 겹칩니다. 대기 중인 경로는 이동으로 세지 않습니다.",
+      "ja": "実線の移動区間が重なります。待機中の軌跡は移動に数えません。"
+    },
+    "Repeat inputs between the main beats.": {
+      "zh-Hans": "在主拍之间重复输入。",
+      "ko": "정박 사이에서 입력을 반복합니다.",
+      "ja": "拍と拍の間で入力を繰り返します。"
+    },
+    "These notes land halfway between the numbered beat lines.": {
+      "zh-Hans": "这些音符位于编号拍线的正中间。",
+      "ko": "이 노트는 번호가 표시된 박자선의 중간에 놓입니다.",
+      "ja": "番号付きの拍線の中間にノーツが来ます。"
+    },
+    "Shift the start of each EACH-linked sweep by one button.": {
+      "zh-Hans": "每段由 EACH 相连的扫动，其起点移动一个按钮。",
+      "ko": "EACH로 연결된 쓸기의 시작을 매번 버튼 하나씩 옮깁니다.",
+      "ja": "EACHでつながるなぞりの始点を、1ボタンずつずらします。"
+    },
+    "Follow 2, 3, 4, 5, then 3, 4, 5, 6. The shared chord links the first ending to the next start.": {
+      "zh-Hans": "依次按 2、3、4、5，再按 3、4、5、6。共同的同时押连接前段终点与后段起点。",
+      "ko": "2, 3, 4, 5 다음 3, 4, 5, 6을 따라갑니다. 동시 입력이 앞 구간의 끝과 다음 구간의 시작을 연결합니다.",
+      "ja": "2、3、4、5、次に3、4、5、6と進みます。同時押しが前の終点と次の始点をつなぎます。"
+    },
+    "Progress around much of the outer button ring.": {
+      "zh-Hans": "沿外圈按钮的大部分区域连续前进。",
+      "ko": "외곽 버튼 링의 대부분을 따라 진행합니다.",
+      "ja": "外周ボタンの広い範囲を順に進みます。"
+    },
+    "The sequence visits all eight buttons in ring order.": {
+      "zh-Hans": "序列按圆周顺序经过全部八个按钮。",
+      "ko": "원 순서대로 여덟 버튼을 모두 지나갑니다.",
+      "ja": "外周の順番に8つのボタンをすべて通ります。"
+    },
+    "Launch successive slides from the same button.": {
+      "zh-Hans": "从同一个按钮连续启动滑动。",
+      "ko": "같은 버튼에서 슬라이드를 연속으로 시작합니다.",
+      "ja": "同じボタンからスライドを続けて始めます。"
+    },
+    "Each star is a separate input at button 1, followed by its own slide movement.": {
+      "zh-Hans": "每个星星都是按钮 1 上的独立输入，随后各自开始滑动。",
+      "ko": "각 별은 버튼 1의 별도 입력이며, 뒤이어 각자의 슬라이드가 이동합니다.",
+      "ja": "各星はボタン1での別々の入力で、その後にそれぞれのスライドが動きます。"
+    },
+    "Trace a route and then its reverse.": {
+      "zh-Hans": "沿一条路径滑动，再反向滑回。",
+      "ko": "경로를 따라간 뒤 반대 방향으로 되돌아옵니다.",
+      "ja": "軌跡をなぞった後、逆向きになぞります。"
+    },
+    "The second slide starts where the first ends and returns along the same line.": {
+      "zh-Hans": "第二条滑动从第一条的终点开始，沿同一路径返回。",
+      "ko": "두 번째 슬라이드는 첫 번째의 끝에서 시작해 같은 선을 따라 돌아옵니다.",
+      "ja": "2本目は1本目の終点から始まり、同じ線を戻ります。"
+    },
+    "One star starts multiple slide branches.": {
+      "zh-Hans": "一个星星启动多条滑动分支。",
+      "ko": "별 하나에서 여러 슬라이드 경로가 시작됩니다.",
+      "ja": "1つの星から複数のスライドが分岐します。"
+    },
+    "Both paths share the same star input at button 1. The head is pressed once.": {
+      "zh-Hans": "两条路径共用按钮 1 上的星星输入。起点只按一次。",
+      "ko": "두 경로는 버튼 1의 별 입력 하나를 공유합니다. 머리는 한 번만 누릅니다.",
+      "ja": "2本ともボタン1の同じ星を共有します。始点は1回だけ押します。"
+    },
+    "Tap the same position repeatedly.": {
+      "zh-Hans": "重复点击同一位置。",
+      "ko": "같은 위치를 반복해서 누릅니다.",
+      "ja": "同じ位置を繰り返しタップします。"
+    },
+    "Each circle is a new input, even though it returns to the same place.": {
+      "zh-Hans": "虽然都在同一位置，每个圆点仍是一次新的输入。",
+      "ko": "같은 위치여도 각 원은 새로운 입력입니다.",
+      "ja": "同じ場所でも、それぞれの円が新しい入力です。"
+    },
+    "Follow a stream that jumps among several buttons.": {
+      "zh-Hans": "跟随在多个按钮间跳跃的连续输入。",
+      "ko": "여러 버튼 사이를 뛰어다니는 입력 흐름을 따라갑니다.",
+      "ja": "複数のボタン間を飛び移る入力を追います。"
+    },
+    "Read each new position rather than assuming the next neighboring button.": {
+      "zh-Hans": "逐个读取新的位置，不要默认下一个是相邻按钮。",
+      "ko": "다음이 옆 버튼이라고 가정하지 말고 각 위치를 읽으세요.",
+      "ja": "次が隣のボタンとは限らないので、各位置を読み取ります。"
+    },
+    "Play two or more inputs together.": {
+      "zh-Hans": "同时操作两个或更多输入。",
+      "ko": "두 개 이상의 입력을 함께 처리합니다.",
+      "ja": "2つ以上の入力を同時に処理します。"
+    },
+    "Notes aligned vertically share one authored time.": {
+      "zh-Hans": "垂直对齐的音符处于示例中同一时刻。",
+      "ko": "세로로 정렬된 노트는 예시에서 같은 시각입니다.",
+      "ja": "縦にそろったノーツは、例の中で同じ時刻にあります。"
+    },
+    "Tap while another slide is moving.": {
+      "zh-Hans": "另一条滑动移动时进行单点输入。",
+      "ko": "다른 슬라이드가 이동하는 동안 탭합니다.",
+      "ja": "別のスライドが動く間にタップします。"
+    },
+    "The independent tap lands inside the slide's solid movement interval.": {
+      "zh-Hans": "独立单点落在滑动的实线移动区间内。",
+      "ko": "독립적인 탭이 슬라이드의 실선 이동 구간 안에 옵니다.",
+      "ja": "独立したタップがスライドの実線移動区間内に来ます。"
+    },
+    "Repeat slide pairs with an arc on one side and a loop on the other.": {
+      "zh-Hans": "重复一侧弧线、另一侧环形的滑动对。",
+      "ko": "한쪽은 원호, 다른 쪽은 루프인 슬라이드 쌍을 반복합니다.",
+      "ja": "片側が弧、もう片側がループのスライドペアを繰り返します。"
+    },
+    "Each pair has one arc and one p/q loop, with the shape roles staying on their respective heads.": {
+      "zh-Hans": "每对包含一条弧线和一条 p/q 形环，各起点保持对应的轨迹形状。",
+      "ko": "각 쌍에는 원호 하나와 p/q 루프 하나가 있으며, 각 머리의 모양 역할이 유지됩니다.",
+      "ja": "各ペアは弧1本とp/qループ1本で、始点ごとの形は変わりません。"
+    },
+    "Start overlapping slide movements at different times.": {
+      "zh-Hans": "在不同时间启动相互重叠的滑动移动。",
+      "ko": "겹치는 슬라이드를 서로 다른 시각에 시작합니다.",
+      "ja": "重なるスライドの移動を異なる時刻に始めます。"
+    },
+    "The second solid movement line starts while the first is still moving.": {
+      "zh-Hans": "第一条仍在移动时，第二条实线移动开始。",
+      "ko": "첫 번째가 이동하는 도중 두 번째 실선 이동이 시작됩니다.",
+      "ja": "1本目が動いている途中で2本目の実線移動が始まります。"
+    },
+    "Repeat pairs of straight slides from one shared starting button.": {
+      "zh-Hans": "从同一个起始按钮重复发射成对直线滑动。",
+      "ko": "같은 시작 버튼에서 직선 슬라이드 쌍을 반복합니다.",
+      "ja": "同じ始点ボタンから直線スライドのペアを繰り返します。"
+    },
+    "Each of three separate stars branches into two straight paths.": {
+      "zh-Hans": "三个独立星星各自分出两条直线路径。",
+      "ko": "세 개의 별이 각각 두 직선 경로로 갈라집니다.",
+      "ja": "3つの別々の星が、それぞれ2本の直線に分岐します。"
+    },
+    "Step through neighboring buttons along a short arc.": {
+      "zh-Hans": "沿短弧逐个经过相邻按钮。",
+      "ko": "짧은 원호를 따라 이웃한 버튼을 차례로 누릅니다.",
+      "ja": "短い弧に沿って隣り合うボタンを順に押します。"
+    },
+    "The highlighted position moves 1 → 2 → 3 → 4, one neighboring button at a time.": {
+      "zh-Hans": "高亮位置按 1 → 2 → 3 → 4 移动，每次移到一个相邻按钮。",
+      "ko": "강조 위치가 1 → 2 → 3 → 4로, 옆 버튼 하나씩 이동합니다.",
+      "ja": "強調位置は 1 → 2 → 3 → 4 と、隣のボタンへ1つずつ移ります。"
+    },
+    "Three close inputs form one short burst.": {
+      "zh-Hans": "三个紧密输入组成一次短连打。",
+      "ko": "가까운 세 입력이 짧은 연타를 이룹니다.",
+      "ja": "間隔の短い3つの入力で連打を作ります。"
+    },
+    "Longer gaps separate each group of three from the next group.": {
+      "zh-Hans": "每组三次输入与下一组之间的间隔更长。",
+      "ko": "세 입력 묶음 사이에는 더 긴 간격이 있습니다.",
+      "ja": "3入力の組と次の組の間は、より長い間隔で区切られます。"
+    },
+    "Continue a touch sweep around a complete ring.": {
+      "zh-Hans": "沿完整一圈持续扫过触摸区。",
+      "ko": "터치를 한 바퀴 돌며 계속 쓸어갑니다.",
+      "ja": "タッチのなぞりを1周続けます。"
+    },
+    "The example visits all eight B zones in order.": {
+      "zh-Hans": "示例按顺序经过全部八个 B 区域。",
+      "ko": "예시는 여덟 B 구역을 순서대로 모두 지나갑니다.",
+      "ja": "例では8つのBエリアを順番にすべて通ります。"
+    },
+    "Read a succession of touches at different screen zones.": {
+      "zh-Hans": "读取不同屏幕区域中的连续触摸输入。",
+      "ko": "화면의 다른 구역에 연속으로 오는 터치를 읽습니다.",
+      "ja": "画面の異なるエリアに続けて来るタッチを読み取ります。"
+    },
+    "All six inputs are touches. Their positions change without an intervening button input.": {
+      "zh-Hans": "六次输入都是触摸，位置变化之间没有按钮输入。",
+      "ko": "여섯 입력 모두 터치입니다. 중간에 버튼 입력 없이 위치가 바뀝니다.",
+      "ja": "6つともタッチです。途中にボタン入力を挟まず位置が変わります。"
+    },
+    "Move through neighboring touch zones along a short arc.": {
+      "zh-Hans": "沿短弧经过相邻触摸区域。",
+      "ko": "짧은 원호를 따라 이웃한 터치 구역으로 이동합니다.",
+      "ja": "短い弧に沿って隣り合うタッチエリアへ進みます。"
+    },
+    "B7, B8, B1 and B2 stay on the same ring and continue through its wraparound.": {
+      "zh-Hans": "B7、B8、B1、B2 位于同一圈，并跨越编号边界连续前进。",
+      "ko": "B7, B8, B1, B2는 같은 링 위에서 번호 경계를 넘어 이어집니다.",
+      "ja": "B7、B8、B1、B2は同じ輪の上で、番号の境目を越えて続きます。"
+    },
+    "Alternate inner touch inputs with button taps.": {
+      "zh-Hans": "交替操作内侧触摸与外圈按钮单点。",
+      "ko": "안쪽 터치와 버튼 탭을 번갈아 입력합니다.",
+      "ja": "内側のタッチとボタンタップを交互に入力します。"
+    },
+    "Square marks are touches in the inner screen area; circles are perimeter-button taps.": {
+      "zh-Hans": "方形标记是屏幕内侧触摸，圆形是外圈按钮单点。",
+      "ko": "사각형은 화면 안쪽 터치이고, 원은 외곽 버튼 탭입니다.",
+      "ja": "四角は画面内側のタッチ、円は外周ボタンのタップです。"
+    },
+    "Divide each beat into three equal parts.": {
+      "zh-Hans": "将每拍均分为三份。",
+      "ko": "한 박을 같은 길이의 세 부분으로 나눕니다.",
+      "ja": "1拍を等しく3つに分けます。"
+    },
+    "Three evenly spaced inputs fit between each pair of whole-beat guide lines.": {
+      "zh-Hans": "每两条整拍参考线之间放置三个等间隔输入。",
+      "ko": "정박 안내선 사이마다 같은 간격의 입력 세 개가 들어갑니다.",
+      "ja": "隣り合う拍のガイド線の間に、等間隔の3入力が入ります。"
+    },
+    "Alternate between two positions: A, B, A, B.": {
+      "zh-Hans": "在两个位置交替输入：A、B、A、B。",
+      "ko": "두 위치를 번갈아 입력합니다: A, B, A, B.",
+      "ja": "2つの位置を A、B、A、B と交互に押します。"
+    },
+    "Follow the evenly spaced notes. Every next note changes to the other position.": {
+      "zh-Hans": "跟随等间隔音符。每个后续音符都切换到另一个位置。",
+      "ko": "일정한 간격의 노트를 따라갑니다. 다음 노트마다 반대 위치로 바뀝니다.",
+      "ja": "等間隔のノーツを追います。次のノーツごとにもう一方の位置へ移ります。"
+    },
+    "Repeat a star-and-tap pair, an intervening tap, then launch the previous slide at the next pair.": {
+      "zh-Hans": "重复星星与单点同时押、中间单点，再在下一对到来时启动上一条滑动。",
+      "ko": "별과 탭 쌍, 사이의 탭을 반복하고 다음 쌍에서 이전 슬라이드를 시작합니다.",
+      "ja": "星とタップのペア、間のタップを繰り返し、次のペアで前のスライドを始めます。"
+    },
+    "Step through pair → intervening tap → next pair plus previous launch. The star role alternates between the two starting positions.": {
+      "zh-Hans": "依次处理：同时押 → 中间单点 → 下一组同时押并启动上一条滑动。星星在两个起点之间交替。",
+      "ko": "쌍 → 사이의 탭 → 다음 쌍과 이전 슬라이드 시작 순으로 진행합니다. 별은 두 시작 위치 사이를 번갈아 이동합니다.",
+      "ja": "ペア → 間のタップ → 次のペアと前のスライド始動、の順に進みます。星は2つの始点を交互に移ります。"
+    },
+    "Change the delay from star input to slide movement.": {
+      "zh-Hans": "改变星星输入到滑动移动之间的延迟。",
+      "ko": "별 입력부터 슬라이드 이동까지의 지연을 바꿉니다.",
+      "ja": "星の入力からスライド移動までの待ち時間を変えます。"
+    },
+    "Compare the dashed waits: the first lasts one beat and the second lasts half a beat.": {
+      "zh-Hans": "比较虚线等待：第一次一拍，第二次半拍。",
+      "ko": "점선 대기를 비교하세요. 첫 번째는 한 박, 두 번째는 반 박입니다.",
+      "ja": "破線の待機を比べます。1つ目は1拍、2つ目は半拍です。"
+    },
+    "More inputs arrive toward the end.": {
+      "zh-Hans": "更多输入集中在后段。",
+      "ko": "후반부에 더 많은 입력이 옵니다.",
+      "ja": "終盤により多くの入力が来ます。"
+    },
+    "Compare equal-length early and late sections on the same scale.": {
+      "zh-Hans": "使用同一刻度比较时长相等的前段与后段。",
+      "ko": "같은 눈금으로 길이가 같은 초반과 후반 구간을 비교하세요.",
+      "ja": "同じスケールで、同じ長さの序盤と終盤を比べます。"
+    },
+    "Break inputs cluster in particular sections.": {
+      "zh-Hans": "BREAK 输入集中在特定段落。",
+      "ko": "BREAK 입력이 특정 구간에 모입니다.",
+      "ja": "BREAK 入力が特定の区間に集中します。"
+    },
+    "The outlined break counts cluster in the middle; total input activity stays unchanged.": {
+      "zh-Hans": "带边框的 BREAK 数量集中在中段；总输入活跃度保持不变。",
+      "ko": "테두리로 표시한 BREAK 수가 중간에 모이며, 전체 입력량은 일정합니다.",
+      "ja": "枠付きの BREAK 数は中盤に集中しますが、総入力数は一定です。"
+    },
+    "Short busy bursts interrupt quieter stretches.": {
+      "zh-Hans": "较平静的段落中夹有短暂的密集输入。",
+      "ko": "입력이 적은 구간 사이에 짧은 고밀도 구간이 끼어 있습니다.",
+      "ja": "入力の少ない区間の間に、短い高密度区間が入ります。"
+    },
+    "The isolated busy sections rise sharply above the chart's usual activity.": {
+      "zh-Hans": "孤立的密集段落明显高于谱面通常的输入水平。",
+      "ko": "독립된 고밀도 구간의 입력량이 채보의 일반적인 수준을 크게 웃돕니다.",
+      "ja": "独立した高密度区間が、通常の入力水準を大きく上回ります。"
+    },
+    "More inputs arrive toward the beginning.": {
+      "zh-Hans": "更多输入集中在前段。",
+      "ko": "초반부에 더 많은 입력이 옵니다.",
+      "ja": "序盤により多くの入力が来ます。"
+    },
+    "The early sections contain more new inputs per second than the later sections.": {
+      "zh-Hans": "前段每秒的新输入多于后段。",
+      "ko": "초반 구간은 후반보다 초당 새 입력이 많습니다.",
+      "ja": "序盤の毎秒の新規入力数が終盤より多くなっています。"
+    },
+    "Many new inputs arrive in a short time.": {
+      "zh-Hans": "短时间内出现大量新输入。",
+      "ko": "짧은 시간에 많은 새 입력이 옵니다.",
+      "ja": "短時間に多くの新しい入力が来ます。"
+    },
+    "This example has 12 inputs per second, compared with 3 in the contrast. The vertical axes use the same scale.": {
+      "zh-Hans": "本示例每秒 12 次输入，对照示例为 3 次。纵轴使用相同刻度。",
+      "ko": "이 예시는 초당 입력 12회, 비교 예시는 3회입니다. 세로축은 같은 눈금을 사용합니다.",
+      "ja": "この例は毎秒12入力、比較例は3入力です。縦軸は同じスケールです。"
+    },
+    "One separated busy peak stands out.": {
+      "zh-Hans": "一个孤立的密集峰值格外突出。",
+      "ko": "다른 구간과 떨어진 하나의 밀도 피크가 두드러집니다.",
+      "ja": "孤立した1つの高密度ピークが目立ちます。"
+    },
+    "One section rises clearly above the quieter sections on both sides.": {
+      "zh-Hans": "某一段明显高于两侧较平静的段落。",
+      "ko": "한 구간이 양옆의 한산한 구간보다 뚜렷이 높아집니다.",
+      "ja": "1つの区間が、前後の入力の少ない区間を明確に上回ります。"
+    },
+    "A chosen pattern has little competing activity around it.": {
+      "zh-Hans": "所选配置附近几乎没有其他同时进行的操作。",
+      "ko": "선택한 패턴 주변에 함께 처리할 다른 입력이 거의 없습니다.",
+      "ja": "選んだ配置の周囲に、同時処理する別の動きがほとんどありません。"
+    },
+    "The highlighted A/B alternation sits by itself. Compare the extra simultaneous inputs in the other example.": {
+      "zh-Hans": "高亮的 A/B 交互独立出现。请与另一示例中的额外同时输入比较。",
+      "ko": "강조된 A/B 교대가 단독으로 있습니다. 다른 예시의 추가 동시 입력과 비교하세요.",
+      "ja": "強調されたA/B交互は単独です。もう一方の例にある追加の同時入力と比べてください。"
+    },
+    "Few new notes arrive, though ongoing actions may remain.": {
+      "zh-Hans": "新音符较少，但可能仍有持续操作。",
+      "ko": "새 노트는 적지만 진행 중인 동작은 남아 있을 수 있습니다.",
+      "ja": "新しいノーツは少なくても、継続中の操作がある場合があります。"
+    },
+    "The input rate drops in the middle. The labeled interval shows a slide still moving through that gap.": {
+      "zh-Hans": "中段输入速率下降。标记区间显示滑动仍在这一空隙中移动。",
+      "ko": "중간에 입력 빈도가 낮아집니다. 표시된 구간에는 그 틈에서도 움직이는 슬라이드가 있습니다.",
+      "ja": "中盤で入力頻度が下がります。ラベル付き区間では、その間もスライドが動いています。"
+    },
+    "Several separated busy peaks recur.": {
+      "zh-Hans": "多个相互分离的密集峰值反复出现。",
+      "ko": "서로 떨어진 여러 구간에서 밀도 피크가 나타납니다.",
+      "ja": "離れた高密度ピークが複数回現れます。"
+    },
+    "Quieter sections separate the prominent peaks.": {
+      "zh-Hans": "突出的峰值之间由较平静的段落分隔。",
+      "ko": "뚜렷한 최고점 사이에 한산한 구간이 있습니다.",
+      "ja": "目立つピークの間に、入力の少ない区間があります。"
+    },
+    "A recognizable phrase appears again.": {
+      "zh-Hans": "可辨识的乐句配置再次出现。",
+      "ko": "알아볼 수 있는 구절이 다시 나타납니다.",
+      "ja": "見分けられるフレーズが再び現れます。"
+    },
+    "Each labeled phrase repeats the same A, B, B, A input order and timing.": {
+      "zh-Hans": "每个标记乐句都重复同样的 A、B、B、A 输入顺序和节奏。",
+      "ko": "각 표시 구절은 같은 A, B, B, A 입력 순서와 타이밍을 반복합니다.",
+      "ja": "各ラベルのフレーズで、同じ A、B、B、A の入力順とタイミングを繰り返します。"
+    },
+    "The spacing between successive inputs changes.": {
+      "zh-Hans": "连续输入之间的间隔发生变化。",
+      "ko": "연속 입력 사이의 간격이 바뀝니다.",
+      "ja": "連続する入力の間隔が変わります。"
+    },
+    "Read the changing gaps along the beat grid, rather than just the total count.": {
+      "zh-Hans": "沿拍线读取变化的间隔，不要只看总数量。",
+      "ko": "전체 개수뿐 아니라 박자 격자에서 바뀌는 간격을 읽으세요.",
+      "ja": "総数だけでなく、拍の格子に沿って変化する間隔を読み取ります。"
+    },
+    "Slide movement fills much of the timeline.": {
+      "zh-Hans": "滑动移动占据大部分时间。",
+      "ko": "슬라이드 이동이 시간축의 많은 부분을 차지합니다.",
+      "ja": "時間軸の大部分でスライドが動きます。"
+    },
+    "The labeled movement intervals cover ten of these twelve seconds. Overlap is counted once.": {
+      "zh-Hans": "标记的移动区间覆盖这十二秒中的十秒。重叠部分只计算一次。",
+      "ko": "표시된 이동 구간은 12초 중 10초를 차지합니다. 겹치는 부분은 한 번만 셉니다.",
+      "ja": "ラベル付きの移動区間は12秒中10秒を占めます。重なりは1回だけ数えます。"
+    },
+    "New inputs arrive at a fairly even rate.": {
+      "zh-Hans": "新输入以较均匀的速率出现。",
+      "ko": "새 입력이 비교적 일정한 속도로 옵니다.",
+      "ja": "新しい入力がほぼ一定の頻度で来ます。"
+    },
+    "Each one-second section has the same number of inputs.": {
+      "zh-Hans": "每个一秒区间的输入数量相同。",
+      "ko": "각 1초 구간의 입력 수가 같습니다.",
+      "ja": "各1秒区間の入力数は同じです。"
+    },
+    "A busy rate continues across a long stretch.": {
+      "zh-Hans": "密集输入速率持续较长时间。",
+      "ko": "높은 입력 빈도가 긴 구간에 걸쳐 지속됩니다.",
+      "ja": "高い入力頻度が長い区間続きます。"
+    },
+    "Six consecutive sections stay at 10 inputs per second. Compare this run with the isolated peak.": {
+      "zh-Hans": "连续六段保持每秒 10 次输入。请与孤立峰值比较。",
+      "ko": "연속 여섯 구간이 초당 입력 10회를 유지합니다. 단독 최고점과 비교하세요.",
+      "ja": "6区間連続で毎秒10入力を維持します。孤立したピークと比べてください。"
+    }
+  }
+}

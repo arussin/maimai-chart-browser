@@ -1,0 +1,454 @@
+{
+  "messages": {
+    "Forget remembered player data": {
+      "zh-Hans": "删除已记住的玩家数据",
+      "ko": "기기에 저장된 플레이어 데이터 삭제",
+      "ja": "保存したプレイヤーデータを削除"
+    },
+    "Hide player data": {
+      "zh-Hans": "隐藏玩家数据",
+      "ko": "플레이어 데이터 숨기기",
+      "ja": "プレイヤーデータを非表示"
+    },
+    "Show player data": {
+      "zh-Hans": "显示玩家数据",
+      "ko": "플레이어 데이터 표시",
+      "ja": "プレイヤーデータを表示"
+    },
+    "Import player data": {
+      "zh-Hans": "导入玩家数据",
+      "ko": "플레이어 데이터 가져오기",
+      "ja": "プレイヤーデータを読み込む"
+    },
+    "About player files — Session Report guide": {
+      "zh-Hans": "关于玩家文件 — Session Report 指南",
+      "ko": "플레이어 파일 안내 — Session Report 가이드",
+      "ja": "プレイヤーファイルについて — Session Report ガイド"
+    },
+    "Bring scores and retained history from Session Report into this browser. Read the player-file guide.": {
+      "zh-Hans": "将 Session Report 中的成绩及保留记录导入此浏览器。请阅读玩家文件指南。",
+      "ko": "Session Report의 점수와 저장된 기록을 이 브라우저로 가져옵니다. 플레이어 파일 가이드를 읽어보세요.",
+      "ja": "Session Report のスコアと保存履歴をこのブラウザに読み込めます。プレイヤーファイルのガイドをご覧ください。"
+    },
+    "Device storage is unavailable.": {
+      "zh-Hans": "设备存储不可用。",
+      "ko": "기기 저장소를 사용할 수 없습니다.",
+      "ja": "端末の保存領域を利用できません。"
+    },
+    "Close other maimai.party tabs to update device storage.": {
+      "zh-Hans": "请关闭其他 maimai.party 标签页后更新设备存储。",
+      "ko": "기기 저장소를 업데이트하려면 다른 maimai.party 탭을 닫으세요.",
+      "ja": "端末の保存領域を更新するには、他の maimai.party タブを閉じてください。"
+    },
+    "Player data changed in another tab. Reload before importing again.": {
+      "zh-Hans": "玩家数据已在另一标签页中更改。请刷新后重新导入。",
+      "ko": "다른 탭에서 플레이어 데이터가 변경되었습니다. 새로고침 후 다시 가져오세요.",
+      "ja": "別のタブでプレイヤーデータが変更されました。再読み込みしてからインポートしてください。"
+    },
+    "Device storage could not be updated. Nothing was replaced.": {
+      "zh-Hans": "无法更新设备存储。未替换任何数据。",
+      "ko": "기기 저장소를 업데이트하지 못했습니다. 기존 데이터는 변경되지 않았습니다.",
+      "ja": "端末の保存領域を更新できませんでした。既存データは変更されていません。"
+    },
+    "This tab’s temporary storage is full or unavailable. Nothing was replaced. You can choose “Remember on this device” to use device storage.": {
+      "zh-Hans": "本标签页的临时存储已满或不可用。未替换任何数据。您可以选择“在此设备上记住”来使用设备存储。",
+      "ko": "이 탭의 임시 저장소가 가득 찼거나 사용할 수 없습니다. 기존 데이터는 변경되지 않았습니다. “이 기기에 저장”을 선택하면 기기 저장소를 사용할 수 있습니다.",
+      "ja": "このタブの一時保存領域が一杯か利用できません。既存データは変更されていません。「この端末に保存」を選ぶと端末の保存領域を使えます。"
+    },
+    "Date unknown": {
+      "zh-Hans": "日期未知",
+      "ko": "날짜 알 수 없음",
+      "ja": "日付不明"
+    },
+    "Reconstructed rating": {
+      "zh-Hans": "重建的 Rating",
+      "ko": "재구성한 레이팅",
+      "ja": "再構成したレーティング"
+    },
+    "Complete PB snapshot": {
+      "zh-Hans": "完整个人最佳成绩快照",
+      "ko": "완전한 개인 최고 기록 스냅샷",
+      "ja": "全自己ベストのスナップショット"
+    },
+    "Partial PB collection": {
+      "zh-Hans": "部分个人最佳成绩集合",
+      "ko": "일부 개인 최고 기록 모음",
+      "ja": "一部の自己ベスト"
+    },
+    "Remembered on this device": {
+      "zh-Hans": "已在此设备上记住",
+      "ko": "이 기기에 저장됨",
+      "ja": "この端末に保存済み"
+    },
+    "This tab only": {
+      "zh-Hans": "仅此标签页",
+      "ko": "이 탭에서만",
+      "ja": "このタブのみ"
+    },
+    "Import this profile?": {
+      "zh-Hans": "导入此玩家资料？",
+      "ko": "이 프로필을 가져올까요?",
+      "ja": "このプロフィールを読み込みますか？"
+    },
+    "The hosted update was unavailable. This is the snapshot saved in the report.": {
+      "zh-Hans": "无法获取托管更新。这是报告中保存的快照。",
+      "ko": "호스팅된 업데이트를 가져올 수 없어 리포트에 저장된 스냅샷을 표시합니다.",
+      "ja": "公開された更新を取得できませんでした。レポートに保存されたスナップショットです。"
+    },
+    "This switches the active player. Different players’ records will not be combined.": {
+      "zh-Hans": "这将切换当前玩家。不同玩家的记录不会合并。",
+      "ko": "활성 플레이어를 전환합니다. 다른 플레이어의 기록은 합치지 않습니다.",
+      "ja": "使用するプレイヤーが切り替わります。別のプレイヤーの記録は統合しません。"
+    },
+    "Your newer results will be kept. This adds any missing retained history.": {
+      "zh-Hans": "将保留您较新的成绩，并补充缺失的已保留历史记录。",
+      "ko": "더 최신인 결과는 유지하며, 누락된 저장 기록을 추가합니다.",
+      "ja": "新しい結果は保持し、不足している保存履歴を追加します。"
+    },
+    "Remember on this device": {
+      "zh-Hans": "在此设备上记住",
+      "ko": "이 기기에 저장",
+      "ja": "この端末に保存"
+    },
+    "Stored only in your browser.": {
+      "zh-Hans": "仅保存在您的浏览器中。",
+      "ko": "브라우저에만 저장됩니다.",
+      "ja": "ブラウザ内にのみ保存します。"
+    },
+    "Import data": {
+      "zh-Hans": "导入数据",
+      "ko": "데이터 가져오기",
+      "ja": "データを読み込む"
+    },
+    "Player data forgotten": {
+      "zh-Hans": "已删除记住的玩家数据",
+      "ko": "저장된 플레이어 데이터 삭제됨",
+      "ja": "保存したプレイヤーデータを削除しました"
+    },
+    "Your saved profile has been removed from this device. You can keep using it in this tab.": {
+      "zh-Hans": "已从此设备中删除保存的玩家资料。您仍可在本标签页中继续使用。",
+      "ko": "이 기기에서 저장된 프로필을 삭제했습니다. 이 탭에서는 계속 사용할 수 있습니다.",
+      "ja": "この端末から保存済みプロフィールを削除しました。このタブでは引き続き使えます。"
+    },
+    "Could not forget data": {
+      "zh-Hans": "无法删除已记住的数据",
+      "ko": "저장된 데이터를 삭제하지 못함",
+      "ja": "保存データを削除できませんでした"
+    },
+    "Saved data could not be loaded. You can still import a player file for this tab.": {
+      "zh-Hans": "无法加载保存的数据。您仍可为此标签页导入玩家文件。",
+      "ko": "저장된 데이터를 불러오지 못했습니다. 이 탭에서 플레이어 파일을 가져올 수 있습니다.",
+      "ja": "保存データを読み込めませんでした。このタブにプレイヤーファイルを読み込むことはできます。"
+    },
+    "Player file exceeds 32 MiB.": {
+      "zh-Hans": "玩家文件超过 32 MiB。",
+      "ko": "플레이어 파일이 32 MiB를 초과합니다.",
+      "ja": "プレイヤーファイルが 32 MiB を超えています。"
+    },
+    "Player data could not be imported": {
+      "zh-Hans": "无法导入玩家数据",
+      "ko": "플레이어 데이터를 가져오지 못함",
+      "ja": "プレイヤーデータを読み込めませんでした"
+    },
+    "Another import is in progress. Please try again.": {
+      "zh-Hans": "正在进行其他导入，请重试。",
+      "ko": "다른 가져오기가 진행 중입니다. 다시 시도하세요.",
+      "ja": "別の読み込みが進行中です。もう一度お試しください。"
+    },
+    "The transfer was interrupted. Download the player file from the report and import it here.": {
+      "zh-Hans": "传输已中断。请从报告中下载玩家文件并在此导入。",
+      "ko": "전송이 중단되었습니다. 리포트에서 플레이어 파일을 다운로드하여 여기서 가져오세요.",
+      "ja": "転送が中断されました。レポートからプレイヤーファイルをダウンロードして、ここで読み込んでください。"
+    },
+    "The latest data could not be transferred. Please try again.": {
+      "zh-Hans": "无法传输最新数据，请重试。",
+      "ko": "최신 데이터를 전송하지 못했습니다. 다시 시도하세요.",
+      "ja": "最新データを転送できませんでした。もう一度お試しください。"
+    },
+    "The report sent a different dataset from the one offered.": {
+      "zh-Hans": "报告发送的数据集与所提示的不一致。",
+      "ko": "리포트에서 안내된 것과 다른 데이터셋을 보냈습니다.",
+      "ja": "レポートから提示と異なるデータが送られました。"
+    },
+    "Grade unknown": {
+      "zh-Hans": "评级未知",
+      "ko": "등급 알 수 없음",
+      "ja": "ランク不明"
+    },
+    "You": {
+      "zh-Hans": "您",
+      "ko": "내 기록",
+      "ja": "あなた"
+    },
+    "No recorded PB": {
+      "zh-Hans": "没有个人最佳成绩记录",
+      "ko": "저장된 개인 최고 기록 없음",
+      "ja": "自己ベストの記録なし"
+    },
+    "Personal chart match unavailable": {
+      "zh-Hans": "无法对应个人谱面",
+      "ko": "개인 기록의 채보 대응 없음",
+      "ja": "個人記録の譜面対応なし"
+    },
+    "Achievement unknown": {
+      "zh-Hans": "达成率未知",
+      "ko": "달성률 알 수 없음",
+      "ja": "達成率不明"
+    },
+    "Rating unknown": {
+      "zh-Hans": "Rating 未知",
+      "ko": "레이팅 알 수 없음",
+      "ja": "レーティング不明"
+    },
+    "Chart rating": {
+      "zh-Hans": "谱面 Rating",
+      "ko": "채보 레이팅",
+      "ja": "譜面レーティング"
+    },
+    "Your data": {
+      "zh-Hans": "您的数据",
+      "ko": "내 데이터",
+      "ja": "あなたのデータ"
+    },
+    "Recorded plays": {
+      "zh-Hans": "游玩记录",
+      "ko": "플레이 기록",
+      "ja": "プレイ履歴"
+    },
+    "No recorded plays for this chart. Your saved PB is shown above.": {
+      "zh-Hans": "此谱面没有游玩记录。已保存的个人最佳成绩显示在上方。",
+      "ko": "이 채보의 플레이 기록이 없습니다. 저장된 개인 최고 기록은 위에 표시됩니다.",
+      "ja": "この譜面のプレイ履歴はありません。保存した自己ベストを上に表示しています。"
+    },
+    "Achievement progress across retained plays": {
+      "zh-Hans": "保留游玩记录中的达成率变化",
+      "ko": "저장된 플레이의 달성률 변화",
+      "ja": "保存されたプレイの達成率推移"
+    },
+    "Achievement": {
+      "zh-Hans": "达成率",
+      "ko": "달성률",
+      "ja": "達成率"
+    },
+    "Grade": {
+      "zh-Hans": "评级",
+      "ko": "등급",
+      "ja": "ランク"
+    },
+    "Badges": {
+      "zh-Hans": "徽章",
+      "ko": "배지",
+      "ja": "バッジ"
+    },
+    "Played on": {
+      "zh-Hans": "游玩日期",
+      "ko": "플레이 날짜",
+      "ja": "プレイ日時"
+    },
+    "Saved on": {
+      "zh-Hans": "保存日期",
+      "ko": "저장 날짜",
+      "ja": "保存日時"
+    },
+    "Saved PB changes": {
+      "zh-Hans": "已保存的个人最佳成绩变化",
+      "ko": "저장된 개인 최고 기록 변화",
+      "ja": "保存した自己ベストの変化"
+    },
+    "These dates show when a PB was saved, not when you played. Unchanged scores are grouped.": {
+      "zh-Hans": "这些日期表示个人最佳成绩的保存时间，并非游玩时间。未变化的成绩会合并显示。",
+      "ko": "날짜는 플레이 시간이 아닌 개인 최고 기록의 저장 시간입니다. 같은 점수는 하나로 묶습니다.",
+      "ja": "日付はプレイ日時ではなく、自己ベストの保存日時です。同じスコアはまとめて表示します。"
+    },
+    "Your results": {
+      "zh-Hans": "您的成绩",
+      "ko": "내 결과",
+      "ja": "あなたの結果"
+    },
+    "Personal chart scope": {
+      "zh-Hans": "个人谱面范围",
+      "ko": "개인 채보 범위",
+      "ja": "個人記録の譜面範囲"
+    },
+    "My PBs": {
+      "zh-Hans": "我的个人最佳成绩",
+      "ko": "내 개인 최고 기록",
+      "ja": "自己ベストあり"
+    },
+    "No PB yet": {
+      "zh-Hans": "尚无个人最佳成绩",
+      "ko": "아직 개인 최고 기록 없음",
+      "ja": "自己ベストなし"
+    },
+    "Sort personal results": {
+      "zh-Hans": "排序个人成绩",
+      "ko": "개인 결과 정렬",
+      "ja": "個人結果を並べ替え"
+    },
+    "Sort by": {
+      "zh-Hans": "排序依据",
+      "ko": "정렬 기준",
+      "ja": "並べ替え"
+    },
+    "Your RT": {
+      "zh-Hans": "您的 RT",
+      "ko": "내 RT",
+      "ja": "あなたの RT"
+    },
+    "Your achievement": {
+      "zh-Hans": "您的达成率",
+      "ko": "내 달성률",
+      "ja": "あなたの達成率"
+    },
+    "Your grade": {
+      "zh-Hans": "您的评级",
+      "ko": "내 등급",
+      "ja": "あなたのランク"
+    },
+    "Last recorded play": {
+      "zh-Hans": "最近一次游玩记录",
+      "ko": "최근 저장된 플레이",
+      "ja": "最後のプレイ記録"
+    },
+    "Sort by your chart rating (RT)": {
+      "zh-Hans": "按您的谱面 Rating（RT）排序",
+      "ko": "내 채보 레이팅(RT)으로 정렬",
+      "ja": "あなたの譜面レーティング（RT）で並べ替え"
+    },
+    "Filter by grade": {
+      "zh-Hans": "按评级筛选",
+      "ko": "등급별 필터",
+      "ja": "ランクで絞り込み"
+    },
+    "Select one or more grades": {
+      "zh-Hans": "选择一个或多个评级",
+      "ko": "등급을 하나 이상 선택",
+      "ja": "ランクを1つ以上選択"
+    },
+    "Any grade": {
+      "zh-Hans": "任意评级",
+      "ko": "모든 등급",
+      "ja": "すべてのランク"
+    },
+    "Combo": {
+      "zh-Hans": "连击",
+      "ko": "콤보",
+      "ja": "コンボ"
+    },
+    "Sync": {
+      "zh-Hans": "同步",
+      "ko": "싱크",
+      "ja": "シンク"
+    },
+    "Achievement from %": {
+      "zh-Hans": "最低达成率 %",
+      "ko": "최소 달성률 %",
+      "ja": "達成率の下限 %"
+    },
+    "Achievement to %": {
+      "zh-Hans": "最高达成率 %",
+      "ko": "최대 달성률 %",
+      "ja": "達成率の上限 %"
+    },
+    "Chart rating from": {
+      "zh-Hans": "最低谱面 Rating",
+      "ko": "최소 채보 레이팅",
+      "ja": "譜面レーティングの下限"
+    },
+    "Chart rating to": {
+      "zh-Hans": "最高谱面 Rating",
+      "ko": "최대 채보 레이팅",
+      "ja": "譜面レーティングの上限"
+    },
+    "Clear personal filters": {
+      "zh-Hans": "清除个人筛选条件",
+      "ko": "개인 필터 초기화",
+      "ja": "個人記録の絞り込みを解除"
+    },
+    "Reconstructed rating {0}": {
+      "zh-Hans": "重建的 Rating {0}",
+      "ko": "재구성한 레이팅 {0}",
+      "ja": "再構成したレーティング {0}"
+    },
+    "{0} retained session": {
+      "zh-Hans": "{0} 次保留的游玩会话",
+      "ko": "저장된 세션 {0}개",
+      "ja": "保存されたセッション {0} 件"
+    },
+    "{0} retained sessions": {
+      "zh-Hans": "{0} 次保留的游玩会话",
+      "ko": "저장된 세션 {0}개",
+      "ja": "保存されたセッション {0} 件"
+    },
+    "{0} retained play": {
+      "zh-Hans": "{0} 次保留的游玩",
+      "ko": "저장된 플레이 {0}회",
+      "ja": "保存されたプレイ {0} 回"
+    },
+    "{0} retained plays": {
+      "zh-Hans": "{0} 次保留的游玩",
+      "ko": "저장된 플레이 {0}회",
+      "ja": "保存されたプレイ {0} 回"
+    },
+    "{0} retained play · Dates show when you played.": {
+      "zh-Hans": "{0} 次保留的游玩 · 日期表示游玩时间。",
+      "ko": "저장된 플레이 {0}회 · 실제 플레이 날짜입니다.",
+      "ja": "保存されたプレイ {0} 回 · 日付はプレイ日時です。"
+    },
+    "{0} retained plays · Dates show when you played.": {
+      "zh-Hans": "{0} 次保留的游玩 · 日期表示游玩时间。",
+      "ko": "저장된 플레이 {0}회 · 실제 플레이 날짜입니다.",
+      "ja": "保存されたプレイ {0} 回 · 日付はプレイ日時です。"
+    },
+    "Captured {0}": {
+      "zh-Hans": "采集于 {0}",
+      "ko": "기록 수집: {0}",
+      "ja": "取得日時：{0}"
+    },
+    "Captured {0} · Complete PB snapshot · Earlier history may be missing": {
+      "zh-Hans": "采集于 {0} · 完整个人最佳成绩快照 · 可能缺少更早记录",
+      "ko": "기록 수집: {0} · 완전한 개인 최고 기록 스냅샷 · 이전 기록이 누락될 수 있음",
+      "ja": "取得日時：{0} · 全自己ベストのスナップショット · 古い履歴は欠けている場合があります"
+    },
+    "Captured {0} · Partial PB collection · Earlier history may be missing": {
+      "zh-Hans": "采集于 {0} · 部分个人最佳成绩集合 · 可能缺少更早记录",
+      "ko": "기록 수집: {0} · 일부 개인 최고 기록 모음 · 이전 기록이 누락될 수 있음",
+      "ja": "取得日時：{0} · 一部の自己ベスト · 古い履歴は欠けている場合があります"
+    },
+    "Hidden · Remembered on this device": {
+      "zh-Hans": "已隐藏 · 已在此设备上记住",
+      "ko": "숨김 · 이 기기에 저장됨",
+      "ja": "非表示 · この端末に保存済み"
+    },
+    "Hidden · This tab only": {
+      "zh-Hans": "已隐藏 · 仅此标签页",
+      "ko": "숨김 · 이 탭에서만",
+      "ja": "非表示 · このタブのみ"
+    },
+    "Show more recorded plays": {
+      "zh-Hans": "显示更多游玩记录",
+      "ko": "플레이 기록 더 보기",
+      "ja": "プレイ履歴をさらに表示"
+    },
+    "Show more saved pb changes": {
+      "zh-Hans": "显示更多已保存的个人最佳成绩变化",
+      "ko": "저장된 개인 최고 기록 변화 더 보기",
+      "ja": "保存した自己ベストの変化をさらに表示"
+    },
+    "Show saved PB changes ({0})": {
+      "zh-Hans": "显示已保存的个人最佳成绩变化（{0}）",
+      "ko": "저장된 개인 최고 기록 변화 보기 ({0})",
+      "ja": "保存した自己ベストの変化を表示（{0}）"
+    },
+    "Hide saved PB changes ({0})": {
+      "zh-Hans": "隐藏已保存的个人最佳成绩变化（{0}）",
+      "ko": "저장된 개인 최고 기록 변화 숨기기 ({0})",
+      "ja": "保存した自己ベストの変化を非表示（{0}）"
+    },
+    "{0} active": {
+      "zh-Hans": "已启用 {0} 项",
+      "ko": "{0}개 적용 중",
+      "ja": "{0} 件適用中"
+    }
+  }
+}

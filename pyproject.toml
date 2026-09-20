@@ -10,7 +10,7 @@ description = "Offline chart analysis, prepared personal recommendations and a s
 readme = "README.md"
 requires-python = ">=3.11"
 license = "MIT"
-license-files = ["LICENSE", "THIRD_PARTY_NOTICES.md"]
+license-files = ["LICENSE", "THIRD_PARTY_NOTICES.md", "docs/LOCALIZATION_LICENSES.md", "docs/FLAG_ICONS_LICENSE.md"]
 dependencies = []
 
 [project.scripts]

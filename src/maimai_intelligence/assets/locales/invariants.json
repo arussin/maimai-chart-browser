@@ -1,0 +1,1678 @@
+{
+  "invariants": {
+    "Arcade Songs · zetaraku": {
+      "reason": "Proper name, established game identifier, or a letter in the maimai.party wordmark.",
+      "sources": [
+        "support-footer.html"
+      ]
+    },
+    "BPM": {
+      "reason": "Proper name, established game identifier, or a letter in the maimai.party wordmark.",
+      "sources": [
+        "challenge-review.html"
+      ]
+    },
+    "Chσimσε · MaiDiffPredictor": {
+      "reason": "Proper name, established game identifier, or a letter in the maimai.party wordmark.",
+      "sources": [
+        "support-footer.html"
+      ]
+    },
+    "Chσimσε · PySimaiParser": {
+      "reason": "Proper name, established game identifier, or a letter in the maimai.party wordmark.",
+      "sources": [
+        "support-footer.html"
+      ]
+    },
+    "DX": {
+      "reason": "Proper name, established game identifier, or a letter in the maimai.party wordmark.",
+      "sources": [
+        "challenge-review.html"
+      ]
+    },
+    "Deque's axe-core": {
+      "reason": "Proper name, established game identifier, or a letter in the maimai.party wordmark.",
+      "sources": [
+        "support-footer.html"
+      ]
+    },
+    "Kamaitachi": {
+      "reason": "Proper name, established game identifier, or a letter in the maimai.party wordmark.",
+      "sources": [
+        "support-footer.html"
+      ]
+    },
+    "MaiLib": {
+      "reason": "Proper name, established game identifier, or a letter in the maimai.party wordmark.",
+      "sources": [
+        "support-footer.html"
+      ]
+    },
+    "MaichartConverter": {
+      "reason": "Proper name, established game identifier, or a letter in the maimai.party wordmark.",
+      "sources": [
+        "support-footer.html"
+      ]
+    },
+    "Matsuk1 · JiETNG-maimai-dx-bot": {
+      "reason": "Proper name, established game identifier, or a letter in the maimai.party wordmark.",
+      "sources": [
+        "support-footer.html"
+      ]
+    },
+    "Minepig · MaiMuriDX": {
+      "reason": "Proper name, established game identifier, or a letter in the maimai.party wordmark.",
+      "sources": [
+        "support-footer.html"
+      ]
+    },
+    "Neskol · Maichart-Converts": {
+      "reason": "Proper name, established game identifier, or a letter in the maimai.party wordmark.",
+      "sources": [
+        "support-footer.html"
+      ]
+    },
+    "Node.js": {
+      "reason": "Proper name, established game identifier, or a letter in the maimai.party wordmark.",
+      "sources": [
+        "support-footer.html"
+      ]
+    },
+    "OTOGE DB · zvuc": {
+      "reason": "Proper name, established game identifier, or a letter in the maimai.party wordmark.",
+      "sources": [
+        "support-footer.html"
+      ]
+    },
+    "Pillow": {
+      "reason": "Proper name, established game identifier, or a letter in the maimai.party wordmark.",
+      "sources": [
+        "support-footer.html"
+      ]
+    },
+    "Playwright": {
+      "reason": "Proper name, established game identifier, or a letter in the maimai.party wordmark.",
+      "sources": [
+        "support-footer.html"
+      ]
+    },
+    "Python": {
+      "reason": "Proper name, established game identifier, or a letter in the maimai.party wordmark.",
+      "sources": [
+        "support-footer.html"
+      ]
+    },
+    "Ruff": {
+      "reason": "Proper name, established game identifier, or a letter in the maimai.party wordmark.",
+      "sources": [
+        "support-footer.html"
+      ]
+    },
+    "STD": {
+      "reason": "Proper name, established game identifier, or a letter in the maimai.party wordmark.",
+      "sources": [
+        "challenge-review.html"
+      ]
+    },
+    "Slipflip": {
+      "reason": "Proper name, established game identifier, or a letter in the maimai.party wordmark.",
+      "sources": [
+        "pattern.slip_flip:aliases"
+      ]
+    },
+    "Stripe": {
+      "reason": "Proper name, established game identifier, or a letter in the maimai.party wordmark.",
+      "sources": [
+        "creator-support.html",
+        "support.html"
+      ]
+    },
+    "TeamMajdata · MajSimai": {
+      "reason": "Proper name, established game identifier, or a letter in the maimai.party wordmark.",
+      "sources": [
+        "support-footer.html"
+      ]
+    },
+    "a": {
+      "reason": "Proper name, established game identifier, or a letter in the maimai.party wordmark.",
+      "sources": [
+        "support.html"
+      ]
+    },
+    "arussin · maimai-session-report": {
+      "reason": "Proper name, established game identifier, or a letter in the maimai.party wordmark.",
+      "sources": [
+        "support-footer.html"
+      ]
+    },
+    "mai-notes (maiノーツ)": {
+      "reason": "Proper name, established game identifier, or a letter in the maimai.party wordmark.",
+      "sources": [
+        "support-footer.html"
+      ]
+    },
+    "maimai": {
+      "reason": "Proper name, established game identifier, or a letter in the maimai.party wordmark.",
+      "sources": [
+        "support.html"
+      ]
+    },
+    "maimai.party": {
+      "reason": "Proper name, established game identifier, or a letter in the maimai.party wordmark.",
+      "sources": [
+        "challenge-review.html"
+      ]
+    },
+    "p": {
+      "reason": "Proper name, established game identifier, or a letter in the maimai.party wordmark.",
+      "sources": [
+        "support.html"
+      ]
+    },
+    "r": {
+      "reason": "Proper name, established game identifier, or a letter in the maimai.party wordmark.",
+      "sources": [
+        "support.html"
+      ]
+    },
+    "t": {
+      "reason": "Proper name, established game identifier, or a letter in the maimai.party wordmark.",
+      "sources": [
+        "support.html"
+      ]
+    },
+    "y": {
+      "reason": "Proper name, established game identifier, or a letter in the maimai.party wordmark.",
+      "sources": [
+        "support.html"
+      ]
+    },
+    "% coverage": {
+      "reason": "Source fragment. Translate the complete composed message rather than this fragment.",
+      "messages": [
+        "{0}: {1} mean, {2} peak inputs/s · {3}% coverage"
+      ],
+      "sources": [
+        "src/maimai_intelligence/assets/chart-overview.js:57"
+      ]
+    },
+    "(opens in a new tab)": {
+      "reason": "Source fragment. Translate the complete composed message rather than this fragment.",
+      "messages": [
+        "YouTube search for {0} (opens in a new tab)",
+        "mai-notes simai player for {0} (opens in a new tab)"
+      ],
+      "sources": [
+        "src/maimai_intelligence/assets/chart-links.js:15",
+        "src/maimai_intelligence/assets/chart-links.js:27"
+      ]
+    },
+    "(prefers-reduced-motion: reduce)": {
+      "reason": "Programming token, selector, serialization or non-copy attribute; never translate.",
+      "sources": [
+        "src/maimai_intelligence/assets/pattern-library.js:102"
+      ]
+    },
+    ", priority": {
+      "reason": "Source fragment. Translate the complete composed message rather than this fragment.",
+      "messages": [
+        "{0}, priority {1}, ascending",
+        "{0}, priority {1}, descending"
+      ],
+      "sources": [
+        "src/maimai_intelligence/assets/challenge-review.js:70"
+      ]
+    },
+    ". Peak": {
+      "reason": "Source fragment. Translate the complete composed message rather than this fragment.",
+      "messages": [
+        "Input activity through {0}. {1} to {2}. Peak {3} inputs per second."
+      ],
+      "sources": [
+        "src/maimai_intelligence/assets/chart-overview.js:51"
+      ]
+    },
+    ". Use + for a plus level.": {
+      "reason": "Source fragment. Translate the complete composed message rather than this fragment.",
+      "messages": [
+        "Enter an available level from {0} to {1}. Use + for a plus level."
+      ],
+      "sources": [
+        "src/maimai_intelligence/assets/chart-filters.js:54"
+      ]
+    },
+    ".party-brand > span": {
+      "reason": "Programming token, selector, serialization or non-copy attribute; never translate.",
+      "sources": [
+        "src/maimai_intelligence/assets/support-stripe.js:19"
+      ]
+    },
+    "/ min": {
+      "reason": "Source fragment. Translate the complete composed message rather than this fragment.",
+      "messages": [
+        "{0} / min · lower bound",
+        "{0} / min"
+      ],
+      "sources": [
+        "src/maimai_intelligence/assets/chart-overview.js:94"
+      ]
+    },
+    "/s · own scale": {
+      "reason": "Source fragment. Translate the complete composed message rather than this fragment.",
+      "messages": [
+        "Peak {0} /s · own scale"
+      ],
+      "sources": [
+        "src/maimai_intelligence/assets/chart-overview.js:61"
+      ]
+    },
+    "/s": {
+      "reason": "Source fragment. Translate the complete composed message rather than this fragment.",
+      "messages": [
+        "Peak {0} /s · own scale",
+        "{0}: {1} mean, {2} peak inputs/s · {3}% coverage",
+        "Hold/slide overlap"
+      ],
+      "sources": [
+        "src/maimai_intelligence/assets/challenge-review.js:19"
+      ]
+    },
+    "; Domain=": {
+      "reason": "Programming token, selector, serialization or non-copy attribute; never translate.",
+      "sources": [
+        "src/maimai_intelligence/assets/analytics.js:81"
+      ]
+    },
+    "<path class=\"pattern-example-line\" d=\"M266 29L275 30L271 39\"/>": {
+      "reason": "Legacy illustration API, unused by the production lesson renderer. Its original output remains compatible with external consumers.",
+      "sources": [
+        "src/maimai_intelligence/assets/chart-visuals.js:50"
+      ]
+    },
+    "<path class=\"pattern-example-movement\" d=\"M38 56L130 22L218 57L275 30\"/>": {
+      "reason": "Legacy illustration API, unused by the production lesson renderer. Its original output remains compatible with external consumers.",
+      "sources": [
+        "src/maimai_intelligence/assets/chart-visuals.js:50"
+      ]
+    },
+    "<rect class=\"pattern-example-hold\" x=\"39\" y=\"20\" width=\"231\" height=\"14\" rx=\"7\"/>": {
+      "reason": "Legacy illustration API, unused by the production lesson renderer. Its original output remains compatible with external consumers.",
+      "sources": [
+        "src/maimai_intelligence/assets/chart-visuals.js:52"
+      ]
+    },
+    "<text class=\"pattern-example-caption\" x=\"14\" y=\"83\">one continuous path</text>": {
+      "reason": "Legacy illustration API, unused by the production lesson renderer. Its original output remains compatible with external consumers.",
+      "sources": [
+        "src/maimai_intelligence/assets/chart-visuals.js:50"
+      ]
+    },
+    "<text class=\"pattern-example-caption\" x=\"14\" y=\"83\">one head · two paths</text>": {
+      "reason": "Legacy illustration API, unused by the production lesson renderer. Its original output remains compatible with external consumers.",
+      "sources": [
+        "src/maimai_intelligence/assets/chart-visuals.js:42"
+      ]
+    },
+    "<text class=\"pattern-example-caption\" x=\"22\" y=\"86\">start</text><text class=\"pattern-example-caption\" x=\"280\" y=\"86\" text-anchor=\"end\">end</text>": {
+      "reason": "Legacy illustration API, unused by the production lesson renderer. Its original output remains compatible with external consumers.",
+      "sources": [
+        "src/maimai_intelligence/assets/chart-visuals.js:62"
+      ]
+    },
+    "<text class=\"pattern-example-caption\" x=\"286\" y=\"86\" text-anchor=\"end\">time →</text>": {
+      "reason": "Legacy illustration API, unused by the production lesson renderer. Its original output remains compatible with external consumers.",
+      "sources": [
+        "src/maimai_intelligence/assets/chart-visuals.js:29"
+      ]
+    },
+    "<text x=\"9\" y=\"31\">A</text><text x=\"9\" y=\"61\">B</text>": {
+      "reason": "Legacy illustration API, unused by the production lesson renderer. Its original output remains compatible with external consumers.",
+      "sources": [
+        "src/maimai_intelligence/assets/chart-visuals.js:28"
+      ]
+    },
+    "=; Max-Age=0; Path=/; SameSite=Lax; Secure": {
+      "reason": "Programming token, selector, serialization or non-copy attribute; never translate.",
+      "sources": [
+        "src/maimai_intelligence/assets/analytics.js:80"
+      ]
+    },
+    "A": {
+      "reason": "Established game label, grade, format, chart position, region code or sort symbol.",
+      "sources": [
+        "src/maimai_intelligence/assets/player-data.js:6"
+      ]
+    },
+    "AA": {
+      "reason": "Established game label, grade, format, chart position, region code or sort symbol.",
+      "sources": [
+        "src/maimai_intelligence/assets/player-data.js:6"
+      ]
+    },
+    "AAA": {
+      "reason": "Established game label, grade, format, chart position, region code or sort symbol.",
+      "sources": [
+        "src/maimai_intelligence/assets/player-data.js:6"
+      ]
+    },
+    "ADVANCED": {
+      "reason": "Established game label, grade, format, chart position, region code or sort symbol.",
+      "sources": [
+        "src/maimai_intelligence/assets/chart-filters.js:12",
+        "src/maimai_intelligence/assets/chart-comparison.js:18",
+        "src/maimai_intelligence/assets/challenge-review.js:36"
+      ]
+    },
+    "ALL PERFECT+": {
+      "reason": "Established game label, grade, format, chart position, region code or sort symbol.",
+      "sources": [
+        "src/maimai_intelligence/assets/player-data.js:135"
+      ]
+    },
+    "ALL PERFECT": {
+      "reason": "Established game label, grade, format, chart position, region code or sort symbol.",
+      "sources": [
+        "src/maimai_intelligence/assets/player-data.js:135"
+      ]
+    },
+    "AbortError": {
+      "reason": "Programming token, selector, serialization or non-copy attribute; never translate.",
+      "sources": [
+        "src/maimai_intelligence/assets/support-stripe.js:80"
+      ]
+    },
+    "All perfect+": {
+      "reason": "Established game label, grade, format, chart position, region code or sort symbol.",
+      "sources": [
+        "src/maimai_intelligence/assets/player-data.js:95"
+      ]
+    },
+    "All perfect": {
+      "reason": "Established game label, grade, format, chart position, region code or sort symbol.",
+      "sources": [
+        "src/maimai_intelligence/assets/player-data.js:95"
+      ]
+    },
+    "ArrowDown": {
+      "reason": "Programming token, selector, serialization or non-copy attribute; never translate.",
+      "sources": [
+        "src/maimai_intelligence/assets/settings-menu.js:29",
+        "src/maimai_intelligence/assets/settings-menu.js:38",
+        "src/maimai_intelligence/assets/settings-menu.js:41",
+        "src/maimai_intelligence/assets/pattern-filter.js:36",
+        "src/maimai_intelligence/assets/pattern-filter.js:39",
+        "src/maimai_intelligence/assets/pattern-filter.js:39",
+        "src/maimai_intelligence/assets/chart-comparison.js:64",
+        "src/maimai_intelligence/assets/chart-comparison.js:66",
+        "src/maimai_intelligence/assets/chart-comparison.js:66"
+      ]
+    },
+    "ArrowUp": {
+      "reason": "Programming token, selector, serialization or non-copy attribute; never translate.",
+      "sources": [
+        "src/maimai_intelligence/assets/settings-menu.js:29",
+        "src/maimai_intelligence/assets/settings-menu.js:30",
+        "src/maimai_intelligence/assets/settings-menu.js:38",
+        "src/maimai_intelligence/assets/pattern-filter.js:36",
+        "src/maimai_intelligence/assets/chart-comparison.js:64"
+      ]
+    },
+    "Authored illustration.": {
+      "reason": "Source fragment. Translate the complete composed message rather than this fragment.",
+      "messages": [
+        "{0} Authored illustration."
+      ],
+      "sources": [
+        "src/maimai_intelligence/assets/pattern-library.js:21"
+      ]
+    },
+    "A–Z": {
+      "reason": "Established game label, grade, format, chart position, region code or sort symbol.",
+      "sources": [
+        "src/maimai_intelligence/assets/challenge-review.js:60"
+      ]
+    },
+    "B": {
+      "reason": "Established game label, grade, format, chart position, region code or sort symbol.",
+      "sources": [
+        "src/maimai_intelligence/assets/player-data.js:6"
+      ]
+    },
+    "BASIC": {
+      "reason": "Established game label, grade, format, chart position, region code or sort symbol.",
+      "sources": [
+        "src/maimai_intelligence/assets/chart-filters.js:12",
+        "src/maimai_intelligence/assets/chart-comparison.js:18",
+        "src/maimai_intelligence/assets/challenge-review.js:36"
+      ]
+    },
+    "BB": {
+      "reason": "Established game label, grade, format, chart position, region code or sort symbol.",
+      "sources": [
+        "src/maimai_intelligence/assets/player-data.js:6"
+      ]
+    },
+    "BBB": {
+      "reason": "Established game label, grade, format, chart position, region code or sort symbol.",
+      "sources": [
+        "src/maimai_intelligence/assets/player-data.js:6"
+      ]
+    },
+    "BE": {
+      "reason": "Established game label, grade, format, chart position, region code or sort symbol.",
+      "sources": [
+        "src/maimai_intelligence/assets/challenge-review.js:20"
+      ]
+    },
+    "Button": {
+      "reason": "Source fragment. Translate the complete composed message rather than this fragment.",
+      "messages": [
+        "Button 1 repeats on every other input. The intervening input moves through buttons 3, 4, 5 and 6.",
+        "Button staircase",
+        "Button {0}"
+      ],
+      "sources": [
+        "src/maimai_intelligence/assets/pattern-library.js:11"
+      ]
+    },
+    "C": {
+      "reason": "Established game label, grade, format, chart position, region code or sort symbol.",
+      "sources": [
+        "src/maimai_intelligence/assets/player-data.js:6",
+        "src/maimai_intelligence/assets/challenge-review.js:20"
+      ]
+    },
+    "Compare with": {
+      "reason": "Source fragment. Translate the complete composed message rather than this fragment.",
+      "messages": [
+        "Compare with {0}"
+      ],
+      "sources": [
+        "src/maimai_intelligence/assets/chart-comparison.js:106"
+      ]
+    },
+    "D": {
+      "reason": "Established game label, grade, format, chart position, region code or sort symbol.",
+      "sources": [
+        "src/maimai_intelligence/assets/player-data.js:6"
+      ]
+    },
+    "DE": {
+      "reason": "Established game label, grade, format, chart position, region code or sort symbol.",
+      "sources": [
+        "src/maimai_intelligence/assets/challenge-review.js:20"
+      ]
+    },
+    "Difficulty for": {
+      "reason": "Source fragment. Translate the complete composed message rather than this fragment.",
+      "messages": [
+        "Difficulty for {0}"
+      ],
+      "sources": [
+        "src/maimai_intelligence/assets/challenge-review.js:166"
+      ]
+    },
+    "EXPERT": {
+      "reason": "Established game label, grade, format, chart position, region code or sort symbol.",
+      "sources": [
+        "src/maimai_intelligence/assets/chart-filters.js:12",
+        "src/maimai_intelligence/assets/chart-comparison.js:18",
+        "src/maimai_intelligence/assets/challenge-review.js:36"
+      ]
+    },
+    "End": {
+      "reason": "Programming token, selector, serialization or non-copy attribute; never translate.",
+      "sources": [
+        "src/maimai_intelligence/assets/settings-menu.js:38",
+        "src/maimai_intelligence/assets/settings-menu.js:40"
+      ]
+    },
+    "Enter an available level from": {
+      "reason": "Source fragment. Translate the complete composed message rather than this fragment.",
+      "messages": [
+        "Enter an available level from {0} to {1}. Use + for a plus level."
+      ],
+      "sources": [
+        "src/maimai_intelligence/assets/chart-filters.js:54"
+      ]
+    },
+    "Enter": {
+      "reason": "Source fragment. Translate the complete composed message rather than this fragment.",
+      "messages": [
+        "Enter an available level from {0} to {1}. Use + for a plus level."
+      ],
+      "sources": [
+        "src/maimai_intelligence/assets/chart-filters.js:66",
+        "src/maimai_intelligence/assets/chart-comparison.js:68"
+      ]
+    },
+    "Escape": {
+      "reason": "Programming token, selector, serialization or non-copy attribute; never translate.",
+      "sources": [
+        "src/maimai_intelligence/assets/settings-menu.js:46",
+        "src/maimai_intelligence/assets/chart-filters.js:30",
+        "src/maimai_intelligence/assets/chart-filters.js:66",
+        "src/maimai_intelligence/assets/pattern-filter.js:35",
+        "src/maimai_intelligence/assets/chart-comparison.js:69",
+        "src/maimai_intelligence/assets/challenge-review.js:91"
+      ]
+    },
+    "Example:": {
+      "reason": "Source fragment. Translate the complete composed message rather than this fragment.",
+      "messages": [
+        "Example: {0}"
+      ],
+      "sources": [
+        "src/maimai_intelligence/assets/pattern-library.js:95"
+      ]
+    },
+    "FS+": {
+      "reason": "Established game label, grade, format, chart position, region code or sort symbol.",
+      "sources": [
+        "src/maimai_intelligence/assets/player-data.js:93",
+        "src/maimai_intelligence/assets/player-data.js:135"
+      ]
+    },
+    "FS": {
+      "reason": "Established game label, grade, format, chart position, region code or sort symbol.",
+      "sources": [
+        "src/maimai_intelligence/assets/player-data.js:93",
+        "src/maimai_intelligence/assets/player-data.js:135"
+      ]
+    },
+    "FSD+": {
+      "reason": "Established game label, grade, format, chart position, region code or sort symbol.",
+      "sources": [
+        "src/maimai_intelligence/assets/player-data.js:93",
+        "src/maimai_intelligence/assets/player-data.js:93",
+        "src/maimai_intelligence/assets/player-data.js:135"
+      ]
+    },
+    "FSD": {
+      "reason": "Established game label, grade, format, chart position, region code or sort symbol.",
+      "sources": [
+        "src/maimai_intelligence/assets/player-data.js:93",
+        "src/maimai_intelligence/assets/player-data.js:93",
+        "src/maimai_intelligence/assets/player-data.js:135"
+      ]
+    },
+    "FULL COMBO+": {
+      "reason": "Established game label, grade, format, chart position, region code or sort symbol.",
+      "sources": [
+        "src/maimai_intelligence/assets/player-data.js:135"
+      ]
+    },
+    "FULL COMBO": {
+      "reason": "Established game label, grade, format, chart position, region code or sort symbol.",
+      "sources": [
+        "src/maimai_intelligence/assets/player-data.js:135"
+      ]
+    },
+    "Find charts ·": {
+      "reason": "Source fragment. Translate the complete composed message rather than this fragment.",
+      "messages": [
+        "Find charts · {0}"
+      ],
+      "sources": [
+        "src/maimai_intelligence/assets/pattern-library.js:66"
+      ]
+    },
+    "Follow connected sections of one slide.": {
+      "reason": "Legacy illustration API, unused by the production lesson renderer. Its original output remains compatible with external consumers.",
+      "sources": [
+        "src/maimai_intelligence/assets/chart-visuals.js:15"
+      ]
+    },
+    "From level": {
+      "reason": "Source fragment. Translate the complete composed message rather than this fragment.",
+      "messages": [
+        "From level {0}"
+      ],
+      "sources": [
+        "src/maimai_intelligence/assets/chart-filters.js:96"
+      ]
+    },
+    "Full combo+": {
+      "reason": "Established game label, grade, format, chart position, region code or sort symbol.",
+      "sources": [
+        "src/maimai_intelligence/assets/player-data.js:95"
+      ]
+    },
+    "Full combo": {
+      "reason": "Established game label, grade, format, chart position, region code or sort symbol.",
+      "sources": [
+        "src/maimai_intelligence/assets/player-data.js:95"
+      ]
+    },
+    "Full sync DX+": {
+      "reason": "Established game label, grade, format, chart position, region code or sort symbol.",
+      "sources": [
+        "src/maimai_intelligence/assets/player-data.js:95",
+        "src/maimai_intelligence/assets/player-data.js:135"
+      ]
+    },
+    "Full sync DX": {
+      "reason": "Established game label, grade, format, chart position, region code or sort symbol.",
+      "sources": [
+        "src/maimai_intelligence/assets/player-data.js:95",
+        "src/maimai_intelligence/assets/player-data.js:135"
+      ]
+    },
+    "Full sync+": {
+      "reason": "Established game label, grade, format, chart position, region code or sort symbol.",
+      "sources": [
+        "src/maimai_intelligence/assets/player-data.js:95",
+        "src/maimai_intelligence/assets/player-data.js:135"
+      ]
+    },
+    "Full sync": {
+      "reason": "Established game label, grade, format, chart position, region code or sort symbol.",
+      "sources": [
+        "src/maimai_intelligence/assets/player-data.js:95",
+        "src/maimai_intelligence/assets/player-data.js:135"
+      ]
+    },
+    "G-FP9V9NF63J": {
+      "reason": "Programming token, selector, serialization or non-copy attribute; never translate.",
+      "sources": [
+        "src/maimai_intelligence/assets/analytics.js:6"
+      ]
+    },
+    "Hidden ·": {
+      "reason": "Source fragment. Translate the complete composed message rather than this fragment.",
+      "messages": [
+        "Hidden · Remembered on this device",
+        "Hidden · This tab only"
+      ],
+      "sources": [
+        "src/maimai_intelligence/assets/player-data.js:29"
+      ]
+    },
+    "Hide": {
+      "reason": "Source fragment. Translate the complete composed message rather than this fragment.",
+      "messages": [
+        "Hide player data",
+        "Hide saved PB changes ({0})"
+      ],
+      "sources": [
+        "src/maimai_intelligence/assets/player-data.js:116"
+      ]
+    },
+    "Highlight": {
+      "reason": "Source fragment. Translate the complete composed message rather than this fragment.",
+      "messages": [
+        "Highlight {0}"
+      ],
+      "sources": [
+        "src/maimai_intelligence/assets/chart-overview.js:70"
+      ]
+    },
+    "Hit two or more inputs together.": {
+      "reason": "Legacy illustration API, unused by the production lesson renderer. Its original output remains compatible with external consumers.",
+      "sources": [
+        "src/maimai_intelligence/assets/chart-visuals.js:10"
+      ]
+    },
+    "Holding": {
+      "reason": "Source fragment. Translate the complete composed message rather than this fragment.",
+      "messages": [
+        "Holding button {0}",
+        "Holding touch {0}"
+      ],
+      "sources": [
+        "src/maimai_intelligence/assets/pattern-library.js:86"
+      ]
+    },
+    "Home": {
+      "reason": "Programming token, selector, serialization or non-copy attribute; never translate.",
+      "sources": [
+        "src/maimai_intelligence/assets/settings-menu.js:38",
+        "src/maimai_intelligence/assets/settings-menu.js:40"
+      ]
+    },
+    "INPUT": {
+      "reason": "Programming token, selector, serialization or non-copy attribute; never translate.",
+      "sources": [
+        "src/maimai_intelligence/assets/chart-filters.js:77"
+      ]
+    },
+    "INTL": {
+      "reason": "Established game label, grade, format, chart position, region code or sort symbol.",
+      "sources": [
+        "src/maimai_intelligence/assets/registry-browser.js:23"
+      ]
+    },
+    "Input activity stays fairly even.": {
+      "reason": "Legacy illustration API, unused by the production lesson renderer. Its original output remains compatible with external consumers.",
+      "sources": [
+        "src/maimai_intelligence/assets/chart-visuals.js:20"
+      ]
+    },
+    "Input activity through": {
+      "reason": "Source fragment. Translate the complete composed message rather than this fragment.",
+      "messages": [
+        "Input activity through {0}",
+        "Input activity through {0}. {1} to {2}. Peak {3} inputs per second."
+      ],
+      "sources": [
+        "src/maimai_intelligence/assets/chart-overview.js:50"
+      ]
+    },
+    "Jacket for": {
+      "reason": "Source fragment. Translate the complete composed message rather than this fragment.",
+      "messages": [
+        "Jacket for {0}",
+        "Jacket for {0} unavailable"
+      ],
+      "sources": [
+        "src/maimai_intelligence/assets/chart-artwork.js:17"
+      ]
+    },
+    "Keep holding while another input arrives.": {
+      "reason": "Legacy illustration API, unused by the production lesson renderer. Its original output remains compatible with external consumers.",
+      "sources": [
+        "src/maimai_intelligence/assets/chart-visuals.js:16"
+      ]
+    },
+    "MASTER": {
+      "reason": "Established game label, grade, format, chart position, region code or sort symbol.",
+      "sources": [
+        "src/maimai_intelligence/assets/chart-filters.js:12",
+        "src/maimai_intelligence/assets/chart-comparison.js:18",
+        "src/maimai_intelligence/assets/challenge-review.js:36"
+      ]
+    },
+    "More inputs arrive near the beginning.": {
+      "reason": "Legacy illustration API, unused by the production lesson renderer. Its original output remains compatible with external consumers.",
+      "sources": [
+        "src/maimai_intelligence/assets/chart-visuals.js:18"
+      ]
+    },
+    "More inputs arrive near the end.": {
+      "reason": "Legacy illustration API, unused by the production lesson renderer. Its original output remains compatible with external consumers.",
+      "sources": [
+        "src/maimai_intelligence/assets/chart-visuals.js:17"
+      ]
+    },
+    "Moving:": {
+      "reason": "Source fragment. Translate the complete composed message rather than this fragment.",
+      "messages": [
+        "Moving: {0}"
+      ],
+      "sources": [
+        "src/maimai_intelligence/assets/pattern-library.js:86"
+      ]
+    },
+    "NFKC": {
+      "reason": "Programming token, selector, serialization or non-copy attribute; never translate.",
+      "sources": [
+        "src/maimai_intelligence/assets/pattern-library.js:8",
+        "src/maimai_intelligence/assets/chart-filters.js:7",
+        "src/maimai_intelligence/assets/pattern-filter.js:5",
+        "src/maimai_intelligence/assets/chart-comparison.js:54",
+        "src/maimai_intelligence/assets/chart-comparison.js:55"
+      ]
+    },
+    "One star starts more than one slide path.": {
+      "reason": "Legacy illustration API, unused by the production lesson renderer. Its original output remains compatible with external consumers.",
+      "sources": [
+        "src/maimai_intelligence/assets/chart-visuals.js:11"
+      ]
+    },
+    "Open lesson:": {
+      "reason": "Source fragment. Translate the complete composed message rather than this fragment.",
+      "messages": [
+        "Open lesson: {0}"
+      ],
+      "sources": [
+        "src/maimai_intelligence/assets/pattern-library.js:62"
+      ]
+    },
+    "Open": {
+      "reason": "Source fragment. Translate the complete composed message rather than this fragment.",
+      "messages": [
+        "Open source and made for the maimai community.",
+        "Open {0} · {1} · Chart constant unknown",
+        "Open the latest catalog"
+      ],
+      "sources": [
+        "src/maimai_intelligence/assets/challenge-review.js:163"
+      ]
+    },
+    "POST": {
+      "reason": "Programming token, selector, serialization or non-copy attribute; never translate.",
+      "sources": [
+        "src/maimai_intelligence/assets/support-client.js:27"
+      ]
+    },
+    "Peak": {
+      "reason": "Source fragment. Translate the complete composed message rather than this fragment.",
+      "messages": [
+        "Peak inputs / s",
+        "Peak {0} /s · own scale",
+        "Input activity through {0}. {1} to {2}. Peak {3} inputs per second."
+      ],
+      "sources": [
+        "src/maimai_intelligence/assets/chart-overview.js:61"
+      ]
+    },
+    "QuotaExceededError": {
+      "reason": "Programming token, selector, serialization or non-copy attribute; never translate.",
+      "sources": [
+        "src/maimai_intelligence/assets/support-stripe.js:78"
+      ]
+    },
+    "RE:MASTER": {
+      "reason": "Established game label, grade, format, chart position, region code or sort symbol.",
+      "sources": [
+        "src/maimai_intelligence/assets/chart-filters.js:12",
+        "src/maimai_intelligence/assets/chart-comparison.js:18",
+        "src/maimai_intelligence/assets/challenge-review.js:36"
+      ]
+    },
+    "RT": {
+      "reason": "Established game label, grade, format, chart position, region code or sort symbol.",
+      "sources": [
+        "src/maimai_intelligence/assets/player-data.js:103"
+      ]
+    },
+    "Remove difficulty": {
+      "reason": "Source fragment. Translate the complete composed message rather than this fragment.",
+      "messages": [
+        "Remove difficulty {0}"
+      ],
+      "sources": [
+        "src/maimai_intelligence/assets/chart-filters.js:95"
+      ]
+    },
+    "Remove pattern": {
+      "reason": "Source fragment. Translate the complete composed message rather than this fragment.",
+      "messages": [
+        "Remove pattern {0}"
+      ],
+      "sources": [
+        "src/maimai_intelligence/assets/pattern-filter.js:61"
+      ]
+    },
+    "Remove version": {
+      "reason": "Source fragment. Translate the complete composed message rather than this fragment.",
+      "messages": [
+        "Remove version {0}"
+      ],
+      "sources": [
+        "src/maimai_intelligence/assets/challenge-review.js:115"
+      ]
+    },
+    "Remove": {
+      "reason": "Source fragment. Translate the complete composed message rather than this fragment.",
+      "messages": [
+        "Remove {0} sort priority",
+        "Remove {0} filter",
+        "No charts match this combination. Remove a filter or try another search."
+      ],
+      "sources": [
+        "src/maimai_intelligence/assets/challenge-review.js:64",
+        "src/maimai_intelligence/assets/challenge-review.js:121"
+      ]
+    },
+    "S+": {
+      "reason": "Established game label, grade, format, chart position, region code or sort symbol.",
+      "sources": [
+        "src/maimai_intelligence/assets/player-data.js:6"
+      ]
+    },
+    "S": {
+      "reason": "Established game label, grade, format, chart position, region code or sort symbol.",
+      "sources": [
+        "src/maimai_intelligence/assets/player-data.js:6"
+      ]
+    },
+    "SHA-256": {
+      "reason": "Programming token, selector, serialization or non-copy attribute; never translate.",
+      "sources": [
+        "src/maimai_intelligence/assets/player-data-core.js:10",
+        "src/maimai_intelligence/assets/lab-loader.js:9"
+      ]
+    },
+    "SS+": {
+      "reason": "Established game label, grade, format, chart position, region code or sort symbol.",
+      "sources": [
+        "src/maimai_intelligence/assets/player-data.js:6"
+      ]
+    },
+    "SS": {
+      "reason": "Established game label, grade, format, chart position, region code or sort symbol.",
+      "sources": [
+        "src/maimai_intelligence/assets/player-data.js:6"
+      ]
+    },
+    "SSS+": {
+      "reason": "Established game label, grade, format, chart position, region code or sort symbol.",
+      "sources": [
+        "src/maimai_intelligence/assets/player-data.js:6"
+      ]
+    },
+    "SSS": {
+      "reason": "Established game label, grade, format, chart position, region code or sort symbol.",
+      "sources": [
+        "src/maimai_intelligence/assets/player-data.js:6"
+      ]
+    },
+    "SYNC": {
+      "reason": "Established game label, grade, format, chart position, region code or sort symbol.",
+      "sources": [
+        "src/maimai_intelligence/assets/player-data.js:93",
+        "src/maimai_intelligence/assets/player-data.js:135"
+      ]
+    },
+    "SameSite=Lax;Secure": {
+      "reason": "Programming token, selector, serialization or non-copy attribute; never translate.",
+      "sources": [
+        "src/maimai_intelligence/assets/analytics.js:64"
+      ]
+    },
+    "Search all": {
+      "reason": "Source fragment. Translate the complete composed message rather than this fragment.",
+      "messages": [
+        "Search all {0} charts by song, artist or difficulty."
+      ],
+      "sources": [
+        "src/maimai_intelligence/assets/chart-comparison.js:36"
+      ]
+    },
+    "Section": {
+      "reason": "Source fragment. Translate the complete composed message rather than this fragment.",
+      "messages": [
+        "Section {0}–{1} s: {2}"
+      ],
+      "sources": [
+        "src/maimai_intelligence/assets/pattern-library.js:83"
+      ]
+    },
+    "SecurityError": {
+      "reason": "Programming token, selector, serialization or non-copy attribute; never translate.",
+      "sources": [
+        "src/maimai_intelligence/assets/support-stripe.js:78"
+      ]
+    },
+    "Shared:": {
+      "reason": "Source fragment. Translate the complete composed message rather than this fragment.",
+      "messages": [
+        "Shared: {0}"
+      ],
+      "sources": [
+        "src/maimai_intelligence/assets/chart-comparison.js:105"
+      ]
+    },
+    "Show more": {
+      "reason": "Source fragment. Translate the complete composed message rather than this fragment.",
+      "messages": [
+        "Show more songs",
+        "Show more matches",
+        "Show more recorded plays"
+      ],
+      "sources": [
+        "src/maimai_intelligence/assets/player-data.js:113"
+      ]
+    },
+    "Showing": {
+      "reason": "Source fragment. Translate the complete composed message rather than this fragment.",
+      "messages": [
+        "Showing {0} of {1} matching charts. Keep typing or show more."
+      ],
+      "sources": [
+        "src/maimai_intelligence/assets/chart-comparison.js:48"
+      ]
+    },
+    "Similar": {
+      "reason": "Source fragment. Translate the complete composed message rather than this fragment.",
+      "messages": [
+        "Similar patterns & demands",
+        "Similar chart demands",
+        "Similar {0}"
+      ],
+      "sources": [
+        "src/maimai_intelligence/assets/chart-comparison.js:104"
+      ]
+    },
+    "Skip to": {
+      "reason": "Source fragment. Translate the complete composed message rather than this fragment.",
+      "messages": [
+        "Skip to charts",
+        "Skip to pattern dictionary",
+        "Skip to compare charts"
+      ],
+      "sources": [
+        "src/maimai_intelligence/assets/view-navigation.js:10"
+      ]
+    },
+    "Slide movement fills much of the chart.": {
+      "reason": "Legacy illustration API, unused by the production lesson renderer. Its original output remains compatible with external consumers.",
+      "sources": [
+        "src/maimai_intelligence/assets/chart-visuals.js:21"
+      ]
+    },
+    "Switch between two buttons: A, B, A, B.": {
+      "reason": "Legacy illustration API, unused by the production lesson renderer. Its original output remains compatible with external consumers.",
+      "sources": [
+        "src/maimai_intelligence/assets/chart-visuals.js:8"
+      ]
+    },
+    "Sync play": {
+      "reason": "Established game label, grade, format, chart position, region code or sort symbol.",
+      "sources": [
+        "src/maimai_intelligence/assets/player-data.js:95",
+        "src/maimai_intelligence/assets/player-data.js:135"
+      ]
+    },
+    "Tap during a slide's waiting beat.": {
+      "reason": "Legacy illustration API, unused by the production lesson renderer. Its original output remains compatible with external consumers.",
+      "sources": [
+        "src/maimai_intelligence/assets/chart-visuals.js:14"
+      ]
+    },
+    "Tap the same button several times.": {
+      "reason": "Legacy illustration API, unused by the production lesson renderer. Its original output remains compatible with external consumers.",
+      "sources": [
+        "src/maimai_intelligence/assets/chart-visuals.js:9"
+      ]
+    },
+    "Tap while a slide is moving.": {
+      "reason": "Legacy illustration API, unused by the production lesson renderer. Its original output remains compatible with external consumers.",
+      "sources": [
+        "src/maimai_intelligence/assets/chart-visuals.js:13"
+      ]
+    },
+    "Through": {
+      "reason": "Source fragment. Translate the complete composed message rather than this fragment.",
+      "messages": [
+        "Through {0}"
+      ],
+      "sources": [
+        "src/maimai_intelligence/assets/challenge-review.js:95"
+      ]
+    },
+    "TimeoutError": {
+      "reason": "Programming token, selector, serialization or non-copy attribute; never translate.",
+      "sources": [
+        "src/maimai_intelligence/assets/support-stripe.js:80"
+      ]
+    },
+    "To level": {
+      "reason": "Source fragment. Translate the complete composed message rather than this fragment.",
+      "messages": [
+        "To level {0}"
+      ],
+      "sources": [
+        "src/maimai_intelligence/assets/chart-filters.js:97"
+      ]
+    },
+    "Touch": {
+      "reason": "Source fragment. Translate the complete composed message rather than this fragment.",
+      "messages": [
+        "Touch inputs",
+        "Touch/button interleave",
+        "Touch stream"
+      ],
+      "sources": [
+        "src/maimai_intelligence/assets/pattern-library.js:11"
+      ]
+    },
+    "Two slide paths move at the same time.": {
+      "reason": "Legacy illustration API, unused by the production lesson renderer. Its original output remains compatible with external consumers.",
+      "sources": [
+        "src/maimai_intelligence/assets/chart-visuals.js:12"
+      ]
+    },
+    "Waiting:": {
+      "reason": "Source fragment. Translate the complete composed message rather than this fragment.",
+      "messages": [
+        "Waiting: {0}"
+      ],
+      "sources": [
+        "src/maimai_intelligence/assets/pattern-library.js:86"
+      ]
+    },
+    "YouTube search for": {
+      "reason": "Source fragment. Translate the complete composed message rather than this fragment.",
+      "messages": [
+        "YouTube search for {0} (opens in a new tab)"
+      ],
+      "sources": [
+        "src/maimai_intelligence/assets/chart-links.js:15"
+      ]
+    },
+    "Z–A": {
+      "reason": "Established game label, grade, format, chart position, region code or sort symbol.",
+      "sources": [
+        "src/maimai_intelligence/assets/challenge-review.js:60"
+      ]
+    },
+    "active path(s) not rendered": {
+      "reason": "Source fragment. Translate the complete composed message rather than this fragment.",
+      "messages": [
+        "{0} active path(s) not rendered",
+        "{0} s · {1} active path(s) not rendered"
+      ],
+      "sources": [
+        "src/maimai_intelligence/assets/challenge-review.js:29"
+      ]
+    },
+    "artwork-missing": {
+      "reason": "Programming token, selector, serialization or non-copy attribute; never translate.",
+      "sources": [
+        "src/maimai_intelligence/assets/chart-artwork.js:8"
+      ]
+    },
+    "at": {
+      "reason": "Source fragment. Translate the complete composed message rather than this fragment.",
+      "messages": [
+        "Thank you to the creators, maintainers and community contributors whose work makes this browser possible.",
+        ", and the composers, performers, illustrators, chart designers, publishers and licensors credited in the game. Song metadata comes from",
+        "SEGA's Japan catalog"
+      ],
+      "sources": [
+        "src/maimai_intelligence/assets/pattern-library.js:85"
+      ]
+    },
+    "buttons": {
+      "reason": "Source fragment. Translate the complete composed message rather than this fragment.",
+      "messages": [
+        "{0} buttons",
+        "Alternate slide launches between two starting buttons.",
+        "Button 1 repeats on every other input. The intervening input moves through buttons 3, 4, 5 and 6."
+      ],
+      "sources": [
+        "src/maimai_intelligence/assets/chart-comparison.js:11",
+        "src/maimai_intelligence/assets/chart-comparison.js:11",
+        "src/maimai_intelligence/assets/challenge-review.js:19"
+      ]
+    },
+    "chart passage": {
+      "reason": "Source fragment. Translate the complete composed message rather than this fragment.",
+      "messages": [
+        "{0} chart passage"
+      ],
+      "sources": [
+        "src/maimai_intelligence/assets/challenge-review.js:23"
+      ]
+    },
+    "chart-level chart-constant": {
+      "reason": "Programming token, selector, serialization or non-copy attribute; never translate.",
+      "sources": [
+        "src/maimai_intelligence/assets/challenge-review.js:170"
+      ]
+    },
+    "charts by song, artist or difficulty.": {
+      "reason": "Source fragment. Translate the complete composed message rather than this fragment.",
+      "messages": [
+        "Search all {0} charts by song, artist or difficulty."
+      ],
+      "sources": [
+        "src/maimai_intelligence/assets/chart-comparison.js:36"
+      ]
+    },
+    "charts found": {
+      "reason": "Source fragment. Translate the complete composed message rather than this fragment.",
+      "messages": [
+        "{0} charts found"
+      ],
+      "sources": [
+        "src/maimai_intelligence/assets/challenge-review.js:194"
+      ]
+    },
+    "check international-data-option": {
+      "reason": "Programming token, selector, serialization or non-copy attribute; never translate.",
+      "sources": [
+        "src/maimai_intelligence/assets/registry-browser.js:11"
+      ]
+    },
+    "compact": {
+      "reason": "Programming token, selector, serialization or non-copy attribute; never translate.",
+      "sources": [
+        "src/maimai_intelligence/assets/chart-overview.js:46"
+      ]
+    },
+    "difficulties selected": {
+      "reason": "Source fragment. Translate the complete composed message rather than this fragment.",
+      "messages": [
+        "{0} difficulties selected"
+      ],
+      "sources": [
+        "src/maimai_intelligence/assets/chart-filters.js:20"
+      ]
+    },
+    "filter": {
+      "reason": "Source fragment. Translate the complete composed message rather than this fragment.",
+      "messages": [
+        "No other song families match the selected filters with enough measurement coverage. Try widening the chart filters.",
+        "Chart evidence could not be loaded. Search and filters are still available.",
+        "Remove {0} filter"
+      ],
+      "sources": [
+        "src/maimai_intelligence/assets/challenge-review.js:121"
+      ]
+    },
+    "inputs per second": {
+      "reason": "Source fragment. Translate the complete composed message rather than this fragment.",
+      "messages": [
+        "Input activity through {0}. {1} to {2}. Peak {3} inputs per second.",
+        "Unknown inputs per second",
+        "The early sections contain more new inputs per second than the later sections."
+      ],
+      "sources": [
+        "src/maimai_intelligence/assets/challenge-review.js:172"
+      ]
+    },
+    "inputs per second.": {
+      "reason": "Source fragment. Translate the complete composed message rather than this fragment.",
+      "messages": [
+        "Input activity through {0}. {1} to {2}. Peak {3} inputs per second.",
+        "Six consecutive sections stay at 10 inputs per second. Compare this run with the isolated peak."
+      ],
+      "sources": [
+        "src/maimai_intelligence/assets/chart-overview.js:51"
+      ]
+    },
+    "inputs": {
+      "reason": "Source fragment. Translate the complete composed message rather than this fragment.",
+      "messages": [
+        "Simultaneous inputs",
+        "Average inputs / s",
+        "90th-percentile inputs / s"
+      ],
+      "sources": [
+        "src/maimai_intelligence/assets/challenge-review.js:19"
+      ]
+    },
+    "lesson-each": {
+      "reason": "Programming token, selector, serialization or non-copy attribute; never translate.",
+      "sources": [
+        "src/maimai_intelligence/assets/pattern-library.js:28",
+        "src/maimai_intelligence/assets/pattern-library.js:37"
+      ]
+    },
+    "lesson-note lesson-": {
+      "reason": "Programming token, selector, serialization or non-copy attribute; never translate.",
+      "sources": [
+        "src/maimai_intelligence/assets/pattern-library.js:37"
+      ]
+    },
+    "lessons found": {
+      "reason": "Source fragment. Translate the complete composed message rather than this fragment.",
+      "messages": [
+        "{0} lessons found"
+      ],
+      "sources": [
+        "src/maimai_intelligence/assets/pattern-library.js:60"
+      ]
+    },
+    "logo": {
+      "reason": "Source fragment. Translate the complete composed message rather than this fragment.",
+      "messages": [
+        "supplied the retained version-logo collection. The logos remain the property of SEGA and their respective rights holders.",
+        "{0} logo unavailable",
+        "{0} logo"
+      ],
+      "sources": [
+        "src/maimai_intelligence/assets/chart-artwork.js:18"
+      ]
+    },
+    "mai-notes simai player for": {
+      "reason": "Source fragment. Translate the complete composed message rather than this fragment.",
+      "messages": [
+        "mai-notes simai player for {0} (opens in a new tab)"
+      ],
+      "sources": [
+        "src/maimai_intelligence/assets/chart-links.js:27"
+      ]
+    },
+    "matches · one chart per song family · select a match to compare both charts.": {
+      "reason": "Source fragment. Translate the complete composed message rather than this fragment.",
+      "messages": [
+        "{0} matches · one chart per song family · select a match to compare both charts."
+      ],
+      "sources": [
+        "src/maimai_intelligence/assets/chart-comparison.js:101"
+      ]
+    },
+    "matching charts. Keep typing or show more.": {
+      "reason": "Source fragment. Translate the complete composed message rather than this fragment.",
+      "messages": [
+        "Showing {0} of {1} matching charts. Keep typing or show more."
+      ],
+      "sources": [
+        "src/maimai_intelligence/assets/chart-comparison.js:48"
+      ]
+    },
+    "matching charts.": {
+      "reason": "Source fragment. Translate the complete composed message rather than this fragment.",
+      "messages": [
+        "No matching charts. Try another song, artist or difficulty.",
+        "Showing {0} of {1} matching charts. Keep typing or show more.",
+        "{0} matching charts."
+      ],
+      "sources": [
+        "src/maimai_intelligence/assets/chart-comparison.js:48"
+      ]
+    },
+    "mean,": {
+      "reason": "Source fragment. Translate the complete composed message rather than this fragment.",
+      "messages": [
+        "{0}: {1} mean, {2} peak inputs/s · {3}% coverage"
+      ],
+      "sources": [
+        "src/maimai_intelligence/assets/chart-overview.js:57"
+      ]
+    },
+    "noopener noreferrer": {
+      "reason": "Programming token, selector, serialization or non-copy attribute; never translate.",
+      "sources": [
+        "src/maimai_intelligence/assets/player-data.js:20",
+        "src/maimai_intelligence/assets/chart-links.js:13",
+        "src/maimai_intelligence/assets/chart-links.js:25"
+      ]
+    },
+    "observed occurrences · experimental detection": {
+      "reason": "Source fragment. Translate the complete composed message rather than this fragment.",
+      "messages": [
+        "{0} observed occurrences · experimental detection"
+      ],
+      "sources": [
+        "src/maimai_intelligence/assets/chart-overview.js:44"
+      ]
+    },
+    "observed": {
+      "reason": "Source fragment. Translate the complete composed message rather than this fragment.",
+      "messages": [
+        "{0} observed occurrences · experimental detection",
+        "{0} observed · partial coverage",
+        "{0} observed"
+      ],
+      "sources": [
+        "src/maimai_intelligence/assets/chart-overview.js:69"
+      ]
+    },
+    "of": {
+      "reason": "Source fragment. Translate the complete composed message rather than this fragment.",
+      "messages": [
+        "supplied the retained version-logo collection. The logos remain the property of SEGA and their respective rights holders.",
+        "Coverage of the retained research source, not a complete current-game song list.",
+        "Invalid report data offer."
+      ],
+      "sources": [
+        "src/maimai_intelligence/assets/pattern-filter.js:17",
+        "src/maimai_intelligence/assets/chart-comparison.js:48"
+      ]
+    },
+    "pattern dictionary": {
+      "reason": "Source fragment. Translate the complete composed message rather than this fragment.",
+      "messages": [
+        "Skip to pattern dictionary"
+      ],
+      "sources": [
+        "src/maimai_intelligence/assets/view-navigation.js:6"
+      ]
+    },
+    "patterns and traits": {
+      "reason": "Source fragment. Translate the complete composed message rather than this fragment.",
+      "messages": [
+        "{0} of {1} patterns and traits"
+      ],
+      "sources": [
+        "src/maimai_intelligence/assets/pattern-filter.js:17"
+      ]
+    },
+    "patterns selected": {
+      "reason": "Source fragment. Translate the complete composed message rather than this fragment.",
+      "messages": [
+        "{0} patterns selected"
+      ],
+      "sources": [
+        "src/maimai_intelligence/assets/pattern-filter.js:13"
+      ]
+    },
+    "peak inputs/s ·": {
+      "reason": "Source fragment. Translate the complete composed message rather than this fragment.",
+      "messages": [
+        "{0}: {1} mean, {2} peak inputs/s · {3}% coverage"
+      ],
+      "sources": [
+        "src/maimai_intelligence/assets/chart-overview.js:57"
+      ]
+    },
+    "player-grade grade-": {
+      "reason": "Programming token, selector, serialization or non-copy attribute; never translate.",
+      "sources": [
+        "src/maimai_intelligence/assets/player-data.js:90"
+      ]
+    },
+    "s ·": {
+      "reason": "Source fragment. Translate the complete composed message rather than this fragment.",
+      "messages": [
+        "Inputs / s · mean bars, 250 ms peak marks · chart time",
+        "{0} matches · one chart per song family · select a match to compare both charts.",
+        "{0} observed occurrences · experimental detection"
+      ],
+      "sources": [
+        "src/maimai_intelligence/assets/challenge-review.js:29"
+      ]
+    },
+    "s:": {
+      "reason": "Source fragment. Translate the complete composed message rather than this fragment.",
+      "messages": [
+        "Read the gaps: short, long, short, long. The pattern is in the spacing between inputs.",
+        "Alternate between two positions: A, B, A, B.",
+        "Compare the dashed waits: the first lasts one beat and the second lasts half a beat."
+      ],
+      "sources": [
+        "src/maimai_intelligence/assets/pattern-library.js:83"
+      ]
+    },
+    "search results": {
+      "reason": "Source fragment. Translate the complete composed message rather than this fragment.",
+      "messages": [
+        "First chart search results",
+        "Second chart search results"
+      ],
+      "sources": [
+        "src/maimai_intelligence/assets/chart-comparison.js:34"
+      ]
+    },
+    "song / format entries,": {
+      "reason": "Source fragment. Translate the complete composed message rather than this fragment.",
+      "messages": [
+        "{0} song / format entries, {1} charts"
+      ],
+      "sources": [
+        "src/maimai_intelligence/assets/challenge-review.js:104"
+      ]
+    },
+    "song": {
+      "reason": "Source fragment. Translate the complete composed message rather than this fragment.",
+      "messages": [
+        "Supplemental song metadata",
+        "Tachi community song database",
+        "and its creator for the chart simulator, public song metadata and note counts. We use these to fill catalog gaps, link matching difficulties and check available transcriptions before preparing analysis. Flow and pattern results are computed by our own experimental analysis engine; matching note counts does not establish exact game fidelity."
+      ],
+      "sources": [
+        "src/maimai_intelligence/assets/challenge-review.js:103"
+      ]
+    },
+    "sort priority": {
+      "reason": "Source fragment. Translate the complete composed message rather than this fragment.",
+      "messages": [
+        "Remove {0} sort priority"
+      ],
+      "sources": [
+        "src/maimai_intelligence/assets/challenge-review.js:64"
+      ]
+    },
+    "support-dialog support-stripe-dialog": {
+      "reason": "Programming token, selector, serialization or non-copy attribute; never translate.",
+      "sources": [
+        "src/maimai_intelligence/assets/support-stripe.js:14"
+      ]
+    },
+    "to": {
+      "reason": "Source fragment. Translate the complete composed message rather than this fragment.",
+      "messages": [
+        "Thank you to the creators, maintainers and community contributors whose work makes this browser possible.",
+        ", and the composers, performers, illustrators, chart designers, publishers and licensors credited in the game. Song metadata comes from",
+        ". The source specifies research use and prohibits commercial use. Attribution does not grant additional rights to the original charts or media."
+      ],
+      "sources": [
+        "src/maimai_intelligence/assets/chart-filters.js:54",
+        "src/maimai_intelligence/assets/chart-overview.js:51"
+      ]
+    },
+    "unavailable": {
+      "reason": "Source fragment. Translate the complete composed message rather than this fragment.",
+      "messages": [
+        "Flow unavailable",
+        "Pattern mappings are unavailable for one or both charts in this release.",
+        "Chart details are unavailable"
+      ],
+      "sources": [
+        "src/maimai_intelligence/assets/chart-artwork.js:9",
+        "src/maimai_intelligence/assets/chart-artwork.js:9",
+        "src/maimai_intelligence/assets/chart-artwork.js:14",
+        "src/maimai_intelligence/assets/chart-artwork.js:14"
+      ]
+    },
+    "unsorted": {
+      "reason": "Source fragment. Translate the complete composed message rather than this fragment.",
+      "messages": [
+        "{0} unsorted"
+      ],
+      "sources": [
+        "src/maimai_intelligence/assets/challenge-review.js:70"
+      ]
+    },
+    "use strict": {
+      "reason": "Programming token, selector, serialization or non-copy attribute; never translate.",
+      "sources": [
+        "src/maimai_intelligence/assets/view-navigation.js:2",
+        "src/maimai_intelligence/assets/settings-menu.js:3",
+        "src/maimai_intelligence/assets/player-data-core.js:2",
+        "src/maimai_intelligence/assets/player-data.js:2",
+        "src/maimai_intelligence/assets/analytics.js:3",
+        "src/maimai_intelligence/assets/support-client.js:3",
+        "src/maimai_intelligence/assets/support-stripe.js:2",
+        "src/maimai_intelligence/assets/support-page.js:2",
+        "src/maimai_intelligence/assets/support-return.js:2",
+        "src/maimai_intelligence/assets/chart-visuals.js:3",
+        "src/maimai_intelligence/assets/pattern-library.js:2",
+        "src/maimai_intelligence/assets/challenge-matching.js:2",
+        "src/maimai_intelligence/assets/chart-links.js:2",
+        "src/maimai_intelligence/assets/chart-artwork.js:2",
+        "src/maimai_intelligence/assets/chart-filters.js:2",
+        "src/maimai_intelligence/assets/chart-overview.js:2",
+        "src/maimai_intelligence/assets/pattern-filter.js:2",
+        "src/maimai_intelligence/assets/registry-browser.js:2",
+        "src/maimai_intelligence/assets/chart-comparison.js:2",
+        "src/maimai_intelligence/assets/challenge-review.js:2",
+        "src/maimai_intelligence/assets/lab-loader.js:3"
+      ]
+    },
+    "versions selected": {
+      "reason": "Source fragment. Translate the complete composed message rather than this fragment.",
+      "messages": [
+        "{0} versions selected"
+      ],
+      "sources": [
+        "src/maimai_intelligence/assets/challenge-review.js:108"
+      ]
+    },
+    "with": {
+      "reason": "Source fragment. Translate the complete composed message rather than this fragment.",
+      "messages": [
+        ", converted upstream with",
+        "No other song families match the selected filters with enough measurement coverage. Try widening the chart filters.",
+        "Alternate a pair of arc slides with a pair of loop slides."
+      ],
+      "sources": [
+        "src/maimai_intelligence/assets/chart-comparison.js:112"
+      ]
+    },
+    "xMidYMid meet": {
+      "reason": "Programming token, selector, serialization or non-copy attribute; never translate.",
+      "sources": [
+        "src/maimai_intelligence/assets/chart-overview.js:51"
+      ]
+    },
+    "· Chart constant": {
+      "reason": "Source fragment. Translate the complete composed message rather than this fragment.",
+      "messages": [
+        "Open {0} · {1} · Chart constant unknown",
+        "Open {0} · {1} · Chart constant {2}"
+      ],
+      "sources": [
+        "src/maimai_intelligence/assets/challenge-review.js:163"
+      ]
+    },
+    "· highlighted in activity chart": {
+      "reason": "Source fragment. Translate the complete composed message rather than this fragment.",
+      "messages": [
+        "{0} · highlighted in activity chart"
+      ],
+      "sources": [
+        "src/maimai_intelligence/assets/chart-overview.js:70"
+      ]
+    },
+    "· lower bound": {
+      "reason": "Source fragment. Translate the complete composed message rather than this fragment.",
+      "messages": [
+        "{0} / min · lower bound"
+      ],
+      "sources": [
+        "src/maimai_intelligence/assets/chart-overview.js:94"
+      ]
+    },
+    "· partial coverage": {
+      "reason": "Source fragment. Translate the complete composed message rather than this fragment.",
+      "messages": [
+        "{0} observed · partial coverage"
+      ],
+      "sources": [
+        "src/maimai_intelligence/assets/chart-overview.js:69"
+      ]
+    },
+    "<circle class=\"pattern-example-tap\" cx=\"{0}\" cy=\"{1}\" r=\"7\"/>": {
+      "reason": "Legacy patternSvg renderer is unused by the public browser, which uses translated pattern-library lessons.",
+      "sources": [
+        "chart-visuals.js"
+      ]
+    },
+    "<polygon class=\"pattern-example-tap\" points=\"{0}\"/>": {
+      "reason": "Legacy patternSvg renderer is unused by the public browser, which uses translated pattern-library lessons.",
+      "sources": [
+        "chart-visuals.js"
+      ]
+    },
+    "<path class=\"{0}\" d=\"M{1} {2}L{3} {4}\"/>": {
+      "reason": "Legacy patternSvg renderer is unused by the public browser, which uses translated pattern-library lessons.",
+      "sources": [
+        "chart-visuals.js"
+      ]
+    },
+    "<path class=\"pattern-example-line\" d=\"M{0} {1}L{2} {3}L{4} {5}\"/>": {
+      "reason": "Legacy patternSvg renderer is unused by the public browser, which uses translated pattern-library lessons.",
+      "sources": [
+        "chart-visuals.js"
+      ]
+    },
+    "<rect class=\"pattern-example-density\" x=\"{0}\" y=\"{1}\" width=\"16\" height=\"{2}\" rx=\"2\"/>": {
+      "reason": "Legacy patternSvg renderer is unused by the public browser, which uses translated pattern-library lessons.",
+      "sources": [
+        "chart-visuals.js"
+      ]
+    },
+    "<svg class=\"pattern-example\" viewBox=\"0 0 304 94\" role=\"img\" aria-label=\"{0} Illustrative example, not a chart excerpt.\"><title>{1}</title>{2}</svg>": {
+      "reason": "Legacy patternSvg renderer is unused by the public browser, which uses translated pattern-library lessons.",
+      "sources": [
+        "chart-visuals.js"
+      ]
+    }
+  }
+}

@@ -30,6 +30,8 @@ SEARCH_DESCRIPTION = (
 CANONICAL_URL = "https://maimai.party/"
 PUBLIC_FILES = (
     "index.html",
+    "localization.js",
+    "localization.css",
     "challenge-review.css",
     "challenge-review.js",
     "lab-loader.js",
@@ -219,10 +221,12 @@ def build_public_release(source, output):
         b"  Content-Security-Policy: frame-ancestors 'none'\n"
         b"/support-return\n  Cache-Control: no-store\n  X-Robots-Tag: noindex, nofollow\n"
         b"  Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self'; "
-        b"connect-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'\n"
+        b"img-src data:; connect-src 'self'; base-uri 'none'; form-action 'none'; "
+        b"frame-ancestors 'none'\n"
         b"/support-return.html\n  X-Robots-Tag: noindex, nofollow\n"
         b"  Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self'; "
-        b"connect-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'\n"
+        b"img-src data:; connect-src 'self'; base-uri 'none'; form-action 'none'; "
+        b"frame-ancestors 'none'\n"
         b"/*\n  X-Content-Type-Options: nosniff\n  Referrer-Policy: no-referrer\n"
         b"  Permissions-Policy: payment=(self "
         b'"https://checkout.stripe.com" "https://js.stripe.com" "https://hooks.stripe.com")\n'

@@ -1,8 +1,10 @@
 /* Authored teaching lessons. Examples and contrasts never assign tags to charts. */
 (()=>{'use strict';
+const i18n=window.maimaiI18n||{text:(node,value)=>node.textContent=value,attribute:(node,key,value)=>node.setAttribute(key,value),option:(...args)=>new Option(...args),searchTerms:value=>value,parts:(values,separator)=>values.join(separator),message:(source,values)=>source.replace(/\{(\d+)\}/g,(_,n)=>values[n]),original:node=>node.textContent,literal:(node,value)=>node.textContent=value};
+
 const definitions=JSON.parse(document.getElementById('pattern-data').textContent),book=__MAIMAI_PATTERN_LESSONS__,lessons=book.lessons;
-const el=id=>document.getElementById(id),make=(tag,text,cls)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(cls)n.className=cls;return n;};
-const ns='http://www.w3.org/2000/svg',svgNode=(tag,attrs={},text)=>{const n=document.createElementNS(ns,tag);for(const[k,v]of Object.entries(attrs))n.setAttribute(k,String(v));if(text!==undefined)n.textContent=text;return n;};
+const el=id=>document.getElementById(id),make=(tag,text,cls)=>{const n=document.createElement(tag);if(text!==undefined)i18n.text(n, text);if(cls)n.className=cls;return n;};
+const ns='http://www.w3.org/2000/svg',svgNode=(tag,attrs={},text)=>{const n=document.createElementNS(ns,tag);for(const[k,v]of Object.entries(attrs))i18n.attribute(n,k,String(v));if(text!==undefined)i18n.text(n, text);return n;};
 const aliases=p=>p.aliases.map(a=>typeof a==='string'?a:a.text).join(' · '),normalize=s=>s.normalize('NFKC').toLowerCase();
 const dialog=el('pattern-dialog');let dispose=()=>{},opener=null,onNavigate=()=>{},onDiscover=()=>{};
 const eventTimes=model=>model.kind==='bars'?Array.from({length:model.duration+1},(_,i)=>i):[...new Set([0,model.duration,...model.notes.map(n=>n[0]),...model.holds.flatMap(h=>h.slice(0,2)),...model.slides.flatMap(s=>s.slice(0,3))])].sort((a,b)=>a-b);
@@ -26,7 +28,7 @@ function chartArt(model,label,{animated=false,maximum=null}={}){
     for(const[start,end,p]of model.holds)svg.append(svgNode('rect',{x:x(start),y:y(p)-6,width:x(end)-x(start),height:12,rx:4,'class':'lesson-hold'+(each.has(start)?' lesson-each':'')}));
     model.slides.forEach(([head,start,end,path],i)=>{
       const sy=32+(positions.length+i)*26;
-      svg.append(svgNode('text',{x:5,y:sy+4,'class':'lesson-label'},path.join('→')+(model.slide_labels?.[i]?' '+model.slide_labels[i]:'')),
+      svg.append(svgNode('text',{x:5,y:sy+4,'class':'lesson-label'},i18n.parts([path.join('→'),...(model.slide_labels?.[i]?[model.slide_labels[i]]:[])],' ')),
         svgNode('line',{x1:x(head),x2:x(start),y1:sy,y2:sy,'class':'lesson-wait'}),
         svgNode('line',{x1:x(start),x2:x(end),y1:sy,y2:sy,'class':'lesson-move'}),
         svgNode('path',{d:`M${x(end)-5} ${sy-5}L${x(end)} ${sy}L${x(end)-5} ${sy+5}`,'class':'lesson-arrow'}));
@@ -41,7 +43,7 @@ function chartArt(model,label,{animated=false,maximum=null}={}){
     const max=maximum||Math.max(1,...model.series.flatMap(s=>s.values)),y=value=>142-value/max*112,width=(right-left)/model.duration;
     for(const value of [0,max/2,max])svg.append(svgNode('text',{x:left-8,y:y(value)+4,'text-anchor':'end','class':'lesson-axis'},Number(value.toFixed(1))));
     model.series.forEach((series,j)=>series.values.forEach((value,i)=>svg.append(svgNode('rect',{x:x(i)+width*(j?.3:.1),y:y(value),width:width*(j?.4:.8),height:142-y(value),'class':j?'lesson-break-bar':'lesson-bar','data-bin':i}))));
-    svg.append(svgNode('text',{x:left,y:12,'class':'lesson-axis'},model.series.map(s=>s.label).join(' · ')));
+    svg.append(svgNode('text',{x:left,y:12,'class':'lesson-axis'},i18n.parts(model.series.map(s=>s.label),' · ')));
   }
   model.bands.forEach(([start,end,text],i)=>{const y=model.kind==='notes'?height-48:164+i*22;svg.append(svgNode('rect',{x:x(start),y:y-9,width:x(end)-x(start),height:17,rx:3,'class':'lesson-band'}),svgNode('text',{x:(x(start)+x(end))/2,y:y+3,'text-anchor':'middle','class':'lesson-band-label'},text));});
   const cursor=svgNode('line',{x1:left,x2:left,y1:17,y2:height-23,'class':'lesson-playhead','aria-hidden':'true'});if(animated)svg.append(cursor);
@@ -53,17 +55,17 @@ function cabinetModel(model){
 }
 function render(){
   const search=normalize(el('pattern-search').value),scope=el('pattern-scope').value;
-  const shown=definitions.filter(p=>normalize([p.display_name,aliases(p),lessons[p.pattern_id].summary,p.definition].join(' ')).includes(search)&&(scope==='all'||(p.kind==='trait')===(scope==='traits')));
+  const shown=definitions.filter(p=>normalize([p.display_name,aliases(p),lessons[p.pattern_id].summary,p.definition].map(i18n.searchTerms).join(' ')).includes(search)&&(scope==='all'||(p.kind==='trait')===(scope==='traits')));
   shown.sort((a,b)=>a.display_name.localeCompare(b.display_name,'en',{sensitivity:'base'}));
-  const root=el('pattern-list');root.replaceChildren();el('pattern-count').textContent=shown.length+' lessons found';
+  const root=el('pattern-list');root.replaceChildren();i18n.text(el('pattern-count'), shown.length+' lessons found');
   for(const p of shown){const lesson=lessons[p.pattern_id],card=make('article',undefined,'pattern-card');card.dataset.patternId=p.pattern_id;
-    const open=make('button','Open lesson →','text-button');open.dataset.openPattern=p.pattern_id;open.setAttribute('aria-label','Open lesson: '+p.display_name);open.onclick=()=>show(p.pattern_id,open);
+    const open=make('button','Open lesson →','text-button');open.dataset.openPattern=p.pattern_id;i18n.attribute(open, 'aria-label', 'Open lesson: '+p.display_name);open.onclick=()=>show(p.pattern_id,open);
     const art=make('div',undefined,'pattern-art');art.append(chartArt(lesson.example,lesson.summary).svg);
     card.append(make('p',p.kind==='trait'?'CHART TRAIT':'PATTERN','eyebrow'),make('h2',p.display_name),make('p',lesson.summary,'pattern-description'),art);
     const overview=window.maimaiChartOverview,count=overview?.frequency.get(p.pattern_id)||0,covered=!!overview?.coverage.get(p.pattern_id);
     const actions=make('div',undefined,'pattern-actions'),find=make('button',covered?'Find charts · '+count:'Find charts','text-button');
     find.dataset.findPattern=p.pattern_id;find.disabled=!covered;find.onclick=()=>onDiscover(p.pattern_id);
-    if(!covered){const reason=make('span','Chart matching unavailable','sr-only');reason.id='unavailable-'+p.pattern_id;find.setAttribute('aria-describedby',reason.id);find.title=reason.textContent;actions.append(reason);}
+    if(!covered){const reason=make('span','Chart matching unavailable','sr-only');reason.id='unavailable-'+p.pattern_id;find.setAttribute('aria-describedby',reason.id);i18n.attribute(find, 'title', i18n.original(reason));actions.append(reason);}
     actions.append(open,find);card.append(actions);root.append(card);
   }
   if(!shown.length)root.append(make('p','No lessons match this search.','empty-state'));
@@ -71,20 +73,20 @@ function render(){
 function demo(lesson){
   const root=make('div',undefined,'pattern-demo'),stage=make('div',undefined,'demo-stage'),caption=make('p',lesson.watch,'lesson-caption'),reading=make('p','','lesson-reading');caption.setAttribute('role','status');reading.setAttribute('role','status');
   const controls=make('div',undefined,'play-controls'),play=make('button','Play demo'),step=make('button','Step'),restart=make('button','Restart'),rate=make('select'),rateLabel=make('label','Speed'),scrub=make('input'),progress=make('span','','demo-progress');
-  rate.setAttribute('aria-label','Demo speed');rate.append(new Option('0.1×','0.1'),new Option('0.25×','0.25'),new Option('0.5×','0.5'),new Option('1×','1'));rate.value='1';rateLabel.append(rate);scrub.type='range';scrub.min='0';scrub.max='1000';scrub.step='1';scrub.value='0';scrub.setAttribute('aria-label','Demo progress');progress.setAttribute('aria-live','off');
+  i18n.attribute(rate, 'aria-label', 'Demo speed');rate.append(i18n.option('0.1×', '0.1'),i18n.option('0.25×', '0.25'),i18n.option('0.5×', '0.5'),i18n.option('1×', '1'));rate.value='1';rateLabel.append(rate);scrub.type='range';scrub.min='0';scrub.max='1000';scrub.step='1';scrub.value='0';i18n.attribute(scrub, 'aria-label', 'Demo progress');progress.setAttribute('aria-live','off');
   controls.append(play,step,restart,rateLabel,scrub,progress);root.append(caption,stage,controls,reading);
   let model=lesson.example,time=0,playing=false,raf=0,last=0,art,cabinet;
-  function stop(){playing=false;cancelAnimationFrame(raf);play.textContent='Play demo';}
+  function stop(){playing=false;cancelAnimationFrame(raf);i18n.text(play, 'Play demo');}
   function draw(){
-    art.draw(time);cabinet?.draw(time*500000);scrub.value=String(Math.round(time/model.duration*1000));progress.textContent=Math.round(time/model.duration*100)+'% · '+Number(time.toFixed(2))+' '+(time===1?model.unit.slice(0,-1):model.unit);
+    art.draw(time);cabinet?.draw(time*500000);scrub.value=String(Math.round(time/model.duration*1000));i18n.text(progress, Math.round(time/model.duration*100)+'% · '+Number(time.toFixed(2))+' '+(time===1?model.unit.slice(0,-1):model.unit));
     let text;
-    if(model.kind==='bars'){const bin=Math.min(model.duration-1,Math.floor(time));text='Section '+bin+'–'+(bin+1)+' s: '+model.series.map(s=>s.values[bin]+' '+s.label.toLowerCase()).join(' · ');}
+    if(model.kind==='bars'){const bin=Math.min(model.duration-1,Math.floor(time));text=i18n.message('Section {0}–{1} s: {2}',[bin,bin+1,i18n.parts(model.series.map(s=>s.values[bin]+' '+s.label.toLowerCase()),' · ')]);}
     else{
       const notes=model.notes.filter(n=>n[0]<=time+1e-8&&n[0]>time-.2).map(n=>n[2]+' at '+positionLabel(n[1]).toLowerCase());
       const ongoing=[...model.slides.filter(s=>s[0]<=time&&time<s[2]).map(s=>(time<s[1]?'Waiting: ':'Moving: ')+s[3].join('→')),...model.holds.filter(h=>h[0]<=time&&time<h[1]).map(h=>'Holding '+positionLabel(h[2]).toLowerCase())];
-      text=[notes.join(' + ')||'No new input',...ongoing].join(' · ');
+      text=i18n.parts([notes.length?i18n.parts(notes,' + '):'No new input',...ongoing],' · ');
     }
-    reading.setAttribute('aria-live',playing?'off':'polite');reading.textContent=text;scrub.setAttribute('aria-valuetext',progress.textContent+' · '+text);
+    reading.setAttribute('aria-live',playing?'off':'polite');i18n.text(reading, text);i18n.attribute(scrub, 'aria-valuetext', i18n.parts([i18n.original(progress),text],' · '));
   }
   function setup(){
     stop();time=0;
@@ -92,10 +94,10 @@ function demo(lesson){
     stage.replaceChildren();const max=model.kind==='bars'?Math.max(1,...model.series.flatMap(s=>s.values)):null;
     art=chartArt(model,'Example: '+lesson.summary,{animated:true,maximum:max});stage.append(art.svg);
     cabinet=model.kind==='notes'?window.maimaiPreviewField(cabinetModel(model),'Input positions',1):null;
-    stage.classList.toggle('with-cabinet',!!cabinet);if(cabinet){cabinet.box.querySelector('svg').setAttribute('aria-label','Authored input positions');stage.append(cabinet.box);}draw();
+    stage.classList.toggle('with-cabinet',!!cabinet);if(cabinet){i18n.attribute(cabinet.box.querySelector('svg'), 'aria-label', 'Authored input positions');stage.append(cabinet.box);}draw();
   }
   function tick(now){if(!playing)return;time+=(now-last)/1000*Number(rate.value)*(model.unit==='beats'?2:1);last=now;if(time>=model.duration){time=model.duration;stop();}draw();if(playing)raf=requestAnimationFrame(tick);}
-  play.onclick=()=>{if(playing){stop();return;}if(time>=model.duration)time=0;playing=true;play.textContent='Pause demo';last=performance.now();raf=requestAnimationFrame(tick);};
+  play.onclick=()=>{if(playing){stop();return;}if(time>=model.duration)time=0;playing=true;i18n.text(play, 'Pause demo');last=performance.now();raf=requestAnimationFrame(tick);};
   step.onclick=()=>{stop();time=eventTimes(model).find(t=>t>time+1e-7)??0;draw();};restart.onclick=()=>{stop();time=0;draw();};scrub.oninput=()=>{stop();time=Number(scrub.value)/1000*model.duration;draw();};
   if(matchMedia('(prefers-reduced-motion: reduce)').matches){play.hidden=true;root.append(make('p','Reduced motion is on. Use Step or the progress slider.','muted'));}
   document.addEventListener('visibilitychange',stop);dispose=()=>{stop();document.removeEventListener('visibilitychange',stop);};setup();return root;
@@ -103,7 +105,7 @@ function demo(lesson){
 function show(id,button=null,navigate=true){
   const p=definitions.find(p=>p.pattern_id===id);if(!p)return false;const lesson=lessons[id];dispose();opener=button||opener;dialog.replaceChildren();
   const header=make('header'),identity=make('div'),title=make('h2',p.display_name);title.id='pattern-title';identity.append(make('p',p.kind==='trait'?'CHART TRAIT':'PATTERN','eyebrow'),title,make('p',aliases(p),'muted'));
-  const close=make('button','Close');close.setAttribute('aria-label','Close pattern');close.onclick=()=>dialog.close();header.append(identity,close);dialog.append(header);if(!dialog.open)dialog.showModal();
+  const close=make('button','Close');i18n.attribute(close, 'aria-label', 'Close pattern');close.onclick=()=>dialog.close();header.append(identity,close);dialog.append(header);if(!dialog.open)dialog.showModal();
   dialog.append(make('p',lesson.summary,'demo-summary'),demo(lesson));
   if(window.maimaiChartOverview?.coverage.get(id)){const find=make('button','Find charts with this pattern');find.onclick=()=>{dialog.close();onDiscover(id);};dialog.append(find);}
   close.focus();if(navigate)onNavigate(id);return true;

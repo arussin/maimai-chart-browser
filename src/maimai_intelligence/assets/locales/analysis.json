@@ -1,0 +1,369 @@
+{
+  "messages": {
+    "Input speed": {
+      "zh-Hans": "输入速度",
+      "ko": "입력 속도",
+      "ja": "入力速度"
+    },
+    "Rhythm": {
+      "zh-Hans": "节奏",
+      "ko": "리듬",
+      "ja": "リズム"
+    },
+    "Simultaneous inputs": {
+      "zh-Hans": "同时输入",
+      "ko": "동시 입력",
+      "ja": "同時入力"
+    },
+    "Holds": {
+      "zh-Hans": "长按",
+      "ko": "홀드",
+      "ja": "ホールド"
+    },
+    "Slides": {
+      "zh-Hans": "滑动",
+      "ko": "슬라이드",
+      "ja": "スライド"
+    },
+    "Layout": {
+      "zh-Hans": "位置分布",
+      "ko": "배치",
+      "ja": "配置"
+    },
+    "Average inputs / s": {
+      "zh-Hans": "平均输入 / 秒",
+      "ko": "평균 입력 / 초",
+      "ja": "平均入力 / 秒"
+    },
+    "Busiest second": {
+      "zh-Hans": "最密集的一秒",
+      "ko": "입력이 가장 많은 1초",
+      "ja": "最も入力の多い1秒"
+    },
+    "90th-percentile inputs / s": {
+      "zh-Hans": "第 90 百分位输入 / 秒",
+      "ko": "초당 입력 수의 90백분위수",
+      "ja": "90パーセンタイル入力 / 秒"
+    },
+    "Average gap between inputs": {
+      "zh-Hans": "平均输入间隔",
+      "ko": "평균 입력 간격",
+      "ja": "平均入力間隔"
+    },
+    "Variation in input spacing": {
+      "zh-Hans": "输入间隔变化",
+      "ko": "입력 간격의 변동성",
+      "ja": "入力間隔のばらつき"
+    },
+    "Inputs played together": {
+      "zh-Hans": "同时操作的输入",
+      "ko": "함께 처리하는 입력",
+      "ja": "同時に処理する入力"
+    },
+    "Largest simultaneous group": {
+      "zh-Hans": "最大同时输入组",
+      "ko": "최대 동시 입력 묶음",
+      "ja": "最大同時入力数"
+    },
+    "Average active holds": {
+      "zh-Hans": "平均持续长按数",
+      "ko": "평균 유지 홀드 수",
+      "ja": "平均ホールド保持数"
+    },
+    "Average moving slides": {
+      "zh-Hans": "平均滑动中的 SLIDE 数",
+      "ko": "평균 이동 중 슬라이드 수",
+      "ja": "平均移動スライド数"
+    },
+    "Average waiting slides": {
+      "zh-Hans": "平均等待中的 SLIDE 数",
+      "ko": "평균 대기 슬라이드 수",
+      "ja": "平均待機スライド数"
+    },
+    "Average spacing between single inputs": {
+      "zh-Hans": "单次输入的平均位置间隔",
+      "ko": "단일 입력 간 평균 위치 간격",
+      "ja": "単発入力間の平均位置間隔"
+    },
+    "Simultaneous-input span": {
+      "zh-Hans": "同时输入跨度",
+      "ko": "동시 입력 범위",
+      "ja": "同時入力の位置幅"
+    },
+    "Touch inputs": {
+      "zh-Hans": "触摸输入",
+      "ko": "터치 입력",
+      "ja": "タッチ入力"
+    },
+    "Average input speed": {
+      "zh-Hans": "平均输入速度",
+      "ko": "평균 입력 속도",
+      "ja": "平均入力速度"
+    },
+    "Busiest 1 s": {
+      "zh-Hans": "最密集的 1 秒",
+      "ko": "입력이 가장 많은 1초",
+      "ja": "最も入力の多い1秒"
+    },
+    "Avg active holds": {
+      "zh-Hans": "平均持续长按数",
+      "ko": "평균 유지 홀드 수",
+      "ja": "平均ホールド保持数"
+    },
+    "Avg moving slides": {
+      "zh-Hans": "平均滑动中的 SLIDE 数",
+      "ko": "평균 이동 슬라이드 수",
+      "ja": "平均移動スライド数"
+    },
+    "Single-input spacing": {
+      "zh-Hans": "单次输入位置间隔",
+      "ko": "단일 입력 위치 간격",
+      "ja": "単発入力の位置間隔"
+    },
+    "Peak inputs / s": {
+      "zh-Hans": "峰值输入 / 秒",
+      "ko": "최고 입력 / 초",
+      "ja": "ピーク入力 / 秒"
+    },
+    "Chart measurements": {
+      "zh-Hans": "谱面测量值",
+      "ko": "채보 측정값",
+      "ja": "譜面の測定値"
+    },
+    "Closest in": {
+      "zh-Hans": "最相近的项目",
+      "ko": "가장 비슷한 항목",
+      "ja": "最も近い項目"
+    },
+    "Furthest in": {
+      "zh-Hans": "差异最大的项目",
+      "ko": "가장 다른 항목",
+      "ja": "最も異なる項目"
+    },
+    "Measurement": {
+      "zh-Hans": "测量项目",
+      "ko": "측정 항목",
+      "ja": "測定項目"
+    },
+    "Source song BPM": {
+      "zh-Hans": "来源乐曲 BPM",
+      "ko": "출처의 곡 BPM",
+      "ja": "出典の楽曲 BPM"
+    },
+    "There is not enough shared measurement coverage for a similarity summary.": {
+      "zh-Hans": "共同测量数据不足，无法生成相似度概要。",
+      "ko": "공통 측정 데이터가 부족하여 유사도를 요약할 수 없습니다.",
+      "ja": "共通する測定データが不足しているため、類似度を要約できません。"
+    },
+    "Similar patterns & demands": {
+      "zh-Hans": "相似配置与操作要求",
+      "ko": "비슷한 패턴 및 요구 능력",
+      "ja": "似た配置と要求動作"
+    },
+    "Similar chart demands": {
+      "zh-Hans": "操作要求相似的谱面",
+      "ko": "비슷한 채보 요구 능력",
+      "ja": "求められる動きが似た譜面"
+    },
+    "No other song families match the selected filters with enough measurement coverage. Try widening the chart filters.": {
+      "zh-Hans": "没有其他乐曲组同时符合筛选条件且有足够测量数据。请放宽筛选条件。",
+      "ko": "필터에 맞고 측정 데이터가 충분한 다른 곡이 없습니다. 채보 필터 범위를 넓혀 보세요.",
+      "ja": "条件に合い、測定データが十分な別の楽曲がありません。絞り込みを広げてください。"
+    },
+    "No shared detections in supported coverage": {
+      "zh-Hans": "支持范围内没有共同检测结果",
+      "ko": "지원 범위 내 공통 검출 없음",
+      "ja": "対応範囲内に共通の検出結果なし"
+    },
+    "Pattern coverage insufficient; ranked by measurements": {
+      "zh-Hans": "配置覆盖不足；按测量值排序",
+      "ko": "패턴 데이터 부족: 측정값 기준 정렬",
+      "ja": "配置データが不足しているため測定値で並べ替え"
+    },
+    "Loading activity…": {
+      "zh-Hans": "正在加载输入趋势…",
+      "ko": "입력 흐름 불러오는 중…",
+      "ja": "入力推移を読み込み中…"
+    },
+    "Loading chart evidence…": {
+      "zh-Hans": "正在加载谱面证据…",
+      "ko": "채보 근거 데이터 불러오는 중…",
+      "ja": "譜面の根拠データを読み込み中…"
+    },
+    "Activity could not load.": {
+      "zh-Hans": "无法加载输入趋势。",
+      "ko": "입력 흐름을 불러올 수 없습니다.",
+      "ja": "入力推移を読み込めませんでした。"
+    },
+    "Chart evidence could not be loaded. Search and filters are still available.": {
+      "zh-Hans": "无法加载谱面证据。仍可使用搜索和筛选。",
+      "ko": "채보 근거 데이터를 불러올 수 없습니다. 검색과 필터는 계속 사용할 수 있습니다.",
+      "ja": "譜面の根拠データを読み込めませんでした。検索と絞り込みは引き続き使えます。"
+    },
+    "Retry loading chart": {
+      "zh-Hans": "重试加载谱面",
+      "ko": "채보 다시 불러오기",
+      "ja": "譜面の読み込みを再試行"
+    },
+    "No patterns detected in supported coverage": {
+      "zh-Hans": "支持范围内未检测到配置",
+      "ko": "지원 범위 내 검출된 패턴 없음",
+      "ja": "対応範囲内に配置の検出なし"
+    },
+    "No patterns detected in supported coverage.": {
+      "zh-Hans": "支持范围内未检测到配置。",
+      "ko": "지원 범위 내 검출된 패턴이 없습니다.",
+      "ja": "対応範囲内に配置は検出されませんでした。"
+    },
+    "Patterns not prepared for this chart": {
+      "zh-Hans": "此谱面尚未生成配置数据",
+      "ko": "이 채보의 패턴 데이터 미준비",
+      "ja": "この譜面の配置データは未作成です"
+    },
+    "Flow unavailable": {
+      "zh-Hans": "输入趋势不可用",
+      "ko": "입력 흐름 없음",
+      "ja": "入力推移なし"
+    },
+    "Inputs / s · mean bars, 250 ms peak marks · chart time": {
+      "zh-Hans": "输入 / 秒 · 柱为平均值，标记为 250 毫秒峰值 · 谱面时间",
+      "ko": "입력 / 초 · 막대: 평균, 표시: 250ms 최고치 · 채보 시간",
+      "ja": "入力 / 秒 · 棒は平均、印は250msのピーク · 譜面時刻"
+    },
+    "Patterns & activity": {
+      "zh-Hans": "配置与输入趋势",
+      "ko": "패턴 및 입력 흐름",
+      "ja": "配置と入力推移"
+    },
+    "This chart has no prepared pattern analysis.": {
+      "zh-Hans": "此谱面尚未生成配置分析。",
+      "ko": "이 채보에는 준비된 패턴 분석이 없습니다.",
+      "ja": "この譜面の配置解析はまだありません。"
+    },
+    "Recurring-pair form · other variants may not be detected": {
+      "zh-Hans": "重复成对形式 · 其他变体可能未被检测",
+      "ko": "반복 쌍 형태 · 다른 변형은 검출되지 않을 수 있음",
+      "ja": "繰り返すペアの形 · 他の変形は検出されない場合があります"
+    },
+    "Patterns in common": {
+      "zh-Hans": "共同配置",
+      "ko": "공통 패턴",
+      "ja": "共通の配置"
+    },
+    "Pattern mappings are unavailable for one or both charts in this release.": {
+      "zh-Hans": "此版本中一张或两张谱面缺少配置对应数据。",
+      "ko": "이 버전에서 한쪽 또는 양쪽 채보의 패턴 데이터가 없습니다.",
+      "ja": "この版では、一方または両方の譜面に配置データがありません。"
+    },
+    "Shared patterns": {
+      "zh-Hans": "共同配置",
+      "ko": "공통 패턴",
+      "ja": "共通の配置"
+    },
+    "Detected only in first": {
+      "zh-Hans": "仅第一张检测到",
+      "ko": "첫 번째에서만 검출",
+      "ja": "1つ目のみで検出"
+    },
+    "Detected only in second": {
+      "zh-Hans": "仅第二张检测到",
+      "ko": "두 번째에서만 검출",
+      "ja": "2つ目のみで検出"
+    },
+    "Other chart coverage unknown": {
+      "zh-Hans": "另一张谱面的覆盖范围未知",
+      "ko": "다른 채보의 데이터 범위 불명",
+      "ja": "他方の譜面の対応範囲が不明"
+    },
+    "None detected": {
+      "zh-Hans": "未检测到",
+      "ko": "검출 없음",
+      "ja": "検出なし"
+    },
+    "Pattern frequency": {
+      "zh-Hans": "配置出现频率",
+      "ko": "패턴 빈도",
+      "ja": "配置の出現頻度"
+    },
+    "Activity through each chart": {
+      "zh-Hans": "各谱面的输入趋势",
+      "ko": "각 채보의 입력 흐름",
+      "ja": "各譜面の入力推移"
+    },
+    "{0} matches · one chart per song family · select a match to compare both charts.": {
+      "zh-Hans": "{0} 个匹配项 · 每个乐曲组一张谱面 · 选择结果以比较两张谱面。",
+      "ko": "결과 {0}개 · 곡 그룹당 채보 하나 · 결과를 선택하면 두 채보를 비교합니다.",
+      "ja": "{0} 件一致 · 楽曲グループごとに1譜面 · 結果を選ぶと両方の譜面を比較します。"
+    },
+    "{0} observed occurrences · experimental detection": {
+      "zh-Hans": "观测到 {0} 次 · 实验性检测",
+      "ko": "관측 {0}회 · 실험적 검출",
+      "ja": "{0} 回観測 · 実験的検出"
+    },
+    "{0} observed · partial coverage": {
+      "zh-Hans": "观测到 {0} 次 · 部分覆盖",
+      "ko": "관측 {0}회 · 부분 데이터",
+      "ja": "{0} 回観測 · 一部範囲のみ"
+    },
+    "{0} observed": {
+      "zh-Hans": "观测到 {0} 次",
+      "ko": "관측 {0}회",
+      "ja": "{0} 回観測"
+    },
+    "Peak {0} /s · own scale": {
+      "zh-Hans": "峰值 {0} /秒 · 独立刻度",
+      "ko": "최고 {0} /초 · 개별 눈금",
+      "ja": "ピーク {0} /秒 · 個別スケール"
+    },
+    "{0} / min · lower bound": {
+      "zh-Hans": "{0} / 分钟 · 下限",
+      "ko": "{0} / 분 · 하한값",
+      "ja": "{0} / 分 · 下限値"
+    },
+    "{0} / min": {
+      "zh-Hans": "{0} / 分钟",
+      "ko": "{0} / 분",
+      "ja": "{0} / 分"
+    },
+    "{0}: {1} mean, {2} peak inputs/s · {3}% coverage": {
+      "zh-Hans": "{0}：平均 {1}、峰值 {2} 次输入/秒 · 覆盖率 {3}%",
+      "ko": "{0}: 평균 {1}, 최고 {2} 입력/초 · 데이터 범위 {3}%",
+      "ja": "{0}：平均 {1}、ピーク {2} 入力/秒 · 対応率 {3}%"
+    },
+    "Input activity through {0}": {
+      "zh-Hans": "{0} 的输入趋势",
+      "ko": "{0} 입력 흐름",
+      "ja": "{0} の入力推移"
+    },
+    "Input activity through {0}. {1} to {2}. Peak {3} inputs per second.": {
+      "zh-Hans": "{0} 的输入趋势。{1} 到 {2}。峰值每秒 {3} 次输入。",
+      "ko": "{0} 입력 흐름. {1}부터 {2}까지. 초당 최고 입력 {3}회.",
+      "ja": "{0} の入力推移。{1} から {2}。ピークは毎秒 {3} 入力。"
+    },
+    "{0} · highlighted in activity chart": {
+      "zh-Hans": "{0} · 已在输入趋势图中突出显示",
+      "ko": "{0} · 입력 흐름 그래프에 강조됨",
+      "ja": "{0} · 入力推移グラフで強調表示"
+    },
+    "Highlight {0}": {
+      "zh-Hans": "突出显示 {0}",
+      "ko": "{0} 강조",
+      "ja": "{0} を強調表示"
+    },
+    "{0} beats": {
+      "zh-Hans": "{0} 拍",
+      "ko": "{0} 박",
+      "ja": "{0} 拍"
+    },
+    "{0} buttons": {
+      "zh-Hans": "{0} 个按钮",
+      "ko": "버튼 {0}개",
+      "ja": "{0} ボタン"
+    },
+    "{0} inputs": {
+      "zh-Hans": "{0} 次输入",
+      "ko": "입력 {0}회",
+      "ja": "{0} 入力"
+    }
+  }
+}

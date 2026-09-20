@@ -6,6 +6,7 @@
     "test": "playwright test"
   },
   "devDependencies": {
+    "acorn": "8.15.0",
     "@playwright/test": "1.63.0",
     "@axe-core/playwright": "4.13.0"
   }

@@ -186,6 +186,7 @@ def project_registry(value, legacy):
         if profile and profile.get("version") != "challenge-profile-1-experimental":
             raise ValueError("Selected analysis is not an accepted profile")
         regions, aliases = {}, set(song["metadata"].get("aliases", []))
+        aliases.update(entry["value"] for entry in song.get("search_aliases", []))
         for region in ("JP", "INTL"):
             meta = observations[sid].get((region, "metadata"))
             level = observations[cid].get((region, "level"))

@@ -75,6 +75,51 @@ async function open(page, {keepNotice = false} = {}) {
 const frame = page => page.frameLocator('iframe[title="Stripe checkout fixture"]');
 const payment = page => frame(page).getByRole('button', {name: 'Complete test payment'});
 
+test('language changes translate Support without restarting or replacing checkout',async({page,context})=>{
+  const state=await hosted(context);await page.goto('https://maimai.party/');await open(page);
+  await expect(frame(page).getByRole('heading')).toBeVisible();
+  const saved=await page.evaluate(key=>sessionStorage.getItem(key),storageKey),calls=state.api.length;
+  const dialog=page.locator('#support-checkout-dialog');
+  const original=await dialog.locator('.support-invitation').textContent();
+  for(const locale of ['ko','zh-Hans','ja']){
+    await dialog.locator('[data-language="'+locale+'"]').click();
+    await expect(page.locator('html')).toHaveAttribute('lang',locale);
+    expect(await dialog.locator('.support-invitation').textContent()).not.toBe(original);
+    await expect(frame(page).getByRole('heading')).toBeVisible();
+    expect(await page.evaluate(key=>sessionStorage.getItem(key),storageKey)).toBe(saved);
+    expect(state.api.length).toBe(calls);
+    expect(await dialog.evaluate(node=>node.scrollWidth<=node.clientWidth+1)).toBe(true);
+  }
+  await dialog.locator('[data-language="en"]').click();
+  await expect(dialog.locator('.support-invitation')).toHaveText(original);
+  await dialog.locator('[data-language="ko"]').click();state.status='paid';await payment(page).click();
+  await expect(dialog).toHaveAttribute('data-stage','result');
+  await expect(dialog.getByRole('button',{name:'다시 후원',exact:true})).toBeVisible();
+  const axe=await new AxeBuilder({page}).include('#support-checkout-dialog').withTags(['wcag2a','wcag2aa','wcag21aa']).analyze();
+  expect(axe.violations).toEqual([]);
+});
+
+test('compact Support errors keep flags and translated controls inside the dialog',async({page,context})=>{
+  await hosted(context,{failScript:true});await page.goto('https://maimai.party/');await open(page);
+  const dialog=page.locator('#support-checkout-dialog');
+  await expect(dialog).toHaveAttribute('data-stage','result');
+  // Fallback font metrics differ between Windows and the Linux CI runner.
+  for(const font of ['', 'Verdana, sans-serif']){
+    await dialog.locator('.support-dialog-title').evaluate((node,value)=>node.style.fontFamily=value,font);
+    for(const locale of ['en','ko','zh-Hans','ja']){
+      await dialog.locator('[data-language="'+locale+'"]').click();
+      const widths=await dialog.evaluate(node=>({scroll:node.scrollWidth,client:node.clientWidth}));
+      expect(widths.scroll,JSON.stringify({locale,font,widths})).toBeLessThanOrEqual(widths.client+1);
+      const bounds=await dialog.boundingBox();
+      const title=await dialog.locator('.support-dialog-title').boundingBox();
+      for(const button of await dialog.locator('.language-controls button,.support-dialog-close').all()){
+        const box=await button.boundingBox();expect(box.x+box.width).toBeLessThanOrEqual(bounds.x+bounds.width+1);
+        expect(box.x>=title.x+title.width-1 || box.y>=title.y+title.height-1).toBe(true);
+      }
+    }
+  }
+});
+
 test('separate support page uses native checkout and keeps wallet returns on that page', async ({page, context}) => {
   const state = await hosted(context);
   await page.goto('https://maimai.party/support.html');

@@ -1,0 +1,179 @@
+{
+  "messages": {
+    "Support maimai.party": {
+      "zh-Hans": "赞助 maimai.party",
+      "ko": "maimai.party 후원",
+      "ja": "maimai.party を支援"
+    },
+    "Support checkout · maimai.party": {
+      "zh-Hans": "赞助付款 · maimai.party",
+      "ko": "후원 결제 · maimai.party",
+      "ja": "支援金のお支払い · maimai.party"
+    },
+    "Powered by": {
+      "zh-Hans": "由以下服务提供支持",
+      "ko": "결제 서비스 제공",
+      "ja": "決済サービス"
+    },
+    "maimai.party home": {
+      "zh-Hans": "maimai.party 首页",
+      "ko": "maimai.party 홈",
+      "ja": "maimai.party ホーム"
+    },
+    "Close support checkout": {
+      "zh-Hans": "关闭赞助付款页面",
+      "ko": "후원 결제 닫기",
+      "ja": "支援金のお支払いを閉じる"
+    },
+    "Try again": {
+      "zh-Hans": "重试",
+      "ko": "다시 시도",
+      "ja": "再試行"
+    },
+    "Start a new checkout": {
+      "zh-Hans": "开始新的付款",
+      "ko": "새 결제 시작",
+      "ja": "新しいお支払いを開始"
+    },
+    "Support again": {
+      "zh-Hans": "再次赞助",
+      "ko": "다시 후원",
+      "ja": "もう一度支援する"
+    },
+    "Check payment status": {
+      "zh-Hans": "查看付款状态",
+      "ko": "결제 상태 확인",
+      "ja": "お支払い状況を確認"
+    },
+    "Check again": {
+      "zh-Hans": "再次查看",
+      "ko": "다시 확인",
+      "ja": "もう一度確認"
+    },
+    "Opening checkout…": {
+      "zh-Hans": "正在打开付款页面…",
+      "ko": "결제 화면 여는 중…",
+      "ja": "お支払い画面を開いています…"
+    },
+    "Opening secure checkout…": {
+      "zh-Hans": "正在打开安全付款页面…",
+      "ko": "안전한 결제 화면 여는 중…",
+      "ja": "安全なお支払い画面を開いています…"
+    },
+    "Checking your checkout…": {
+      "zh-Hans": "正在查询付款状态…",
+      "ko": "결제 확인 중…",
+      "ja": "お支払い状況を確認中…"
+    },
+    "Back to maimai.party": {
+      "zh-Hans": "返回 maimai.party",
+      "ko": "maimai.party로 돌아가기",
+      "ja": "maimai.party に戻る"
+    },
+    "Return to checkout": {
+      "zh-Hans": "返回付款页面",
+      "ko": "결제 화면으로 돌아가기",
+      "ja": "お支払い画面に戻る"
+    },
+    "Continue": {
+      "zh-Hans": "继续",
+      "ko": "계속",
+      "ja": "続ける"
+    },
+    "Thank you for supporting maimai.party!": {
+      "zh-Hans": "感谢您支持 maimai.party！",
+      "ko": "maimai.party를 후원해 주셔서 감사합니다!",
+      "ja": "maimai.party へのご支援ありがとうございます！"
+    },
+    "maimai.party is free for everyone. If you’d like to help with hosting and domain costs, a few dollars is more than enough.": {
+      "zh-Hans": "maimai.party 向所有人免费开放。如果您想帮助分担服务器和域名费用，几美元就足够了。",
+      "ko": "maimai.party는 누구나 무료로 이용할 수 있습니다. 호스팅과 도메인 비용에 도움을 주고 싶으시다면 몇 달러만으로도 충분합니다.",
+      "ja": "maimai.party はどなたでも無料で使えます。サーバーやドメインの費用をご支援いただける場合、数ドルでも十分です。"
+    },
+    "Your payment is still processing. Please check its status before trying another payment.": {
+      "zh-Hans": "付款仍在处理中。再次付款前请先查看状态。",
+      "ko": "결제가 아직 처리 중입니다. 다시 결제하기 전에 상태를 확인하세요.",
+      "ja": "お支払いは処理中です。再度お支払いする前に状況をご確認ください。"
+    },
+    "Your payment is still processing. Please check again before making another payment.": {
+      "zh-Hans": "付款仍在处理中。再次付款前请先重新查看状态。",
+      "ko": "결제가 아직 처리 중입니다. 다시 결제하기 전에 한 번 더 확인하세요.",
+      "ja": "お支払いは処理中です。再度お支払いする前にもう一度ご確認ください。"
+    },
+    "This checkout has expired. You can start a new checkout.": {
+      "zh-Hans": "此付款页面已过期。您可以重新发起付款。",
+      "ko": "이 결제 화면의 유효기간이 만료되었습니다. 새 결제를 시작할 수 있습니다.",
+      "ja": "このお支払い画面の有効期限が切れました。新しく開始できます。"
+    },
+    "This checkout has expired. You can return to choose an amount again.": {
+      "zh-Hans": "此付款页面已过期。您可以返回并重新选择金额。",
+      "ko": "이 결제 화면의 유효기간이 만료되었습니다. 돌아가서 금액을 다시 선택할 수 있습니다.",
+      "ja": "このお支払い画面の有効期限が切れました。戻って金額を選び直せます。"
+    },
+    "Your checkout is unfinished. You can return to it or leave it for later.": {
+      "zh-Hans": "付款尚未完成。您可以返回继续，也可以稍后处理。",
+      "ko": "결제가 완료되지 않았습니다. 돌아가서 계속하거나 나중에 진행할 수 있습니다.",
+      "ja": "お支払いは未完了です。画面に戻るか、後で続けられます。"
+    },
+    "Please wait a minute and try again.": {
+      "zh-Hans": "请稍等一分钟后重试。",
+      "ko": "1분 후 다시 시도하세요.",
+      "ja": "1分ほど待ってからもう一度お試しください。"
+    },
+    "Checkout is unavailable. Please try again.": {
+      "zh-Hans": "付款暂时不可用，请重试。",
+      "ko": "결제를 이용할 수 없습니다. 다시 시도하세요.",
+      "ja": "現在お支払いをご利用いただけません。もう一度お試しください。"
+    },
+    "Stripe could not load. Please try again.": {
+      "zh-Hans": "无法加载 Stripe，请重试。",
+      "ko": "Stripe를 불러올 수 없습니다. 다시 시도하세요.",
+      "ja": "Stripe を読み込めませんでした。もう一度お試しください。"
+    },
+    "Checkout is taking too long. Try again to resume the same payment.": {
+      "zh-Hans": "付款页面响应超时。请重试以继续同一笔付款。",
+      "ko": "결제에 시간이 오래 걸리고 있습니다. 다시 시도하면 같은 결제를 이어갈 수 있습니다.",
+      "ja": "お支払い画面の応答に時間がかかっています。再試行すると同じお支払いを再開します。"
+    },
+    "Checkout could not connect. Try again to resume the same payment.": {
+      "zh-Hans": "无法连接付款服务。请重试以继续同一笔付款。",
+      "ko": "결제 서비스에 연결할 수 없습니다. 다시 시도하면 같은 결제를 이어갈 수 있습니다.",
+      "ja": "お支払いサービスに接続できませんでした。再試行すると同じお支払いを再開します。"
+    },
+    "Checkout could not start. Try again to resume the same payment.": {
+      "zh-Hans": "无法开始付款。请重试以继续同一笔付款。",
+      "ko": "결제를 시작할 수 없습니다. 다시 시도하면 같은 결제를 이어갈 수 있습니다.",
+      "ja": "お支払いを開始できませんでした。再試行すると同じお支払いを再開します。"
+    },
+    "Checkout needs temporary storage in this tab to return safely from a wallet. Please allow it and try again.": {
+      "zh-Hans": "付款需要使用本标签页的临时存储，以便从电子钱包安全返回。请允许使用后重试。",
+      "ko": "전자지갑 결제 후 안전하게 돌아오려면 이 탭의 임시 저장소가 필요합니다. 저장소 사용을 허용한 후 다시 시도하세요.",
+      "ja": "ウォレットから安全に戻るため、このタブの一時保存領域が必要です。許可してから再試行してください。"
+    },
+    "Support checkout is currently unavailable. Thank you for visiting maimai.party.": {
+      "zh-Hans": "赞助付款暂时无法使用。感谢您访问 maimai.party。",
+      "ko": "현재 후원 결제를 이용할 수 없습니다. maimai.party에 방문해 주셔서 감사합니다.",
+      "ja": "現在、支援金のお支払いをご利用いただけません。maimai.party にお越しいただきありがとうございます。"
+    },
+    "We could not find this checkout in this tab. Check your receipt before making another payment.": {
+      "zh-Hans": "在本标签页中找不到这笔付款。再次付款前请先查看收据。",
+      "ko": "이 탭에서 해당 결제를 찾을 수 없습니다. 다시 결제하기 전에 영수증을 확인하세요.",
+      "ja": "このタブにお支払いの記録が見つかりません。再度お支払いする前に領収書をご確認ください。"
+    },
+    "We could not confirm your payment yet. Check again before starting another payment.": {
+      "zh-Hans": "暂时无法确认付款。开始另一笔付款前请再次查看状态。",
+      "ko": "아직 결제를 확인할 수 없습니다. 새 결제를 시작하기 전에 다시 확인하세요.",
+      "ja": "まだお支払いを確認できませんでした。新しくお支払いする前にもう一度ご確認ください。"
+    },
+    "JavaScript is needed to open checkout.": {
+      "zh-Hans": "打开付款页面需要启用 JavaScript。",
+      "ko": "결제 화면을 열려면 JavaScript가 필요합니다.",
+      "ja": "お支払い画面を開くには JavaScript が必要です。"
+    },
+    "JavaScript is needed to check payment status. You can also check your Stripe receipt.": {
+      "zh-Hans": "查询付款状态需要启用 JavaScript。您也可以查看 Stripe 收据。",
+      "ko": "결제 상태를 확인하려면 JavaScript가 필요합니다. Stripe 영수증으로도 확인할 수 있습니다.",
+      "ja": "お支払い状況の確認には JavaScript が必要です。Stripe の領収書でも確認できます。"
+    }
+  }
+}

@@ -27,6 +27,9 @@ jobs:
       - run: python -m ruff check .
       - run: python -m ruff format --check .
       - run: python -m unittest discover -s tests
+      - run: python scripts/check_localization.py
+      - run: python scripts/check_localization_review.py
+      - run: python scripts/prepare_multilingual_search.py --registry registry --output src/maimai_intelligence/assets/song-localizations.json --check
       - run: maimai-chart demo --output output/site
   browser:
     runs-on: ubuntu-latest
@@ -42,11 +45,13 @@ jobs:
         with:
           node-version: '22'
       - run: python -m pip install --no-deps .
+      - run: python -m pip install -r requirements-localization.txt
       - run: python tests/browser/prepare.py
         env:
           PYTHONPATH: .
       - run: npm ci
         working-directory: tests/browser
+      - run: node scripts/localization_sources.mjs .
       - run: npx playwright install --with-deps chromium webkit
         working-directory: tests/browser
       - run: npm test
