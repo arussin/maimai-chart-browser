@@ -1,5 +1,5 @@
 // Build a separate test-only preview from canonical support assets. No credentials
-// or production configuration are written or accepted by this build script.
+// or production configuration are written to the sandbox output.
 import {readFile, writeFile, mkdir} from 'node:fs/promises';
 import {fileURLToPath} from 'node:url';
 import path from 'node:path';
@@ -18,11 +18,14 @@ for (const name of ['site-brand.css', 'support-footer.css', 'support-checkout.cs
   'support-client.js', 'support-stripe.js', 'support-return.html', 'support-return.js',
   'stripe-wordmark.svg', 'support.html', 'support-page.js', 'support-page.css']) files['/' + name] = await readAsset(name);
 const publicConfig = await readAsset('support-config.js');
-if (!publicConfig.includes('enabled: false') || !publicConfig.includes("publishableKey: ''")) {
-  throw new Error('Production support configuration must remain disabled and unprovisioned.');
+for (const pattern of [/enabled: (?:true|false)/g, /publishableKey: '[^']*'/g,
+  /origin: 'https:\/\/maimai\.party'/g]) {
+  if ([...publicConfig.matchAll(pattern)].length !== 1) throw new Error('Unexpected public configuration.');
 }
-files['/support-config.js'] = publicConfig.replace('enabled: false', 'enabled: true')
-  .replace('https://maimai.party', origin).replace("publishableKey: ''", `publishableKey: '${publishableKey}'`);
+files['/support-config.js'] = publicConfig.replace(/enabled: (?:true|false)/, 'enabled: true')
+  .replace("origin: 'https://maimai.party'", `origin: '${origin}'`)
+  .replace(/publishableKey: '[^']*'/, `publishableKey: '${publishableKey}'`);
+if (/pk_live_/.test(files['/support-config.js'])) throw new Error('Live key in sandbox output.');
 files['/preview.css'] = 'body{margin:0;background:#f4fafb;color:#183b43;font:16px/1.6 system-ui,sans-serif}main{box-sizing:border-box;max-width:760px;margin:8vh auto;padding:24px}h1{font-size:24px;font-weight:600;margin-top:40px}.preview-note{color:#52676d;font-size:14px}';
 files['/'] = `<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1"><meta name="referrer" content="no-referrer">

@@ -1,8 +1,9 @@
 # Live support configuration handoff
 
-Prepared September 20, 2026. Production is not activated. The existing preview
-continues to use Stripe's sandbox. This is the configuration for the owner-controlled
-security-sensitive / privileged workflow, not a credential file or deployment script.
+Updated September 20, 2026. The live Worker is provisioned and enabled; creating and
+retrieving an unpaid live Checkout session both passed. The public site activation
+is prepared for release. The existing preview continues to use Stripe's sandbox.
+This record contains public configuration and verification, never credentials.
 
 ## Verified live Stripe resources
 
@@ -21,6 +22,25 @@ methods by currency, region, eligibility and Checkout compatibility. Some indivi
 methods remain paused or pending approval. Active account capabilities alone do not
 establish approval of the support use case for every payment method.
 
+## Activation evidence
+
+- The owner created the restricted live key and submitted it directly to Cloudflare.
+  Metadata-only verification confirms `STRIPE_SECRET_KEY` is `secret_text`.
+- Worker `maimai-support` serves only `maimai.party/api/support/*`. Dev/preview URLs,
+  logs/traces and diagnostics are disabled. Its rate-limit namespace is
+  `202609200002`, with 30 requests per 60 seconds.
+- Live payment domain `maimai.party` is enabled (`pmd_1UHeilDrG9Tq0ch5YN5FbHhV`).
+  Stripe branding uses the official site logo, light background and teal accent.
+- This is voluntary support for the site's already provided service, with no
+  charitable claim or payment on someone else's behalf. This matches Stripe's
+  general [tips requirements](https://support.stripe.com/questions/requirements-for-accepting-tips-or-donations).
+  Method-specific approval is distinct: Alipay and WeChat remain pending. No user
+  payment selections were disabled, and this review does not certify those methods.
+- Both server gates are enabled. A real session-create request returned HTTP 200,
+  live mode and `open`; a separate status request verified `open`. No charge was made.
+- Public activation uses the matching publishable key. Browser fixtures replace it
+  with a synthetic key; the sandbox builder always substitutes a test key and origin.
+
 ## Owner provisioning
 
 **This crosses the protected security boundary and needs the security-sensitive / privileged workflow.**
@@ -31,8 +51,7 @@ establish approval of the support use case for every payment method.
    relabeling this payment. Register/verify the live payment domain if absent.
 2. Provision the independent Worker named `maimai-support` using the reviewed
    `support-worker/index.mjs`. The source example is `support-worker/wrangler.jsonc`.
-   On inspection, that Worker and a support route do not yet exist. Keep the
-   sandbox Worker separate.
+   The Worker and its narrow route are now provisioned. Keep the sandbox separate.
 3. Enter a live restricted Stripe key directly into Cloudflare's encrypted
    `STRIPE_SECRET_KEY` binding. It needs Price/Product read and Checkout Session
    write/read access. Credential creation/entry is completed by the owner; never
@@ -46,7 +65,7 @@ establish approval of the support use case for every payment method.
    limit of 30 requests per 60 seconds. Keep Worker dev/preview URLs and request
    logs/traces disabled. Retain existing application headers and privacy controls.
 6. Route only `maimai.party/api/support/*` to this Worker. The Cloudflare zone
-   `62aa723b24ffe5f4db3d1eff5040b3f8` is active and had no Worker routes on inspection.
+   `62aa723b24ffe5f4db3d1eff5040b3f8` is active.
    Check the current Pages/DNS configuration before adding that route; other
    paths continue to the existing site.
 7. Supply the matching public `pk_live_…` key in `support-config.js`, publish the

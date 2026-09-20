@@ -56,8 +56,8 @@ async function hosted(context, {enabled = true, failScript = false, failCreate =
     try {
       let bytes = await readFile(path);
       if (url.pathname.endsWith('/support-config.js'))
-        bytes = Buffer.from(bytes.toString().replace('enabled: false', 'enabled: ' + enabled)
-          .replace("publishableKey: ''", "publishableKey: 'pk_test_fixture'"));
+        bytes = Buffer.from(bytes.toString().replace(/enabled: (?:true|false)/, 'enabled: ' + enabled)
+          .replace(/publishableKey: '[^']*'/, "publishableKey: 'pk_test_fixture'"));
       return route.fulfill({contentType: mime[extname(path)] || 'application/octet-stream', body: bytes});
     } catch { return route.fulfill({status: 404, body: 'Missing fixture'}); }
   });

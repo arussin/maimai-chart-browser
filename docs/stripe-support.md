@@ -1,6 +1,6 @@
 # Native support checkout
 
-Status: implemented and deployed to an isolated HTTPS sandbox; **production remains disabled**. Buy Me a Coffee has been removed completely, with no fallback. The support button stays hidden until Stripe is configured and enabled. Real Stripe currency, amount, card and Kakao Pay observations are recorded in [sandbox verification](stripe-sandbox-verification.md); remaining live eligibility and device checks are explicit there.
+Status: the live Worker is configured and its unpaid session create/status checks pass; public activation is prepared for release. Buy Me a Coffee has been removed completely, with no fallback. Real Stripe currency, amount, card and Kakao Pay observations are recorded in [sandbox verification](stripe-sandbox-verification.md); production configuration and remaining method/device limitations are in [live activation](stripe-live-activation.md).
 
 ## Visitor flow
 
@@ -16,7 +16,7 @@ Imported results kept only in application memory can be lost when a wallet navig
 
 ## Components and API contract
 
-- `src/maimai_intelligence/assets/support-config.js`: public feature flag, publishable key and site wording. Shipped with `enabled: false` and an empty key. Only the exact configured HTTPS origin is eligible; unsupported origins, local files and HTTP keep the support button hidden.
+- `src/maimai_intelligence/assets/support-config.js`: public feature flag, publishable key and site wording. Enabled for the configured live origin; disabling the flag hides Support. Only the exact configured HTTPS origin is eligible; unsupported origins, local files and HTTP keep the support button hidden.
 - `support-client.js`: same-origin requests and payment-only tab storage (`support.checkout.v2.maimai-party`), accepted for at most 23 hours. No amount, currency, client secret or payer details are persisted. The earlier v1 draft was never deployed.
 - `support-stripe.js`: lazy native dialog, SDK lifecycle, focus restoration and retry/return handling. There is no secondary provider: disabled or absent Stripe configuration hides support, and an active Stripe dialog offers retry on failure.
 - `support-return.html` / `.js`: dedicated no-analytics status page. Meta and release-header CSP allow only local scripts/connections, blocking injected Cloudflare beacons. Both Pages' extensionless path and `.html` path receive the restrictive headers.
