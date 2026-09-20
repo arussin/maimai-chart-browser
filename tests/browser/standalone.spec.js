@@ -36,7 +36,8 @@ test('About links work even when the catalog cannot load',async({page})=>{
   await page.goto('/progressive/?view=about');
   await expect(page.locator('#about')).toBeVisible();
   await expect(page.locator('#about h1')).toHaveText('About maimai.party');
-  await expect(page.getByRole('link',{name:'Support maimai.party',exact:true})).toBeVisible();
+  await expect(page.getByRole('link',{name:'View on GitHub',exact:true})).toBeVisible();
+  await expect(page.locator('#support-open')).toBeHidden();
   await page.locator('#catalog-tab').click();await expect(page.locator('#catalog')).toBeVisible();
   await page.locator('#about-tab').click();await expect(page.locator('#about')).toBeVisible();
 });
