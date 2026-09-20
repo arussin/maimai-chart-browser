@@ -25,6 +25,47 @@ function upstream(data) { return mock.method(globalThis, 'fetch', async url =>
   Response.json(url.includes('/prices/') ? price() : data)); }
 afterEach(() => mock.restoreAll());
 
+test('report checkout accepts only its named origin and returns to the same report tab', async () => {
+  const reportOrigin = 'https://adamrussin.com';
+  const reportBody = {...body, project: 'session-report'};
+  const fetch = upstream(await session({metadata: {support_project: 'session-report',
+    support_attempt_hash: await hash(attempt)}}));
+  const response = await worker.fetch(request(reportBody, 'checkout', {headers: {
+    Origin: reportOrigin, 'Sec-Fetch-Site': 'cross-site', 'CF-Connecting-IP': '192.0.2.1',
+    'Content-Type': 'application/json'}}), env());
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get('Access-Control-Allow-Origin'), reportOrigin);
+  assert.equal(response.headers.get('Access-Control-Allow-Credentials'), null);
+  const params = new URLSearchParams(fetch.mock.calls[1].arguments[1].body);
+  assert.equal(params.get('return_url'), 'https://adamrussin.com/maimai/#support-return');
+  assert.equal(params.get('payment_method_configuration'), 'pmc_fixture');
+  assert.equal(params.has('payment_method_types'), false);
+  assert.equal((await worker.fetch(request(reportBody), env())).status, 403);
+  assert.equal((await worker.fetch(request(body, 'checkout', {headers: {
+    Origin: reportOrigin, 'Content-Type': 'application/json', 'CF-Connecting-IP': '192.0.2.1',
+  }}), env())).status, 403);
+});
+
+test('CORS permits only POST JSON from the report, including retryable errors', async () => {
+  const preflight = (origin, method = 'POST', header = 'content-type') => new Request(
+    'https://maimai.party/api/support/checkout', {method: 'OPTIONS', headers: {
+      Origin: origin, 'Access-Control-Request-Method': method, 'Access-Control-Request-Headers': header}});
+  const approved = await worker.fetch(preflight('https://adamrussin.com'), env());
+  assert.equal(approved.status, 204);
+  assert.equal(approved.headers.get('Access-Control-Allow-Origin'), 'https://adamrussin.com');
+  for (const origin of ['https://evil.invalid', 'null', 'http://adamrussin.com', 'https://adamrussin.com.evil.invalid']) {
+    const denied = await worker.fetch(preflight(origin), env());
+    assert.notEqual(denied.status, 204);
+    assert.equal(denied.headers.get('Access-Control-Allow-Origin'), null);
+  }
+  assert.equal((await worker.fetch(preflight('https://adamrussin.com', 'GET'), env())).status, 403);
+  assert.equal((await worker.fetch(preflight('https://adamrussin.com', 'POST', 'authorization'), env())).status, 403);
+  const unavailable = await worker.fetch(request({...body, project: 'session-report'}, 'checkout', {
+    headers: {Origin: 'https://adamrussin.com', 'Content-Type': 'application/json'}}), {...env(), SUPPORT_ENABLED: 'false'});
+  assert.equal(unavailable.status, 503);
+  assert.equal(unavailable.headers.get('Access-Control-Allow-Origin'), 'https://adamrussin.com');
+});
+
 test('uses a verified native customer-chosen price with dynamic methods and a clean return URL', async () => {
   const fetch = upstream(await session());
   const response = await worker.fetch(request(), env());

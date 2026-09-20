@@ -2,6 +2,8 @@
 const PROJECTS = Object.freeze({
   'maimai-party': Object.freeze({origin: 'https://maimai.party', name: 'Support maimai.party',
     returnPath: '/support-return.html', maximum: 10000, preset: 500}),
+  'session-report': Object.freeze({origin: 'https://adamrussin.com', name: 'Support maimai.party',
+    returnPath: '/maimai/#support-return', maximum: 10000, preset: 500}),
 });
 const UUID = /^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/;
 const SESSION = /^cs_(test|live)_[a-zA-Z0-9]{10,200}$/;
@@ -72,7 +74,7 @@ async function stripe(env, path, params, key) {
     throw failure;
   }
 }
-export default {
+const service = {
   async fetch(request, env) {
     try {
       const url = new URL(request.url);
@@ -88,9 +90,11 @@ export default {
           !env.SUPPORT_RATE_LIMITER || (env.TEST_LOCATION_COUNTRY &&
             (env.STRIPE_MODE !== 'test' || !['US', 'KR', 'JP', 'CN'].includes(env.TEST_LOCATION_COUNTRY))))
         return json({error: 'support_unavailable'}, 503);
-      if (url.protocol !== 'https:' || request.headers.get('Origin') !== url.origin ||
-          !Object.values(PROJECTS).some(project => project.origin === url.origin) ||
-          !['same-origin', null].includes(request.headers.get('Sec-Fetch-Site')))
+      const origin = request.headers.get('Origin');
+      if (url.protocol !== 'https:' || url.origin !== PROJECTS['maimai-party'].origin ||
+          !Object.values(PROJECTS).some(project => project.origin === origin) ||
+          !(origin === url.origin ? ['same-origin', null] : ['cross-site', null])
+            .includes(request.headers.get('Sec-Fetch-Site')))
         return json({error: 'invalid_origin'}, 403);
       if (request.headers.get('Content-Type')?.split(';')[0].trim() !== 'application/json')
         return json({error: 'invalid_request'}, 415);
@@ -110,7 +114,7 @@ export default {
           typeof body.project !== 'string' || !Object.hasOwn(PROJECTS, body.project))
         return json({error: 'invalid_request'}, 400);
       const project = PROJECTS[body.project];
-      if (project.origin !== url.origin) return json({error: 'invalid_origin'}, 403);
+      if (project.origin !== origin) return json({error: 'invalid_origin'}, 403);
       const attemptHash = await digest(body.attempt);
       let session;
       if (action === 'checkout' && !hasSession) {
@@ -165,5 +169,26 @@ export default {
           {sandboxDiagnostic: error.sandboxDiagnostic} : {})},
         error instanceof Failure ? error.status : 503);
     }
+  },
+};
+
+export default {
+  async fetch(request, env) {
+    const url = new URL(request.url);
+    const reportOrigin = PROJECTS['session-report'].origin;
+    const reportRequest = url.origin === PROJECTS['maimai-party'].origin &&
+      request.headers.get('Origin') === reportOrigin && !url.search &&
+      ['/api/support/checkout', '/api/support/status'].includes(url.pathname);
+    const cors = {'Access-Control-Allow-Origin': reportOrigin, Vary: 'Origin'};
+    if (request.method === 'OPTIONS' && reportRequest) {
+      const requested = request.headers.get('Access-Control-Request-Headers') || '';
+      if (request.headers.get('Access-Control-Request-Method') !== 'POST' ||
+          requested.toLowerCase() !== 'content-type') return json({error: 'invalid_request'}, 403);
+      return new Response(null, {status: 204, headers: {...headers, ...cors,
+        'Access-Control-Allow-Methods': 'POST', 'Access-Control-Allow-Headers': 'Content-Type'}});
+    }
+    const response = await service.fetch(request, env);
+    if (reportRequest) for (const [name, value] of Object.entries(cors)) response.headers.set(name, value);
+    return response;
   },
 };
