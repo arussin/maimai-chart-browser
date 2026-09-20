@@ -57,7 +57,7 @@ class PublicReleaseTests(unittest.TestCase):
         self.assertFalse((self.output / "raw-response.json").exists())
         self.assertFalse((self.output / "catalogs").exists())
         self.assertIn(
-            'Permissions-Policy: payment=(self '
+            "Permissions-Policy: payment=(self "
             '"https://checkout.stripe.com" "https://js.stripe.com" "https://hooks.stripe.com")',
             (self.output / "_headers").read_text("utf-8"),
         )
