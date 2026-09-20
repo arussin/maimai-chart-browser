@@ -1,8 +1,8 @@
 # Live support configuration handoff
 
-Updated September 20, 2026. The live Worker is provisioned and enabled; creating and
-retrieving an unpaid live Checkout session both passed. The public site activation
-is prepared for release. The existing preview continues to use Stripe's sandbox.
+Updated September 20, 2026. The live Worker and public site are activated. Creating
+and retrieving an unpaid live Checkout session both passed, and the owner confirmed
+a successful real payment through maimai.party. The preview remains a separate sandbox.
 This record contains public configuration and verification, never credentials.
 
 ## Verified live Stripe resources
@@ -40,6 +40,16 @@ establish approval of the support use case for every payment method.
   live mode and `open`; a separate status request verified `open`. No charge was made.
 - Public activation uses the matching publishable key. Browser fixtures replace it
   with a synthetic key; the sandbox builder always substitutes a test key and origin.
+- Production Pages release `1a6c07f0-6e3f-496a-a095-59c671fd9aa4` uses merged commit
+  `cce1d5eda93fae3af58bb292434581dddb2d94a6`. CI and all 45 targeted browser checks
+  passed. The immutable deployment and apex domain serve the reviewed support files.
+  Cloudflare's pre-existing HTML beacon injection is blocked by the checkout CSP.
+- All 14 catalogs, integration files and artwork are unchanged. The manifest SHA-256
+  remains `9cb000b90b381f32a531651f6a321a22f418d0427185e45b97fdd25f227e7c73`.
+  Previous Pages release `d75f2b13-5468-47f5-a31c-b9f6918a80b7` is retained for rollback.
+- The native live checkout displays maimai.party and accepted an edited $1 amount
+  without a site minimum. The agent submitted no payment; the owner's successful
+  real-payment confirmation is reported separately from these automated checks.
 
 ## Owner provisioning
 

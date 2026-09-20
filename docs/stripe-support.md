@@ -1,6 +1,6 @@
 # Native support checkout
 
-Status: the live Worker is configured and its unpaid session create/status checks pass; public activation is prepared for release. Buy Me a Coffee has been removed completely, with no fallback. Real Stripe currency, amount, card and Kakao Pay observations are recorded in [sandbox verification](stripe-sandbox-verification.md); production configuration and remaining method/device limitations are in [live activation](stripe-live-activation.md).
+Status: live on maimai.party, with unpaid session create/status checks verified and a successful real payment confirmed by the owner. Buy Me a Coffee has been removed completely, with no fallback. Real Stripe currency, amount, card and Kakao Pay observations are recorded in [sandbox verification](stripe-sandbox-verification.md); production configuration and remaining method/device limitations are in [live activation](stripe-live-activation.md).
 
 ## Visitor flow
 
