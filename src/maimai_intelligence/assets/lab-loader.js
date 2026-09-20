@@ -1,6 +1,8 @@
 /* Versioned public research data only; retains the existing comparison interface. */
 (async()=>{
   'use strict';
+const i18n=window.maimaiI18n||{text:(node,value)=>node.textContent=value,attribute:(node,key,value)=>node.setAttribute(key,value),option:(...args)=>new Option(...args),literal:(node,value)=>node.textContent=value};
+
   const status=document.getElementById('lab-status');
   const maximum=32*1024*1024;
   const catalogMaximum=64*1024*1024;
@@ -81,6 +83,6 @@
     window.maimaiResearchCatalog=data;
     window.maimaiPersonal?.configure(data,data.provider_mapping);
     const element=document.createElement('script');element.type='application/json';element.id='challenge-data';element.textContent=text;document.body.append(element);
-    const script=document.createElement('script');script.src='challenge-review.js';script.onload=()=>{status.textContent='';if(version!==manifest.default){status.textContent='You are viewing an older catalog. ';const link=document.createElement('a'),latest=new URL(location.href);latest.searchParams.set('version',manifest.default);link.href=latest.href;link.textContent='Open the latest catalog';status.append(link);}};script.onerror=()=>{status.textContent='The research browser could not start.';};document.body.append(script);
-  }catch(error){status.textContent=error.message;}
+    const script=document.createElement('script');script.src='challenge-review.js';script.onload=()=>{i18n.text(status, '');if(version!==manifest.default){i18n.text(status, 'You are viewing an older catalog. ');const link=document.createElement('a'),latest=new URL(location.href);latest.searchParams.set('version',manifest.default);link.href=latest.href;i18n.text(link, 'Open the latest catalog');status.append(link);}};script.onerror=()=>{i18n.text(status, 'The research browser could not start.');};document.body.append(script);
+  }catch(error){i18n.text(status, error.message);}
 })();

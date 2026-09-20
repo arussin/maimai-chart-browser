@@ -1,0 +1,4183 @@
+{
+  "method": "AI language review, not native-speaker certification",
+  "changes": [
+    {
+      "catalog": "about.json",
+      "english": "and their contributors supply fallback BPM, chart constants and chart reference data.",
+      "locale": "ko",
+      "before": "및 기여자들이 보충 BPM, 채보 정수, 채보 참고 데이터를 제공합니다.",
+      "after": "및 기여자들이 보충 BPM, 채보 상수, 채보 참고 데이터를 제공합니다."
+    },
+    {
+      "catalog": "analysis.json",
+      "english": "Busiest second",
+      "locale": "ko",
+      "before": "가장 바쁜 1초",
+      "after": "입력이 가장 많은 1초"
+    },
+    {
+      "catalog": "analysis.json",
+      "english": "90th-percentile inputs / s",
+      "locale": "ko",
+      "before": "90백분위 입력 / 초",
+      "after": "초당 입력 수의 90백분위수"
+    },
+    {
+      "catalog": "analysis.json",
+      "english": "Variation in input spacing",
+      "locale": "ko",
+      "before": "입력 간격 변화",
+      "after": "입력 간격의 변동성"
+    },
+    {
+      "catalog": "analysis.json",
+      "english": "Average moving slides",
+      "locale": "zh-Hans",
+      "before": "平均移动滑动数",
+      "after": "平均滑动中的 SLIDE 数"
+    },
+    {
+      "catalog": "analysis.json",
+      "english": "Average waiting slides",
+      "locale": "zh-Hans",
+      "before": "平均等待滑动数",
+      "after": "平均等待中的 SLIDE 数"
+    },
+    {
+      "catalog": "analysis.json",
+      "english": "Busiest 1 s",
+      "locale": "ko",
+      "before": "가장 바쁜 1초",
+      "after": "입력이 가장 많은 1초"
+    },
+    {
+      "catalog": "analysis.json",
+      "english": "Avg moving slides",
+      "locale": "zh-Hans",
+      "before": "平均移动滑动数",
+      "after": "平均滑动中的 SLIDE 数"
+    },
+    {
+      "catalog": "analysis.json",
+      "english": "Similar patterns & demands",
+      "locale": "zh-Hans",
+      "before": "相似配置与要求",
+      "after": "相似配置与操作要求"
+    },
+    {
+      "catalog": "analysis.json",
+      "english": "Similar chart demands",
+      "locale": "zh-Hans",
+      "before": "相似谱面要求",
+      "after": "操作要求相似的谱面"
+    },
+    {
+      "catalog": "composed.json",
+      "english": "Chart constant unknown",
+      "locale": "ko",
+      "before": "채보 정수 알 수 없음",
+      "after": "채보 상수 알 수 없음"
+    },
+    {
+      "catalog": "composed.json",
+      "english": "Open {0} · {1} · Chart constant unknown",
+      "locale": "ko",
+      "before": "{0} 열기 · {1} · 채보 정수 알 수 없음",
+      "after": "{0} 열기 · {1} · 채보 상수 알 수 없음"
+    },
+    {
+      "catalog": "messages.json",
+      "english": "Source constant",
+      "locale": "ko",
+      "before": "출처 정수",
+      "after": "출처 상수"
+    },
+    {
+      "catalog": "messages.json",
+      "english": "Constant",
+      "locale": "ko",
+      "before": "정수",
+      "after": "상수"
+    },
+    {
+      "catalog": "messages.json",
+      "english": "Choose a second chart or find similar chart demands.",
+      "locale": "zh-Hans",
+      "before": "请选择第二张谱面，或查找要求相似的谱面。",
+      "after": "请选择第二张谱面，或查找所需操作相似的谱面。"
+    },
+    {
+      "catalog": "messages.json",
+      "english": "Chart constant",
+      "locale": "ko",
+      "before": "채보 정수",
+      "after": "채보 상수"
+    },
+    {
+      "catalog": "messages.json",
+      "english": "No verified source constant is available for this context.",
+      "locale": "ko",
+      "before": "현재 조건에 대해 검증된 출처 정수가 없습니다.",
+      "after": "현재 조건에 맞는 출처의 채보 상수가 확인되지 않았습니다."
+    },
+    {
+      "catalog": "messages.json",
+      "english": "Neskol source constant · regional and game-version scope unspecified.",
+      "locale": "ko",
+      "before": "Neskol 출처 정수 · 지역 및 게임 버전 범위 미지정.",
+      "after": "Neskol 출처 상수 · 지역 및 게임 버전 범위 미지정."
+    },
+    {
+      "catalog": "messages.json",
+      "english": "Comparing {0} with {1}",
+      "locale": "ko",
+      "before": "{0}와(과) {1} 비교 중",
+      "after": "비교 중: {0} / {1}"
+    },
+    {
+      "catalog": "messages.json",
+      "english": "Compare with {0}",
+      "locale": "ko",
+      "before": "{0}와(과) 비교",
+      "after": "비교 대상: {0}"
+    },
+    {
+      "catalog": "messages.json",
+      "english": "Chart constant {0}",
+      "locale": "ko",
+      "before": "채보 정수 {0}",
+      "after": "채보 상수 {0}"
+    },
+    {
+      "catalog": "messages.json",
+      "english": "Open {0} · {1} · Chart constant {2}",
+      "locale": "ko",
+      "before": "{0} 열기 · {1} · 채보 정수 {2}",
+      "after": "{0} 열기 · {1} · 채보 상수 {2}"
+    },
+    {
+      "catalog": "privacy.json",
+      "english": "Analytics could not load. Your browser remains fully usable.",
+      "locale": "ko",
+      "before": "방문 통계를 불러오지 못했습니다. 브라우저 기능은 정상적으로 사용할 수 있습니다.",
+      "after": "방문 통계를 불러오지 못했습니다. 사이트 기능은 정상적으로 사용할 수 있습니다."
+    },
+    {
+      "catalog": "privacy.json",
+      "english": "Analytics could not load. Your browser remains fully usable.",
+      "locale": "zh-Hans",
+      "before": "无法加载访问统计。浏览器功能仍可正常使用。",
+      "after": "无法加载访问统计。网站功能仍可正常使用。"
+    },
+    {
+      "catalog": "privacy.json",
+      "english": "Analytics could not load. Your browser remains fully usable.",
+      "locale": "ja",
+      "before": "アクセス解析を読み込めませんでした。ブラウザの機能は引き続き使えます。",
+      "after": "アクセス解析を読み込めませんでした。サイトの機能は引き続き使えます。"
+    },
+    {
+      "catalog": "privacy.json",
+      "english": "On maimai.party, optional Google Analytics uses cookies to count visits, page views and basic device and country information. It loads only after you allow analytics. We send the broad Charts, Pattern dictionary, Compare charts and About views, and may count support checkout opens, starts and confirmed returns. Imported files, player identifiers, search terms, chart selections, full URLs, referrers, payment amounts and payment identifiers are excluded from Google Analytics. Advertising personalization and Google signals are off.",
+      "locale": "zh-Hans",
+      "before": "maimai.party 上可选的 Google Analytics 使用 Cookie 统计访问、页面浏览以及基本设备和国家信息，仅在您允许后加载。我们发送“谱面”“配置词典”“比较谱面”和“关于”等大类浏览信息，也可能统计支持付款的打开、开始及已确认的返回。导入文件、玩家标识、搜索词、谱面选择、完整网址、来源网址、付款金额和付款标识不会发送给 Google Analytics。广告个性化及 Google 信号已关闭。",
+      "after": "maimai.party 上可选的 Google Analytics 使用 Cookie 统计访问、页面浏览以及基本设备和国家信息，仅在您允许后加载。我们发送“谱面”“配置词典”“比较谱面”和“关于”等大类浏览信息，也可能统计赞助付款的打开、开始及已确认的返回。导入文件、玩家标识、搜索词、谱面选择、完整网址、来源网址、付款金额和付款标识不会发送给 Google Analytics。广告个性化及 Google 信号已关闭。"
+    },
+    {
+      "catalog": "privacy.json",
+      "english": "Support checkout loads a payment provider only when you choose to open it. Stripe processes its own connection, cookies and payment details. Our checkout requests exclude imported results, chart selections and searches. Stripe checkout keeps a random payment attempt and checkout reference temporarily in this tab so interrupted payments can resume; it does not create a player account. Stripe handles amount entry and payment details directly. See",
+      "locale": "zh-Hans",
+      "before": "仅在您选择打开支持付款时才会加载付款服务。Stripe 处理其自身的连接、Cookie 和付款信息。我们的付款请求不包含导入成绩、谱面选择和搜索。Stripe 付款会在此标签页中临时保存随机付款尝试标识及付款引用，以便恢复中断的付款；不会创建玩家账户。金额输入与付款信息由 Stripe 直接处理。请参阅",
+      "after": "仅在您选择打开赞助付款时才会加载付款服务。Stripe 处理其自身的连接、Cookie 和付款信息。我们的付款请求不包含导入成绩、谱面选择和搜索。Stripe 付款会在此标签页中临时保存随机付款尝试标识及付款引用，以便恢复中断的付款；不会创建玩家账户。金额输入与付款信息由 Stripe 直接处理。请参阅"
+    },
+    {
+      "catalog": "support.json",
+      "english": "Support maimai.party",
+      "locale": "zh-Hans",
+      "before": "支持 maimai.party",
+      "after": "赞助 maimai.party"
+    },
+    {
+      "catalog": "support.json",
+      "english": "Support checkout · maimai.party",
+      "locale": "zh-Hans",
+      "before": "支持付款 · maimai.party",
+      "after": "赞助付款 · maimai.party"
+    },
+    {
+      "catalog": "support.json",
+      "english": "Support checkout · maimai.party",
+      "locale": "ja",
+      "before": "支援のお支払い · maimai.party",
+      "after": "支援金のお支払い · maimai.party"
+    },
+    {
+      "catalog": "support.json",
+      "english": "Powered by",
+      "locale": "ko",
+      "before": "결제 제공",
+      "after": "결제 서비스 제공"
+    },
+    {
+      "catalog": "support.json",
+      "english": "Close support checkout",
+      "locale": "zh-Hans",
+      "before": "关闭支持付款",
+      "after": "关闭赞助付款页面"
+    },
+    {
+      "catalog": "support.json",
+      "english": "Close support checkout",
+      "locale": "ja",
+      "before": "支援のお支払いを閉じる",
+      "after": "支援金のお支払いを閉じる"
+    },
+    {
+      "catalog": "support.json",
+      "english": "Support again",
+      "locale": "zh-Hans",
+      "before": "再次支持",
+      "after": "再次赞助"
+    },
+    {
+      "catalog": "support.json",
+      "english": "Opening checkout…",
+      "locale": "ko",
+      "before": "결제 여는 중…",
+      "after": "결제 화면 여는 중…"
+    },
+    {
+      "catalog": "support.json",
+      "english": "Opening secure checkout…",
+      "locale": "ko",
+      "before": "안전한 결제 여는 중…",
+      "after": "안전한 결제 화면 여는 중…"
+    },
+    {
+      "catalog": "support.json",
+      "english": "Return to checkout",
+      "locale": "ko",
+      "before": "결제로 돌아가기",
+      "after": "결제 화면으로 돌아가기"
+    },
+    {
+      "catalog": "support.json",
+      "english": "This checkout has expired. You can start a new checkout.",
+      "locale": "ko",
+      "before": "이 결제는 만료되었습니다. 새 결제를 시작할 수 있습니다.",
+      "after": "이 결제 화면의 유효기간이 만료되었습니다. 새 결제를 시작할 수 있습니다."
+    },
+    {
+      "catalog": "support.json",
+      "english": "This checkout has expired. You can start a new checkout.",
+      "locale": "zh-Hans",
+      "before": "本次付款已过期。您可以开始新的付款。",
+      "after": "此付款页面已过期。您可以重新发起付款。"
+    },
+    {
+      "catalog": "support.json",
+      "english": "This checkout has expired. You can return to choose an amount again.",
+      "locale": "ko",
+      "before": "이 결제는 만료되었습니다. 돌아가서 금액을 다시 선택할 수 있습니다.",
+      "after": "이 결제 화면의 유효기간이 만료되었습니다. 돌아가서 금액을 다시 선택할 수 있습니다."
+    },
+    {
+      "catalog": "support.json",
+      "english": "This checkout has expired. You can return to choose an amount again.",
+      "locale": "zh-Hans",
+      "before": "本次付款已过期。您可以返回并重新选择金额。",
+      "after": "此付款页面已过期。您可以返回并重新选择金额。"
+    },
+    {
+      "catalog": "support.json",
+      "english": "Please wait a minute and try again.",
+      "locale": "ko",
+      "before": "잠시 후 다시 시도하세요.",
+      "after": "1분 후 다시 시도하세요."
+    },
+    {
+      "catalog": "support.json",
+      "english": "Please wait a minute and try again.",
+      "locale": "ja",
+      "before": "少し待ってからもう一度お試しください。",
+      "after": "1分ほど待ってからもう一度お試しください。"
+    },
+    {
+      "catalog": "support.json",
+      "english": "Checkout needs temporary storage in this tab to return safely from a wallet. Please allow it and try again.",
+      "locale": "ko",
+      "before": "지갑에서 안전하게 돌아오려면 이 탭의 임시 저장소가 필요합니다. 허용한 후 다시 시도하세요.",
+      "after": "전자지갑 결제 후 안전하게 돌아오려면 이 탭의 임시 저장소가 필요합니다. 저장소 사용을 허용한 후 다시 시도하세요."
+    },
+    {
+      "catalog": "support.json",
+      "english": "Checkout needs temporary storage in this tab to return safely from a wallet. Please allow it and try again.",
+      "locale": "zh-Hans",
+      "before": "付款需要在本标签页中使用临时存储，以便从钱包安全返回。请允许后重试。",
+      "after": "付款需要使用本标签页的临时存储，以便从电子钱包安全返回。请允许使用后重试。"
+    },
+    {
+      "catalog": "support.json",
+      "english": "Support checkout is currently unavailable. Thank you for visiting maimai.party.",
+      "locale": "zh-Hans",
+      "before": "支持付款目前不可用。感谢您访问 maimai.party。",
+      "after": "赞助付款暂时无法使用。感谢您访问 maimai.party。"
+    },
+    {
+      "catalog": "support.json",
+      "english": "Support checkout is currently unavailable. Thank you for visiting maimai.party.",
+      "locale": "ja",
+      "before": "現在、支援のお支払いをご利用いただけません。maimai.party にお越しいただきありがとうございます。",
+      "after": "現在、支援金のお支払いをご利用いただけません。maimai.party にお越しいただきありがとうございます。"
+    },
+    {
+      "catalog": "support.json",
+      "english": "JavaScript is needed to open checkout.",
+      "locale": "ko",
+      "before": "결제를 열려면 JavaScript가 필요합니다.",
+      "after": "결제 화면을 열려면 JavaScript가 필요합니다."
+    },
+    {
+      "catalog": "lessons.json",
+      "english": "Longer gaps separate each group of three from the next group.",
+      "locale": "zh-Hans",
+      "before": "每组三个输入之间由较长间隔分隔。",
+      "after": "每组三次输入与下一组之间的间隔更长。"
+    },
+    {
+      "catalog": "lessons.json",
+      "english": "Short busy bursts interrupt quieter stretches.",
+      "locale": "ko",
+      "before": "한산한 구간 사이에 짧고 바쁜 구간이 끼어 있습니다.",
+      "after": "입력이 적은 구간 사이에 짧은 고밀도 구간이 끼어 있습니다."
+    },
+    {
+      "catalog": "lessons.json",
+      "english": "The isolated busy sections rise sharply above the chart's usual activity.",
+      "locale": "ko",
+      "before": "독립된 바쁜 구간이 채보의 평소 입력량보다 크게 높아집니다.",
+      "after": "독립된 고밀도 구간의 입력량이 채보의 일반적인 수준을 크게 웃돕니다."
+    },
+    {
+      "catalog": "lessons.json",
+      "english": "One separated busy peak stands out.",
+      "locale": "ko",
+      "before": "떨어져 있는 바쁜 최고점 하나가 두드러집니다.",
+      "after": "다른 구간과 떨어진 하나의 밀도 피크가 두드러집니다."
+    },
+    {
+      "catalog": "lessons.json",
+      "english": "Several separated busy peaks recur.",
+      "locale": "ko",
+      "before": "떨어진 바쁜 최고점이 여러 번 나타납니다.",
+      "after": "서로 떨어진 여러 구간에서 밀도 피크가 나타납니다."
+    },
+    {
+      "catalog": "lessons.json",
+      "english": "A busy rate continues across a long stretch.",
+      "locale": "ko",
+      "before": "바쁜 입력 속도가 긴 구간에 걸쳐 지속됩니다.",
+      "after": "높은 입력 빈도가 긴 구간에 걸쳐 지속됩니다."
+    },
+    {
+      "catalog": "pattern-aliases.json",
+      "english": "Future pattern · Future white pattern",
+      "locale": "ko",
+      "before": "Future 패턴 · Future 백보 패턴",
+      "after": "Future 패턴 · Future Re:MASTER 패턴"
+    },
+    {
+      "catalog": "pattern-aliases.json",
+      "english": "branching slides · shared-head slides · slide fan",
+      "locale": "ko",
+      "before": "분기 슬라이드 · 머리 공유 슬라이드 · 부채꼴 슬라이드",
+      "after": "분기 슬라이드 · 시작점을 공유하는 슬라이드 · 부채꼴 슬라이드"
+    },
+    {
+      "catalog": "pattern-aliases.json",
+      "english": "branching slides · shared-head slides · slide fan",
+      "locale": "zh-Hans",
+      "before": "分岔滑动 · 同头滑动 · 扇形滑动",
+      "after": "分岔滑动 · 同起点滑动 · 扇形滑动"
+    },
+    {
+      "catalog": "pattern-aliases.json",
+      "english": "button sweep · sweep · sweeps · staircase",
+      "locale": "zh-Hans",
+      "before": "按钮扫动 · 扫动 · 连续扫动 · 阶梯",
+      "after": "扫键 · 扫动 · 连续扫键 · 楼梯"
+    },
+    {
+      "catalog": "pattern-aliases.json",
+      "english": "jacks · jack · repeated taps",
+      "locale": "zh-Hans",
+      "before": "同键连打 · 同键重复 · 重复单点",
+      "after": "纵连 · 同键连打 · 重复单点"
+    },
+    {
+      "catalog": "pattern-aliases.json",
+      "english": "jacks · jack · repeated taps",
+      "locale": "ko",
+      "before": "잭 · 같은 버튼 연타 · 반복 탭",
+      "after": "연타 · 같은 버튼 연타 · 반복 탭"
+    },
+    {
+      "catalog": "patterns.json",
+      "english": "Repeated-button notes",
+      "locale": "zh-Hans",
+      "before": "同键连打",
+      "after": "纵连 / 同键连打"
+    },
+    {
+      "catalog": "patterns.json",
+      "english": "Repeated-button notes",
+      "locale": "ja",
+      "before": "同ボタン連打",
+      "after": "縦連 / 同ボタン連打"
+    },
+    {
+      "catalog": "patterns.json",
+      "english": "Shared-head slide fan",
+      "locale": "ko",
+      "before": "같은 머리 분기 슬라이드",
+      "after": "시작점을 공유하는 분기 슬라이드"
+    },
+    {
+      "catalog": "patterns.json",
+      "english": "Shared-head slide fan",
+      "locale": "zh-Hans",
+      "before": "同头分岔滑动",
+      "after": "同起点分岔滑动"
+    },
+    {
+      "catalog": "patterns.json",
+      "english": "Staggered slide starts",
+      "locale": "ko",
+      "before": "시차 슬라이드 시작",
+      "after": "시간차 슬라이드 시작"
+    },
+    {
+      "catalog": "patterns.json",
+      "english": "Staggered slide starts",
+      "locale": "zh-Hans",
+      "before": "错时滑动起动",
+      "after": "错时启动的滑动"
+    },
+    {
+      "catalog": "patterns.json",
+      "english": "Overlapping moving slides",
+      "locale": "zh-Hans",
+      "before": "移动滑动重叠",
+      "after": "滑动过程重叠"
+    },
+    {
+      "catalog": "patterns.json",
+      "english": "Bursty density",
+      "locale": "ko",
+      "before": "돌발 밀도",
+      "after": "순간적인 고밀도"
+    },
+    {
+      "catalog": "patterns.json",
+      "english": "Bursty density",
+      "locale": "zh-Hans",
+      "before": "突发密度",
+      "after": "短暂高密度"
+    },
+    {
+      "catalog": "patterns.json",
+      "english": "Sustained density",
+      "locale": "ko",
+      "before": "지속 밀도",
+      "after": "지속되는 고밀도"
+    },
+    {
+      "catalog": "patterns.json",
+      "english": "Multiple density peaks",
+      "locale": "ko",
+      "before": "다중 밀도 최고점",
+      "after": "여러 구간의 밀도 피크"
+    },
+    {
+      "catalog": "patterns.json",
+      "english": "High moving-slide occupancy",
+      "locale": "zh-Hans",
+      "before": "移动滑动高占比",
+      "after": "滑动过程占比高"
+    },
+    {
+      "catalog": "patterns.json",
+      "english": "Anchored trill",
+      "locale": "zh-Hans",
+      "before": "固定点交互",
+      "after": "轴交互"
+    },
+    {
+      "catalog": "patterns.json",
+      "english": "Scattered tap stream",
+      "locale": "zh-Hans",
+      "before": "散点连续单点",
+      "after": "连续散点"
+    },
+    {
+      "catalog": "patterns.json",
+      "english": "Alternating slide launches",
+      "locale": "zh-Hans",
+      "before": "交替发射滑动",
+      "after": "交替启动滑动"
+    },
+    {
+      "catalog": "patterns.json",
+      "english": "No supported chart coverage",
+      "locale": "zh-Hans",
+      "before": "没有支持的谱面覆盖",
+      "after": "暂无支持的谱面数据"
+    },
+    {
+      "catalog": "messages.json",
+      "english": "About",
+      "locale": "ja",
+      "before": "このサイトについて",
+      "after": "サイト紹介",
+      "reason": "Concise Japanese navigation label; verified separately from Simplified Chinese. Full About-page title remains unchanged."
+    },
+    {
+      "catalog": "messages.json",
+      "english": "All charts",
+      "locale": "ja",
+      "before": "すべての譜面",
+      "after": "すべて",
+      "reason": "The surrounding filter label or group supplies the noun; shorten the selection in its UI context."
+    },
+    {
+      "catalog": "messages.json",
+      "english": "All charts",
+      "locale": "zh-Hans",
+      "before": "全部谱面",
+      "after": "全部",
+      "reason": "The surrounding filter label or group supplies the noun; shorten the selection in its UI context."
+    },
+    {
+      "catalog": "messages.json",
+      "english": "All charts",
+      "locale": "ko",
+      "before": "모든 채보",
+      "after": "전체",
+      "reason": "The surrounding filter label or group supplies the noun; shorten the selection in its UI context."
+    },
+    {
+      "catalog": "messages.json",
+      "english": "All genres",
+      "locale": "ja",
+      "before": "すべてのジャンル",
+      "after": "すべて",
+      "reason": "The surrounding filter label or group supplies the noun; shorten the selection in its UI context."
+    },
+    {
+      "catalog": "messages.json",
+      "english": "All genres",
+      "locale": "zh-Hans",
+      "before": "全部分类",
+      "after": "全部",
+      "reason": "The surrounding filter label or group supplies the noun; shorten the selection in its UI context."
+    },
+    {
+      "catalog": "messages.json",
+      "english": "All genres",
+      "locale": "ko",
+      "before": "모든 장르",
+      "after": "전체",
+      "reason": "The surrounding filter label or group supplies the noun; shorten the selection in its UI context."
+    },
+    {
+      "catalog": "messages.json",
+      "english": "All versions",
+      "locale": "ja",
+      "before": "すべてのバージョン",
+      "after": "すべて",
+      "reason": "The surrounding filter label or group supplies the noun; shorten the selection in its UI context."
+    },
+    {
+      "catalog": "messages.json",
+      "english": "All versions",
+      "locale": "zh-Hans",
+      "before": "全部版本",
+      "after": "全部",
+      "reason": "The surrounding filter label or group supplies the noun; shorten the selection in its UI context."
+    },
+    {
+      "catalog": "messages.json",
+      "english": "All versions",
+      "locale": "ko",
+      "before": "모든 버전",
+      "after": "전체",
+      "reason": "The surrounding filter label or group supplies the noun; shorten the selection in its UI context."
+    },
+    {
+      "catalog": "messages.json",
+      "english": "All difficulties",
+      "locale": "ja",
+      "before": "すべての難易度",
+      "after": "すべて",
+      "reason": "The surrounding filter label or group supplies the noun; shorten the selection in its UI context."
+    },
+    {
+      "catalog": "messages.json",
+      "english": "All difficulties",
+      "locale": "zh-Hans",
+      "before": "全部难度",
+      "after": "全部",
+      "reason": "The surrounding filter label or group supplies the noun; shorten the selection in its UI context."
+    },
+    {
+      "catalog": "messages.json",
+      "english": "All difficulties",
+      "locale": "ko",
+      "before": "모든 난이도",
+      "after": "전체",
+      "reason": "The surrounding filter label or group supplies the noun; shorten the selection in its UI context."
+    },
+    {
+      "catalog": "messages.json",
+      "english": "All patterns",
+      "locale": "ja",
+      "before": "すべての配置",
+      "after": "すべて",
+      "reason": "The surrounding filter label or group supplies the noun; shorten the selection in its UI context."
+    },
+    {
+      "catalog": "messages.json",
+      "english": "All patterns",
+      "locale": "zh-Hans",
+      "before": "全部配置",
+      "after": "全部",
+      "reason": "The surrounding filter label or group supplies the noun; shorten the selection in its UI context."
+    },
+    {
+      "catalog": "messages.json",
+      "english": "All patterns",
+      "locale": "ko",
+      "before": "모든 패턴",
+      "after": "전체",
+      "reason": "The surrounding filter label or group supplies the noun; shorten the selection in its UI context."
+    },
+    {
+      "catalog": "messages.json",
+      "english": "All lessons",
+      "locale": "ja",
+      "before": "すべての解説",
+      "after": "すべて",
+      "reason": "The surrounding filter label or group supplies the noun; shorten the selection in its UI context."
+    },
+    {
+      "catalog": "messages.json",
+      "english": "All lessons",
+      "locale": "zh-Hans",
+      "before": "全部教程",
+      "after": "全部",
+      "reason": "The surrounding filter label or group supplies the noun; shorten the selection in its UI context."
+    },
+    {
+      "catalog": "messages.json",
+      "english": "All lessons",
+      "locale": "ko",
+      "before": "모든 강좌",
+      "after": "전체",
+      "reason": "The surrounding filter label or group supplies the noun; shorten the selection in its UI context."
+    }
+  ],
+  "song_changes": [
+    {
+      "song_id": "song:0009e790-c247-4797-bccc-7db50acbe0a2",
+      "title": "ケロ⑨destiny",
+      "before": null,
+      "after": {
+        "title": "ケロ⑨destiny",
+        "artist": "Silver Forest",
+        "aliases": {
+          "zh-Hans": [
+            "青蛙九命运"
+          ]
+        },
+        "reading": "ケロキューデスティニー",
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:0089330d-85df-4e2a-b2fd-249c9ddee40f",
+      "title": "キミとボクのミライ",
+      "before": null,
+      "after": {
+        "title": "キミとボクのミライ",
+        "artist": "ジータ（CV:金元寿子）、ルリア（CV:東山奈央）、ヴィーラ（CV:今井麻美）、マリー（CV:長谷川明子）",
+        "aliases": {
+          "zh-Hans": [
+            "你与我的未来"
+          ]
+        },
+        "reading": "キミトボクノミライ",
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:011b6802-f91e-4a6b-8e61-09c6af391706",
+      "title": "39",
+      "before": {
+        "title": "39",
+        "artist": "sasakure.UK x DECO*27",
+        "aliases": {
+          "zh-Hans": [
+            "三十九 感谢"
+          ],
+          "ko": [
+            "산큐"
+          ]
+        },
+        "review_status": "machine-assisted-draft",
+        "note": "Additional search forms only; Chinese may be a literal gloss or transliteration. Native review welcome."
+      },
+      "after": {
+        "title": "39",
+        "artist": "sasakure.UK x DECO*27",
+        "aliases": {
+          "zh-Hans": [
+            "三十九",
+            "感谢",
+            "三九"
+          ],
+          "ko": [
+            "산큐"
+          ]
+        },
+        "review_status": "ai-reviewed",
+        "note": "Additional search forms only; Chinese may be a literal gloss or transliteration. Native review welcome.",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:01640937-5485-43ab-bd3b-99331da7b559",
+      "title": "おちゃめ機能",
+      "before": null,
+      "after": {
+        "title": "おちゃめ機能",
+        "artist": "ゴジマジP",
+        "aliases": {
+          "zh-Hans": [
+            "淘气机能"
+          ]
+        },
+        "reading": "オチャメキノウ",
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:09fccb83-8531-4ba5-b1d5-7f55b09da756",
+      "title": "ナイト・オブ・ナイツ (Cranky Remix)",
+      "before": null,
+      "after": {
+        "title": "ナイト・オブ・ナイツ (Cranky Remix)",
+        "artist": "ビートまりお × Cranky",
+        "aliases": {
+          "zh-Hans": [
+            "骑士之夜混音"
+          ],
+          "ko": [
+            "나이트 오브 나이츠 크랭키 리믹스"
+          ]
+        },
+        "reading": "ナイトオブナイツクランキーリミックス",
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:0d176ef6-65ad-4a83-877c-ef0b97db886c",
+      "title": "『ウソテイ』 ～一回戦せりなvsしろなvsなずな～",
+      "before": null,
+      "after": {
+        "title": "『ウソテイ』 ～一回戦せりなvsしろなvsなずな～",
+        "artist": "イロドリミドリ「CHUNITHM」",
+        "aliases": {
+          "zh-Hans": [
+            "谎言帝第一回战"
+          ]
+        },
+        "reading": "ウソテイイッカイセンセリナタイシロナタイナズナ",
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:16190071-c622-40cb-a36a-ce3d7a89629e",
+      "title": "エピクロスの虹はもう見えない",
+      "before": null,
+      "after": {
+        "title": "エピクロスの虹はもう見えない",
+        "artist": "SYNC.ART'S feat. 美里",
+        "aliases": {
+          "zh-Hans": [
+            "已经看不见伊壁鸠鲁的彩虹"
+          ]
+        },
+        "reading": "エピクロスノニジワモウミエナイ",
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:16219e44-acff-41ea-83f6-734916ba97d9",
+      "title": "とびだせ！TO THE COSMIC!!",
+      "before": null,
+      "after": {
+        "title": "とびだせ！TO THE COSMIC!!",
+        "artist": "t+pazolite feat. しゃま(CV:種﨑 敦美) & みるく(CV:伊藤 あすか)",
+        "aliases": {
+          "zh-Hans": [
+            "飞向宇宙"
+          ]
+        },
+        "reading": "トビダセトゥーザコズミック",
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:163c9e47-d3a0-401e-b3c8-54352e339f2d",
+      "title": "いっぱい食べる君が好きだよ",
+      "before": null,
+      "after": {
+        "title": "いっぱい食べる君が好きだよ",
+        "artist": "ななひら",
+        "aliases": {
+          "zh-Hans": [
+            "喜欢大口吃饭的你"
+          ]
+        },
+        "reading": "イッパイタベルキミガスキダヨ",
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:16a3383c-c0c0-42fe-b6b9-f3acc7ac3f46",
+      "title": "お返事まだカナ？おじさん構文！",
+      "before": null,
+      "after": {
+        "title": "お返事まだカナ？おじさん構文！",
+        "artist": "吉本おじさん",
+        "aliases": {
+          "zh-Hans": [
+            "还没回复吗大叔句式"
+          ]
+        },
+        "reading": "オヘンジマダカナオジサンコウブン",
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:190a68fe-ec89-44aa-b324-609974b8680a",
+      "title": "ゴーストルール",
+      "before": null,
+      "after": {
+        "title": "ゴーストルール",
+        "artist": "DECO*27",
+        "aliases": {
+          "ko": [
+            "고스트 룰"
+          ],
+          "zh-Hans": [
+            "幽灵法则"
+          ]
+        },
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:199d0328-8a00-4807-a54a-f98725d2d9eb",
+      "title": "ねぇ、壊れタ人形ハ何処へ棄テらレるノ？",
+      "before": null,
+      "after": {
+        "title": "ねぇ、壊れタ人形ハ何処へ棄テらレるノ？",
+        "artist": "cosMo＠暴走P",
+        "aliases": {
+          "zh-Hans": [
+            "呐坏掉的人偶会被丢到哪里呢"
+          ]
+        },
+        "reading": "ネエコワレタニンギョウワドコエステラレルノ",
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:1c1169e7-402c-4f39-acc4-352c0f399cea",
+      "title": "アイドル新鋭隊",
+      "before": null,
+      "after": {
+        "title": "アイドル新鋭隊",
+        "artist": "Mitchie M / 初音ミク / MORE MORE JUMP！「プロジェクトセカイ カラフルステージ！ feat. 初音ミク」",
+        "aliases": {
+          "zh-Hans": [
+            "偶像新锐队"
+          ]
+        },
+        "reading": "アイドルシンエイタイ",
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:1eaefd36-8734-42f0-9264-73f1d17214ef",
+      "title": "2代目閻魔",
+      "before": null,
+      "after": {
+        "title": "2代目閻魔",
+        "artist": "読谷あかね",
+        "aliases": {
+          "zh-Hans": [
+            "第二代阎魔"
+          ]
+        },
+        "reading": "ニダイメエンマ",
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:21f4614c-71e5-4f92-ab4f-ac01c807a7d7",
+      "title": "かせげ！ジャリンコヒーロー",
+      "before": null,
+      "after": {
+        "title": "かせげ！ジャリンコヒーロー",
+        "artist": "角田信朗「ヒーローバンク」",
+        "aliases": {
+          "zh-Hans": [
+            "赚钱吧小鬼英雄"
+          ]
+        },
+        "reading": "カセゲジャリンコヒーロー",
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:23045b7a-78db-4035-a911-87bf3747f6a2",
+      "title": "キズナの物語",
+      "before": null,
+      "after": {
+        "title": "キズナの物語",
+        "artist": "Trefle「チェインクロニクル」",
+        "aliases": {
+          "zh-Hans": [
+            "羁绊的故事"
+          ]
+        },
+        "reading": "キズナノモノガタリ",
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:23c42c22-42e8-40c0-bc28-dc2f08f2c1a8",
+      "title": "アイドル",
+      "before": null,
+      "after": {
+        "title": "アイドル",
+        "artist": "YOASOBI",
+        "aliases": {
+          "ko": [
+            "아이돌",
+            "아이도루"
+          ],
+          "zh-Hans": [
+            "偶像"
+          ]
+        },
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:23eef2ce-25ee-4b78-87ce-c668b544076f",
+      "title": "Alice in 冷凍庫",
+      "before": {
+        "title": "Alice in 冷凍庫",
+        "artist": "Orangestar",
+        "aliases": {
+          "zh-Hans": [
+            "冷冻库中的爱丽丝"
+          ],
+          "ko": [
+            "앨리스 인 레이토코"
+          ]
+        },
+        "review_status": "machine-assisted-draft",
+        "note": "Additional search forms only; Chinese may be a literal gloss or transliteration. Native review welcome."
+      },
+      "after": {
+        "title": "Alice in 冷凍庫",
+        "artist": "Orangestar",
+        "aliases": {
+          "zh-Hans": [
+            "冷冻库中的爱丽丝"
+          ],
+          "ko": [
+            "앨리스 인 레이토코",
+            "앨리스 인 냉동고"
+          ]
+        },
+        "review_status": "ai-reviewed",
+        "note": "Additional search forms only; Chinese may be a literal gloss or transliteration. Native review welcome.",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:253d7e56-7881-4358-b6db-c6f98be7a8c8",
+      "title": "おくすり飲んで寝よう",
+      "before": null,
+      "after": {
+        "title": "おくすり飲んで寝よう",
+        "artist": "もちうつね",
+        "aliases": {
+          "zh-Hans": [
+            "吃药睡觉吧"
+          ]
+        },
+        "reading": "オクスリノンデネヨウ",
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:2544b173-0bc3-499d-a8e2-efae0c0e13d0",
+      "title": "なだめスかし Negotiation（TVsize）",
+      "before": null,
+      "after": {
+        "title": "なだめスかし Negotiation（TVsize）",
+        "artist": "鹿乃と宇崎ちゃん",
+        "aliases": {
+          "zh-Hans": [
+            "软磨硬泡的谈判"
+          ]
+        },
+        "reading": "ナダメスカシネゴシエーション",
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:25aec61f-19af-4396-aff6-1e8bc47a7423",
+      "title": "maiム・maiム feat.週刊少年マガジン",
+      "before": null,
+      "after": {
+        "title": "maiム・maiム feat.週刊少年マガジン",
+        "artist": "にしもと先生、タクマ、どんちゃん「ちょっと盛りました。」",
+        "aliases": {
+          "zh-Hans": [
+            "迈姆迈姆"
+          ]
+        },
+        "reading": "マイムマイム",
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:272710c0-634f-40cd-b5c3-1877bfcfeda0",
+      "title": "INTERNET OVERDOSE",
+      "before": {
+        "title": "INTERNET OVERDOSE",
+        "artist": "Aiobahn feat. KOTOKO",
+        "aliases": {
+          "zh-Hans": [
+            "网络过载"
+          ],
+          "ko": [
+            "인터넷 오버도즈"
+          ]
+        },
+        "review_status": "machine-assisted-draft",
+        "note": "Additional search forms only; Chinese may be a literal gloss or transliteration. Native review welcome."
+      },
+      "after": {
+        "title": "INTERNET OVERDOSE",
+        "artist": "Aiobahn feat. KOTOKO",
+        "aliases": {
+          "zh-Hans": [
+            "网络过载",
+            "网络过量"
+          ],
+          "ko": [
+            "인터넷 오버도즈"
+          ]
+        },
+        "review_status": "ai-reviewed",
+        "note": "Additional search forms only; Chinese may be a literal gloss or transliteration. Native review welcome.",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:2a715e35-9f12-4235-b3fb-6d8aac233e88",
+      "title": "バグ",
+      "before": null,
+      "after": {
+        "title": "バグ",
+        "artist": "かいりきベア",
+        "aliases": {
+          "ko": [
+            "버그",
+            "바구"
+          ],
+          "zh-Hans": [
+            "错误",
+            "故障"
+          ]
+        },
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:2a92de96-2ce0-46dc-b7c8-6895259ac95d",
+      "title": "メイトなやつら（FEAT. 天開司, 佐藤ホームズ, あっくん大魔王 & 歌衣メイカ）",
+      "before": null,
+      "after": {
+        "title": "メイトなやつら（FEAT. 天開司, 佐藤ホームズ, あっくん大魔王 & 歌衣メイカ）",
+        "artist": "MonsterZ MATE",
+        "aliases": {
+          "zh-Hans": [
+            "那些伙伴们"
+          ]
+        },
+        "reading": "メイトナヤツラ",
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:2bd3de1c-708f-4e5f-b413-c42af7fd7677",
+      "title": "チルノのパーフェクトさんすう教室",
+      "before": null,
+      "after": {
+        "title": "チルノのパーフェクトさんすう教室",
+        "artist": "ARM＋夕野ヨシミ(IOSYS)feat. miko",
+        "aliases": {
+          "ko": [
+            "치르노의 퍼펙트 산수교실",
+            "치르노노 퍼펙트 산수 쿄시츠"
+          ],
+          "zh-Hans": [
+            "琪露诺的完美算术教室"
+          ]
+        },
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:2cb12058-4475-4fec-a02d-81e6a9b14a8b",
+      "title": "イタ電はやめて！ ぼくらのスカーレット・コール",
+      "before": null,
+      "after": {
+        "title": "イタ電はやめて！ ぼくらのスカーレット・コール",
+        "artist": "七条レタスグループ",
+        "aliases": {
+          "zh-Hans": [
+            "别再打恶作剧电话我们的绯红呼叫"
+          ]
+        },
+        "reading": "イタデンワヤメテボクラノスカーレットコール",
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:2ec07e86-1054-408f-a996-2a8e2d7d0bd8",
+      "title": "ちっちゃな私",
+      "before": null,
+      "after": {
+        "title": "ちっちゃな私",
+        "artist": "マサラダ",
+        "aliases": {
+          "zh-Hans": [
+            "小小的我"
+          ]
+        },
+        "reading": "チッチャナワタシ",
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:2f2fa4cd-ed3c-4e3c-b0c4-dc2cc9593db9",
+      "title": "おジャ魔女カーニバル!!",
+      "before": null,
+      "after": {
+        "title": "おジャ魔女カーニバル!!",
+        "artist": "covered by 光吉猛修",
+        "aliases": {
+          "zh-Hans": [
+            "小魔女嘉年华"
+          ]
+        },
+        "reading": "オジャマジョカーニバル",
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:2ff73fc2-c886-4560-b8cf-7ebbdd533ced",
+      "title": "Everyday、カチューシャ",
+      "before": null,
+      "after": {
+        "title": "Everyday、カチューシャ",
+        "artist": "AKB48 [PV]",
+        "aliases": {
+          "zh-Hans": [
+            "每日发箍"
+          ]
+        },
+        "reading": "エブリデイカチューシャ",
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:32cde932-ad33-4ac0-acc9-0d9548edc835",
+      "title": "アスノヨゾラ哨戒班",
+      "before": null,
+      "after": {
+        "title": "アスノヨゾラ哨戒班",
+        "artist": "Orangestar feat.IA",
+        "aliases": {
+          "zh-Hans": [
+            "明日的夜空哨戒班"
+          ]
+        },
+        "reading": "アスノヨゾラショウカイハン",
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:32f1117f-76cf-41ef-ba24-7afb15c3aaf2",
+      "title": "メズマライザー",
+      "before": null,
+      "after": {
+        "title": "メズマライザー",
+        "artist": "サツキ feat.初音ミク・重音テト",
+        "aliases": {
+          "ko": [
+            "메스머라이저"
+          ],
+          "zh-Hans": [
+            "催眠术"
+          ]
+        },
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:341468a2-ee99-4f8c-8f40-af81e81988ef",
+      "title": "ヒバナ",
+      "before": null,
+      "after": {
+        "title": "ヒバナ",
+        "artist": "DECO*27",
+        "aliases": {
+          "ko": [
+            "히바나",
+            "불꽃"
+          ],
+          "zh-Hans": [
+            "火花"
+          ]
+        },
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:34da7ab3-2db6-4175-b739-56091084847b",
+      "title": "あつすぎの歌",
+      "before": null,
+      "after": {
+        "title": "あつすぎの歌",
+        "artist": "からめる",
+        "aliases": {
+          "zh-Hans": [
+            "太热之歌"
+          ]
+        },
+        "reading": "アツスギノウタ",
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:37a53ff0-1793-4b41-9114-e32a8c578f1a",
+      "title": "DUAL ROZES",
+      "before": {
+        "title": "DUAL ROZES",
+        "artist": "SOUND HOLIC Vs. Eurobeat Union feat. Nana Takahashi",
+        "aliases": {
+          "zh-Hans": [
+            "双生玫瑰"
+          ],
+          "ko": [
+            "듀얼 로지스"
+          ]
+        },
+        "review_status": "machine-assisted-draft",
+        "note": "Additional search forms only; Chinese may be a literal gloss or transliteration. Native review welcome."
+      },
+      "after": {
+        "title": "DUAL ROZES",
+        "artist": "SOUND HOLIC Vs. Eurobeat Union feat. Nana Takahashi",
+        "aliases": {
+          "zh-Hans": [
+            "双生玫瑰"
+          ],
+          "ko": [
+            "듀얼 로지스",
+            "듀얼 로즈"
+          ]
+        },
+        "review_status": "ai-reviewed",
+        "note": "Additional search forms only; Chinese may be a literal gloss or transliteration. Native review welcome.",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:37b62d74-d17e-4db5-ba31-88a87ea5c079",
+      "title": "Contrapasso -paradiso-",
+      "before": {
+        "title": "Contrapasso -paradiso-",
+        "artist": "t+pazolite",
+        "aliases": {
+          "zh-Hans": [
+            "对位天堂"
+          ],
+          "ko": [
+            "콘트라파소 파라디소"
+          ]
+        },
+        "review_status": "machine-assisted-draft",
+        "note": "Additional search forms only; Chinese may be a literal gloss or transliteration. Native review welcome."
+      },
+      "after": {
+        "title": "Contrapasso -paradiso-",
+        "artist": "t+pazolite",
+        "aliases": {
+          "zh-Hans": [
+            "报应 天堂",
+            "孔特拉帕索 天堂"
+          ],
+          "ko": [
+            "콘트라파소 파라디소"
+          ]
+        },
+        "review_status": "ai-reviewed",
+        "note": "Additional search forms only; Chinese may be a literal gloss or transliteration. Native review welcome.",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:387b0e4c-33e4-4d44-929b-92e4f2cf374e",
+      "title": "LOVEドッきゅん♥",
+      "before": null,
+      "after": {
+        "title": "LOVEドッきゅん♥",
+        "artist": "club Prince[cover]",
+        "aliases": {
+          "zh-Hans": [
+            "爱心砰砰"
+          ]
+        },
+        "reading": "ラブドッキュン",
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:38b78e91-fe0d-4ebd-a0b5-990636172b14",
+      "title": "フォニイ",
+      "before": null,
+      "after": {
+        "title": "フォニイ",
+        "artist": "ツミキ　feat.音楽的同位体　可不（KAFU）",
+        "aliases": {
+          "ko": [
+            "포니",
+            "포니이"
+          ],
+          "zh-Hans": [
+            "伪物"
+          ]
+        },
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:3a3fe144-026e-44b5-beda-c59a9655eebd",
+      "title": "System “Z”",
+      "before": {
+        "title": "System “Z”",
+        "artist": "Jimmy Weckl",
+        "aliases": {
+          "zh-Hans": [
+            "系统贼德"
+          ],
+          "ko": [
+            "시스템 제트"
+          ]
+        },
+        "review_status": "machine-assisted-draft",
+        "note": "Additional search forms only; Chinese may be a literal gloss or transliteration. Native review welcome."
+      },
+      "after": {
+        "title": "System “Z”",
+        "artist": "Jimmy Weckl",
+        "aliases": {
+          "zh-Hans": [
+            "系统Z"
+          ],
+          "ko": [
+            "시스템 제트"
+          ]
+        },
+        "review_status": "ai-reviewed",
+        "note": "Additional search forms only; Chinese may be a literal gloss or transliteration. Native review welcome.",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:3e1d0297-d484-419b-be30-0b7b65ed3619",
+      "title": "だんだん早くなる",
+      "before": null,
+      "after": {
+        "title": "だんだん早くなる",
+        "artist": "40mP",
+        "aliases": {
+          "zh-Hans": [
+            "逐渐变快"
+          ]
+        },
+        "reading": "ダンダンハヤクナル",
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:3f47d8b9-be4e-41c3-9a0a-d16f52a74171",
+      "title": "オシオキGIMMICK!!",
+      "before": null,
+      "after": {
+        "title": "オシオキGIMMICK!!",
+        "artist": "Junky",
+        "aliases": {
+          "zh-Hans": [
+            "惩罚机关"
+          ]
+        },
+        "reading": "オシオキギミック",
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:3fc728a3-21e8-4aff-9365-91f02aff75aa",
+      "title": "ようこそジャパリパークへ",
+      "before": null,
+      "after": {
+        "title": "ようこそジャパリパークへ",
+        "artist": "どうぶつビスケッツ×PPP「けものフレンズ」",
+        "aliases": {
+          "zh-Hans": [
+            "欢迎来到加帕里公园"
+          ]
+        },
+        "reading": "ヨウコソジャパリパークエ",
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:430bb1e5-0046-40ac-bbf7-44bba6035215",
+      "title": "アスヘノBRAVE",
+      "before": null,
+      "after": {
+        "title": "アスヘノBRAVE",
+        "artist": "M.S.S Project",
+        "aliases": {
+          "zh-Hans": [
+            "迈向明天的勇气"
+          ]
+        },
+        "reading": "アスエノブレイブ",
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:43105d54-42e6-4e69-8afb-3b29af124544",
+      "title": "ゴーゴー幽霊船",
+      "before": null,
+      "after": {
+        "title": "ゴーゴー幽霊船",
+        "artist": "米津玄師",
+        "aliases": {
+          "zh-Hans": [
+            "前进幽灵船"
+          ]
+        },
+        "reading": "ゴーゴーユウレイセン",
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:46bad4d2-d9c4-45bd-85fc-348ce9410063",
+      "title": "でらっくmaimai♪てんてこまい!",
+      "before": null,
+      "after": {
+        "title": "でらっくmaimai♪てんてこまい!",
+        "artist": "やしきん feat.でらっくま(CV:三森すずこ)",
+        "aliases": {
+          "zh-Hans": [
+            "豪华舞萌忙得团团转"
+          ]
+        },
+        "reading": "デラックマイマイテンテコマイ",
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:4805d9f8-faf6-4aad-9669-dd03e7294cf3",
+      "title": "+♂",
+      "before": null,
+      "after": {
+        "title": "+♂",
+        "artist": "ギガ/れをる　ダンス　アルスマグナ",
+        "aliases": {
+          "zh-Hans": [
+            "正号男子"
+          ]
+        },
+        "reading": "プラスダンシ",
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:4b76ce5b-a784-4597-b72f-dc26badcedc0",
+      "title": "無敵的ハピネス！(SOS団5人Ver.)",
+      "before": null,
+      "after": {
+        "title": "無敵的ハピネス！(SOS団5人Ver.)",
+        "artist": "涼宮ハルヒ(CV.平野綾),長門有希(CV.茅原実里),朝比奈みくる(CV.後藤邑子)、キョン(CV.杉田智和)、古泉一樹(CV.小野大輔)",
+        "aliases": {
+          "zh-Hans": [
+            "无敌的幸福"
+          ]
+        },
+        "reading": "ムテキテキハピネス",
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:4e0261cb-98f8-4c9c-b386-cbb01be10b33",
+      "title": "女々しくて",
+      "before": {
+        "title": "女々しくて",
+        "artist": "ゴールデンボンバー [PV]",
+        "aliases": {
+          "zh-Hans": [
+            "女女地"
+          ],
+          "ko": [
+            "메메시쿠테"
+          ]
+        },
+        "review_status": "machine-assisted-draft",
+        "note": "Additional search forms only; Chinese may be a literal gloss or transliteration. Native review welcome."
+      },
+      "after": {
+        "title": "女々しくて",
+        "artist": "ゴールデンボンバー [PV]",
+        "aliases": {
+          "zh-Hans": [
+            "没骨气"
+          ],
+          "ko": [
+            "메메시쿠테"
+          ]
+        },
+        "review_status": "ai-reviewed",
+        "note": "Additional search forms only; Chinese may be a literal gloss or transliteration. Native review welcome.",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:5410c11a-a95b-4552-b57b-44f9406e7117",
+      "title": "おても☆Yan",
+      "before": null,
+      "after": {
+        "title": "おても☆Yan",
+        "artist": "光吉猛修",
+        "aliases": {
+          "zh-Hans": [
+            "奥特莫扬"
+          ]
+        },
+        "reading": "オテモヤン",
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:54ab2179-39bb-4714-97f1-767af6f4c7dc",
+      "title": "B.M.S.",
+      "before": {
+        "title": "B.M.S.",
+        "artist": "光吉猛修の父",
+        "aliases": {
+          "zh-Hans": [
+            "比姆斯"
+          ],
+          "ko": [
+            "비엠에스"
+          ]
+        },
+        "review_status": "machine-assisted-draft",
+        "note": "Additional search forms only; Chinese may be a literal gloss or transliteration. Native review welcome."
+      },
+      "after": {
+        "title": "B.M.S.",
+        "artist": "光吉猛修の父",
+        "aliases": {
+          "zh-Hans": [
+            "比艾姆艾斯"
+          ],
+          "ko": [
+            "비엠에스"
+          ]
+        },
+        "review_status": "ai-reviewed",
+        "note": "Additional search forms only; Chinese may be a literal gloss or transliteration. Native review welcome.",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:5542803f-c212-46e9-b560-b73c7dfc0e64",
+      "title": "SAKURAスキップ",
+      "before": null,
+      "after": {
+        "title": "SAKURAスキップ",
+        "artist": "fourfolium「NEW GAME!」",
+        "aliases": {
+          "zh-Hans": [
+            "樱花蹦跳"
+          ]
+        },
+        "reading": "サクラスキップ",
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:577abff5-41ad-4d73-ae64-15b1b6e8427a",
+      "title": "エンドマークに希望と涙を添えて",
+      "before": null,
+      "after": {
+        "title": "エンドマークに希望と涙を添えて",
+        "artist": "cosMo＠暴走P",
+        "aliases": {
+          "zh-Hans": [
+            "在终止符上添上希望与泪水"
+          ]
+        },
+        "reading": "エンドマークニキボウトナミダオソエテ",
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:59b6ed9e-ccec-445a-ab95-d4a19c183545",
+      "title": "だから僕は音楽を辞めた",
+      "before": null,
+      "after": {
+        "title": "だから僕は音楽を辞めた",
+        "artist": "ヨルシカ",
+        "aliases": {
+          "zh-Hans": [
+            "所以我放弃了音乐"
+          ]
+        },
+        "reading": "ダカラボクワオンガクオヤメタ",
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:5b04aaee-9fd1-4e01-92c0-1afcbe52d058",
+      "title": "マツケンサンバⅡ",
+      "before": null,
+      "after": {
+        "title": "マツケンサンバⅡ",
+        "artist": "松平健 [covered by 光吉猛修]",
+        "aliases": {
+          "zh-Hans": [
+            "松健桑巴二"
+          ]
+        },
+        "reading": "マツケンサンバツー",
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:5bf1953c-c86c-4355-b234-661a890ccd92",
+      "title": "推活天使ビビアンちゃん (feat.マスタード＆ビートまりお)",
+      "before": null,
+      "after": {
+        "title": "推活天使ビビアンちゃん (feat.マスタード＆ビートまりお)",
+        "artist": "ファル公＆DJ Myosuke「ゲーム『ゼンレスゾーンゼロ』ビビアン 同人イメージソング」",
+        "aliases": {
+          "zh-Hans": [
+            "追星天使薇薇安"
+          ]
+        },
+        "reading": "オシカツテンシビビアンチャン",
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:5eff63b2-8cf1-4fbd-b71b-c8dfa113bc8c",
+      "title": "ナイト・オブ・ナイツ",
+      "before": null,
+      "after": {
+        "title": "ナイト・オブ・ナイツ",
+        "artist": "ビートまりお(COOL＆CREATE)",
+        "aliases": {
+          "ko": [
+            "나이트 오브 나이츠"
+          ],
+          "zh-Hans": [
+            "骑士之夜"
+          ]
+        },
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:63f96914-7b87-4605-a702-890dac797037",
+      "title": "インドア系ならトラックメイカー",
+      "before": null,
+      "after": {
+        "title": "インドア系ならトラックメイカー",
+        "artist": "Yunomi & nicamoq",
+        "aliases": {
+          "zh-Hans": [
+            "室内系的音乐制作人"
+          ]
+        },
+        "reading": "インドアケイナラトラックメイカー",
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:64864a36-3708-4e46-aad5-c656ed8882f7",
+      "title": "ってゐ！ ～えいえんてゐVer～",
+      "before": null,
+      "after": {
+        "title": "ってゐ！ ～えいえんてゐVer～",
+        "artist": "石鹸屋",
+        "aliases": {
+          "zh-Hans": [
+            "因幡帝永远版"
+          ]
+        },
+        "reading": "ッテイエイエンテイ",
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:652ae9c6-1e5b-4e95-ae86-ea67c596093f",
+      "title": "はじまりの未来",
+      "before": null,
+      "after": {
+        "title": "はじまりの未来",
+        "artist": "40mP × sasakure.UK / 初音ミク「劇場版プロジェクトセカイ　壊れたセカイと歌えないミク」",
+        "aliases": {
+          "zh-Hans": [
+            "起始的未来"
+          ]
+        },
+        "reading": "ハジマリノミライ",
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:66fa8cc8-ab6c-4a22-b121-55013064be20",
+      "title": "このふざけた素晴らしき世界は、僕の為にある",
+      "before": null,
+      "after": {
+        "title": "このふざけた素晴らしき世界は、僕の為にある",
+        "artist": "n.k",
+        "aliases": {
+          "zh-Hans": [
+            "这个荒唐而美妙的世界为我而存在"
+          ]
+        },
+        "reading": "コノフザケタスバラシキセカイワボクノタメニアル",
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:676f9ddb-f0e1-49be-9cfa-59e8d92eb9e4",
+      "title": "うい麦畑でつかまえて",
+      "before": null,
+      "after": {
+        "title": "うい麦畑でつかまえて",
+        "artist": "しぐれうい",
+        "aliases": {
+          "zh-Hans": [
+            "在麦田里抓住我"
+          ]
+        },
+        "reading": "ウイムギバタケデツカマエテ",
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:685c9802-1c62-4680-8f36-2fc1bfb2a1e9",
+      "title": "にゃーにゃー冒険譚",
+      "before": null,
+      "after": {
+        "title": "にゃーにゃー冒険譚",
+        "artist": "黒魔",
+        "aliases": {
+          "zh-Hans": [
+            "喵喵冒险谭"
+          ]
+        },
+        "reading": "ニャーニャーボウケンタン",
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:6bbbb9f3-797e-4062-9ade-9ef89f2ba444",
+      "title": "ロキ",
+      "before": null,
+      "after": {
+        "title": "ロキ",
+        "artist": "みきとP",
+        "aliases": {
+          "ko": [
+            "로키"
+          ],
+          "zh-Hans": [
+            "洛基"
+          ]
+        },
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:70a66fb6-2b3a-4ecc-8194-82c2011637ad",
+      "title": "キミノヨゾラ哨戒班",
+      "before": null,
+      "after": {
+        "title": "キミノヨゾラ哨戒班",
+        "artist": "Orangestar",
+        "aliases": {
+          "zh-Hans": [
+            "你的夜空哨戒班"
+          ]
+        },
+        "reading": "キミノヨゾラショウカイハン",
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:74927b47-110f-48ee-995d-97523ecf587e",
+      "title": "いちげき！のテーマ",
+      "before": null,
+      "after": {
+        "title": "いちげき！のテーマ",
+        "artist": "曲：ヒゲドライバー／歌：いちげきしゅーたーず！",
+        "aliases": {
+          "zh-Hans": [
+            "一击的主题曲"
+          ]
+        },
+        "reading": "イチゲキノテーマ",
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:79e83f9d-38ff-430f-b380-6c6f85314bf4",
+      "title": "CHOCOLATE BOMB!!!!",
+      "before": {
+        "title": "CHOCOLATE BOMB!!!!",
+        "artist": "YUC'e",
+        "aliases": {
+          "zh-Hans": [
+            "巧克力炸弹"
+          ],
+          "ko": [
+            "초콜릿 봄"
+          ]
+        },
+        "review_status": "machine-assisted-draft",
+        "note": "Additional search forms only; Chinese may be a literal gloss or transliteration. Native review welcome."
+      },
+      "after": {
+        "title": "CHOCOLATE BOMB!!!!",
+        "artist": "YUC'e",
+        "aliases": {
+          "zh-Hans": [
+            "巧克力炸弹"
+          ],
+          "ko": [
+            "초콜릿 봄",
+            "초콜릿 밤"
+          ]
+        },
+        "review_status": "ai-reviewed",
+        "note": "Additional search forms only; Chinese may be a literal gloss or transliteration. Native review welcome.",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:7b6272ab-6afc-4058-800b-b5bec531f086",
+      "title": "テレキャスタービーボーイ",
+      "before": null,
+      "after": {
+        "title": "テレキャスタービーボーイ",
+        "artist": "すりぃ",
+        "aliases": {
+          "ko": [
+            "텔레캐스터 비보이",
+            "테레캐스터 비보이"
+          ],
+          "zh-Hans": [
+            "电音吉他男孩"
+          ]
+        },
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:7d7fcc00-85b2-45b1-8481-e3d8767bfcb7",
+      "title": "ドキドキDREAM!!!",
+      "before": null,
+      "after": {
+        "title": "ドキドキDREAM!!!",
+        "artist": "イロドリミドリ「CHUNITHM」",
+        "aliases": {
+          "zh-Hans": [
+            "心动之梦"
+          ]
+        },
+        "reading": "ドキドキドリーム",
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:7dee3e49-633b-40d8-93ef-a790e4470595",
+      "title": "緋色のDance",
+      "before": null,
+      "after": {
+        "title": "緋色のDance",
+        "artist": "岸田教団＆THE明星ロケッツ",
+        "aliases": {
+          "zh-Hans": [
+            "绯色之舞"
+          ]
+        },
+        "reading": "ヒイロノダンス",
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:8156ce4b-3055-49c2-981d-d55f265ad7e2",
+      "title": "ぐるぐるWASH！コインランドリー・ディスコ",
+      "before": null,
+      "after": {
+        "title": "ぐるぐるWASH！コインランドリー・ディスコ",
+        "artist": "D.watt(IOSYS)feat.ちよこ",
+        "aliases": {
+          "zh-Hans": [
+            "转转洗投币洗衣店迪斯科"
+          ]
+        },
+        "reading": "グルグルウォッシュコインランドリーディスコ",
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:8438a02d-fdd9-4765-9646-583a98e10696",
+      "title": "どんぐりGAME",
+      "before": null,
+      "after": {
+        "title": "どんぐりGAME",
+        "artist": "こっちのけんと",
+        "aliases": {
+          "zh-Hans": [
+            "橡子游戏"
+          ]
+        },
+        "reading": "ドングリゲーム",
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:85f83b54-0e20-4974-b05a-25c4b9c31acc",
+      "title": "このピアノでお前を8759632145回ぶん殴る",
+      "before": null,
+      "after": {
+        "title": "このピアノでお前を8759632145回ぶん殴る",
+        "artist": "SLAVE.V-V-R",
+        "aliases": {
+          "zh-Hans": [
+            "用这架钢琴打你8759632145次"
+          ]
+        },
+        "reading": "コノピアノデオマエオ8759632145カイブンナグル",
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:861f4dde-4676-4c15-8337-87a62c00e429",
+      "title": "T氏の話を信じるな",
+      "before": null,
+      "after": {
+        "title": "T氏の話を信じるな",
+        "artist": "ピノキオピー",
+        "aliases": {
+          "zh-Hans": [
+            "别相信T先生的话"
+          ]
+        },
+        "reading": "ティーシノハナシオシンジルナ",
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:86909718-68d0-4baf-9b4b-3269b61072a6",
+      "title": "だれかの心臓になれたなら",
+      "before": null,
+      "after": {
+        "title": "だれかの心臓になれたなら",
+        "artist": "ユリイ・カノン feat.GUMI",
+        "aliases": {
+          "zh-Hans": [
+            "若能成为某人的心脏"
+          ]
+        },
+        "reading": "ダレカノシンゾウニナレタナラ",
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:8d6d23c4-a428-4b4d-9606-4d1affd240e7",
+      "title": "マーシャル・マキシマイザー",
+      "before": null,
+      "after": {
+        "title": "マーシャル・マキシマイザー",
+        "artist": "柊マグネタイト　feat.音楽的同位体　可不（KAFU）",
+        "aliases": {
+          "ko": [
+            "마셜 맥시마이저",
+            "마샬 맥시마이저"
+          ],
+          "zh-Hans": [
+            "马歇尔最大化"
+          ]
+        },
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:8dc40df7-8225-48a4-a3a6-8410bbc20e28",
+      "title": "Halcyon",
+      "before": {
+        "title": "Halcyon",
+        "artist": "xi",
+        "aliases": {
+          "zh-Hans": [
+            "宁静"
+          ],
+          "ko": [
+            "할시온"
+          ]
+        },
+        "review_status": "machine-assisted-draft",
+        "note": "Additional search forms only; Chinese may be a literal gloss or transliteration. Native review welcome."
+      },
+      "after": {
+        "title": "Halcyon",
+        "artist": "xi",
+        "aliases": {
+          "zh-Hans": [
+            "宁静"
+          ],
+          "ko": [
+            "할시온",
+            "하루시온",
+            "핼시언"
+          ]
+        },
+        "review_status": "ai-reviewed",
+        "note": "Additional search forms only; Chinese may be a literal gloss or transliteration. Native review welcome.",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:8e96ee9e-f7ac-4210-bb25-2421db343d24",
+      "title": "ごはん食べヨ",
+      "before": null,
+      "after": {
+        "title": "ごはん食べヨ",
+        "artist": "Mega Shinnosuke",
+        "aliases": {
+          "zh-Hans": [
+            "吃饭吧"
+          ]
+        },
+        "reading": "ゴハンタベヨ",
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:9086e697-2f8f-43ff-9eb2-27bdbf56b3a4",
+      "title": "グッバイ宣言",
+      "before": null,
+      "after": {
+        "title": "グッバイ宣言",
+        "artist": "Chinozo",
+        "aliases": {
+          "zh-Hans": [
+            "再见宣言"
+          ]
+        },
+        "reading": "グッバイセンゲン",
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:919d4c6a-233a-42d8-88db-ab463b2a3090",
+      "title": "なるとなぎのパーフェクトロックンロール教室",
+      "before": null,
+      "after": {
+        "title": "なるとなぎのパーフェクトロックンロール教室",
+        "artist": "イロドリミドリ「CHUNITHM」",
+        "aliases": {
+          "zh-Hans": [
+            "完美摇滚教室"
+          ]
+        },
+        "reading": "ナルトナギノパーフェクトロックンロールキョウシツ",
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:93653a05-9ac3-478e-9b18-1aa7e1264381",
+      "title": "あなたは世界の終わりにずんだを食べるのだ",
+      "before": null,
+      "after": {
+        "title": "あなたは世界の終わりにずんだを食べるのだ",
+        "artist": "なみぐる",
+        "aliases": {
+          "zh-Hans": [
+            "你要在世界终末吃毛豆泥"
+          ]
+        },
+        "reading": "アナタワセカイノオワリニズンダオタベルノダ",
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:98de853a-24ae-4008-80d8-75b004c8339e",
+      "title": "ヴァンパイア",
+      "before": null,
+      "after": {
+        "title": "ヴァンパイア",
+        "artist": "DECO*27",
+        "aliases": {
+          "ko": [
+            "뱀파이어",
+            "밤파이아"
+          ],
+          "zh-Hans": [
+            "吸血鬼"
+          ]
+        },
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:9a045f4e-f9c5-4c7c-99eb-39255314c530",
+      "title": "MOON NIGHTのせいにして",
+      "before": null,
+      "after": {
+        "title": "MOON NIGHTのせいにして",
+        "artist": "DRAMATIC STARS [天道 輝 (CV.仲村宗悟), 桜庭 薫 (CV.内田雄馬), 柏木 翼 (CV.八代 拓)]",
+        "aliases": {
+          "zh-Hans": [
+            "都怪月夜"
+          ]
+        },
+        "reading": "ムーンナイトノセイニシテ",
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:a215ae78-f9ac-474a-bf00-0a973b117ff9",
+      "title": "オレンジの夏",
+      "before": null,
+      "after": {
+        "title": "オレンジの夏",
+        "artist": "Hiro/タクマロ",
+        "aliases": {
+          "zh-Hans": [
+            "橙色之夏"
+          ]
+        },
+        "reading": "オレンジノナツ",
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:a3ecd281-d2ad-4428-b638-1370bc1620d5",
+      "title": "Let's ミクササイズ！！",
+      "before": {
+        "title": "Let's ミクササイズ！！",
+        "artist": "cosMo＠暴走P「Fit Boxing feat. 初音ミク -ミクといっしょにエクササイズ-」",
+        "aliases": {
+          "zh-Hans": [
+            "初音体操"
+          ],
+          "ko": [
+            "렛츠 미쿠서사이즈"
+          ]
+        },
+        "review_status": "machine-assisted-draft",
+        "note": "Additional search forms only; Chinese may be a literal gloss or transliteration. Native review welcome."
+      },
+      "after": {
+        "title": "Let's ミクササイズ！！",
+        "artist": "cosMo＠暴走P「Fit Boxing feat. 初音ミク -ミクといっしょにエクササイズ-」",
+        "aliases": {
+          "zh-Hans": [
+            "初音体操"
+          ],
+          "ko": [
+            "렛츠 미쿠서사이즈",
+            "렛츠 미쿠사사이즈"
+          ]
+        },
+        "review_status": "ai-reviewed",
+        "note": "Additional search forms only; Chinese may be a literal gloss or transliteration. Native review welcome.",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:a78a4485-cd4d-4264-8477-7d51dcc1799e",
+      "title": "ラグトレイン",
+      "before": null,
+      "after": {
+        "title": "ラグトレイン",
+        "artist": "稲葉曇",
+        "aliases": {
+          "ko": [
+            "러그 트레인",
+            "라그 트레인"
+          ],
+          "zh-Hans": [
+            "延迟列车"
+          ]
+        },
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:a9ef9879-f4c4-4cb3-8c28-b82004a3364b",
+      "title": "トリドリ⇒モリモリ！Lovely fruits☆",
+      "before": null,
+      "after": {
+        "title": "トリドリ⇒モリモリ！Lovely fruits☆",
+        "artist": "曲：やしきん／歌：柏木 美亜(CV：和氣 あず未)",
+        "aliases": {
+          "zh-Hans": [
+            "缤纷满满可爱水果"
+          ]
+        },
+        "reading": "トリドリモリモリラブリーフルーツ",
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:b5c634f9-8415-4c1f-9178-85f2600599b5",
+      "title": "アポカリプスに反逆の焔を焚べろ",
+      "before": null,
+      "after": {
+        "title": "アポカリプスに反逆の焔を焚べろ",
+        "artist": "cosMo＠暴走AlterEgo",
+        "aliases": {
+          "zh-Hans": [
+            "向末日燃起反叛之焰"
+          ]
+        },
+        "reading": "アポカリプスニハンギャクノホノオオクベロ",
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:b75d7636-d268-4117-a609-57a9bd8505cd",
+      "title": "にっこり^^調査隊のテーマ",
+      "before": null,
+      "after": {
+        "title": "にっこり^^調査隊のテーマ",
+        "artist": "ワンダフル☆オポチュニティ！ / 初音ミク / ワンダーランズ×ショウタイム「プロジェクトセカイ カラフルステージ！ feat. 初音ミク」",
+        "aliases": {
+          "zh-Hans": [
+            "微笑调查队的主题曲"
+          ]
+        },
+        "reading": "ニッコリチョウサタイノテーマ",
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:b8949860-1f96-4681-9a41-f3c089375bf3",
+      "title": "フォルテシモBELL",
+      "before": null,
+      "after": {
+        "title": "フォルテシモBELL",
+        "artist": "天王洲 なずな(CV:山本 彩乃)",
+        "aliases": {
+          "zh-Hans": [
+            "最强音铃声"
+          ]
+        },
+        "reading": "フォルテシモベル",
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:b8ceea60-ee71-4db0-aff4-d52f64bcbaab",
+      "title": "怪盗Rのテーマ",
+      "before": null,
+      "after": {
+        "title": "怪盗Rのテーマ",
+        "artist": "大谷智哉「リズム怪盗R 皇帝ナポレオンの遺産」",
+        "aliases": {
+          "zh-Hans": [
+            "怪盗R的主题曲"
+          ]
+        },
+        "reading": "カイトウアールノテーマ",
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:bf057692-271e-4afd-8106-ac9bf7178592",
+      "title": "ひれ伏せ愚民どもっ！",
+      "before": null,
+      "after": {
+        "title": "ひれ伏せ愚民どもっ！",
+        "artist": "ARM＋夕野ヨシミ (IOSYS) feat.miko",
+        "aliases": {
+          "zh-Hans": [
+            "跪下吧愚民们"
+          ]
+        },
+        "reading": "ヒレフセグミンドモ",
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:bf7842b0-51cb-4dde-8ebe-2d987f52c8dd",
+      "title": "ガラテアの螺旋",
+      "before": null,
+      "after": {
+        "title": "ガラテアの螺旋",
+        "artist": "sasakure.UK",
+        "aliases": {
+          "zh-Hans": [
+            "伽拉忒亚的螺旋"
+          ]
+        },
+        "reading": "ガラテアノラセン",
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:c5f53dfa-5cc3-42c7-9d1b-9e981bc98137",
+      "title": "39みゅーじっく！",
+      "before": null,
+      "after": {
+        "title": "39みゅーじっく！",
+        "artist": "みきとP",
+        "aliases": {
+          "zh-Hans": [
+            "感谢音乐"
+          ]
+        },
+        "reading": "サンキューミュージック",
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:cae95252-9e4b-4be3-8567-7a647dd50e21",
+      "title": "キラメキ居残り大戦争",
+      "before": null,
+      "after": {
+        "title": "キラメキ居残り大戦争",
+        "artist": "森羅万象",
+        "aliases": {
+          "zh-Hans": [
+            "闪耀留堂大战争"
+          ]
+        },
+        "reading": "キラメキイノコリダイセンソウ",
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:ce3d095b-b64d-4cef-9b92-afb46880491d",
+      "title": "キミは“見ていたね”？",
+      "before": null,
+      "after": {
+        "title": "キミは“見ていたね”？",
+        "artist": "曲：篠崎あやと、橘亮祐／歌：結城 莉玖(CV：朝日奈 丸佳)、東雲 つむぎ(CV：和泉 風花)",
+        "aliases": {
+          "zh-Hans": [
+            "你在看着吧"
+          ]
+        },
+        "reading": "キミワミテイタネ",
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:cf4e4c68-08af-44bc-a7a2-d57dbbd49c69",
+      "title": "シャルル",
+      "before": null,
+      "after": {
+        "title": "シャルル",
+        "artist": "バルーン",
+        "aliases": {
+          "ko": [
+            "샤를"
+          ],
+          "zh-Hans": [
+            "夏露露",
+            "夏尔"
+          ]
+        },
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:d5651f68-e6cc-4273-871c-6ff02397cab4",
+      "title": "ほとんど違法行為",
+      "before": {
+        "title": "ほとんど違法行為",
+        "artist": "ネコネコカワイイ「ニンジャスレイヤー」",
+        "aliases": {
+          "zh-Hans": [
+            "几乎是违法行为"
+          ],
+          "ko": [
+            "호톤도 이하우코이"
+          ]
+        },
+        "review_status": "machine-assisted-draft",
+        "note": "Additional search forms only; Chinese may be a literal gloss or transliteration. Native review welcome."
+      },
+      "after": {
+        "title": "ほとんど違法行為",
+        "artist": "ネコネコカワイイ「ニンジャスレイヤー」",
+        "aliases": {
+          "zh-Hans": [
+            "几乎是违法行为"
+          ],
+          "ko": [
+            "호톤도 이호 코이"
+          ]
+        },
+        "review_status": "ai-reviewed",
+        "note": "Additional search forms only; Chinese may be a literal gloss or transliteration. Native review welcome.",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:d95aa88c-34be-4f89-b78e-ee61eee4a667",
+      "title": "クノイチでも恋がしたい",
+      "before": null,
+      "after": {
+        "title": "クノイチでも恋がしたい",
+        "artist": "みきとP",
+        "aliases": {
+          "zh-Hans": [
+            "女忍者也想谈恋爱"
+          ]
+        },
+        "reading": "クノイチデモコイガシタイ",
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:dc354c42-b553-4522-afd8-33533bd74839",
+      "title": "おこちゃま戦争",
+      "before": null,
+      "after": {
+        "title": "おこちゃま戦争",
+        "artist": "ギガ/れをる",
+        "aliases": {
+          "zh-Hans": [
+            "孩子气的战争"
+          ]
+        },
+        "reading": "オコチャマセンソウ",
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:e14dc0b7-4d61-40e8-b2fe-992ce4264513",
+      "title": "オーディエンスを沸かす程度の能力 feat.タイツォン",
+      "before": null,
+      "after": {
+        "title": "オーディエンスを沸かす程度の能力 feat.タイツォン",
+        "artist": "D.watt(IOSYS)＋らっぷびと",
+        "aliases": {
+          "zh-Hans": [
+            "让观众沸腾程度的能力"
+          ]
+        },
+        "reading": "オーディエンスオワカステイドノノウリョク",
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:e5a25268-cccf-48b0-b683-c1612745ee93",
+      "title": "Re:Unknown X",
+      "before": {
+        "title": "Re:Unknown X",
+        "artist": "まらしぃ",
+        "aliases": {
+          "zh-Hans": [
+            "再未知叉"
+          ],
+          "ko": [
+            "리 언노운 엑스"
+          ]
+        },
+        "review_status": "machine-assisted-draft",
+        "note": "Additional search forms only; Chinese may be a literal gloss or transliteration. Native review welcome."
+      },
+      "after": {
+        "title": "Re:Unknown X",
+        "artist": "まらしぃ",
+        "aliases": {
+          "zh-Hans": [
+            "再未知X"
+          ],
+          "ko": [
+            "리 언노운 엑스"
+          ]
+        },
+        "review_status": "ai-reviewed",
+        "note": "Additional search forms only; Chinese may be a literal gloss or transliteration. Native review welcome.",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:e9767bf3-50d5-4a0d-a2db-40f85d6d2d31",
+      "title": "ヒミツCULT",
+      "before": null,
+      "after": {
+        "title": "ヒミツCULT",
+        "artist": "t+pazolite",
+        "aliases": {
+          "zh-Hans": [
+            "秘密教团"
+          ]
+        },
+        "reading": "ヒミツカルト",
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:eb4ba249-b200-4e1c-8d8a-064fc8d4ff89",
+      "title": "L4TS:2018 (feat. あひる & KTA)",
+      "before": null,
+      "after": {
+        "title": "L4TS:2018 (feat. あひる & KTA)",
+        "artist": "Sprite Recordings",
+        "aliases": {
+          "ko": [
+            "엘 포 티 에스 2018"
+          ],
+          "zh-Hans": [
+            "艾尔四提艾斯2018"
+          ]
+        },
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:ee3bc40f-346b-4c52-84c9-7191e5a30b1e",
+      "title": "タケモトピアノCMソング",
+      "before": null,
+      "after": {
+        "title": "タケモトピアノCMソング",
+        "artist": "タケモトピアノCM",
+        "aliases": {
+          "zh-Hans": [
+            "竹本钢琴广告歌"
+          ]
+        },
+        "reading": "タケモトピアノシーエムソング",
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:eed4a31b-5f1a-4e37-89cf-6faf68ba3140",
+      "title": "Death Scythe",
+      "before": {
+        "title": "Death Scythe",
+        "artist": "SHIKI",
+        "aliases": {
+          "zh-Hans": [
+            "死亡镰刀"
+          ],
+          "ko": [
+            "데스 사이드"
+          ]
+        },
+        "review_status": "machine-assisted-draft",
+        "note": "Additional search forms only; Chinese may be a literal gloss or transliteration. Native review welcome."
+      },
+      "after": {
+        "title": "Death Scythe",
+        "artist": "SHIKI",
+        "aliases": {
+          "zh-Hans": [
+            "死亡镰刀"
+          ],
+          "ko": [
+            "데스 사이드",
+            "데스 사이즈",
+            "데스 사이스"
+          ]
+        },
+        "review_status": "ai-reviewed",
+        "note": "Additional search forms only; Chinese may be a literal gloss or transliteration. Native review welcome.",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:f64364a0-cdf1-484c-ad94-afbc1992ffb0",
+      "title": "コンティニュー！ feat. 藍月なくる",
+      "before": null,
+      "after": {
+        "title": "コンティニュー！ feat. 藍月なくる",
+        "artist": "lapix",
+        "aliases": {
+          "zh-Hans": [
+            "继续"
+          ]
+        },
+        "reading": "コンティニュー",
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:f727a1cc-9ad9-4455-b3fb-b26d342173f4",
+      "title": "あいたい星人",
+      "before": null,
+      "after": {
+        "title": "あいたい星人",
+        "artist": "DECO*27",
+        "aliases": {
+          "zh-Hans": [
+            "想见你的星人"
+          ]
+        },
+        "reading": "アイタイセイジン",
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:f8f9c084-679b-42bb-9b78-91ff27641583",
+      "title": "POPPY PAPPY DAY",
+      "before": {
+        "title": "POPPY PAPPY DAY",
+        "artist": "ポプ子(CV:五十嵐裕美)＆ピピ美(CV:松嵜麗)",
+        "aliases": {
+          "zh-Hans": [
+            "波比帕比日"
+          ],
+          "ko": [
+            "팝피 팝피 데이"
+          ]
+        },
+        "review_status": "machine-assisted-draft",
+        "note": "Additional search forms only; Chinese may be a literal gloss or transliteration. Native review welcome."
+      },
+      "after": {
+        "title": "POPPY PAPPY DAY",
+        "artist": "ポプ子(CV:五十嵐裕美)＆ピピ美(CV:松嵜麗)",
+        "aliases": {
+          "zh-Hans": [
+            "波比帕比日"
+          ],
+          "ko": [
+            "포피 패피 데이",
+            "폿피 팟피 데이"
+          ]
+        },
+        "review_status": "ai-reviewed",
+        "note": "Additional search forms only; Chinese may be a literal gloss or transliteration. Native review welcome.",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:fa38d0fb-8cbd-48ec-89fe-d4f397c41ac0",
+      "title": "AMABIE",
+      "before": {
+        "title": "AMABIE",
+        "artist": "OSTER project",
+        "aliases": {
+          "zh-Hans": [
+            "海彦"
+          ],
+          "ko": [
+            "아마비에"
+          ]
+        },
+        "review_status": "machine-assisted-draft",
+        "note": "Additional search forms only; Chinese may be a literal gloss or transliteration. Native review welcome."
+      },
+      "after": {
+        "title": "AMABIE",
+        "artist": "OSTER project",
+        "aliases": {
+          "zh-Hans": [
+            "阿玛比埃",
+            "阿妈鳖"
+          ],
+          "ko": [
+            "아마비에"
+          ]
+        },
+        "review_status": "ai-reviewed",
+        "note": "Additional search forms only; Chinese may be a literal gloss or transliteration. Native review welcome.",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles.",
+          "sources": [
+            {
+              "url": "https://www.bilibili.com/video/BV1i94y1p7DJ/",
+              "alias": "阿妈鳖",
+              "kind": "community usage in creator playlist"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "song_id": "song:fb830e66-ae8d-4c63-bad2-ea5a9185f38d",
+      "title": "ギリギリ最強あいまいみー！",
+      "before": null,
+      "after": {
+        "title": "ギリギリ最強あいまいみー！",
+        "artist": "愛(C.V.大坪由佳) 麻衣(C.V.内田彩) ミイ(C.V.内田真礼)「あいまいみー」",
+        "aliases": {
+          "zh-Hans": [
+            "极限最强漫研部"
+          ]
+        },
+        "reading": "ギリギリサイキョウアイマイミー",
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:fbab93fa-823e-44b7-945e-19a9aa100401",
+      "title": "アトロポスと最果の探究者",
+      "before": null,
+      "after": {
+        "title": "アトロポスと最果の探究者",
+        "artist": "しーけー",
+        "aliases": {
+          "zh-Hans": [
+            "阿特洛波斯与尽头的探究者"
+          ]
+        },
+        "reading": "アトロポストサイハテノタンキュウシャ",
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:fdf8c8bd-11e1-4ee2-bf1a-09f5bf19aeea",
+      "title": "エゴロック",
+      "before": null,
+      "after": {
+        "title": "エゴロック",
+        "artist": "すりぃ",
+        "aliases": {
+          "ko": [
+            "에고록",
+            "에고 록"
+          ],
+          "zh-Hans": [
+            "自我摇滚"
+          ]
+        },
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:ff6f212c-a5c9-4553-a56e-53e6528f8ea4",
+      "title": "お呪い",
+      "before": null,
+      "after": {
+        "title": "お呪い",
+        "artist": "なきそ",
+        "aliases": {
+          "zh-Hans": [
+            "魔法咒语"
+          ]
+        },
+        "reading": "オマジナイ",
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      }
+    },
+    {
+      "song_id": "song:5b04aaee-9fd1-4e01-92c0-1afcbe52d058",
+      "title": "マツケンサンバⅡ",
+      "before": {
+        "title": "マツケンサンバⅡ",
+        "artist": "松平健 [covered by 光吉猛修]",
+        "aliases": {
+          "zh-Hans": [
+            "松健桑巴二"
+          ]
+        },
+        "reading": "マツケンサンバツー",
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      },
+      "after": {
+        "title": "マツケンサンバⅡ",
+        "artist": "松平健 [covered by 光吉猛修]",
+        "aliases": {
+          "zh-Hans": [
+            "松健桑巴二"
+          ],
+          "ko": [
+            "마츠켄 삼바"
+          ]
+        },
+        "reading": "マツケンサンバツー",
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles.",
+          "sources": [
+            {
+              "url": "https://gall.dcinside.com/mgallery/board/view/?id=maimai1&no=195150",
+              "aliases": [
+                "마츠켄 삼바"
+              ],
+              "kind": "community usage; names in player guide"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "song_id": "song:70184ddb-d7ff-485d-8810-8f1ef27da58d",
+      "title": "居並ぶ穀物と溜息まじりの運送屋",
+      "before": null,
+      "after": {
+        "title": "居並ぶ穀物と溜息まじりの運送屋",
+        "artist": "hanzo",
+        "aliases": {
+          "zh-Hans": [
+            "成排的谷物与叹息的运输者"
+          ],
+          "ko": [
+            "운송업자"
+          ]
+        },
+        "reading": "イナラブコクモツトタメイキマジリノウンソウヤ",
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "sources": [
+            {
+              "url": "https://gall.dcinside.com/mgallery/board/view/?id=maimai1&no=195150",
+              "aliases": [
+                "운송업자"
+              ],
+              "kind": "community usage; names in player guide"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "song_id": "song:8156ce4b-3055-49c2-981d-d55f265ad7e2",
+      "title": "ぐるぐるWASH！コインランドリー・ディスコ",
+      "before": {
+        "title": "ぐるぐるWASH！コインランドリー・ディスコ",
+        "artist": "D.watt(IOSYS)feat.ちよこ",
+        "aliases": {
+          "zh-Hans": [
+            "转转洗投币洗衣店迪斯科"
+          ]
+        },
+        "reading": "グルグルウォッシュコインランドリーディスコ",
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles."
+        }
+      },
+      "after": {
+        "title": "ぐるぐるWASH！コインランドリー・ディスコ",
+        "artist": "D.watt(IOSYS)feat.ちよこ",
+        "aliases": {
+          "zh-Hans": [
+            "转转洗投币洗衣店迪斯科"
+          ],
+          "ko": [
+            "구루구루",
+            "란도리"
+          ]
+        },
+        "reading": "グルグルウォッシュコインランドリーディスコ",
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Authored search aids; translations and transliterations are not claims of established regional titles.",
+          "sources": [
+            {
+              "url": "https://gall.dcinside.com/mgallery/board/view/?id=maimai1&no=195150",
+              "aliases": [
+                "구루구루",
+                "란도리"
+              ],
+              "kind": "community usage; names in player guide"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "song_id": "song:b0570c14-6e36-4637-8102-af59b9873542",
+      "title": "My First Phone",
+      "before": {
+        "title": "My First Phone",
+        "artist": "cubesato",
+        "aliases": {
+          "zh-Hans": [
+            "我的第一部手机"
+          ],
+          "ko": [
+            "마이 퍼스트 폰"
+          ]
+        },
+        "review_status": "ai-reviewed",
+        "note": "Additional search forms only; Chinese may be a literal gloss or transliteration. Native review welcome.",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Read against title and artist; search-only gloss or phonetic aid, not regional-name certification."
+        }
+      },
+      "after": {
+        "title": "My First Phone",
+        "artist": "cubesato",
+        "aliases": {
+          "zh-Hans": [
+            "我的第一部手机"
+          ],
+          "ko": [
+            "마이 퍼스트 폰",
+            "내첫폰"
+          ]
+        },
+        "review_status": "ai-reviewed",
+        "note": "Additional search forms only; Chinese may be a literal gloss or transliteration. Native review welcome.",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "note": "Read against title and artist; search-only gloss or phonetic aid, not regional-name certification.",
+          "sources": [
+            {
+              "url": "https://gall.dcinside.com/mgallery/board/view/?id=maimai1&no=195150",
+              "aliases": [
+                "내첫폰"
+              ],
+              "kind": "community usage; names in player guide"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "song_id": "song:badc14ab-ed40-452a-b151-8678fe4bfc40",
+      "title": "超熊猫的周遊記（ワンダーパンダートラベラー）",
+      "before": null,
+      "after": {
+        "title": "超熊猫的周遊記（ワンダーパンダートラベラー）",
+        "artist": "FANTAGIRAFF",
+        "aliases": {
+          "zh-Hans": [
+            "超级熊猫周游记"
+          ],
+          "ko": [
+            "원더판다",
+            "원더팬더"
+          ]
+        },
+        "reading": "ワンダーパンダートラベラー",
+        "review_status": "ai-reviewed",
+        "review": {
+          "reviewer": "Codex",
+          "method": "AI linguistic review",
+          "date": "2026-09-20",
+          "scope": [
+            "ko",
+            "zh-Hans"
+          ],
+          "sources": [
+            {
+              "url": "https://gall.dcinside.com/mgallery/board/view/?id=maimai1&no=195150",
+              "aliases": [
+                "원더판다",
+                "원더팬더"
+              ],
+              "kind": "community usage; names in player guide"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

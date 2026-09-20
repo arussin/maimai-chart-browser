@@ -1,8 +1,10 @@
 /* Exact-source research observations and Flow; no accounts or external requests. */
 (()=>{'use strict';
+const i18n=window.maimaiI18n||{text:(node,value)=>node.textContent=value,attribute:(node,key,value)=>node.setAttribute(key,value),option:(...args)=>new Option(...args),literal:(node,value)=>node.textContent=value};
+
 const data=window.maimaiResearchCatalog??=JSON.parse(document.getElementById('challenge-data').textContent),pack=data.analysis;
 const definitions=new Map(JSON.parse(document.getElementById('pattern-data').textContent).map(p=>[p.pattern_id,p]));
-const make=(tag,text,cls)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(cls)n.className=cls;return n;};
+const make=(tag,text,cls)=>{const n=document.createElement(tag);if(text!==undefined)i18n.text(n, text);if(cls)n.className=cls;return n;};
 // Only presentation choices are remembered here, independently of player records.
 const sectionKey='maimai-chart-sections-v1',sectionState={chart:true,player:true};let sectionSerial=0;
 function readSections(){try{const saved=JSON.parse(localStorage.getItem(sectionKey));for(const key of Object.keys(sectionState))if(typeof saved?.[key]==='boolean')sectionState[key]=saved[key];}catch{}}
@@ -20,7 +22,7 @@ function section(kind,title,decoration){
   button.onclick=()=>{sectionState[kind]=!sectionState[kind];try{localStorage.setItem(sectionKey,JSON.stringify(sectionState));}catch{}syncSections();};
   return {root,content};
 }
-const svg=(tag,attrs,text)=>{const n=document.createElementNS('http://www.w3.org/2000/svg',tag);for(const[k,v]of Object.entries(attrs))n.setAttribute(k,String(v));if(text!==undefined)n.textContent=text;return n;};
+const svg=(tag,attrs,text)=>{const n=document.createElementNS('http://www.w3.org/2000/svg',tag);for(const[k,v]of Object.entries(attrs))i18n.attribute(n,k,String(v));if(text!==undefined)i18n.text(n, text);return n;};
 const get=c=>['research-overview-1','research-overview-2'].includes(pack?.version)&&[undefined,'sparse-tags-1','sparse-tags-2','sparse-tags-3'].includes(pack?.representation)&&pack.charts[c.chart_id]?.source_hash===c.source_hash?pack.charts[c.chart_id]:null;
 const name=id=>definitions.get(id)?.display_name||id;
 const clock=us=>{const s=us/1e6;return Math.floor(s/60)+':'+(s%60).toFixed(1).padStart(4,'0');};
@@ -39,7 +41,7 @@ function loadInto(box,c,render,priority=false){
   return run;
 }
 function patternButton(id,text=name(id)){const b=make('button',text,'pattern-chip');b.type='button';b.dataset.pattern=id;b.onclick=()=>window.maimaiPatternLibrary.show(id,b);return b;}
-function chips(c,limit=3,focus=null){const box=make('div',undefined,'chart-patterns'),found=detected(c);const priorities=new Set(Array.isArray(focus)?focus:focus?[focus]:[]);if(priorities.size)found.sort((a,b)=>Number(priorities.has(b.id))-Number(priorities.has(a.id)));for(const t of found.slice(0,limit)){const b=patternButton(t.id);b.title=t.count+' observed occurrences · experimental detection';box.append(b);}if(found.length>limit)box.append(make('span','+'+(found.length-limit),'muted'));if(!found.length)box.append(make('span',get(c)?'No patterns detected in supported coverage':'Patterns not prepared for this chart','muted'));return box;}
+function chips(c,limit=3,focus=null){const box=make('div',undefined,'chart-patterns'),found=detected(c);const priorities=new Set(Array.isArray(focus)?focus:focus?[focus]:[]);if(priorities.size)found.sort((a,b)=>Number(priorities.has(b.id))-Number(priorities.has(a.id)));for(const t of found.slice(0,limit)){const b=patternButton(t.id);i18n.attribute(b, 'title', t.count+' observed occurrences · experimental detection');box.append(b);}if(found.length>limit)box.append(make('span','+'+(found.length-limit),'muted'));if(!found.length)box.append(make('span',get(c)?'No patterns detected in supported coverage':'Patterns not prepared for this chart','muted'));return box;}
 function graph(c,{compact=false,maximum=null,span=null}={}){
   const record=get(c),box=make('figure',undefined,'chart-flow'+(compact?' compact':''));
   if(record&&delivery&&!delivery.ready(c)){box.append(make('span','Loading activity…','muted'));onVisible(box,loadInto(box,c,()=>graph(c,{compact,maximum,span})));return box;}
@@ -65,7 +67,7 @@ function details(c){
   if(!get(c)){box.append(make('p','This chart has no prepared pattern analysis.'));return box;}
   if(!found.length)evidenceList.append(make('p','No patterns detected in supported coverage.','muted'));
   for(const tag of found){const row=make('div',undefined,'pattern-evidence');row.append(patternButton(tag.id),make('span',tag.count+' observed'+(tag.coverage==='partial'||tag.truncated?' · partial coverage':'') ,'muted'));
-    const seen=new Set();tag.spans.forEach((span,i)=>{const evidence=tag.evidence[i]||{},target=evidence.target_pattern_id,key=span.join(':')+':'+(target||'');if(seen.has(key))return;seen.add(key);const label=(target?name(target)+' · ':'')+clock(span[0])+'–'+clock(span[1]),button=make('button',label,'span-button');button.type='button';button.setAttribute('aria-label','Highlight '+name(tag.id)+' · '+label);button.onclick=()=>{flow.replaceChildren(graph(c,{span}));reading.textContent=name(tag.id)+' · '+label+' · highlighted in activity chart';};row.append(button);});
+    const seen=new Set();tag.spans.forEach((span,i)=>{const evidence=tag.evidence[i]||{},target=evidence.target_pattern_id,key=span.join(':')+':'+(target||'');if(seen.has(key))return;seen.add(key);const label=(target?name(target)+' · ':'')+clock(span[0])+'–'+clock(span[1]),button=make('button',label,'span-button');button.type='button';i18n.attribute(button, 'aria-label', 'Highlight '+name(tag.id)+' · '+label);button.onclick=()=>{flow.replaceChildren(graph(c,{span}));i18n.text(reading, name(tag.id)+' · '+label+' · highlighted in activity chart');};row.append(button);});
     if(tag.id==='pattern.umiyuri')row.append(make('span','Recurring-pair form · other variants may not be detected','muted'));
     evidenceList.append(row);}
   return box;
@@ -89,7 +91,7 @@ function pair(left,right){
   }
   const ids=[...new Set([...result.shared,...result.first,...result.second,...result.unknown])].filter(id=>id.startsWith('pattern.'));
   if(ids.length){const table=make('table',undefined,'pattern-metrics'),head=make('thead'),labels=make('tr');for(const text of ['Pattern frequency',left.title+' · '+left.difficulty,right.title+' · '+right.difficulty]){const th=make('th',text);th.scope='col';labels.append(th);}head.append(labels);table.append(head);const body=make('tbody');
-    for(const id of ids){const row=make('tr'),label=make('th');label.scope='row';label.append(patternButton(id));row.append(label);for(const c of [left,right]){const t=tags(c).find(t=>t.id===id),cell=make('td');if(!t||t.status==='unknown')cell.textContent='Unknown';else{cell.append(make('strong',String(t.count)),make('span',(rate(c,t)??0).toFixed(1)+' / min'+(t.coverage==='partial'||t.truncated?' · lower bound':''),'muted'));}row.append(cell);}body.append(row);}table.append(body);box.append(table);}
+    for(const id of ids){const row=make('tr'),label=make('th');label.scope='row';label.append(patternButton(id));row.append(label);for(const c of [left,right]){const t=tags(c).find(t=>t.id===id),cell=make('td');if(!t||t.status==='unknown')i18n.text(cell, 'Unknown');else{cell.append(make('strong',String(t.count)),make('span',(rate(c,t)??0).toFixed(1)+' / min'+(t.coverage==='partial'||t.truncated?' · lower bound':''),'muted'));}row.append(cell);}body.append(row);}table.append(body);box.append(table);}
   box.append(make('h2','Activity through each chart'));const graphs=make('div',undefined,'flow-comparison');
   const max=Math.max(1,...[left,right].map(c=>get(c)?.flow_peak??Math.max(0,...(get(c)?.segments||[]).map(s=>s[3]||0))));
   for(const c of [left,right]){const figure=make('div');figure.append(make('h3',(c.title.trim()||'Untitled')+' · '+c.difficulty),graph(c,{maximum:max}));graphs.append(figure);}box.append(graphs);return box;

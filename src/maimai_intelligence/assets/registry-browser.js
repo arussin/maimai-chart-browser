@@ -1,6 +1,8 @@
 /* Regional data preference never restricts catalog membership. */
 (()=>{'use strict';
-const make=(tag,text)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;return n;};
+const i18n=window.maimaiI18n||{text:(node,value)=>node.textContent=value,attribute:(node,key,value)=>node.setAttribute(key,value),option:(...args)=>new Option(...args),literal:(node,value)=>node.textContent=value};
+
+const make=(tag,text)=>{const n=document.createElement(tag);if(text!==undefined)i18n.text(n, text);return n;};
 const known=value=>value!=null&&value!==''&&value!=='unknown';
 function resolve(data,id){return data.legacy_ids?.[id]||id;}
 function mount(data,changed){

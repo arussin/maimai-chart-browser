@@ -1,0 +1,690 @@
+{
+  "messages": {
+    "Language": {
+      "zh-Hans": "语言",
+      "ko": "언어",
+      "ja": "言語"
+    },
+    "Views": {
+      "zh-Hans": "视图",
+      "ko": "화면",
+      "ja": "表示"
+    },
+    "Charts": {
+      "zh-Hans": "谱面",
+      "ko": "채보",
+      "ja": "譜面"
+    },
+    "Pattern dictionary": {
+      "zh-Hans": "谱面配置词典",
+      "ko": "패턴 사전",
+      "ja": "配置辞典"
+    },
+    "Compare charts": {
+      "zh-Hans": "比较谱面",
+      "ko": "채보 비교",
+      "ja": "譜面比較"
+    },
+    "About": {
+      "zh-Hans": "关于",
+      "ko": "소개",
+      "ja": "サイト紹介"
+    },
+    "About maimai.party": {
+      "zh-Hans": "关于 maimai.party",
+      "ko": "maimai.party 소개",
+      "ja": "maimai.party について"
+    },
+    "Settings": {
+      "zh-Hans": "设置",
+      "ko": "설정",
+      "ja": "設定"
+    },
+    "Find a chart": {
+      "zh-Hans": "查找谱面",
+      "ko": "채보 찾기",
+      "ja": "譜面を探す"
+    },
+    "Research catalog": {
+      "zh-Hans": "研究用曲库",
+      "ko": "연구용 카탈로그",
+      "ja": "研究用カタログ"
+    },
+    "Loading research catalog…": {
+      "zh-Hans": "正在加载研究用曲库…",
+      "ko": "연구용 카탈로그 불러오는 중…",
+      "ja": "研究用カタログを読み込み中…"
+    },
+    "Search songs": {
+      "zh-Hans": "搜索乐曲",
+      "ko": "곡 검색",
+      "ja": "楽曲を検索"
+    },
+    "Song, romaji title or artist…": {
+      "zh-Hans": "曲名、拼音、罗马字或艺术家…",
+      "ko": "곡명, 한글 발음, 로마자 또는 아티스트…",
+      "ja": "曲名、読み、ローマ字、アーティスト…"
+    },
+    "Chart format": {
+      "zh-Hans": "谱面类型",
+      "ko": "채보 유형",
+      "ja": "譜面タイプ"
+    },
+    "All charts": {
+      "zh-Hans": "全部",
+      "ko": "전체",
+      "ja": "すべて"
+    },
+    "Reset filters": {
+      "zh-Hans": "重置筛选",
+      "ko": "필터 초기화",
+      "ja": "絞り込みをリセット"
+    },
+    "Genre": {
+      "zh-Hans": "分类",
+      "ko": "장르",
+      "ja": "ジャンル"
+    },
+    "All genres": {
+      "zh-Hans": "全部",
+      "ko": "전체",
+      "ja": "すべて"
+    },
+    "Version": {
+      "zh-Hans": "版本",
+      "ko": "버전",
+      "ja": "バージョン"
+    },
+    "All versions": {
+      "zh-Hans": "全部",
+      "ko": "전체",
+      "ja": "すべて"
+    },
+    "Difficulty": {
+      "zh-Hans": "难度",
+      "ko": "난이도",
+      "ja": "難易度"
+    },
+    "All difficulties": {
+      "zh-Hans": "全部",
+      "ko": "전체",
+      "ja": "すべて"
+    },
+    "Level range": {
+      "zh-Hans": "等级范围",
+      "ko": "레벨 범위",
+      "ja": "レベル範囲"
+    },
+    "Reset levels": {
+      "zh-Hans": "重置等级",
+      "ko": "레벨 초기화",
+      "ja": "レベルをリセット"
+    },
+    "From": {
+      "zh-Hans": "从",
+      "ko": "최소",
+      "ja": "下限"
+    },
+    "To": {
+      "zh-Hans": "到",
+      "ko": "최대",
+      "ja": "上限"
+    },
+    "Minimum level": {
+      "zh-Hans": "最低等级",
+      "ko": "최소 레벨",
+      "ja": "最低レベル"
+    },
+    "Maximum level": {
+      "zh-Hans": "最高等级",
+      "ko": "최대 레벨",
+      "ja": "最高レベル"
+    },
+    "Drag handles, or type 13, 13+ or 13.5.": {
+      "zh-Hans": "拖动滑块，或输入 13、13+、13.5。",
+      "ko": "슬라이더를 움직이거나 13, 13+, 13.5를 입력하세요.",
+      "ja": "つまみを動かすか、13、13+、13.5 と入力してください。"
+    },
+    "Patterns or chart traits": {
+      "zh-Hans": "配置或谱面特征",
+      "ko": "패턴 또는 채보 특성",
+      "ja": "配置・譜面の特徴"
+    },
+    "All patterns": {
+      "zh-Hans": "全部",
+      "ko": "전체",
+      "ja": "すべて"
+    },
+    "Find patterns": {
+      "zh-Hans": "查找配置",
+      "ko": "패턴 찾기",
+      "ja": "配置を探す"
+    },
+    "Name or alias…": {
+      "zh-Hans": "名称或别名…",
+      "ko": "이름 또는 별칭…",
+      "ja": "名前・別名…"
+    },
+    "Match any selected pattern.": {
+      "zh-Hans": "匹配任意已选配置。",
+      "ko": "선택한 패턴 중 하나라도 포함된 채보입니다.",
+      "ja": "選択した配置のいずれかを含む譜面を表示します。"
+    },
+    "Clear patterns": {
+      "zh-Hans": "清除配置筛选",
+      "ko": "패턴 선택 해제",
+      "ja": "配置の選択を解除"
+    },
+    "No patterns match this search.": {
+      "zh-Hans": "没有匹配的配置。",
+      "ko": "검색에 맞는 패턴이 없습니다.",
+      "ja": "一致する配置がありません。"
+    },
+    "Sort priorities": {
+      "zh-Hans": "排序优先级",
+      "ko": "정렬 우선순위",
+      "ja": "並べ替えの優先順位"
+    },
+    "Keep sort priorities": {
+      "zh-Hans": "保留排序优先级",
+      "ko": "정렬 우선순위 유지",
+      "ja": "並べ替えの優先順位を保持"
+    },
+    "Active filters": {
+      "zh-Hans": "当前筛选",
+      "ko": "적용 중인 필터",
+      "ja": "適用中の絞り込み"
+    },
+    "Sort by column": {
+      "zh-Hans": "按列排序",
+      "ko": "열별 정렬",
+      "ja": "列で並べ替え"
+    },
+    "Song / artist": {
+      "zh-Hans": "乐曲 / 艺术家",
+      "ko": "곡 / 아티스트",
+      "ja": "楽曲 / アーティスト"
+    },
+    "Source constant": {
+      "zh-Hans": "来源定数",
+      "ko": "출처 상수",
+      "ja": "出典の譜面定数"
+    },
+    "Constant": {
+      "zh-Hans": "定数",
+      "ko": "상수",
+      "ja": "定数"
+    },
+    "Inputs / s": {
+      "zh-Hans": "输入 / 秒",
+      "ko": "입력 / 초",
+      "ja": "入力 / 秒"
+    },
+    "Flow · peak": {
+      "zh-Hans": "输入趋势 · 峰值",
+      "ko": "입력 흐름 · 최고치",
+      "ja": "入力推移 · ピーク"
+    },
+    "Show more songs": {
+      "zh-Hans": "显示更多乐曲",
+      "ko": "곡 더 보기",
+      "ja": "楽曲をさらに表示"
+    },
+    "Find a pattern": {
+      "zh-Hans": "查找配置",
+      "ko": "패턴 찾기",
+      "ja": "配置を探す"
+    },
+    "Name, alias or description…": {
+      "zh-Hans": "名称、别名或描述…",
+      "ko": "이름, 별칭 또는 설명…",
+      "ja": "名前・別名・説明…"
+    },
+    "Show": {
+      "zh-Hans": "显示",
+      "ko": "표시",
+      "ja": "表示"
+    },
+    "All lessons": {
+      "zh-Hans": "全部",
+      "ko": "전체",
+      "ja": "すべて"
+    },
+    "Patterns": {
+      "zh-Hans": "配置",
+      "ko": "패턴",
+      "ja": "配置"
+    },
+    "Chart traits": {
+      "zh-Hans": "谱面特征",
+      "ko": "채보 특성",
+      "ja": "譜面の特徴"
+    },
+    "Find similar to first chart": {
+      "zh-Hans": "查找与第一张谱面相似的谱面",
+      "ko": "첫 번째 채보와 비슷한 채보 찾기",
+      "ja": "1つ目の譜面に似た譜面を探す"
+    },
+    "Prioritize": {
+      "zh-Hans": "优先依据",
+      "ko": "우선 기준",
+      "ja": "優先する項目"
+    },
+    "Patterns & measurements": {
+      "zh-Hans": "配置与测量值",
+      "ko": "패턴 및 측정값",
+      "ja": "配置と測定値"
+    },
+    "Measurements": {
+      "zh-Hans": "测量值",
+      "ko": "측정값",
+      "ja": "測定値"
+    },
+    "Use chart filters for matches": {
+      "zh-Hans": "使用谱面筛选条件匹配",
+      "ko": "채보 필터를 적용하여 검색",
+      "ja": "譜面の絞り込み条件を使用"
+    },
+    "Clear comparison": {
+      "zh-Hans": "清除比较",
+      "ko": "비교 초기화",
+      "ja": "比較をクリア"
+    },
+    "Choose a first chart to begin.": {
+      "zh-Hans": "请选择第一张谱面。",
+      "ko": "첫 번째 채보를 선택하세요.",
+      "ja": "まず1つ目の譜面を選んでください。"
+    },
+    "Choose a second chart or find similar chart demands.": {
+      "zh-Hans": "请选择第二张谱面，或查找所需操作相似的谱面。",
+      "ko": "두 번째 채보를 선택하거나 요구 능력이 비슷한 채보를 찾아보세요.",
+      "ja": "2つ目の譜面を選ぶか、求められる動きが似た譜面を探してください。"
+    },
+    "Both selections are the same chart. Choose another chart to compare.": {
+      "zh-Hans": "两次选择的是同一张谱面，请选择另一张进行比较。",
+      "ko": "같은 채보를 선택했습니다. 비교할 다른 채보를 선택하세요.",
+      "ja": "同じ譜面が選ばれています。比較する別の譜面を選んでください。"
+    },
+    "First chart": {
+      "zh-Hans": "第一张谱面",
+      "ko": "첫 번째 채보",
+      "ja": "1つ目の譜面"
+    },
+    "Second chart": {
+      "zh-Hans": "第二张谱面",
+      "ko": "두 번째 채보",
+      "ja": "2つ目の譜面"
+    },
+    "Show more matches": {
+      "zh-Hans": "显示更多匹配项",
+      "ko": "검색 결과 더 보기",
+      "ja": "検索結果をさらに表示"
+    },
+    "No matching charts. Try another song, artist or difficulty.": {
+      "zh-Hans": "没有匹配的谱面，请尝试其他乐曲、艺术家或难度。",
+      "ko": "일치하는 채보가 없습니다. 다른 곡, 아티스트 또는 난이도로 검색하세요.",
+      "ja": "一致する譜面がありません。別の楽曲・アーティスト・難易度で検索してください。"
+    },
+    "Compare": {
+      "zh-Hans": "比较",
+      "ko": "비교",
+      "ja": "比較"
+    },
+    "Comparing": {
+      "zh-Hans": "正在比较",
+      "ko": "비교 중",
+      "ja": "比較中"
+    },
+    "Compare this chart": {
+      "zh-Hans": "比较此谱面",
+      "ko": "이 채보 비교",
+      "ja": "この譜面を比較"
+    },
+    "Find similar": {
+      "zh-Hans": "查找相似谱面",
+      "ko": "비슷한 채보 찾기",
+      "ja": "似た譜面を探す"
+    },
+    "Chart details": {
+      "zh-Hans": "谱面详情",
+      "ko": "채보 상세",
+      "ja": "譜面の詳細"
+    },
+    "Artist": {
+      "zh-Hans": "艺术家",
+      "ko": "아티스트",
+      "ja": "アーティスト"
+    },
+    "Artist not provided": {
+      "zh-Hans": "未提供艺术家",
+      "ko": "아티스트 정보 없음",
+      "ja": "アーティスト情報なし"
+    },
+    "Title": {
+      "zh-Hans": "曲名",
+      "ko": "곡명",
+      "ja": "曲名"
+    },
+    "Format": {
+      "zh-Hans": "类型",
+      "ko": "유형",
+      "ja": "タイプ"
+    },
+    "Uncategorized": {
+      "zh-Hans": "未分类",
+      "ko": "미분류",
+      "ja": "未分類"
+    },
+    "Unknown": {
+      "zh-Hans": "未知",
+      "ko": "알 수 없음",
+      "ja": "不明"
+    },
+    "Untitled": {
+      "zh-Hans": "无标题",
+      "ko": "제목 없음",
+      "ja": "無題"
+    },
+    "〈Blank title〉": {
+      "zh-Hans": "〈空白曲名〉",
+      "ko": "〈빈 곡명〉",
+      "ja": "〈空白の曲名〉"
+    },
+    "Level": {
+      "zh-Hans": "等级",
+      "ko": "레벨",
+      "ja": "レベル"
+    },
+    "No levels available": {
+      "zh-Hans": "无可用等级",
+      "ko": "사용 가능한 레벨 없음",
+      "ja": "選択できるレベルがありません"
+    },
+    "Chart constant": {
+      "zh-Hans": "谱面定数",
+      "ko": "채보 상수",
+      "ja": "譜面定数"
+    },
+    "BPM unknown": {
+      "zh-Hans": "BPM 未知",
+      "ko": "BPM 알 수 없음",
+      "ja": "BPM 不明"
+    },
+    "Source song BPM; individual passages may change tempo.": {
+      "zh-Hans": "来源乐曲 BPM；个别段落可能变速。",
+      "ko": "출처에 기록된 곡 BPM입니다. 구간에 따라 템포가 바뀔 수 있습니다.",
+      "ja": "出典の楽曲 BPM です。区間によってテンポが変わる場合があります。"
+    },
+    "No verified source constant is available for this context.": {
+      "zh-Hans": "当前条件下没有已验证的来源定数。",
+      "ko": "현재 조건에 맞는 출처의 채보 상수가 확인되지 않았습니다.",
+      "ja": "この条件で確認済みの譜面定数はありません。"
+    },
+    "Neskol source constant · regional and game-version scope unspecified.": {
+      "zh-Hans": "Neskol 来源定数 · 地区与游戏版本范围未注明。",
+      "ko": "Neskol 출처 상수 · 지역 및 게임 버전 범위 미지정.",
+      "ja": "Neskol 出典の定数 · 地域とゲームバージョンの範囲は未指定。"
+    },
+    "game version unspecified": {
+      "zh-Hans": "游戏版本未注明",
+      "ko": "게임 버전 미지정",
+      "ja": "ゲームバージョン未指定"
+    },
+    "Find charts with comparable measurements": {
+      "zh-Hans": "查找测量值相近的谱面",
+      "ko": "측정값이 비슷한 채보 찾기",
+      "ja": "測定値の近い譜面を探す"
+    },
+    "Similarity needs prepared analysis": {
+      "zh-Hans": "相似度需要预先生成的分析",
+      "ko": "유사도 계산에는 준비된 분석이 필요합니다",
+      "ja": "類似度には事前の解析が必要です"
+    },
+    "No charts match this combination. Remove a filter or try another search.": {
+      "zh-Hans": "没有符合当前条件的谱面。请移除筛选条件或尝试其他搜索。",
+      "ko": "조건에 맞는 채보가 없습니다. 필터를 해제하거나 다른 검색어를 입력하세요.",
+      "ja": "条件に一致する譜面がありません。絞り込みを解除するか、検索語を変えてください。"
+    },
+    "The linked chart is unavailable in this catalog version. Search for the song below.": {
+      "zh-Hans": "当前曲库版本中没有链接的谱面。请在下方搜索乐曲。",
+      "ko": "이 카탈로그 버전에는 링크된 채보가 없습니다. 아래에서 곡을 검색하세요.",
+      "ja": "このカタログにはリンク先の譜面がありません。下で楽曲を検索してください。"
+    },
+    "A linked chart is not available in this catalog version. Choose a chart below.": {
+      "zh-Hans": "当前曲库版本中没有链接的谱面。请在下方选择谱面。",
+      "ko": "이 카탈로그 버전에는 링크된 채보가 없습니다. 아래에서 채보를 선택하세요.",
+      "ja": "このカタログにはリンク先の譜面がありません。下で譜面を選んでください。"
+    },
+    "Use maimai international data": {
+      "zh-Hans": "使用 maimai 国际版数据",
+      "ko": "maimai 국제판 데이터 사용",
+      "ja": "maimai 海外版のデータを使用"
+    },
+    "Close": {
+      "zh-Hans": "关闭",
+      "ko": "닫기",
+      "ja": "閉じる"
+    },
+    "Cancel": {
+      "zh-Hans": "取消",
+      "ko": "취소",
+      "ja": "キャンセル"
+    },
+    "Not now": {
+      "zh-Hans": "暂时不要",
+      "ko": "나중에",
+      "ja": "今はしない"
+    },
+    "Okay!": {
+      "zh-Hans": "好的！",
+      "ko": "확인!",
+      "ja": "OK!"
+    },
+    "Any": {
+      "zh-Hans": "任意",
+      "ko": "전체",
+      "ja": "すべて"
+    },
+    "YouTube search ↗": {
+      "zh-Hans": "在 YouTube 搜索 ↗",
+      "ko": "YouTube 검색 ↗",
+      "ja": "YouTube で検索 ↗"
+    },
+    "mai-notes simai player ↗": {
+      "zh-Hans": "mai-notes simai 播放器 ↗",
+      "ko": "mai-notes simai 플레이어 ↗",
+      "ja": "mai-notes simai プレイヤー ↗"
+    },
+    "Search for this chart on YouTube; results may include other versions.": {
+      "zh-Hans": "在 YouTube 搜索此谱面；结果可能包含其他版本。",
+      "ko": "YouTube에서 이 채보를 검색합니다. 다른 버전이 포함될 수 있습니다.",
+      "ja": "この譜面を YouTube で検索します。別バージョンが含まれる場合があります。"
+    },
+    "Skip to charts": {
+      "zh-Hans": "跳转到谱面",
+      "ko": "채보로 이동",
+      "ja": "譜面へスキップ"
+    },
+    "Skip to pattern dictionary": {
+      "zh-Hans": "跳转到配置词典",
+      "ko": "패턴 사전으로 이동",
+      "ja": "配置辞典へスキップ"
+    },
+    "Skip to compare charts": {
+      "zh-Hans": "跳转到谱面比较",
+      "ko": "채보 비교로 이동",
+      "ja": "譜面比較へスキップ"
+    },
+    "Skip to about": {
+      "zh-Hans": "跳转到关于页面",
+      "ko": "소개로 이동",
+      "ja": "サイトについてへスキップ"
+    },
+    "Through {0}": {
+      "zh-Hans": "截至 {0}",
+      "ko": "{0}까지",
+      "ja": "{0} まで"
+    },
+    "{0} versions selected": {
+      "zh-Hans": "已选 {0} 个版本",
+      "ko": "버전 {0}개 선택됨",
+      "ja": "{0} バージョン選択中"
+    },
+    "{0} difficulties selected": {
+      "zh-Hans": "已选 {0} 个难度",
+      "ko": "난이도 {0}개 선택됨",
+      "ja": "{0} 難易度選択中"
+    },
+    "{0} charts found": {
+      "zh-Hans": "找到 {0} 张谱面",
+      "ko": "채보 {0}개 검색됨",
+      "ja": "{0} 譜面が見つかりました"
+    },
+    "{0} charts": {
+      "zh-Hans": "{0} 张谱面",
+      "ko": "채보 {0}개",
+      "ja": "{0} 譜面"
+    },
+    "{0} song · {1} charts": {
+      "zh-Hans": "{0} 首乐曲 · {1} 张谱面",
+      "ko": "{0}곡 · 채보 {1}개",
+      "ja": "{0} 曲 · {1} 譜面"
+    },
+    "{0} songs · {1} charts": {
+      "zh-Hans": "{0} 首乐曲 · {1} 张谱面",
+      "ko": "{0}곡 · 채보 {1}개",
+      "ja": "{0} 曲 · {1} 譜面"
+    },
+    "{0} song / format entries, {1} charts": {
+      "zh-Hans": "{0} 个乐曲 / 类型条目，{1} 张谱面",
+      "ko": "곡 / 유형 항목 {0}개, 채보 {1}개",
+      "ja": "楽曲 / タイプ {0} 件、{1} 譜面"
+    },
+    "Search all {0} charts by song, artist or difficulty.": {
+      "zh-Hans": "按乐曲、艺术家或难度搜索全部 {0} 张谱面。",
+      "ko": "곡, 아티스트 또는 난이도로 전체 채보 {0}개를 검색하세요.",
+      "ja": "楽曲・アーティスト・難易度で全 {0} 譜面を検索できます。"
+    },
+    "Showing {0} of {1} matching charts. Keep typing or show more.": {
+      "zh-Hans": "显示 {1} 张匹配谱面中的 {0} 张。继续输入或显示更多。",
+      "ko": "검색된 채보 {1}개 중 {0}개를 표시합니다. 계속 입력하거나 더 보기를 누르세요.",
+      "ja": "一致した {1} 譜面中 {0} 譜面を表示中。検索を続けるか、さらに表示してください。"
+    },
+    "{0} matching charts.": {
+      "zh-Hans": "{0} 张匹配谱面。",
+      "ko": "일치하는 채보 {0}개.",
+      "ja": "{0} 譜面が一致しました。"
+    },
+    "Comparing {0} with {1}": {
+      "zh-Hans": "比较 {0} 与 {1}",
+      "ko": "비교 중: {0} / {1}",
+      "ja": "{0} と {1} を比較中"
+    },
+    "Compare with {0}": {
+      "zh-Hans": "与 {0} 比较",
+      "ko": "비교 대상: {0}",
+      "ja": "{0} と比較"
+    },
+    "Difficulty for {0}": {
+      "zh-Hans": "{0} 的难度",
+      "ko": "{0} 난이도",
+      "ja": "{0} の難易度"
+    },
+    "Remove version {0}": {
+      "zh-Hans": "移除版本 {0}",
+      "ko": "버전 {0} 제외",
+      "ja": "バージョン {0} を解除"
+    },
+    "Remove difficulty {0}": {
+      "zh-Hans": "移除难度 {0}",
+      "ko": "난이도 {0} 제외",
+      "ja": "難易度 {0} を解除"
+    },
+    "From level {0}": {
+      "zh-Hans": "最低等级 {0}",
+      "ko": "최소 레벨 {0}",
+      "ja": "レベル {0} 以上"
+    },
+    "To level {0}": {
+      "zh-Hans": "最高等级 {0}",
+      "ko": "최대 레벨 {0}",
+      "ja": "レベル {0} 以下"
+    },
+    "Level {0}": {
+      "zh-Hans": "等级 {0}",
+      "ko": "레벨 {0}",
+      "ja": "レベル {0}"
+    },
+    "Remove minimum level filter": {
+      "zh-Hans": "移除最低等级筛选",
+      "ko": "최소 레벨 필터 해제",
+      "ja": "最低レベルの絞り込みを解除"
+    },
+    "Remove maximum level filter": {
+      "zh-Hans": "移除最高等级筛选",
+      "ko": "최대 레벨 필터 해제",
+      "ja": "最高レベルの絞り込みを解除"
+    },
+    "Enter an available level from {0} to {1}. Use + for a plus level.": {
+      "zh-Hans": "请输入 {0} 到 {1} 之间的可用等级。加号等级请使用 +。",
+      "ko": "{0}부터 {1}까지 사용 가능한 레벨을 입력하세요. 플러스 레벨은 +를 사용하세요.",
+      "ja": "{0} から {1} までのレベルを入力してください。プラス付きは + を使います。"
+    },
+    "YouTube search for {0} (opens in a new tab)": {
+      "zh-Hans": "在 YouTube 搜索 {0}（在新标签页打开）",
+      "ko": "YouTube에서 {0} 검색 (새 탭에서 열림)",
+      "ja": "{0} を YouTube で検索（新しいタブで開きます）"
+    },
+    "mai-notes simai player for {0} (opens in a new tab)": {
+      "zh-Hans": "{0} 的 mai-notes simai 播放器（在新标签页打开）",
+      "ko": "{0} mai-notes simai 플레이어 (새 탭에서 열림)",
+      "ja": "{0} の mai-notes simai プレイヤー（新しいタブで開きます）"
+    },
+    "Jacket for {0}": {
+      "zh-Hans": "{0} 的封面",
+      "ko": "{0} 재킷",
+      "ja": "{0} のジャケット"
+    },
+    "Jacket for {0} unavailable": {
+      "zh-Hans": "{0} 的封面不可用",
+      "ko": "{0} 재킷 없음",
+      "ja": "{0} のジャケットなし"
+    },
+    "{0} logo unavailable": {
+      "zh-Hans": "{0} 标志不可用",
+      "ko": "{0} 로고 없음",
+      "ja": "{0} のロゴなし"
+    },
+    "{0} logo": {
+      "zh-Hans": "{0} 标志",
+      "ko": "{0} 로고",
+      "ja": "{0} のロゴ"
+    },
+    "Chart constant {0}": {
+      "zh-Hans": "谱面定数 {0}",
+      "ko": "채보 상수 {0}",
+      "ja": "譜面定数 {0}"
+    },
+    "{0} inputs per second": {
+      "zh-Hans": "每秒 {0} 次输入",
+      "ko": "초당 입력 {0}회",
+      "ja": "毎秒 {0} 入力"
+    },
+    "Open {0} · {1} · Chart constant {2}": {
+      "zh-Hans": "打开 {0} · {1} · 谱面定数 {2}",
+      "ko": "{0} 열기 · {1} · 채보 상수 {2}",
+      "ja": "{0} を開く · {1} · 譜面定数 {2}"
+    },
+    "First chart search results": {
+      "zh-Hans": "第一张谱面的搜索结果",
+      "ko": "첫 번째 채보 검색 결과",
+      "ja": "1つ目の譜面の検索結果"
+    },
+    "Second chart search results": {
+      "zh-Hans": "第二张谱面的搜索结果",
+      "ko": "두 번째 채보 검색 결과",
+      "ja": "2つ目の譜面の検索結果"
+    }
+  },
+  "invariants": {}
+}

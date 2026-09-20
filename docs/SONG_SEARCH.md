@@ -1,5 +1,9 @@
 # Romaji and alternate-title search
 
+Four-language search generation, pronunciation corrections and coverage gates
+are documented in [Localization](LOCALIZATION.md). Existing Tachi aliases below
+remain available alongside these search-only additions.
+
 Charts, Explore and both comparison pickers use the same local search helper.
 For example, `Umiyuri`, `Umiyuri Kaiteitan`, `umi yuri` and full-width `Ｕｍｉｙｕｒｉ`
 find ウミユリ海底譚 by n-buna. `Senbonzakura` also matches Tachi's spaced

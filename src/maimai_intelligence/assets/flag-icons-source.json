@@ -1,0 +1,29 @@
+{
+  "license": "Public domain",
+  "author": "Mark James",
+  "repository": "https://github.com/legacy-icons/famfamfam-flags",
+  "files": [
+    {
+      "sha256": "16eaf5f7a840fafb8429af9ad26cdd86f53c25fff206057d71dbde9c8d73715f",
+      "file": "flag-us.png",
+      "source": "https://raw.githubusercontent.com/legacy-icons/famfamfam-flags/a79ec57f332a43717170cdcf159692bcf0012872/dist/png/us.png"
+    },
+    {
+      "sha256": "0242f535f7ee0cc26bd88cc9f807ece4a6d70129303b902a232b38c58e66ef51",
+      "file": "flag-cn.png",
+      "source": "https://raw.githubusercontent.com/legacy-icons/famfamfam-flags/a79ec57f332a43717170cdcf159692bcf0012872/dist/png/cn.png"
+    },
+    {
+      "sha256": "a2f269ecfffe3ff989f710392403eb64433da7fe4708784f59f64d536dce2c16",
+      "file": "flag-kr.png",
+      "source": "https://raw.githubusercontent.com/legacy-icons/famfamfam-flags/a79ec57f332a43717170cdcf159692bcf0012872/dist/png/kr.png"
+    },
+    {
+      "sha256": "5efce88ac7228ea159bcf7fd1cc56d73c19428394218706524bac0e9151d4c61",
+      "file": "flag-jp.png",
+      "source": "https://raw.githubusercontent.com/legacy-icons/famfamfam-flags/a79ec57f332a43717170cdcf159692bcf0012872/dist/png/jp.png"
+    }
+  ],
+  "revision": "a79ec57f332a43717170cdcf159692bcf0012872",
+  "project": "famfamfam Flags"
+}

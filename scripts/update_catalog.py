@@ -278,6 +278,12 @@ def prepare_update(
                     from maimai_intelligence.registry import write_registry
 
                     write_registry(accepted, run / "registry")
+                from maimai_intelligence.multilingual_search import enrich_registry
+
+                # Search aids belong to the projection and its retained report;
+                # the accepted identity registry remains exactly as reconciled.
+                accepted, search_aliases = enrich_registry(accepted)
+                atomic_json(run / "multilingual-search.json", search_aliases)
                 prepared = build_registry_package(
                     accepted,
                     package,

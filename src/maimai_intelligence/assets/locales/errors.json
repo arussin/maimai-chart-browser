@@ -1,0 +1,264 @@
+{
+  "messages": {
+    "Unsupported player file. Choose a maimai-player-data v1 export.": {
+      "zh-Hans": "不支持此玩家文件。请选择 maimai-player-data v1 导出文件。",
+      "ko": "지원하지 않는 플레이어 파일입니다. maimai-player-data v1 내보내기 파일을 선택하세요.",
+      "ja": "対応していないプレイヤーファイルです。maimai-player-data v1 のエクスポートを選んでください。"
+    },
+    "Invalid player identity.": {
+      "zh-Hans": "玩家身份信息无效。",
+      "ko": "플레이어 식별 정보가 올바르지 않습니다.",
+      "ja": "プレイヤー識別情報が無効です。"
+    },
+    "Invalid or oversized player collection.": {
+      "zh-Hans": "玩家数据集合无效或过大。",
+      "ko": "플레이어 데이터 모음이 올바르지 않거나 너무 큽니다.",
+      "ja": "プレイヤーデータが無効か大きすぎます。"
+    },
+    "Invalid chart reference.": {
+      "zh-Hans": "谱面引用无效。",
+      "ko": "채보 참조가 올바르지 않습니다.",
+      "ja": "譜面参照が無効です。"
+    },
+    "Invalid score observation.": {
+      "zh-Hans": "成绩记录无效。",
+      "ko": "점수 기록이 올바르지 않습니다.",
+      "ja": "スコアの記録が無効です。"
+    },
+    "Invalid score text.": {
+      "zh-Hans": "成绩文本无效。",
+      "ko": "점수 텍스트가 올바르지 않습니다.",
+      "ja": "スコアのテキストが無効です。"
+    },
+    "Invalid score measurement.": {
+      "zh-Hans": "成绩测量值无效。",
+      "ko": "점수 측정값이 올바르지 않습니다.",
+      "ja": "スコアの測定値が無効です。"
+    },
+    "Missing play observation.": {
+      "zh-Hans": "缺少游玩记录。",
+      "ko": "플레이 기록이 누락되었습니다.",
+      "ja": "プレイ記録がありません。"
+    },
+    "Invalid PB snapshot.": {
+      "zh-Hans": "个人最佳成绩快照无效。",
+      "ko": "개인 최고 기록 스냅샷이 올바르지 않습니다.",
+      "ja": "自己ベストのスナップショットが無効です。"
+    },
+    "PB chart mismatch.": {
+      "zh-Hans": "个人最佳成绩与谱面不匹配。",
+      "ko": "개인 최고 기록과 채보가 일치하지 않습니다.",
+      "ja": "自己ベストと譜面が一致しません。"
+    },
+    "Invalid capture.": {
+      "zh-Hans": "采集记录无效。",
+      "ko": "수집 기록이 올바르지 않습니다.",
+      "ja": "取得記録が無効です。"
+    },
+    "Missing capture observations.": {
+      "zh-Hans": "缺少采集数据。",
+      "ko": "수집 데이터가 누락되었습니다.",
+      "ja": "取得データがありません。"
+    },
+    "Invalid dataset revision.": {
+      "zh-Hans": "数据集修订版本无效。",
+      "ko": "데이터셋 버전이 올바르지 않습니다.",
+      "ja": "データセットの改訂情報が無効です。"
+    },
+    "Player file integrity check failed.": {
+      "zh-Hans": "玩家文件完整性检查失败。",
+      "ko": "플레이어 파일 무결성 검사에 실패했습니다.",
+      "ja": "プレイヤーファイルの整合性確認に失敗しました。"
+    },
+    "Observation integrity check failed.": {
+      "zh-Hans": "记录完整性检查失败。",
+      "ko": "기록 무결성 검사에 실패했습니다.",
+      "ja": "記録の整合性確認に失敗しました。"
+    },
+    "Player history exceeds its size limit; nothing was replaced.": {
+      "zh-Hans": "玩家历史记录超过大小限制；未替换任何数据。",
+      "ko": "플레이어 기록이 크기 제한을 초과했습니다. 기존 데이터는 변경되지 않았습니다.",
+      "ja": "プレイヤー履歴がサイズ上限を超えています。既存データは変更されていません。"
+    },
+    "This browser cannot read compressed player files. Please update your browser.": {
+      "zh-Hans": "此浏览器无法读取压缩玩家文件。请更新浏览器。",
+      "ko": "이 브라우저는 압축된 플레이어 파일을 읽을 수 없습니다. 브라우저를 업데이트하세요.",
+      "ja": "このブラウザは圧縮されたプレイヤーファイルを読めません。ブラウザを更新してください。"
+    },
+    "Invalid compressed player file.": {
+      "zh-Hans": "压缩玩家文件无效。",
+      "ko": "압축된 플레이어 파일이 올바르지 않습니다.",
+      "ja": "圧縮されたプレイヤーファイルが無効です。"
+    },
+    "Expanded player history exceeds 128 MiB.": {
+      "zh-Hans": "解压后的玩家历史记录超过 128 MiB。",
+      "ko": "압축 해제된 플레이어 기록이 128 MiB를 초과합니다.",
+      "ja": "展開したプレイヤー履歴が 128 MiB を超えています。"
+    },
+    "Invalid report data offer.": {
+      "zh-Hans": "报告提供的数据信息无效。",
+      "ko": "리포트가 제공한 데이터 정보가 올바르지 않습니다.",
+      "ja": "レポートが提示したデータ情報が無効です。"
+    },
+    "Invalid report history offer.": {
+      "zh-Hans": "报告提供的历史记录信息无效。",
+      "ko": "리포트가 제공한 기록 정보가 올바르지 않습니다.",
+      "ja": "レポートが提示した履歴情報が無効です。"
+    },
+    "Invalid player profile.": {
+      "zh-Hans": "玩家资料无效。",
+      "ko": "플레이어 프로필이 올바르지 않습니다.",
+      "ja": "プレイヤープロフィールが無効です。"
+    },
+    "Different players cannot be merged.": {
+      "zh-Hans": "无法合并不同玩家的数据。",
+      "ko": "다른 플레이어의 데이터는 합칠 수 없습니다.",
+      "ja": "別のプレイヤーのデータは統合できません。"
+    },
+    "Conflicting retained observation.": {
+      "zh-Hans": "保留的记录发生冲突。",
+      "ko": "저장된 기록이 충돌합니다.",
+      "ja": "保存された記録が競合しています。"
+    },
+    "Oversized temporary data": {
+      "zh-Hans": "临时数据过大",
+      "ko": "임시 데이터가 너무 큼",
+      "ja": "一時データが大きすぎます"
+    },
+    "Invalid checkout response.": {
+      "zh-Hans": "付款响应无效。",
+      "ko": "결제 응답이 올바르지 않습니다.",
+      "ja": "決済の応答が無効です。"
+    },
+    "Incompatible comparison profile": {
+      "zh-Hans": "不兼容的比较资料",
+      "ko": "호환되지 않는 비교 프로필",
+      "ja": "比較データに互換性がありません"
+    },
+    "Invalid comparison measurement": {
+      "zh-Hans": "比较测量值无效",
+      "ko": "비교 측정값이 올바르지 않음",
+      "ja": "比較の測定値が無効です"
+    },
+    "Chart is not in this catalog": {
+      "zh-Hans": "此曲库中没有该谱面",
+      "ko": "이 카탈로그에 없는 채보",
+      "ja": "このカタログに譜面がありません"
+    },
+    "Result limit must be 1..100": {
+      "zh-Hans": "结果数量限制必须为 1 到 100",
+      "ko": "결과 수 제한은 1~100이어야 합니다",
+      "ja": "結果数の上限は1〜100です"
+    },
+    "Research catalog could not be loaded": {
+      "zh-Hans": "无法加载研究用曲库",
+      "ko": "연구용 카탈로그를 불러올 수 없음",
+      "ja": "研究用カタログを読み込めませんでした"
+    },
+    "Research catalog exceeds its size limit": {
+      "zh-Hans": "研究用曲库超过大小限制",
+      "ko": "연구용 카탈로그가 크기 제한을 초과함",
+      "ja": "研究用カタログがサイズ上限を超えています"
+    },
+    "Invalid public data reference": {
+      "zh-Hans": "公开数据引用无效",
+      "ko": "공개 데이터 참조가 올바르지 않음",
+      "ja": "公開データの参照が無効です"
+    },
+    "Public data integrity check failed": {
+      "zh-Hans": "公开数据完整性检查失败",
+      "ko": "공개 데이터 무결성 검사 실패",
+      "ja": "公開データの整合性確認に失敗しました"
+    },
+    "Chart details belong to another catalog": {
+      "zh-Hans": "谱面详情属于其他曲库",
+      "ko": "채보 상세 정보가 다른 카탈로그에 속함",
+      "ja": "譜面詳細は別のカタログのものです"
+    },
+    "Chart detail identity mismatch": {
+      "zh-Hans": "谱面详情身份不匹配",
+      "ko": "채보 상세 식별 정보 불일치",
+      "ja": "譜面詳細の識別情報が一致しません"
+    },
+    "Passage identity mismatch": {
+      "zh-Hans": "片段身份不匹配",
+      "ko": "구간 식별 정보 불일치",
+      "ja": "区間の識別情報が一致しません"
+    },
+    "Chart evidence is missing": {
+      "zh-Hans": "缺少谱面证据",
+      "ko": "채보 근거 데이터 누락",
+      "ja": "譜面の根拠データがありません"
+    },
+    "Chart details are unavailable": {
+      "zh-Hans": "谱面详情不可用",
+      "ko": "채보 상세 정보를 사용할 수 없음",
+      "ja": "譜面詳細を利用できません"
+    },
+    "This research catalog version is unavailable": {
+      "zh-Hans": "此研究用曲库版本不可用",
+      "ko": "이 연구용 카탈로그 버전을 사용할 수 없음",
+      "ja": "この研究用カタログの版は利用できません"
+    },
+    "Unsupported browsing index": {
+      "zh-Hans": "不支持的浏览索引",
+      "ko": "지원하지 않는 탐색 인덱스",
+      "ja": "対応していない閲覧インデックスです"
+    },
+    "Invalid catalog parts": {
+      "zh-Hans": "曲库分片无效",
+      "ko": "카탈로그 조각이 올바르지 않음",
+      "ja": "カタログの分割データが無効です"
+    },
+    "Invalid catalog part": {
+      "zh-Hans": "曲库分片无效",
+      "ko": "카탈로그 조각이 올바르지 않음",
+      "ja": "カタログの分割データが無効です"
+    },
+    "Full research catalog exceeds 64 MiB": {
+      "zh-Hans": "完整研究用曲库超过 64 MiB",
+      "ko": "전체 연구용 카탈로그가 64 MiB를 초과함",
+      "ja": "研究用カタログ全体が 64 MiB を超えています"
+    },
+    "Catalog part integrity check failed": {
+      "zh-Hans": "曲库分片完整性检查失败",
+      "ko": "카탈로그 조각 무결성 검사 실패",
+      "ja": "カタログ分割データの整合性確認に失敗しました"
+    },
+    "Research catalog integrity check failed": {
+      "zh-Hans": "研究用曲库完整性检查失败",
+      "ko": "연구용 카탈로그 무결성 검사 실패",
+      "ja": "研究用カタログの整合性確認に失敗しました"
+    },
+    "Inventory schema mismatch": {
+      "zh-Hans": "曲库清单格式不匹配",
+      "ko": "목록 형식 불일치",
+      "ja": "一覧のデータ形式が一致しません"
+    },
+    "Unsupported inventory index": {
+      "zh-Hans": "不支持的曲库清单索引",
+      "ko": "지원하지 않는 목록 인덱스",
+      "ja": "対応していない一覧インデックスです"
+    },
+    "Invalid browsing index": {
+      "zh-Hans": "浏览索引无效",
+      "ko": "탐색 인덱스가 올바르지 않음",
+      "ja": "閲覧インデックスが無効です"
+    },
+    "You are viewing an older catalog.": {
+      "zh-Hans": "您正在浏览旧版曲库。",
+      "ko": "이전 버전의 카탈로그를 보고 있습니다.",
+      "ja": "古い版のカタログを表示しています。"
+    },
+    "Open the latest catalog": {
+      "zh-Hans": "打开最新曲库",
+      "ko": "최신 카탈로그 열기",
+      "ja": "最新のカタログを開く"
+    },
+    "The research browser could not start.": {
+      "zh-Hans": "研究用浏览器无法启动。",
+      "ko": "연구용 브라우저를 시작할 수 없습니다.",
+      "ja": "研究用ブラウザを起動できませんでした。"
+    }
+  }
+}

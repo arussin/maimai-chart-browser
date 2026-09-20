@@ -14,6 +14,7 @@ from .artwork import copy_artwork, validate_artwork
 from .catalog_loading import MAX_CATALOG_BYTES
 from .challenge_review import render_review, review_scripts
 from .io import atomic_write_text
+from .localization import localization_script
 from .mai_notes import validate_links
 from .provider_mapping import integration_catalog
 from .research_overview import validate_overview
@@ -119,6 +120,7 @@ def build_lab(package_directory, output, *, catalog_version):
     assets = files("maimai_intelligence.assets")
     early_scripts = []
     for name in (
+        "localization.js",
         "settings-menu.js",
         "player-data-core.js",
         "player-data.js",
@@ -127,12 +129,17 @@ def build_lab(package_directory, output, *, catalog_version):
         "support-client.js",
         "support-stripe.js",
     ):
-        content = assets.joinpath(name).read_text("utf-8")
+        content = (
+            localization_script()
+            if name == "localization.js"
+            else assets.joinpath(name).read_text("utf-8")
+        )
         atomic_write_text(root / name, content)
         revision = hashlib.sha256(content.encode("utf-8")).hexdigest()[:16]
         early_scripts.append(f'<script defer src="{name}?v={revision}"></script>')
     for name in (
         "support.html",
+        "localization.css",
         "support-page.js",
         "support-page.css",
         "site-brand.css",
@@ -158,6 +165,8 @@ def build_lab(package_directory, output, *, catalog_version):
     atomic_write_text(root / "lab-loader.js", loader)
     styles = (
         assets.joinpath("challenge-review.css").read_text("utf-8")
+        + "\n"
+        + assets.joinpath("localization.css").read_text("utf-8")
         + "\n"
         + assets.joinpath("chart-visuals.css").read_text("utf-8")
         + "\n"
@@ -219,8 +228,8 @@ def build_lab(package_directory, output, *, catalog_version):
     html = html.replace(
         "</head>",
         f'<link rel="preload" as="script" href="challenge-review.js?v={script_revision}">'
-        f'<script defer src="view-navigation.js?v={view_revision}"></script>'
         + "".join(early_scripts)
+        + f'<script defer src="view-navigation.js?v={view_revision}"></script>'
         + "</head>",
     )
     atomic_write_text(root / "index.html", html)

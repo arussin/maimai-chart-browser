@@ -1,5 +1,7 @@
 /* Searches use public chart metadata; no video is fetched or presumed verified. */
 (()=>{'use strict';
+const i18n=window.maimaiI18n||{text:(node,value)=>node.textContent=value,attribute:(node,key,value)=>node.setAttribute(key,value),option:(...args)=>new Option(...args),literal:(node,value)=>node.textContent=value};
+
 let playerLinks=null,identityVersion=1;
 function configure(index){identityVersion=index?.version==='mai-notes-links-2'?2:1;playerLinks=['mai-notes-links-1','mai-notes-links-2'].includes(index?.version)?index.charts:null;}
 function youtube(chart){
@@ -9,9 +11,9 @@ function youtube(chart){
   url.searchParams.set('search_query','maimai '+description);
   const link=document.createElement('a');link.className='youtube-search';
   link.href=url.href;link.target='_blank';link.rel='noopener noreferrer';link.referrerPolicy='no-referrer';
-  link.textContent='YouTube search ↗';
-  link.setAttribute('aria-label','YouTube search for '+description+' (opens in a new tab)');
-  link.title='Search for this chart on YouTube; results may include other versions.';
+  i18n.text(link, 'YouTube search ↗');
+  i18n.attribute(link, 'aria-label', 'YouTube search for '+description+' (opens in a new tab)');
+  i18n.attribute(link, 'title', 'Search for this chart on YouTube; results may include other versions.');
   return link;
 }
 function maiNotes(chart){
@@ -21,8 +23,8 @@ function maiNotes(chart){
   const link=document.createElement('a');link.className='mai-notes-player';
   link.href='https://mai-notes.com/player.html?chart='+record.id;
   link.target='_blank';link.rel='noopener noreferrer';link.referrerPolicy='no-referrer';
-  link.textContent='mai-notes simai player ↗';
-  link.setAttribute('aria-label','mai-notes simai player for '+[chart.title,chart.format,chart.difficulty].join(' ')+' (opens in a new tab)');
+  i18n.text(link, 'mai-notes simai player ↗');
+  i18n.attribute(link, 'aria-label', 'mai-notes simai player for '+[chart.title,chart.format,chart.difficulty].join(' ')+' (opens in a new tab)');
   return link;
 }
 function group(chart){

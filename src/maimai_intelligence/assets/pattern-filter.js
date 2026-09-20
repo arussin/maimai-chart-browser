@@ -1,18 +1,20 @@
 /* Searchable public pattern filters. Multiple selections match any selected pattern. */
 (()=>{'use strict';
+const i18n=window.maimaiI18n||{text:(node,value)=>node.textContent=value,attribute:(node,key,value)=>node.setAttribute(key,value),option:(...args)=>new Option(...args),searchTerms:value=>value,literal:(node,value)=>node.textContent=value};
+
 const el=id=>document.getElementById(id),normalize=value=>String(value??'').normalize('NFKC').toLowerCase().trim();
 function mount(overview,onChange){
   const definitions=new Map(JSON.parse(el('pattern-data').textContent).map(p=>[p.pattern_id,p]));
   const ids=[...overview.patternIds],selected=new Set(),rows=[];
   const menu=el('pattern-filter'),summary=el('pattern-filter-summary'),search=el('pattern-filter-search');
   const keepVisible=()=>requestAnimationFrame(()=>{if(menu.open)menu.querySelector('.pattern-filter-panel').scrollIntoView({block:'nearest',inline:'nearest'});});
-  const make=(tag,text,cls)=>{const node=document.createElement(tag);if(text!==undefined)node.textContent=text;if(cls)node.className=cls;return node;};
+  const make=(tag,text,cls)=>{const node=document.createElement(tag);if(text!==undefined)i18n.text(node, text);if(cls)node.className=cls;return node;};
   function update(){
-    summary.textContent=selected.size===0?'All patterns':selected.size===1?overview.name([...selected][0]):selected.size+' patterns selected';
+    i18n.text(summary, selected.size===0?'All patterns':selected.size===1?overview.name([...selected][0]):selected.size+' patterns selected');
     el('pattern-filter-clear').disabled=!selected.size;
     const terms=normalize(search.value).split(/\s+/).filter(Boolean);let count=0;
     for(const row of rows){row.input.checked=selected.has(row.id);row.label.hidden=!terms.every(term=>row.text.includes(term));if(!row.label.hidden)count++;}
-    el('pattern-filter-count').textContent=ids.length?count+' of '+ids.length+' patterns and traits':'No pattern data in this catalog release.';
+    i18n.text(el('pattern-filter-count'), ids.length?count+' of '+ids.length+' patterns and traits':'No pattern data in this catalog release.');
     el('pattern-filter-empty').hidden=count>0||!ids.length;
     if(menu.open)keepVisible();
   }
@@ -24,7 +26,7 @@ function mount(overview,onChange){
     text.append(name,detail);label.append(input,text);
     input.onchange=()=>{if(input.checked)selected.add(id);else selected.delete(id);update();onChange();};
     const aliases=(definition?.aliases||[]).map(alias=>typeof alias==='string'?alias:alias.text);
-    rows.push({id,input,label,text:normalize([overview.name(id),id,...aliases].join(' '))});
+    rows.push({id,input,label,text:normalize([overview.name(id),id,...aliases].map(i18n.searchTerms).join(' '))});
     el('pattern-filter-options').append(label);
   }
   const visibleInputs=()=>rows.filter(row=>!row.label.hidden&&!row.input.disabled).map(row=>row.input);
@@ -56,7 +58,7 @@ function mount(overview,onChange){
     clear(){set([]);},
     matches:chart=>!selected.size||overview.detected(chart).some(tag=>selected.has(tag.id)),
     chips:()=>[...selected].map(id=>{
-      const button=make('button',overview.name(id)+' ×','filter-chip');button.setAttribute('aria-label','Remove pattern '+overview.name(id));
+      const button=make('button',overview.name(id)+' ×','filter-chip');i18n.attribute(button, 'aria-label', 'Remove pattern '+overview.name(id));
       button.onclick=()=>{selected.delete(id);update();onChange();summary.focus();};return button;
     })
   };

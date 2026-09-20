@@ -1,0 +1,264 @@
+{
+  "messages": {
+    "Open source and made for the maimai community.": {
+      "zh-Hans": "为 maimai 社区打造的开源项目。",
+      "ko": "maimai 커뮤니티를 위해 만든 오픈 소스 프로젝트입니다.",
+      "ja": "maimai コミュニティのためのオープンソースです。"
+    },
+    "Contribute code, suggest improvements or report an issue on GitHub.": {
+      "zh-Hans": "欢迎在 GitHub 贡献代码、提出改进建议或报告问题。",
+      "ko": "GitHub에서 코드 기여, 개선 제안 또는 문제 제보를 할 수 있습니다.",
+      "ja": "GitHub でコードの貢献、改善提案、不具合報告を受け付けています。"
+    },
+    "View on GitHub": {
+      "zh-Hans": "在 GitHub 查看",
+      "ko": "GitHub에서 보기",
+      "ja": "GitHub で見る"
+    },
+    "Report an issue": {
+      "zh-Hans": "报告问题",
+      "ko": "문제 제보",
+      "ja": "問題を報告"
+    },
+    "GitHub · opens in a new tab": {
+      "zh-Hans": "GitHub · 在新标签页打开",
+      "ko": "GitHub · 새 탭에서 열림",
+      "ja": "GitHub · 新しいタブで開きます"
+    },
+    "Unavailable in this preview": {
+      "zh-Hans": "此预览中不可用",
+      "ko": "이 미리보기에서는 사용할 수 없음",
+      "ja": "このプレビューでは利用できません"
+    },
+    "Project and credits": {
+      "zh-Hans": "项目与致谢",
+      "ko": "프로젝트 및 크레딧",
+      "ja": "プロジェクトとクレジット"
+    },
+    "Credits & thanks": {
+      "zh-Hans": "鸣谢",
+      "ko": "크레딧 및 감사",
+      "ja": "クレジットと謝辞"
+    },
+    "Thank you to the creators, maintainers and community contributors whose work makes this browser possible.": {
+      "zh-Hans": "感谢所有创作者、维护者和社区贡献者，正是他们的工作让本浏览器得以实现。",
+      "ko": "이 브라우저를 가능하게 해 준 제작자, 관리자, 커뮤니티 기여자 여러분께 감사드립니다.",
+      "ja": "このブラウザを支える制作者、保守担当者、コミュニティの貢献者の皆様に感謝します。"
+    },
+    "Game, music & artwork": {
+      "zh-Hans": "游戏、音乐与美术",
+      "ko": "게임, 음악 및 아트워크",
+      "ja": "ゲーム・音楽・アートワーク"
+    },
+    "SEGA and the maimai team": {
+      "zh-Hans": "SEGA 与 maimai 团队",
+      "ko": "SEGA 및 maimai 팀",
+      "ja": "SEGA と maimai チーム"
+    },
+    ", and the composers, performers, illustrators, chart designers, publishers and licensors credited in the game. Song metadata comes from": {
+      "zh-Hans": "，以及游戏中署名的作曲者、表演者、插画师、谱师、发行商和授权方。乐曲元数据来自",
+      "ko": ", 그리고 게임에 명시된 작곡가, 연주자, 일러스트레이터, 채보 제작자, 배급사 및 권리자 여러분. 곡 메타데이터의 출처:",
+      "ja": "、およびゲーム内に記載された作曲者、演奏者、イラストレーター、譜面制作者、出版社、権利者の皆様。楽曲データの出典："
+    },
+    "SEGA's Japan catalog": {
+      "zh-Hans": "SEGA 日本版曲库",
+      "ko": "SEGA 일본판 카탈로그",
+      "ja": "SEGA 日本版カタログ"
+    },
+    "International catalog": {
+      "zh-Hans": "国际版曲库",
+      "ko": "국제판 카탈로그",
+      "ja": "海外版カタログ"
+    },
+    "; jacket images are sourced from maimai DX NET.": {
+      "zh-Hans": "；封面图来自 maimai DX NET。",
+      "ko": ". 재킷 이미지는 maimai DX NET에서 가져옵니다.",
+      "ja": "。ジャケット画像は maimai DX NET が出典です。"
+    },
+    "Research chart data": {
+      "zh-Hans": "研究用谱面数据",
+      "ko": "연구용 채보 데이터",
+      "ja": "研究用譜面データ"
+    },
+    ", converted upstream with": {
+      "zh-Hans": "，上游转换使用",
+      "ko": ", 상위 프로젝트의 변환 도구:",
+      "ja": "。上流での変換に使用："
+    },
+    "and": {
+      "zh-Hans": "及",
+      "ko": "및",
+      "ja": "と"
+    },
+    "and the": {
+      "zh-Hans": "以及",
+      "ko": "및",
+      "ja": "および"
+    },
+    ", its": {
+      "zh-Hans": "及其",
+      "ko": "및 해당 커뮤니티의",
+      "ja": "と、その"
+    },
+    "The": {
+      "zh-Hans": "以下项目：",
+      "ko": "다음 프로젝트:",
+      "ja": "次のプロジェクト："
+    },
+    ". The source specifies research use and prohibits commercial use. Attribution does not grant additional rights to the original charts or media.": {
+      "zh-Hans": "。来源注明仅限研究使用，禁止商用。注明出处并不赋予原谱面或媒体的额外使用权。",
+      "ko": ". 출처는 연구 목적 사용을 명시하고 상업적 사용을 금지합니다. 출처 표기는 원본 채보나 미디어의 추가 권리를 부여하지 않습니다.",
+      "ja": "。出典は研究用途を指定し、商用利用を禁止しています。帰属表示によって元の譜面やメディアの追加権利が付与されることはありません。"
+    },
+    "Supplemental song metadata": {
+      "zh-Hans": "补充乐曲元数据",
+      "ko": "보충 곡 메타데이터",
+      "ja": "補足の楽曲メタデータ"
+    },
+    "maimai Wiki on Gamerch": {
+      "zh-Hans": "Gamerch 上的 maimai Wiki",
+      "ko": "Gamerch의 maimai Wiki",
+      "ja": "Gamerch の maimai Wiki"
+    },
+    "and their contributors supply fallback BPM, chart constants and chart reference data.": {
+      "zh-Hans": "及其贡献者提供备用 BPM、谱面定数和谱面参考数据。",
+      "ko": "및 기여자들이 보충 BPM, 채보 상수, 채보 참고 데이터를 제공합니다.",
+      "ja": "とその貢献者が、補足の BPM、譜面定数、譜面参照データを提供しています。"
+    },
+    "Version artwork": {
+      "zh-Hans": "版本标志图",
+      "ko": "버전 아트워크",
+      "ja": "バージョンのアートワーク"
+    },
+    "supplied the retained version-logo collection. The logos remain the property of SEGA and their respective rights holders.": {
+      "zh-Hans": "提供了保留的版本标志集合。标志仍归 SEGA 及各自权利人所有。",
+      "ko": "에서 보존된 버전 로고 모음을 제공했습니다. 로고의 권리는 SEGA 및 각 권리자에게 있습니다.",
+      "ja": "が保管されたバージョンロゴ集を提供しました。ロゴの権利は SEGA と各権利者に帰属します。"
+    },
+    "Chart notation & community transcriptions": {
+      "zh-Hans": "谱面记法与社区转录",
+      "ko": "채보 표기 및 커뮤니티 채보 전사",
+      "ja": "譜面記法とコミュニティの採譜"
+    },
+    "Simai community": {
+      "zh-Hans": "Simai 社区",
+      "ko": "Simai 커뮤니티",
+      "ja": "Simai コミュニティ"
+    },
+    "notation documentation": {
+      "zh-Hans": "记法文档",
+      "ko": "표기 문서",
+      "ja": "記法ドキュメント"
+    },
+    "community chart collection": {
+      "zh-Hans": "社区谱面集合",
+      "ko": "커뮤니티 채보 모음",
+      "ja": "コミュニティの譜面集"
+    },
+    "inform our independent parser and provide fallback chart transcriptions for analysis.": {
+      "zh-Hans": "为我们的独立解析器提供参考，并提供用于分析的备用转录谱面。",
+      "ko": "은 독립 파서의 참고 자료이며 분석을 위한 보충 채보 전사를 제공합니다.",
+      "ja": "を独自パーサーの参考にし、解析用の補足採譜を利用しています。"
+    },
+    "Pattern teaching references": {
+      "zh-Hans": "配置教学参考",
+      "ko": "패턴 교육 참고 자료",
+      "ja": "配置解説の参考資料"
+    },
+    "Surone's Umiyuri tutorial": {
+      "zh-Hans": "Surone 的海底谭教程",
+      "ko": "Surone의 우미유리 강좌",
+      "ja": "Surone のウミユリ解説"
+    },
+    "なめあ's illustrated explanation": {
+      "zh-Hans": "なめあ 的图解",
+      "ko": "なめあ의 그림 설명",
+      "ja": "なめあの図解"
+    },
+    "informed the scoped Umiyuri lesson. Browser demonstrations are authored illustrations; automatic chart detections remain experimental.": {
+      "zh-Hans": "为本项目限定范围的海底谭教程提供了参考。浏览器演示为编写的示意示例；自动谱面检测仍处于实验阶段。",
+      "ko": "을 한정된 우미유리 강좌의 참고로 사용했습니다. 브라우저 시연은 직접 제작한 예시이며, 자동 채보 검출은 실험 단계입니다.",
+      "ja": "を限定した範囲のウミユリ解説の参考にしました。デモは作成した説明用の例であり、自動検出は実験段階です。"
+    },
+    "Song aliases & personal score service": {
+      "zh-Hans": "乐曲别名与个人成绩服务",
+      "ko": "곡 별칭 및 개인 점수 서비스",
+      "ja": "楽曲の別名と個人スコアサービス"
+    },
+    "Tachi community song database": {
+      "zh-Hans": "Tachi 社区乐曲数据库",
+      "ko": "Tachi 커뮤니티 곡 데이터베이스",
+      "ja": "Tachi コミュニティ楽曲データベース"
+    },
+    "supplies romaji and alternate-title search aliases.": {
+      "zh-Hans": "提供罗马字和其他曲名的搜索别名。",
+      "ko": "에서 로마자 및 다른 곡명 검색 별칭을 제공합니다.",
+      "ja": "がローマ字や別名の検索用エイリアスを提供しています。"
+    },
+    "Tachi contributors": {
+      "zh-Hans": "Tachi 贡献者",
+      "ko": "Tachi 기여자",
+      "ja": "Tachi の貢献者"
+    },
+    "also provide the score service and API used by the optional downloader. Personal files are prepared separately and stay in this browser tab when opened.": {
+      "zh-Hans": "还提供可选下载器使用的成绩服务和 API。个人文件单独准备，打开后保留在此浏览器标签页中。",
+      "ko": "는 선택적 다운로더가 사용하는 점수 서비스와 API도 제공합니다. 개인 파일은 별도로 준비하며, 열면 이 브라우저 탭에만 남습니다.",
+      "ja": "は任意のダウンローダーが利用するスコアサービスと API も提供しています。個人ファイルは別途作成され、開くとこのタブ内に保持されます。"
+    },
+    "mai-notes metadata, transcriptions & player": {
+      "zh-Hans": "mai-notes 元数据、转录与播放器",
+      "ko": "mai-notes 메타데이터, 채보 전사 및 플레이어",
+      "ja": "mai-notes のメタデータ・採譜・プレイヤー"
+    },
+    "Thank you to": {
+      "zh-Hans": "感谢",
+      "ko": "감사드립니다:",
+      "ja": "感謝："
+    },
+    "and its creator for the chart simulator, public song metadata and note counts. We use these to fill catalog gaps, link matching difficulties and check available transcriptions before preparing analysis. Flow and pattern results are computed by our own experimental analysis engine; matching note counts does not establish exact game fidelity.": {
+      "zh-Hans": "及其创作者提供谱面模拟器、公开乐曲元数据和音符数量。我们使用这些数据补充曲库、关联对应难度，并在分析前检查可用转录。输入趋势和配置结果由我们的实验性分析引擎计算；音符数量匹配不代表与游戏完全一致。",
+      "ko": "및 제작자께서 채보 시뮬레이터, 공개 곡 메타데이터와 노트 수를 제공해 주셨습니다. 이를 통해 카탈로그를 보완하고 난이도를 연결하며 분석 전에 채보 전사를 확인합니다. 입력 흐름과 패턴은 자체 실험용 분석 엔진으로 계산합니다. 노트 수의 일치가 게임과의 완전한 동일성을 뜻하지는 않습니다.",
+      "ja": "と制作者の方が提供する譜面シミュレーター、公開楽曲データ、ノーツ数を、カタログの補完、難易度の対応付け、解析前の採譜確認に使用しています。入力推移と配置は独自の実験用エンジンで解析しており、ノーツ数の一致はゲームとの完全な一致を保証しません。"
+    },
+    "Project foundations": {
+      "zh-Hans": "项目基础",
+      "ko": "프로젝트 기반",
+      "ja": "プロジェクトの基盤"
+    },
+    "(originally maimai-report-starter) provided the original analyzer, recommendation engine, browser foundations and tests. Project code is MIT licensed; that license does not cover game assets or third-party datasets.": {
+      "zh-Hans": "（原名 maimai-report-starter）提供了最初的分析器、推荐引擎、浏览器基础和测试。项目代码使用 MIT 许可；该许可不涵盖游戏资源或第三方数据集。",
+      "ko": "(원래 이름: maimai-report-starter)에서 초기 분석기, 추천 엔진, 브라우저 기반 및 테스트를 제공했습니다. 프로젝트 코드는 MIT 라이선스이며, 게임 자산이나 타사 데이터셋에는 적용되지 않습니다.",
+      "ja": "（旧 maimai-report-starter）が、元の解析器、推薦エンジン、ブラウザの基盤、テストを提供しました。コードは MIT ライセンスですが、ゲーム素材や第三者のデータセットには適用されません。"
+    },
+    "Research tools reviewed": {
+      "zh-Hans": "参考的研究工具",
+      "ko": "검토한 연구 도구",
+      "ja": "検討した研究ツール"
+    },
+    "were consulted during the source audit. Their code, models and labels are not bundled or used as this browser's analysis engine.": {
+      "zh-Hans": "在来源审查期间被参考。其代码、模型和标签未被打包，也未用作本浏览器的分析引擎。",
+      "ko": "는 출처 검토 과정에서 참고했습니다. 해당 코드, 모델 및 라벨은 포함하지 않으며 이 브라우저의 분석 엔진으로 사용하지 않습니다.",
+      "ja": "を出典調査で参照しました。これらのコード、モデル、ラベルは同梱しておらず、このブラウザの解析エンジンにも使用していません。"
+    },
+    "Building & checking the browser": {
+      "zh-Hans": "浏览器构建与检查",
+      "ko": "브라우저 빌드 및 검사",
+      "ja": "ブラウザの構築と検証"
+    },
+    "support local preparation, development and accessibility checks.": {
+      "zh-Hans": "支持本地准备、开发和无障碍检查。",
+      "ko": "는 로컬 준비, 개발 및 접근성 검사를 지원합니다.",
+      "ja": "がローカルでの準備、開発、アクセシビリティ検証を支えています。"
+    },
+    "Coverage of the retained research source, not a complete current-game song list.": {
+      "zh-Hans": "表示保留研究来源的覆盖范围，并非当前游戏的完整曲目列表。",
+      "ko": "보존된 연구 출처의 범위이며, 현재 게임의 전체 곡 목록은 아닙니다.",
+      "ja": "保管した研究用出典の範囲であり、現行ゲームの完全な楽曲一覧ではありません。"
+    },
+    "charts": {
+      "zh-Hans": "张谱面",
+      "ko": "채보",
+      "ja": "譜面"
+    }
+  }
+}

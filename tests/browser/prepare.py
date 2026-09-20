@@ -12,6 +12,7 @@ from maimai_intelligence.lab import build_lab
 from maimai_intelligence.mai_notes import prepare_links
 from maimai_intelligence.metadata_waterfall import accept as accept_metadata
 from maimai_intelligence.metadata_waterfall import propose as propose_metadata
+from maimai_intelligence.multilingual_search import enrich_registry
 from maimai_intelligence.official_inventory import assertion
 from maimai_intelligence.public_release import build_public_release
 from maimai_intelligence.registry import accept_mapping, digest
@@ -234,6 +235,19 @@ with tempfile.TemporaryDirectory() as temporary:
         evidence="Synthetic player fixture, no real account",
     )
     build_lab(package, staging / "browser", catalog_version="legacy-fixture")
+    inventory, _ = enrich_registry(
+        inventory,
+        overrides={
+            "songs": {
+                master["song_id"]: {
+                    "title": "ソテリア",
+                    "artist": "Rafutsuri feat.桜あおい",
+                    "reading": "ソテリア",
+                    "aliases": {"en": ["Soteria"], "ko": ["소테리아"], "zh-Hans": ["索特里亚"]},
+                }
+            }
+        },
+    )
     build_registry_package(inventory, package, staging / "package")
     # Authored jacket tied to canonical song identity, before regional labels change.
     prepared = staging / "package"

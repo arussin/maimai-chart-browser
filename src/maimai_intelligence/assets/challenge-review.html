@@ -22,11 +22,11 @@ __FAVICON__
 <div class="browser-filters"><div class="filter-row">
 <label>Genre<select id="filter-genre"><option value="">All genres</option></select></label>
 <div class="version-field"><span id="version-label">Version</span>
-<details id="version-filter"><summary id="version-summary">All versions</summary>
+<details id="version-filter"><summary id="version-summary" aria-labelledby="version-label version-summary">All versions</summary>
 <div class="version-panel"><button id="version-clear" type="button" class="text-button">All versions</button>
 <div id="version-options" role="group" aria-labelledby="version-label"></div></div></details></div>
 <div class="difficulty-field"><span id="difficulty-label">Difficulty</span>
-<details id="difficulty-filter"><summary id="difficulty-summary">All difficulties</summary>
+<details id="difficulty-filter"><summary id="difficulty-summary" aria-labelledby="difficulty-label difficulty-summary">All difficulties</summary>
 <div class="difficulty-panel"><button id="difficulty-clear" type="button" class="text-button">All difficulties</button>
 <div id="difficulty-options" role="group" aria-labelledby="difficulty-label"></div></div></details></div>
 </div><div class="filter-secondary-row">
@@ -39,7 +39,7 @@ __FAVICON__
 <input id="level-max-slider" type="range" aria-label="Maximum level" aria-describedby="level-hint"></div>
 <p id="level-hint">Drag handles, or type 13, 13+ or 13.5.</p><p id="level-error" role="status"></p></div>
 <div class="pattern-filter-row"><div class="pattern-filter-field"><span id="pattern-filter-label">Patterns or chart traits</span>
-<details id="pattern-filter"><summary id="pattern-filter-summary">All patterns</summary>
+<details id="pattern-filter"><summary id="pattern-filter-summary" aria-labelledby="pattern-filter-label pattern-filter-summary">All patterns</summary>
 <div class="pattern-filter-panel"><label>Find patterns<input id="pattern-filter-search" type="search" placeholder="Name or alias…" autocomplete="off" aria-controls="pattern-filter-options"></label>
 <div class="pattern-filter-toolbar"><p>Match any selected pattern.</p><button id="pattern-filter-clear" type="button" class="text-button">Clear patterns</button></div>
 <p id="pattern-filter-count" class="muted" role="status"></p><div id="pattern-filter-options" role="group" aria-labelledby="pattern-filter-label"></div>

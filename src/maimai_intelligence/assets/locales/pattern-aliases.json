@@ -1,0 +1,357 @@
+{
+  "messages": {
+    "Amazing Mightyyy Expert pattern · Amemai Expert pattern · dotted-eighth stream": {
+      "zh-Hans": "Amazing Mightyyy EXPERT 配置 · Amemai EXPERT 配置 · 附点八分音符连打",
+      "ko": "Amazing Mightyyy EXPERT 패턴 · Amemai EXPERT 패턴 · 점8분음표 연타",
+      "ja": "Amazing Mightyyy EXPERT 配置 · アメマイ EXPERT 配置 · 付点8分連打"
+    },
+    "Cycles · Cycle pattern": {
+      "zh-Hans": "Cycles · CYCLES 配置",
+      "ko": "Cycles · CYCLES 패턴",
+      "ja": "Cycles · CYCLES 配置"
+    },
+    "Deathscythe · counter-rotating tap and slide pattern": {
+      "zh-Hans": "Deathscythe · 反向旋转单点与滑动配置",
+      "ko": "Deathscythe · 반대 방향으로 회전하는 탭과 슬라이드",
+      "ja": "Deathscythe · 逆回転のタップとスライド"
+    },
+    "Future pattern · Future white pattern": {
+      "zh-Hans": "Future 配置 · Future 白谱配置",
+      "ko": "Future 패턴 · Future Re:MASTER 패턴",
+      "ja": "Future 配置 · Future 白譜面配置"
+    },
+    "Hoshizora pattern": {
+      "zh-Hans": "星空配置",
+      "ko": "호시조라 패턴",
+      "ja": "星空配置"
+    },
+    "Outlaw's Lullaby pattern · shifting EACH-linked sweeps": {
+      "zh-Hans": "Outlaw's Lullaby 配置 · 移位的 EACH 连接扫动",
+      "ko": "Outlaw's Lullaby 패턴 · 위치를 옮기는 EACH 연결 쓸기",
+      "ja": "Outlaw's Lullaby 配置 · ずれるEACH接続のなぞり"
+    },
+    "Sugar Song and Bitter Step pattern · Shugabita pattern": {
+      "zh-Hans": "Sugar Song and Bitter Step 配置 · Shugabita 配置",
+      "ko": "Sugar Song and Bitter Step 패턴 · 슈가비타 패턴",
+      "ja": "シュガーソングとビターステップ配置 · シュガビタ配置"
+    },
+    "The Intense Voice of Hatsune Miku pattern · EACH-linked opposing sweeps": {
+      "zh-Hans": "初音未来的激唱配置 · EACH 连接的反向扫动",
+      "ko": "하츠네 미쿠의 격창 패턴 · EACH로 연결된 반대 방향 쓸기",
+      "ja": "初音ミクの激唱配置 · EACHでつながる逆向きのなぞり"
+    },
+    "Umiyuri · Umiyuri Kaiteitan pattern": {
+      "zh-Hans": "Umiyuri · 海底谭配置",
+      "ko": "우미유리 · 우미유리 해저담 패턴",
+      "ja": "ウミユリ · ウミユリ海底譚配置"
+    },
+    "alternating slide stream": {
+      "zh-Hans": "交替连续滑动",
+      "ko": "교대 슬라이드 연속",
+      "ja": "交互スライドの連続"
+    },
+    "axis trill · moving trill with a fixed anchor": {
+      "zh-Hans": "轴交互 · 固定点与移动点交互",
+      "ko": "축 트릴 · 고정 축이 있는 이동 트릴",
+      "ja": "軸トリル · 固定軸のある移動トリル"
+    },
+    "branching slides · shared-head slides · slide fan": {
+      "zh-Hans": "分岔滑动 · 同起点滑动 · 扇形滑动",
+      "ko": "분기 슬라이드 · 시작점을 공유하는 슬라이드 · 부채꼴 슬라이드",
+      "ja": "分岐スライド · 同始点スライド · 扇状スライド"
+    },
+    "button sweep · sweep · sweeps · staircase": {
+      "zh-Hans": "扫键 · 扫动 · 连续扫键 · 楼梯",
+      "ko": "버튼 쓸기 · 쓸기 · 연속 쓸기 · 계단",
+      "ja": "ボタンなぞり · なぞり · 連続なぞり · 階段"
+    },
+    "chord stream · repeated chords · EACH stream": {
+      "zh-Hans": "同时押连打 · 重复同时押 · EACH 连打",
+      "ko": "동시 입력 연속 · 반복 동시 입력 · EACH 연속",
+      "ja": "同時押し連打 · 同時押しの繰り返し · EACH連打"
+    },
+    "chord · each · simultaneous notes · chords": {
+      "zh-Hans": "同时押 · EACH · 同时音符 · 同时押组",
+      "ko": "동시 입력 · EACH · 동시 노트 · 동시 입력 묶음",
+      "ja": "同時押し · EACH · 同時ノーツ · 同時押しの組"
+    },
+    "connected slides · chained slide · slide chain": {
+      "zh-Hans": "连接滑动 · 连锁滑动 · 滑动链",
+      "ko": "연결 슬라이드 · 연쇄 슬라이드 · 슬라이드 체인",
+      "ja": "連結スライド · 連鎖スライド · スライドチェーン"
+    },
+    "delayed slide · slide stop · long slide wait": {
+      "zh-Hans": "延迟滑动 · 停顿滑动 · 长等待滑动",
+      "ko": "지연 슬라이드 · 정지 슬라이드 · 긴 대기 슬라이드",
+      "ja": "遅延スライド · 停止スライド · 長い待機のスライド"
+    },
+    "gallops · short-long pairs": {
+      "zh-Hans": "短长节奏 · 短长间隔对",
+      "ko": "갤럽 · 짧고 긴 간격 쌍",
+      "ja": "短長リズム · 短長間隔のペア"
+    },
+    "hold and slide": {
+      "zh-Hans": "长按与滑动",
+      "ko": "홀드와 슬라이드",
+      "ja": "ホールドとスライド"
+    },
+    "hold and tap": {
+      "zh-Hans": "长按与单点",
+      "ko": "홀드와 탭",
+      "ja": "ホールドとタップ"
+    },
+    "jacks · jack · repeated taps": {
+      "zh-Hans": "纵连 · 同键连打 · 重复单点",
+      "ko": "연타 · 같은 버튼 연타 · 반복 탭",
+      "ja": "連打 · 縦連 · 同位置のタップ"
+    },
+    "magic circle · rotating diagonal slides": {
+      "zh-Hans": "魔法阵 · 旋转对角滑动",
+      "ko": "마법진 · 회전하는 대각선 슬라이드",
+      "ja": "魔法陣 · 回転する対角スライド"
+    },
+    "random stream · scattered stream": {
+      "zh-Hans": "随机连打 · 散点连打",
+      "ko": "랜덤 연타 · 산개 연타",
+      "ja": "乱打 · 散らばる連打"
+    },
+    "repeated slide heads · same-start slide stream": {
+      "zh-Hans": "重复滑动起点 · 同起点连续滑动",
+      "ko": "반복 슬라이드 머리 · 같은 시작점의 연속 슬라이드",
+      "ja": "始点の繰り返し · 同始点の連続スライド"
+    },
+    "return slides · opposing slides": {
+      "zh-Hans": "返回滑动 · 反向滑动",
+      "ko": "복귀 슬라이드 · 반대 방향 슬라이드",
+      "ja": "戻るスライド · 逆向きのスライド"
+    },
+    "reversal · reversals · foldback · reverse sweep": {
+      "zh-Hans": "反转 · 方向反转 · 折返 · 反向扫动",
+      "ko": "방향 전환 · 반복 방향 전환 · 꺾기 · 역방향 쓸기",
+      "ja": "反転 · 方向反転 · 折り返し · 逆向きのなぞり"
+    },
+    "rotation · rotations · spin · spins · button rotation": {
+      "zh-Hans": "转圈 · 连续转圈 · 旋转 · 连续旋转 · 按钮转圈",
+      "ko": "회전 · 연속 회전 · 스핀 · 연속 스핀 · 버튼 회전",
+      "ja": "回転 · 連続回転 · スピン · 連続スピン · ボタン回転"
+    },
+    "scattered touch notes": {
+      "zh-Hans": "散点触摸音符",
+      "ko": "산개 터치 노트",
+      "ja": "散らばるタッチノーツ"
+    },
+    "slide and tap · tap during slide movement": {
+      "zh-Hans": "滑动与单点 · 滑动移动中单点",
+      "ko": "슬라이드와 탭 · 슬라이드 이동 중 탭",
+      "ja": "スライドとタップ · スライド移動中のタップ"
+    },
+    "tap during slide wait": {
+      "zh-Hans": "滑动等待中单点",
+      "ko": "슬라이드 대기 중 탭",
+      "ja": "スライド待機中のタップ"
+    },
+    "touch and button · touch and tap": {
+      "zh-Hans": "触摸与按钮 · 触摸与单点",
+      "ko": "터치와 버튼 · 터치와 탭",
+      "ja": "タッチとボタン · タッチとタップ"
+    },
+    "touch spin · touch perimeter run": {
+      "zh-Hans": "触摸旋转 · 触摸圆周连续输入",
+      "ko": "터치 회전 · 터치 외곽 연속",
+      "ja": "タッチ回転 · タッチ外周の連続"
+    },
+    "touch staircase": {
+      "zh-Hans": "触摸阶梯",
+      "ko": "터치 계단",
+      "ja": "タッチ階段"
+    },
+    "trill · trills · two-button alternation": {
+      "zh-Hans": "交互 · 连续交互 · 两按钮交替",
+      "ko": "트릴 · 연속 트릴 · 두 버튼 교대",
+      "ja": "トリル · 連続トリル · 2ボタン交互"
+    },
+    "unequal slide speeds · mixed-speed slides": {
+      "zh-Hans": "不同滑动速度 · 混合速度滑动",
+      "ko": "서로 다른 슬라이드 속도 · 혼합 속도 슬라이드",
+      "ja": "異なるスライド速度 · 混速スライド"
+    },
+    "variable slide waits": {
+      "zh-Hans": "可变滑动等待",
+      "ko": "변하는 슬라이드 대기",
+      "ja": "変化するスライド待機"
+    },
+    "Break inputs / s": {
+      "zh-Hans": "BREAK 输入 / 秒",
+      "ko": "BREAK 입력 / 초",
+      "ja": "BREAK 入力 / 秒"
+    },
+    "Inputs / s · Break inputs / s": {
+      "zh-Hans": "输入 / 秒 · BREAK 输入 / 秒",
+      "ko": "입력 / 초 · BREAK 입력 / 초",
+      "ja": "入力 / 秒 · BREAK 入力 / 秒"
+    },
+    "Moving slide A": {
+      "zh-Hans": "移动中的滑动 A",
+      "ko": "이동 중 슬라이드 A",
+      "ja": "移動スライド A"
+    },
+    "Moving slide B": {
+      "zh-Hans": "移动中的滑动 B",
+      "ko": "이동 중 슬라이드 B",
+      "ja": "移動スライド B"
+    },
+    "Phrase A": {
+      "zh-Hans": "乐句 A",
+      "ko": "구절 A",
+      "ja": "フレーズ A"
+    },
+    "Slide still moving": {
+      "zh-Hans": "滑动仍在移动",
+      "ko": "계속 이동 중인 슬라이드",
+      "ja": "移動を続けるスライド"
+    },
+    "Target A/B sequence": {
+      "zh-Hans": "目标 A/B 序列",
+      "ko": "목표 A/B 순서",
+      "ja": "対象の A/B 配置"
+    },
+    "arc": {
+      "zh-Hans": "弧线",
+      "ko": "원호",
+      "ja": "弧"
+    },
+    "straight": {
+      "zh-Hans": "直线",
+      "ko": "직선",
+      "ja": "直線"
+    },
+    "p loop": {
+      "zh-Hans": "p 形环",
+      "ko": "p자 루프",
+      "ja": "p型ループ"
+    },
+    "q loop": {
+      "zh-Hans": "q 形环",
+      "ko": "q자 루프",
+      "ja": "q型ループ"
+    },
+    "{0} arc": {
+      "zh-Hans": "{0} 弧线",
+      "ko": "{0} 원호",
+      "ja": "{0} 弧"
+    },
+    "{0} straight": {
+      "zh-Hans": "{0} 直线",
+      "ko": "{0} 직선",
+      "ja": "{0} 直線"
+    },
+    "{0} p loop": {
+      "zh-Hans": "{0} p 形环",
+      "ko": "{0} p자 루프",
+      "ja": "{0} p型ループ"
+    },
+    "{0} q loop": {
+      "zh-Hans": "{0} q 形环",
+      "ko": "{0} q자 루프",
+      "ja": "{0} q型ループ"
+    },
+    "Waiting: {0}": {
+      "zh-Hans": "等待：{0}",
+      "ko": "대기: {0}",
+      "ja": "待機：{0}"
+    },
+    "Moving: {0}": {
+      "zh-Hans": "移动：{0}",
+      "ko": "이동: {0}",
+      "ja": "移動：{0}"
+    },
+    "Holding button {0}": {
+      "zh-Hans": "长按按钮 {0}",
+      "ko": "버튼 {0} 홀드 유지",
+      "ja": "ボタン {0} を保持"
+    },
+    "Holding touch {0}": {
+      "zh-Hans": "长按触摸区 {0}",
+      "ko": "터치 {0} 유지",
+      "ja": "タッチ {0} を保持"
+    },
+    "tap at button {0}": {
+      "zh-Hans": "在按钮 {0} 单点",
+      "ko": "버튼 {0} 탭",
+      "ja": "ボタン {0} をタップ"
+    },
+    "star at button {0}": {
+      "zh-Hans": "在按钮 {0} 按星星",
+      "ko": "버튼 {0} 별 입력",
+      "ja": "ボタン {0} の星を押す"
+    },
+    "hold at button {0}": {
+      "zh-Hans": "在按钮 {0} 开始长按",
+      "ko": "버튼 {0} 홀드 시작",
+      "ja": "ボタン {0} のホールド開始"
+    },
+    "touch at touch {0}": {
+      "zh-Hans": "在触摸区 {0} 触摸",
+      "ko": "터치 구역 {0} 터치",
+      "ja": "タッチエリア {0} にタッチ"
+    },
+    "Section {0}–{1} s: {2}": {
+      "zh-Hans": "{0}–{1} 秒区间：{2}",
+      "ko": "{0}–{1}초 구간: {2}",
+      "ja": "{0}〜{1} 秒の区間：{2}",
+      "$translate": [
+        2
+      ]
+    },
+    "{0} inputs / s": {
+      "zh-Hans": "{0} 次输入 / 秒",
+      "ko": "{0} 입력 / 초",
+      "ja": "{0} 入力 / 秒"
+    },
+    "{0} break inputs / s": {
+      "zh-Hans": "{0} 次 BREAK 输入 / 秒",
+      "ko": "{0} BREAK 입력 / 초",
+      "ja": "{0} BREAK 入力 / 秒"
+    },
+    "{0} active path(s) not rendered": {
+      "zh-Hans": "未绘制 {0} 条活动路径",
+      "ko": "활성 경로 {0}개 미표시",
+      "ja": "有効な軌跡 {0} 本は未描画"
+    },
+    "POPS & ANIME": {
+      "zh-Hans": "流行与动画",
+      "ko": "POPS & 애니메이션",
+      "ja": "POPS＆アニメ"
+    },
+    "niconico & VOCALOID": {
+      "zh-Hans": "niconico 与 VOCALOID",
+      "ko": "niconico & VOCALOID",
+      "ja": "niconico＆ボーカロイド"
+    },
+    "Touhou Project": {
+      "zh-Hans": "东方Project",
+      "ko": "동방Project",
+      "ja": "東方Project"
+    },
+    "GAME & VARIETY": {
+      "zh-Hans": "游戏与综艺",
+      "ko": "게임 & 버라이어티",
+      "ja": "ゲーム＆バラエティ"
+    },
+    "ONGEKI & CHUNITHM": {
+      "zh-Hans": "音击与 CHUNITHM",
+      "ko": "온게키 & CHUNITHM",
+      "ja": "オンゲキ＆CHUNITHM"
+    },
+    "Unknown introduction": {
+      "zh-Hans": "初次收录版本未知",
+      "ko": "최초 수록 버전 불명",
+      "ja": "初収録バージョン不明"
+    },
+    "SEGA version {0}": {
+      "zh-Hans": "SEGA 版本 {0}",
+      "ko": "SEGA 버전 {0}",
+      "ja": "SEGA バージョン {0}"
+    }
+  }
+}

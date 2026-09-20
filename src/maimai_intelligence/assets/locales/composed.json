@@ -1,0 +1,163 @@
+{
+  "messages": {
+    "{0} A–Z": {
+      "zh-Hans": "{0} A–Z",
+      "ko": "{0} A–Z",
+      "ja": "{0} A–Z",
+      "$translate": [
+        0
+      ]
+    },
+    "{0} Z–A": {
+      "zh-Hans": "{0} Z–A",
+      "ko": "{0} Z–A",
+      "ja": "{0} Z–A",
+      "$translate": [
+        0
+      ]
+    },
+    "{0} ↑": {
+      "zh-Hans": "{0} ↑",
+      "ko": "{0} ↑",
+      "ja": "{0} ↑",
+      "$translate": [
+        0
+      ]
+    },
+    "{0} ↓": {
+      "zh-Hans": "{0} ↓",
+      "ko": "{0} ↓",
+      "ja": "{0} ↓",
+      "$translate": [
+        0
+      ]
+    },
+    "{0} ×": {
+      "zh-Hans": "{0} ×",
+      "ko": "{0} ×",
+      "ja": "{0} ×",
+      "$translate": [
+        0
+      ]
+    },
+    "{0}. {1} ×": {
+      "zh-Hans": "{0}. {1} ×",
+      "ko": "{0}. {1} ×",
+      "ja": "{0}. {1} ×",
+      "$translate": [
+        1
+      ]
+    },
+    "Remove {0} sort priority": {
+      "zh-Hans": "移除 {0} 排序优先级",
+      "ko": "{0} 정렬 우선순위 삭제",
+      "ja": "{0} の並べ替え優先順位を解除",
+      "$translate": [
+        0
+      ]
+    },
+    "{0}, priority {1}, ascending": {
+      "zh-Hans": "{0}，优先级 {1}，升序",
+      "ko": "{0}, 우선순위 {1}, 오름차순",
+      "ja": "{0}、優先順位 {1}、昇順",
+      "$translate": [
+        0
+      ]
+    },
+    "{0}, priority {1}, descending": {
+      "zh-Hans": "{0}，优先级 {1}，降序",
+      "ko": "{0}, 우선순위 {1}, 내림차순",
+      "ja": "{0}、優先順位 {1}、降順",
+      "$translate": [
+        0
+      ]
+    },
+    "{0} unsorted": {
+      "zh-Hans": "{0} 未排序",
+      "ko": "{0} 정렬 안 함",
+      "ja": "{0} 並べ替えなし",
+      "$translate": [
+        0
+      ]
+    },
+    "Remove {0} filter": {
+      "zh-Hans": "移除 {0} 筛选",
+      "ko": "{0} 필터 해제",
+      "ja": "{0} の絞り込みを解除",
+      "$translate": [
+        0
+      ]
+    },
+    "Similar {0}": {
+      "zh-Hans": "相似的 {0}",
+      "ko": "비슷한 {0}",
+      "ja": "似た {0}",
+      "$translate": [
+        0
+      ]
+    },
+    "Shared: {0}": {
+      "zh-Hans": "共同：{0}",
+      "ko": "공통: {0}",
+      "ja": "共通：{0}",
+      "$translate": [
+        0
+      ]
+    },
+    "Chart constant unknown": {
+      "zh-Hans": "谱面定数未知",
+      "ko": "채보 상수 알 수 없음",
+      "ja": "譜面定数不明"
+    },
+    "Unknown inputs per second": {
+      "zh-Hans": "每秒输入次数未知",
+      "ko": "초당 입력 수 알 수 없음",
+      "ja": "毎秒入力数不明"
+    },
+    "Open {0} · {1} · Chart constant unknown": {
+      "zh-Hans": "打开 {0} · {1} · 谱面定数未知",
+      "ko": "{0} 열기 · {1} · 채보 상수 알 수 없음",
+      "ja": "{0} を開く · {1} · 譜面定数不明"
+    },
+    "Artist not provided · {0}": {
+      "zh-Hans": "未提供艺术家 · {0}",
+      "ko": "아티스트 정보 없음 · {0}",
+      "ja": "アーティスト情報なし · {0}"
+    },
+    "input speed": {
+      "zh-Hans": "输入速度",
+      "ko": "입력 속도",
+      "ja": "入力速度"
+    },
+    "rhythm": {
+      "zh-Hans": "节奏",
+      "ko": "리듬",
+      "ja": "リズム"
+    },
+    "simultaneous inputs": {
+      "zh-Hans": "同时输入",
+      "ko": "동시 입력",
+      "ja": "同時入力"
+    },
+    "holds": {
+      "zh-Hans": "长按",
+      "ko": "홀드",
+      "ja": "ホールド"
+    },
+    "slides": {
+      "zh-Hans": "滑动",
+      "ko": "슬라이드",
+      "ja": "スライド"
+    },
+    "layout": {
+      "zh-Hans": "位置分布",
+      "ko": "배치",
+      "ja": "配置"
+    },
+    "{0} inputs / s · {1} break inputs / s": {
+      "zh-Hans": "{0} 次输入 / 秒 · {1} 次 BREAK 输入 / 秒",
+      "ko": "{0} 입력 / 초 · {1} BREAK 입력 / 초",
+      "ja": "{0} 入力 / 秒 · {1} BREAK 入力 / 秒"
+    }
+  }
+}

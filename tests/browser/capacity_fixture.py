@@ -46,6 +46,8 @@ def build_capacity_fixture(root: Path, count: int = 7000):
     for name in [
         "index.html",
         "lab-loader.js",
+        "localization.js",
+        "localization.css",
         "challenge-review.js",
         "challenge-review.css",
         "analytics.js",

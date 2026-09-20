@@ -98,7 +98,7 @@ class CloudflareAnalyticsTests(unittest.TestCase):
             self.assertEqual(checkout_return.policies[0]["connect-src"], ["'self'"])
             self.assertEqual(
                 checkout_return.scripts,
-                ["support-config.js", "support-client.js", "support-return.js"],
+                ["localization.js", "support-config.js", "support-client.js", "support-return.js"],
             )
             self.assertNotIn("support-worker", str(list(published.rglob("*"))))
             self.assertIn(

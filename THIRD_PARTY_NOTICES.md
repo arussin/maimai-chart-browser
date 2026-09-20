@@ -78,6 +78,22 @@ maimai.party and any public release are separate rollout steps.
 
 ## Song search aliases
 
+Language buttons use the unmodified 16×11 pixel **Famfamfam Flags** by Mark James,
+from [legacy-icons/famfamfam-flags](https://github.com/legacy-icons/famfamfam-flags),
+revision `a79ec57f332a43717170cdcf159692bcf0012872`. The four original icons are
+public domain; [upstream license](docs/FLAG_ICONS_LICENSE.md) and per-file hashes
+in `assets/flag-icons-source.json` are retained. Icons are bundled locally and
+do not call a flag CDN.
+
+Multilingual search additionally uses offline [pypinyin](https://github.com/mozillazg/python-pinyin),
+[OpenCC's Python reimplementation](https://github.com/yichen0831/opencc-python),
+and BSD-licensed [CMUdict data](https://github.com/cmusphinx/cmudict), parsed directly
+without the GPL Python wrapper.
+Pinned versions, generation provenance and correction rules are in
+[Localization](docs/LOCALIZATION.md); [license notices](docs/LOCALIZATION_LICENSES.md)
+retain the pinyin, OpenCC and CMU dictionary notices. Generated aliases are
+approximate search aids, not official translations or native-reviewed names.
+
 Public title, artist, `altTitles` and `searchTerms` metadata is derived from
 [Tachi's maimai DX seed data](https://github.com/zkldi/Tachi/blob/f08148f8644e40de9b178445df4bd59da712d3de/db/seeds/songs-maimaidx.json)
 and its [maimai seed data](https://github.com/zkldi/Tachi/blob/f08148f8644e40de9b178445df4bd59da712d3de/db/seeds/songs-maimai.json),

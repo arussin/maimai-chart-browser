@@ -31,8 +31,9 @@ def _metadata():
         f"Name: {DISPLAY_NAME}\nVersion: {VERSION}\n"
         "Summary: Offline chart intelligence and standalone maimai browser\n"
         "Requires-Python: >=3.11\nLicense-Expression: MIT\nLicense-File: LICENSE\n"
-        "License-File: THIRD_PARTY_NOTICES.md\nDescription-Content-Type: text/markdown\n\n"
-        + Path("README.md").read_text("utf-8")
+        "License-File: THIRD_PARTY_NOTICES.md\n"
+        "License-File: docs/LOCALIZATION_LICENSES.md\nLicense-File: docs/FLAG_ICONS_LICENSE.md\n"
+        "Description-Content-Type: text/markdown\n\n" + Path("README.md").read_text("utf-8")
     )
 
 
@@ -54,7 +55,12 @@ def _entries(editable=False):
     result[f"{DIST_INFO}/entry_points.txt"] = (
         b"[console_scripts]\nmaimai-chart = maimai_intelligence.cli:main\n"
     )
-    for name in ("LICENSE", "THIRD_PARTY_NOTICES.md"):
+    for name in (
+        "LICENSE",
+        "THIRD_PARTY_NOTICES.md",
+        "docs/LOCALIZATION_LICENSES.md",
+        "docs/FLAG_ICONS_LICENSE.md",
+    ):
         result[f"{DIST_INFO}/licenses/{name}"] = root.joinpath(name).read_bytes()
     return result
 

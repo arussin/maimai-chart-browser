@@ -1,0 +1,6 @@
+{
+  "source": "https://github.com/cmusphinx/cmudict",
+  "distribution": "cmudict 1.1.3 data/cmudict.dict",
+  "license": "BSD-2-Clause with acknowledgment; see docs/LOCALIZATION_LICENSES.md",
+  "sha256": "81917843c7f44ce2b094ac63873c2c7a4cf802040792c455ba3ca406891c3d22"
+}

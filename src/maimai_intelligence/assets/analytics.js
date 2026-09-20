@@ -1,6 +1,8 @@
 /* Basic GA4 collection for the published site only. No application data is read. */
 (() => {
   'use strict';
+const i18n=window.maimaiI18n||{text:(node,value)=>node.textContent=value,attribute:(node,key,value)=>node.setAttribute(key,value),option:(...args)=>new Option(...args),literal:(node,value)=>node.textContent=value};
+
   const measurementId = 'G-FP9V9NF63J';
   const hosts = ['maimai.party', 'www.maimai.party'];
   if (location.protocol !== 'https:' || !hosts.includes(location.hostname)) return;
@@ -63,8 +65,7 @@
       const script = document.createElement('script');
       script.async = true; script.referrerPolicy = 'no-referrer';
       script.src = 'https://www.googletagmanager.com/gtag/js?id=' + measurementId;
-      script.onerror = () => { document.getElementById('analytics-status').textContent =
-        'Analytics could not load. Your browser remains fully usable.'; };
+      script.onerror = () => { i18n.text(document.getElementById('analytics-status'), 'Analytics could not load. Your browser remains fully usable.'); };
       document.head.append(script);
     }
     trackView();
@@ -83,9 +84,9 @@
   }
   function updateStatus() {
     const blocked = privacySignal();
-    document.getElementById('analytics-status').textContent = blocked ?
+    i18n.text(document.getElementById('analytics-status'), blocked ?
       'Analytics is off because your browser requests privacy.' :
-      active ? 'Analytics is on. You can turn it off at any time.' : 'Analytics is off.';
+      active ? 'Analytics is on. You can turn it off at any time.' : 'Analytics is off.');
     for (const button of document.querySelectorAll('[data-analytics-choice="granted"]'))
       button.disabled = blocked;
   }

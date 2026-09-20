@@ -1,0 +1,144 @@
+{
+  "messages": {
+    "Analytics": {
+      "zh-Hans": "访问统计",
+      "ko": "방문 통계",
+      "ja": "アクセス解析"
+    },
+    "Privacy & analytics": {
+      "zh-Hans": "隐私与访问统计",
+      "ko": "개인정보 및 방문 통계",
+      "ja": "プライバシーとアクセス解析"
+    },
+    "Google Analytics settings": {
+      "zh-Hans": "Google Analytics 设置",
+      "ko": "Google Analytics 설정",
+      "ja": "Google Analytics の設定"
+    },
+    "Help improve maimai.party?": {
+      "zh-Hans": "帮助改进 maimai.party？",
+      "ko": "maimai.party 개선에 도움을 주시겠어요?",
+      "ja": "maimai.party の改善に協力しますか？"
+    },
+    "Allow analytics": {
+      "zh-Hans": "允许访问统计",
+      "ko": "방문 통계 허용",
+      "ja": "アクセス解析を許可"
+    },
+    "No thanks": {
+      "zh-Hans": "不用了，谢谢",
+      "ko": "괜찮습니다",
+      "ja": "許可しない"
+    },
+    "Turn off analytics": {
+      "zh-Hans": "关闭访问统计",
+      "ko": "방문 통계 끄기",
+      "ja": "アクセス解析を無効にする"
+    },
+    "Analytics could not load. Your browser remains fully usable.": {
+      "zh-Hans": "无法加载访问统计。网站功能仍可正常使用。",
+      "ko": "방문 통계를 불러오지 못했습니다. 사이트 기능은 정상적으로 사용할 수 있습니다.",
+      "ja": "アクセス解析を読み込めませんでした。サイトの機能は引き続き使えます。"
+    },
+    "Analytics is off because your browser requests privacy.": {
+      "zh-Hans": "您的浏览器请求隐私保护，因此访问统计已关闭。",
+      "ko": "브라우저의 개인정보 보호 요청으로 방문 통계가 꺼져 있습니다.",
+      "ja": "ブラウザのプライバシー設定により、アクセス解析は無効です。"
+    },
+    "Analytics is off.": {
+      "zh-Hans": "访问统计已关闭。",
+      "ko": "방문 통계가 꺼져 있습니다.",
+      "ja": "アクセス解析は無効です。"
+    },
+    "Analytics is on. You can turn it off at any time.": {
+      "zh-Hans": "访问统计已开启。您可以随时关闭。",
+      "ko": "방문 통계가 켜져 있습니다. 언제든 끌 수 있습니다.",
+      "ja": "アクセス解析は有効です。いつでも無効にできます。"
+    },
+    "Allow Google Analytics to count visits using cookies. Imported results, searches and chart selections are excluded. This choice applies to Google Analytics, not separate cookie-free Cloudflare traffic measurements on the published site.": {
+      "zh-Hans": "允许 Google Analytics 使用 Cookie 统计访问。导入成绩、搜索内容和谱面选择不包含在内。此选择仅适用于 Google Analytics，不影响已发布网站上独立的、不使用 Cookie 的 Cloudflare 流量统计。",
+      "ko": "Google Analytics가 쿠키로 방문 수를 집계하도록 허용합니다. 가져온 결과, 검색어, 채보 선택은 제외됩니다. 이 선택은 Google Analytics에만 적용되며, 공개 사이트의 별도 쿠키 없는 Cloudflare 트래픽 측정에는 적용되지 않습니다.",
+      "ja": "Google Analytics が Cookie を使って訪問数を集計することを許可します。読み込んだ結果、検索語、譜面の選択は含みません。この選択は Google Analytics のみに適用され、公開サイトの Cookie を使わない別の Cloudflare 計測には適用されません。"
+    },
+    "Google Analytics counts visits and broad page views using cookies. Imported results, searches and chart selections are excluded. Advertising features are off.": {
+      "zh-Hans": "Google Analytics 使用 Cookie 统计访问次数和大类页面浏览。导入成绩、搜索和谱面选择不包含在内。广告功能已关闭。",
+      "ko": "Google Analytics는 쿠키로 방문 수와 주요 페이지 조회 수를 집계합니다. 가져온 결과, 검색어, 채보 선택은 제외됩니다. 광고 기능은 꺼져 있습니다.",
+      "ja": "Google Analytics は Cookie で訪問数と大まかなページ閲覧数を集計します。読み込んだ結果、検索語、譜面の選択は含みません。広告機能は無効です。"
+    },
+    "Turning Google Analytics off keeps your personal results and chart filters in place. The published site may separately use cookie-free Cloudflare Web Analytics for aggregate traffic and performance; this Google Analytics choice does not control it.": {
+      "zh-Hans": "关闭 Google Analytics 会保留您的个人成绩和谱面筛选。已发布网站可能另行使用不带 Cookie 的 Cloudflare Web Analytics 统计总体流量和性能；Google Analytics 的选择不控制该统计。",
+      "ko": "Google Analytics를 꺼도 개인 결과와 채보 필터는 유지됩니다. 공개 사이트는 전체 트래픽과 성능을 위해 쿠키 없는 Cloudflare Web Analytics를 별도로 사용할 수 있으며, Google Analytics 설정으로는 제어되지 않습니다.",
+      "ja": "Google Analytics を無効にしても個人結果と譜面の絞り込みは保持されます。公開サイトでは総トラフィックと性能の計測に、Cookie を使わない Cloudflare Web Analytics を別途利用する場合があります。この設定はそちらには適用されません。"
+    },
+    "Imported personal results stay in this browser for the current tab session, or on this device if you choose to remember them. They are not uploaded, added to public catalogs or included in analytics. Open Settings to hide your results or forget remembered data.": {
+      "zh-Hans": "导入的个人成绩保留在当前浏览器标签页会话中；若选择记住，则保存在此设备上。数据不会上传、加入公开曲库或纳入访问统计。您可在设置中隐藏成绩或删除记住的数据。",
+      "ko": "가져온 개인 결과는 현재 탭 세션 동안 브라우저에 남으며, 저장을 선택하면 이 기기에 보관됩니다. 업로드되거나 공개 카탈로그 또는 방문 통계에 포함되지 않습니다. 설정에서 결과를 숨기거나 저장된 데이터를 삭제할 수 있습니다.",
+      "ja": "読み込んだ個人結果は現在のタブのセッション内に保持され、保存を選んだ場合は端末に保存されます。アップロード、公開カタログへの追加、アクセス解析への送信は行いません。設定から結果を非表示にしたり、保存データを削除できます。"
+    },
+    "On maimai.party, optional Google Analytics uses cookies to count visits, page views and basic device and country information. It loads only after you allow analytics. We send the broad Charts, Pattern dictionary, Compare charts and About views, and may count support checkout opens, starts and confirmed returns. Imported files, player identifiers, search terms, chart selections, full URLs, referrers, payment amounts and payment identifiers are excluded from Google Analytics. Advertising personalization and Google signals are off.": {
+      "zh-Hans": "maimai.party 上可选的 Google Analytics 使用 Cookie 统计访问、页面浏览以及基本设备和国家信息，仅在您允许后加载。我们发送“谱面”“配置词典”“比较谱面”和“关于”等大类浏览信息，也可能统计赞助付款的打开、开始及已确认的返回。导入文件、玩家标识、搜索词、谱面选择、完整网址、来源网址、付款金额和付款标识不会发送给 Google Analytics。广告个性化及 Google 信号已关闭。",
+      "ko": "maimai.party의 선택적 Google Analytics는 쿠키를 사용해 방문, 페이지 조회, 기본 기기 및 국가 정보를 집계하며, 허용한 후에만 불러옵니다. 채보, 패턴 사전, 채보 비교, 소개 화면의 대략적 조회와 후원 결제의 열기, 시작, 확인된 복귀를 집계할 수 있습니다. 가져온 파일, 플레이어 식별자, 검색어, 채보 선택, 전체 URL, 유입 경로, 결제 금액과 결제 식별자는 Google Analytics에서 제외합니다. 광고 개인 최적화와 Google 신호는 꺼져 있습니다.",
+      "ja": "maimai.party の任意の Google Analytics は Cookie を使い、訪問数、ページ閲覧数、基本的な端末・国の情報を集計します。許可した後にのみ読み込みます。譜面、配置辞典、譜面比較、サイト紹介という大まかな閲覧と、支援の決済画面を開いた回数、開始、確認済みの復帰を集計する場合があります。読み込みファイル、プレイヤー識別子、検索語、譜面の選択、完全な URL、参照元、支払い金額、決済識別子は送信しません。広告のパーソナライズと Google シグナルは無効です。"
+    },
+    "Your Google Analytics choice is saved on this device for up to 180 days; Google Analytics cookies expire after 90 days. Open Settings (the gear icon), then Analytics, to change your choice. Turning analytics off removes this site's Google Analytics cookies and stops further Google collection, without clearing your results. Browser privacy signals and local previews disable Google Analytics.": {
+      "zh-Hans": "Google Analytics 的选择在此设备上最多保存 180 天；其 Cookie 在 90 天后过期。您可打开设置（齿轮图标），再进入访问统计以更改选择。关闭后会移除本站的 Google Analytics Cookie 并停止后续收集，但不清除您的成绩。浏览器隐私信号和本地预览会禁用 Google Analytics。",
+      "ko": "Google Analytics 선택은 이 기기에 최대 180일 저장되며, 해당 쿠키는 90일 후 만료됩니다. 설정(톱니바퀴)에서 방문 통계를 열어 변경할 수 있습니다. 끄면 이 사이트의 Google Analytics 쿠키를 삭제하고 추가 수집을 중단하지만 결과는 지우지 않습니다. 브라우저의 개인정보 보호 신호 및 로컬 미리보기에서는 Google Analytics가 비활성화됩니다.",
+      "ja": "Google Analytics の選択は端末に最大180日保存され、Cookie は90日で期限切れになります。歯車の設定からアクセス解析を開いて変更できます。無効にすると当サイトの Google Analytics Cookie を削除し、以後の収集を停止しますが、結果は消去しません。ブラウザのプライバシー信号やローカルプレビューでは Google Analytics は無効です。"
+    },
+    "Separately, the published site may use Cloudflare Web Analytics for aggregate traffic and page-performance measurements, including visits and page views. Cloudflare Web Analytics does not use cookies, local storage or fingerprinting to identify visitors. Choosing No thanks or turning Google Analytics off does not disable this separate measurement. These traffic totals are estimates, not a count of unique people. See": {
+      "zh-Hans": "另外，已发布网站可能使用 Cloudflare Web Analytics 进行总体流量和页面性能测量，包括访问与页面浏览。该服务不使用 Cookie、本地存储或指纹识别访客。选择“不用了，谢谢”或关闭 Google Analytics 不会禁用这一独立测量。流量总数是估计值，并非独立人数。请参阅",
+      "ko": "별도로 공개 사이트는 방문과 페이지 조회를 포함한 전체 트래픽 및 페이지 성능 측정에 Cloudflare Web Analytics를 사용할 수 있습니다. 이 서비스는 방문자를 식별하기 위해 쿠키, 로컬 저장소 또는 핑거프린팅을 사용하지 않습니다. “괜찮습니다”를 선택하거나 Google Analytics를 꺼도 이 별도 측정은 꺼지지 않습니다. 트래픽 합계는 추정치이며 고유 인원수가 아닙니다. 참고:",
+      "ja": "公開サイトは別途、訪問数やページ閲覧数を含むトラフィックと性能の集計に Cloudflare Web Analytics を利用する場合があります。このサービスは訪問者の識別に Cookie、ローカルストレージ、フィンガープリントを使いません。「許可しない」の選択や Google Analytics の無効化では、この別の計測は停止しません。集計値は推定であり、実人数ではありません。参照："
+    },
+    "Cloudflare's analytics privacy information": {
+      "zh-Hans": "Cloudflare 访问统计隐私说明",
+      "ko": "Cloudflare 방문 통계 개인정보 안내",
+      "ja": "Cloudflare のアクセス解析のプライバシー情報"
+    },
+    "Cloudflare also receives connection information when serving this website. Cookie-free analytics does not mean that no data is processed. See": {
+      "zh-Hans": "Cloudflare 在提供本网站时也会接收连接信息。不使用 Cookie 的统计不代表不处理任何数据。请参阅",
+      "ko": "Cloudflare는 이 웹사이트를 제공하면서 연결 정보도 받습니다. 쿠키 없는 통계가 데이터 처리를 전혀 하지 않는다는 뜻은 아닙니다. 참고:",
+      "ja": "Cloudflare はサイトの配信時に接続情報も受け取ります。Cookie を使わない解析でも、データ処理がないわけではありません。参照："
+    },
+    "Cloudflare's privacy policy": {
+      "zh-Hans": "Cloudflare 隐私政策",
+      "ko": "Cloudflare 개인정보 처리방침",
+      "ja": "Cloudflare のプライバシーポリシー"
+    },
+    ". The application does not add personal results or custom interaction events to Cloudflare analytics.": {
+      "zh-Hans": "。本应用不会向 Cloudflare 统计添加个人成绩或自定义交互事件。",
+      "ko": ". 앱은 Cloudflare 통계에 개인 결과나 사용자 정의 상호작용 이벤트를 추가하지 않습니다.",
+      "ja": "。アプリは Cloudflare の解析に個人結果や独自の操作イベントを追加しません。"
+    },
+    "Google processes analytics requests, including your IP address when connecting. See": {
+      "zh-Hans": "Google 处理统计请求，包括连接时的 IP 地址。请参阅",
+      "ko": "Google은 연결 시 IP 주소를 포함하여 통계 요청을 처리합니다. 참고:",
+      "ja": "Google は接続時の IP アドレスを含む解析リクエストを処理します。参照："
+    },
+    "Google's privacy policy": {
+      "zh-Hans": "Google 隐私政策",
+      "ko": "Google 개인정보처리방침",
+      "ja": "Google のプライバシーポリシー"
+    },
+    "how Google uses information from partner sites": {
+      "zh-Hans": "Google 如何使用合作伙伴网站的信息",
+      "ko": "Google의 파트너 사이트 정보 사용 방식",
+      "ja": "Google によるパートナーサイトの情報の利用方法"
+    },
+    ". Previously collected data is not removed by changing this device's choice.": {
+      "zh-Hans": "。更改此设备的选择不会删除先前收集的数据。",
+      "ko": ". 이 기기의 설정을 바꿔도 이전에 수집된 데이터는 삭제되지 않습니다.",
+      "ja": "。この端末の選択を変えても、既に収集されたデータは削除されません。"
+    },
+    "Support checkout loads a payment provider only when you choose to open it. Stripe processes its own connection, cookies and payment details. Our checkout requests exclude imported results, chart selections and searches. Stripe checkout keeps a random payment attempt and checkout reference temporarily in this tab so interrupted payments can resume; it does not create a player account. Stripe handles amount entry and payment details directly. See": {
+      "zh-Hans": "仅在您选择打开赞助付款时才会加载付款服务。Stripe 处理其自身的连接、Cookie 和付款信息。我们的付款请求不包含导入成绩、谱面选择和搜索。Stripe 付款会在此标签页中临时保存随机付款尝试标识及付款引用，以便恢复中断的付款；不会创建玩家账户。金额输入与付款信息由 Stripe 直接处理。请参阅",
+      "ko": "후원 결제를 열기로 선택할 때만 결제 제공자를 불러옵니다. Stripe는 자체 연결, 쿠키 및 결제 정보를 처리합니다. 결제 요청에는 가져온 결과, 채보 선택, 검색어가 포함되지 않습니다. 중단된 결제를 재개하도록 무작위 결제 시도와 결제 참조를 이 탭에 임시 저장하며, 플레이어 계정을 만들지는 않습니다. 금액 입력과 결제 정보는 Stripe가 직접 처리합니다. 참고:",
+      "ja": "支援の決済サービスは、開くことを選んだときにのみ読み込みます。Stripe は独自の接続、Cookie、決済情報を処理します。当サイトの決済リクエストに個人結果、譜面の選択、検索語は含めません。中断した決済を再開するため、ランダムな決済試行と決済参照をこのタブに一時保存しますが、プレイヤーアカウントは作りません。金額入力と決済情報は Stripe が直接扱います。参照："
+    },
+    "Stripe's privacy policy": {
+      "zh-Hans": "Stripe 隐私政策",
+      "ko": "Stripe 개인정보 처리방침",
+      "ja": "Stripe のプライバシーポリシー"
+    }
+  }
+}

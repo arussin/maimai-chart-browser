@@ -1,0 +1,10 @@
+{
+  "messages": {
+    "untitled chart": {"zh-Hans":"无标题谱面","ko":"제목 없는 채보","ja":"タイトルなしの譜面"},
+    "Skip to comparison": {"zh-Hans":"跳转到比较","ko":"비교로 건너뛰기","ja":"比較へスキップ"}
+  },
+  "invariants": {
+    "maimai.party ·": {"reason":"Stable analytics page-title prefix; not visible page copy."},
+    "· Lv.": {"reason":"Official level abbreviation and separator retained with game labels."}
+  }
+}
