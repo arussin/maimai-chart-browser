@@ -53,9 +53,18 @@ test('unchanged PBs with a newer profile timestamp create no history; corrected 
   state.tracks.tracks[0].r.a=950000;state.profile.userRecord.profile.updatedAt=new Date('2026-09-21T00:00:01Z');await age(page);await refresh(page);
   await expect.poll(async()=>page.evaluate(async()=>{const s=await maimaiPlayerStorage.read();return maimaiPlayerData.current(await maimaiPlayerData.decode(s.active.bytes)).pbs.get('maishift:intl:1').achievement;})).toBe(950000);
 });
-test('profile continuity change, throttling and login HTML preserve the remembered dataset',async({page,context})=>{
+test('username and region identify refresh; changed snapshot creation date is not a player switch',async({page,context})=>{
   const state=await prepare(context);await boot(page);await commit(page);const before=(await saved(page)).active.revision;
-  state.profile.userRecord.profile.createdAt=new Date('2026-02-01T00:00:00Z');await age(page);await refresh(page);await expect(page.locator('#player-status')).toContainText('Could not refresh');expect((await saved(page)).active.revision).toBe(before);
+  state.profile.userRecord.profile.createdAt=new Date('2026-02-01T00:00:00Z');state.profile.userRecord.profile.updatedAt=new Date('2026-09-21T00:00:00Z');await age(page);await refresh(page);await expect.poll(async()=>(await saved(page)).active.source.sourceUpdatedAt).toBe(Date.parse('2026-09-21T00:00:00Z'));expect((await saved(page)).active.revision).toBe(before);
+  for(const field of ['handle','region']){
+    const original=state.profile[field];state.profile[field]=field==='handle'?'different-player':'JAPAN';
+    await page.evaluate(async()=>{const s=await maimaiPlayerStorage.read();const lease=await maimaiPlayerStorage.claim(s.token,true,Date.now()+1e9);await maimaiPlayerStorage.finish(s.token,lease.id,{lastAttempt:0,retryAt:0});});
+    const calls=state.calls;await refresh(page);await expect.poll(()=>state.calls).toBe(calls+1);await expect.poll(async()=>((await saved(page)).active.source.retryAt||0)>Date.now()).toBe(true);await expect(page.locator('#player-status')).toContainText('Could not refresh');expect((await saved(page)).active.revision).toBe(before);state.profile[field]=original;
+  }
+});
+
+test('throttling and login HTML preserve the remembered dataset',async({page,context})=>{
+  const state=await prepare(context);await boot(page);await commit(page);const before=(await saved(page)).active.revision;
   for(const mode of ['throttle','html']){state.status=mode==='throttle'?429:200;state.html=mode==='html';await page.evaluate(async()=>{const s=await maimaiPlayerStorage.read();const lease=await maimaiPlayerStorage.claim(s.token,true,Date.now()+1e9);await maimaiPlayerStorage.finish(s.token,lease.id,{lastAttempt:0,retryAt:0});});await refresh(page);await expect.poll(async()=>((await saved(page)).active.source.retryAt||0)>Date.now()).toBe(true);expect((await saved(page)).active.revision).toBe(before);}
 });
 test('cross-tab Forget aborts a delayed proxy refresh and stale tabs cannot resurrect it',async({page,context})=>{

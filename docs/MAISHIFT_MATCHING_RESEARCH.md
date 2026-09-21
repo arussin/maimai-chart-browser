@@ -2,8 +2,10 @@
 
 Observed 2026-09-21 UTC. **Chart matching appears feasible, and full public PB
 access is demonstrated for the official sample in both regions. Safe account
-continuity on refresh remains unresolved.** The connector and announcement stay
-disabled. These are research candidates, not installed registry mappings.
+continuity on refresh was unresolved at this investigation stage.** The later
+[exception review and username decision](MAISHIFT_MAPPING_DECISIONS.md) resolves
+the 56 exception identities and selects username-scoped source identity. The
+connector and announcement stay disabled; these are not installed registry mappings.
 
 Only the official `shiftpsh` sample was queried, without credentials or referrers.
 No other accounts were enumerated. PB values and profile metadata stayed in
@@ -81,8 +83,9 @@ charts are ten STD/DX song variants, four difficulties each. Differences are:
 - `岸田教団&THE明星ロケッツ` versus the credit including `×草野華余子`: one variant.
 
 Those candidates agree on exact title, official regional jacket filename and
-format/difficulty. They still need explicit reviewed crosswalk entries tied to
-source evidence; no general rule stripping artist credits was implemented.
+format/difficulty. The later review preserves all 56 exceptional regional chart
+decisions in `registry/maishift-review-20260921.json`; production installation is
+still pending. No general rule stripping artist credits was implemented.
 
 Numeric track IDs are unique within each response. The regional catalogs have
 **zero overlapping IDs**, so a region namespace is essential. The tracks/export
@@ -110,13 +113,14 @@ and [export component](https://maimai.shiftpsh.com/assets/index-R7KvJhuN.js) use
 `createdAt` for the displayed date and game-version week. **Inference:** this is
 record/snapshot timing, not an immutable account-creation marker. A live update
 or documented semantics is needed to confirm the exact meaning of both fields.
-The existing created-at equality check is only a fail-closed guard and may reject
-a legitimate future upload. It cannot justify enabling remembered refresh.
+The former created-at equality check could reject a legitimate future upload.
+It has now been removed in favor of the explicit username/region source identity
+model documented in `MAISHIFT_MAPPING_DECISIONS.md`.
 
-Before release, verify a provider-supported continuity rule or require renewed
-user confirmation whenever ownership cannot be established. Also verify which
-timestamp orders corrected PB observations. Never silently merge a reused handle
-or substitute fetch time for unverified source chronology.
+That model follows the public source address and does not claim verified account
+ownership or detect reassigned handles. Reconnecting a different handle/region
+requires the existing player-switch confirmation. Source chronology still needs
+validation: do not substitute fetch time for unverified source chronology.
 
 ## Reproduction and retained evidence
 
@@ -143,6 +147,6 @@ Input file SHA256s:
 - `registry/songs.json`: `920322fd9588c4271e8a28372024e6ae092be6ce84c442e8e2c05ab70f7c01aa`
 - `registry/mappings.json`: `008ff0cb21929a2eb96a7fbdbb63df7fc0ae90ea3365e7384453e35d1f10ae50`
 
-Next work is a reviewed, versioned crosswalk with conflict detection and verified
-player continuity/timestamp semantics. None of these findings alone enables the
-connector or the combined announcement.
+Next work is installing/exporting the reviewed crosswalk with conflict detection
+and validating source timestamp semantics. None of these findings alone enables
+the connector or the combined announcement.

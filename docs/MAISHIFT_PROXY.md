@@ -31,12 +31,12 @@ both select the international record region; language-only URLs require an
 explicit matching region selection. Historical version overrides are rejected.
 Handles remain case-sensitive in portable identities. Coordination folds case
 conservatively to prevent duplicate case variants increasing upstream load.
-Handle ownership, rename/reuse rules and immutable player identity are unresolved.
-A changed profile `createdAt` timestamp blocks remembered refresh; this is a
-conservative rejection guard, not proof that handles are immutable. Follow-up
-research indicates this is snapshot timing, not account creation; the guard may
-reject a legitimate upload and needs verified replacement semantics before release.
-See [matching and identity research](MAISHIFT_MATCHING_RESEARCH.md).
+Player identity follows the supplied username plus region. The public response
+must identify that handle and region. Profile dates are record metadata; the
+former cross-refresh `createdAt` equality guard was removed. This model requires
+reconnecting after a rename and cannot detect username reassignment. It does not
+claim account ownership verification. See the
+[mapping and identity decisions](MAISHIFT_MAPPING_DECISIONS.md).
 
 Achievements retain the source integer scale (`1000000 = 100%`). Maishift supplies
 fractional ratings with no verified lossless conversion to the portable format’s
@@ -113,7 +113,8 @@ not a deployed Cloudflare-to-Maishift connection or completeness for other users
 - [x] Fixed-destination proxy, bounded inert decoding and minimized responses.
 - [x] Partial PB semantics, unknown values, precision and provider/region isolation.
 - [x] Local preview/remember/refresh integration and four-language copy.
-- [ ] Verified full PB completeness, snapshot consistency and handle ownership semantics.
+- [x] Define username/region source identity with explicit rename/reuse limits.
+- [ ] Validate source chronology and full-PB snapshot consistency for release.
 - [ ] Exact reviewed region/chart crosswalk with no fabricated or fuzzy joins.
 - [ ] Owner-reviewed deployment, runtime upstream access and platform log retention.
 - [ ] Benchmark a permitted full canary against the selected Worker's CPU/memory
@@ -187,6 +188,8 @@ Validation for this follow-up:
   files were preserved and excluded from this change's commits.
 
 Public sample research agrees across full tracks/export loaders in both regions
-and finds unique candidates for all catalog rows. Forty International candidates
-need artist-credit review. No crosswalk was installed. Player continuity and
-timestamp semantics remain unresolved, so the release checklist stays incomplete.
+and finds unique candidates for all catalog rows. The subsequent exception review
+accepts 40 artist-credit and 16 blank-metadata regional chart decisions, retained
+in Git. No production crosswalk was installed. Timestamp semantics and runtime
+mapping consumption remain incomplete; username/region is now the declared player
+source identity with the documented reuse limitation.

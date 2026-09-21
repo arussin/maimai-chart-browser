@@ -1,0 +1,875 @@
+{
+  "schema_version": "maishift-mapping-review-1",
+  "review_id": "maishift-exceptions-20260921",
+  "status": "reviewed-not-installed",
+  "reviewer": "Codex",
+  "date": "2026-09-21",
+  "method": "Explicit metadata identity review against exact regional SEGA jacket, title and ordinary chart slot. Artist-credit differences accepted only for the enumerated provider IDs. No audio, chart bodies, PBs or profile identifiers retained.",
+  "inputs": {
+    "registry": {
+      "charts.json": "f06ad4e8d6d209137cbc2267432f87d5c1467ce2cedc4e757bdd960cbd3e4bfc",
+      "songs.json": "920322fd9588c4271e8a28372024e6ae092be6ce84c442e8e2c05ab70f7c01aa",
+      "mappings.json": "008ff0cb21929a2eb96a7fbdbb63df7fc0ae90ea3365e7384453e35d1f10ae50"
+    },
+    "candidate_sha256": {
+      "intl": "983e5f8d8c14f4453b4ba5817844a991a0fd49806c55286763e6c56ce4139f5a",
+      "jp": "c330f5462f2b49d54c66522726bcda2951b7891afd8d2a205b9cd891f9b33b03"
+    },
+    "official": {
+      "intl": {
+        "url": "https://maimai.sega.com/assets/data/maimai_songs.json",
+        "checkedAt": "2026-09-21T05:35:31.378Z",
+        "sha256": "78416cd5fa103d4e5c04c2123cb4f741810a806f8409bde53ff9a3a3d16bed41"
+      },
+      "jp": {
+        "url": "https://maimai.sega.jp/data/maimai_songs.json",
+        "checkedAt": "2026-09-21T05:35:32.827Z",
+        "sha256": "109e93dc03f476e385118ff557dcbb55f9ac7b2a819646d14123b081c832deae"
+      }
+    }
+  },
+  "groups": [
+    {
+      "group_id": "intl:170",
+      "region": "intl",
+      "decision": "accept",
+      "reason": "blank_title",
+      "source": {
+        "title": "",
+        "artist": "x0o0x_",
+        "format": "DX",
+        "jacket_filename": "5bb69b619f266d0a.png"
+      },
+      "canonical": {
+        "song_id": "song:a52f13bc-9503-4cbd-8e07-fe31d1d81f61",
+        "title": "　",
+        "artist": "x0o0x_"
+      },
+      "official": {
+        "mapping_key": "556342fa5aca7c51db8eb8da18b06ec9c2893ab62cd7c0bf038baf8dca1066f2",
+        "mapping_sha256": "d6d092233753a41cb3a7cebdb8f3ffd90f2b0f0e22d1de5b6b07eb09b1e577a0",
+        "snapshot_id": "sega-intl:78416cd5fa103d4e5c04c2123cb4f741810a806f8409bde53ff9a3a3d16bed41",
+        "record_sha256": "623c843e45398fac5beefed351ea83dc99e08d88cc645b8745702edec69daac4",
+        "observed_record": {
+          "artist": "x0o0x_",
+          "dx_lev_bas": "3",
+          "dx_lev_adv": "6",
+          "dx_lev_exp": "10",
+          "dx_lev_mas": "12+",
+          "image_url": "5bb69b619f266d0a.png",
+          "title": "　"
+        }
+      },
+      "charts": [
+        {
+          "provider_chart_id": "170",
+          "chart_id": "chart:deb32134-f0ce-4701-976e-1a4d5c5fb423",
+          "difficulty": "BASIC",
+          "source_identity_sha256": "501465a9e63ae011dcceb2ac165cdec30d0a256f07c01d3ede3af50f0a9f18dd"
+        },
+        {
+          "provider_chart_id": "171",
+          "chart_id": "chart:a29fcbc2-8fde-40a9-b20c-46cd74400fd4",
+          "difficulty": "ADVANCED",
+          "source_identity_sha256": "efb39fc2d3bae34278ae007ca2e1a0928dbffc46dba68debb7a6ffa380fb2cc8"
+        },
+        {
+          "provider_chart_id": "172",
+          "chart_id": "chart:5e4b885e-3c2e-482d-812a-2ecc458f4a67",
+          "difficulty": "EXPERT",
+          "source_identity_sha256": "2f1ba3d89cab8dd0e3ec9b7c8c5c7148f02f1ccf633bb10d07918ca839674706"
+        },
+        {
+          "provider_chart_id": "173",
+          "chart_id": "chart:b9cf39be-9528-4290-8746-296f0dd10575",
+          "difficulty": "MASTER",
+          "source_identity_sha256": "a31fbd695168eeec937e0349ef305c3536ff0bb5c6c529694ffd443250692e30"
+        }
+      ],
+      "decision_sha256": "1b0c1dd405102ad366657fb3288f0da508011e0a448f78a4dc349df093d34f30"
+    },
+    {
+      "group_id": "intl:1414",
+      "region": "intl",
+      "decision": "accept",
+      "reason": "blank_artist",
+      "source": {
+        "title": "ぽっぴっぽー",
+        "artist": "",
+        "format": "STD",
+        "jacket_filename": "a614663a6453f7de.png"
+      },
+      "canonical": {
+        "song_id": "song:b12ca966-6224-4a15-90c7-5fc6fed1ad41",
+        "title": "ぽっぴっぽー",
+        "artist": ""
+      },
+      "official": {
+        "mapping_key": "57ed07e6bc9e647851eed54f8fe5993df901175fa7419216d9c8820b32e375bc",
+        "mapping_sha256": "bafde61fd174800e7579193b3915ea6795af91232a23930f4ecb5991daa42599",
+        "snapshot_id": "sega-intl:78416cd5fa103d4e5c04c2123cb4f741810a806f8409bde53ff9a3a3d16bed41",
+        "record_sha256": "74a4eaae783d453f209276fceefb46f2e555d2e95ef572f2b811d4508aada49a",
+        "observed_record": {
+          "artist": " ",
+          "image_url": "a614663a6453f7de.png",
+          "lev_bas": "4",
+          "lev_adv": "7",
+          "lev_exp": "9+",
+          "lev_mas": "13",
+          "title": "ぽっぴっぽー"
+        }
+      },
+      "charts": [
+        {
+          "provider_chart_id": "1414",
+          "chart_id": "chart:5edaf786-adf9-4a5b-8168-fad9740e0a61",
+          "difficulty": "BASIC",
+          "source_identity_sha256": "abefb62fa3bc86e904db2c4f982894e4d242b5f7d1d0fe68dcf057bcb00fb4a5"
+        },
+        {
+          "provider_chart_id": "1415",
+          "chart_id": "chart:f82eec74-ffa9-49c8-8b73-caa6727969e7",
+          "difficulty": "ADVANCED",
+          "source_identity_sha256": "b470b171a13d06027588c4e49bb6f341a8ef2b6d4ca1b83c3c4f33ee38a3b1f7"
+        },
+        {
+          "provider_chart_id": "1416",
+          "chart_id": "chart:52944ff0-1f91-4bab-82ee-c07e9ed5628f",
+          "difficulty": "EXPERT",
+          "source_identity_sha256": "0578d7175f787cf9f754a0221898a7ec82bc75efa4212a69039a93b6f67362c7"
+        },
+        {
+          "provider_chart_id": "1417",
+          "chart_id": "chart:51f38289-78ee-4415-994f-891eb833b0d2",
+          "difficulty": "MASTER",
+          "source_identity_sha256": "7ed89a02faa12a67b8f7b430417372424a03ad3adba662f372873a93cc65ac81"
+        }
+      ],
+      "decision_sha256": "a98560aadab99be98ce2982b4c476143ea7a98d3844cd8eb80e8bb4cb759fb69"
+    },
+    {
+      "group_id": "intl:1691",
+      "region": "intl",
+      "decision": "accept",
+      "reason": "shortened_artist_credit",
+      "source": {
+        "title": "紅に染まる恋の花",
+        "artist": "幽閉サテライト",
+        "format": "DX",
+        "jacket_filename": "5aef951016fdee27.png"
+      },
+      "canonical": {
+        "song_id": "song:64b8e12e-aacb-46e0-8236-403c40de1510",
+        "title": "紅に染まる恋の花",
+        "artist": "幽閉サテライト(Produce:嵯峨飛鳥 Arranged:Iceon)"
+      },
+      "official": {
+        "mapping_key": "3a02d572f5de7401f5ccb7b69cd6e72dbea5deffa8c314860f569149e271f963",
+        "mapping_sha256": "a170da5de0127c2c14ee40508b7c85d54479cbaf538cb3dd34eb2a78f93f0623",
+        "snapshot_id": "sega-intl:78416cd5fa103d4e5c04c2123cb4f741810a806f8409bde53ff9a3a3d16bed41",
+        "record_sha256": "aca47cc85037e33cec8b56a23ac95aad9981e3bcd164c3970bf5c89ab1bb4018",
+        "observed_record": {
+          "artist": "幽閉サテライト(Produce:嵯峨飛鳥 Arranged:Iceon)",
+          "dx_lev_bas": "2",
+          "dx_lev_adv": "6",
+          "dx_lev_exp": "10",
+          "dx_lev_mas": "12",
+          "image_url": "5aef951016fdee27.png",
+          "title": "紅に染まる恋の花"
+        }
+      },
+      "charts": [
+        {
+          "provider_chart_id": "1691",
+          "chart_id": "chart:55eb4c58-ba17-4545-a6a7-e96406fc529d",
+          "difficulty": "BASIC",
+          "source_identity_sha256": "d54cc8234ceb485bef4918947e3c719696a9c99e88e91e3006b28d289b6a02db"
+        },
+        {
+          "provider_chart_id": "1692",
+          "chart_id": "chart:607546cf-1eab-437b-b218-5757218004fa",
+          "difficulty": "ADVANCED",
+          "source_identity_sha256": "40714255c5ce7f3748d47564ec63da0b89450b1f575de094ddef1c6e5197a0f7"
+        },
+        {
+          "provider_chart_id": "1693",
+          "chart_id": "chart:a425491a-8b69-4f45-aa31-557a392d287d",
+          "difficulty": "EXPERT",
+          "source_identity_sha256": "92550a3f6d5bd1f168ffe922bb063cf15bfcf4b0b8835034724514e220a47801"
+        },
+        {
+          "provider_chart_id": "1694",
+          "chart_id": "chart:94e07d07-04f8-4dad-ab31-d9d252254c41",
+          "difficulty": "MASTER",
+          "source_identity_sha256": "d68437f176c35fa5b085bc3d5af82cd371c82d6ca08c2c0c323992c723fe7352"
+        }
+      ],
+      "decision_sha256": "358eb5ccf48c4263f8daf87fb9c98880e402b4636aecda3479a02b84fe84d4a2"
+    },
+    {
+      "group_id": "intl:1695",
+      "region": "intl",
+      "decision": "accept",
+      "reason": "shortened_artist_credit",
+      "source": {
+        "title": "今、誰が為のかがり火へ",
+        "artist": "幽閉サテライト",
+        "format": "DX",
+        "jacket_filename": "3a3232dcc8cfbbf2.png"
+      },
+      "canonical": {
+        "song_id": "song:7ed28921-4b15-441c-8213-39cb67fcc20e",
+        "title": "今、誰が為のかがり火へ",
+        "artist": "幽閉サテライト(Produce:嵯峨飛鳥 Arranged:Iceon)"
+      },
+      "official": {
+        "mapping_key": "675a8021e1e85c87103154e283984ce8a8bf6a0bbabaad628daf8306448df276",
+        "mapping_sha256": "623d0a17708802c4e579be9ec2e4e97f75661fea5f03da9b8f813d2387efdd13",
+        "snapshot_id": "sega-intl:78416cd5fa103d4e5c04c2123cb4f741810a806f8409bde53ff9a3a3d16bed41",
+        "record_sha256": "47e653c91d129f070fc979456cd9c2dfbf47e4cb7c98dabdc05ed1c7864c82c9",
+        "observed_record": {
+          "artist": "幽閉サテライト(Produce:嵯峨飛鳥 Arranged:Iceon)",
+          "dx_lev_bas": "3",
+          "dx_lev_adv": "6",
+          "dx_lev_exp": "8+",
+          "dx_lev_mas": "12",
+          "image_url": "3a3232dcc8cfbbf2.png",
+          "title": "今、誰が為のかがり火へ"
+        }
+      },
+      "charts": [
+        {
+          "provider_chart_id": "1695",
+          "chart_id": "chart:ff23942c-cdf1-4023-a256-6e0dc9cb2114",
+          "difficulty": "BASIC",
+          "source_identity_sha256": "b48391cf1f445ece03c4e963dd8ea89c91f4b9880ad0cb7b0d4288f3b8c7ad5a"
+        },
+        {
+          "provider_chart_id": "1696",
+          "chart_id": "chart:00d36635-3c10-48fa-976f-744e5bb7ba96",
+          "difficulty": "ADVANCED",
+          "source_identity_sha256": "f5ddb50761e5db3e0554987543cccced57e9dc173d3352e39bc63de4751d4c83"
+        },
+        {
+          "provider_chart_id": "1697",
+          "chart_id": "chart:eee3e7c1-edf8-49e6-bc61-a42c1115d88f",
+          "difficulty": "EXPERT",
+          "source_identity_sha256": "dd754d2810e8542888ad5aed91d0a9fad0c182a8fc68aec1a2b6429bd88964a8"
+        },
+        {
+          "provider_chart_id": "1698",
+          "chart_id": "chart:13a0977e-09f3-4839-a1ef-456cd9d14c52",
+          "difficulty": "MASTER",
+          "source_identity_sha256": "4b6b6052e9f62f69b521d50a9d544b9bd0afd430c87ad369e261fb823c6d2500"
+        }
+      ],
+      "decision_sha256": "459e121fa46c3304682493fb44201c11092894db7e5c08676656cf9b7210275f"
+    },
+    {
+      "group_id": "intl:1699",
+      "region": "intl",
+      "decision": "accept",
+      "reason": "shortened_artist_credit",
+      "source": {
+        "title": "泡沫、哀のまほろば",
+        "artist": "幽閉サテライト",
+        "format": "STD",
+        "jacket_filename": "1ad46c5221faa3a0.png"
+      },
+      "canonical": {
+        "song_id": "song:396b7f01-48d7-4f66-8505-45db83416e2e",
+        "title": "泡沫、哀のまほろば",
+        "artist": "幽閉サテライト(Produce:嵯峨飛鳥 Arranged:Iceon)"
+      },
+      "official": {
+        "mapping_key": "dfcb8dda3434f8122f189cf2dcb7227a831853c69fbc57546356bf142223f938",
+        "mapping_sha256": "c23a3fabf9acfe181f395c08fd609ac523b4383283280c38de50d8433a20d6eb",
+        "snapshot_id": "sega-intl:78416cd5fa103d4e5c04c2123cb4f741810a806f8409bde53ff9a3a3d16bed41",
+        "record_sha256": "81129ede1cb40471735aabb22223de6f9e53dcbbee39c24ef533b9c84e978b76",
+        "observed_record": {
+          "artist": "幽閉サテライト(Produce:嵯峨飛鳥 Arranged:Iceon)",
+          "image_url": "1ad46c5221faa3a0.png",
+          "lev_bas": "4",
+          "lev_adv": "7",
+          "lev_exp": "10",
+          "lev_mas": "12",
+          "title": "泡沫、哀のまほろば"
+        }
+      },
+      "charts": [
+        {
+          "provider_chart_id": "1699",
+          "chart_id": "chart:9dd76b15-d0e4-4125-aadd-33add9d6374d",
+          "difficulty": "BASIC",
+          "source_identity_sha256": "172c7df65eb3c0f87b27d5de88f7287e98b449e2bd33a6bf36eea8d010c895a1"
+        },
+        {
+          "provider_chart_id": "1700",
+          "chart_id": "chart:6d336b42-1fab-4028-b8b9-01cb257b65be",
+          "difficulty": "ADVANCED",
+          "source_identity_sha256": "255c023c25a82d57c84249b2a3eb39443a4496cacfe9dd88160591335e704e32"
+        },
+        {
+          "provider_chart_id": "1701",
+          "chart_id": "chart:1b67508d-d76f-4682-868b-c1d8051e6454",
+          "difficulty": "EXPERT",
+          "source_identity_sha256": "c6172d22fcc7d7e1a581e5734d2a34aff4cb71fe3551372b7a252f85c09d3baf"
+        },
+        {
+          "provider_chart_id": "1702",
+          "chart_id": "chart:af6b6765-976d-492a-9c88-e7ed7ffa9b56",
+          "difficulty": "MASTER",
+          "source_identity_sha256": "746adbc36683097113681d2a2599e3ea54774f01a130c367e7a9dd9c33520fc0"
+        }
+      ],
+      "decision_sha256": "52ca6233c8aca9bf0e81d611bb528612ccdd88bb864b11b9c6ceffb8ff049d0b"
+    },
+    {
+      "group_id": "intl:1703",
+      "region": "intl",
+      "decision": "accept",
+      "reason": "shortened_artist_credit",
+      "source": {
+        "title": "華鳥風月",
+        "artist": "幽閉サテライト",
+        "format": "STD",
+        "jacket_filename": "e1a5916bfb31fa3b.png"
+      },
+      "canonical": {
+        "song_id": "song:b7833555-ba59-4c29-ae1e-85f2a669ce9d",
+        "title": "華鳥風月",
+        "artist": "幽閉サテライト(Produce:嵯峨飛鳥 Arranged:Iceon)"
+      },
+      "official": {
+        "mapping_key": "9f8281d284878d688a2a819df9f6e0136616b057f45833a9321ea40da7d7bccc",
+        "mapping_sha256": "2e88e6b0cc3a0c39396a2185f6cc730d770e2ef8c877ceae282e294e1d5cd578",
+        "snapshot_id": "sega-intl:78416cd5fa103d4e5c04c2123cb4f741810a806f8409bde53ff9a3a3d16bed41",
+        "record_sha256": "71db644f798259795db355cbdbab90c58e5f41f79d15d15820b23317ee902b2e",
+        "observed_record": {
+          "artist": "幽閉サテライト(Produce:嵯峨飛鳥 Arranged:Iceon)",
+          "image_url": "e1a5916bfb31fa3b.png",
+          "lev_bas": "2",
+          "lev_adv": "6",
+          "lev_exp": "9+",
+          "lev_mas": "12+",
+          "title": "華鳥風月"
+        }
+      },
+      "charts": [
+        {
+          "provider_chart_id": "1703",
+          "chart_id": "chart:eecbe4e4-677e-4a15-aaa2-370c6a64c84a",
+          "difficulty": "BASIC",
+          "source_identity_sha256": "ba691e711a4fc41e7860c813d7c709f7ad31eccaf33815b4432006245f325e45"
+        },
+        {
+          "provider_chart_id": "1704",
+          "chart_id": "chart:6c6c5322-0abb-46ae-93fe-79bfd648a99e",
+          "difficulty": "ADVANCED",
+          "source_identity_sha256": "3c0c3661aad7853bce187531500d75d03445f121ecd9aced475d857559d08790"
+        },
+        {
+          "provider_chart_id": "1705",
+          "chart_id": "chart:0b3cd2ed-0632-486e-b433-62e631a7da0e",
+          "difficulty": "EXPERT",
+          "source_identity_sha256": "0b9e3cddb9a119e49dae512f9c510056b7710499858fdbc6130718d8b5772a32"
+        },
+        {
+          "provider_chart_id": "1706",
+          "chart_id": "chart:a7a96220-6b34-49a7-bab9-25c9813b704f",
+          "difficulty": "MASTER",
+          "source_identity_sha256": "d3824afa8247713449dd59d2e79c6f63f4c28834166b86857137abbd7b68d815"
+        }
+      ],
+      "decision_sha256": "0fda34bd0b95310dbf489b6680b82b1abb4f12ab7f89724d7f2d30bc720c4670"
+    },
+    {
+      "group_id": "intl:1707",
+      "region": "intl",
+      "decision": "accept",
+      "reason": "shortened_artist_credit",
+      "source": {
+        "title": "月に叢雲華に風",
+        "artist": "幽閉サテライト",
+        "format": "DX",
+        "jacket_filename": "f9f5c93325ed2b1d.png"
+      },
+      "canonical": {
+        "song_id": "song:0c8f9093-435d-436e-adff-55189ab77d77",
+        "title": "月に叢雲華に風",
+        "artist": "幽閉サテライト(Produce:嵯峨飛鳥 Arranged:Iceon)"
+      },
+      "official": {
+        "mapping_key": "0a68b17a55d5663a4b44c7b07625bd0fe76f73926c9200d7d5f24d27924e67dc",
+        "mapping_sha256": "5b8be3cf92ffdb6a0188bb4b988e819c298532beb3be899be8a43be422957f30",
+        "snapshot_id": "sega-intl:78416cd5fa103d4e5c04c2123cb4f741810a806f8409bde53ff9a3a3d16bed41",
+        "record_sha256": "165311491fc258995182e1861c332d1112f3017d5b8ec62d1915d1a2d2c9c278",
+        "observed_record": {
+          "artist": "幽閉サテライト(Produce:嵯峨飛鳥 Arranged:Iceon)",
+          "dx_lev_bas": "2",
+          "dx_lev_adv": "6",
+          "dx_lev_exp": "9",
+          "dx_lev_mas": "12+",
+          "image_url": "f9f5c93325ed2b1d.png",
+          "lev_bas": "4",
+          "lev_adv": "7",
+          "lev_exp": "10",
+          "lev_mas": "13",
+          "title": "月に叢雲華に風"
+        }
+      },
+      "charts": [
+        {
+          "provider_chart_id": "1707",
+          "chart_id": "chart:5e672e4f-a5e9-4f36-a931-c8ef09d7ad1b",
+          "difficulty": "BASIC",
+          "source_identity_sha256": "da45a2b51dcec8b2e0745939dc4c903b3b81ac9fc65de8a3bf70828e67ecb26d"
+        },
+        {
+          "provider_chart_id": "1708",
+          "chart_id": "chart:6ecd3b09-ae8e-4677-a4c2-05d242b93d30",
+          "difficulty": "ADVANCED",
+          "source_identity_sha256": "a69478caa144cbf760ce670c3865a2549f607b4f66ce4c6cb328af374b4c0b01"
+        },
+        {
+          "provider_chart_id": "1709",
+          "chart_id": "chart:49922db8-034b-4f3d-802e-6af906270f96",
+          "difficulty": "EXPERT",
+          "source_identity_sha256": "22fc0d29ca1eec69e4b4a2b3192d78eb5e4643f682682ba5c46f0db74f013d70"
+        },
+        {
+          "provider_chart_id": "1710",
+          "chart_id": "chart:73c3de0e-4338-407a-939f-7244a5dc60d2",
+          "difficulty": "MASTER",
+          "source_identity_sha256": "deab8c101812e36a833d760ee476c60dc901e36765d24cb3d94b9170d9794f4a"
+        }
+      ],
+      "decision_sha256": "01edf31e4c8e4780413bed7dee2057a5c5625dda35e3dd7ffd8f6329d3bfec68"
+    },
+    {
+      "group_id": "intl:1711",
+      "region": "intl",
+      "decision": "accept",
+      "reason": "shortened_artist_credit",
+      "source": {
+        "title": "月に叢雲華に風",
+        "artist": "幽閉サテライト",
+        "format": "STD",
+        "jacket_filename": "f9f5c93325ed2b1d.png"
+      },
+      "canonical": {
+        "song_id": "song:0c8f9093-435d-436e-adff-55189ab77d77",
+        "title": "月に叢雲華に風",
+        "artist": "幽閉サテライト(Produce:嵯峨飛鳥 Arranged:Iceon)"
+      },
+      "official": {
+        "mapping_key": "0a68b17a55d5663a4b44c7b07625bd0fe76f73926c9200d7d5f24d27924e67dc",
+        "mapping_sha256": "5b8be3cf92ffdb6a0188bb4b988e819c298532beb3be899be8a43be422957f30",
+        "snapshot_id": "sega-intl:78416cd5fa103d4e5c04c2123cb4f741810a806f8409bde53ff9a3a3d16bed41",
+        "record_sha256": "165311491fc258995182e1861c332d1112f3017d5b8ec62d1915d1a2d2c9c278",
+        "observed_record": {
+          "artist": "幽閉サテライト(Produce:嵯峨飛鳥 Arranged:Iceon)",
+          "dx_lev_bas": "2",
+          "dx_lev_adv": "6",
+          "dx_lev_exp": "9",
+          "dx_lev_mas": "12+",
+          "image_url": "f9f5c93325ed2b1d.png",
+          "lev_bas": "4",
+          "lev_adv": "7",
+          "lev_exp": "10",
+          "lev_mas": "13",
+          "title": "月に叢雲華に風"
+        }
+      },
+      "charts": [
+        {
+          "provider_chart_id": "1711",
+          "chart_id": "chart:b064bdbd-ba2e-464b-878b-c363da1eab88",
+          "difficulty": "BASIC",
+          "source_identity_sha256": "639527b0e5bd77e75f8077789d3d1e74812d184d510edb20d25407947e29b15b"
+        },
+        {
+          "provider_chart_id": "1712",
+          "chart_id": "chart:958f8d00-5372-4d32-988f-42f8eab13e4a",
+          "difficulty": "ADVANCED",
+          "source_identity_sha256": "82ecae0bbf40ceb889c194ef7564a787da891fb87a5b94900caa1c9d426b3fca"
+        },
+        {
+          "provider_chart_id": "1713",
+          "chart_id": "chart:9ca8d4d6-43ac-4fac-8941-ac1b544c61e4",
+          "difficulty": "EXPERT",
+          "source_identity_sha256": "1796b7b4f4c127b5d5f7d9ef3406411f14f94013f5a3d952ab6f025431a76f3c"
+        },
+        {
+          "provider_chart_id": "1714",
+          "chart_id": "chart:608a37ed-3e78-4e78-98ab-0e98fcc8c9e0",
+          "difficulty": "MASTER",
+          "source_identity_sha256": "e140e10f3078b547cbe9047d6381d6c8e471ff8f8d897f6e185b60aae01732fe"
+        }
+      ],
+      "decision_sha256": "baf15db6adcc22b84e941372266c419643efd8b3606ebca9423e56dc155f9f32"
+    },
+    {
+      "group_id": "intl:1715",
+      "region": "intl",
+      "decision": "accept",
+      "reason": "shortened_artist_credit",
+      "source": {
+        "title": "色は匂へど散りぬるを",
+        "artist": "幽閉サテライト",
+        "format": "DX",
+        "jacket_filename": "196e63bd095d25da.png"
+      },
+      "canonical": {
+        "song_id": "song:d79f2550-1bac-4c33-bee5-929e8f88143c",
+        "title": "色は匂へど散りぬるを",
+        "artist": "幽閉サテライト(Produce:嵯峨飛鳥 Arranged:Iceon)"
+      },
+      "official": {
+        "mapping_key": "c35be6814c645c367b1e61006bfbf5e459d30e3fa1b5c2fad58e952f3aea6664",
+        "mapping_sha256": "045735cc3ba9f6da8d4ad71c53e32e368e3b6d17e8207af399c57b4e7e030459",
+        "snapshot_id": "sega-intl:78416cd5fa103d4e5c04c2123cb4f741810a806f8409bde53ff9a3a3d16bed41",
+        "record_sha256": "cf6ca18fbe2b8e5e90b3bcbf188ba6b3e00396854c3ff5e637c4a7f1e5bef108",
+        "observed_record": {
+          "artist": "幽閉サテライト(Produce:嵯峨飛鳥 Arranged:Iceon)",
+          "dx_lev_bas": "3",
+          "dx_lev_adv": "6",
+          "dx_lev_exp": "9",
+          "dx_lev_mas": "12+",
+          "image_url": "196e63bd095d25da.png",
+          "lev_bas": "4",
+          "lev_adv": "7+",
+          "lev_exp": "9+",
+          "lev_mas": "12",
+          "title": "色は匂へど散りぬるを"
+        }
+      },
+      "charts": [
+        {
+          "provider_chart_id": "1715",
+          "chart_id": "chart:7826b472-3182-422c-a05d-b69d69d87ff8",
+          "difficulty": "BASIC",
+          "source_identity_sha256": "16cc2e71765c7ab5a07012ce0848d34b0503344a1581d0c82fbddd3ed2cdb5e8"
+        },
+        {
+          "provider_chart_id": "1716",
+          "chart_id": "chart:d230644e-46c9-446b-8fc3-74d31317c281",
+          "difficulty": "ADVANCED",
+          "source_identity_sha256": "6d435a7a4106db0be9b11e76672342f93589874ce81327c9a3d5eef1c8fe5d10"
+        },
+        {
+          "provider_chart_id": "1717",
+          "chart_id": "chart:6c698a70-b0dd-400b-9184-001664ee0f5b",
+          "difficulty": "EXPERT",
+          "source_identity_sha256": "bcb0b632a1e8dba9842f7d2fd4249f1e20048d7f4b1551ebc9a60f95bb89df0a"
+        },
+        {
+          "provider_chart_id": "1718",
+          "chart_id": "chart:a87eb3f6-83f7-4629-b044-a3915d149890",
+          "difficulty": "MASTER",
+          "source_identity_sha256": "43f12745fb85e321a27fb01cb76d509e99cf1206814b3ce5c3146b7dc18c9a2c"
+        }
+      ],
+      "decision_sha256": "71b501779598cae49a00cd80665c2897b584346dbf7a780c0c2d55f2349eb169"
+    },
+    {
+      "group_id": "intl:1719",
+      "region": "intl",
+      "decision": "accept",
+      "reason": "shortened_artist_credit",
+      "source": {
+        "title": "色は匂へど散りぬるを",
+        "artist": "幽閉サテライト",
+        "format": "STD",
+        "jacket_filename": "196e63bd095d25da.png"
+      },
+      "canonical": {
+        "song_id": "song:d79f2550-1bac-4c33-bee5-929e8f88143c",
+        "title": "色は匂へど散りぬるを",
+        "artist": "幽閉サテライト(Produce:嵯峨飛鳥 Arranged:Iceon)"
+      },
+      "official": {
+        "mapping_key": "c35be6814c645c367b1e61006bfbf5e459d30e3fa1b5c2fad58e952f3aea6664",
+        "mapping_sha256": "045735cc3ba9f6da8d4ad71c53e32e368e3b6d17e8207af399c57b4e7e030459",
+        "snapshot_id": "sega-intl:78416cd5fa103d4e5c04c2123cb4f741810a806f8409bde53ff9a3a3d16bed41",
+        "record_sha256": "cf6ca18fbe2b8e5e90b3bcbf188ba6b3e00396854c3ff5e637c4a7f1e5bef108",
+        "observed_record": {
+          "artist": "幽閉サテライト(Produce:嵯峨飛鳥 Arranged:Iceon)",
+          "dx_lev_bas": "3",
+          "dx_lev_adv": "6",
+          "dx_lev_exp": "9",
+          "dx_lev_mas": "12+",
+          "image_url": "196e63bd095d25da.png",
+          "lev_bas": "4",
+          "lev_adv": "7+",
+          "lev_exp": "9+",
+          "lev_mas": "12",
+          "title": "色は匂へど散りぬるを"
+        }
+      },
+      "charts": [
+        {
+          "provider_chart_id": "1719",
+          "chart_id": "chart:752732d6-bcac-4ab8-865c-52e0ed898d7b",
+          "difficulty": "BASIC",
+          "source_identity_sha256": "4dffbf73b1ffcf261a3b992116aede70f3d408f848d64543d93e14d4ec6725d4"
+        },
+        {
+          "provider_chart_id": "1720",
+          "chart_id": "chart:7eede022-ad43-4444-ad84-befb65727589",
+          "difficulty": "ADVANCED",
+          "source_identity_sha256": "c0238fbe09ded3863d1aa64efedf966988c0b910b69511ba59070af1013128da"
+        },
+        {
+          "provider_chart_id": "1721",
+          "chart_id": "chart:0f66e947-b7ac-4f0c-8037-a4ddef14e9ad",
+          "difficulty": "EXPERT",
+          "source_identity_sha256": "9fbc2cdde8bb1f2b7051f7e3f5a6988f73a1c0f7f38708f41b66d0c18cf58f22"
+        },
+        {
+          "provider_chart_id": "1722",
+          "chart_id": "chart:f18dc6cb-675f-4daa-99cc-5a7e51c46185",
+          "difficulty": "MASTER",
+          "source_identity_sha256": "160cf66e9822b57137870222eb5e91b6cebbaf3ba2f43258033f7a514fd8a2b4"
+        }
+      ],
+      "decision_sha256": "4033d51d71a946c1469680f366516f2a6d070dad5223c76bfdc15f06449500fa"
+    },
+    {
+      "group_id": "intl:3432",
+      "region": "intl",
+      "decision": "accept",
+      "reason": "shortened_artist_credit",
+      "source": {
+        "title": "オトヒメモリー☆ウタゲーション",
+        "artist": "Junky",
+        "format": "STD",
+        "jacket_filename": "c20ee423d01b854a.png"
+      },
+      "canonical": {
+        "song_id": "song:75f04c7d-b4bc-4e4c-9045-a07ce6a9fadd",
+        "title": "オトヒメモリー☆ウタゲーション",
+        "artist": "Junky feat. 乙姫(CV:浅川悠)"
+      },
+      "official": {
+        "mapping_key": "01550ac441cd21a22923c27b62769307ddcf11b5137dde0c77c8a4901d6fefe5",
+        "mapping_sha256": "c0662e8ceccb6c308cc99762b018d715c318922194403f1d20a8c85e0f9eac4d",
+        "snapshot_id": "sega-intl:78416cd5fa103d4e5c04c2123cb4f741810a806f8409bde53ff9a3a3d16bed41",
+        "record_sha256": "03c7414e5e7cc0a1ece71f78266a72a8b35b89c97f34c5495e9fabee46505c13",
+        "observed_record": {
+          "artist": "Junky feat. 乙姫(CV:浅川悠)",
+          "image_url": "c20ee423d01b854a.png",
+          "lev_bas": "5",
+          "lev_adv": "7+",
+          "lev_exp": "11+",
+          "lev_mas": "12+",
+          "title": "オトヒメモリー☆ウタゲーション"
+        }
+      },
+      "charts": [
+        {
+          "provider_chart_id": "3432",
+          "chart_id": "chart:61fa7c00-513f-47ce-a9bb-9c22efb3d580",
+          "difficulty": "BASIC",
+          "source_identity_sha256": "26e6a7e5d3e351da73ed0dd6197687fedbb0d9671e09850d828e0bafcda8ec49"
+        },
+        {
+          "provider_chart_id": "3433",
+          "chart_id": "chart:8c1c730b-81c5-4758-99fb-10ddcddc189d",
+          "difficulty": "ADVANCED",
+          "source_identity_sha256": "a39d854c4dcedcc09b77a4f6312a9495335eaf91fcf90d004dc20b5d81c78689"
+        },
+        {
+          "provider_chart_id": "3434",
+          "chart_id": "chart:b03c7733-fa5a-4e47-98b4-a5541e7f0020",
+          "difficulty": "EXPERT",
+          "source_identity_sha256": "9159747cf93ba72bc8a8d3a11d4b5606279abb2203162454fd74a634d3802de3"
+        },
+        {
+          "provider_chart_id": "3435",
+          "chart_id": "chart:70be20df-d468-4f66-af98-db43632c27cb",
+          "difficulty": "MASTER",
+          "source_identity_sha256": "e669e05f183cb03e60d9b0953cdd8c57b15d8b1809e3735e7156e25d3b229b03"
+        }
+      ],
+      "decision_sha256": "44055dd5177e515d344193f571b8cf24e0a4ba2f1786f84d4093fafb361874d4"
+    },
+    {
+      "group_id": "intl:4903",
+      "region": "intl",
+      "decision": "accept",
+      "reason": "shortened_artist_credit",
+      "source": {
+        "title": "LOSTPHANTASIA",
+        "artist": "岸田教団&THE明星ロケッツ",
+        "format": "DX",
+        "jacket_filename": "c825fb9620d74576.png"
+      },
+      "canonical": {
+        "song_id": "song:f6ae79e6-79e9-4792-a887-6b178582a665",
+        "title": "LOSTPHANTASIA",
+        "artist": "岸田教団&THE明星ロケッツ×草野華余子"
+      },
+      "official": {
+        "mapping_key": "a6ae9b009497610ca4181c18c02bd2c1320867987c0fd7be4b2d4d3d62ddae9d",
+        "mapping_sha256": "db1089900904b6aa15bee7e4d76ab93adc997cc8fb5a1468eb2b201e17ff7a60",
+        "snapshot_id": "sega-intl:78416cd5fa103d4e5c04c2123cb4f741810a806f8409bde53ff9a3a3d16bed41",
+        "record_sha256": "60052288ddda4c05cbc50f531008ec8b56b09543b5a1bb978ebb5cd1558386ca",
+        "observed_record": {
+          "artist": "岸田教団&THE明星ロケッツ×草野華余子",
+          "dx_lev_bas": "2",
+          "dx_lev_adv": "6",
+          "dx_lev_exp": "9+",
+          "dx_lev_mas": "12+",
+          "image_url": "c825fb9620d74576.png",
+          "title": "LOSTPHANTASIA"
+        }
+      },
+      "charts": [
+        {
+          "provider_chart_id": "4903",
+          "chart_id": "chart:8c2d5078-81ed-418e-ba93-34863fb2d3da",
+          "difficulty": "BASIC",
+          "source_identity_sha256": "d13f6135b27dcd5cf399c03b1cb6b6fbb9cd0df5568dbb17680a2f3837567152"
+        },
+        {
+          "provider_chart_id": "4904",
+          "chart_id": "chart:72c2c187-8b1d-4da8-991f-84c2567d24a1",
+          "difficulty": "ADVANCED",
+          "source_identity_sha256": "a366da0ed1cc45e49b225895a1ba8221df0e064538cf5d70bef2dfa6547e21c9"
+        },
+        {
+          "provider_chart_id": "4905",
+          "chart_id": "chart:96a209cd-1ac1-4901-b7a6-1f54a8b1cbfb",
+          "difficulty": "EXPERT",
+          "source_identity_sha256": "c77076998a96f46b58e790f1eef202b53587f186812f79f571d6863714c7f07d"
+        },
+        {
+          "provider_chart_id": "4906",
+          "chart_id": "chart:972d0086-6ea3-4a12-8ad2-0e6d7b8d27a6",
+          "difficulty": "MASTER",
+          "source_identity_sha256": "ba8f185e5895284e76f83eef3255b1a0ce6e7c15da2ad0e7f50ed1c1e1373b9b"
+        }
+      ],
+      "decision_sha256": "96a9951f5367b26ef95b4343bdabb2357029d2bdebdffe4ff6d5632d5053c4bf"
+    },
+    {
+      "group_id": "jp:12570",
+      "region": "jp",
+      "decision": "accept",
+      "reason": "blank_title",
+      "source": {
+        "title": "",
+        "artist": "x0o0x_",
+        "format": "DX",
+        "jacket_filename": "5bb69b619f266d0a.png"
+      },
+      "canonical": {
+        "song_id": "song:a52f13bc-9503-4cbd-8e07-fe31d1d81f61",
+        "title": "　",
+        "artist": "x0o0x_"
+      },
+      "official": {
+        "mapping_key": "0bdba65b5a556637d9bd07c11ba174e3e3237c63d910793c4fc1cfe57b5a1de2",
+        "mapping_sha256": "8de3af6ece96f1a014707ba09b08ff9bb1bbc79ac66ace8516026dd22cc56cc0",
+        "snapshot_id": "sega-jp:109e93dc03f476e385118ff557dcbb55f9ac7b2a819646d14123b081c832deae",
+        "record_sha256": "d6ecb9cf0533eb7b1dd7979d575226dceeefadec377f3a117b7191dae3046453",
+        "observed_record": {
+          "artist": "x0o0x_",
+          "dx_lev_bas": "3",
+          "dx_lev_adv": "6",
+          "dx_lev_exp": "10",
+          "dx_lev_mas": "12+",
+          "image_url": "5bb69b619f266d0a.png",
+          "title": "　"
+        }
+      },
+      "charts": [
+        {
+          "provider_chart_id": "12570",
+          "chart_id": "chart:deb32134-f0ce-4701-976e-1a4d5c5fb423",
+          "difficulty": "BASIC",
+          "source_identity_sha256": "e545e77a8762db281ae71b9e831a300a2c0e9eb2e5b914aa12f9b1d9ef7fa905"
+        },
+        {
+          "provider_chart_id": "12571",
+          "chart_id": "chart:a29fcbc2-8fde-40a9-b20c-46cd74400fd4",
+          "difficulty": "ADVANCED",
+          "source_identity_sha256": "b676fe6d42fe5d4ac1e26e70ed6047743adf7bc74369cb02ba8430abed15faac"
+        },
+        {
+          "provider_chart_id": "12572",
+          "chart_id": "chart:5e4b885e-3c2e-482d-812a-2ecc458f4a67",
+          "difficulty": "EXPERT",
+          "source_identity_sha256": "c1bc820a54ca434f9af56443100f47c606e372d55459eed1e8b4a24783bdc1d6"
+        },
+        {
+          "provider_chart_id": "12573",
+          "chart_id": "chart:b9cf39be-9528-4290-8746-296f0dd10575",
+          "difficulty": "MASTER",
+          "source_identity_sha256": "59a7ea007b7da8793150e76e85a0dd12a2d605b73cc09faa7395780f39993a46"
+        }
+      ],
+      "decision_sha256": "83d941ff6a9308fe59804afdc043d23f7bb37cd0f9b8afee7f602f50876db167"
+    },
+    {
+      "group_id": "jp:14277",
+      "region": "jp",
+      "decision": "accept",
+      "reason": "blank_artist",
+      "source": {
+        "title": "ぽっぴっぽー",
+        "artist": "",
+        "format": "STD",
+        "jacket_filename": "a614663a6453f7de.png"
+      },
+      "canonical": {
+        "song_id": "song:b12ca966-6224-4a15-90c7-5fc6fed1ad41",
+        "title": "ぽっぴっぽー",
+        "artist": ""
+      },
+      "official": {
+        "mapping_key": "0cd3499261b785666b5cdd49932ad1c82af93cb0d46e6172d83808bfbd3b86d6",
+        "mapping_sha256": "32cd982f024d4f7829c65882aaf5f5e74e0531f432975c04bf5f8d5a96f50a6f",
+        "snapshot_id": "sega-jp:109e93dc03f476e385118ff557dcbb55f9ac7b2a819646d14123b081c832deae",
+        "record_sha256": "00094a263b84384c61a772b34efe67601a1eacd72b8eaf8fc590914fdfba10e8",
+        "observed_record": {
+          "artist": " ",
+          "image_url": "a614663a6453f7de.png",
+          "lev_bas": "4",
+          "lev_adv": "8",
+          "lev_exp": "9+",
+          "lev_mas": "13",
+          "title": "ぽっぴっぽー"
+        }
+      },
+      "charts": [
+        {
+          "provider_chart_id": "14277",
+          "chart_id": "chart:5edaf786-adf9-4a5b-8168-fad9740e0a61",
+          "difficulty": "BASIC",
+          "source_identity_sha256": "001c89f44a050e3819a695e0cf21228fe1a22f4d7fcb24a9c7e59c2c1bd802dd"
+        },
+        {
+          "provider_chart_id": "14278",
+          "chart_id": "chart:f82eec74-ffa9-49c8-8b73-caa6727969e7",
+          "difficulty": "ADVANCED",
+          "source_identity_sha256": "8a0f3b95456c4481216f1693cd64636af548e34a114aee37b95d45d92da0db66"
+        },
+        {
+          "provider_chart_id": "14279",
+          "chart_id": "chart:52944ff0-1f91-4bab-82ee-c07e9ed5628f",
+          "difficulty": "EXPERT",
+          "source_identity_sha256": "e0da9ca7ae167c4e4ecc915e113ab92dcf1f81bc5d5d44d3ef989db16aadfcdc"
+        },
+        {
+          "provider_chart_id": "14280",
+          "chart_id": "chart:51f38289-78ee-4415-994f-891eb833b0d2",
+          "difficulty": "MASTER",
+          "source_identity_sha256": "9b07d7bd70d8fe78b3ab5c9cbf3d2da9ea6a1fbde90f0a3a075bc98c1ff2e2b4"
+        }
+      ],
+      "decision_sha256": "37484ab5bfcc41444b601f29184bb65fe489cbe8439dfd8a37408915d8971131"
+    }
+  ]
+}

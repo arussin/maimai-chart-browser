@@ -6,8 +6,9 @@ and v1 normalization: 6,031 chart rows, 2,010 played PBs, 2,010 imported PBs, ze
 excluded records, and zero invented plays. The [follow-up matching and completeness
 research](MAISHIFT_MATCHING_RESEARCH.md) verifies agreement with Maishift's full
 export loader in both regions and finds unique chart candidates throughout both
-catalogs. Stable handle ownership and a reviewed production crosswalk are still
-unverified. Direct browser
+catalogs. The [exception review](MAISHIFT_MAPPING_DECISIONS.md) is now retained,
+and player identity follows the supplied username plus game region. Production
+crosswalk consumption and source chronology remain incomplete. Direct browser
 CORS still fails. The combined `player-import-sources-v1` announcement is unreleased.
 
 The user subsequently approved implementing the described proxy locally. That
@@ -181,15 +182,16 @@ case. `username` carries that exact source identity; `displayName` carries its
 label. Chart IDs must use `maishift:<jp|intl>:<provider-chart-identity>`. This is
 Party's contract, not a claim that upstream currently supplies immutable IDs.
 The adapter conservatively accepts ASCII handles with an explicit game region.
-Created-at continuity is currently checked on refresh as a conservative rejection
-guard. Follow-up research shows different values by game region and public-client
-use as a displayed score date/version week. It must not be treated as account
-creation or immutable identity; the refresh design needs verified identity semantics
-before release. No Maishift IDs currently join the Kamaitachi mapping.
+Cross-refresh identity uses the supplied username plus region; the misleading
+created-at equality guard has been removed. Profile dates describe records and
+remain separate from identity. This is a source-address identity contract, not
+verification of a natural person or detection of reassigned usernames. See the
+documented rename/reuse limits in `MAISHIFT_MAPPING_DECISIONS.md`.
+No Maishift IDs currently join the Kamaitachi mapping.
 Existing Kamaitachi keys, datasets, hashes and handoff v1 remain valid.
 
-To clear the gate, establish definitive PB completeness and consistency, stable
-identity/revision semantics, and an exact reviewed chart crosswalk. The sample’s
+To clear the gate, validate source chronology and consistency, apply the declared
+username/region identity contract, and install/export the exact reviewed chart crosswalk. The sample’s
 successful normalization is evidence of extraction, not a proof that every public
 profile or region is complete. `maimaiPlayerSources.capabilities.maishift` remains
 false. There is no fuzzy title matching and no Maishift-to-Kamaitachi ID reuse.

@@ -3,15 +3,18 @@
 The independent import, refresh, storage and localization changes are implemented
 for review. **The complete Maishift integration remains incomplete and disabled.**
 The approved local proxy now verifies extraction and normalization of all 2,010
-played PBs returned for the official sample. Upstream completeness/identity
-semantics and an exact Party chart crosswalk remain unverified. The combined
+played PBs returned for the official sample. Source chronology and a production
+Party chart crosswalk remain incomplete. The combined
 announcement is consequently unreleased. See [proxy delivery](MAISHIFT_PROXY.md)
 for the new code, privacy constraints, validation, and remaining release gates.
 The [latest matching research](MAISHIFT_MATCHING_RESEARCH.md) verifies the full
 tracks/export agreement in both regions and records unique candidates for every
-catalog chart. A reviewed production crosswalk and stable player continuity are
-still outstanding. The preview was shortened, with secondary copy under native
-Import details; new validation and fictional screenshots are in the proxy delivery.
+catalog chart. All exceptional matches are now explicitly reviewed and preserved;
+production mapping consumption is still outstanding. Player source identity uses
+the supplied username plus game region, with rename/reuse limits documented in
+[the mapping decisions](MAISHIFT_MAPPING_DECISIONS.md). The preview was shortened,
+with secondary copy under native Import details; new validation and fictional
+screenshots are in the proxy delivery.
 
 ## Reviewable changes
 
@@ -92,7 +95,7 @@ Native-language human review and real-device mobile checks are not claimed.
   announcement preferences and truthful capability gating.
 - [x] Record deterministic tests and narrow-screen visual review.
 - [ ] Establish a permitted Maishift resource with complete available played PBs,
-  stable provider/region/chart identity, timestamps and pagination/completeness.
+  the declared provider/region/username identity, source chronology and completeness.
 - [ ] Freeze observed fixtures, implement normalization/diagnostics, and prove a
   real-source import with exact chart matching and Party-origin access.
 - [ ] Verify private/missing profiles, interrupted pagination and all newly
