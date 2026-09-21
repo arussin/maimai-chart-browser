@@ -15,7 +15,8 @@ not a claim that SEGA officially translates a song title that way.
 | Anchored trill | 轴交互 | 축 트릴 | 軸トリル | Chinese creator terminology [4]; other labels describe the fixed anchor without inventing a game mechanic. |
 | Simultaneous group | 同时押 | 동시 입력 | 同時押し | Do not blindly substitute 双押: our groups may contain more than two notes. |
 | TAP, HOLD, SLIDE, TOUCH, BREAK, EACH | Keep identifiers | Keep identifiers | Keep identifiers | Official note guide [7]. Prose can explain the action locally; exported identifiers and badges stay recognizable. |
-| MASTER, Re:MASTER, DX, STD, ranks | Keep source labels | Keep source labels | Keep source labels | Official international/Korean presentation [7–8]; registry identities remain untouched. |
+| Difficulties BASIC / ADVANCED / EXPERT / MASTER / Re:MASTER | 初级 / 高级 / 专家 / 大师 / 宗师 | Keep English game names | Keep English game names | Cabinet terminology follow-up in [catalog hotfix review](localization-review/catalog-hotfix-20260921.md); presentation only, identifiers and colors remain untouched. |
+| DX, STD, ranks | Keep source labels | Keep source labels | Keep source labels | Official international/Korean presentation [7–8]; registry identities remain untouched. |
 | Release names, e.g. MAGiCAL, CiRCLE | Keep source names | Keep source names | Keep source names | [8–9]. UI language does not select a game region or substitute mainland-China release years. |
 | Site financial support | 赞助 / 赞助付款 | 후원 / 결제 | 支援 / 支援金のお支払い | Editorial choice, not a maimai game term. Distinguish an expired checkout page from a failed or expired payment. |
 

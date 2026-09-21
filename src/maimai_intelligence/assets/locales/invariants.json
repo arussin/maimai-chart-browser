@@ -1,5 +1,11 @@
 {
   "invariants": {
+    "Lv.": {
+      "reason": "Official level abbreviation retained beside localized difficulty names.",
+      "sources": [
+        "chart-comparison.js"
+      ]
+    },
     "Arcade Songs · zetaraku": {
       "reason": "Proper name, established game identifier, or a letter in the maimai.party wordmark.",
       "sources": [
@@ -149,12 +155,6 @@
       "reason": "Proper name, established game identifier, or a letter in the maimai.party wordmark.",
       "sources": [
         "support-footer.html"
-      ]
-    },
-    "maimai": {
-      "reason": "Proper name, established game identifier, or a letter in the maimai.party wordmark.",
-      "sources": [
-        "support.html"
       ]
     },
     "maimai.party": {
@@ -355,14 +355,6 @@
         "src/maimai_intelligence/assets/player-data.js:6"
       ]
     },
-    "ADVANCED": {
-      "reason": "Established game label, grade, format, chart position, region code or sort symbol.",
-      "sources": [
-        "src/maimai_intelligence/assets/chart-filters.js:12",
-        "src/maimai_intelligence/assets/chart-comparison.js:18",
-        "src/maimai_intelligence/assets/challenge-review.js:36"
-      ]
-    },
     "ALL PERFECT+": {
       "reason": "Established game label, grade, format, chart position, region code or sort symbol.",
       "sources": [
@@ -438,14 +430,6 @@
         "src/maimai_intelligence/assets/player-data.js:6"
       ]
     },
-    "BASIC": {
-      "reason": "Established game label, grade, format, chart position, region code or sort symbol.",
-      "sources": [
-        "src/maimai_intelligence/assets/chart-filters.js:12",
-        "src/maimai_intelligence/assets/chart-comparison.js:18",
-        "src/maimai_intelligence/assets/challenge-review.js:36"
-      ]
-    },
     "BB": {
       "reason": "Established game label, grade, format, chart position, region code or sort symbol.",
       "sources": [
@@ -510,14 +494,6 @@
       ],
       "sources": [
         "src/maimai_intelligence/assets/challenge-review.js:166"
-      ]
-    },
-    "EXPERT": {
-      "reason": "Established game label, grade, format, chart position, region code or sort symbol.",
-      "sources": [
-        "src/maimai_intelligence/assets/chart-filters.js:12",
-        "src/maimai_intelligence/assets/chart-comparison.js:18",
-        "src/maimai_intelligence/assets/challenge-review.js:36"
       ]
     },
     "End": {
@@ -774,14 +750,6 @@
         "src/maimai_intelligence/assets/chart-visuals.js:16"
       ]
     },
-    "MASTER": {
-      "reason": "Established game label, grade, format, chart position, region code or sort symbol.",
-      "sources": [
-        "src/maimai_intelligence/assets/chart-filters.js:12",
-        "src/maimai_intelligence/assets/chart-comparison.js:18",
-        "src/maimai_intelligence/assets/challenge-review.js:36"
-      ]
-    },
     "More inputs arrive near the beginning.": {
       "reason": "Legacy illustration API, unused by the production lesson renderer. Its original output remains compatible with external consumers.",
       "sources": [
@@ -860,14 +828,6 @@
       "reason": "Programming token, selector, serialization or non-copy attribute; never translate.",
       "sources": [
         "src/maimai_intelligence/assets/support-stripe.js:78"
-      ]
-    },
-    "RE:MASTER": {
-      "reason": "Established game label, grade, format, chart position, region code or sort symbol.",
-      "sources": [
-        "src/maimai_intelligence/assets/chart-filters.js:12",
-        "src/maimai_intelligence/assets/chart-comparison.js:18",
-        "src/maimai_intelligence/assets/challenge-review.js:36"
       ]
     },
     "RT": {

@@ -1,8 +1,13 @@
 /* Public chart browsing and authored pattern previews. */
 (()=>{'use strict';
-const i18n=window.maimaiI18n||{text:(node,value)=>node.textContent=value,attribute:(node,key,value)=>node.setAttribute(key,value),option:(...args)=>new Option(...args),original:node=>node.textContent,verbatim:value=>value,parts:(values,separator)=>values.join(separator),literal:(node,value)=>node.textContent=value};
+const i18n=window.maimaiI18n||{text:(node,value)=>node.textContent=value,attribute:(node,key,value)=>node.setAttribute(key,value),option:(...args)=>new Option(...args),original:node=>node.textContent,verbatim:value=>value,parts:(values,separator)=>values.join(separator),message:(source,values)=>source.replace(/\{(\d+)\}/g,(_,n)=>values[n]),literal:(node,value)=>node.textContent=value};
 
 const data=window.maimaiResearchCatalog??=JSON.parse(document.getElementById('challenge-data').textContent);
+try{window.maimaiRegistryBrowser.normalize(data);}catch(error){
+  let status=document.getElementById('lab-status');
+  if(!status){status=document.createElement('p');status.id='lab-status';status.setAttribute('role','alert');document.getElementById('catalog').prepend(status);}
+  status.dataset.catalogError='genre';i18n.text(status,error.message);window.maimaiResearchCatalog=undefined;return;
+}
 window.maimaiChartLinks.configure(data.mai_notes);
 const byId=new Map(data.catalog.map(c=>[c.chart_id,c]));
 const el=id=>document.getElementById(id),make=(tag,text,cls)=>{const e=document.createElement(tag);if(text!==undefined)i18n.text(e, text);if(cls)e.className=cls;return e;};
@@ -42,7 +47,7 @@ const sortFields={title:'Title',artist:'Artist',constant:'Source constant',bpm:'
 let sortRules=[{key:'title',direction:1}];
 const personalSorts={rating:'Your RT',achievement:'Your achievement',grade:'Your grade',lastPlayed:'Last recorded play'};
 const filters=['genre'],selectedVersions=new Set();
-let chartFilters,patternFilter;
+let chartFilters,patternFilter,regionFilter;
 const versionLabel=value=>value.replace(/^maimai DX /,'DX ').replace(/^maimai /,'');
 const genreLabel=value=>(navigation.genres||[]).find(g=>g.id===value)?.label||'Uncategorized';
 const values={title:c=>displayTitle(c),artist:c=>c.artist,constant:chartConstant,bpm:c=>navigation.charts?.[c.chart_id]?.bpm??null,difficulty:c=>window.maimaiCatalogFilters.levelNumber(c.level),format:c=>c.format,genre:c=>genreLabel(folderValue(c,'genre')),version:c=>{const v=(navigation.versions||[]).indexOf(folderValue(c,'version'));return v<0?null:v;},speed:c=>c.demand?.cadence?.mean_onsets_s??null,peak:c=>{const record=overview.get(c);if(record&&Object.hasOwn(record,'flow_peak'))return record.flow_peak;const peaks=(record?.segments||[]).filter(s=>s[3]!=null&&s[4]>0).map(s=>s[3]);return peaks.length?Math.max(...peaks):null;}};
@@ -84,16 +89,16 @@ function initializeFilters(){
   for(const version of navigation.versions||[]){
     const label=make('label'),checkbox=make('input');checkbox.type='checkbox';checkbox.value=version;
     checkbox.onchange=()=>{if(checkbox.checked)selectedVersions.add(version);else selectedVersions.delete(version);visible=40;updateVersions();catalog();};
-    const text=make('span',versionLabel(version),'version-name'),detail=make('small','','version-count');detail.setAttribute('aria-hidden','true');text.append(detail);
+    const text=make('span',i18n.verbatim(versionLabel(version)),'version-name'),detail=make('small','','version-count');detail.setAttribute('aria-hidden','true');text.append(detail);
     label.append(checkbox,window.maimaiChartArtwork.version(version),text);el('version-options').append(label);
   }
   updateVersionCounts();
   el('version-clear').onclick=()=>{selectedVersions.clear();visible=40;updateVersions();catalog();};
   el('version-filter').addEventListener('keydown',event=>{if(event.key==='Escape'){el('version-filter').open=false;el('version-summary').focus();event.stopPropagation();}});
   document.addEventListener('click',event=>{if(!el('version-filter').contains(event.target))el('version-filter').open=false;});
-  el('reset-filters').onclick=()=>{for(const id of filters)el('filter-'+id).value='';selectedVersions.clear();updateVersions();chartFilters.clear();patternFilter.clear();el('search').value='';format='all';visible=40;writePatternFilter();updateFormat();catalog();};
+  el('reset-filters').onclick=()=>{for(const id of filters)el('filter-'+id).value='';regionFilter?.clear(false);selectedVersions.clear();updateVersions();updateVersionCounts();chartFilters.clear();patternFilter.clear();el('search').value='';format='all';visible=40;writePatternFilter();updateFormat();catalog();comparisonUI?.render();};
   renderSort();
-  const newest=(navigation.versions||[]).find(v=>data.catalog.some(c=>folderValue(c,'version')===v));i18n.text(el('catalog-era'), newest?'Through '+versionLabel(newest):'Research catalog');
+  const newest=(navigation.versions||[]).find(v=>data.catalog.some(c=>folderValue(c,'version')===v));i18n.text(el('catalog-era'), newest?i18n.message('Through {0}',[i18n.verbatim(versionLabel(newest))]):'Research catalog');
 }
 function writePatternFilter(){const url=new URL(location.href);url.searchParams.delete('pattern-filter');for(const id of patternFilter.ids())url.searchParams.append('pattern-filter',id);history.replaceState(null,'',url);}
 function updateVersionCounts(){
@@ -106,13 +111,13 @@ function updateVersionCounts(){
   }
 }
 function updateVersions(){
-  i18n.text(el('version-summary'), selectedVersions.size===0?'All versions':selectedVersions.size===1?versionLabel([...selectedVersions][0]):selectedVersions.size+' versions selected');
+  i18n.text(el('version-summary'), selectedVersions.size===0?'All versions':selectedVersions.size===1?i18n.verbatim(versionLabel([...selectedVersions][0])):selectedVersions.size+' versions selected');
   for(const input of el('version-options').querySelectorAll('input'))input.checked=selectedVersions.has(input.value);
 }
 function updateFormat(){for(const key of ['all','STD','DX'])el('format-'+key).setAttribute('aria-pressed',String(key===format));}
 function activeFilters(){
   const root=el('active-filters'),chips=[];
-  const count=Number(!!el('search').value.trim())+Number(format!=='all')+Number(selectedVersions.size>0)+chartFilters.activeCount()+Number(patternFilter.ids().length>0)+Number(!!el('filter-genre').value)+Number(!!el('use-international-data')?.checked);
+  const count=Number(!!el('search').value.trim())+Number(format!=='all')+Number(selectedVersions.size>0)+chartFilters.activeCount()+Number(patternFilter.ids().length>0)+Number(!!el('filter-genre').value)+Number(!!regionFilter?.value())+Number(!!el('use-international-data')?.checked);
   i18n.text(el('catalog-filter-count'),count?`${count} active`:'');
   el('catalog-filters-empty').hidden=count>0;el('reset-filters').hidden=count===0;
   function chip(label,remove){const button=make('button',label+' ×','filter-chip');i18n.attribute(button,'aria-label','Remove '+label+' filter');button.onclick=remove;chips.push(button);}
@@ -120,8 +125,9 @@ function activeFilters(){
   if(format!=='all')chip(format,()=>{format='all';updateFormat();visible=40;catalog();});
   const international=el('use-international-data');
   if(international?.checked)chip('Use maimai international data',()=>international.click());
+  if(regionFilter?.value())chip(regionFilter.label(),()=>regionFilter.clear());
   for(const version of selectedVersions){
-    const button=make('button',versionLabel(version)+' ×','filter-chip');i18n.attribute(button, 'aria-label', 'Remove version '+versionLabel(version));
+    const button=make('button',i18n.verbatim(versionLabel(version)+' ×'),'filter-chip');i18n.attribute(button, 'aria-label', i18n.message('Remove version {0}',[i18n.verbatim(versionLabel(version))]));
     button.onclick=()=>{selectedVersions.delete(version);visible=40;updateVersions();catalog();el('version-summary').focus();};chips.push(button);
   }
   chips.push(...chartFilters.chips(),...patternFilter.chips());
@@ -139,10 +145,12 @@ function activeFilters(){
 function catalog(focusKey=null){
   const matchesSearch=window.maimaiSongSearch.query(el('search').value);
   const selected=Object.fromEntries(filters.map(id=>[id,el('filter-'+id).value]));
+  const region=regionFilter?.value();
   const charts=data.catalog.filter(c=>{
     if(format!=='all'&&c.format!==format)return false;
     if(!matchesSearch(c))return false;
     if(selected.genre&&folderValue(c,'genre')!==selected.genre)return false;
+    if(!window.maimaiRegistryBrowser.matchesRegion(c,region))return false;
     if(selectedVersions.size&&!selectedVersions.has(folderValue(c,'version')))return false;
     if(!chartFilters.matches(c))return false;
     if(!patternFilter.matches(c))return false;
@@ -169,11 +177,11 @@ function catalog(focusKey=null){
     const header=make('div',undefined,'chart-summary');
     const summary=make('button',undefined,'chart-row'),identity=make('span',undefined,'song-identity'),title=make('span',i18n.verbatim(displayTitle(c)),'song-title');summary.type='button';
     identity.append(title,make('span',i18n.parts([c.artist?i18n.verbatim(c.artist):'Artist not provided',i18n.verbatim(c.format)],' · '),'muted'));summary.append(identity);
-    i18n.attribute(summary, 'aria-label', 'Open '+displayTitle(c)+' · '+c.format+' '+c.difficulty+' · Chart constant '+(chartConstant(c)==null?'unknown':constantLabel(c)));
+    i18n.attribute(summary, 'aria-label', i18n.message(chartConstant(c)==null?'Open {0} · {1} · Chart constant unknown':'Open {0} · {1} · Chart constant {2}',[i18n.verbatim(displayTitle(c)),i18n.parts([i18n.verbatim(c.format),c.difficulty],' '),i18n.verbatim(constantLabel(c))]));
     const heading=make('div',undefined,'chart-row-heading'),videoLink=window.maimaiChartLinks.group(c);
     heading.append(window.maimaiChartArtwork.jacket(c),summary,overview.chips(c,3,patternFilter.ids()));if(videoLink)heading.append(videoLink);
     const picker=make('select');picker.className='row-difficulty';picker.id='row-difficulty-'+index;i18n.attribute(picker, 'aria-label', 'Difficulty for '+displayTitle(c)+' '+c.format);
-    for(const choice of [...choices].sort((a,b)=>(difficultyRank(a)??99)-(difficultyRank(b)??99)||a.chart_id.localeCompare(b.chart_id)))picker.append(i18n.option(choice.difficulty+' · '+(choice.level||'?'), choice.chart_id));
+    for(const choice of [...choices].sort((a,b)=>(difficultyRank(a)??99)-(difficultyRank(b)??99)||a.chart_id.localeCompare(b.chart_id)))picker.append(i18n.option(i18n.parts([choice.difficulty,i18n.verbatim(choice.level||'?')],' · '), choice.chart_id));
     picker.value=c.chart_id;
     picker.onchange=()=>{selectedCharts.set(key,picker.value);catalog(key);[...el('songs').querySelectorAll('.row-difficulty')].find(p=>p.value===selectedCharts.get(key))?.focus();};
     const level=make('span',constantLabel(c),'chart-level chart-constant'),bpm=make('span',values.bpm(c)==null?'—':String(values.bpm(c)),'chart-bpm'),speed=make('span',values.speed(c)==null?'—':values.speed(c).toFixed(1),'chart-speed');
@@ -181,8 +189,8 @@ function catalog(focusKey=null){
     i18n.attribute(level, 'aria-label', 'Chart constant '+(chartConstant(c)==null?'unknown':constantLabel(c)));i18n.attribute(level, 'title', chartConstant(c)==null?'No verified source constant is available for this context.':(()=>{const source=navigation.charts?.[c.chart_id]?.metric_sources?.chart_constant;return source?[source.provider,source.region,source.release||'game version unspecified'].filter(Boolean).join(' · '):'Neskol source constant · regional and game-version scope unspecified.';})());i18n.attribute(speed, 'aria-label', (values.speed(c)==null?'Unknown':values.speed(c).toFixed(1))+' inputs per second');
     const flow=overview.graph(c,{compact:true});header.append(heading,picker,level,bpm,speed,flow);
     const footer=make('div',undefined,'chart-card-footer'),version=folderValue(c,'version'),metadata=make('div',undefined,'chart-card-metadata');
-    const versionArt=window.maimaiChartArtwork.version(version);i18n.attribute(versionArt, 'title', version);
-    metadata.append(versionArt,make('span',genreLabel(folderValue(c,'genre')),'chart-card-genre'),make('span',version,'chart-card-version'));
+    const versionArt=window.maimaiChartArtwork.version(version);i18n.attribute(versionArt, 'title', i18n.verbatim(version));
+    metadata.append(versionArt,make('span',genreLabel(folderValue(c,'genre')),'chart-card-genre'),make('span',i18n.verbatim(version),'chart-card-version'));
     const actions=make('div',undefined,'chart-detail-actions'),compareButton=make('button','Compare this chart'),similarButton=make('button','Find similar');
     compareButton.type=similarButton.type='button';
     compareButton.onclick=()=>{selectView('compare');if(comparisonUI.first()&&comparisonUI.first()!==c.chart_id)comparisonUI.useAsSecond(c.chart_id);else comparisonUI.useAsFirst(c.chart_id);};
@@ -211,7 +219,7 @@ for(const name of ['compare','catalog','patterns','about'])el(name+'-tab').oncli
 i18n.text(el('loaded-count'), data.catalog.length.toLocaleString());
 window.maimaiPreviewField=field;
 initializeFilters();
-window.maimaiRegistryBrowser.mount(data,()=>{updateVersionCounts();visible=40;catalog();comparisonUI?.render();});
+regionFilter=window.maimaiRegistryBrowser.mount(data,()=>{updateVersionCounts();visible=40;catalog();comparisonUI?.render();});
 const personalControls=personal?.controls(el('catalog'),()=>{visible=40;catalog();});
 function personalChanged(){for(const key of Object.keys(personalSorts))delete sortFields[key];if(personal?.enabled())Object.assign(sortFields,personalSorts);else sortRules=sortRules.filter(r=>!Object.hasOwn(personalSorts,r.key));if(!sortRules.length)sortRules=[{key:'title',direction:1}];renderSort();catalog();comparisonUI?.render();}
 window.addEventListener('maimai-personal-change',personalChanged);personalChanged();
@@ -221,6 +229,7 @@ comparisonUI=window.maimaiChartComparison.mount({data,eligibleIds:()=>data.catal
   if(!patternFilter.matches(c))return false;
     if(personal&&!personal.matches(c))return false;
   if(el('filter-genre').value&&folderValue(c,'genre')!==el('filter-genre').value)return false;
+  if(!window.maimaiRegistryBrowser.matchesRegion(c,regionFilter?.value()))return false;
   return chartFilters.matches(c);
 }).map(c=>c.chart_id)});
 const params=new URLSearchParams(location.search),initialView=params.get('view'),initialPattern=params.get('pattern');
