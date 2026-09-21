@@ -23,6 +23,18 @@ test('frozen wire constants, dates and request serialization',()=>{
   assert.equal(JSON.parse(url.searchParams.get('payload')).t.p.v[0].p.v[1].s,'ASIA');
   for(const value of [{t:99},{t:10,p:{k:['__proto__'],v:[{t:2,s:0}]}},{t:10,p:{k:['a','a'],v:[{t:2,s:0},{t:2,s:0}]}},{t:2,s:5}])assert.throws(()=>decode(value));
 });
+test('transport escapes preserve exact chart text without executing or recursively decoding it',()=>{
+  const envelope=s=>({t:10,p:{k:['result','error'],v:[{t:1,s},{t:2,s:1}]}});
+  assert.equal(decode(envelope('Fictional \\"Quote\\" \\x3Cmix>')),'Fictional "Quote" <mix>');
+  assert.equal(decode(envelope('literal \\\\x3C')),'literal \\x3C');
+  assert.equal(decode(envelope('\\n\\r\\b\\t\\f\\u2028\\u2029')),'\n\r\b\t\f\u2028\u2029');
+  assert.equal(decode(envelope('\\u0061')),'\\u0061');
+  const inert='</script><script>throw new Error("never execute")</script>';
+  assert.equal(decode(wire(inert)),inert);
+  const result=decode(wire({'Fictional "key" <': 'Fictional \\ title'}));
+  assert.equal(result['Fictional "key" <'],'Fictional \\ title');
+});
+
 test('public import minimizes fields, bounds requests and normalizes without invented history',async()=>{
   const s=setup(),r=await s.service.fetch(request(),s.env),body=await r.json();assert.equal(r.status,200);assert.equal(r.headers.get('cache-control'),'no-store, private');
   assert.equal(s.calls.length,3);assert.ok(s.calls.every(c=>c.options.credentials==='omit'&&c.options.referrerPolicy==='no-referrer'&&c.options.redirect==='manual'&&!c.options.headers.Cookie&&!c.options.headers.Authorization));

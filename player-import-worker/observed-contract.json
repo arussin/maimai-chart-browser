@@ -23,13 +23,26 @@
     "name": "observed Seroval subset",
     "types": {
       "0": "number in s",
-      "1": "string in s",
+      "1": "string in s, decoded once with the observed literal Seroval escape table",
       "2": "constant: 0 null, 1 undefined, 2 true, 3 false",
       "5": "ISO date in s",
       "9": "array in a",
       "10": "object with p.k/p.v",
       "11": "null-prototype object with p.k/p.v"
-    }
+    },
+    "stringEscapes": [
+      "backslash",
+      "double quote",
+      "n",
+      "r",
+      "b",
+      "t",
+      "f",
+      "x3C",
+      "u2028",
+      "u2029"
+    ],
+    "stringEvidence": "Public main-B0wkGPQy.js: fQ/Ks encoder and pQ/_u decoder, inspected without execution on 2026-09-21."
   },
   "profileFields": [
     "handle",

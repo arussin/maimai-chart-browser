@@ -7,6 +7,11 @@ played PBs returned for the official sample. Upstream completeness/identity
 semantics and an exact Party chart crosswalk remain unverified. The combined
 announcement is consequently unreleased. See [proxy delivery](MAISHIFT_PROXY.md)
 for the new code, privacy constraints, validation, and remaining release gates.
+The [latest matching research](MAISHIFT_MATCHING_RESEARCH.md) verifies the full
+tracks/export agreement in both regions and records unique candidates for every
+catalog chart. A reviewed production crosswalk and stable player continuity are
+still outstanding. The preview was shortened, with secondary copy under native
+Import details; new validation and fictional screenshots are in the proxy delivery.
 
 ## Reviewable changes
 
@@ -24,9 +29,10 @@ for the new code, privacy constraints, validation, and remaining release gates.
 - Four-language copy and an accessible reusable announcement registry are present.
   The blocked combined announcement and its replay action remain hidden.
 - The Maishift contract document includes measured transport evidence, remaining
-  gates, an unimplemented proxy proposal, and owner-only monitoring proposals.
+  gates, the locally implemented proxy, and owner-only monitoring proposals.
 
-Canonical registry branch: `codex/player-import-sources`. Its shared validator
+Initial registry branch: `codex/player-import-sources`; the local proxy and research
+continue on `codex/maishift-proxy`. The shared validator
 commit is `f1abe2c7d93ff7f0b6610dd0bb57d4e038f609c0`.
 The Session Report branch is `codex/player-source-compatibility`, commit
 `c54749e211e08ad4ad01719e329ed9b2f5e3f483`. Only its shared player reader,
@@ -93,7 +99,7 @@ Native-language human review and real-device mobile checks are not claimed.
   observed upstream failure cases against that future frozen adapter contract.
 - [ ] Enable and acceptance-test Maishift and the combined announcement only
   after those gates pass. HTML access or Best 50 alone cannot pass.
-- [ ] Obtain a separate owner release action; separately approve any proxy,
+- [ ] Obtain a separate owner release action; separately approve proxy deployment,
   monitoring schedule, alert publication and long-term canary.
 
 No deployment, push, maintainer contact, issue update, live workflow dispatch,

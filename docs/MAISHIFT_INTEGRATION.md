@@ -3,8 +3,11 @@
 Status: **local proxy and browser adapter implemented; release remains incomplete
 and disabled**. The approved official sample now passes the frozen server reader
 and v1 normalization: 6,031 chart rows, 2,010 played PBs, 2,010 imported PBs, zero
-excluded records, and zero invented plays. This does not certify upstream
-completeness, stable handle ownership, or Party chart matching. Direct browser
+excluded records, and zero invented plays. The [follow-up matching and completeness
+research](MAISHIFT_MATCHING_RESEARCH.md) verifies agreement with Maishift's full
+export loader in both regions and finds unique chart candidates throughout both
+catalogs. Stable handle ownership and a reviewed production crosswalk are still
+unverified. Direct browser
 CORS still fails. The combined `player-import-sources-v1` announcement is unreleased.
 
 The user subsequently approved implementing the described proxy locally. That
@@ -178,7 +181,11 @@ case. `username` carries that exact source identity; `displayName` carries its
 label. Chart IDs must use `maishift:<jp|intl>:<provider-chart-identity>`. This is
 Party's contract, not a claim that upstream currently supplies immutable IDs.
 The adapter conservatively accepts ASCII handles with an explicit game region.
-Created-at continuity is checked on refresh; it is not proof of immutable identity. No Maishift IDs currently join the Kamaitachi mapping.
+Created-at continuity is currently checked on refresh as a conservative rejection
+guard. Follow-up research shows different values by game region and public-client
+use as a displayed score date/version week. It must not be treated as account
+creation or immutable identity; the refresh design needs verified identity semantics
+before release. No Maishift IDs currently join the Kamaitachi mapping.
 Existing Kamaitachi keys, datasets, hashes and handoff v1 remain valid.
 
 To clear the gate, establish definitive PB completeness and consistency, stable

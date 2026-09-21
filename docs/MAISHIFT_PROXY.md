@@ -32,8 +32,11 @@ explicit matching region selection. Historical version overrides are rejected.
 Handles remain case-sensitive in portable identities. Coordination folds case
 conservatively to prevent duplicate case variants increasing upstream load.
 Handle ownership, rename/reuse rules and immutable player identity are unresolved.
-A changed profile-created timestamp blocks remembered refresh; this is a
-continuity check, not proof that handles are immutable.
+A changed profile `createdAt` timestamp blocks remembered refresh; this is a
+conservative rejection guard, not proof that handles are immutable. Follow-up
+research indicates this is snapshot timing, not account creation; the guard may
+reject a legitimate upload and needs verified replacement semantics before release.
+See [matching and identity research](MAISHIFT_MATCHING_RESEARCH.md).
 
 Achievements retain the source integer scale (`1000000 = 100%`). Maishift supplies
 fractional ratings with no verified lossless conversion to the portable format’s
@@ -160,3 +163,30 @@ Validation workspaces (all under the documented registry DevCache root):
 Local implementation commits: `42e037f` (proxy/contract/runtime), `faee3e9`
 (browser adapter, localization and tests). The documentation commit follows these.
 Concurrent filter UI edits and pre-existing untracked work are preserved separately.
+
+## Simpler import UI and research follow-up
+
+The preview now keeps the player, handle, region/PB count, date and nonzero
+unmatched/excluded warnings visible. Secondary coverage/privacy information and
+the source link sit in native **Import details**. The consent label is **Remember
+and refresh**; Import & remember / Import once remains explicit. Existing file
+import defaults are unchanged. The two fictional screenshots above were refreshed
+and visually checked at desktop and 320px widths.
+
+Validation for this follow-up:
+
+- 70 Maishift browser tests passed in `20260921T051833323-8beaf379`.
+- 140 existing import/source tests passed in `20260921T052045131-5e6067b6`.
+- All seven browser/layout configurations passed, including four-language copy,
+  collapsed-details behavior, corrections, hidden results and cross-tab Forget.
+- 13 Worker tests and binding generation passed in
+  `20260921T052149486-a9face35`, including the new transport-string regression.
+- Python localization coverage passed. The scoped staged JavaScript inventory
+  and language-review fingerprints passed. The working tree's global inventory
+  and review checks still report separate concurrent filter-copy changes; those
+  files were preserved and excluded from this change's commits.
+
+Public sample research agrees across full tracks/export loaders in both regions
+and finds unique candidates for all catalog rows. Forty International candidates
+need artist-credit review. No crosswalk was installed. Player continuity and
+timestamp semantics remain unresolved, so the release checklist stays incomplete.

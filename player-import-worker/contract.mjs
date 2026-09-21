@@ -15,6 +15,10 @@ const text = (v, max = 512, empty = false) => typeof v === 'string' && (empty ||
 const difficulty = Object.freeze({BASIC:'BASIC', ADVANCED:'ADVANCED', EXPERT:'EXPERT', MASTER:'MASTER', RE_MASTER:'RE:MASTER'});
 const combos = new Set(['FULL_COMBO','FULL_COMBO_PLUS','ALL_PERFECT','ALL_PERFECT_PLUS']);
 const syncs = new Set(['SYNC_PLAY','FULL_SYNC','FULL_SYNC_PLUS','FULL_SYNC_DX','FULL_SYNC_DX_PLUS']);
+// The observed transport escapes strings once in addition to JSON encoding.
+// Decode only its literal escape table, in one pass; never interpret JS.
+const escapes = Object.freeze({'\\\\':'\\','\\"':'"','\\n':'\n','\\r':'\r','\\b':'\b','\\t':'\t','\\f':'\f','\\x3C':'<','\\u2028':'\u2028','\\u2029':'\u2029'});
+const unescape = value => value.replace(/\\(?:\\|"|n|r|b|t|f|x3C|u2028|u2029)/g, token => escapes[token]);
 
 export function validInput(v) {
   return object(v) && Object.keys(v).sort().join(',') === 'handle,manual,region' &&
@@ -34,7 +38,7 @@ export function decode(root) {
     if (++nodes > 300000 || depth > 32 || !object(n)) fail();
     switch (n.t) {
       case 0: if (typeof n.s !== 'number' || !Number.isFinite(n.s)) fail(); return n.s;
-      case 1: if (typeof n.s !== 'string' || n.s.length > 8192) fail(); return n.s;
+      case 1: if (typeof n.s !== 'string' || n.s.length > 8192) fail(); return unescape(n.s);
       case 2: if (![0,1,2,3].includes(n.s)) fail(); return [null,undefined,true,false][n.s];
       case 5: if (typeof n.s !== 'string' || !/^\d{4}-\d\d-\d\dT/.test(n.s) || !Number.isFinite(Date.parse(n.s))) fail(); return n.s;
       case 9: if (!Array.isArray(n.a) || n.a.length > 20000) fail(); return n.a.map(v => read(v, depth + 1));
@@ -42,7 +46,9 @@ export function decode(root) {
         if (!object(n.p) || !Array.isArray(n.p.k) || !Array.isArray(n.p.v) || n.p.k.length !== n.p.v.length || n.p.k.length > 128) fail();
         const out = Object.create(null);
         n.p.k.forEach((k,i) => {
-          if (typeof k !== 'string' || k.length > 128 || ['__proto__','constructor','prototype'].includes(k) || Object.hasOwn(out,k)) fail();
+          if (typeof k !== 'string' || k.length > 128) fail();
+          k = unescape(k);
+          if (['__proto__','constructor','prototype'].includes(k) || Object.hasOwn(out,k)) fail();
           out[k] = read(n.p.v[i], depth + 1);
         });
         return out;
