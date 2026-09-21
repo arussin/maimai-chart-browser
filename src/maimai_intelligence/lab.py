@@ -118,6 +118,7 @@ def build_lab(package_directory, output, *, catalog_version):
         manifest["releases"].append(entry)
     manifest["default"] = catalog_version
     assets = files("maimai_intelligence.assets")
+    (root / "version-magical.png").write_bytes(assets.joinpath("version-magical.png").read_bytes())
     early_scripts = []
     for name in (
         "localization.js",

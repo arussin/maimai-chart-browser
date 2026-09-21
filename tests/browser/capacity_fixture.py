@@ -44,6 +44,7 @@ def build_capacity_fixture(root: Path, count: int = 7000):
     digest = hashlib.sha256(raw).hexdigest()
     target.mkdir(parents=True, exist_ok=True)
     for name in [
+        "version-magical.png",
         "index.html",
         "lab-loader.js",
         "localization.js",
