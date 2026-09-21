@@ -141,8 +141,20 @@ def validate_review(review, registry):
 
 def main():
     review = json.loads((ROOT / "registry/maishift-review-20260921.json").read_text("utf-8"))
-    rows = validate_review(review, read_registry(ROOT / "registry"))
-    print(json.dumps({"reviewed_chart_decisions": len(rows), "runtime_mappings_installed": False}))
+    registry = read_registry(ROOT / "registry")
+    rows = validate_review(review, registry)
+    installed = sum(
+        registry["mappings"]
+        .get(digest(["maishift", "maimaidx", key.removeprefix("maishift:")]), {})
+        .get("subject_id")
+        == row["chart_id"]
+        for key, row in rows.items()
+    )
+    print(
+        json.dumps(
+            {"reviewed_chart_decisions": len(rows), "installed_registry_decisions": installed}
+        )
+    )
 
 
 if __name__ == "__main__":

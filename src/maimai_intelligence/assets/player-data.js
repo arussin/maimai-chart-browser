@@ -6,6 +6,7 @@ const core=window.maimaiPlayerData,sources=window.maimaiPlayerSources,storage=wi
 const protocol='maimai-player-handoff/1',grades=['D','C','B','BB','BBB','A','AA','AAA','S','S+','SS','SS+','SSS','SSS+'];
 let active=null,remembered=false,storedRevision=null,visible=true,pbs=new Map(),pbDates=new Map(),catalog=null,mapping=null,reverse=new Map(),lastTimes=new Map(),busy=false;
 let source=null,storeToken=null,generation=0,pending=null,refreshing=false,refreshText='',cancelConsent=null;
+let maishiftMapping=null,maishiftReverse=new Map(),catalogByID=new Map();
 let channel;try{channel=new BroadcastChannel('maimai-player-events');}catch{}
 function notify(kind){const value={kind,epoch:storeToken?.epoch,version:storeToken?.version};channel?.postMessage(value);try{localStorage.setItem('maimai-player-event',JSON.stringify({...value,id:crypto.randomUUID()}));}catch{}}
 function invalidate(){generation++;busy=false;pending?.abort();pending=null;refreshing=false;cancelConsent?.();cancelConsent=null;if(typeof refreshButton!=='undefined')refreshButton.disabled=false;}
@@ -99,7 +100,7 @@ const ready=(async()=>{let failed=false,saved;try{const state=await storage.read
 input.onchange=async()=>{const file=input.files[0];input.value='';if(!file||busy)return;busy=true;let expected;try{expected=await beginImport();if(file.size>core.MAX_COMPRESSED)throw new Error('Player file exceeds 32 MiB.');const data=await core.decode(await file.arrayBuffer());assertCurrent(expected);const choice=await ask(core.offer(await core.reconcile(data)),{file:true});if(choice.accept)await commit(data,choice.remember,{expected});}catch(e){if(e.name!=='AbortError')message('Player data could not be imported',e.message);}finally{if(expected===generation||expected===undefined)busy=false;}};
 
 function external(label,url){const link=make('a',label);link.href=url;link.target='_blank';link.rel='noopener noreferrer';link.referrerPolicy='no-referrer';return link;}
-function unmatchedPBs(data){const ids=new Set([...reverse.values()].flat());return [...core.current(data).pbs.keys()].filter(id=>data.player.provider!=='kamaitachi'||!ids.has(id)).length;}
+function unmatchedPBs(data){const ids=new Set([...reverse.values()].flat());return [...core.current(data).pbs.keys()].filter(id=>data.player.provider==='maishift'?!maishiftMatch(data,id):data.player.provider!=='kamaitachi'||!ids.has(id)).length;}
 async function selectSource(){
   await ready;
   invalidate();dialog.replaceChildren();dialog.classList.remove('player-message');dialog.removeAttribute('aria-describedby');
@@ -197,9 +198,19 @@ if(nonce&&/^[a-f0-9-]{36}$/.test(nonce)&&window.opener){
 
 function configure(data,providerMapping){catalog=data;mapping=providerMapping||data.provider_mapping||null;reverse=new Map();const byId=new Map(data.catalog.map(c=>[c.chart_id,c]));
   if(['provider-mapping-1','provider-mapping-2'].includes(mapping?.schema_version))for(const [cid,row]of Object.entries(mapping.charts||{})){const c=byId.get(row.chart_id);if(c&&(mapping.schema_version==='provider-mapping-1'?c.source_hash===row.source_hash:['reviewed','legacy_published'].includes(row.acceptance_basis)&&c.format===row.format&&c.difficulty===row.difficulty)){if(!reverse.has(c.chart_id))reverse.set(c.chart_id,[]);reverse.get(c.chart_id).push(cid);}}
+  catalogByID=byId;maishiftReverse=new Map();maishiftMapping=data.maishift_mapping;
+  if(maishiftMapping?.schema_version==='maishift-mapping-1'&&maishiftMapping.provider==='maishift'&&maishiftMapping.game==='maimaidx')for(const [id,row]of Object.entries(maishiftMapping.charts||{})){
+    const c=byId.get(row.chart_id),region=/^maishift:(intl|jp):[1-9][0-9]{0,15}$/.exec(id)?.[1];
+    if(!region||!c||row.acceptance_basis!=='reviewed'||!['title','artist','format','difficulty'].every(k=>typeof row.expected_source?.[k]==='string')||!['format','difficulty'].every(k=>c[k]===row.expected_source[k]))continue;
+    const key=region+':'+c.chart_id;
+    // Multiple IDs claiming one regional chart invalidate that target.
+    maishiftReverse.set(key,maishiftReverse.has(key)?null:id);
+  }
   changed();
 }
-function providerID(c){if(active?.player.provider!=='kamaitachi')return null;const ids=reverse.get(c.chart_id)||[];return ids.filter(id=>pbs.has(id)).sort((a,b)=>(pbDates.get(b)||0)-(pbDates.get(a)||0)||Number(!!mapping.charts[a].aliasOf)-Number(!!mapping.charts[b].aliasOf)||a.localeCompare(b))[0]||ids[0]||null;}
+function maishiftMatch(data,id){const row=maishiftMapping?.charts?.[id],c=catalogByID.get(row?.chart_id);return maishiftReverse.get(data.player.key.split(':')[2]+':'+c?.chart_id)===id&&window.maimaiPlayerMaishift.matchChart(data.player,data.charts[id],row,c);}
+function providerIDs(c){if(active?.player.provider==='kamaitachi')return reverse.get(c.chart_id)||[];if(active?.player.provider!=='maishift')return [];const id=maishiftReverse.get(active.player.key.split(':')[2]+':'+c.chart_id);return id&&maishiftMatch(active,id)?[id]:[];}
+function providerID(c){const ids=providerIDs(c);return ids.filter(id=>pbs.has(id)).sort((a,b)=>(pbDates.get(b)||0)-(pbDates.get(a)||0)||Number(!!mapping?.charts?.[a]?.aliasOf)-Number(!!mapping?.charts?.[b]?.aliasOf)||a.localeCompare(b))[0]||ids[0]||null;}
 function record(c){return visible&&active?pbs.get(providerID(c))||null:null;}
 function lastPlayed(c){if(!visible||!active||active.player.provider!=='kamaitachi')return null;const times=(reverse.get(c.chart_id)||[]).map(id=>lastTimes.get(id)).filter(v=>v!=null);return times.length?Math.max(...times):null;}
 function gradeNode(value){
@@ -221,7 +232,7 @@ function summary(c){const root=make('div',undefined,'player-achievement');root.h
   root.append(score,rating,badges(r));return root;
 }
 function details(c){const group=window.maimaiChartOverview.section('player','Your data'),root=group.root,body=group.content;root.classList.add('player-history');root.hidden=!active||!visible;if(root.hidden)return root;body.append(summary(c));const cid=providerID(c);if(!cid)return root;
-  const {plays,changes}=core.chartHistory(active,[cid,...(reverse.get(c.chart_id)||[]).filter(id=>id!==cid)]);
+  const {plays,changes}=core.chartHistory(active,[cid,...providerIDs(c).filter(id=>id!==cid)]);
   body.append(make('h4','Recorded plays','player-history-title'),make('p',plays.length?`${plays.length} retained ${plays.length===1?'play':'plays'} · Dates show when you played.`:'No recorded plays for this chart. Your saved PB is shown above.','muted'));
   const points=plays.filter(e=>e.time!=null&&e.r.achievement!=null).slice().reverse();
   if(points.length>1){const ns='http://www.w3.org/2000/svg',svg=document.createElementNS(ns,'svg');svg.setAttribute('viewBox','0 0 400 100');svg.setAttribute('role','img');i18n.attribute(svg, 'aria-label', 'Achievement progress across retained plays');const line=document.createElementNS(ns,'polyline'),lo=points.reduce((v,p)=>Math.min(v,p.r.achievement),1010000),hi=points.reduce((v,p)=>Math.max(v,p.r.achievement),lo+10000);line.setAttribute('points',points.map((p,i)=>`${8+i*384/(points.length-1)},${92-(p.r.achievement-lo)*84/(hi-lo)}`).join(' '));line.setAttribute('fill','none');line.setAttribute('stroke','currentColor');line.setAttribute('stroke-width','2');svg.append(line);body.append(svg);}

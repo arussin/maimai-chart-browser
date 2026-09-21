@@ -8,7 +8,10 @@ research](MAISHIFT_MATCHING_RESEARCH.md) verifies agreement with Maishift's full
 export loader in both regions and finds unique chart candidates throughout both
 catalogs. The [exception review](MAISHIFT_MAPPING_DECISIONS.md) is now retained,
 and player identity follows the supplied username plus game region. Production
-crosswalk consumption and source chronology remain incomplete. Direct browser
+crosswalk consumption is now implemented locally, with [test evidence](MAISHIFT_MAPPING_TESTS.md).
+The final local browser runs match all 2,010 International and 200 Japan PBs in
+Chrome, Edge, Firefox and narrow WebKit, with zero unmatched records or plays.
+Source chronology and deployment acceptance remain incomplete. Direct browser
 CORS still fails. The combined `player-import-sources-v1` announcement is unreleased.
 
 The user subsequently approved implementing the described proxy locally. That

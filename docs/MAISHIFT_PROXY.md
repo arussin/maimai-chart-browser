@@ -50,9 +50,9 @@ because these are partial observations.
 
 Provider chart IDs are namespaced by provider and region, with `inGameID: null`.
 They never impersonate SEGA or Kamaitachi identifiers. Empty display titles or
-artists do not invalidate a known provider ID. Every current Maishift chart is
-explicitly unmatched in the preview and excluded from catalog overlays until a
-reviewed crosswalk is delivered. At most 100 excluded-row indices/reason codes
+artists do not invalidate a known provider ID. The separate reviewed crosswalk
+now supplies local overlays; changed or unknown source identities stay unmatched
+and remain in the portable dataset. At most 100 excluded-row indices/reason codes
 and their total count accompany a remembered connection outside portable data.
 
 ## Limits, privacy and operation
@@ -105,7 +105,9 @@ The manual `player-import-worker/live-contract.mjs` requires
 `MAISHIFT_CANARY_APPROVED=true`, `MAISHIFT_CANARY_URL` and
 `MAISHIFT_CANARY_REGION`. Never put personal canaries in CI logs or artifacts.
 The approved official sample was read on 2026-09-21: 6,031 charts, 2,010 played
-PBs, all 2,010 normalized, zero excluded, zero plays, zero Party matches.
+PBs, all 2,010 normalized, zero excluded and zero plays. That initial run had
+no installed mappings; [subsequent mapping tests](MAISHIFT_MAPPING_TESTS.md)
+cover the newly installed crosswalk and actual browser overlays.
 No raw sample data was retained. This verifies the server reader and normalization,
 not a deployed Cloudflare-to-Maishift connection or completeness for other users.
 
@@ -115,7 +117,7 @@ not a deployed Cloudflare-to-Maishift connection or completeness for other users
 - [x] Local preview/remember/refresh integration and four-language copy.
 - [x] Define username/region source identity with explicit rename/reuse limits.
 - [ ] Validate source chronology and full-PB snapshot consistency for release.
-- [ ] Exact reviewed region/chart crosswalk with no fabricated or fuzzy joins.
+- [x] Exact reviewed region/chart crosswalk with no fabricated or fuzzy joins.
 - [ ] Owner-reviewed deployment, runtime upstream access and platform log retention.
 - [ ] Benchmark a permitted full canary against the selected Worker's CPU/memory
   budget and configure capacity/cost limits before enabling the route.
@@ -190,6 +192,7 @@ Validation for this follow-up:
 Public sample research agrees across full tracks/export loaders in both regions
 and finds unique candidates for all catalog rows. The subsequent exception review
 accepts 40 artist-credit and 16 blank-metadata regional chart decisions, retained
-in Git. No production crosswalk was installed. Timestamp semantics and runtime
-mapping consumption remain incomplete; username/region is now the declared player
-source identity with the documented reuse limitation.
+in Git. At that stage no crosswalk was installed. The later
+[mapping implementation and test evidence](MAISHIFT_MAPPING_TESTS.md) supersedes
+that mapping status. Timestamp semantics remain a release gate; username/region
+is the declared player source identity with the documented reuse limitation.

@@ -41,6 +41,7 @@ def build_lab(package_directory, output, *, catalog_version):
             "artwork.json",
             "mai-notes.json",
             "provider-mapping.json",
+            "maishift-mapping.json",
             "browser-metadata.json",
         )
         if name in records
@@ -77,6 +78,7 @@ def build_lab(package_directory, output, *, catalog_version):
         mai_notes,
         loaded.get("provider-mapping.json"),
         loaded.get("browser-metadata.json"),
+        loaded.get("maishift-mapping.json"),
     )
     data_match = re.search(
         r'<script id="challenge-data" type="application/json">(.*?)</script>', html, re.S

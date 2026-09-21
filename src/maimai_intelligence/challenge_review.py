@@ -75,6 +75,7 @@ def render_review(
     mai_notes=None,
     provider_mapping=None,
     browser_metadata=None,
+    maishift_mapping=None,
 ):
     data = {
         "package": package,
@@ -93,6 +94,10 @@ def render_review(
         data["artwork"] = artwork
     if mai_notes is not None:
         data["mai_notes"] = mai_notes
+    if maishift_mapping is not None:
+        from .maishift_mapping import validate_mapping
+
+        data["maishift_mapping"] = validate_mapping(maishift_mapping, catalog)
     if browser_metadata is not None:
         if set(browser_metadata) != {"schema_version", "registry", "legacy_ids", "sources"}:
             raise ValueError("Unexpected browser registry metadata")

@@ -4,8 +4,10 @@ Reviewed 2026-09-21. **All 56 exceptional regional chart identities can be
 resolved.** Forty have shortened artist credits; sixteen have blank/whitespace
 metadata. These decisions are retained in
 [`registry/maishift-review-20260921.json`](../registry/maishift-review-20260921.json).
-Their status is `reviewed-not-installed`: the analysis is complete, but the
-production registry export and browser overlay do not consume them yet.
+That immutable review records the earlier `reviewed-not-installed` state. The
+subsequent local implementation installs all 12,474 regional mappings, including
+these 56 exceptions, and exports them to the browser. **Release remains disabled.**
+See [mapping implementation and test evidence](MAISHIFT_MAPPING_TESTS.md).
 
 ## Evidence and conclusions
 
@@ -45,10 +47,10 @@ Printed levels are observations, not identity: the regional ADVANCED levels for
 The review contains 14 region/format groups with 56 explicit source-ID-to-UUID
 decisions: 48 International and 8 Japan. No target is duplicated within a region.
 It completes the exception review behind the earlier 6,031 International and
-6,443 Japan unique-candidate totals. The other exact-match candidates still need
-the same controlled import/export path; counts alone do not install mappings.
+6,443 Japan unique-candidate totals. The other 12,418 strict exact matches now use
+the same controlled registry import/export path.
 
-## How the mappings will be preserved
+## How the mappings are preserved
 
 1. **Keep the reviewed decision in Git.** The retained file includes every
    provider chart ID, raw source title/artist, format/difficulty, jacket filename,
@@ -64,9 +66,9 @@ the same controlled import/export path; counts alone do not install mappings.
    of an accepted provider identity. Build a candidate registry in DevCache and
    review its diff before promoting it; never partially overwrite the six-table
    registry or bypass its manifest.
-3. **Export an additive Maishift lookup.** The current catalog exporter and
-   browser overlay support Kamaitachi mappings. Keep that contract intact and
-   add a separately versioned Maishift map keyed by `maishift:<region>:<trackID>`.
+3. **Export an additive Maishift lookup.** The catalog exporter and browser
+   overlay retain the Kamaitachi contract and add a separately versioned
+   `maishift-mapping-1` map keyed by `maishift:<region>:<trackID>`.
    A map entry carries the canonical UUID, expected raw title/artist/format/
    difficulty and review reference. Browser and Python consumers must use the
    same accepted map. Do not stuff Maishift IDs into the Kamaitachi map.
@@ -128,8 +130,7 @@ public source address; it cannot promise continuity of a natural person. A user
 who knows a name was reassigned must Forget before reconnecting. An immutable
 provider ID could improve this later without blocking the chosen username model.
 
-The connector remains disabled until the accepted crosswalk is installed and
-used consistently, source chronology is validated, and deployment/browser
+The connector remains disabled until source chronology is validated and deployment/browser
 acceptance is complete. This review does not deploy anything or release the
 combined announcement.
 

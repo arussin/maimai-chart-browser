@@ -27,6 +27,42 @@ async function commit(page,remember=true){await preview(page);await page.locator
 async function age(page){await page.evaluate(async()=>{const db=await new Promise(resolve=>{const q=indexedDB.open('maimai-player-data',2);q.onsuccess=()=>resolve(q.result);});await new Promise((resolve,reject)=>{const t=db.transaction('datasets','readwrite'),s=t.objectStore('datasets'),q=s.get('active');q.onsuccess=()=>s.put({...q.result,source:{...q.result.source,lastAttempt:0}},'active');t.oncomplete=resolve;t.onabort=reject;});db.close();});}
 async function refresh(page){await page.locator('#settings-toggle').click();await page.locator('#player-refresh').click();}
 
+test('a 6000-PB profile reaches preview and preserves every observation',async({page,context})=>{
+  const state=await prepare(context),template=state.tracks.tracks[0];state.tracks.tracks=Array.from({length:6000},(_,i)=>({...template,i:i+1}));await boot(page);await commit(page);
+  const counts=await page.evaluate(async()=>{const s=await maimaiPlayerStorage.read(),data=await maimaiPlayerData.decode(s.active.bytes);return {pbs:maimaiPlayerData.current(data).pbs.size,records:Object.keys(data.records).length,plays:Object.keys(data.plays).length,exact:Object.values(data.records).every(r=>r.achievement===987654)};});
+  expect(counts).toEqual({pbs:6000,records:6000,plays:0,exact:true});
+});
+
+async function mappedFixture(page){await page.waitForFunction(()=>!!window.maimaiResearchCatalog);return page.evaluate(()=>{
+  const data=maimaiResearchCatalog,rows=data.catalog.slice(0,3),formats=['STD','STD','DX'],difficulties=['BASIC','MASTER','ADVANCED'];
+  const mapping={schema_version:'maishift-mapping-1',provider:'maishift',game:'maimaidx',charts:{}};
+  rows.forEach((c,i)=>{c.format=formats[i];c.difficulty=difficulties[i];mapping.charts['maishift:intl:'+(i+1)]={chart_id:c.chart_id,acceptance_basis:'reviewed',expected_source:{title:'Fictional Song',artist:'Fictional Artist',format:c.format,difficulty:c.difficulty}};});
+  data.maishift_mapping=mapping;maimaiPersonal.configure(data);return rows.map(c=>c.chart_id);
+});}
+
+test('reviewed mappings show exact PBs and observation history without invented plays',async({page,context})=>{
+  await prepare(context);await boot(page);const ids=await mappedFixture(page);await preview(page);
+  await expect(page.locator('.player-dialog')).not.toContainText('Unmatched PB charts');
+  await page.getByRole('button',{name:'Import & remember',exact:true}).click();
+  await expect.poll(()=>page.evaluate(()=>maimaiPersonal.enabled())).toBe(true);
+  const records=await page.evaluate(ids=>ids.map(id=>{const c=maimaiResearchCatalog.catalog.find(c=>c.chart_id===id);return {record:maimaiPersonal.record(c),lastPlayed:maimaiPersonal.lastPlayed(c),summary:maimaiPersonal.summary(c).textContent,details:maimaiPersonal.details(c).textContent};}),ids);
+  expect(records.map(r=>r.record.achievement)).toEqual([987654,1009999,null]);
+  expect(records.every(r=>r.lastPlayed===null&&r.details.includes('No recorded plays for this chart.'))).toBe(true);
+  expect(records[0].summary).toContain('98.7654%');expect(records[1].summary).toContain('100.9999%');expect(records[2].summary).toContain('Achievement unknown');
+  await page.locator('#settings-toggle').click();await page.locator('#player-toggle').click();
+  expect(await page.evaluate(ids=>ids.every(id=>maimaiPersonal.record(maimaiResearchCatalog.catalog.find(c=>c.chart_id===id))===null),ids)).toBe(true);
+});
+
+test('changed metadata and colliding regional targets stay unmatched without losing portable PBs',async({page,context})=>{
+  const state=await prepare(context);await boot(page);const ids=await mappedFixture(page);state.tracks.songs[0].artist='Changed artist';await preview(page);
+  await expect(page.locator('.player-dialog')).toContainText('Unmatched PB charts: 2');await page.getByRole('button',{name:'Import & remember',exact:true}).click();await expect.poll(()=>page.evaluate(()=>maimaiPersonal.enabled())).toBe(true);
+  expect(await page.evaluate(ids=>ids.map(id=>maimaiPersonal.record(maimaiResearchCatalog.catalog.find(c=>c.chart_id===id))?.achievement??null),ids)).toEqual([null,null,null]);
+  expect(await page.evaluate(id=>maimaiPersonal.record(maimaiResearchCatalog.catalog.find(c=>c.chart_id===id))!==null,ids[2])).toBe(true);
+  const count=await page.evaluate(async()=>{const s=await maimaiPlayerStorage.read();return maimaiPlayerData.current(await maimaiPlayerData.decode(s.active.bytes)).pbs.size;});expect(count).toBe(3);
+  await page.evaluate(()=>{const d=maimaiResearchCatalog,m=d.maishift_mapping;m.charts['maishift:intl:99']={...m.charts['maishift:intl:3']};maimaiPersonal.configure(d);});
+  expect(await page.evaluate(id=>maimaiPersonal.record(maimaiResearchCatalog.catalog.find(c=>c.chart_id===id)),ids[2])).toBeNull();
+});
+
 test('proxy preview has explicit consent, region, precision and unmatched coverage; POST leaks no profile URL',async({page,context},testInfo)=>{
   const state=await prepare(context);await boot(page);
   await page.evaluate(()=>{window.requests=[];const original=fetch;window.fetch=(url,options)=>{if(String(url).includes('/api/player-import/'))requests.push({url:String(url),...options});return original(url,options);};});

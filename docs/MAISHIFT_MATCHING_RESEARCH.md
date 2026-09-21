@@ -5,7 +5,8 @@ access is demonstrated for the official sample in both regions. Safe account
 continuity on refresh was unresolved at this investigation stage.** The later
 [exception review and username decision](MAISHIFT_MAPPING_DECISIONS.md) resolves
 the 56 exception identities and selects username-scoped source identity. The
-connector and announcement stay disabled; these are not installed registry mappings.
+connector and announcement stay disabled. The candidates from this investigation
+were subsequently [installed and tested locally](MAISHIFT_MAPPING_TESTS.md).
 
 Only the official `shiftpsh` sample was queried, without credentials or referrers.
 No other accounts were enumerated. PB values and profile metadata stayed in
