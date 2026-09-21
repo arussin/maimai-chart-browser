@@ -2,10 +2,11 @@
 
 The independent import, refresh, storage and localization changes are implemented
 for review. **The complete Maishift integration remains incomplete and disabled.**
-There is no verified real-source full-PB Maishift import, frozen upstream schema,
-or exact chart crosswalk. Subsequent research located an internal full-record
-response with 2,010 sample PBs; CORS and terms/access remain blockers (see the
-follow-up investigation). The combined announcement is consequently unreleased.
+The approved local proxy now verifies extraction and normalization of all 2,010
+played PBs returned for the official sample. Upstream completeness/identity
+semantics and an exact Party chart crosswalk remain unverified. The combined
+announcement is consequently unreleased. See [proxy delivery](MAISHIFT_PROXY.md)
+for the new code, privacy constraints, validation, and remaining release gates.
 
 ## Reviewable changes
 

@@ -1,10 +1,16 @@
 # Maishift investigation and release gate
 
-Status: **blocked; no live Maishift adapter or proxy is enabled**. A follow-up
-investigation found structured full-record data, but direct browser CORS fails,
-access permission is unresolved, and exact chart joins remain unverified. The import
-selector explains the unavailable status. The combined `player-import-sources-v1`
-announcement remains disabled. File and Session Report imports work independently.
+Status: **local proxy and browser adapter implemented; release remains incomplete
+and disabled**. The approved official sample now passes the frozen server reader
+and v1 normalization: 6,031 chart rows, 2,010 played PBs, 2,010 imported PBs, zero
+excluded records, and zero invented plays. This does not certify upstream
+completeness, stable handle ownership, or Party chart matching. Direct browser
+CORS still fails. The combined `player-import-sources-v1` announcement is unreleased.
+
+The user subsequently approved implementing the described proxy locally. That
+supersedes the earlier proposal-only scope. Deployment, maintainer contact,
+workflow dispatch, scheduling, and alert publication remain separate owner actions.
+See [local proxy delivery and release checklist](MAISHIFT_PROXY.md).
 
 ## Initial observations (2026-09-21 UTC)
 
@@ -132,95 +138,74 @@ browser fetch was unreadable. Its required-header preflight returned HTTP **405*
 with no Access-Control-Allow-Origin, Allow-Methods or Allow-Headers. The successful
 server-side GET also lacked Access-Control-Allow-Origin. Current direct browser
 integration therefore fails the transport gate. Browser security was not disabled,
-and no proxy was used or built.
+and no proxy was used or built during that initial CORS investigation.
 
 The legal pages render their content after hydration, explaining why the earlier
 HTML-only inspection found only the footer. Ordinary browser navigation now read:
 
 - [Terms of Service](https://maimai.shiftpsh.com/en@na/terms), displayed effective
   date July 10, 2026. Section 8 addresses members' rights in supplied records and
-  limited uses/disclosure. Section 9 prohibits members from reverse engineering,
-  among other prohibited conduct. This is an access concern requiring service-owner
-  clarification, not a legal conclusion about a particular integration.
+  limited uses/disclosure. Section 9.1.1 includes reverse-engineering and attack language; section 9.1.2
+  separately addresses abnormal uploads. Those are different provisions. The
+  upload restriction alone does not establish that an authorized import of a
+  user’s own public records is prohibited. No legal conclusion about this
+  integration or claim of an officially supported API is inferred.
 - [Privacy Policy](https://maimai.shiftpsh.com/en@na/privacy), whose English text
   says the Korean version is authoritative. It lists a user-chosen handle and
   optional linked profile/play records. The page header displayed July 10 while
   the policy body gave July 11, 2026; the discrepancy was not resolved.
 
-Internal-endpoint investigation stopped when that terms provision was found.
-No further endpoint probing, maintainer contact or permission acceptance followed.
+The initial investigation paused at that terms provision. After discussion, the
+user approved further public-data investigation and the local proxy. No maintainer
+was contacted and no service terms were accepted on anyone’s behalf.
 The publicly discoverable [older repository](https://github.com/shiftpsh/shiftpsh.com-maimai)
 is archived (February 15, 2025), describes a personal tracker and uses React/Vite;
 it does not establish a supported contract for today's application.
 
-### Recommended next owner action
-
-Seek a supported public read API or data export, and permission for user-initiated
-imports/remembered refresh. Establish allowed load, CORS, immutable IDs, complete
-snapshot semantics and chart metadata before writing an adapter. A proxy could
-address transport only after access permission and contract review; it cannot
-resolve those gaps itself. No proxy implementation is authorized in this scope.
-
-Draft inquiry, **not sent**:
-
-> We are working on optional player-data imports for maimai.party. Does Maishift
-> offer a supported API or structured export for a consenting user's public
-> profile, covering played PBs at every difficulty and both STD/DX formats? We
-> would like to confirm permitted access, request limits, stable profile/chart
-> identifiers, Japan/International region semantics, snapshot dates/completeness,
-> and whether credential-free CORS reads from https://maimai.party can be supported.
-> Remembered refresh would be opt-in, at most once per 15 minutes while the user
-> is visiting the page. We have not enabled an integration or deployed a proxy.
-
 ## Decisions and missing evidence
 
 Full available PB access is required; Best 50 alone cannot enable the feature.
-Do not infer a schema from presentation labels or execute hydration scripts.
-No live adapter fixtures, source-ID parser, fabricated IDs, or fuzzy matches are
-provided as substitutes for that contract. Raw rows without usable identities
-must eventually have a bounded local diagnostic representation with disclosed
-counts. Normalization and those diagnostics remain deferred until permitted access
-and the observed candidate contract are accepted and frozen.
+The observed transport is frozen in `player-import-worker/observed-contract.json`.
+All checked-in fixtures are fictional. The decoder handles only the observed
+inert Seroval subset and never executes fetched scripts. Valid provider IDs with
+blank titles or artists remain importable. Rows lacking sufficient chart identity
+are excluded from portable exports and overlays; at most 100 row-index/reason
+entries and a total count stay in the local connection descriptor.
 
 The additive portable v1 identity namespace is implemented independently of
 transport: `maishift:maimaidx:<jp|intl>:<URI-encoded-source-identity>`, preserving
 case. `username` carries that exact source identity; `displayName` carries its
 label. Chart IDs must use `maishift:<jp|intl>:<provider-chart-identity>`. This is
 Party's contract, not a claim that upstream currently supplies immutable IDs.
-Before enabling normalization, select an evidence-backed identity and document
-handle limitations. No Maishift IDs currently join the Kamaitachi mapping.
+The adapter conservatively accepts ASCII handles with an explicit game region.
+Created-at continuity is checked on refresh; it is not proof of immutable identity. No Maishift IDs currently join the Kamaitachi mapping.
 Existing Kamaitachi keys, datasets, hashes and handoff v1 remain valid.
 
-To clear the gate, establish permitted use of a supported resource, definitive PB
-completeness and consistency, exact region and chart identities, source revision
-semantics and synthetic transport fixtures. Then implement and test normalization,
-unknown/unmatched preservation, bounded reads, and browser-origin access. Until
-then `maimaiPlayerSources.capabilities.maishift` stays false.
+To clear the gate, establish definitive PB completeness and consistency, stable
+identity/revision semantics, and an exact reviewed chart crosswalk. The sample’s
+successful normalization is evidence of extraction, not a proof that every public
+profile or region is complete. `maimaiPlayerSources.capabilities.maishift` remains
+false. There is no fuzzy title matching and no Maishift-to-Kamaitachi ID reuse.
 
-## On-demand proxy proposal — not implemented
+## Local on-demand proxy
 
-A candidate full-record resource now exists, but permission and browser access
-are unresolved. Review a separate proxy only after access permission and contract
-approval, before any implementation or deployment. It would accept a
-validated provider identity and supported region, construct a fixed upstream
-URL, and reject arbitrary URLs and redirects. Any necessary redirects would
-require per-hop validation against an exact allowlist.
+The implementation and operations checklist are in [MAISHIFT_PROXY.md](MAISHIFT_PROXY.md).
+It accepts a handle and region in a same-origin POST body, constructs only the two
+frozen upstream RPC destinations, and makes three sequential requests: profile,
+tracks, profile. Redirects are rejected. Request bounds are 2 KiB input/5 seconds,
+4 MiB per upstream response, three reads/30 seconds total. The server holds a
+45-second expiring lease per profile, with 30-second manual and 15-minute automatic
+cooldowns, plus longer upstream retry timing. A separate rate binding is required
+for the proposed 10-per-minute client limit. These are Party limits, not published
+Maishift limits.
 
-Proposed limits: at most one concurrent upstream request per identity; 10-second
-connect/30-second total deadline; 4 MiB per response and 16 MiB per complete read;
-no more than 10 pages, subject to adjustment using measured full-PB sizes before
-approval. Abort rather than truncate. Suggested starting request limits are one
-automatic read per identity per 15 minutes and 10 requests per minute per client,
-honoring longer upstream retry instructions. These are proposed load controls,
-not Maishift's published limits.
-
-No login material, score database, retained response bodies, periodic population
-crawl, or third-party scraper. Responses are `no-store`. Proposed ephemeral
-coordination expires after 15 minutes; an owner must review any platform request
-logging retention before deployment. Logs contain failure categories and counts,
-not identities, URLs or scores. Privacy copy must explicitly disclose that
-imported scores pass through the proxy. The existing payment Worker is not a
-score transport and is not changed for this purpose.
+No PBs, response bodies, handles, or profile URLs are stored on the server. The
+transient coordination record contains a random lease and times, addressed by a
+hash of region/handle. Hashing is minimization, not anonymity. An alarm clears
+expired coordination; it never fetches profiles. Scores pass through the proxy
+in memory and are saved in the browser only after confirmation. Application logs
+and Wrangler telemetry are disabled; account-wide log retention needs owner review
+before deployment. The payment Worker is unchanged.
 
 ## Manual probe and proposed monitoring
 
@@ -228,8 +213,10 @@ score transport and is not changed for this purpose.
 `MAISHIFT_CANARY_APPROVED=true`. Run it with browser dependencies and temporary
 files in the documented DevCache environment. Output is sanitized JSON only.
 This existing probe tests the profile HTML, not the newly located full-record
-function, and must not be treated as a full-data contract check. Further internal
-endpoint investigation requires resolving the terms/access gate above.
+function, and must not be treated as a full-data contract check. The new
+`player-import-worker/live-contract.mjs` runs the frozen server reader plus v1
+normalization with an approved canary URL, region and explicit per-run consent.
+It outputs aggregate counts only and continues to label the release incomplete.
 Its nonzero exit intentionally reports `blocked-unverified`; transport success
 alone can never certify full PB coverage or normalization.
 
@@ -237,9 +224,9 @@ The `Maishift contract investigation` workflow has **workflow_dispatch only**,
 read-only repository permissions, an explicit per-run canary approval, a five
 minute timeout, no artifacts, and no alert publishing. It has not been dispatched.
 
-After the adapter gate passes, replace the diagnostic-only outcome with checks
-for the frozen required structure, full coverage, exact-match sanity and actual
-normalization. Add deployed-browser checks separately. Proposed owner activation:
+After the release gates pass, promote the frozen contract check to the workflow
+and add full coverage/exact-match assertions. Deployed-browser checks remain
+separate. Proposed owner activation:
 once daily at 05:17 UTC, one retry after 60 seconds for transient failures, one
 deduplicated alert after three consecutive failed runs and one recovery notice.
 No ordinary third-party profile may silently become that canary. The schedule,
