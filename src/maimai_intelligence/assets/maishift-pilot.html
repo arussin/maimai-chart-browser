@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow"><meta name="referrer" content="no-referrer">
+<title>Maishift pilot test</title><link rel="stylesheet" href="localization.css"><link rel="stylesheet" href="pilot.css">
+<script src="localization.js" defer></script><script src="player-data-core.js" defer></script><script src="player-maishift.js" defer></script>
+<script src="pilot-core.js" defer></script><script src="pilot.js" defer></script></head>
+<body><main><header class="site-header"><p>maimai.party</p><h1>Maishift pilot test</h1></header>
+<p>Help test a real upload before Maishift imports are released.</p>
+<p>Test scores stay in this tab until you clear or close it. Nothing is added to your saved player data.</p>
+<form id="profile-form"><label for="profile">Public Maishift username or URL</label><input id="profile" required maxlength="2048" autocomplete="off" spellcheck="false">
+<label for="region">Game region</label><select id="region"><option value="intl">International</option><option value="jp">Japan</option></select>
+<label class="consent"><input id="consent" type="checkbox" required><span>I agree to read this public profile for this test.</span></label>
+<button id="baseline" type="submit" disabled>1. Read baseline</button></form>
+<section aria-labelledby="update-title"><h2 id="update-title">After your next Maishift upload</h2>
+<p>Keep this tab open. Play and upload to Maishift as usual, then return here.</p>
+<label for="change">What changed?</label><select id="change"><option value="upload">A normal score update</option><option value="correction">A correction lowered a score</option><option value="version">A new game version</option></select>
+<div class="actions"><button id="updated" disabled>2. Check the upload</button><button id="confirmed" disabled>3. Check again for stability</button></div></section>
+<p id="status" role="status" aria-live="polite">Preparing the test…</p>
+<section id="results" hidden aria-labelledby="result-title"><h2 id="result-title">Test results</h2><p id="outcome"></p><ul id="counts"></ul></section>
+<div class="actions"><button id="download" disabled>Download test summary</button><button id="clear" disabled>Clear test data</button></div>
+<p>A summary contains checks and counts only. It excludes your username, scores, chart IDs and source dates.</p>
+<p>This link is public. Share your summary with the person who invited you; nothing is sent automatically.</p>
+<p>A successful check covers this observed upload. It does not approve the full release.</p>
+</main></body></html>

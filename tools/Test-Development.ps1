@@ -21,6 +21,7 @@ try {
  }
  elseif($Check -eq 'browser') {
   & $RegistryPython tests/browser/prepare.py;if($LASTEXITCODE){throw 'Fixture setup failed'}
+  & $RegistryPython scripts/build_maishift_pilot.py --output (Join-Path $env:MAIMAI_BROWSER_OUTPUT 'maishift-pilot') | Out-Null;if($LASTEXITCODE){throw 'Pilot fixture setup failed'}
   Push-Location tests/browser
   try {& npm.cmd ci --ignore-scripts --no-audit --no-fund;if($LASTEXITCODE){throw 'Browser dependencies failed'};$testArgs=@('test','--');if($TestFile){$testArgs+=$TestFile};if($BrowserProject){$testArgs+=@('--project',$BrowserProject)};& npm.cmd @testArgs;if($LASTEXITCODE){throw 'Browser tests failed'}}finally{Pop-Location}
  }

@@ -6,6 +6,12 @@ and 200 Japan PBs unchanged. Source chronology across actual uploads, deployed
 CPU/memory behavior, upstream access from Cloudflare and Party-origin browser
 acceptance remain open. No deployment or monitoring activation occurred.
 
+Follow-up: the [invited hosted pilot](MAISHIFT_PILOT.md) now implements the
+baseline/genuine-upload/stable-reread experiment proposed here. Its fictional
+tests pass and a separate static artifact is prepared. It is not published and
+has not closed chronology or deployed operating-limit acceptance. The original
+measurements and provenance below remain unchanged.
+
 ## What this pass changed
 
 - Bound the returned JSON to 4 MiB, including identity, coverage and diagnostics.

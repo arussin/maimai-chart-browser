@@ -43,7 +43,8 @@
     "README.ja.md": "a52749c6cd74759fd9a732a607fc7fc0defdd7958e3cd1f127a229c015a4f482",
     "src/maimai_intelligence/assets/locales/share.json": "20585e67f1443547ae3ba6b164a38b634f5b233f846f40d51af98ee9da825839",
     "src/maimai_intelligence/assets/locales/player-sources.json": "6223dd50b4a37e09dc9af00ba08fa655ca1105b9b2ac20f7be17bc262e1c0012",
-    "src/maimai_intelligence/assets/locales/player-maishift.json": "cd1b8916093f79ba25b54de665790aec2e1f9c251ff369f2977b36f512a1d001"
+    "src/maimai_intelligence/assets/locales/player-maishift.json": "cd1b8916093f79ba25b54de665790aec2e1f9c251ff369f2977b36f512a1d001",
+    "src/maimai_intelligence/assets/locales/maishift-pilot.json": "80fc38a5a560c0016e85122c91f3699c4fb0452f9da68446acec35442bf1e69b"
   },
   "documentation": {
     "source": "README.md",
@@ -100,5 +101,18 @@
     ],
     "entries": 15,
     "scope": "Reviewed the new Maishift catalog for public-profile and proxy disclosure, game region independent of language, retained-data error wording, PB observations without sessions, and unchanged {0} placeholders. No song titles or aliases changed."
+  },
+  "maishift_pilot_review": {
+    "reviewer": "Codex",
+    "date": "2026-09-21",
+    "method": "AI contextual language review; not native-speaker certification.",
+    "locales": [
+      "zh-Hans",
+      "ko",
+      "ja"
+    ],
+    "entries": 51,
+    "record": "docs/localization-review/maishift-pilot-20260921.md",
+    "scope": "Opt-in pilot form, consent, result states, errors and privacy copy; existing regional terminology and placeholders retained."
   }
 }

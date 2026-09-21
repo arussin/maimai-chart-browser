@@ -34,6 +34,8 @@ jobs:
   browser:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    env:
+      MAIMAI_BROWSER_OUTPUT: ${{ runner.temp }}/maimai-browser
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
         with:
@@ -49,6 +51,7 @@ jobs:
       - run: python tests/browser/prepare.py
         env:
           PYTHONPATH: .
+      - run: python scripts/build_maishift_pilot.py --output "$MAIMAI_BROWSER_OUTPUT/maishift-pilot"
       - run: npm ci
         working-directory: tests/browser
       - run: node scripts/localization_sources.mjs .

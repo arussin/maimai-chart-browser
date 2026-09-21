@@ -17,6 +17,7 @@ TEMPLATES = (
     "support-footer.html",
     "support.html",
     "support-return.html",
+    "maishift-pilot.html",
 )
 
 

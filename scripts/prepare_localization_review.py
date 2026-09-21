@@ -21,9 +21,12 @@ FEATURES = {
     "lessons": "Pattern lessons",
     "analysis": "Chart analysis and comparison",
     "player": "Player data",
+    "player-sources": "Player import sources",
+    "player-maishift": "Maishift public profiles",
     "composed": "Combined labels and sorting",
     "remaining": "Other controls",
     "about": "About and credits",
+    "maishift-pilot": "Opt-in Maishift pilot",
 }
 
 

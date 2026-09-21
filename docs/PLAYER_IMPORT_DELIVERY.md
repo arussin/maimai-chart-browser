@@ -20,6 +20,62 @@ screenshots are in the proxy delivery.
 The [runtime verification](MAISHIFT_RUNTIME_VERIFICATION.md) now also passes both
 regions in local workerd, adds bounded output expansion and per-isolate admission,
 and separates the remaining upstream chronology and deployed resource gates.
+The [invited pilot](MAISHIFT_PILOT.md) is now built as a separate unlisted page
+and deployment artifact. Its baseline/upload/stability sequence collects the
+missing evidence without writing experimental data into saved Party history.
+It is not published and does not enable the normal import or announcement.
+
+## Hosted pilot preparation — September 21
+
+The tester's explicit choice is a hosted pilot for a few invited players. The
+prepared scope is `/pilot/maishift/` plus the existing isolated Maishift proxy.
+This remains a public unlisted link, not an invitation access restriction.
+Deployment, invitations, account configuration, genuine account trials and live
+workflow dispatch remain separate owner actions. No live account was fetched in
+this preparation pass. See the [pilot guide](MAISHIFT_PILOT.md) for tester steps,
+aggregate report fields, deployment merge/rollback instructions and release gaps.
+
+Final artifact:
+`C:\DevCache\projects\maimai-chart-browser-registry\6c15e789d6fd4518\workspaces\pilot-artifact-20260921T202953458-bf9f763b`.
+Pilot build fingerprint:
+`4eea6ebaea4a7ae236c52b5d2ec780f9c3a1b494f95766f6aaa39ac1f6e59963`.
+The manifest hashes all pilot assets and the proposed path-scoped headers. Do not
+deploy this directory as the whole site or overwrite existing site headers.
+
+| Final check | Result | DevCache workspace |
+| --- | --- | --- |
+| Python development wrapper | 525 tests, OK, 7 skipped | `20260921T202506955-adfeac34` |
+| Worker development wrapper and binding generation | 24 passed | `20260921T202508586-82f3f138` |
+| Pilot browser development wrapper | 42 passed in all seven configurations | `20260921T202915607-5a05a997` |
+| Localization copy, JS inventory and review fingerprints | Passed; 51 new pilot entries, 910 total in current working tree | Canonical source and DevCache dependencies |
+| Pilot Python style checks and hosted checker syntax | Passed | Canonical source, DevCache tools |
+
+The Python/Worker checks used the same final logic; the final browser pass also
+verifies the subsequent language-button sizing change. An earlier pilot run had
+one Firefox context-teardown protocol error; its clean retry and final complete
+matrix passed without suppressing assertions. Tests use fictional profiles, the
+actual Worker contract and browser adapter. No hosted or genuine-upload result
+is claimed. The separate owner-run hosted smoke script requires an approved
+canary and the reviewed build fingerprint.
+
+Fictional desktop and 320px screenshots were visually reviewed in the final
+browser workspace under `tests/browser/test-results/`, in the
+`player-maishift-pilot-host-e8c08-dence-and-no-player-storage-desktop` and
+`player-maishift-pilot-host-e8c08-dence-and-no-player-storage-narrow` directories
+(each named `maishift-pilot.png`). Test outputs remain in DevCache.
+
+The pilot reuses exact mappings and the strict v1 adapter but intentionally does
+not test saved real-account imports, remembered refresh or cross-tab Forget.
+Their existing deterministic evidence remains below; deployed real-account
+acceptance is still required. The shared library and Session Report pin are
+unchanged. Concurrent filter/artwork/other localization changes remain separate.
+
+The exact staged tree was separately exported to DevCache workspace
+`pilot-staged-20260921T203302434`: its 15 focused Python tests, eight pilot contract
+tests, style checks and localization checks passed (900 staged messages, excluding
+ten messages from concurrent work). All ten deployable artifact files match that
+tree after normalizing checkout line endings and the resulting build fingerprint.
+The supplied artifact's literal hashes were also verified against its manifest.
 
 ## Reviewable changes
 
@@ -108,6 +164,8 @@ Native-language human review and real-device mobile checks are not claimed.
   an unknown changed contract fails closed rather than inventing page requests.
 - [x] Benchmark permitted full samples and larger fictional workloads in local
   workerd; add output and capacity guards without retaining player payloads.
+- [x] Build and deterministically test the opt-in hosted pilot and sanitized
+  baseline/upload/stability report, with a separate deployment checklist.
 - [ ] Verify source chronology across genuine changed uploads, corrections and
   version changes, and validate full-PB snapshot consistency.
 - [ ] Verify upstream access, CPU/memory/cost limits and log retention in the
