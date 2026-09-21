@@ -145,3 +145,13 @@ The embedded five-color ring favicon was created for maimai.party with OpenAI's
 image-generation tool and is shared with the Session Report. It uses the site's
 party palette and contains no character artwork. It is not an official SEGA logo
 or endorsement.
+
+## Sharing service icons
+
+The locally bundled sharing glyphs are from [Simple Icons](https://github.com/simple-icons/simple-icons),
+version 16.32.0, commit `b86d5c9a0bdd4f3f5c30898a63654dd32f39fd76`, under CC0-1.0.
+The unmodified path geometry is embedded in `settings-menu.js`; source URLs and
+hashes are retained in `assets/share-icons-source.json`. The [license text](docs/SHARE_ICONS_LICENSE.md)
+is retained locally. Brand names and marks belong to their respective owners;
+their use identifies sharing destinations and does not imply endorsement.
+No Simple Icons, AddToAny, or social-provider request is made to render these icons.

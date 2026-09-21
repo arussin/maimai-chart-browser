@@ -1,0 +1,136 @@
+{
+  "messages": {
+    "Share this site": {
+      "zh-Hans": "分享本站",
+      "ko": "이 사이트 공유하기",
+      "ja": "このサイトを共有"
+    },
+    "Share the public homepage. Your player data and current search are not included.": {
+      "zh-Hans": "分享公开主页，不会包含你的玩家数据或当前搜索内容。",
+      "ko": "공개 홈페이지를 공유합니다. 플레이어 데이터와 현재 검색 내용은 포함되지 않습니다.",
+      "ja": "公開ホームページを共有します。プレイヤーデータや現在の検索内容は含まれません。"
+    },
+    "Website link": {
+      "zh-Hans": "网站链接",
+      "ko": "사이트 링크",
+      "ja": "サイトのリンク"
+    },
+    "Copy link": {
+      "zh-Hans": "复制链接",
+      "ko": "링크 복사",
+      "ja": "リンクをコピー"
+    },
+    "Link copied": {
+      "zh-Hans": "链接已复制",
+      "ko": "링크를 복사했습니다",
+      "ja": "リンクをコピーしました"
+    },
+    "Share with device…": {
+      "zh-Hans": "使用设备分享…",
+      "ko": "기기에서 공유…",
+      "ja": "端末の共有機能を使う…"
+    },
+    "More…": {
+      "zh-Hans": "更多…",
+      "ko": "더 보기…",
+      "ja": "その他…"
+    },
+    "Social services open in a new tab. More options are provided by AddToAny.": {
+      "zh-Hans": "社交服务将在新标签页中打开。更多选项由 AddToAny 提供。",
+      "ko": "소셜 서비스는 새 탭에서 열립니다. 더 많은 옵션은 AddToAny에서 제공합니다.",
+      "ja": "各サービスは新しいタブで開きます。その他の共有先は AddToAny で選べます。"
+    },
+    "Explore maimai charts, patterns, and personal progress.": {
+      "zh-Hans": "探索 maimai 谱面、配置和个人进步。",
+      "ko": "maimai 채보와 패턴, 개인 성장 기록을 살펴보세요.",
+      "ja": "maimai の譜面や配置、プレイの上達をチェック。"
+    },
+    "Copy the selected link using your device’s copy command.": {
+      "zh-Hans": "请使用设备的复制功能复制已选中的链接。",
+      "ko": "기기의 복사 기능으로 선택된 링크를 복사하세요.",
+      "ja": "端末のコピー機能で、選択されたリンクをコピーしてください。"
+    },
+    "KakaoTalk": {
+      "zh-Hans": "KakaoTalk",
+      "ko": "카카오톡",
+      "ja": "カカオトーク"
+    },
+    "Naver": {
+      "zh-Hans": "Naver",
+      "ko": "네이버",
+      "ja": "NAVER"
+    },
+    "WeChat": {
+      "zh-Hans": "微信",
+      "ko": "위챗",
+      "ja": "WeChat"
+    },
+    "Weibo": {
+      "zh-Hans": "微博",
+      "ko": "웨이보",
+      "ja": "Weibo"
+    }
+  },
+  "invariants": {
+    "LINE": {
+      "reason": "Public service brand; retain official spelling.",
+      "sources": [
+        "src/maimai_intelligence/assets/settings-menu.js"
+      ]
+    },
+    "X": {
+      "reason": "Public service brand; retain official spelling.",
+      "sources": [
+        "src/maimai_intelligence/assets/settings-menu.js"
+      ]
+    },
+    "Hatena": {
+      "reason": "Public service brand; retain official spelling.",
+      "sources": [
+        "src/maimai_intelligence/assets/settings-menu.js"
+      ]
+    },
+    "Qzone": {
+      "reason": "Public service brand; retain official spelling.",
+      "sources": [
+        "src/maimai_intelligence/assets/settings-menu.js"
+      ]
+    },
+    "Facebook": {
+      "reason": "Public service brand; retain official spelling.",
+      "sources": [
+        "src/maimai_intelligence/assets/settings-menu.js"
+      ]
+    },
+    "WhatsApp": {
+      "reason": "Public service brand; retain official spelling.",
+      "sources": [
+        "src/maimai_intelligence/assets/settings-menu.js"
+      ]
+    },
+    "Messenger": {
+      "reason": "Public service brand; retain official spelling.",
+      "sources": [
+        "src/maimai_intelligence/assets/settings-menu.js"
+      ]
+    },
+    "Reddit": {
+      "reason": "Public service brand; retain official spelling.",
+      "sources": [
+        "src/maimai_intelligence/assets/settings-menu.js"
+      ]
+    },
+    "MacIntel": {
+      "reason": "Browser platform identifier, not user-facing copy.",
+      "sources": [
+        "src/maimai_intelligence/assets/settings-menu.js"
+      ]
+    },
+    "Tab": {
+      "reason": "KeyboardEvent.key identifier used by the share-dialog focus loop; not visible UI prose.",
+      "sources": [
+        "src/maimai_intelligence/assets/settings-menu.js"
+      ]
+    }
+  }
+}

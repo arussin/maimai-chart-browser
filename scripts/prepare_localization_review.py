@@ -15,6 +15,7 @@ FEATURES = {
     "messages": "Navigation and catalog controls",
     "errors": "Errors and recovery",
     "privacy": "Privacy and analytics",
+    "share": "Site sharing",
     "patterns": "Pattern names and controls",
     "pattern-aliases": "Pattern aliases and diagrams",
     "lessons": "Pattern lessons",
