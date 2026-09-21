@@ -1,4 +1,14 @@
 import {test,expect} from '@playwright/test';
+
+// Existing control tests exercise the remembered-open state. Disclosure tests
+// below separately cover first visits and persistence across pages.
+test.beforeEach(async({page},testInfo)=>{
+  if(testInfo.title.startsWith('filter disclosures'))return;
+  await page.addInitScript(()=>{
+    localStorage.setItem('maimai-catalog-filters-collapsed','0');
+    localStorage.setItem('maimai-personal-filters-collapsed','0');
+  });
+});
 import {readFile} from 'node:fs/promises';
 import {gzipSync} from 'node:zlib';
 import AxeBuilder from '@axe-core/playwright';
@@ -85,16 +95,16 @@ test('My PBs is one click, works while minimized, and combines with grade and ac
   await page.getByRole('button',{name:'Clear personal filters',exact:true}).click();
   await expect(scope.getByRole('button',{name:'All charts',exact:true})).toHaveAttribute('aria-pressed','true');
   await expect(page.locator('#catalog-count')).toHaveText('7,000 charts found');
-  await page.locator('.player-filter-toggle').click();
-  await expect(page.locator('.player-filter-toggle')).toHaveAttribute('aria-expanded','false');
+  await page.locator('.player-filters .player-filter-toggle').click();
+  await expect(page.locator('.player-filters .player-filter-toggle')).toHaveAttribute('aria-expanded','false');
   await scope.getByRole('button',{name:'My PBs',exact:true}).focus();
   await page.keyboard.press('Enter');
   await expect(page.locator('#catalog-count')).toHaveText('101 charts found');
   await scope.getByRole('button',{name:'No PB yet',exact:true}).click();
   await expect(page.locator('#catalog-count')).toHaveText('6,899 charts found');
   await expect(rows.locator('.player-chart-rating')).toHaveCount(0);
-  await page.locator('.player-filter-toggle').click();
-  await expect(page.locator('.player-filter-reveal')).toHaveCSS('opacity','1');
+  await page.locator('.player-filters .player-filter-toggle').click();
+  await expect(page.locator('.player-filters .player-filter-reveal')).toHaveCSS('opacity','1');
   const axe=await new AxeBuilder({page}).include('.player-filters').withTags(['wcag2a','wcag2aa','wcag21aa']).analyze();
   expect(axe.violations.map(v=>({id:v.id,nodes:v.nodes.map(n=>({target:n.target,reason:n.failureSummary}))}))).toEqual([]);
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);

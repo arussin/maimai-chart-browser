@@ -72,6 +72,7 @@ function renderSort(){
   }
 }
 function initializeFilters(){
+  window.maimaiFilterDisclosure(el('catalog-filters'),el('catalog-filters-toggle'),el('catalog-filter-content').firstElementChild,'maimai-catalog-filters-collapsed');
   chartFilters=window.maimaiCatalogFilters.mount(data.catalog,()=>{visible=40;catalog();});
   patternFilter=window.maimaiPatternFilter.mount(overview,()=>{visible=40;writePatternFilter();catalog();});
   for(const id of filters){const select=el('filter-'+id);let options=[];
@@ -111,6 +112,14 @@ function updateVersions(){
 function updateFormat(){for(const key of ['all','STD','DX'])el('format-'+key).setAttribute('aria-pressed',String(key===format));}
 function activeFilters(){
   const root=el('active-filters'),chips=[];
+  const count=Number(!!el('search').value.trim())+Number(format!=='all')+Number(selectedVersions.size>0)+chartFilters.activeCount()+Number(patternFilter.ids().length>0)+Number(!!el('filter-genre').value)+Number(!!el('use-international-data')?.checked);
+  i18n.text(el('catalog-filter-count'),count?`${count} active`:'');
+  el('catalog-filters-empty').hidden=count>0;el('reset-filters').hidden=count===0;
+  function chip(label,remove){const button=make('button',label+' ×','filter-chip');i18n.attribute(button,'aria-label','Remove '+label+' filter');button.onclick=remove;chips.push(button);}
+  if(el('search').value.trim())chip(`Search: ${el('search').value.trim()}`,()=>{el('search').value='';visible=40;catalog();});
+  if(format!=='all')chip(format,()=>{format='all';updateFormat();visible=40;catalog();});
+  const international=el('use-international-data');
+  if(international?.checked)chip('Use maimai international data',()=>international.click());
   for(const version of selectedVersions){
     const button=make('button',versionLabel(version)+' ×','filter-chip');i18n.attribute(button, 'aria-label', 'Remove version '+versionLabel(version));
     button.onclick=()=>{selectedVersions.delete(version);visible=40;updateVersions();catalog();el('version-summary').focus();};chips.push(button);
@@ -203,7 +212,7 @@ i18n.text(el('loaded-count'), data.catalog.length.toLocaleString());
 window.maimaiPreviewField=field;
 initializeFilters();
 window.maimaiRegistryBrowser.mount(data,()=>{updateVersionCounts();visible=40;catalog();comparisonUI?.render();});
-const personalControls=personal?.controls(el('active-filters').parentElement,()=>{visible=40;catalog();});
+const personalControls=personal?.controls(el('catalog'),()=>{visible=40;catalog();});
 function personalChanged(){for(const key of Object.keys(personalSorts))delete sortFields[key];if(personal?.enabled())Object.assign(sortFields,personalSorts);else sortRules=sortRules.filter(r=>!Object.hasOwn(personalSorts,r.key));if(!sortRules.length)sortRules=[{key:'title',direction:1}];renderSort();catalog();comparisonUI?.render();}
 window.addEventListener('maimai-personal-change',personalChanged);personalChanged();
 comparisonUI=window.maimaiChartComparison.mount({data,eligibleIds:()=>data.catalog.filter(c=>{

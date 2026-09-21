@@ -185,11 +185,6 @@
       "ko": "정렬 우선순위",
       "ja": "並べ替えの優先順位"
     },
-    "Keep sort priorities": {
-      "zh-Hans": "保留排序优先级",
-      "ko": "정렬 우선순위 유지",
-      "ja": "並べ替えの優先順位を保持"
-    },
     "Active filters": {
       "zh-Hans": "当前筛选",
       "ko": "적용 중인 필터",
@@ -684,6 +679,61 @@
       "zh-Hans": "第二张谱面的搜索结果",
       "ko": "두 번째 채보 검색 결과",
       "ja": "2つ目の譜面の検索結果"
+    },
+    "Filters": {
+      "zh-Hans": "筛选",
+      "ko": "필터",
+      "ja": "フィルター"
+    },
+    "Expand": {
+      "zh-Hans": "展开",
+      "ko": "펼치기",
+      "ja": "展開"
+    },
+    "Collapse": {
+      "zh-Hans": "收起",
+      "ko": "접기",
+      "ja": "折りたたむ"
+    },
+    "Click to expand": {
+      "zh-Hans": "点击展开",
+      "ko": "클릭하여 펼치기",
+      "ja": "クリックして展開"
+    },
+    "Click to collapse": {
+      "zh-Hans": "点击收起",
+      "ko": "클릭하여 접기",
+      "ja": "クリックして折りたたむ"
+    },
+    "Clear": {
+      "zh-Hans": "清除",
+      "ko": "지우기",
+      "ja": "クリア"
+    },
+    "Clear filters": {
+      "zh-Hans": "清除筛选",
+      "ko": "필터 지우기",
+      "ja": "フィルターをクリア"
+    },
+    "No filters selected": {
+      "zh-Hans": "未选择筛选条件",
+      "ko": "선택한 필터 없음",
+      "ja": "フィルター未選択"
+    },
+    "Enable multi-sorting": {
+      "zh-Hans": "启用多条件排序",
+      "ko": "다중 기준 정렬 사용",
+      "ja": "複数条件で並べ替え"
+    },
+    "Active personal filters": {
+      "zh-Hans": "当前个人成绩筛选",
+      "ko": "적용 중인 개인 기록 필터",
+      "ja": "適用中の個人成績フィルター"
+    },
+    "Search: {0}": {
+      "zh-Hans": "搜索：{0}",
+      "ko": "검색: {0}",
+      "ja": "検索：{0}"
     }
   },
   "invariants": {}
