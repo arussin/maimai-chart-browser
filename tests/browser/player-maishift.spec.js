@@ -31,11 +31,12 @@ test('proxy preview has explicit consent, region, precision and unmatched covera
   const state=await prepare(context);await boot(page);
   await page.evaluate(()=>{window.requests=[];const original=fetch;window.fetch=(url,options)=>{if(String(url).includes('/api/player-import/'))requests.push({url:String(url),...options});return original(url,options);};});
   await open(page);await page.locator('input[value=maishift]').check();expect(state.calls).toBe(0);
-  await expect(page.getByLabel('Remember this profile and refresh it when I return')).toBeChecked();
+  await expect(page.getByLabel('Remember and refresh')).toBeChecked();
   await page.locator('#player-maishift-url').fill('fictional-player');await page.getByRole('button',{name:'Continue',exact:true}).click();
-  await expect(page.locator('.player-dialog')).toContainText('Game region: International');await expect(page.locator('.player-dialog')).toContainText('Unmatched PB charts: 3');
+  await expect(page.locator('.player-dialog')).toContainText('International · 3 PBs');await expect(page.locator('.player-dialog')).toContainText('Unmatched PB charts: 3');
   await expect(page.getByRole('button',{name:'Import & remember',exact:true})).toBeVisible();expect((await saved(page)).active).toBeNull();
-  await page.screenshot({path:testInfo.outputPath('maishift-fictional-preview.png')});
+  await expect(page.locator('.player-import-details')).not.toHaveAttribute('open');await expect(page.getByText('Only PB observations are imported. Play dates and sessions are unavailable.',{exact:true})).not.toBeVisible();await page.screenshot({path:testInfo.outputPath('maishift-fictional-preview.png')});
+  await page.getByText('Import details',{exact:true}).click();await expect(page.getByText('Only PB observations are imported. Play dates and sessions are unavailable.',{exact:true})).toBeVisible();await page.getByText('Import details',{exact:true}).click();
   await page.getByRole('button',{name:'Import & remember',exact:true}).click();await expect.poll(async()=>!!(await saved(page)).active).toBe(true);
   const source=(await saved(page)).active.source;expect(source.type).toBe('maishift');expect(source.region).toBe('intl');expect(source.autoRefresh).toBe(true);
   const options=await page.evaluate(()=>requests[0]);expect(options.url).toBe(PATH);expect(options.credentials).toBe('omit');expect(options.referrerPolicy).toBe('no-referrer');expect(page.url()).not.toContain('fictional-player');
@@ -67,6 +68,6 @@ test('newer file import invalidates an outstanding proxy refresh',async({page,co
   const fixture=JSON.parse(await readFile(new URL('../../output/reconciliation-fixture.json',import.meta.url),'utf8'));const bytes=gzipSync(Buffer.from(JSON.stringify(await page.evaluate(d=>maimaiPlayerData.reconcile(d),fixture))));
   await page.locator('input[type=file]').setInputFiles({name:'fictional.gz',mimeType:'application/gzip',buffer:bytes});await expect(page.getByRole('heading',{name:'Import this profile?',exact:true})).toBeVisible();await page.getByRole('button',{name:'Import data',exact:true}).click();release();await expect(page.locator('#player-refresh')).toBeHidden();await expect(page.locator('#player-status')).not.toContainText('Fictional Player');
 });
-for(const [locale,region,excluded] of [['en','Game region: International','Records excluded for missing chart identity: 1'],['zh-Hans','游戏区域：国际版','因缺少谱面标识而排除的记录：1'],['ko','게임 지역: 국제판','채보 식별 정보가 없어 제외된 기록: 1'],['ja','ゲーム地域：海外版','譜面の識別情報がないため除外された記録：1']])test(`localized Maishift preview ${locale} fits narrow screens and supports keyboard cancellation`,async({page,context})=>{
+for(const [locale,region,excluded] of [['en','International · 3 PBs','Records excluded for missing chart identity: 1'],['zh-Hans','国际版 · 3 项个人最佳成绩','因缺少谱面标识而排除的记录：1'],['ko','국제판 · 개인 최고 기록 3개','채보 식별 정보가 없어 제외된 기록: 1'],['ja','海外版 · 自己ベスト 3件','譜面の識別情報がないため除外された記録：1']])test(`localized Maishift preview ${locale} fits narrow screens and supports keyboard cancellation`,async({page,context})=>{
   const state=await prepare(context,{locale});state.tracks.tracks.push({s:9000,r:{a:987654}});await boot(page);await preview(page);await expect(page.locator('.player-dialog')).toContainText(region);await expect(page.locator('.player-dialog')).toContainText(excluded);expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);await page.keyboard.press('Escape');await expect(page.locator('.player-dialog')).not.toBeVisible();expect((await saved(page)).active).toBeNull();
 });

@@ -43,7 +43,7 @@
     "README.ja.md": "a52749c6cd74759fd9a732a607fc7fc0defdd7958e3cd1f127a229c015a4f482",
     "src/maimai_intelligence/assets/locales/share.json": "20585e67f1443547ae3ba6b164a38b634f5b233f846f40d51af98ee9da825839",
     "src/maimai_intelligence/assets/locales/player-sources.json": "6223dd50b4a37e09dc9af00ba08fa655ca1105b9b2ac20f7be17bc262e1c0012",
-    "src/maimai_intelligence/assets/locales/player-maishift.json": "1498060d0bd3bf8d1bb5ef8e80c5548cd58619ae3dfe7a4e009e42599485172f"
+    "src/maimai_intelligence/assets/locales/player-maishift.json": "cd1b8916093f79ba25b54de665790aec2e1f9c251ff369f2977b36f512a1d001"
   },
   "documentation": {
     "source": "README.md",
@@ -70,6 +70,11 @@
       "date": "2026-09-20",
       "scope": "Reviewed the Tab keyboard identifier only; all sharing translations and earlier review scopes remain unchanged.",
       "record": "docs/localization-review/share-review-20260920.json"
+    },
+    {
+      "reviewer": "Codex",
+      "date": "2026-09-21",
+      "scope": "AI contextual review of six shorter import messages in English, Simplified Chinese, Korean and Japanese. Preserved public-only disclosure, browser storage, remembering consent, game region and PB terminology. Details remain available without crowding the preview. Not native-speaker certification."
     }
   ],
   "player_sources_review": {

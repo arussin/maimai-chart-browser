@@ -74,6 +74,36 @@
       "zh-Hans": "Maishift 的成绩已变化，但来源时间戳未更新。已保留您的已保存数据。",
       "ko": "Maishift 기록이 변경되었지만 소스의 타임스탬프가 갱신되지 않았습니다. 저장된 데이터는 유지됩니다.",
       "ja": "Maishift の記録が変更されましたが、取得元のタイムスタンプが新しくなっていません。保存済みのデータは保持されています。"
+    },
+    "Japan · {0} PBs": {
+      "zh-Hans": "日本版 · {0} 项个人最佳成绩",
+      "ko": "일본판 · 개인 최고 기록 {0}개",
+      "ja": "日本版 · 自己ベスト {0}件"
+    },
+    "International · {0} PBs": {
+      "zh-Hans": "国际版 · {0} 项个人最佳成绩",
+      "ko": "국제판 · 개인 최고 기록 {0}개",
+      "ja": "海外版 · 自己ベスト {0}件"
+    },
+    "Import details": {
+      "zh-Hans": "导入详情",
+      "ko": "가져오기 세부 정보",
+      "ja": "読み込みの詳細"
+    },
+    "Remember and refresh": {
+      "zh-Hans": "记住并刷新",
+      "ko": "기억하고 새로고침",
+      "ja": "保存して更新"
+    },
+    "Public profiles only. Party reads your scores; saving stays in your browser.": {
+      "zh-Hans": "仅支持公开个人资料。Party 读取您的成绩；保存的数据仅留在浏览器中。",
+      "ko": "공개 프로필만 지원합니다. Party가 점수를 읽으며, 데이터는 브라우저에만 저장됩니다.",
+      "ja": "公開プロフィールのみ対応しています。Party がスコアを取得し、データはブラウザー内にのみ保存します。"
+    },
+    "For private reports, use Open in Party from your report.": {
+      "zh-Hans": "私密报告请在报告中使用“在 Party 中打开”。",
+      "ko": "비공개 보고서는 보고서에서 “Party에서 열기”를 사용하세요.",
+      "ja": "非公開レポートは、レポート内の「Party で開く」を使用してください。"
     }
   },
   "invariants": {}

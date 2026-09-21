@@ -52,6 +52,7 @@ function profileCard(offer){
     if(rating<=99999)for(const digit of String(rating).padStart(5,' '))digits.append(make('span',digit===' '?'':digit));else i18n.text(digits, String(rating));
     badge.append(digits);card.append(badge,make('small','Reconstructed rating','player-profile-rating-label'));
   }
+  if(offer.player.provider==='maishift'){card.append(make('span',i18n.verbatim(offer.player.username),'player-profile-history'),make('span',window.maimaiI18n.message(offer.player.key.split(':')[2]==='jp'?'Japan · {0} PBs':'International · {0} PBs',[offer.pbCount.toLocaleString()]),'player-profile-history'));return card;}
   const count=offer.profile?.sessionCount;
   card.append(make('span',count?`${count.toLocaleString()} retained ${count===1?'session':'sessions'}`:`${offer.playCount.toLocaleString()} retained ${offer.playCount===1?'play':'plays'}`,'player-profile-history'));
   return card;
@@ -60,10 +61,15 @@ function ask(offer,{file=false,stale=false,connection=null,rememberDefault=true,
   if(stale)dialog.append(make('p','The hosted update was unavailable. This is the snapshot saved in the report.'));
   if(active&&active.player.key!==offer.player.key)dialog.append(make('p','This switches the active player. Different players’ records will not be combined.'));
   if(active&&active.player.key===offer.player.key&&core.offer(active).capturedAt>offer.capturedAt)dialog.append(make('p','Your newer results will be kept. This adds any missing retained history.'));
-  if(connection)dialog.append(external(connection.type==='maishift'?'Maishift':'Session Report',connection.url),make('p',i18n.verbatim(offer.player.username)),make('p',offer.pbCoverage==='complete'?'Complete PB snapshot':'Partial PB collection'),make('p','Earlier history may be missing'));
-  if(connection?.type==='maishift')dialog.append(make('p',connection.region==='jp'?'Game region: Japan':'Game region: International'),make('p',window.maimaiI18n.message('Records excluded for missing chart identity: {0}',[String(connection.diagnosticCount)])),make('p','Only PB observations are imported. Play dates and sessions are unavailable.'));
-  if(unmatched!==null)dialog.append(make('p',window.maimaiI18n.message('Unmatched PB charts: {0}',[String(unmatched)])));
-  const label=make('label',undefined,'player-remember'),check=make('input');check.type='checkbox';check.checked=connection?rememberDefault:remembered&&active?.player.key===offer.player.key;label.append(check,make('span',connection?'Remember this profile and refresh it when I return':'Remember on this device'));dialog.append(label,make('p','Stored only in your browser.','player-import-privacy'));
+  if(connection){
+    if(unmatched>0)dialog.append(make('p',window.maimaiI18n.message('Unmatched PB charts: {0}',[String(unmatched)]),'player-import-warning'));
+    if(connection.diagnosticCount>0)dialog.append(make('p',window.maimaiI18n.message('Records excluded for missing chart identity: {0}',[String(connection.diagnosticCount)]),'player-import-warning'));
+    const details=make('details',undefined,'player-import-details');details.append(make('summary','Import details'),external(connection.type==='maishift'?'Maishift':'Session Report',connection.url),make('p',offer.pbCoverage==='complete'?'Complete PB snapshot':'Partial PB collection'));
+    if(connection.type==='maishift')details.append(make('p','Only PB observations are imported. Play dates and sessions are unavailable.'),make('p','Your Maishift profile must be public. Party’s import service reads it when you import or refresh; scores are stored in your browser.'));
+    else details.append(make('p',i18n.verbatim(offer.player.username)),make('p','Earlier history may be missing'));
+    dialog.append(details);
+  }
+  const label=make('label',undefined,'player-remember'),check=make('input');check.type='checkbox';check.checked=connection?rememberDefault:remembered&&active?.player.key===offer.player.key;label.append(check,make('span',connection?'Remember and refresh':'Remember on this device'));dialog.append(label,make('p','Stored only in your browser.','player-import-privacy'));
   const actions=make('div',undefined,'player-actions'),yes=make('button','Import data'),no=make('button',file?'Cancel':'Not now');actions.append(yes,no);dialog.append(actions);
   if(connection){const label=()=>i18n.text(yes,check.checked?'Import & remember':'Import once');check.onchange=label;label();}
   let finished=false;function finish(accept){if(finished)return;finished=true;cancelConsent=null;dialog.removeEventListener('cancel',cancel);dialog.close();resolve({accept,remember:check.checked});}function cancel(e){e.preventDefault();finish(false);}cancelConsent=()=>finish(false);dialog.addEventListener('cancel',cancel);yes.onclick=()=>finish(true);no.onclick=()=>finish(false);if(!dialog.open)dialog.showModal();yes.focus();
@@ -110,14 +116,14 @@ async function selectSource(){
     else if(selected==='maishift'){
       const label=make('label','Maishift handle or profile URL'),url=make('input');url.type='text';url.id='player-maishift-url';url.autocomplete='off';url.spellcheck=false;url.maxLength=2048;url.value=source?.type==='maishift'?source.url:'';label.append(url);
       const regionLabel=make('label','Game region'),region=make('select');region.append(i18n.option('International','intl'),i18n.option('Japan','jp'));region.value=source?.region||'intl';regionLabel.append(region);
-      const remember=make('label',undefined,'player-remember'),check=make('input');check.type='checkbox';check.checked=rememberChoice;check.onchange=()=>rememberChoice=check.checked;remember.append(check,make('span','Remember this profile and refresh it when I return'));
-      fields.append(label,regionLabel,make('p','Your Maishift profile must be public. Party’s import service reads it when you import or refresh; scores are stored in your browser.'),remember);
+      const remember=make('label',undefined,'player-remember'),check=make('input');check.type='checkbox';check.checked=rememberChoice;check.onchange=()=>rememberChoice=check.checked;remember.append(check,make('span','Remember and refresh'));
+      fields.append(label,regionLabel,make('p','Public profiles only. Party reads your scores; saving stays in your browser.'),remember);
       next.onclick=()=>{let selected;try{selected=window.maimaiPlayerMaishift.location(url.value,region.value);}catch(e){message('Player data could not be imported',e.message);return;}importReport(selected,rememberChoice);};
     }
     else{
       const label=make('label','Hosted Session Report URL'),url=make('input');url.type='url';url.id='player-report-url';url.autocomplete='off';url.spellcheck=false;url.maxLength=2048;url.value=source?.type==='report'?source.url:'';label.append(url);
-      const remember=make('label',undefined,'player-remember'),check=make('input');check.type='checkbox';check.checked=rememberChoice;check.onchange=()=>rememberChoice=check.checked;remember.append(check,make('span','Remember this profile and refresh it when I return'));
-      fields.append(label,make('p','Public reports can refresh automatically. Reports that require sign-in use Open in Party from the report.'),remember,external('Session Report guide','https://github.com/arussin/maimai-session-report/blob/main/docs/PLAYER_FILE.md'));
+      const remember=make('label',undefined,'player-remember'),check=make('input');check.type='checkbox';check.checked=rememberChoice;check.onchange=()=>rememberChoice=check.checked;remember.append(check,make('span','Remember and refresh'));
+      fields.append(label,make('p','For private reports, use Open in Party from your report.'),remember,external('Session Report guide','https://github.com/arussin/maimai-session-report/blob/main/docs/PLAYER_FILE.md'));
       next.onclick=()=>importReport(url.value,rememberChoice);
     }
   }
