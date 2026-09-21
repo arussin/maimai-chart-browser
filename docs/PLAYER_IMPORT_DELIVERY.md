@@ -3,7 +3,9 @@
 The independent import, refresh, storage and localization changes are implemented
 for review. **The complete Maishift integration remains incomplete and disabled.**
 There is no verified real-source full-PB Maishift import, frozen upstream schema,
-or exact chart crosswalk. The combined announcement is consequently unreleased.
+or exact chart crosswalk. Subsequent research located an internal full-record
+response with 2,010 sample PBs; CORS and terms/access remain blockers (see the
+follow-up investigation). The combined announcement is consequently unreleased.
 
 ## Reviewable changes
 
