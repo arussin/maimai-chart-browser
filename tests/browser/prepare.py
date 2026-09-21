@@ -22,6 +22,7 @@ from maimai_intelligence.snapshots import atomic_json, read_json
 from scripts.build_challenge_package import write
 from tests.artwork_fixture import IMAGE, add_artwork
 from tests.browser.capacity_fixture import build_capacity_fixture
+from tests.browser.filter_preview import build_preview
 from tests.lab_fixture import write_package
 from tests.mai_notes_fixture import encoded as mai_notes_index
 from tests.personal_fixture import fixture
@@ -274,3 +275,6 @@ with tempfile.TemporaryDirectory() as temporary:
     build_lab(staging / "package", staging / "browser", catalog_version="registry-fixture")
     build_public_release(staging / "browser", staging / "public")
     shutil.copytree(staging / "public", root / "registry", dirs_exist_ok=True)
+
+# Interactive local preview uses fictional records, never a personal export.
+build_preview(root, Path("output/reconciliation-fixture.json"))

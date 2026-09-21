@@ -1,4 +1,14 @@
 import {test,expect} from '@playwright/test';
+
+// Existing control tests exercise the remembered-open state. Disclosure tests
+// below separately cover first visits and persistence across pages.
+test.beforeEach(async({page},testInfo)=>{
+  if(testInfo.title.startsWith('filter disclosures'))return;
+  await page.addInitScript(()=>{
+    localStorage.setItem('maimai-catalog-filters-collapsed','0');
+    localStorage.setItem('maimai-personal-filters-collapsed','0');
+  });
+});
 import AxeBuilder from '@axe-core/playwright';
 
 const forms=[

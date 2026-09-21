@@ -1,4 +1,14 @@
 import {test,expect} from '@playwright/test';
+
+// Existing control tests exercise the remembered-open state. Disclosure tests
+// below separately cover first visits and persistence across pages.
+test.beforeEach(async({page},testInfo)=>{
+  if(testInfo.title.startsWith('filter disclosures'))return;
+  await page.addInitScript(()=>{
+    localStorage.setItem('maimai-catalog-filters-collapsed','0');
+    localStorage.setItem('maimai-personal-filters-collapsed','0');
+  });
+});
 import AxeBuilder from '@axe-core/playwright';
 
 const labels={en:'Find a chart','zh-Hans':'查找谱面',ko:'채보 찾기',ja:'譜面を探す'};
@@ -76,6 +86,7 @@ test('all languages switch instantly, preserve state and return exact English te
   for(const locale of ['zh-Hans','ko','ja','en']){
     await choose(page,locale);await expect(page.locator('html')).toHaveAttribute('lang',locale);
     await expect(page.locator('#catalog h1')).toHaveText(labels[locale]);
+    await expect(page.locator('#sort-keep')).toHaveAccessibleName({en:'Enable multi-sorting','zh-Hans':'启用多条件排序',ko:'다중 기준 정렬 사용',ja:'複数条件で並べ替え'}[locale]);
     await expect(page.locator('#search')).toHaveValue('ソテリア');
     await expect(row.locator('.row-difficulty')).toHaveValue(selected);
     await expect(row).toContainText('ソテリア');await expect(row).toContainText('MASTER');
