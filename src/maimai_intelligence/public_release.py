@@ -156,6 +156,10 @@ def build_public_release(source, output):
             from .registry_catalog import validate_catalog
 
             validate_catalog(data)
+        elif "navigation" in data:
+            from .registry_catalog import validate_genres
+
+            validate_genres(data)
         if "mai_notes" in data:
             validate_links(data["mai_notes"], data["catalog"])
         if "provider_mapping" in data:

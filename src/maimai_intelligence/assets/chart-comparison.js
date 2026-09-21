@@ -1,6 +1,6 @@
 /* Choose any public chart pair or find similar measured demands, entirely locally. */
 (()=>{'use strict';
-const i18n=window.maimaiI18n||{text:(node,value)=>node.textContent=value,attribute:(node,key,value)=>node.setAttribute(key,value),option:(...args)=>new Option(...args),verbatim:value=>value,parts:(values,separator)=>values.join(separator),message:(source,values)=>source.replace(/\{(\d+)\}/g,(_,n)=>values[n]),literal:(node,value)=>node.textContent=value};
+const i18n=window.maimaiI18n||{text:(node,value)=>node.textContent=value,attribute:(node,key,value)=>node.setAttribute(key,value),option:(...args)=>new Option(...args),verbatim:value=>value,searchTerms:value=>value,parts:(values,separator)=>values.join(separator),message:(source,values)=>source.replace(/\{(\d+)\}/g,(_,n)=>values[n]),literal:(node,value)=>node.textContent=value};
 
 const groups={cadence:'Input speed',rhythm:'Rhythm',coordination:'Simultaneous inputs',holds:'Holds',slides:'Slides',spatial:'Layout'};
 const measurements=[
@@ -14,12 +14,14 @@ function mount({data,eligibleIds}){
   const overview=window.maimaiChartOverview;
   const el=id=>document.getElementById(id),make=(tag,text,cls)=>{const node=document.createElement(tag);if(text!==undefined)i18n.text(node, text);if(cls)node.className=cls;return node;};
   const byId=new Map(data.catalog.map(c=>[c.chart_id,c])),state={left:null,right:null},pickers={};
-  const name=c=>c.title.trim()||'〈Blank title〉',label=c=>name(c)+' · '+c.format+' '+c.difficulty+' · Lv. '+(c.level||'?');
+  const name=c=>c.title.trim()||'〈Blank title〉';
+  const chartType=c=>i18n.parts([i18n.verbatim(c.format),c.difficulty],' ');
+  const label=c=>i18n.parts([i18n.verbatim(name(c)),chartType(c),i18n.verbatim('Lv. '+(c.level||'?'))],' · ');
   const collator=new Intl.Collator(undefined,{numeric:true,sensitivity:'base'}),difficultyOrder=['BASIC','ADVANCED','EXPERT','MASTER','RE:MASTER'];
   const bpm=c=>data.navigation?.charts?.[c.chart_id]?.bpm??null,bpmText=c=>bpm(c)==null?'BPM unknown':bpm(c)+' BPM';
   let index=null,matches=null;
   const getIndex=()=>index||(index=window.maimaiChallengeMatching.createIndex(data.catalog));
-  function identity(c){const box=make('div',undefined,'chosen-chart');box.append(window.maimaiChartArtwork.jacket(c),make('strong',i18n.verbatim(name(c))),make('p',c.format+' '+c.difficulty+' · Lv. '+(c.level||'?')+' · '+bpmText(c),'muted'),make('p',i18n.verbatim(c.artist),'muted'),overview.chips(c),overview.graph(c,{compact:true}));const videoLink=window.maimaiChartLinks.group(c);if(videoLink)box.append(videoLink);if(window.maimaiPersonal)box.append(window.maimaiPersonal.summary(c));return box;}
+  function identity(c){const box=make('div',undefined,'chosen-chart');box.append(window.maimaiChartArtwork.jacket(c),make('strong',i18n.verbatim(name(c))),make('p',i18n.parts([chartType(c),i18n.verbatim('Lv. '+(c.level||'?')),bpmText(c)],' · '),'muted'),make('p',i18n.verbatim(c.artist),'muted'),overview.chips(c),overview.graph(c,{compact:true}));const videoLink=window.maimaiChartLinks.group(c);if(videoLink)box.append(videoLink);if(window.maimaiPersonal)box.append(window.maimaiPersonal.summary(c));return box;}
   function writeLink(){const url=new URL(location.href);for(const side of ['left','right']){if(state[side])url.searchParams.set(side,state[side]);else url.searchParams.delete(side);}history.replaceState(null,'',url);}
   function choose(side,id,write=true){
     id=window.maimaiRegistryBrowser.resolve(data,id);
@@ -42,7 +44,7 @@ function mount({data,eligibleIds}){
     function appendMatches(){
       const end=Math.min(shown+20,found.length);
       for(let index=shown;index<end;index++){
-        const chart=found[index],option=make('div',i18n.verbatim(label(chart)),'chart-choice');option.id=results.id+'-'+index;option.dataset.choice=chart.chart_id;option.setAttribute('role','option');option.setAttribute('aria-selected','false');option.setAttribute('aria-posinset',String(index+1));option.setAttribute('aria-setsize',String(found.length));
+        const chart=found[index],option=make('div',label(chart),'chart-choice');option.id=results.id+'-'+index;option.dataset.choice=chart.chart_id;option.setAttribute('role','option');option.setAttribute('aria-selected','false');option.setAttribute('aria-posinset',String(index+1));option.setAttribute('aria-setsize',String(found.length));
         option.onmousedown=event=>event.preventDefault();option.onclick=()=>{choose(side,chart.chart_id);input.focus();};results.append(option);
       }
       shown=end;more.hidden=shown>=found.length;i18n.text(status, found.length?(shown<found.length?'Showing '+shown+' of '+found.length.toLocaleString()+' matching charts. Keep typing or show more.':found.length.toLocaleString()+' matching charts.'):'No matching charts. Try another song, artist or difficulty.');
@@ -53,7 +55,7 @@ function mount({data,eligibleIds}){
       if(!input.value.trim()){close();return;}
       const matchesSearch=window.maimaiSongSearch.query(input.value),query=input.value.normalize('NFKC').toLowerCase().trim();
       const rank=c=>{const title=name(c).normalize('NFKC').toLowerCase();return title===query?0:title.startsWith(query)?1:2;};
-      found=data.catalog.filter(c=>matchesSearch(c,[c.format,c.difficulty,c.level]));
+      found=data.catalog.filter(c=>matchesSearch(c,[c.format,i18n.searchTerms(c.difficulty),c.level]));
       found.sort((a,b)=>rank(a)-rank(b)||collator.compare(name(a),name(b))||collator.compare(a.format,b.format)||difficultyOrder.indexOf(a.difficulty)-difficultyOrder.indexOf(b.difficulty)||a.chart_id.localeCompare(b.chart_id));
       results.hidden=!found.length;input.setAttribute('aria-expanded',String(!!found.length));appendMatches();
     }
@@ -86,7 +88,7 @@ function mount({data,eligibleIds}){
     }
     else root.append(make('p','There is not enough shared measurement coverage for a similarity summary.','muted'));
     const table=make('table',undefined,'metric-comparison'),head=make('thead'),tr=make('tr');
-    for(const text of ['Measurement',i18n.verbatim(label(left)),i18n.verbatim(label(right))]){const th=make('th',text);th.scope='col';tr.append(th);}head.append(tr);table.append(head);
+    for(const text of ['Measurement',label(left),label(right)]){const th=make('th',text);th.scope='col';tr.append(th);}head.append(tr);table.append(head);
     const body=make('tbody');let lastGroup='';
     const tempoRow=make('tr'),tempoLabel=make('th','Source song BPM');tempoLabel.scope='row';tempoRow.append(tempoLabel);for(const chart of [left,right])tempoRow.append(make('td',bpm(chart)==null?'Unknown':String(bpm(chart))));body.append(tempoRow);
     for(const [group,key,title,unit]of measurements){
@@ -103,13 +105,13 @@ function mount({data,eligibleIds}){
     for(const match of matches){const c=byId.get(match.chart_id),card=make('article',undefined,'similar-chart');card.append(identity(c));
       card.append(make('p',i18n.message('Similar {0}',[i18n.parts(match.closest_groups.map(g=>groups[g].toLowerCase()),' and ')]),'muted'));
       if(match.patterns){const shared=match.patterns.shared;card.append(make('p',shared.length?i18n.message('Shared: {0}',[i18n.parts(shared.map(overview.name),' · ')]):'No shared detections in supported coverage','match-patterns'));if(match.patternDistance==null)card.append(make('p','Pattern coverage insufficient; ranked by measurements','muted'));}
-      const button=make('button',state.right===c.chart_id?'Comparing':'Compare');i18n.attribute(button, 'aria-label', 'Compare with '+label(c));button.dataset.compareChart=c.chart_id;button.onclick=()=>{choose('right',c.chart_id);el('direct-comparison').scrollIntoView({block:'start',behavior:'instant'});el('direct-comparison').tabIndex=-1;el('direct-comparison').focus({preventScroll:true});};card.append(button);root.append(card);
+      const button=make('button',state.right===c.chart_id?'Comparing':'Compare');i18n.attribute(button, 'aria-label', i18n.message('Compare with {0}',[label(c)]));button.dataset.compareChart=c.chart_id;button.onclick=()=>{choose('right',c.chart_id);el('direct-comparison').scrollIntoView({block:'start',behavior:'instant'});el('direct-comparison').tabIndex=-1;el('direct-comparison').focus({preventScroll:true});};card.append(button);root.append(card);
     }
   }
   function render(){
     for(const side of ['left','right'])if(state[side])pickers[side].selection.replaceChildren(identity(byId.get(state[side])));
     el('find-similar').disabled=!state.left||!byId.get(state.left)?.demand;
-    i18n.text(el('comparison-status'), state.left&&state.right?(state.left===state.right?'Both selections are the same chart. Choose another chart to compare.':'Comparing '+label(byId.get(state.left))+' with '+label(byId.get(state.right))):state.left?'Choose a second chart or find similar chart demands.':'Choose a first chart to begin.');
+    i18n.text(el('comparison-status'), state.left&&state.right?(state.left===state.right?'Both selections are the same chart. Choose another chart to compare.':i18n.message('Comparing {0} with {1}',[label(byId.get(state.left)),label(byId.get(state.right))])):state.left?'Choose a second chart or find similar chart demands.':'Choose a first chart to begin.');
     renderPair();renderMatches();
   }
   function find(){if(!state.left||!byId.get(state.left)?.demand)return;matches=getIndex().similar(state.left,{limit:8,eligibleIds:el('similar-use-filters').checked?eligibleIds():null,patternCompare:el('similar-priority').value==='patterns'?overview.compare:null});render();el('similar-results').scrollIntoView({block:'start',behavior:'instant'});}

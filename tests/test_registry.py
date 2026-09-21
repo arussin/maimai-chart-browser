@@ -129,6 +129,15 @@ class RegistryTests(unittest.TestCase):
                 legacy_chart_id=old["chart_id"] + "-corrected",
                 analysis_state="unsupported",
             )
+            # Replacing the transcription also clears its old source metadata.
+            # A missing genre now requires review before the corrected chart can ship.
+            with self.assertRaisesRegex(
+                ValueError, "Unrecognized genre None.*requires genre review"
+            ):
+                project_registry(value, legacy)
+            value["charts"][cid]["source_metadata"]["genre"] = legacy["navigation"]["charts"][
+                old["chart_id"]
+            ]["genre"]
             result = project_registry(value, legacy)
             c = next(c for c in result["catalog"] if c["chart_id"] == cid)
             self.assertNotIn("demand", c)

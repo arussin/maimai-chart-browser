@@ -2,6 +2,7 @@
 
 import hashlib
 import json
+import unicodedata
 from collections import Counter, defaultdict
 from copy import deepcopy
 from pathlib import Path
@@ -26,14 +27,72 @@ CHART_FIELDS = PROFILE_FIELDS | {
     "input_id",
     "transcription",
 }
+# Stable IDs, display labels and explicit source aliases. Keep browser compatibility
+# in registry-browser.js in sync through tests/fixtures/genre-aliases.json.
+# JP/INTL observations captured 2026-09-17 include fullwidth ampersands and VOCALOID™.
 GENRES = {
-    "POPS＆アニメ": ("POPSアニメ", "POPS & ANIME"),
-    "niconico＆ボーカロイド": ("niconicoボーカロイド", "niconico & VOCALOID"),
-    "東方Project": ("東方Project", "Touhou Project"),
-    "ゲーム＆バラエティ": ("ゲームバラエティ", "GAME & VARIETY"),
-    "maimai": ("maimai", "maimai"),
-    "オンゲキ＆CHUNITHM": ("オンゲキCHUNITHM", "ONGEKI & CHUNITHM"),
+    "POPSアニメ": ("POPS & ANIME", ["POPS＆アニメ", "POPS＆ANIME"]),
+    "niconicoボーカロイド": (
+        "niconico & VOCALOID™",
+        [
+            "niconico＆ボーカロイド",
+            "niconico＆VOCALOID",
+            "niconico＆VOCALOID™",
+            "niconico & VOCALOID",
+        ],
+    ),
+    "東方Project": ("東方Project", ["Touhou Project"]),
+    "ゲームバラエティ": ("GAME & VARIETY", ["ゲーム＆バラエティ", "GAME＆VARIETY"]),
+    "maimai": ("maimai", []),
+    "オンゲキCHUNITHM": (
+        "オンゲキ & CHUNITHM",
+        ["オンゲキ＆CHUNITHM", "ONGEKI＆CHUNITHM", "ONGEKI & CHUNITHM"],
+    ),
 }
+GENRE_ALIASES = {
+    unicodedata.normalize("NFKC", alias).strip(): genre
+    for genre, (label, aliases) in GENRES.items()
+    for alias in [genre, label, *aliases]
+}
+
+
+def genre_id(value, *, context="genre"):
+    """Resolve explicit aliases only; unrecognized categories require owner review."""
+    raw = value.removeprefix("sega:") if isinstance(value, str) else ""
+    known = GENRE_ALIASES.get(unicodedata.normalize("NFKC", raw).strip())
+    if known is None:
+        raise ValueError(
+            f"Unrecognized genre {value!r} at {context}; catalog publication requires genre review"
+        )
+    return known
+
+
+def genre_label(value):
+    return GENRES[genre_id(value)][0]
+
+
+def validate_genres(data):
+    """Reject unreviewed categories without rewriting immutable historical catalogs."""
+    navigation = data.get("navigation", {})
+    charts = navigation.get("charts", {})
+    for item in navigation.get("genres", []):
+        genre_id(item.get("id"), context="navigation.genres")
+    for cid, row in charts.items():
+        genre_id(row.get("genre"), context=f"navigation for chart {cid}")
+    for chart in data.get("catalog", []):
+        if not isinstance(chart, dict):
+            continue
+        cid = chart.get("chart_id")
+        if "navigation" in data:
+            genre_id(charts.get(cid, {}).get("genre"), context=f"navigation for chart {cid}")
+        for region, entry in chart.get("regional", {}).items():
+            context = f"{region} metadata for chart {cid}"
+            if "genre" in entry:
+                genre_id(entry["genre"], context=context)
+            if "catcode" in entry.get("metadata", {}):
+                genre_id(entry["metadata"]["catcode"], context=context)
+
+
 # Explicit official song-introduction codes. New values stay visible as raw codes.
 VERSIONS = dict(
     zip(
@@ -204,10 +263,8 @@ def project_registry(value, legacy):
             }
             if meta:
                 regional_genre = meta["value"].get("catcode", "")
-                genre, label = GENRES.get(
-                    regional_genre, ("sega:" + regional_genre, regional_genre)
-                )
-                genres[genre] = label
+                genre = genre_id(regional_genre, context=f"{region} metadata for song {sid}")
+                genres[genre] = genre_label(genre)
                 regions[region]["genre"] = genre
                 regions[region]["version"] = version_label(meta["value"].get("version"))
                 versions.add(regions[region]["version"])
@@ -230,9 +287,11 @@ def project_registry(value, legacy):
         }
         if meta.get("catcode"):
             raw_genre = meta["catcode"]
-            genre, label = GENRES.get(raw_genre, ("sega:" + raw_genre, raw_genre))
+            genre = genre_id(raw_genre, context=f"metadata for song {sid}")
             nav["genre"] = genre
-            genres[genre] = label
+            genres[genre] = genre_label(genre)
+        if nav.get("genre"):
+            nav["genre"] = genre_id(nav["genre"], context=f"navigation for chart {cid}")
         if meta.get("version"):
             nav["version"] = version_label(meta["version"])
             nav["version_basis"] = "official_song_introduction"
@@ -307,8 +366,19 @@ def project_registry(value, legacy):
         {cid: resolve(value, cid) for cid, c in value["charts"].items() if c.get("redirect")}
     )
     for item in legacy.get("navigation", {}).get("genres", []):
-        genres.setdefault(item["id"], item["label"])
-    data["navigation"]["genres"] = [{"id": k, "label": v} for k, v in sorted(genres.items())]
+        key = genre_id(item["id"], context="legacy navigation.genres")
+        genres.setdefault(key, genre_label(key))
+    referenced = {nav["genre"] for nav in data["navigation"]["charts"].values() if nav.get("genre")}
+    # Include switchable regional genres, even if JP is the initial metadata preference.
+    referenced.update(
+        region["genre"]
+        for chart in data["catalog"]
+        for region in chart["regional"].values()
+        if region.get("genre")
+    )
+    data["navigation"]["genres"] = [
+        {"id": key, "label": genres.get(key, genre_label(key))} for key in sorted(referenced)
+    ]
     data["navigation"]["versions"] = sorted(
         versions,
         key=lambda v: list(VERSIONS.values()).index(v) if v in VERSIONS.values() else 999,
@@ -429,6 +499,7 @@ def coverage_report(data):
 def validate_catalog(data):
     if data.get("schema_version") != SCHEMA:
         raise ValueError("Unsupported browser inventory schema")
+    validate_genres(data)
     ids = set()
     for c in data["catalog"]:
         if (

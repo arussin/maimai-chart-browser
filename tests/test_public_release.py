@@ -1,4 +1,5 @@
 import hashlib
+import json
 import shutil
 import subprocess
 import tempfile
@@ -10,7 +11,10 @@ from pathlib import Path
 from unittest.mock import patch
 
 from maimai_intelligence.public_release import PUBLIC_FILES, build_public_release
+from maimai_intelligence.registry import empty
+from maimai_intelligence.registry_catalog import project_registry
 from maimai_intelligence.snapshots import atomic_json, canonical, read_json
+from tests.registry_fixture import admit, official_row
 
 
 class PublicReleaseTests(unittest.TestCase):
@@ -113,6 +117,32 @@ class PublicReleaseTests(unittest.TestCase):
             build_public_release(self.source, self.output)
         self.assertFalse(self.output.exists())
 
+    def test_unreviewed_genres_block_all_release_versions_before_any_output(self):
+        value, _ = admit(empty(), [official_row("Genre fixture", "Artist")])
+        original = project_registry(value, {})
+        original["package"] = {"status": "research_preview"}
+        for schema in ("maimai-browser-catalog-2", None):
+            with self.subTest(schema=schema):
+                data = json.loads(json.dumps(original))
+                if schema is None:
+                    del data["schema_version"]
+                # Also reject an unused declared category, not just chart references.
+                data["navigation"]["genres"].append(
+                    {"id": "sega:Future category", "label": "Future"}
+                )
+                raw = canonical(data)
+                sha = hashlib.sha256(raw).hexdigest()
+                path = f"catalogs/{sha}.json"
+                (self.source / path).write_bytes(raw)
+                self.manifest["releases"] = [
+                    {"version": "accepted-v1", "path": self.path, "sha256": self.sha},
+                    {"version": "older-unreviewed", "path": path, "sha256": sha},
+                ]
+                atomic_json(self.source / "manifest.json", self.manifest)
+                with self.assertRaisesRegex(ValueError, "Future category.*requires genre review"):
+                    build_public_release(self.source, self.output)
+                self.assertFalse(self.output.exists())
+
     def test_hosting_file_size_limit_is_checked_before_any_write(self):
         (self.source / "challenge-review.js").write_bytes(b" " * 4096)
         with patch("maimai_intelligence.public_release.MAX_PUBLIC_FILE_BYTES", 4095):
@@ -191,7 +221,7 @@ async function run(change=()=>{},alter=()=>{}){
   let r=await run();assert.equal(r.appended.length,2);
   assert.equal(r.appended[0].textContent,bytes.toString('utf8'));
   assert.equal(JSON.stringify(r.catalog),bytes.toString('utf8'));
-  assert.match(r.pinned,/left=chart-id&version=v1/);
+  assert.equal(r.pinned,undefined); // Clean/latest URLs must not acquire a version pin.
   assert(!r.requests.some(p=>p.includes('chart-id')));
   r=await run(m=>{m.schema_version='1.0.0';delete m.releases[0].parts;});
   assert.equal(r.appended.length,2);assert(r.requests.includes(entry.path));

@@ -15,6 +15,101 @@ const labels={en:'Find a chart','zh-Hans':'查找谱面',ko:'채보 찾기',ja:'
 const choose=(page,locale)=>page.locator('.site-header [data-language="'+locale+'"]').click();
 const settle=async page=>{await expect(page.locator('#songs .song-row').first()).toBeVisible();};
 
+const cabinetGenres={
+  en:['POPS & ANIME','niconico & VOCALOID™','東方Project','GAME & VARIETY','maimai','オンゲキ & CHUNITHM'],
+  'zh-Hans':['流行&动漫','niconico＆VOCALOID™','东方Project','其他游戏','舞萌','音击/中二节奏'],
+  ko:['POPS & ANIME','niconico & VOCALOID™','東方Project','GAME & VARIETY','maimai','オンゲキ & CHUNITHM'],
+  ja:['POPS＆アニメ','niconico＆ボーカロイド','東方Project','ゲーム＆バラエティ','maimai','オンゲキ＆CHUNITHM']
+};
+const cabinetGenreIds=['POPSアニメ','niconicoボーカロイド','東方Project','ゲームバラエティ','maimai','オンゲキCHUNITHM'];
+
+for(const width of [320,1280])test(`cabinet genre labels follow language without changing filters or version identities at ${width}px`,async({page})=>{
+  await page.setViewportSize({width,height:900});
+  await page.goto('/registry/?version=duplicate-genres-fixture&view=catalog');await settle(page);
+  const identities=()=>page.evaluate(()=>({navigation:maimaiResearchCatalog.navigation,charts:maimaiResearchCatalog.catalog.map(({chart_id,title,artist,format,difficulty,regional})=>({chart_id,title,artist,format,difficulty,regional}))}));
+  const data=await identities();
+  const versionNames=()=>page.locator('#version-options .version-name').evaluateAll(nodes=>nodes.map(n=>n.firstChild.textContent));
+  const versions=await versionNames();
+  const genre=page.locator('#filter-genre');
+  for(const locale of ['en','zh-Hans','ko','ja','en']){
+    await choose(page,locale);await expect(genre.locator('option')).toHaveCount(7);
+    await expect(page.locator('.party-brand')).toHaveText('maimai.party');
+    expect(await versionNames()).toEqual(versions);
+    for(const [index,id]of cabinetGenreIds.entries()){
+      const label=cabinetGenres[locale][index];
+      await expect(genre.locator('option[value="'+id+'"]').first()).toHaveText(label);
+      await genre.selectOption(id);
+      await expect(page.locator('.chart-card-genre').first()).toHaveText(label);
+      await expect(page.locator('#active-filters')).toContainText(label);
+      expect(await genre.evaluate(n=>{
+        const canvas=document.createElement('canvas'),style=getComputedStyle(n),context=canvas.getContext('2d');context.font=style.font;
+        return context.measureText(n.selectedOptions[0].textContent).width<=n.clientWidth-parseFloat(style.paddingLeft)-parseFloat(style.paddingRight)-20;
+      })).toBe(true);
+    }
+    expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
+  }
+  // Translating the maimai genre must not rename a song, artist or release.
+  await page.evaluate(()=>{
+    const host=document.createElement('div');host.id='cabinet-literals';
+    for(const value of ['maimai','MASTER','東方Project']){const node=document.createElement('span');maimaiI18n.literal(node,value);host.append(node);}
+    document.body.append(host);
+  });
+  await genre.selectOption('maimai');
+  const selected=await page.locator('.song-row').evaluateAll(rows=>rows.map(r=>r.dataset.chartId));
+  await choose(page,'zh-Hans');await expect(genre).toHaveValue('maimai');
+  expect(await page.locator('.song-row').evaluateAll(rows=>rows.map(r=>r.dataset.chartId))).toEqual(selected);
+  await expect(page.locator('#cabinet-literals span')).toHaveText(['maimai','MASTER','東方Project']);
+  expect(await identities()).toEqual(data);
+});
+
+test('cabinet difficulty names update in filters, chart controls and comparison while preserving IDs',async({page})=>{
+  await page.goto('/registry/?search=ソテリア&view=catalog');await settle(page);
+  const row=page.locator('#songs .song-row');await row.locator('.row-difficulty').selectOption({label:'MASTER · 14'});
+  const selected=await row.locator('.row-difficulty').inputValue();
+  await row.locator('.chart-row').click();
+  await page.locator('#difficulty-summary').click();
+  await page.locator('#difficulty-options input[value="MASTER"]').check();
+  for(const locale of ['zh-Hans','ko','ja','en']){
+    await choose(page,locale);
+    const label=locale==='zh-Hans'?'大师':'MASTER';
+    await expect(page.locator('#difficulty-summary')).toHaveText(label);
+    await expect(page.locator('#difficulty-options label[data-difficulty="MASTER"]')).toHaveText(label);
+    await expect(row.locator('.row-difficulty option:checked')).toHaveText(label+' · 14');
+    await expect(row.locator('.chart-difficulty-badge')).toHaveText(label);
+    await expect(row.locator('.chart-row')).toHaveAttribute('aria-label',new RegExp(label));
+    await expect(row.locator('.chart-row')).toHaveAttribute('aria-label',new RegExp({en:'Chart constant unknown','zh-Hans':'谱面定数未知',ko:'채보 상수 알 수 없음',ja:'譜面定数不明'}[locale]));
+    await expect(row.locator('.row-difficulty')).toHaveValue(selected);
+    await expect(page.locator('#active-filters')).toContainText(label);
+    await expect(row).toHaveAttribute('data-difficulty','MASTER');
+  }
+  await row.getByRole('button',{name:'Compare this chart',exact:true}).click();
+  await choose(page,'zh-Hans');
+  await expect(page.locator('#comparison-pickers .chosen-chart')).toContainText('大师');
+  const right=page.locator('#compare-right-search');await right.fill('高级');
+  await expect(page.locator('#compare-right-choices .chart-choice').first()).toContainText('高级');
+  await right.press('ArrowDown');await right.press('Enter');
+  await expect(page.locator('#comparison-status')).toContainText('大师');
+  await expect(page.locator('#comparison-status')).toContainText('高级');
+  for(const [id,zh]of [['BASIC','初级'],['ADVANCED','高级'],['EXPERT','专家'],['MASTER','大师'],['RE:MASTER','宗师']]){
+    await expect(page.locator('#difficulty-options label[data-difficulty="'+id+'"]')).toHaveText(zh);
+  }
+  await choose(page,'en');await expect(page.locator('#comparison-status')).toContainText('MASTER');
+  await expect(page.locator('#comparison-status')).toContainText('ADVANCED');
+});
+
+test('cabinet difficulty names reach chart activity accessibility labels',async({page})=>{
+  await page.goto('/progressive/?view=catalog');await settle(page);
+  await page.locator('#songs .chart-flow').first().scrollIntoViewIfNeeded();
+  const graph=page.locator('#songs .chart-flow svg').first();await expect(graph).toBeVisible();
+  const original=await graph.getAttribute('aria-label');
+  for(const locale of ['zh-Hans','ko','ja','en']){
+    await choose(page,locale);
+    await expect(graph).not.toHaveAttribute('aria-label',/\[object Object\]/);
+    if(locale==='zh-Hans')await expect(graph).toHaveAttribute('aria-label',/初级|高级|专家|大师|宗师/);
+  }
+  await expect(graph).toHaveAttribute('aria-label',original);
+});
+
 test('GitHub link follows the chosen README language and restores the English destination',async({page})=>{
   const repository='https://github.com/arussin/maimai-chart-browser';
   await page.goto('/registry/');await settle(page);await page.locator('#about-tab').click();
@@ -89,7 +184,7 @@ test('all languages switch instantly, preserve state and return exact English te
     await expect(page.locator('#sort-keep')).toHaveAccessibleName({en:'Enable multi-sorting','zh-Hans':'启用多条件排序',ko:'다중 기준 정렬 사용',ja:'複数条件で並べ替え'}[locale]);
     await expect(page.locator('#search')).toHaveValue('ソテリア');
     await expect(row.locator('.row-difficulty')).toHaveValue(selected);
-    await expect(row).toContainText('ソテリア');await expect(row).toContainText('MASTER');
+    await expect(row).toContainText('ソテリア');await expect(row).toContainText(locale==='zh-Hans'?'大师':'MASTER');
     expect(await page.evaluate(()=>JSON.stringify(maimaiResearchCatalog))).toBe(data);
     expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
   }
