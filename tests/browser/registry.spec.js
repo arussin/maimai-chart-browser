@@ -245,3 +245,17 @@ for(const width of [280,320,390,1280])for(const locale of ['en','zh-Hans','ko','
     }
   }
 });
+
+
+test('MAGiCAL logo is available when retained catalogs have no artwork mapping',async({page})=>{
+  await page.goto('/registry/');
+  await expect(page.locator('#songs .song-row').first()).toBeVisible();
+  await page.evaluate(()=>{
+    const logo=maimaiChartArtwork.version('maimai DX MAGiCAL');
+    logo.id='magical-logo-regression';document.body.prepend(logo);
+  });
+  const logo=page.locator('#magical-logo-regression');
+  await expect(logo.locator('img')).toHaveAttribute('src','version-magical.png');
+  await expect(logo).not.toHaveClass(/artwork-missing/);
+  expect(await logo.locator('img').evaluate(n=>n.complete&&n.naturalWidth>0)).toBe(true);
+});
