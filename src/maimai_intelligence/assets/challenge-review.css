@@ -36,3 +36,24 @@ details summary{cursor:pointer;min-height:44px;padding:12px 0}.sources{border-to
 @media(max-width:600px){.browser-filters .pattern-filter-field{width:100%;max-width:none}.page-heading{padding:24px 0 20px}}
 
 .chart-external-links{display:flex;flex-wrap:wrap;gap:0 14px;min-width:0}
+
+/* Source selection and the local release announcement. */
+.player-source-options {display:grid;gap:.7rem;border:0;padding:0;margin:1rem 0}
+.player-source-options legend {margin-bottom:.6rem;font-weight:600}
+.player-source-options label {display:flex;flex-direction:row;align-items:center;gap:.65rem;min-height:40px;cursor:pointer;color:var(--ink);font-size:14px}
+.player-source-options input {accent-color:var(--aqua);width:18px;height:18px;min-height:18px;margin:0;padding:0;flex:none}
+.player-source-fields {display:grid;gap:.8rem;overflow-wrap:anywhere}
+.player-source-fields label:not(.player-remember) {display:grid;gap:.5rem}
+.player-source-fields input[type=url] {width:100%;box-sizing:border-box;min-width:0;padding:.7rem;font:inherit}
+.player-source-fields .player-remember {display:flex;align-items:flex-start;gap:.5rem}
+.player-source-fields p {margin:0}
+.player-status small {display:block;overflow-wrap:anywhere}
+.player-dialog a {overflow-wrap:anywhere}
+.feature-announcement {position:fixed;z-index:110;width:min(340px,calc(100vw - 32px));box-sizing:border-box;padding:1rem;border:1px solid var(--line,#556);border-radius:14px;background:var(--paper,#fff);color:var(--ink,#183b43);box-shadow:0 8px 32px #0005;overflow:auto}
+.feature-announcement[hidden] {display:none}
+.feature-announcement h2 {font-size:1.05rem;margin:0 0 .6rem}
+.feature-announcement p {line-height:1.5}
+.feature-announcement div {display:flex;flex-wrap:wrap;gap:.6rem}
+.feature-announcement button {padding:.5rem .8rem;cursor:pointer}
+.feature-announcement a {color:var(--aqua,#007887);font-size:.85rem}
+.feature-announcement::before {content:"";position:absolute;top:0;right:14px;border-left:7px solid transparent;border-right:7px solid transparent;border-bottom:7px solid var(--aqua,#007887)}

@@ -2,9 +2,15 @@
 (()=>{'use strict';
 const i18n=window.maimaiI18n||{text:(node,value)=>node.textContent=value,attribute:(node,key,value)=>node.setAttribute(key,value),option:(...args)=>new Option(...args),verbatim:value=>value,literal:(node,value)=>node.textContent=value};
 if(window.maimaiPersonal)return;
-const core=window.maimaiPlayerData,make=(tag,text,cls)=>{const n=document.createElement(tag);if(text!==undefined)i18n.text(n, text);if(cls)n.className=cls;return n;};
+const core=window.maimaiPlayerData,sources=window.maimaiPlayerSources,storage=window.maimaiPlayerStorage,make=(tag,text,cls)=>{const n=document.createElement(tag);if(text!==undefined)i18n.text(n, text);if(cls)n.className=cls;return n;};
 const protocol='maimai-player-handoff/1',grades=['D','C','B','BB','BBB','A','AA','AAA','S','S+','SS','SS+','SSS','SSS+'];
 let active=null,remembered=false,storedRevision=null,visible=true,pbs=new Map(),pbDates=new Map(),catalog=null,mapping=null,reverse=new Map(),lastTimes=new Map(),busy=false;
+let source=null,storeToken=null,generation=0,pending=null,refreshing=false,refreshText='',cancelConsent=null;
+let channel;try{channel=new BroadcastChannel('maimai-player-events');}catch{}
+function notify(kind){const value={kind,epoch:storeToken?.epoch,version:storeToken?.version};channel?.postMessage(value);try{localStorage.setItem('maimai-player-event',JSON.stringify({...value,id:crypto.randomUUID()}));}catch{}}
+function invalidate(){generation++;busy=false;pending?.abort();pending=null;refreshing=false;cancelConsent?.();cancelConsent=null;if(typeof refreshButton!=='undefined')refreshButton.disabled=false;}
+function assertCurrent(expected){if(expected!==generation)throw new DOMException('Cancelled','AbortError');}
+async function beginImport(){invalidate();busy=true;const expected=generation;await ready;if(storeToken){storeToken=await storage.begin(storeToken);notify('invalidate');}assertCurrent(expected);return expected;}
 try{visible=sessionStorage.getItem('maimai-generic')!=='1';}catch{}
 const state={recorded:'',grade:new Set(),min:'',max:'',rateMin:'',rateMax:'',lamp:'',sync:''};
 const status=make('div','','player-status');status.id='player-status';status.setAttribute('role','status');status.hidden=true;
@@ -15,19 +21,21 @@ const menu=document.getElementById('settings-actions');document.getElementById('
 function menuItem(id,label,run){const b=make('button',label);b.id=id;b.type='button';b.setAttribute('role','menuitem');b.tabIndex=-1;b.onclick=()=>{window.maimaiSettings?.close();run();};menu?.prepend(b);return b;}
 forgetButton=menuItem('player-forget','Forget remembered player data',()=>forget());
 hideButton=menuItem('player-toggle','Hide player data',()=>{visible=!visible;saveVisibility();changed();});
-const importButton=menuItem('player-import','Import player data',()=>{if(!busy)input.click();});
+const refreshButton=menuItem('player-refresh','Refresh now',()=>refresh(true));refreshButton.hidden=true;
+const importButton=menuItem('player-import','Import player data',()=>{if(!busy)selectSource();});
 const importRow=make('div',undefined,'player-import-row'),help=make('a','?','player-import-help');
 help.href='https://github.com/arussin/maimai-session-report/blob/main/docs/PLAYER_FILE.md';help.target='_blank';help.rel='noopener noreferrer';help.referrerPolicy='no-referrer';help.setAttribute('role','menuitem');help.tabIndex=-1;i18n.attribute(help, 'aria-label', 'About player files — Session Report guide');i18n.attribute(help, 'title', 'Bring scores and retained history from Session Report into this browser. Read the player-file guide.');
 importButton.before(importRow);importRow.append(importButton,help);
 function saveVisibility(){try{if(visible)sessionStorage.removeItem('maimai-generic');else sessionStorage.setItem('maimai-generic','1');}catch{}}
-function db(){return new Promise((resolve,reject)=>{const q=indexedDB.open('maimai-player-data',1);q.onupgradeneeded=()=>q.result.createObjectStore('datasets');q.onsuccess=()=>resolve(q.result);q.onerror=()=>reject(new Error('Device storage is unavailable.'));q.onblocked=()=>reject(new Error('Close other maimai.party tabs to update device storage.'));});}
-async function stored(){const d=await db();try{return await new Promise((resolve,reject)=>{const t=d.transaction('datasets','readonly'),q=t.objectStore('datasets').get('active');q.onsuccess=()=>resolve(q.result);q.onerror=()=>reject(q.error);});}finally{d.close();}}
-async function persist(value){const d=await db();try{await new Promise((resolve,reject)=>{const t=d.transaction('datasets','readwrite'),s=t.objectStore('datasets'),q=s.get('active');let conflict=false;q.onsuccess=()=>{if((q.result?.revision??null)!==storedRevision){conflict=true;t.abort();return;}if(value)s.put(value,'active');else s.delete('active');};t.oncomplete=resolve;t.onabort=()=>reject(new Error(conflict?'Player data changed in another tab. Reload before importing again.':'Device storage could not be updated. Nothing was replaced.'));t.onerror=()=>{};});storedRevision=value?.revision??null;}finally{d.close();}}
-function saveTab(bytes){let text='';for(let i=0;i<bytes.length;i+=32768)text+=String.fromCharCode(...bytes.subarray(i,i+32768));try{sessionStorage.setItem('maimai-player-session',btoa(text));}catch{throw new Error('This tab’s temporary storage is full or unavailable. Nothing was replaced. You can choose “Remember on this device” to use device storage.');}}
+function clearTab(){try{sessionStorage.removeItem('maimai-player-session');}catch{}}
+function saveTab(bytes,epoch=storeToken?.epoch??null){let text='';for(let i=0;i<bytes.length;i+=32768)text+=String.fromCharCode(...bytes.subarray(i,i+32768));try{sessionStorage.setItem('maimai-player-session',JSON.stringify({epoch,bytes:btoa(text)}));}catch{throw new Error('This tab’s temporary storage is full or unavailable. Nothing was replaced. You can choose “Remember on this device” to use device storage.');}}
 function date(ms){return ms==null||ms===0?'Date unknown':new Date(ms).toLocaleString();}
-function changed(){pbs=active?core.current(active).pbs:new Map();pbDates=new Map();if(active)for(const s of Object.values(active.snapshots))for(const cid of Object.keys(s.pbs))pbDates.set(cid,Math.max(pbDates.get(cid)||0,s.capturedAt));lastTimes=new Map();if(active)for(const ref of Object.values(active.plays)){const r=active.records[ref];if(r.timeAchieved!=null)lastTimes.set(r.chartID,Math.max(lastTimes.get(r.chartID)||0,r.timeAchieved));}hideButton.hidden=!active;forgetButton.hidden=!storedRevision;i18n.text(hideButton, visible?'Hide player data':'Show player data');
+function changed(redraw=true){const scroll=[scrollX,scrollY],expandedHistory=[...document.querySelectorAll('.player-pb-toggle[aria-expanded="true"]')].map(node=>node.getAttribute('aria-controls'));pbs=active?core.current(active).pbs:new Map();pbDates=new Map();if(active)for(const s of Object.values(active.snapshots))for(const cid of Object.keys(s.pbs))pbDates.set(cid,Math.max(pbDates.get(cid)||0,s.capturedAt));lastTimes=new Map();if(active)for(const ref of Object.values(active.plays)){const r=active.records[ref];if(r.timeAchieved!=null)lastTimes.set(r.chartID,Math.max(lastTimes.get(r.chartID)||0,r.timeAchieved));}hideButton.hidden=!active;forgetButton.hidden=!storedRevision;i18n.text(hideButton, visible?'Hide player data':'Show player data');
   status.hidden=!active;if(active){const o=core.offer(active);const card=profileCard(o);card.classList.add('player-profile-compact');i18n.attribute(card, 'title', `Captured ${date(o.capturedAt)} · ${o.pbCoverage==='complete'?'Complete PB snapshot':'Partial PB collection'} · Earlier history may be missing`);status.replaceChildren(card,make('small',`${visible?'': 'Hidden · '}${remembered?'Remembered on this device':'This tab only'}`,'player-storage-label'));}
-  document.querySelectorAll('[data-personal-controls]').forEach(n=>n.hidden=!active||!visible);window.dispatchEvent(new Event('maimai-personal-change'));
+  refreshButton.hidden=!source?.autoRefresh;refreshButton.disabled=refreshing;
+  if(active&&source){status.append(external('Session Report',source.url));for(const [label,time]of [['Last checked: {0}',source.lastChecked],['Last successful refresh: {0}',source.lastSuccess],['Source updated: {0}',source.sourceUpdatedAt]])status.append(make('small',window.maimaiI18n?.message(label,[date(time)])||label.replace('{0}',date(time))));}
+  if(refreshText&&active)status.append(make('small',refreshText));
+  document.querySelectorAll('[data-personal-controls]').forEach(n=>n.hidden=!active||!visible);if(redraw){window.dispatchEvent(new Event('maimai-personal-change'));for(const id of expandedHistory){const toggle=document.getElementById(id)?.previousElementSibling;if(toggle?.classList.contains('player-pb-toggle')&&toggle.getAttribute('aria-expanded')==='false')toggle.click();}scrollTo(...scroll);}
 }
 function message(title,body,{success=false}={}){
   dialog.replaceChildren();dialog.classList.add('player-message');dialog.setAttribute('aria-describedby','player-message-body');
@@ -48,33 +56,122 @@ function profileCard(offer){
   card.append(make('span',count?`${count.toLocaleString()} retained ${count===1?'session':'sessions'}`:`${offer.playCount.toLocaleString()} retained ${offer.playCount===1?'play':'plays'}`,'player-profile-history'));
   return card;
 }
-function ask(offer,{file=false,stale=false}={}){return new Promise(resolve=>{dialog.replaceChildren();dialog.classList.remove('player-message');dialog.removeAttribute('aria-describedby');const h=make('h2','Import this profile?');h.id='player-dialog-title';dialog.append(h,profileCard(offer),make('p',`Captured ${date(offer.capturedAt)}`,'player-capture-date'));
+function ask(offer,{file=false,stale=false,connection=null,rememberDefault=true,unmatched=null}={}){return new Promise(resolve=>{dialog.replaceChildren();dialog.classList.remove('player-message');dialog.removeAttribute('aria-describedby');const h=make('h2','Import this profile?');h.id='player-dialog-title';dialog.append(h,profileCard(offer),make('p',`Captured ${date(offer.capturedAt)}`,'player-capture-date'));
   if(stale)dialog.append(make('p','The hosted update was unavailable. This is the snapshot saved in the report.'));
   if(active&&active.player.key!==offer.player.key)dialog.append(make('p','This switches the active player. Different players’ records will not be combined.'));
   if(active&&active.player.key===offer.player.key&&core.offer(active).capturedAt>offer.capturedAt)dialog.append(make('p','Your newer results will be kept. This adds any missing retained history.'));
-  const label=make('label',undefined,'player-remember'),check=make('input');check.type='checkbox';check.checked=remembered&&active?.player.key===offer.player.key;label.append(check,make('span','Remember on this device'));dialog.append(label,make('p','Stored only in your browser.','player-import-privacy'));
+  if(connection)dialog.append(external('Session Report',connection.url),make('p',i18n.verbatim(offer.player.username)),make('p',offer.pbCoverage==='complete'?'Complete PB snapshot':'Partial PB collection'),make('p','Earlier history may be missing'));
+  if(unmatched!==null)dialog.append(make('p',window.maimaiI18n.message('Unmatched PB charts: {0}',[String(unmatched)])));
+  const label=make('label',undefined,'player-remember'),check=make('input');check.type='checkbox';check.checked=connection?rememberDefault:remembered&&active?.player.key===offer.player.key;label.append(check,make('span',connection?'Remember this profile and refresh it when I return':'Remember on this device'));dialog.append(label,make('p','Stored only in your browser.','player-import-privacy'));
   const actions=make('div',undefined,'player-actions'),yes=make('button','Import data'),no=make('button',file?'Cancel':'Not now');actions.append(yes,no);dialog.append(actions);
-  let finished=false;function finish(accept){if(finished)return;finished=true;dialog.removeEventListener('cancel',cancel);dialog.close();resolve({accept,remember:check.checked});}function cancel(e){e.preventDefault();finish(false);}dialog.addEventListener('cancel',cancel);yes.onclick=()=>finish(true);no.onclick=()=>finish(false);if(!dialog.open)dialog.showModal();yes.focus();
+  if(connection){const label=()=>i18n.text(yes,check.checked?'Import & remember':'Import once');check.onchange=label;label();}
+  let finished=false;function finish(accept){if(finished)return;finished=true;cancelConsent=null;dialog.removeEventListener('cancel',cancel);dialog.close();resolve({accept,remember:check.checked});}function cancel(e){e.preventDefault();finish(false);}cancelConsent=()=>finish(false);dialog.addEventListener('cancel',cancel);yes.onclick=()=>finish(true);no.onclick=()=>finish(false);if(!dialog.open)dialog.showModal();yes.focus();
 });}
-async function commit(data,remember){const next=active?.player.key===data.player.key?await core.merge(active,data):await core.reconcile(data);const bytes=await core.encode(next);if(remember){await persist({revision:next.revision,bytes});try{sessionStorage.removeItem('maimai-player-session');}catch{}}else saveTab(bytes);active=next;remembered=remember;visible=true;saveVisibility();changed();}
-async function forget(){if(busy)return;busy=true;try{await persist(null);remembered=false;changed();message('Player data forgotten','Your saved profile has been removed from this device. You can keep using it in this tab.',{success:true});}catch(e){message('Could not forget data',e.message);}finally{busy=false;}}
-const ready=(async()=>{let failed=false,saved;try{saved=await stored();storedRevision=saved?.revision??null;}catch{failed=true;}try{const temporary=sessionStorage.getItem('maimai-player-session');if(temporary){if(temporary.length>Math.ceil(core.MAX_COMPRESSED*4/3)+4)throw new Error('Oversized temporary data');active=await core.reconcile(await core.decode(Uint8Array.from(atob(temporary),c=>c.charCodeAt(0))));}else if(saved){active=await core.reconcile(await core.decode(saved.bytes));remembered=true;}}catch{failed=true;}changed();if(failed&&!active){status.hidden=false;i18n.text(status, 'Saved data could not be loaded. You can still import a player file for this tab.');}})();
-input.onchange=async()=>{const file=input.files[0];input.value='';if(!file||busy)return;busy=true;try{await ready;if(file.size>core.MAX_COMPRESSED)throw new Error('Player file exceeds 32 MiB.');const data=await core.decode(await file.arrayBuffer()),choice=await ask(core.offer(await core.reconcile(data)),{file:true});if(choice.accept)await commit(data,choice.remember);}catch(e){message('Player data could not be imported',e.message);}finally{busy=false;}};
+async function commit(data,remember,{connection=null,expected=generation,automatic=false,lease=null}={}){
+  const next=active?.player.key===data.player.key?await core.merge(active,data):await core.reconcile(data);
+  if(connection&&core.offer(data).capturedAt>=core.offer(next).capturedAt){next.player=structuredClone(data.player);const {revision,...body}=next;next.revision=await core.digest(body);}
+  const bytes=await core.encode(next);assertCurrent(expected);
+  if(remember){if(!storeToken)throw new Error('Device storage is unavailable.');storeToken=await storage.save({revision:next.revision,bytes,source:connection},storeToken,lease);storedRevision=storeToken.revision;assertCurrent(expected);clearTab();notify('saved');}
+  else{if(storeToken)await storage.verify(storeToken);assertCurrent(expected);
+    if(remembered&&source&&connection?.url===source.url){
+      const previous=sessionStorage.getItem('maimai-player-session');saveTab(bytes,storeToken.epoch+1);
+      try{storeToken=await storage.forget(storeToken);}catch(e){if(previous===null)clearTab();else sessionStorage.setItem('maimai-player-session',previous);throw e;}
+      storedRevision=null;notify('forgotten');assertCurrent(expected);
+    }else saveTab(bytes);
+  }
+  active=next;remembered=remember;source=remember?connection:null;refreshText='';if(!automatic){visible=true;saveVisibility();}changed();
+}
+async function forget(){invalidate();busy=false;try{storeToken=await storage.forget();storedRevision=null;clearTab();remembered=false;source=null;refreshText='';notify('forgotten');changed();message('Player data forgotten','The saved profile and connection were removed. You can keep viewing these scores in this tab; automatic refresh is off.',{success:true});}catch(e){message('Could not forget data',e.message);}}
+const ready=(async()=>{let failed=false,saved;try{const state=await storage.read();saved=state.active;storeToken=state.token;storedRevision=storeToken.revision;}catch{failed=true;}try{let temporary=sessionStorage.getItem('maimai-player-session');if(temporary){if(temporary.length>Math.ceil(core.MAX_COMPRESSED*4/3)+128)throw new Error('Oversized temporary data');const entry=temporary.startsWith('{')?JSON.parse(temporary):{epoch:0,bytes:temporary};if(entry.epoch!==(storeToken?.epoch??null)){clearTab();temporary=null;}else active=await core.reconcile(await core.decode(Uint8Array.from(atob(entry.bytes),c=>c.charCodeAt(0))));}if(!temporary&&saved){active=await core.reconcile(await core.decode(saved.bytes));remembered=true;try{source=sources.validateSource(saved.source??null,active.player.key);}catch{source=null;}}}catch{failed=true;}changed();if(failed&&!active){status.hidden=false;i18n.text(status, 'Saved data could not be loaded. You can still import a player file for this tab.');}})();
+input.onchange=async()=>{const file=input.files[0];input.value='';if(!file||busy)return;busy=true;let expected;try{expected=await beginImport();if(file.size>core.MAX_COMPRESSED)throw new Error('Player file exceeds 32 MiB.');const data=await core.decode(await file.arrayBuffer());assertCurrent(expected);const choice=await ask(core.offer(await core.reconcile(data)),{file:true});if(choice.accept)await commit(data,choice.remember,{expected});}catch(e){if(e.name!=='AbortError')message('Player data could not be imported',e.message);}finally{if(expected===generation||expected===undefined)busy=false;}};
+
+function external(label,url){const link=make('a',label);link.href=url;link.target='_blank';link.rel='noopener noreferrer';link.referrerPolicy='no-referrer';return link;}
+function unmatchedPBs(data){const ids=new Set([...reverse.values()].flat());return [...core.current(data).pbs.keys()].filter(id=>data.player.provider!=='kamaitachi'||!ids.has(id)).length;}
+async function selectSource(){
+  await ready;
+  invalidate();dialog.replaceChildren();dialog.classList.remove('player-message');dialog.removeAttribute('aria-describedby');
+  const heading=make('h2','Import player data');heading.id='player-dialog-title';
+  const group=make('fieldset',undefined,'player-source-options');group.append(make('legend','Choose a source'));
+  const fields=make('div',undefined,'player-source-fields'),actions=make('div',undefined,'player-actions'),next=make('button','Continue'),cancel=make('button','Cancel');
+  let selected=source?'report':'file',rememberChoice=true;
+  for(const [value,label]of [['file','Upload a file'],['report','Hosted Session Report'],['maishift','Maishift']]){
+    const row=make('label'),radio=make('input');radio.type='radio';radio.name='player-source';radio.value=value;radio.checked=value===selected;radio.onchange=()=>{selected=value;render();};row.append(radio,make('span',label));group.append(row);
+  }
+  function render(){fields.replaceChildren();next.disabled=selected==='maishift';
+    if(selected==='file'){fields.append(make('p','Choose a compressed player file exported by Session Report.'));next.onclick=()=>{dialog.close();input.click();};}
+    else if(selected==='maishift')fields.append(make('p','Maishift import is not available yet. Full record access and exact chart matching are still being verified.'),external('Maishift','https://maimai.shiftpsh.com/en'));
+    else{
+      const label=make('label','Hosted Session Report URL'),url=make('input');url.type='url';url.id='player-report-url';url.autocomplete='off';url.spellcheck=false;url.maxLength=2048;url.value=source?.url||'';label.append(url);
+      const remember=make('label',undefined,'player-remember'),check=make('input');check.type='checkbox';check.checked=rememberChoice;check.onchange=()=>rememberChoice=check.checked;remember.append(check,make('span','Remember this profile and refresh it when I return'));
+      fields.append(label,make('p','Public reports can refresh automatically. Reports that require sign-in use Open in Party from the report.'),remember,external('Session Report guide','https://github.com/arussin/maimai-session-report/blob/main/docs/PLAYER_FILE.md'));
+      next.onclick=()=>importReport(url.value,rememberChoice);
+    }
+  }
+  cancel.onclick=()=>{dialog.close();window.maimaiSettings?.focus();};actions.append(next,cancel);dialog.append(heading,group,fields,actions);render();if(!dialog.open)dialog.showModal();group.querySelector(':checked')?.focus();
+}
+async function importReport(value,rememberChoice){
+  if(busy)return;let parsed;try{parsed=sources.reportURL(value);}catch(e){message('Player data could not be imported',e.message);return;}
+  if(!parsed.manifest){reportRecovery(parsed.url);return;}
+  busy=true;let expected,reading=false;try{
+    expected=await beginImport();pending=new AbortController();message('Reading public player data','You can cancel this request.');
+    const cancel=()=>{if(expected===generation)invalidate();},close=dialog.querySelector('button');close.addEventListener('click',cancel);dialog.addEventListener('cancel',cancel);dialog.addEventListener('close',cancel);
+    let result;try{reading=true;result=await sources.readReport(parsed.manifest,{signal:pending.signal});reading=false;}finally{close.removeEventListener('click',cancel);dialog.removeEventListener('cancel',cancel);dialog.removeEventListener('close',cancel);}
+    assertCurrent(expected);const choice=await ask(core.offer(await core.reconcile(result.data)),{file:true,connection:result.source,rememberDefault:rememberChoice,unmatched:unmatchedPBs(result.data)});
+    if(choice.accept)await commit(result.data,choice.remember,{connection:result.source,expected});
+  }catch(e){if(e.name!=='AbortError'){if(reading)reportRecovery(parsed.url);else message('Player data could not be imported',e.message);}}
+  finally{if(expected===generation||expected===undefined){busy=false;pending=null;}}
+}
+function reportRecovery(url){message('Open your Session Report','The public source could not be read. Open the report to use its import or download controls.');dialog.querySelector('.player-message-actions').prepend(external('Open report',url));}
+async function refresh(manual=false){
+  await ready;if(!source||!remembered||busy||refreshing||document.visibilityState!=='visible'||!navigator.onLine||document.querySelector('dialog[open]')||handoffPending)return;
+  refreshing=true;const expected=generation;let lease;try{
+    lease=await storage.claim(storeToken,manual);assertCurrent(expected);if(!lease){if(manual){refreshText='Please wait before refreshing again.';changed(false);}return;}
+    refreshing=true;pending=new AbortController();refreshText='Checking for updated player data…';changed(false);
+    const result=await sources.readReport(source.url,{signal:pending.signal,expectedPlayer:active.player.key});assertCurrent(expected);const now=Date.now();
+    const updated={...source,...result.source,lastAttempt:lease.active.source.lastAttempt,lastChecked:now,lastSuccess:now,retryAt:null};
+    const older=core.offer(result.data).capturedAt<(source.sourceUpdatedAt??0);
+    if(result.data.revision===source.sourceRevision||older){
+      source=await storage.finish(storeToken,lease.id,{lastChecked:now,lastSuccess:now,retryAt:null});assertCurrent(expected);
+    }else await commit(result.data,true,{connection:updated,expected,automatic:true,lease:lease.id});
+    refreshText=older?'The source returned older data. Your saved data was kept.':'Your saved data is up to date.';
+  }catch(e){if(expected===generation&&e.name!=='AbortError'){
+    refreshText='Could not refresh — showing your saved data';if(lease)try{source=await storage.finish(storeToken,lease.id,{retryAt:e.retryAt??Date.now()+sources.AUTO_INTERVAL});}catch{}
+  }}finally{if(expected===generation){refreshing=false;pending=null;changed(false);}}
+}
+async function receiveUpdate(event){
+  if(!['saved','forgotten','invalidate'].includes(event?.kind))return;
+  if(event.kind==='forgotten'&&Number.isSafeInteger(event.epoch)&&event.epoch>(storeToken?.epoch??0)){
+    invalidate();busy=false;clearTab();remembered=false;source=null;storedRevision=null;refreshText='The saved profile and connection were removed. You can keep viewing these scores in this tab; automatic refresh is off.';changed(false);
+  }
+  await ready;try{const state=await storage.read();if(state.token.epoch===(storeToken?.epoch??0)&&state.token.version<=(storeToken?.version??0))return;
+    const forgotten=state.token.epoch!==(storeToken?.epoch??0),wasRemembered=remembered;invalidate();busy=false;storeToken=state.token;storedRevision=storeToken.revision;
+    if(forgotten){clearTab();remembered=false;source=null;refreshText='The saved profile and connection were removed. You can keep viewing these scores in this tab; automatic refresh is off.';}
+    else if(wasRemembered&&state.active&&event.kind==='saved'){
+      const expected=generation,data=await core.reconcile(await core.decode(state.active.bytes));assertCurrent(expected);active=data;source=sources.validateSource(state.active.source??null,data.player.key);
+    }
+    changed(event.kind!=='invalidate');
+  }catch{/* A failed notification never replaces the current in-memory data. */}
+}
+if(channel)channel.onmessage=event=>receiveUpdate(event.data);
+window.addEventListener('storage',event=>{if(event.key==='maimai-player-event')try{receiveUpdate(JSON.parse(event.newValue));}catch{}});
+window.addEventListener('online',()=>refresh());window.addEventListener('focus',()=>refresh());document.addEventListener('visibilitychange',()=>refresh());
+ready.then(()=>refresh());
 
 // An opener is only given readiness/acceptance. No remembered scores or account
 // details are returned to an originating report. Payload arrives over a port.
 const url=new URL(location.href),fragment=new URLSearchParams(url.hash.slice(1)),nonce=fragment.get('party-import');
+let handoffPending=!!(nonce&&/^[a-f0-9-]{36}$/.test(nonce)&&window.opener);
 if(nonce&&/^[a-f0-9-]{36}$/.test(nonce)&&window.opener){
   fragment.delete('party-import');url.hash=fragment.toString();history.replaceState(null,'',url);
   const opener=window.opener;let connected=false,tries=0;const announce=()=>{if(!connected&&tries++<40)opener.postMessage({protocol,type:'ready',nonce},'*');else clearInterval(timer);};const timer=setInterval(announce,500);
   window.addEventListener('message',async function receive(event){if((event.origin!=='null'&&!/^https?:\/\//.test(event.origin))||connected||event.source!==opener||event.data?.protocol!==protocol||event.data?.type!=='offer'||event.data?.nonce!==nonce||!event.ports[0])return;
     connected=true;clearInterval(timer);window.removeEventListener('message',receive);const port=event.ports[0];port.start();let ownsImport=false;
-    try{await ready;if(busy)throw new Error('Another import is in progress. Please try again.');busy=true;ownsImport=true;const offer=core.validateOffer(event.data.offer);
+    let expected;try{await ready;if(busy)throw new Error('Another import is in progress. Please try again.');busy=true;ownsImport=true;expected=await beginImport();const offer=core.validateOffer(event.data.offer);
       if(active&&!core.needsUpdate(active,offer)){visible=true;saveVisibility();changed();port.postMessage({type:'reused'});port.close();busy=false;return;}
       const choice=await ask(offer,{stale:event.data.stale===true});if(!choice.accept){visible=false;saveVisibility();changed();port.postMessage({type:'declined'});port.close();busy=false;return;}
       const bytes=await new Promise((resolve,reject)=>{const timeout=setTimeout(()=>reject(new Error('The transfer was interrupted. Download the player file from the report and import it here.')),45000);port.onmessage=e=>{if(e.data?.type==='data'&&e.data.bytes instanceof ArrayBuffer){clearTimeout(timeout);resolve(e.data.bytes);}else if(e.data?.type==='error'){clearTimeout(timeout);reject(new Error('The latest data could not be transferred. Please try again.'));}};port.postMessage({type:'accept'});});
-      const data=await core.decode(bytes);if(!Object.entries(core.offer(data)).every(([key,value])=>key==='profile'&&!Object.hasOwn(offer,key)||core.canonical(value)===core.canonical(offer[key])))throw new Error('The report sent a different dataset from the one offered.');await commit(data,choice.remember);port.postMessage({type:'imported'});
-    }catch(e){port.postMessage({type:'error'});message('Player data could not be imported',e.message);}finally{port.close();if(ownsImport)busy=false;}
+      const data=await core.decode(bytes);if(!Object.entries(core.offer(data)).every(([key,value])=>key==='profile'&&!Object.hasOwn(offer,key)||core.canonical(value)===core.canonical(offer[key])))throw new Error('The report sent a different dataset from the one offered.');await commit(data,choice.remember,{expected});port.postMessage({type:'imported'});
+    }catch(e){port.postMessage({type:'error'});if(e.name!=='AbortError')message('Player data could not be imported',e.message);}finally{port.close();handoffPending=false;if(ownsImport&&(expected===generation||expected===undefined))busy=false;}
   });announce();
 }
 
@@ -82,9 +179,9 @@ function configure(data,providerMapping){catalog=data;mapping=providerMapping||d
   if(['provider-mapping-1','provider-mapping-2'].includes(mapping?.schema_version))for(const [cid,row]of Object.entries(mapping.charts||{})){const c=byId.get(row.chart_id);if(c&&(mapping.schema_version==='provider-mapping-1'?c.source_hash===row.source_hash:['reviewed','legacy_published'].includes(row.acceptance_basis)&&c.format===row.format&&c.difficulty===row.difficulty)){if(!reverse.has(c.chart_id))reverse.set(c.chart_id,[]);reverse.get(c.chart_id).push(cid);}}
   changed();
 }
-function providerID(c){const ids=reverse.get(c.chart_id)||[];return ids.filter(id=>pbs.has(id)).sort((a,b)=>(pbDates.get(b)||0)-(pbDates.get(a)||0)||Number(!!mapping.charts[a].aliasOf)-Number(!!mapping.charts[b].aliasOf)||a.localeCompare(b))[0]||ids[0]||null;}
+function providerID(c){if(active?.player.provider!=='kamaitachi')return null;const ids=reverse.get(c.chart_id)||[];return ids.filter(id=>pbs.has(id)).sort((a,b)=>(pbDates.get(b)||0)-(pbDates.get(a)||0)||Number(!!mapping.charts[a].aliasOf)-Number(!!mapping.charts[b].aliasOf)||a.localeCompare(b))[0]||ids[0]||null;}
 function record(c){return visible&&active?pbs.get(providerID(c))||null:null;}
-function lastPlayed(c){if(!visible||!active)return null;const times=(reverse.get(c.chart_id)||[]).map(id=>lastTimes.get(id)).filter(v=>v!=null);return times.length?Math.max(...times):null;}
+function lastPlayed(c){if(!visible||!active||active.player.provider!=='kamaitachi')return null;const times=(reverse.get(c.chart_id)||[]).map(id=>lastTimes.get(id)).filter(v=>v!=null);return times.length?Math.max(...times):null;}
 function gradeNode(value){
   const kind=/^SSS/.test(value)?'rainbow':/^S/.test(value)?'gold':/^A/.test(value)?'red':/^B/.test(value)?'blue':'unknown';
   const node=make('span',undefined,'player-grade grade-'+kind);node.setAttribute('role','img');i18n.attribute(node, 'aria-label', value||'Grade unknown');

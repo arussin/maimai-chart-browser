@@ -1,0 +1,37 @@
+name: Maishift contract investigation
+on:
+  workflow_dispatch:
+    inputs:
+      canary_url:
+        description: Owner or maintainer approved public Maishift canary URL
+        required: true
+        type: string
+      canary_approved:
+        description: This profile is explicitly approved for this one test
+        required: true
+        default: false
+        type: boolean
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
+        with:
+          node-version: '22'
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+        working-directory: tests/browser
+      - run: npx playwright install --with-deps chromium
+        working-directory: tests/browser
+      - name: Inspect transport without logging player data
+        env:
+          MAISHIFT_CANARY_URL: ${{ inputs.canary_url }}
+          MAISHIFT_CANARY_APPROVED: ${{ inputs.canary_approved }}
+        run: node scripts/probe_maishift.mjs
+# Intentionally no schedule, issue permission, alert posting or artifacts.
+# Exit 2 currently means the full-PB integration contract remains unverified.

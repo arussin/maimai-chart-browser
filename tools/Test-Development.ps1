@@ -1,4 +1,4 @@
-param([ValidateSet('python','browser','prepare')][string]$Check='python')
+param([ValidateSet('python','browser','prepare')][string]$Check='python', [string]$TestFile='', [string]$BrowserProject='')
 $ErrorActionPreference='Stop'
 . (Join-Path $PSScriptRoot 'Use-DevelopmentEnvironment.ps1') -Install
 $workspace=Join-Path $RegistryCache ('workspaces\'+[DateTime]::UtcNow.ToString('yyyyMMddTHHmmssfff')+'-'+[guid]::NewGuid().ToString('N').Substring(0,8))
@@ -17,7 +17,7 @@ try {
  elseif($Check -eq 'browser') {
   & $RegistryPython tests/browser/prepare.py;if($LASTEXITCODE){throw 'Fixture setup failed'}
   Push-Location tests/browser
-  try {& npm.cmd ci --ignore-scripts --no-audit --no-fund;if($LASTEXITCODE){throw 'Browser dependencies failed'};& npm.cmd test;if($LASTEXITCODE){throw 'Browser tests failed'}}finally{Pop-Location}
+  try {& npm.cmd ci --ignore-scripts --no-audit --no-fund;if($LASTEXITCODE){throw 'Browser dependencies failed'};$testArgs=@('test','--');if($TestFile){$testArgs+=$TestFile};if($BrowserProject){$testArgs+=@('--project',$BrowserProject)};& npm.cmd @testArgs;if($LASTEXITCODE){throw 'Browser tests failed'}}finally{Pop-Location}
  }
  [pscustomobject]@{Source=$RegistrySource;Workspace=$workspace;Check=$Check;Passed=$true;EditingLocation=$RegistrySource}|ConvertTo-Json
 }finally{Pop-Location}
