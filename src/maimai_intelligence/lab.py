@@ -123,6 +123,7 @@ def build_lab(package_directory, output, *, catalog_version):
         "localization.js",
         "settings-menu.js",
         "player-data-core.js",
+        "player-maishift.js",
         "player-sources.js",
         "player-storage.js",
         "player-data.js",
@@ -217,7 +218,8 @@ def build_lab(package_directory, output, *, catalog_version):
         "https://static.cloudflareinsights.com https://js.stripe.com "
         "https://*.js.stripe.com https://checkout.stripe.com; "
         "style-src 'self' 'unsafe-inline'; "
-        "connect-src 'self' https: https://www.google-analytics.com https://region1.google-analytics.com "
+        "connect-src 'self' https: https://www.google-analytics.com "
+        "https://region1.google-analytics.com "
         "https://cloudflareinsights.com/cdn-cgi/rum https://api.stripe.com "
         "https://checkout.stripe.com https://link.com https://*.link.com; "
         "img-src 'self' data: https://www.google-analytics.com "

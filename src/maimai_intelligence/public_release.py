@@ -51,6 +51,7 @@ PUBLIC_FILES = (
     "stripe-wordmark.svg",
     "view-navigation.js",
     "player-data-core.js",
+    "player-maishift.js",
     "player-sources.js",
     "player-storage.js",
     "player-data.js",

@@ -42,7 +42,8 @@
     "README.ko.md": "16f88597ed58e405c4b14c820bca9e21b6341f9f3a131a3a1a164c83b48e3e93",
     "README.ja.md": "a52749c6cd74759fd9a732a607fc7fc0defdd7958e3cd1f127a229c015a4f482",
     "src/maimai_intelligence/assets/locales/share.json": "20585e67f1443547ae3ba6b164a38b634f5b233f846f40d51af98ee9da825839",
-    "src/maimai_intelligence/assets/locales/player-sources.json": "6223dd50b4a37e09dc9af00ba08fa655ca1105b9b2ac20f7be17bc262e1c0012"
+    "src/maimai_intelligence/assets/locales/player-sources.json": "6223dd50b4a37e09dc9af00ba08fa655ca1105b9b2ac20f7be17bc262e1c0012",
+    "src/maimai_intelligence/assets/locales/player-maishift.json": "1498060d0bd3bf8d1bb5ef8e80c5548cd58619ae3dfe7a4e009e42599485172f"
   },
   "documentation": {
     "source": "README.md",
@@ -82,5 +83,17 @@
     ],
     "entries": 41,
     "scope": "New player source catalog only. Checked remembering consent, assisted-report copy, unavailable Maishift wording, PB terminology and unchanged placeholders."
+  },
+  "maishift_proxy_review": {
+    "reviewer": "Codex",
+    "date": "2026-09-21",
+    "method": "AI linguistic review in source-selector, preview and error contexts; not native-speaker certification.",
+    "locales": [
+      "zh-Hans",
+      "ko",
+      "ja"
+    ],
+    "entries": 15,
+    "scope": "Reviewed the new Maishift catalog for public-profile and proxy disclosure, game region independent of language, retained-data error wording, PB observations without sessions, and unchanged {0} placeholders. No song titles or aliases changed."
   }
 }

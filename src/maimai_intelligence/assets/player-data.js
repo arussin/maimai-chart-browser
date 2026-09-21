@@ -33,7 +33,7 @@ function date(ms){return ms==null||ms===0?'Date unknown':new Date(ms).toLocaleSt
 function changed(redraw=true){const scroll=[scrollX,scrollY],expandedHistory=[...document.querySelectorAll('.player-pb-toggle[aria-expanded="true"]')].map(node=>node.getAttribute('aria-controls'));pbs=active?core.current(active).pbs:new Map();pbDates=new Map();if(active)for(const s of Object.values(active.snapshots))for(const cid of Object.keys(s.pbs))pbDates.set(cid,Math.max(pbDates.get(cid)||0,s.capturedAt));lastTimes=new Map();if(active)for(const ref of Object.values(active.plays)){const r=active.records[ref];if(r.timeAchieved!=null)lastTimes.set(r.chartID,Math.max(lastTimes.get(r.chartID)||0,r.timeAchieved));}hideButton.hidden=!active;forgetButton.hidden=!storedRevision;i18n.text(hideButton, visible?'Hide player data':'Show player data');
   status.hidden=!active;if(active){const o=core.offer(active);const card=profileCard(o);card.classList.add('player-profile-compact');i18n.attribute(card, 'title', `Captured ${date(o.capturedAt)} · ${o.pbCoverage==='complete'?'Complete PB snapshot':'Partial PB collection'} · Earlier history may be missing`);status.replaceChildren(card,make('small',`${visible?'': 'Hidden · '}${remembered?'Remembered on this device':'This tab only'}`,'player-storage-label'));}
   refreshButton.hidden=!source?.autoRefresh;refreshButton.disabled=refreshing;
-  if(active&&source){status.append(external('Session Report',source.url));for(const [label,time]of [['Last checked: {0}',source.lastChecked],['Last successful refresh: {0}',source.lastSuccess],['Source updated: {0}',source.sourceUpdatedAt]])status.append(make('small',window.maimaiI18n?.message(label,[date(time)])||label.replace('{0}',date(time))));}
+  if(active&&source){status.append(external(source.type==='maishift'?'Maishift':'Session Report',source.url));for(const [label,time]of [['Last checked: {0}',source.lastChecked],['Last successful refresh: {0}',source.lastSuccess],['Source updated: {0}',source.sourceUpdatedAt]])status.append(make('small',window.maimaiI18n?.message(label,[date(time)])||label.replace('{0}',date(time))));}
   if(refreshText&&active)status.append(make('small',refreshText));
   document.querySelectorAll('[data-personal-controls]').forEach(n=>n.hidden=!active||!visible);if(redraw){window.dispatchEvent(new Event('maimai-personal-change'));for(const id of expandedHistory){const toggle=document.getElementById(id)?.previousElementSibling;if(toggle?.classList.contains('player-pb-toggle')&&toggle.getAttribute('aria-expanded')==='false')toggle.click();}scrollTo(...scroll);}
 }
@@ -60,7 +60,8 @@ function ask(offer,{file=false,stale=false,connection=null,rememberDefault=true,
   if(stale)dialog.append(make('p','The hosted update was unavailable. This is the snapshot saved in the report.'));
   if(active&&active.player.key!==offer.player.key)dialog.append(make('p','This switches the active player. Different players’ records will not be combined.'));
   if(active&&active.player.key===offer.player.key&&core.offer(active).capturedAt>offer.capturedAt)dialog.append(make('p','Your newer results will be kept. This adds any missing retained history.'));
-  if(connection)dialog.append(external('Session Report',connection.url),make('p',i18n.verbatim(offer.player.username)),make('p',offer.pbCoverage==='complete'?'Complete PB snapshot':'Partial PB collection'),make('p','Earlier history may be missing'));
+  if(connection)dialog.append(external(connection.type==='maishift'?'Maishift':'Session Report',connection.url),make('p',i18n.verbatim(offer.player.username)),make('p',offer.pbCoverage==='complete'?'Complete PB snapshot':'Partial PB collection'),make('p','Earlier history may be missing'));
+  if(connection?.type==='maishift')dialog.append(make('p',connection.region==='jp'?'Game region: Japan':'Game region: International'),make('p',window.maimaiI18n.message('Records excluded for missing chart identity: {0}',[String(connection.diagnosticCount)])),make('p','Only PB observations are imported. Play dates and sessions are unavailable.'));
   if(unmatched!==null)dialog.append(make('p',window.maimaiI18n.message('Unmatched PB charts: {0}',[String(unmatched)])));
   const label=make('label',undefined,'player-remember'),check=make('input');check.type='checkbox';check.checked=connection?rememberDefault:remembered&&active?.player.key===offer.player.key;label.append(check,make('span',connection?'Remember this profile and refresh it when I return':'Remember on this device'));dialog.append(label,make('p','Stored only in your browser.','player-import-privacy'));
   const actions=make('div',undefined,'player-actions'),yes=make('button','Import data'),no=make('button',file?'Cancel':'Not now');actions.append(yes,no);dialog.append(actions);
@@ -68,6 +69,12 @@ function ask(offer,{file=false,stale=false,connection=null,rememberDefault=true,
   let finished=false;function finish(accept){if(finished)return;finished=true;cancelConsent=null;dialog.removeEventListener('cancel',cancel);dialog.close();resolve({accept,remember:check.checked});}function cancel(e){e.preventDefault();finish(false);}cancelConsent=()=>finish(false);dialog.addEventListener('cancel',cancel);yes.onclick=()=>finish(true);no.onclick=()=>finish(false);if(!dialog.open)dialog.showModal();yes.focus();
 });}
 async function commit(data,remember,{connection=null,expected=generation,automatic=false,lease=null}={}){
+  if(connection?.type==='maishift'&&active?.player.key===data.player.key){
+    const current=core.current(active).pbs,observations=core.current(data).pbs;
+    const unchanged=[...observations].every(([id,r])=>core.canonical(current.get(id))===core.canonical(r)&&core.canonical(active.charts[id])===core.canonical(data.charts[id]));
+    if(unchanged){data={...active,player:data.player};const {revision,...body}=data;data.revision=await core.digest(body);}
+    else if(core.offer(data).capturedAt<=core.offer(active).capturedAt)throw new Error('Maishift changed records without a newer source timestamp. Your saved data was kept.');
+  }
   const next=active?.player.key===data.player.key?await core.merge(active,data):await core.reconcile(data);
   if(connection&&core.offer(data).capturedAt>=core.offer(next).capturedAt){next.player=structuredClone(data.player);const {revision,...body}=next;next.revision=await core.digest(body);}
   const bytes=await core.encode(next);assertCurrent(expected);
@@ -93,15 +100,22 @@ async function selectSource(){
   const heading=make('h2','Import player data');heading.id='player-dialog-title';
   const group=make('fieldset',undefined,'player-source-options');group.append(make('legend','Choose a source'));
   const fields=make('div',undefined,'player-source-fields'),actions=make('div',undefined,'player-actions'),next=make('button','Continue'),cancel=make('button','Cancel');
-  let selected=source?'report':'file',rememberChoice=true;
+  let selected=source?.type||'file',rememberChoice=true;
   for(const [value,label]of [['file','Upload a file'],['report','Hosted Session Report'],['maishift','Maishift']]){
     const row=make('label'),radio=make('input');radio.type='radio';radio.name='player-source';radio.value=value;radio.checked=value===selected;radio.onchange=()=>{selected=value;render();};row.append(radio,make('span',label));group.append(row);
   }
-  function render(){fields.replaceChildren();next.disabled=selected==='maishift';
+  function render(){fields.replaceChildren();next.disabled=selected==='maishift'&&!sources.capabilities.maishift;
     if(selected==='file'){fields.append(make('p','Choose a compressed player file exported by Session Report.'));next.onclick=()=>{dialog.close();input.click();};}
-    else if(selected==='maishift')fields.append(make('p','Maishift import is not available yet. Full record access and exact chart matching are still being verified.'),external('Maishift','https://maimai.shiftpsh.com/en'));
+    else if(selected==='maishift'&&!sources.capabilities.maishift)fields.append(make('p','Maishift import is not available yet. Full record access and exact chart matching are still being verified.'),external('Maishift','https://maimai.shiftpsh.com/en'));
+    else if(selected==='maishift'){
+      const label=make('label','Maishift handle or profile URL'),url=make('input');url.type='text';url.id='player-maishift-url';url.autocomplete='off';url.spellcheck=false;url.maxLength=2048;url.value=source?.type==='maishift'?source.url:'';label.append(url);
+      const regionLabel=make('label','Game region'),region=make('select');region.append(i18n.option('International','intl'),i18n.option('Japan','jp'));region.value=source?.region||'intl';regionLabel.append(region);
+      const remember=make('label',undefined,'player-remember'),check=make('input');check.type='checkbox';check.checked=rememberChoice;check.onchange=()=>rememberChoice=check.checked;remember.append(check,make('span','Remember this profile and refresh it when I return'));
+      fields.append(label,regionLabel,make('p','Your Maishift profile must be public. Party’s import service reads it when you import or refresh; scores are stored in your browser.'),remember);
+      next.onclick=()=>{let selected;try{selected=window.maimaiPlayerMaishift.location(url.value,region.value);}catch(e){message('Player data could not be imported',e.message);return;}importReport(selected,rememberChoice);};
+    }
     else{
-      const label=make('label','Hosted Session Report URL'),url=make('input');url.type='url';url.id='player-report-url';url.autocomplete='off';url.spellcheck=false;url.maxLength=2048;url.value=source?.url||'';label.append(url);
+      const label=make('label','Hosted Session Report URL'),url=make('input');url.type='url';url.id='player-report-url';url.autocomplete='off';url.spellcheck=false;url.maxLength=2048;url.value=source?.type==='report'?source.url:'';label.append(url);
       const remember=make('label',undefined,'player-remember'),check=make('input');check.type='checkbox';check.checked=rememberChoice;check.onchange=()=>rememberChoice=check.checked;remember.append(check,make('span','Remember this profile and refresh it when I return'));
       fields.append(label,make('p','Public reports can refresh automatically. Reports that require sign-in use Open in Party from the report.'),remember,external('Session Report guide','https://github.com/arussin/maimai-session-report/blob/main/docs/PLAYER_FILE.md'));
       next.onclick=()=>importReport(url.value,rememberChoice);
@@ -110,15 +124,15 @@ async function selectSource(){
   cancel.onclick=()=>{dialog.close();window.maimaiSettings?.focus();};actions.append(next,cancel);dialog.append(heading,group,fields,actions);render();if(!dialog.open)dialog.showModal();group.querySelector(':checked')?.focus();
 }
 async function importReport(value,rememberChoice){
-  if(busy)return;let parsed;try{parsed=sources.reportURL(value);}catch(e){message('Player data could not be imported',e.message);return;}
-  if(!parsed.manifest){reportRecovery(parsed.url);return;}
+  if(busy)return;let parsed;try{parsed=typeof value==='object'?{...value,type:'maishift'}:sources.reportURL(value);}catch(e){message('Player data could not be imported',e.message);return;}
+  if(parsed.type!=='maishift'&&!parsed.manifest){reportRecovery(parsed.url);return;}
   busy=true;let expected,reading=false;try{
     expected=await beginImport();pending=new AbortController();message('Reading public player data','You can cancel this request.');
     const cancel=()=>{if(expected===generation)invalidate();},close=dialog.querySelector('button');close.addEventListener('click',cancel);dialog.addEventListener('cancel',cancel);dialog.addEventListener('close',cancel);
-    let result;try{reading=true;result=await sources.readReport(parsed.manifest,{signal:pending.signal});reading=false;}finally{close.removeEventListener('click',cancel);dialog.removeEventListener('cancel',cancel);dialog.removeEventListener('close',cancel);}
+    let result;try{reading=true;result=await sources.readSource(parsed.type==='maishift'?parsed:{type:'report',url:parsed.manifest},{signal:pending.signal});reading=false;}finally{close.removeEventListener('click',cancel);dialog.removeEventListener('cancel',cancel);dialog.removeEventListener('close',cancel);}
     assertCurrent(expected);const choice=await ask(core.offer(await core.reconcile(result.data)),{file:true,connection:result.source,rememberDefault:rememberChoice,unmatched:unmatchedPBs(result.data)});
     if(choice.accept)await commit(result.data,choice.remember,{connection:result.source,expected});
-  }catch(e){if(e.name!=='AbortError'){if(reading)reportRecovery(parsed.url);else message('Player data could not be imported',e.message);}}
+  }catch(e){if(e.name!=='AbortError'){if(reading&&parsed.type!=='maishift')reportRecovery(parsed.url);else message('Player data could not be imported',e.message);}}
   finally{if(expected===generation||expected===undefined){busy=false;pending=null;}}
 }
 function reportRecovery(url){message('Open your Session Report','The public source could not be read. Open the report to use its import or download controls.');dialog.querySelector('.player-message-actions').prepend(external('Open report',url));}
@@ -127,11 +141,11 @@ async function refresh(manual=false){
   refreshing=true;const expected=generation;let lease;try{
     lease=await storage.claim(storeToken,manual);assertCurrent(expected);if(!lease){if(manual){refreshText='Please wait before refreshing again.';changed(false);}return;}
     refreshing=true;pending=new AbortController();refreshText='Checking for updated player data…';changed(false);
-    const result=await sources.readReport(source.url,{signal:pending.signal,expectedPlayer:active.player.key});assertCurrent(expected);const now=Date.now();
+    const result=await sources.readSource(source,{signal:pending.signal,expectedPlayer:active.player.key,manual});assertCurrent(expected);const now=Date.now();
     const updated={...source,...result.source,lastAttempt:lease.active.source.lastAttempt,lastChecked:now,lastSuccess:now,retryAt:null};
     const older=core.offer(result.data).capturedAt<(source.sourceUpdatedAt??0);
-    if(result.data.revision===source.sourceRevision||older){
-      source=await storage.finish(storeToken,lease.id,{lastChecked:now,lastSuccess:now,retryAt:null});assertCurrent(expected);
+    if(result.data.revision===source.sourceRevision||older||source.type==='maishift'&&result.source.contentRevision===source.contentRevision){
+      source=await storage.finish(storeToken,lease.id,{lastChecked:now,lastSuccess:now,retryAt:null,...(!older&&source.type==='maishift'?{sourceUpdatedAt:result.source.sourceUpdatedAt,diagnosticCount:result.source.diagnosticCount,diagnostics:result.source.diagnostics}: {})});assertCurrent(expected);
     }else await commit(result.data,true,{connection:updated,expected,automatic:true,lease:lease.id});
     refreshText=older?'The source returned older data. Your saved data was kept.':'Your saved data is up to date.';
   }catch(e){if(expected===generation&&e.name!=='AbortError'){

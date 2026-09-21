@@ -39,6 +39,7 @@ def review_scripts():
                 "view-navigation.js",
                 "settings-menu.js",
                 "player-data-core.js",
+                "player-maishift.js",
                 "player-sources.js",
                 "player-storage.js",
                 "player-data.js",

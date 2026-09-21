@@ -14,9 +14,15 @@ function reportURL(value){
 }
 function validateSource(source,playerKey){
   if(source===null)return null;
-  if(!source||source.schemaVersion!==1||source.type!=='report'||source.adapterVersion!==1||source.playerKey!==playerKey||source.autoRefresh!==true||!Number.isSafeInteger(source.generation)||source.generation<0)throw new Error('Invalid saved source connection.');
-  const parsed=reportURL(source.url);
-  if(!parsed.manifest||parsed.manifest!==source.url)throw new Error('Invalid saved source connection.');
+  if(!source||source.schemaVersion!==1||!['report','maishift'].includes(source.type)||source.adapterVersion!==1||source.playerKey!==playerKey||source.autoRefresh!==true||!Number.isSafeInteger(source.generation)||source.generation<0)throw new Error('Invalid saved source connection.');
+  if(source.type==='report'){
+    const parsed=reportURL(source.url);
+    if(!parsed.manifest||parsed.manifest!==source.url)throw new Error('Invalid saved source connection.');
+  }else{
+    const parsed=globalThis.maimaiPlayerMaishift.location(source.url,source.region);
+    if(parsed.url!==source.url||parsed.handle!==source.handle||playerKey!=='maishift:maimaidx:'+source.region+':'+encodeURIComponent(source.handle)||!Number.isSafeInteger(source.profileCreatedAt)||source.profileCreatedAt<0||!/^[a-f0-9]{64}$/.test(source.contentRevision)||!Array.isArray(source.diagnostics)||source.diagnostics.length>100||!Number.isSafeInteger(source.diagnosticCount)||source.diagnosticCount<source.diagnostics.length||source.diagnosticCount>20000)throw new Error('Invalid saved source connection.');
+    if(source.diagnostics.some(d=>!Number.isSafeInteger(d.rowIndex)||d.rowIndex<0||d.rowIndex>=20000||d.reason!=='insufficient_chart_identity'))throw new Error('Invalid saved source connection.');
+  }
   for(const name of ['lastAttempt','lastChecked','lastSuccess','sourceUpdatedAt','retryAt'])if(source[name]!==null&&(!Number.isSafeInteger(source[name])||source[name]<0))throw new Error('Invalid saved source connection.');
   if(!/^[a-f0-9]{64}$/.test(source.sourceRevision))throw new Error('Invalid saved source connection.');
   return source;
@@ -49,5 +55,18 @@ async function readReport(value,{signal=new AbortController().signal,expectedPla
   if(!Object.entries(offer).every(([key,value])=>key==='profile'&&!Object.hasOwn(meta,key)||core.canonical(value)===core.canonical(meta[key])))throw new Error('The report sent a different dataset from the one offered.');
   signal.throwIfAborted();return {data,source:connection(parsed.manifest,data)};
 }
-globalThis.maimaiPlayerSources=Object.freeze({capabilities,reportURL,validateSource,connection,readReport,AUTO_INTERVAL,MANUAL_INTERVAL,retryAfter});
+async function readMaishift(value,{signal=new AbortController().signal,manual=true,expectedPlayer=null,previous=null}={}){
+  if(!capabilities.maishift)throw new Error('Maishift import is not available yet. Full record access and exact chart matching are still being verified.');
+  const adapter=globalThis.maimaiPlayerMaishift,selected=adapter.location(value.url||value.handle,value.region);
+  const response=await fetch('/api/player-import/maishift',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({handle:selected.handle,region:selected.region,manual}),credentials:'omit',referrerPolicy:'no-referrer',cache:'no-store',redirect:'error',signal:AbortSignal.any([signal,AbortSignal.timeout(45000)])});
+  if(!response.ok){const error=new Error('Maishift could not be read. Your saved data was kept. Try again later or open your public profile.');if(response.status===429||response.status===503)error.retryAt=retryAfter(response.headers.get('Retry-After'));throw error;}
+  if(!/^application\/json(?:;|$)/i.test(response.headers.get('Content-Type')||'')||Number(response.headers.get('Content-Length'))>4*1024*1024)throw new Error('Maishift returned an unsupported response. Your saved data was kept.');
+  const raw=await core.bounded(response.body,4*1024*1024);let envelope;try{envelope=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(raw));}catch{throw new Error('Maishift returned an unsupported response. Your saved data was kept.');}
+  const result=await adapter.normalize(envelope,selected),data=result.data;
+  if(expectedPlayer&&data.player.key!==expectedPlayer||previous&&result.createdAt!==previous.profileCreatedAt)throw new Error('The source now identifies a different player. Import it again to confirm the switch.');
+  const source={...connection(selected.url,data),type:'maishift',handle:selected.handle,region:selected.region,profileCreatedAt:result.createdAt,sourceUpdatedAt:result.updatedAt,contentRevision:await core.digest({charts:data.charts,records:data.records}),diagnostics:result.diagnostics,diagnosticCount:result.coverage.diagnosticCount};
+  signal.throwIfAborted();return {data,source};
+}
+function readSource(source,options={}){return source.type==='maishift'?readMaishift(source,{...options,previous:source.profileCreatedAt===undefined?null:source}):readReport(source.url,options);}
+globalThis.maimaiPlayerSources=Object.freeze({capabilities,reportURL,validateSource,connection,readReport,readMaishift,readSource,AUTO_INTERVAL,MANUAL_INTERVAL,retryAfter});
 })();

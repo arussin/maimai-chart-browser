@@ -66,6 +66,7 @@ def build_capacity_fixture(root: Path, count: int = 7000):
         "stripe-wordmark.svg",
         "view-navigation.js",
         "player-data-core.js",
+        "player-maishift.js",
         "player-sources.js",
         "player-storage.js",
         "player-data.js",
