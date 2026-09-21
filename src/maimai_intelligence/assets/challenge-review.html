@@ -14,12 +14,15 @@ __FAVICON__
 <p class="catalog-total"><strong id="loaded-count"></strong> charts<span id="catalog-era" title="Coverage of the retained research source, not a complete current-game song list.">Research catalog</span></p></div>
 <div class="catalog-controls"><label class="search-field">Search songs
 <input id="search" type="search" placeholder="Song, romaji title or artist…"></label>
-<div class="format-switch" role="group" aria-label="Chart format">
+<div id="personal-scope-slot"></div>
+</div>
+<fieldset id="catalog-filters" class="filter-disclosure is-collapsed">
+<legend><button id="catalog-filters-toggle" class="player-filter-toggle" type="button" aria-controls="catalog-filter-content" aria-expanded="false"><span>Filters</span><small id="catalog-filter-count" class="player-filter-count"></small><span class="player-filter-chevron" aria-hidden="true"></span></button></legend>
+<div class="filter-disclosure-actions"><span id="catalog-filters-empty" class="filter-empty">No filters selected</span><div id="active-filters" class="active-filters" role="group" aria-label="Active filters"></div><button id="reset-filters" hidden type="button" class="filter-disclosure-clear" aria-label="Clear filters" title="Clear filters">Clear</button></div>
+<div id="catalog-filter-content" class="player-filter-reveal"><div class="player-filter-body" inert><div class="browser-filters"><div class="format-switch" role="group" aria-label="Chart format">
 <button id="format-all" aria-pressed="true">All charts</button>
 <button id="format-STD" aria-pressed="false">STD</button>
-<button id="format-DX" aria-pressed="false">DX</button></div>
-<button id="reset-filters" class="text-button">Reset filters</button></div>
-<div class="browser-filters"><div class="filter-row">
+<button id="format-DX" aria-pressed="false">DX</button></div><div class="filter-row">
 <label>Genre<select id="filter-genre"><option value="">All genres</option></select></label>
 <div class="version-field"><span id="version-label">Version</span>
 <details id="version-filter"><summary id="version-summary" aria-labelledby="version-label version-summary">All versions</summary>
@@ -44,11 +47,12 @@ __FAVICON__
 <div class="pattern-filter-toolbar"><p>Match any selected pattern.</p><button id="pattern-filter-clear" type="button" class="text-button">Clear patterns</button></div>
 <p id="pattern-filter-count" class="muted" role="status"></p><div id="pattern-filter-options" role="group" aria-labelledby="pattern-filter-label"></div>
 <p id="pattern-filter-empty" hidden>No patterns match this search.</p></div></details></div></div></div></div>
+</div></div></fieldset>
 <p id="catalog-count" class="sr-only" role="status"></p>
 <div class="sort-toolbar">
-<div id="sort-rules" class="sort-priorities" role="group" aria-label="Sort priorities"></div>
-<label class="check"><input id="sort-keep" type="checkbox">Keep sort priorities</label></div>
-<div id="active-filters" class="active-filters" role="group" aria-label="Active filters"></div>
+<label class="check"><input id="sort-keep" type="checkbox">Enable multi-sorting</label>
+<div id="sort-rules" class="sort-priorities" role="group" aria-label="Sort priorities"></div></div>
+
 
 <div class="column-labels" role="group" aria-label="Sort by column"><button data-sort-key="title">Song / artist</button><button data-sort-key="difficulty">Difficulty</button><button data-sort-key="constant">Source constant</button><button data-sort-key="bpm">BPM</button><button data-sort-key="speed">Inputs / s</button><button data-sort-key="peak">Flow · peak</button></div>
 <div id="songs"></div><button id="more">Show more songs</button></section>

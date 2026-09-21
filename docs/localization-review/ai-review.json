@@ -29,7 +29,7 @@
     "src/maimai_intelligence/assets/locales/errors.json": "8d606884cd61cfef308458f60bccdfb124a725140e4827ef1edba6b3621128f5",
     "src/maimai_intelligence/assets/locales/invariants.json": "f5e35d4246b0e45c9fb21bfd265248fa1d735556e6cc3d076a784b6118c0aab7",
     "src/maimai_intelligence/assets/locales/lessons.json": "11c862874f1a6599defe50faf9973f909af473960079d798d93bc1c02c686cf4",
-    "src/maimai_intelligence/assets/locales/messages.json": "a934a51bf75b4e7f68357e32e59f65a61a9e78b08cc020fa75b97633491a3a61",
+    "src/maimai_intelligence/assets/locales/messages.json": "e9b7612b233d9bb682253dbe826ec8586ada3255933c04aaa43f157974f3337a",
     "src/maimai_intelligence/assets/locales/pattern-aliases.json": "7f19ccf69917c8ae5414d68986339e6136b6d756e6a2460cdb3d6b15f964be3d",
     "src/maimai_intelligence/assets/locales/patterns.json": "ace85290f6d7ac0190b9aadcab30bba72b88c613cb1a7dca97fe26aff2716dfb",
     "src/maimai_intelligence/assets/locales/player.json": "54b74fc2b934d066b612681224dce80bfeaf6409bc78a4795247837876a080b2",
@@ -76,6 +76,13 @@
       "reviewer": "Codex",
       "date": "2026-09-21",
       "scope": "AI contextual review of six shorter import messages in English, Simplified Chinese, Korean and Japanese. Preserved public-only disclosure, browser storage, remembering consent, game region and PB terminology. Details remain available without crowding the preview. Not native-speaker certification."
+    },
+    {
+      "date": "2026-09-21",
+      "reviewer": "Codex",
+      "method": "AI review of changed filter and sorting copy in UI context; not native-speaker certification",
+      "scope": "Filter disclosures, selected-filter summaries, and multi-sorting in zh-Hans, ko, and ja",
+      "record": "docs/localization-review/filter-disclosures-20260921.md"
     }
   ],
   "player_sources_review": {

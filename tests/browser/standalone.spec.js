@@ -1,4 +1,15 @@
 import {test,expect} from '@playwright/test';
+
+// Existing control tests exercise the remembered-open state. Disclosure tests
+// below separately cover first visits and persistence across pages.
+test.beforeEach(async({page},testInfo)=>{
+  if(testInfo.title.startsWith('filter disclosures'))return;
+  await page.addInitScript(()=>{
+    if(location.pathname==='/')return; // The separate report app has no filter disclosures.
+    localStorage.setItem('maimai-catalog-filters-collapsed','0');
+    localStorage.setItem('maimai-personal-filters-collapsed','0');
+  });
+});
 import AxeBuilder from '@axe-core/playwright';
 import {readFile} from 'node:fs/promises';
 // Resolve fixtures from repository root rather than the browser's served directory.
@@ -394,8 +405,8 @@ test('clean headings, filter placement and lesson actions align without overflow
         textBottom:button.lastElementChild.getBoundingClientRect().bottom,
       }))};
   });
-  expect(layout.keep.top).toBeGreaterThanOrEqual(layout.priorities.bottom);
-  expect(layout.keep.top-layout.priorities.bottom).toBeLessThanOrEqual(8);
+  expect(layout.priorities.top).toBeGreaterThanOrEqual(layout.keep.bottom);
+  expect(layout.priorities.top-layout.keep.bottom).toBeLessThanOrEqual(8);
   expect(Math.abs(layout.keep.left-layout.priorities.left)).toBeLessThan(1);
   if(layout.width>800){
     expect(layout.level.top).toBeGreaterThan(layout.genre.bottom);

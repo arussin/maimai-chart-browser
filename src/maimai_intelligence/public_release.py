@@ -29,6 +29,7 @@ SEARCH_DESCRIPTION = (
 )
 CANONICAL_URL = "https://maimai.party/"
 PUBLIC_FILES = (
+    "version-magical.png",
     "index.html",
     "localization.js",
     "localization.css",

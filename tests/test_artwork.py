@@ -43,6 +43,7 @@ class ArtworkTests(unittest.TestCase):
                 validate_artwork(art, catalog, [])
             page = build_lab(source, root / "site", catalog_version="artwork-v1")
             html = page.read_text("utf-8")
+            self.assertTrue((root / "site/version-magical.png").read_bytes().startswith(b"\x89PNG"))
             self.assertIn("img-src 'self' data:", html)
             path = next(iter(art["assets"]))
             self.assertEqual((root / "site" / path).read_bytes(), (source / path).read_bytes())

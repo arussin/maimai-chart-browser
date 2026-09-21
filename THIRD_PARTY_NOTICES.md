@@ -155,3 +155,7 @@ hashes are retained in `assets/share-icons-source.json`. The [license text](docs
 is retained locally. Brand names and marks belong to their respective owners;
 their use identifies sharing destinations and does not imply endorsement.
 No Simple Icons, AddToAny, or social-provider request is made to render these icons.
+
+### MAGiCAL version logo
+
+The bundled MAGiCAL logo comes from [SEGA’s official maimai site](https://maimai.sega.jp/storage/root/logo.png), retrieved September 21, 2026. The PNG SHA-256 is `9f659f914d7d8c7fea2a49331166748ade47dfc0f194e9d8c54e9878878966d7`. It is served unchanged from this site for release identification; ownership remains with SEGA and the respective rights holders. This display fallback does not change retained catalog data.

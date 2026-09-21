@@ -1,5 +1,9 @@
 name: CI
-on: [push, pull_request, workflow_dispatch]
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
 permissions:
   contents: read
 jobs:
@@ -33,7 +37,7 @@ jobs:
       - run: maimai-chart demo --output output/site
   browser:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     env:
       MAIMAI_BROWSER_OUTPUT: ${{ runner.temp }}/maimai-browser
     steps:

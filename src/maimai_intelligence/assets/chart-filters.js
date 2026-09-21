@@ -2,6 +2,19 @@
 (()=>{'use strict';
 const i18n=window.maimaiI18n||{text:(node,value)=>node.textContent=value,attribute:(node,key,value)=>node.setAttribute(key,value),option:(...args)=>new Option(...args),literal:(node,value)=>node.textContent=value};
 
+// Shared disclosure behavior for catalog and personal filters.
+window.maimaiFilterDisclosure=(root,toggle,body,key)=>{
+  const hint=document.createElement('small');hint.className='filter-disclosure-hint';hint.setAttribute('aria-hidden','true');toggle.insertBefore(hint,toggle.lastElementChild);
+  let expanded=false;
+  try{expanded=(localStorage.getItem(key)??sessionStorage.getItem(key))==='0';}catch{}
+  function update(){
+    toggle.setAttribute('aria-expanded',String(expanded));root.classList.toggle('is-collapsed',!expanded);body.inert=!expanded;
+    i18n.text(hint,expanded?'Collapse':'Expand');i18n.attribute(toggle,'title',expanded?'Click to collapse':'Click to expand');
+    i18n.attribute(root,'title',expanded?'':'Click to expand');
+  }
+  toggle.onclick=()=>{expanded=!expanded;update();try{localStorage.setItem(key,expanded?'0':'1');}catch{}};
+  update();
+};
 const el=id=>document.getElementById(id);
 const number=value=>{
   const text=String(value??'').normalize('NFKC').trim();
@@ -89,6 +102,7 @@ function mount(charts,onChange){
       const value=number(chart.level);return value!=null&&value>=levels[low]&&value<=levels[high];
     },
     clear(){selected.clear();updateDifficulties();clearLevels();},
+    activeCount(){return Number(selected.size>0)+Number(low>0)+Number(high<levels.length-1);},
     chips(){
       const result=[];
       function chip(text,aria,remove){const button=document.createElement('button');button.className='filter-chip';i18n.text(button, text+' ×');i18n.attribute(button, 'aria-label', aria);button.onclick=remove;result.push(button);}
