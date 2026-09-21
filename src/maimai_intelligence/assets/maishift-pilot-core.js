@@ -60,7 +60,9 @@ function create({mapping,targets,build,fetcher=fetch,now=Date.now}){
       const response=await fetcher(PATH,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({handle:location.handle,region:location.region,manual:true}),credentials:'omit',referrerPolicy:'no-referrer',redirect:'error',cache:'no-store',signal});
       if(!response.ok){
         if(response.status===429||response.status===503){const raw=response.headers.get('Retry-After'),time=/^\d+$/.test(raw||'')?now()+Number(raw)*1000:Date.parse(raw||'');retryAt=Math.max(retryAt,Number.isSafeInteger(time)?time:now()+900000);}
-        await response.body?.cancel();throw Error(response.status===429?'cooldown':response.status===503?'service_unavailable':'source_failed');
+        let regionMismatch=false;
+        if(response.status===409&&/^application\/json(?:;|$)/i.test(response.headers.get('Content-Type')||''))try{const bytes=await core.bounded(response.body,2048);regionMismatch=JSON.parse(new TextDecoder().decode(bytes)).error==='region_mismatch';}catch{}
+        await response.body?.cancel().catch(()=>{});throw Error(regionMismatch?'region_mismatch':response.status===429?'cooldown':[405,501,503].includes(response.status)?'service_unavailable':'source_failed');
       }
       if(!/^application\/json(?:;|$)/i.test(response.headers.get('Content-Type')||'')||Number(response.headers.get('Content-Length'))>MAX){await response.body?.cancel();throw Error('invalid_response');}
       const reader=response.body?.getReader();if(!reader)throw Error('invalid_response');
@@ -84,7 +86,7 @@ function create({mapping,targets,build,fetcher=fetch,now=Date.now}){
       if(phase==='confirmed')confirmed=snapshot;
       return report();
     }catch(error){
-      const safe=['cooldown','service_unavailable','source_failed','invalid_response','cancelled'];
+      const safe=['cooldown','service_unavailable','source_failed','invalid_response','cancelled','region_mismatch'];
       const code=signal.aborted||expected!==generation?'cancelled':safe.includes(error.message)?error.message:'source_failed';
       if(expected===generation)lastError=code;
       throw Error(code);

@@ -84,6 +84,7 @@
   },
   "coverage": "The full tracks and export loaders agree on all 2010 International and 200 Japan played PBs for the approved official sample. Completeness for other users is unverified. Use partial PB observations; no invented plays.",
   "identity": "The supplied username plus provider and region identifies the public source. It is not proof of account ownership and cannot detect reassigned usernames.",
+  "regionFallback": "A user-approved profile returned ASIA when JAPAN was requested on 2026-09-21. Reject known mismatches with region_mismatch before fetching tracks; never relabel or silently switch the selected region. The identifying profile and payload are not retained in this fixture.",
   "chronology": "Profile dates are observed record metadata. Strict update ordering and atomic full-track snapshots across real uploads, corrections and version changes remain unverified; release stays disabled.",
   "displayMetadata": "Empty title or artist strings exist. Preserve known provider chart identity with empty display metadata; do not discard these PBs.",
   "omitted": [

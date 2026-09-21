@@ -1,4 +1,6 @@
 {"messages":{
+"This preview is only available on this computer. Nothing is sent automatically.":{"zh-Hans":"此预览仅可在本机访问。不会自动发送任何内容。","ko":"이 미리보기는 이 컴퓨터에서만 볼 수 있습니다. 자동으로 전송되는 내용은 없습니다.","ja":"このプレビューは、このコンピューターでのみ表示できます。自動送信は行われません。"},
+"Maishift returned a different game region. Try the other region.":{"zh-Hans":"Maishift 返回了另一个游戏地区的数据。请尝试切换游戏地区。","ko":"Maishift가 다른 게임 지역의 데이터를 반환했습니다. 다른 지역을 선택해 보세요.","ja":"Maishift から別のゲーム地域のデータが返されました。もう一方の地域を選んでください。"},
 "Maishift pilot test":{"zh-Hans":"Maishift 试用测试","ko":"Maishift 시범 테스트","ja":"Maishift 試験運用テスト"},
 "Help test a real upload before Maishift imports are released.":{"zh-Hans":"在 Maishift 导入功能发布前，帮助测试一次真实上传。","ko":"Maishift 가져오기 기능 출시 전에 실제 업로드를 테스트해 주세요.","ja":"Maishift インポートの公開前に、実際のアップロードをテストしてください。"},
 "Test scores stay in this tab until you clear or close it. Nothing is added to your saved player data.":{"zh-Hans":"测试成绩仅保留在此标签页中，清除或关闭后即消失。不会添加到您已保存的玩家数据中。","ko":"테스트 점수는 지우거나 탭을 닫을 때까지 이 탭에만 남습니다. 저장된 플레이어 데이터에는 추가되지 않습니다.","ja":"テスト中のスコアは、消去するかタブを閉じるまでこのタブ内だけに保持されます。保存済みのプレイヤーデータには追加されません。"},

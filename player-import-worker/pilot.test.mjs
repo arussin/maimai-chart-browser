@@ -70,3 +70,12 @@ test('selected source stays fixed and version transitions are only tester-declar
   assert.equal(f.pilot.report().declaredChange,'version');assert.equal(f.pilot.report().versionTransition,'tester-declared');
   assert.equal(f.pilot.report().outcome,'needs_changed_upload');
 });
+
+test('a static preview without the API explains the unavailable service',async()=>{
+  const f=fixture();f.setFetch(async()=>new Response('Unsupported method',{status:501}));
+  await assert.rejects(f.capture(),/service_unavailable/);assert.equal(f.pilot.report().baseline,null);
+});
+test('a source region mismatch is explained without committing or silently switching source',async()=>{
+  const f=fixture();f.setFetch(async()=>Response.json({error:'region_mismatch'},{status:409}));
+  await assert.rejects(f.capture(),/region_mismatch/);assert.equal(f.pilot.report().baseline,null);assert.equal(f.pilot.report().region,null);
+});

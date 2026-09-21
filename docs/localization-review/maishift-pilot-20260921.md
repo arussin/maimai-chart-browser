@@ -22,3 +22,10 @@ states, overflow and control clipping at 320px. The page uses the site's existin
 language controls; no network translation is involved. Automated checks establish
 coverage/layout, not linguistic fluency. The canonical review record contains the
 catalog fingerprint and this review's scope.
+
+Follow-up: reviewed two additional messages (53 total) for a source-region
+mismatch and the local-only preview notice in all four languages. The wording
+does not claim that a failed Japan read is an International import, and the local
+notice no longer describes a loopback preview as a public link. Existing game
+region terminology is preserved. Narrow-browser tests also exercise the translated
+region error while keeping the earlier baseline visible.

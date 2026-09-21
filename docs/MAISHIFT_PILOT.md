@@ -151,6 +151,36 @@ and additional API calls. Output is an allowlisted aggregate. It saves no trace,
 screenshot or browser-state export, and never claims genuine-upload acceptance.
 No live smoke run, workflow dispatch, schedule or alert has been activated.
 
+## Working local preview
+
+A plain static server displays this page but cannot handle its POST requests.
+Use `tools/Start-MaishiftPilot.ps1 -ProfileUrl <approved-public-URL> -Region intl`
+instead. It builds in DevCache and serves both page and importer at
+`http://127.0.0.1:8895/pilot/maishift/`. Use `-Region jp` only when testing Japan
+data. It runs until stopped, with no startup entry, public route or deployment.
+
+The local gateway verifies exact loopback Host/Origin, refuses credentials and
+arbitrary URLs, checks the artifact manifest and permits only the explicitly
+selected username/region. Six reads and the 30-second cooldown apply across tabs
+for that server lifetime. Its in-memory coordinator is a development substitute,
+not evidence of deployed Cloudflare rate limiting or Durable Object behavior.
+To test a different profile/region, stop it and start with that explicit selection.
+No profile content or raw errors are written to server logs or disk.
+
+Profile URLs may end at the username, optionally with a trailing slash, as well
+as `/home`, `/records` or `/export`. Other hosts, query strings, fragments and
+region conflicts remain rejected. A reviewed public profile-root redirect
+established the shorter URL form. An observed requested-Japan response returned
+`region: ASIA`; the reader now reports `region_mismatch` and stops before reading
+tracks instead of relabeling those scores or silently switching regions.
+
+One user-supplied public profile was verified through the visible local browser
+on September 21: International returned 1,719 played PBs, all exactly matched,
+zero unmatched and zero excluded. The Japan fallback remained rejected. Only
+these aggregate results are recorded here; there was no raw player artifact or
+screenshot. This is baseline access evidence, not changed-upload, deployed-origin
+or general-release acceptance.
+
 ## Validation and remaining gates
 
 The deterministic suite drives the actual proxy contract and browser adapter

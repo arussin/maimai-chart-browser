@@ -25,6 +25,41 @@ and deployment artifact. Its baseline/upload/stability sequence collects the
 missing evidence without writing experimental data into saved Party history.
 It is not published and does not enable the normal import or announcement.
 
+## Local preview repair and real-account baseline — September 21
+
+The initial loopback preview was a static server: its API POST returned 501.
+The replacement `tools/Start-MaishiftPilot.ps1` serves the verified artifact and
+the existing bounded reader locally, restricted to the expressly selected public
+username/region. It validates local Host/Origin, denies credentials/arbitrary
+URLs, shares cooldown/attempt limits across tabs and never publishes a route.
+The page now states that this preview is local-only. Production origin validation
+and disabled release/announcement flags remain unchanged.
+
+The supplied profile-root URL is now accepted, consistent with the observed
+redirect to `/home`. A user-selected Japan read returned International (`ASIA`)
+metadata; this mismatch now has an explicit localized error and still stops
+before fetching tracks. A subsequent International baseline was verified in the
+user's visible browser: **1,719 played PBs, 1,719 exact matches, zero unmatched,
+zero excluded**. No actual score payload, profile identifier or real-account
+screenshot was retained in repository artifacts. This does not verify genuine
+changed uploads, snapshot atomicity or deployed Cloudflare operation.
+
+The active preview artifact is DevCache workspace
+`pilot-preview-20260921T205248260-29ee9adb`, build
+`27bc2d01233e810decaf64b2e84a1479154a7dc81020827c8df82be9db18f64f`.
+This supersedes the initial pilot artifact below for the repaired UI/adapter.
+Worker/local-preview checks: **31 passed**, workspace
+`20260921T205444596-8cab72ba`. Existing Maishift import/refresh/Forget checks:
+**112 passed**, in `20260921T205443981-8b327332`. The accompanying pilot matrix
+initially reported 28 test failures because its clipping assertion treated normal
+scrolling of a long URL inside a native input as overflow. The corrected check
+retains URL-value, field-boundary and button/select-label assertions. The complete
+final pilot matrix then passed **42 tests**, including translated region errors
+at 320px, in `20260921T205701075-7e7cb25e`. Localization coverage/inventory/review
+checks pass with 53 pilot entries. No shared-library/Session Report pin changed.
+Hosted deployment, genuine update/correction/version evidence, operating-limit
+acceptance and general release remain incomplete; other checkout work is separate.
+
 ## Hosted pilot preparation — September 21
 
 The tester's explicit choice is a hosted pilot for a few invited players. The

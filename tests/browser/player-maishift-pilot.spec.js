@@ -24,7 +24,7 @@ async function setup(page,context,locale='en'){
     await route.fulfill({status:response.status,headers:Object.fromEntries(response.headers),body:await response.text()});
   });
   await page.clock.install();await page.goto(entry);await expect(page.locator('#baseline')).toBeEnabled();
-  await page.locator('#profile').fill('fictional-player');return state;
+  await page.locator('#profile').fill('https://maimai.shiftpsh.com/en/profile/fictional-player');return state;
 }
 async function capture(page,id){await page.locator('#'+id).click();await expect(page.locator('#status')).toContainText('Read complete.');}
 async function summary(page){const pending=page.waitForEvent('download');await page.locator('#download').click();const download=await pending,stream=await download.createReadStream(),parts=[];for await(const part of stream)parts.push(part);return JSON.parse(Buffer.concat(parts).toString());}
@@ -37,6 +37,7 @@ test('hosted pilot completes genuine-change steps with sanitized evidence and no
   await page.clock.fastForward(31000);await capture(page,'confirmed');const report=await summary(page);expect(report.outcome).toBe('observed_pass');expect(report.releaseReady).toBe(false);
   for(const value of ['fictional-player','Fictional Player','987654','990001','maishift:intl:'])expect(JSON.stringify(report)).not.toContain(value);
   expect(state.external).toEqual([]);expect(state.calls).toBe(4);
+  await expect(page.locator('#sharing-notice')).toContainText('only available on this computer');
   expect(await page.evaluate(async()=>({dbs:(await indexedDB.databases()).map(d=>d.name),sentinel:localStorage.getItem('unrelated-player-sentinel')}))).toEqual({dbs:[],sentinel:'keep'});
   await page.screenshot({path:testInfo.outputPath('maishift-pilot.png'),fullPage:true});
   await page.locator('#clear').click();expect((await summary(page)).baseline).toBeNull();
@@ -55,6 +56,15 @@ for(const locale of ['en','zh-Hans','ko','ja'])test(`pilot ${locale} controls fi
   if(locale!=='en')await expect(page.locator('h1')).not.toHaveText('Maishift pilot test');
   await page.locator('#consent').focus();await page.keyboard.press('Space');await page.keyboard.press('Tab');await page.keyboard.press('Enter');await expect(page.locator('#results')).toBeVisible();
   expect(state.calls).toBe(1);expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
-  const clipping=await page.locator('button,input,select').evaluateAll(nodes=>nodes.filter(n=>n.getBoundingClientRect().width&&n.scrollWidth>n.clientWidth+2).length);expect(clipping).toBe(0);
+  // A long URL scrolls inside its native single-line field; control labels must fit.
+  const clipping=await page.locator('button,select').evaluateAll(nodes=>nodes.filter(n=>n.getBoundingClientRect().width&&n.scrollWidth>n.clientWidth+2).length);expect(clipping).toBe(0);
+  await expect(page.locator('#profile')).toHaveValue('https://maimai.shiftpsh.com/en/profile/fictional-player');
+  expect(await page.locator('#profile').evaluate(node=>{const r=node.getBoundingClientRect();return r.left>=0&&r.right<=innerWidth;})).toBe(true);
   expect(await page.locator('.language-controls button').evaluateAll(nodes=>nodes.every(n=>n.getBoundingClientRect().width>=44&&n.getBoundingClientRect().height>=44))).toBe(true);
+  state.profile.region='JAPAN';await page.clock.fastForward(31000);await page.locator('#updated').click();
+  const source='Maishift returned a different game region. Try the other region.';
+  const catalog=JSON.parse(await readFile(new URL('../../src/maimai_intelligence/assets/locales/maishift-pilot.json',import.meta.url),'utf8'));
+  await expect(page.locator('#status')).toHaveText(locale==='en'?source:catalog.messages[source][locale]);
+  await expect(page.locator('#results')).toBeVisible();
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
 });

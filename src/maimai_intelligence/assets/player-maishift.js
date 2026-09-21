@@ -7,7 +7,7 @@ function location(value,region){
   let handle=value.trim(),url;
   if(handle.includes('://')){
     try{url=new URL(handle);}catch{throw new Error('Enter a Maishift handle or a public profile URL.');}
-    const match=/^\/(?:en|ko|ja|zh-TW)(?:@(na|intl|jp))?\/profile\/([A-Za-z0-9_-]{1,64})\/(?:home|records|export)$/.exec(url.pathname);
+    const match=/^\/(?:en|ko|ja|zh-TW)(?:@(na|intl|jp))?\/profile\/([A-Za-z0-9_-]{1,64})(?:\/(?:home|records|export))?\/?$/.exec(url.pathname);
     if(url.origin!=='https://maimai.shiftpsh.com'||url.username||url.password||url.port||url.search||url.hash||!match)throw new Error('Enter a Maishift handle or a public profile URL.');
     if(match[1]&&(match[1]==='jp'?'jp':'intl')!==region)throw new Error('The profile URL and selected game region do not match.');
     handle=match[2];

@@ -130,7 +130,13 @@ test('size and time bounds cancel streams, and thrown upstream details stay priv
   const hold=setTimeout(()=>{},1000);try{assert.equal((await slow.service.fetch(request(),slow.env)).status,502);}finally{clearTimeout(hold);}
 });
 test('conservative handles and region-specific URLs never infer region from language',()=>{
+  for(const suffix of ['', '/', '/home', '/home/'])assert.equal(adapter.location('https://maimai.shiftpsh.com/en/profile/fictional-player'+suffix,'intl').handle,input.handle);
   assert.equal(adapter.location('https://maimai.shiftpsh.com/ja/profile/fictional-player/home','intl').region,'intl');
   assert.equal(adapter.location('https://maimai.shiftpsh.com/en@na/profile/fictional-player/records','intl').handle,input.handle);
-  for(const url of ['https://evil.example/en/profile/x/home','https://maimai.shiftpsh.com/en@jp/profile/x/home','https://maimai.shiftpsh.com/en/profile/x:1/home','https://maimai.shiftpsh.com/en/profile/x/home?foo=1'])assert.throws(()=>adapter.location(url,'intl'));
+  for(const url of ['https://evil.example/en/profile/x/home','https://maimai.shiftpsh.com/en@jp/profile/x','https://maimai.shiftpsh.com/en@jp/profile/x/home','https://maimai.shiftpsh.com/en/profile/x:1/home','https://maimai.shiftpsh.com/en/profile/x/home?foo=1','https://maimai.shiftpsh.com/en/profile/x/unknown','https://maimai.shiftpsh.com/en/profile/x#secret'])assert.throws(()=>adapter.location(url,'intl'));
+});
+test('a known region fallback stops before reading tracks and is never relabeled',async()=>{
+  const s=setup({responses:[publicProfile('JAPAN')]});
+  const result=await s.service.fetch(request(),s.env);assert.equal(result.status,409);
+  assert.deepEqual(await result.json(),{error:'region_mismatch'});assert.equal(s.calls.length,1);
 });

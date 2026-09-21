@@ -67,7 +67,8 @@ function timestamp(value) {
 }
 export function profile(value, input) {
   if (value == null || value?.ban?.banned === true || value?.userRecord == null) throw new ImportError('profile_unavailable',404);
-  if (!object(value) || value.handle !== input.handle || value.region !== (input.region === 'jp' ? 'JAPAN' : 'ASIA') || value.versionOverride !== null || value?.ban?.banned !== false) fail();
+  if (!object(value) || value.handle !== input.handle || !['ASIA','JAPAN'].includes(value.region) || value.versionOverride !== null || value?.ban?.banned !== false) fail();
+  if (value.region !== (input.region === 'jp' ? 'JAPAN' : 'ASIA')) throw new ImportError('region_mismatch',409);
   const p = value.userRecord.profile;
   if (!object(p) || !text(p.name,200)) fail();
   const createdAt = timestamp(p.createdAt), updatedAt = timestamp(p.updatedAt);
