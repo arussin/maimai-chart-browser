@@ -1,4 +1,4 @@
-param([ValidateSet('python','browser','prepare')][string]$Check='python', [string]$TestFile='', [string]$BrowserProject='')
+param([ValidateSet('python','browser','worker','prepare')][string]$Check='python', [string]$TestFile='', [string]$BrowserProject='')
 $ErrorActionPreference='Stop'
 . (Join-Path $PSScriptRoot 'Use-DevelopmentEnvironment.ps1') -Install
 $workspace=Join-Path $RegistryCache ('workspaces\'+[DateTime]::UtcNow.ToString('yyyyMMddTHHmmssfff')+'-'+[guid]::NewGuid().ToString('N').Substring(0,8))
@@ -11,9 +11,14 @@ $copyLog='/LOG:'+(Join-Path $workspace 'source-copy.log')
 if($LASTEXITCODE -ge 8){throw 'Source copy failed'}
 $env:PYTHONPATH=(Join-Path $workspace 'src')+[IO.Path]::PathSeparator+$workspace
 $env:MAIMAI_BROWSER_OUTPUT=Join-Path $workspace 'output\browser-tests'
+$env:WRANGLER_SEND_METRICS='false'
 Push-Location $workspace
 try {
  if($Check -eq 'python') {& $RegistryPython -m unittest discover -s tests; if($LASTEXITCODE){throw 'Python tests failed'}}
+ elseif($Check -eq 'worker') {
+  Push-Location player-import-worker
+  try {& npm.cmd ci --no-audit --no-fund;if($LASTEXITCODE){throw 'Worker dependencies failed'};& npm.cmd test;if($LASTEXITCODE){throw 'Worker tests failed'};& npm.cmd run types;if($LASTEXITCODE){throw 'Worker binding types failed'}}finally{Pop-Location}
+ }
  elseif($Check -eq 'browser') {
   & $RegistryPython tests/browser/prepare.py;if($LASTEXITCODE){throw 'Fixture setup failed'}
   Push-Location tests/browser

@@ -5,6 +5,12 @@ Canonical source: C:\Dev\maimai\maimai-chart-browser-registry.
 
 Run tools\Test-Development.ps1 for Python checks, or tools\Test-Development.ps1 -Check browser for browser checks. -Check prepare creates a disposable workspace for other builds. Edit the canonical source only. Each invocation copies the current source, including uncommitted and untracked source, to a new DevCache workspace. It never copies changes back. Environments and bytecode/lint/test caches are separated by source/worktree path. Browser packages live beside source only in the disposable workspace; browser binaries are under C:\DevCache\playwright.
 
+Use `tools\Test-Development.ps1 -Check worker` for the isolated player-import
+Worker's deterministic Node/workerd checks and binding-type generation. It installs
+pinned dependencies only in its DevCache copy, disables Wrangler telemetry, and
+does not deploy or contact Maishift. The separately invoked live contract check
+requires an explicitly approved public canary; see `docs/MAISHIFT_PROXY.md`.
+
 For interactive Python setup, dot-source tools\Use-DevelopmentEnvironment.ps1 -Install, then use $RegistryPython. Use $env:MAIMAI_REGISTRY_OUTPUT or another explicit DevCache output path for new generated output. Do not run legacy README relative-output commands directly in the canonical source.
 
 Preservation: the pre-migration output tree contains published registry snapshots, downloaded provenance, selected artwork and research/audit results. It is retained intact during review; a folder named output is not disposable. The detailed migration register identifies its final disposition. Existing registry/ inputs and Git state remain canonical. No publishing, remote API calls or deployments are implied by setup or tests.

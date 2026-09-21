@@ -57,3 +57,9 @@ jobs:
       - run: npm test
         working-directory: tests/browser
       - run: node --test support-worker/index.test.mjs
+      - run: npm ci --no-audit --no-fund
+        working-directory: player-import-worker
+      - run: npm test
+        working-directory: player-import-worker
+        env:
+          WRANGLER_SEND_METRICS: 'false'

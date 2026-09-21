@@ -1,0 +1,84 @@
+{
+  "version": 1,
+  "status": "observed-candidate-not-public-api",
+  "observedAt": "2026-09-21",
+  "origin": "https://maimai.shiftpsh.com",
+  "functions": {
+    "profile": "8cc17f2a26e01e823beaeca45b578af6db3bd0bc627a603a0add3b0772a33301",
+    "tracks": "4596ec22247ca585a111f9481e9c4ce1f2553f7b0f3fc7b98a4324205365ef54"
+  },
+  "method": "GET",
+  "header": {
+    "x-tsr-serverFn": "true",
+    "Accept": "application/json"
+  },
+  "input": {
+    "handle": "user-selected ASCII handle",
+    "region": [
+      "ASIA",
+      "JAPAN"
+    ]
+  },
+  "encoding": {
+    "name": "observed Seroval subset",
+    "types": {
+      "0": "number in s",
+      "1": "string in s",
+      "2": "constant: 0 null, 1 undefined, 2 true, 3 false",
+      "5": "ISO date in s",
+      "9": "array in a",
+      "10": "object with p.k/p.v",
+      "11": "null-prototype object with p.k/p.v"
+    }
+  },
+  "profileFields": [
+    "handle",
+    "region",
+    "versionOverride",
+    "isPrimaryRegion",
+    "userRecord",
+    "ban"
+  ],
+  "profileMetadata": [
+    "name",
+    "createdAt",
+    "updatedAt"
+  ],
+  "fullTrackFields": [
+    "songs",
+    "tracks"
+  ],
+  "trackFields": {
+    "s": "song array index",
+    "i": "provider numeric track ID",
+    "d": "difficulty",
+    "l": "constant in tenths",
+    "x": "0 means estimated constant",
+    "r": "optional played PB"
+  },
+  "recordFields": {
+    "a": "achievement integer, 1000000 = 100%",
+    "d": "DX score",
+    "m": "maximum DX score",
+    "g": "fractional source rating; no verified lossless integer v1 conversion, so canonical rate is null",
+    "c": "optional combo",
+    "y": "optional sync"
+  },
+  "observedCounts": {
+    "songs": 1472,
+    "charts": 6031,
+    "playedPBs": 2010
+  },
+  "coverage": "Client loads one full track response; independent completeness and stable handle ownership are unverified. Use partial PB observations; no invented plays.",
+  "displayMetadata": "Empty title or artist strings exist. Preserve known provider chart identity with empty display metadata; do not discard these PBs.",
+  "omitted": [
+    "friend code",
+    "avatar",
+    "trophy",
+    "dan/class",
+    "play totals",
+    "plate details",
+    "user/session/auth data"
+  ],
+  "fixtures": "All checked-in fixtures are fictional. Numeric IDs in synthetic tests never authorize chart joins."
+}
