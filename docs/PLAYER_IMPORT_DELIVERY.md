@@ -17,6 +17,9 @@ the supplied username plus game region, with rename/reuse limits documented in
 [the mapping decisions](MAISHIFT_MAPPING_DECISIONS.md). The preview was shortened,
 with secondary copy under native Import details; new validation and fictional
 screenshots are in the proxy delivery.
+The [runtime verification](MAISHIFT_RUNTIME_VERIFICATION.md) now also passes both
+regions in local workerd, adds bounded output expansion and per-isolate admission,
+and separates the remaining upstream chronology and deployed resource gates.
 
 ## Reviewable changes
 
@@ -96,18 +99,26 @@ Native-language human review and real-device mobile checks are not claimed.
 - [x] Keep player data out of analytics/referrers/sharing; maintain separate
   announcement preferences and truthful capability gating.
 - [x] Record deterministic tests and narrow-screen visual review.
-- [ ] Establish a permitted Maishift resource with complete available played PBs,
-  the declared provider/region/username identity, source chronology and completeness.
-- [ ] Freeze observed fixtures, implement normalization/diagnostics, and prove a
-  real-source import with exact chart matching and Party-origin access.
-- [ ] Verify private/missing profiles, interrupted pagination and all newly
-  observed upstream failure cases against that future frozen adapter contract.
+- [x] Establish complete available PB access for the approved official sample in
+  both regions, with the declared provider/region/username source identity.
+- [x] Freeze observed fixtures, implement normalization/diagnostics, and verify
+  real-source imports with exact chart matching in four local browser engines.
+- [x] Test missing/private profiles, login HTML, throttling, interrupted snapshots,
+  bounded output, and decoder failures. The observed full response has no pagination;
+  an unknown changed contract fails closed rather than inventing page requests.
+- [x] Benchmark permitted full samples and larger fictional workloads in local
+  workerd; add output and capacity guards without retaining player payloads.
+- [ ] Verify source chronology across genuine changed uploads, corrections and
+  version changes, and validate full-PB snapshot consistency.
+- [ ] Verify upstream access, CPU/memory/cost limits and log retention in the
+  intended deployed Worker, then test the actual Party-origin endpoint.
 - [ ] Enable and acceptance-test Maishift and the combined announcement only
   after those gates pass. HTML access or Best 50 alone cannot pass.
 - [ ] Obtain a separate owner release action; separately approve proxy deployment,
   monitoring schedule, alert publication and long-term canary.
 
 No deployment, push, maintainer contact, issue update, live workflow dispatch,
-monitoring schedule activation, private-data refresh or proxy was performed.
+monitoring schedule activation or private-data refresh was performed. The
+subsequently approved proxy was implemented and tested locally; it is not deployed.
 See [the source/storage contract](PLAYER_SOURCES.md) and
 [the Maishift investigation](MAISHIFT_INTEGRATION.md) for operational limits.

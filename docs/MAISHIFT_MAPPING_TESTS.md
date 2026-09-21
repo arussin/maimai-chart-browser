@@ -116,8 +116,10 @@ WebKit used 320×800. This is engine/layout coverage, not a physical-device test
 - Validate upstream update-time ordering across genuine changed uploads,
   corrections and version transitions. Current deterministic correction tests
   establish Party behavior, not Maishift's timestamp guarantee.
-- Benchmark the permitted full sample in the intended Worker CPU/memory budget
-  and review rate limits, costs, log retention and deployed upstream access.
+- The [local Worker benchmark](MAISHIFT_RUNTIME_VERIFICATION.md) now passes both
+  permitted regions and adds output/capacity guards. Validate the proposed paid
+  CPU ceiling, memory behavior, costs, log retention and upstream access in the
+  intended deployed environment; local profiling does not clear those gates.
 - Complete owner-approved deployment and browser acceptance of the actual
   same-origin endpoint before enabling Maishift or its announcement.
 

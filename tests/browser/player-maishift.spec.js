@@ -89,6 +89,25 @@ test('unchanged PBs with a newer profile timestamp create no history; corrected 
   state.tracks.tracks[0].r.a=950000;state.profile.userRecord.profile.updatedAt=new Date('2026-09-21T00:00:01Z');await age(page);await refresh(page);
   await expect.poll(async()=>page.evaluate(async()=>{const s=await maimaiPlayerStorage.read();return maimaiPlayerData.current(await maimaiPlayerData.decode(s.active.bytes)).pbs.get('maishift:intl:1').achievement;})).toBe(950000);
 });
+
+test('changed PBs with equal or older source timestamps preserve saved history',async({page,context})=>{
+  const state=await prepare(context);await boot(page);await commit(page);const before=(await saved(page)).active;
+  state.tracks.tracks[0].r.a=950000;
+  for(const [date,status]of [['2026-09-20T00:00:00Z','Could not refresh'],['2026-09-19T00:00:00Z','The source returned older data']]){
+    state.profile.userRecord.profile.updatedAt=new Date(date);
+    await page.evaluate(async()=>{const s=await maimaiPlayerStorage.read();const lease=await maimaiPlayerStorage.claim(s.token,true,Date.now()+1e9);await maimaiPlayerStorage.finish(s.token,lease.id,{lastAttempt:0,retryAt:0});});
+    await refresh(page);await expect(page.locator('#player-status')).toContainText(status);
+    const after=(await saved(page)).active;expect(after.revision).toBe(before.revision);expect(after.source.sourceUpdatedAt).toBe(before.source.sourceUpdatedAt);
+    expect(await page.evaluate(async()=>{const s=await maimaiPlayerStorage.read(),data=await maimaiPlayerData.decode(s.active.bytes);return {achievement:maimaiPlayerData.current(data).pbs.get('maishift:intl:1').achievement,records:Object.keys(data.records).length,plays:Object.keys(data.plays).length};})).toEqual({achievement:987654,records:3,plays:0});
+  }
+});
+
+test('oversized expanded response fails without replacing remembered scores',async({page,context})=>{
+  const state=await prepare(context);await boot(page);await commit(page);const before=(await saved(page)).active.revision;
+  state.tracks={songs:[{title:'界'.repeat(512),artist:'語'.repeat(512),type:'STANDARD'}],tracks:Array.from({length:2000},(_,i)=>({s:0,i:i+1,d:'MASTER',r:{a:1000000}}))};
+  state.profile.userRecord.profile.updatedAt=new Date('2026-09-21T00:00:00Z');await age(page);await refresh(page);
+  await expect(page.locator('#player-status')).toContainText('Could not refresh');expect((await saved(page)).active.revision).toBe(before);
+});
 test('username and region identify refresh; changed snapshot creation date is not a player switch',async({page,context})=>{
   const state=await prepare(context);await boot(page);await commit(page);const before=(await saved(page)).active.revision;
   state.profile.userRecord.profile.createdAt=new Date('2026-02-01T00:00:00Z');state.profile.userRecord.profile.updatedAt=new Date('2026-09-21T00:00:00Z');await age(page);await refresh(page);await expect.poll(async()=>(await saved(page)).active.source.sourceUpdatedAt).toBe(Date.parse('2026-09-21T00:00:00Z'));expect((await saved(page)).active.revision).toBe(before);

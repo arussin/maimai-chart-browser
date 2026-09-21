@@ -64,6 +64,9 @@ redirects, authentication headers and private-report forwarding are unsupported.
 
 - Input: 2 KiB and 5 seconds; upstream: 4 MiB per response, three requests and
   30 seconds total. Decode depth, node counts and collections are also bounded.
+- Output: 4 MiB including the envelope; repeated song metadata is bounded during
+  expansion. No truncated success. Two imports may run per isolate; excess work
+  receives a 30-second retry before upstream access. No score-bearing queue.
 - A required client rate binding starts at 10 requests/minute. Cloudflare’s
   native limiter is local to a data center, not a strict global IP quota.
 - SQLite-backed Durable Objects provide a global per-profile lease (45 seconds),
@@ -119,8 +122,10 @@ not a deployed Cloudflare-to-Maishift connection or completeness for other users
 - [ ] Validate source chronology and full-PB snapshot consistency for release.
 - [x] Exact reviewed region/chart crosswalk with no fabricated or fuzzy joins.
 - [ ] Owner-reviewed deployment, runtime upstream access and platform log retention.
-- [ ] Benchmark a permitted full canary against the selected Worker's CPU/memory
-  budget and configure capacity/cost limits before enabling the route.
+- [x] Benchmark the approved full sample in local workerd; bound output expansion
+  and concurrent imports. See [runtime evidence](MAISHIFT_RUNTIME_VERIFICATION.md).
+- [ ] Verify the proposed paid 1,000-ms CPU cap and memory behavior after owner
+  provisioning; review account-wide abuse/spending limits before enabling.
 - [ ] Final browser acceptance against the deployed same-origin endpoint.
 - [ ] Enable Maishift and the truthful combined announcement only after those gates.
 

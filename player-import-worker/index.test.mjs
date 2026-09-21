@@ -7,6 +7,49 @@ import '../src/maimai_intelligence/assets/player-data-core.js';
 import '../src/maimai_intelligence/assets/player-maishift.js';
 const adapter=globalThis.maimaiPlayerMaishift,core=globalThis.maimaiPlayerData;
 const input={handle:'fictional-player',region:'intl',manual:true};
+
+test('shared multibyte song metadata cannot expand beyond the browser response limit',async()=>{
+  const data={songs:[{title:'界'.repeat(512),artist:'語'.repeat(512),type:'STANDARD'}],
+    tracks:Array.from({length:2000},(_,i)=>({s:0,i:i+1,d:'MASTER',r:{a:1000000}}))};
+  assert.ok(new TextEncoder().encode(JSON.stringify(wire(data))).byteLength<4*1024*1024);
+  assert.throws(()=>minimize(data,{handle:'fictional-player'}),{code:'response_too_large'});
+  const state=setup({responses:[publicProfile(),data,publicProfile()]});
+  const response=await state.service.fetch(request(),state.env);
+  assert.equal(response.status,502);assert.deepEqual(await response.json(),{error:'response_too_large'});
+  assert.equal(state.calls.length,2);assert.equal(state.finishes.length,1);
+});
+
+test('response limit also includes identity, coverage and bounded diagnostics',async()=>{
+  const data={songs:[{title:'界'.repeat(512),artist:'語'.repeat(512),type:'STANDARD'}],tracks:[]};
+  // Find the last whole record which fits the records-only budget. The bounded
+  // diagnostic envelope is larger than one record, so it crosses the final cap.
+  let low=1,high=2000;
+  const fill=count=>Array.from({length:count},(_,i)=>({s:0,i:i+1,d:'MASTER',r:{a:1000000}}));
+  while(low<high){const mid=Math.ceil((low+high)/2);data.tracks=fill(mid);
+    try{minimize(data,{});low=mid;}catch(error){assert.equal(error.code,'response_too_large');high=mid-1;}}
+  data.tracks=fill(low).concat(Array.from({length:100},()=>({r:{}})));
+  const payload=minimize(data,profile(decode(wire(publicProfile())),input));
+  assert.ok(new TextEncoder().encode(JSON.stringify(payload)).byteLength>4*1024*1024);
+  const state=setup({responses:[publicProfile(),data,publicProfile()]});
+  const response=await state.service.fetch(request(),state.env);
+  assert.equal(response.status,502);assert.deepEqual(await response.json(),{error:'response_too_large'});
+  assert.equal(state.calls.length,3);assert.equal(state.finishes.length,1);
+});
+
+test('isolate capacity rejects excess work before upstream reads and releases failed reservations',async()=>{
+  let reads=0,release;
+  const paused=new Promise(resolve=>{release=resolve;});
+  const state=setup({fetcher:async()=>{reads++;await paused;return new Response('unavailable',{status:503});}});
+  const first=state.service.fetch(request(),state.env),second=state.service.fetch(request(),state.env);
+  while(reads<2)await new Promise(resolve=>setTimeout(resolve,1));
+  const excess=await state.service.fetch(request(),state.env);
+  assert.equal(excess.status,429);assert.equal(excess.headers.get('Retry-After'),'30');assert.equal(reads,2);
+  release();assert.deepEqual((await Promise.all([first,second])).map(r=>r.status),[503,503]);
+  state.coordinator.finish=async()=>{throw Error('Fictional coordination failure');};
+  assert.equal((await state.service.fetch(request(),state.env)).status,503);assert.equal(reads,3);
+  assert.equal((await state.service.fetch(request(),state.env)).status,503);assert.equal(reads,4);
+  assert.equal((await state.service.fetch(request(),state.env)).status,503);assert.equal(reads,5);
+});
 const request=(body=input,options={})=>new Request('https://maimai.party'+PATH,{method:'POST',headers:{Origin:'https://maimai.party','Content-Type':'application/json','CF-Connecting-IP':'192.0.2.10'},body:JSON.stringify(body),...options});
 const response=value=>new Response(JSON.stringify(wire(value)),{headers:{'Content-Type':'application/json'}});
 function setup({responses=[publicProfile(),tracks(),publicProfile()],fetcher,timeoutMs}={}){

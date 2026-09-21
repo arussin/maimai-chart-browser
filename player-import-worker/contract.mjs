@@ -1,6 +1,7 @@
 // Frozen, inert subset of the public client's observed transport. Never eval
 // upstream JavaScript or hydrate arbitrary Seroval types. See observed-contract.json.
 export const ORIGIN = 'https://maimai.shiftpsh.com';
+export const MAX_RESPONSE_BYTES = 4 * 1024 * 1024;
 export const FUNCTIONS = Object.freeze({
   profile: '8cc17f2a26e01e823beaeca45b578af6db3bd0bc627a603a0add3b0772a33301',
   tracks: '4596ec22247ca585a111f9481e9c4ce1f2553f7b0f3fc7b98a4324205365ef54',
@@ -75,7 +76,8 @@ export function profile(value, input) {
 }
 export function minimize(value, identity) {
   if (!object(value) || !Array.isArray(value.songs) || !Array.isArray(value.tracks) || value.songs.length > 5000 || value.tracks.length > 20000) fail();
-  const records = [], diagnostics = [], ids = new Set(); let diagnosticCount = 0, played = 0;
+  const records = [], diagnostics = [], ids = new Set(), encoder = new TextEncoder();
+  let diagnosticCount = 0, played = 0, recordBytes = 2;
   for (const [rowIndex,t] of value.tracks.entries()) {
     if (!object(t)) fail();
     if (t.r == null) continue;
@@ -96,8 +98,13 @@ export function minimize(value, identity) {
     if (r.d != null && r.m != null && r.d > r.m) fail();
     if (r.c != null && !combos.has(r.c) || r.y != null && !syncs.has(r.y)) fail();
     if (t.l != null && !integer(t.l,200) || t.dl != null && !text(t.dl,20)) fail();
-    records.push({id:String(t.i),title:song.title,artist:song.artist,format:song.type === 'STANDARD' ? 'STD' : 'DX',difficulty:difficulty[t.d],
-      constant:t.x === 0 ? null : t.l ?? null,level:t.dl ?? '',achievement:r.a ?? null,dxScore:r.d ?? null,maxDxScore:r.m ?? null,rate:null,lamp:r.c ?? '',sync:r.y ?? ''});
+    const record = {id:String(t.i),title:song.title,artist:song.artist,format:song.type === 'STANDARD' ? 'STD' : 'DX',difficulty:difficulty[t.d],
+      constant:t.x === 0 ? null : t.l ?? null,level:t.dl ?? '',achievement:r.a ?? null,dxScore:r.d ?? null,maxDxScore:r.m ?? null,rate:null,lamp:r.c ?? '',sync:r.y ?? ''};
+    // Shared song metadata expands once per PB in the portable response. Bound
+    // that expansion before assembling a potentially much larger JSON body.
+    recordBytes += encoder.encode(JSON.stringify(record)).byteLength + (records.length ? 1 : 0);
+    if (recordBytes > MAX_RESPONSE_BYTES) throw new ImportError('response_too_large');
+    records.push(record);
   }
   records.sort((a,b) => Number(a.id)-Number(b.id));
   return {schemaVersion:1,adapterVersion:1,provider:'maishift',identity,coverage:{kind:'partial',totalCharts:value.tracks.length,playedCharts:played,importedCharts:records.length,diagnosticCount},records,diagnostics};

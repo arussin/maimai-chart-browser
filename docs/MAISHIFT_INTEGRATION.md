@@ -13,6 +13,8 @@ The final local browser runs match all 2,010 International and 200 Japan PBs in
 Chrome, Edge, Firefox and narrow WebKit, with zero unmatched records or plays.
 Source chronology and deployment acceptance remain incomplete. Direct browser
 CORS still fails. The combined `player-import-sources-v1` announcement is unreleased.
+The [local Worker benchmark and chronology follow-up](MAISHIFT_RUNTIME_VERIFICATION.md)
+verify both regional samples in workerd and record output/concurrency safeguards.
 
 The user subsequently approved implementing the described proxy locally. That
 supersedes the earlier proposal-only scope. Deployment, maintainer contact,
@@ -119,8 +121,9 @@ connects each track's `s` to the response's song array and exposes `i` as `track
 fields include level `l`, accuracy flag `x`, and optional `p`; the decoder also
 handles display-level/delta fields. A numeric track ID is provider-local. Its
 cross-release/region stability and relationship to Party's IDs are unestablished.
-The local registry and existing provider crosswalk contain no Maishift entries.
-No title-derived or numeric-ID-derived join was installed.
+At this initial investigation stage, the local registry had no Maishift entries.
+The later [reviewed mapping installation](MAISHIFT_MAPPING_TESTS.md) adds a
+separate guarded crosswalk; it never reuses numeric IDs as Kamaitachi identities.
 
 A played row's `r` contained `a`, `d`, `m`, `g`, and optionally `c`/`y`. The decoder
 labels these achievement, DX score, maximum DX score, rating, combo and sync.
@@ -193,8 +196,9 @@ documented rename/reuse limits in `MAISHIFT_MAPPING_DECISIONS.md`.
 No Maishift IDs currently join the Kamaitachi mapping.
 Existing Kamaitachi keys, datasets, hashes and handoff v1 remain valid.
 
-To clear the gate, validate source chronology and consistency, apply the declared
-username/region identity contract, and install/export the exact reviewed chart crosswalk. The sample’s
+To clear the remaining gate, validate source chronology and consistency and
+complete deployed acceptance. Username/region identity and the exact reviewed
+crosswalk are implemented and locally tested. The sample's
 successful normalization is evidence of extraction, not a proof that every public
 profile or region is complete. `maimaiPlayerSources.capabilities.maishift` remains
 false. There is no fuzzy title matching and no Maishift-to-Kamaitachi ID reuse.
@@ -210,6 +214,11 @@ tracks, profile. Redirects are rejected. Request bounds are 2 KiB input/5 second
 cooldowns, plus longer upstream retry timing. A separate rate binding is required
 for the proposed 10-per-minute client limit. These are Party limits, not published
 Maishift limits.
+Returned JSON also has a 4-MiB bound, checked during record expansion and again
+with its envelope. At most two imports run in one isolate; excess work returns
+a 30-second retry before fetching. The disabled configuration proposes a paid
+1,000-ms CPU cap. [Local measurements](MAISHIFT_RUNTIME_VERIFICATION.md) do not
+establish deployed CPU/memory acceptance or an account-wide spending limit.
 
 No PBs, response bodies, handles, or profile URLs are stored on the server. The
 transient coordination record contains a random lease and times, addressed by a

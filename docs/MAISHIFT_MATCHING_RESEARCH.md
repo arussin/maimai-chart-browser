@@ -85,8 +85,9 @@ charts are ten STD/DX song variants, four difficulties each. Differences are:
 
 Those candidates agree on exact title, official regional jacket filename and
 format/difficulty. The later review preserves all 56 exceptional regional chart
-decisions in `registry/maishift-review-20260921.json`; production installation is
-still pending. No general rule stripping artist credits was implemented.
+decisions in `registry/maishift-review-20260921.json`. Those decisions were
+subsequently installed in the local crosswalk with [browser test evidence](MAISHIFT_MAPPING_TESTS.md).
+No general rule stripping artist credits was implemented.
 
 Numeric track IDs are unique within each response. The regional catalogs have
 **zero overlapping IDs**, so a region namespace is essential. The tracks/export
@@ -148,6 +149,8 @@ Input file SHA256s:
 - `registry/songs.json`: `920322fd9588c4271e8a28372024e6ae092be6ce84c442e8e2c05ab70f7c01aa`
 - `registry/mappings.json`: `008ff0cb21929a2eb96a7fbdbb63df7fc0ae90ea3365e7384453e35d1f10ae50`
 
-Next work is installing/exporting the reviewed crosswalk with conflict detection
-and validating source timestamp semantics. None of these findings alone enables
-the connector or the combined announcement.
+The reviewed crosswalk is now installed/exported with conflict detection.
+[Runtime and chronology verification](MAISHIFT_RUNTIME_VERIFICATION.md) records
+the next stage: local full-profile runtime checks pass, but source chronology and
+deployed acceptance remain incomplete. The connector and combined announcement
+remain disabled.
