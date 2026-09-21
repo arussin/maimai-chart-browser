@@ -319,29 +319,79 @@
       "ja": "有効な軌跡 {0} 本は未描画"
     },
     "POPS & ANIME": {
-      "zh-Hans": "流行与动画",
-      "ko": "POPS & 애니메이션",
+      "zh-Hans": "流行&动漫",
+      "ko": "POPS & ANIME",
       "ja": "POPS＆アニメ"
     },
     "niconico & VOCALOID": {
-      "zh-Hans": "niconico 与 VOCALOID",
-      "ko": "niconico & VOCALOID",
+      "zh-Hans": "niconico＆VOCALOID™",
+      "ko": "niconico & VOCALOID™",
+      "ja": "niconico＆ボーカロイド"
+    },
+    "niconico & VOCALOID™": {
+      "zh-Hans": "niconico＆VOCALOID™",
+      "ko": "niconico & VOCALOID™",
       "ja": "niconico＆ボーカロイド"
     },
     "Touhou Project": {
       "zh-Hans": "东方Project",
-      "ko": "동방Project",
+      "ko": "東方Project",
+      "ja": "東方Project"
+    },
+    "東方Project": {
+      "zh-Hans": "东方Project",
+      "ko": "東方Project",
       "ja": "東方Project"
     },
     "GAME & VARIETY": {
-      "zh-Hans": "游戏与综艺",
-      "ko": "게임 & 버라이어티",
+      "zh-Hans": "其他游戏",
+      "ko": "GAME & VARIETY",
       "ja": "ゲーム＆バラエティ"
     },
     "ONGEKI & CHUNITHM": {
-      "zh-Hans": "音击与 CHUNITHM",
-      "ko": "온게키 & CHUNITHM",
+      "zh-Hans": "音击/中二节奏",
+      "ko": "オンゲキ & CHUNITHM",
       "ja": "オンゲキ＆CHUNITHM"
+    },
+    "オンゲキ & CHUNITHM": {
+      "zh-Hans": "音击/中二节奏",
+      "ko": "オンゲキ & CHUNITHM",
+      "ja": "オンゲキ＆CHUNITHM"
+    },
+    "maimai": {
+      "zh-Hans": "舞萌",
+      "ko": "maimai",
+      "ja": "maimai"
+    },
+    "BASIC": {
+      "zh-Hans": "初级",
+      "ko": "BASIC",
+      "ja": "BASIC"
+    },
+    "ADVANCED": {
+      "zh-Hans": "高级",
+      "ko": "ADVANCED",
+      "ja": "ADVANCED"
+    },
+    "EXPERT": {
+      "zh-Hans": "专家",
+      "ko": "EXPERT",
+      "ja": "EXPERT"
+    },
+    "MASTER": {
+      "zh-Hans": "大师",
+      "ko": "MASTER",
+      "ja": "MASTER"
+    },
+    "Re:MASTER": {
+      "zh-Hans": "宗师",
+      "ko": "Re:MASTER",
+      "ja": "Re:MASTER"
+    },
+    "RE:MASTER": {
+      "zh-Hans": "宗师",
+      "ko": "Re:MASTER",
+      "ja": "Re:MASTER"
     },
     "Unknown introduction": {
       "zh-Hans": "初次收录版本未知",

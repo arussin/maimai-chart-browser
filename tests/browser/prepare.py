@@ -272,6 +272,41 @@ with tempfile.TemporaryDirectory() as temporary:
     descriptor["files"] = [f for f in descriptor["files"] if f["path"] != "artwork.json"]
     descriptor["files"].append(write(prepared, "artwork.json", art))
     atomic_json(prepared / "package.json", descriptor)
+    # Deliberately immutable old bytes with duplicate semantic genre identities.
+    # Current browser compatibility must repair these without rebuilding the JSON.
+    historical = staging / "historical-package"
+    shutil.copytree(prepared, historical)
+    vectors = json.loads(Path("tests/fixtures/genre-aliases.json").read_text("utf-8"))
+    old_genres = [
+        raw
+        for vector in vectors
+        for raw in [
+            vector["id"],
+            "sega:" + vector["aliases"][-2 if len(vector["aliases"]) > 1 else 0],
+        ]
+    ]
+    old_charts = json.loads((historical / "catalog.json").read_text("utf-8"))
+    old_navigation = read_json(historical / "navigation.json")
+    old_navigation["genres"] = [
+        {"id": raw, "label": raw.removeprefix("sega:")} for raw in old_genres
+    ]
+    for index, chart in enumerate(old_charts):
+        genre = old_genres[index % len(old_genres)]
+        old_navigation["charts"][chart["chart_id"]]["genre"] = genre
+        for region in chart["regional"].values():
+            region["genre"] = genre
+    old_descriptor = read_json(historical / "package.json")
+    old_descriptor["files"] = [
+        f for f in old_descriptor["files"] if f["path"] not in {"catalog.json", "navigation.json"}
+    ]
+    old_descriptor["files"].extend(
+        [
+            write(historical, "catalog.json", old_charts),
+            write(historical, "navigation.json", old_navigation),
+        ]
+    )
+    atomic_json(historical / "package.json", old_descriptor)
+    build_lab(historical, staging / "browser", catalog_version="duplicate-genres-fixture")
     build_lab(staging / "package", staging / "browser", catalog_version="registry-fixture")
     build_public_release(staging / "browser", staging / "public")
     shutil.copytree(staging / "public", root / "registry", dirs_exist_ok=True)
