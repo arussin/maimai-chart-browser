@@ -1,0 +1,119 @@
+{
+  "library": "Simple Icons",
+  "version": "16.32.0",
+  "revision": "b86d5c9a0bdd4f3f5c30898a63654dd32f39fd76",
+  "license": "CC0-1.0",
+  "license_file": "docs/SHARE_ICONS_LICENSE.md",
+  "retrieved": "2026-09-20",
+  "usage": "Unmodified SVG path geometry embedded in settings-menu.js; locally styled service tiles. No runtime CDN or icon requests.",
+  "icons": {
+    "facebook": {
+      "slug": "facebook",
+      "title": "Facebook",
+      "hex": "0866FF",
+      "source": "https://about.meta.com/brand/resources/facebook/logo",
+      "svg_url": "https://raw.githubusercontent.com/simple-icons/simple-icons/b86d5c9a0bdd4f3f5c30898a63654dd32f39fd76/icons/facebook.svg",
+      "svg_sha256": "b06d18d844ed621b89faffb1a33440cc0ec4f1ffea9f36191f50db19a47c59a6",
+      "path_sha256": "910dcaa575f731d3e2f1cadeb5a4fcbdcfa6d71ba3bd04c6d2734c4104bba816"
+    },
+    "whatsapp": {
+      "slug": "whatsapp",
+      "title": "WhatsApp",
+      "hex": "25D366",
+      "source": "https://about.meta.com/brand/resources/whatsapp/whatsapp-brand",
+      "svg_url": "https://raw.githubusercontent.com/simple-icons/simple-icons/b86d5c9a0bdd4f3f5c30898a63654dd32f39fd76/icons/whatsapp.svg",
+      "svg_sha256": "8fb209a53a61618c3483594b3e070481a35575d6aaecbe00a6fe386670c8fb1c",
+      "path_sha256": "8bbe960a5a29b570b477b5730b454f2693b365d5d9edd088783ad25ee1666cc1"
+    },
+    "reddit": {
+      "slug": "reddit",
+      "title": "Reddit",
+      "hex": "FF4500",
+      "source": "https://www.redditinc.com/brand",
+      "svg_url": "https://raw.githubusercontent.com/simple-icons/simple-icons/b86d5c9a0bdd4f3f5c30898a63654dd32f39fd76/icons/reddit.svg",
+      "svg_sha256": "00e5008d56567543cf956561e61d5bf9bf629f520c7488a4d9a00164c29dd8ba",
+      "path_sha256": "56447b3636ee5a2893658eec6e0a275b987c5023d892020977f6c596a25c1a98"
+    },
+    "x": {
+      "slug": "x",
+      "title": "X",
+      "hex": "000000",
+      "source": "https://x.com",
+      "svg_url": "https://raw.githubusercontent.com/simple-icons/simple-icons/b86d5c9a0bdd4f3f5c30898a63654dd32f39fd76/icons/x.svg",
+      "svg_sha256": "693e68863eceb8dc9f72e2acd386ab9c20a10858dab2c076212f7084cb7a32fe",
+      "path_sha256": "a0a8e4521f2dc70e9a6fb8b860dedf3cd0e67bdf279c607ed45b341811025cab"
+    },
+    "facebook_messenger": {
+      "slug": "messenger",
+      "title": "Messenger",
+      "hex": "0866FF",
+      "source": "https://about.meta.com/brand/resources/facebook/messenger-icon",
+      "svg_url": "https://raw.githubusercontent.com/simple-icons/simple-icons/b86d5c9a0bdd4f3f5c30898a63654dd32f39fd76/icons/messenger.svg",
+      "svg_sha256": "a52aadd9f7602aebfe4d01e2b249963e136fc996edfa2b78b037ad7e1a400e71",
+      "path_sha256": "a50600f0ebbe914fa8d34d9955601a9ce883f30b047f1f8d991cc4509cdc9449"
+    },
+    "line": {
+      "slug": "line",
+      "title": "LINE",
+      "hex": "00C300",
+      "source": "https://line.me/en/logo",
+      "svg_url": "https://raw.githubusercontent.com/simple-icons/simple-icons/b86d5c9a0bdd4f3f5c30898a63654dd32f39fd76/icons/line.svg",
+      "svg_sha256": "b62430462354f95914536d7205128647d5563cdb805bc9aca000300aaed816c8",
+      "path_sha256": "c60e036e353e1b433cd5cc368eeeaa5446cdc99f3efe7125f0d9a3016e2c5efe"
+    },
+    "hatena": {
+      "slug": "hatenabookmark",
+      "title": "Hatena Bookmark",
+      "hex": "00A4DE",
+      "source": "https://hatenacorp.jp/press/resource",
+      "svg_url": "https://raw.githubusercontent.com/simple-icons/simple-icons/b86d5c9a0bdd4f3f5c30898a63654dd32f39fd76/icons/hatenabookmark.svg",
+      "svg_sha256": "9769faaad115391f5632602efb962a330528a0869e6c6954ad4d31816fd5f447",
+      "path_sha256": "8476d0c4270f1c860404eba86e2b81e83ff14c695282aab49217cf63a66c81a1"
+    },
+    "kakao": {
+      "slug": "kakaotalk",
+      "title": "KakaoTalk",
+      "hex": "FFCD00",
+      "source": "https://commons.wikimedia.org/wiki/File:KakaoTalk_logo.svg",
+      "svg_url": "https://raw.githubusercontent.com/simple-icons/simple-icons/b86d5c9a0bdd4f3f5c30898a63654dd32f39fd76/icons/kakaotalk.svg",
+      "svg_sha256": "667df35f97be224c0afff6c6f49fd8373c25fc408772137e9eba03f24bde3664",
+      "path_sha256": "c49976c5ea858a1fb3c01fbd060e2104f9cb61309634720ab4f8a65b24a4ecd3"
+    },
+    "naver": {
+      "slug": "naver",
+      "title": "Naver",
+      "hex": "03C75A",
+      "source": "https://developers.naver.com/docs/login/bi/bi.md",
+      "svg_url": "https://raw.githubusercontent.com/simple-icons/simple-icons/b86d5c9a0bdd4f3f5c30898a63654dd32f39fd76/icons/naver.svg",
+      "svg_sha256": "6c8125ff3908b12e0d0e0dd56bfeaa90013547a0124f7e34e2b149ba474150a8",
+      "path_sha256": "8fd05a2dba014eb474db99801d0459b463afa78873d2ea48cae400c205b8d65a"
+    },
+    "wechat": {
+      "slug": "wechat",
+      "title": "WeChat",
+      "hex": "07C160",
+      "source": "https://wechat.design/tool/brand",
+      "svg_url": "https://raw.githubusercontent.com/simple-icons/simple-icons/b86d5c9a0bdd4f3f5c30898a63654dd32f39fd76/icons/wechat.svg",
+      "svg_sha256": "74b48b3d315337ce79cb644933b5f975e19996f564fcc4138ed67d45674c43ca",
+      "path_sha256": "64dfe7d6a27dc09edd0622e28598439a96c6bc3dabd4070cf7a1744de42ee4f8"
+    },
+    "sina_weibo": {
+      "slug": "sinaweibo",
+      "title": "Sina Weibo",
+      "hex": "E6162D",
+      "source": "https://en.wikipedia.org/wiki/Sina_Weibo",
+      "svg_url": "https://raw.githubusercontent.com/simple-icons/simple-icons/b86d5c9a0bdd4f3f5c30898a63654dd32f39fd76/icons/sinaweibo.svg",
+      "svg_sha256": "44facf47c6bfa06c312c28acda6aa2ed404ef7f68c2897c8f33ad51b6ba94059",
+      "path_sha256": "9ed23c46361afcaca54733513d0758add84ac2d1cf41029d2c45cf812e775363"
+    },
+    "qzone": {
+      "slug": "qzone",
+      "title": "Qzone",
+      "hex": "FECE00",
+      "source": "https://qzone.qq.com",
+      "svg_url": "https://raw.githubusercontent.com/simple-icons/simple-icons/b86d5c9a0bdd4f3f5c30898a63654dd32f39fd76/icons/qzone.svg",
+      "svg_sha256": "c50f4085871efe3afcb71e2924adf7ffff3f16f2c5d890db0bec70af21a070ca",
+      "path_sha256": "4186666248424197cfebff8e326bc58a158b406b0a1847d1faa3a85b4c97556f"
+    }
+  }
+}

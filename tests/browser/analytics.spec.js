@@ -217,16 +217,17 @@ test('issue reporting supports keyboard access in public and personal browsers w
     await ready(page,path+'?search=PRIVATE_SEARCH#PRIVATE_HASH',origin);
     const link=page.locator('#report-issue');
     await page.locator('#settings-toggle').focus();await page.keyboard.press('ArrowUp');
+    await expect(page.locator('#site-share')).toBeFocused();await page.keyboard.press('ArrowUp');
     await expect(link).toBeFocused();await expect(link).toBeEnabled();
     await expect(link).toHaveAttribute('href',issueURL);
     await expect(link).toHaveAttribute('rel','noopener noreferrer');
     await page.keyboard.press('ArrowUp');await expect(page.locator('#analytics-settings')).toBeFocused();
-    await page.keyboard.press('End');await expect(link).toBeFocused();
+    await page.keyboard.press('End');await expect(page.locator('#site-share')).toBeFocused();await page.keyboard.press('ArrowUp');await expect(link).toBeFocused();
     const hasPlayerImport=await page.locator('#player-import').count()>0;
     await page.keyboard.press('Home');await expect(page.locator(hasPlayerImport?'#player-import':'#analytics-settings')).toBeFocused();
     await page.keyboard.press('ArrowDown');await expect(hasPlayerImport?page.locator('.player-import-help'):link).toBeFocused();
     await page.keyboard.press('Escape');await expect(page.locator('#settings-toggle')).toBeFocused();
-    await page.keyboard.press('ArrowUp');
+    await page.keyboard.press('ArrowUp');await page.keyboard.press('ArrowUp');
     const opened=context.waitForEvent('page');
     if(path==='/lab/'){
       // Reproduce browsers that blur the current item without focusing a clicked link.
@@ -280,7 +281,8 @@ test('settings work before the catalog loads and after a catalog failure',async(
   await settings(page);await expect(page.locator('#analytics-dialog')).toBeVisible();
   await page.keyboard.press('Escape');await expect(page.locator('#settings-toggle')).toBeFocused();
   release();await expect(page.locator('#lab-status')).toContainText('could not be loaded');
-  await page.locator('#settings-toggle').press('ArrowUp');await expect(page.locator('#report-issue')).toBeFocused();
+  await page.locator('#settings-toggle').press('ArrowUp');await expect(page.locator('#site-share')).toBeFocused();
+  await page.keyboard.press('ArrowUp');await expect(page.locator('#report-issue')).toBeFocused();
   await expect(page.locator('#report-issue')).toBeEnabled();await page.keyboard.press('Escape');
   await settings(page);await expect(page.locator('#analytics-dialog')).toBeVisible();
   expect(external).toEqual([]);

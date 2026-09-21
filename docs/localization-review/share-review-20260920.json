@@ -1,0 +1,110 @@
+{
+  "reviewer": "ChatGPT",
+  "date": "2026-09-20",
+  "method": "AI self-review of all newly authored translations against the implemented menu, dialog, clipboard states and native-share payload. Consulted the maintained terminology guide and official provider integration references. This is not independent review or native-speaker certification.",
+  "scope": "14 new sharing messages in Simplified Chinese, Korean and Japanese; existing Close translation reused unchanged. No earlier UI copy, README or song alias was re-reviewed or changed.",
+  "locales": [
+    "zh-Hans",
+    "ko",
+    "ja"
+  ],
+  "terminology_guide": "docs/LOCALIZATION_TERMINOLOGY.md",
+  "provider_references": [
+    "https://www.addtoany.com/services/",
+    "https://www.addtoany.com/services/kakao_button",
+    "https://www.addtoany.com/services/facebook_messenger_button",
+    "https://www.addtoany.com/ext/wechat/share/",
+    "https://www.addtoany.com/buttons/for/website",
+    "https://developers.naver.com/docs/share/navershare/"
+  ],
+  "input": "src/maimai_intelligence/assets/locales/share.json",
+  "input_sha256": "20585e67f1443547ae3ba6b164a38b634f5b233f846f40d51af98ee9da825839",
+  "entries": {
+    "Share this site": {
+      "status": "ai-reviewed",
+      "translation_sha256": "92c56d58928ab4cd4668247ee6ed5c8a2af61a07b3dad296ae7f980eefd418b1",
+      "context_review": "Action label names the site rather than the current chart or player profile; concise in all three languages."
+    },
+    "Share the public homepage. Your player data and current search are not included.": {
+      "status": "ai-reviewed",
+      "translation_sha256": "c76bec686686d2c8caae2654babb0149dcab0cecd87c42a8af3460ea999ce490",
+      "context_review": "Public-homepage scope and exclusions retained in all languages; matches the constant URL and payload."
+    },
+    "Website link": {
+      "status": "ai-reviewed",
+      "translation_sha256": "301eee8b2d3b2f3c3453065a5d737260aefd389bfba7020ee9f7708886b51b62",
+      "context_review": "Accessible name describes the read-only homepage URL field."
+    },
+    "Copy link": {
+      "status": "ai-reviewed",
+      "translation_sha256": "bb9824a1c67896529ccdcfdd420f4514ce4042c166baf78151f5cea341b2b452",
+      "context_review": "Conventional clipboard action label; does not imply the link was already copied."
+    },
+    "Link copied": {
+      "status": "ai-reviewed",
+      "translation_sha256": "06853a0528f5c837681b432832917e3405f78a22f7150f07f91edeca5b768c97",
+      "context_review": "Completion message is shown only after the clipboard write succeeds."
+    },
+    "Share with device…": {
+      "status": "ai-reviewed",
+      "translation_sha256": "5d6b0c150c562cbbb63a91a1590d220bcf3a6f86f9dd68821a3a9c4122741738",
+      "context_review": "Invokes the operating-system share picker, distinct from provider links; ellipsis retained."
+    },
+    "More…": {
+      "status": "ai-reviewed",
+      "translation_sha256": "6ad348330f3ca1fda82ff5618956bda3c499826c19e8db79f88257dea39e5e09",
+      "context_review": "Additional sharing destinations rather than automatic publication; contextual label with ellipsis."
+    },
+    "Social services open in a new tab. More options are provided by AddToAny.": {
+      "status": "ai-reviewed",
+      "translation_sha256": "341307a632e9a84c02df86714b25109a62f3343575cd8530dd3923c0f41c2f98",
+      "context_review": "Discloses new-tab navigation and the external provider; AddToAny spelling preserved."
+    },
+    "Explore maimai charts, patterns, and personal progress.": {
+      "status": "ai-reviewed",
+      "translation_sha256": "0f34cdbbdb694a6d2b9b252339a2bbf848663215f508de5badb1a5c07ea80943",
+      "context_review": "Generic site invitation, with guide-consistent chart terms 谱面 / 채보 / 譜面; contains no personal results."
+    },
+    "Copy the selected link using your device’s copy command.": {
+      "status": "ai-reviewed",
+      "translation_sha256": "984e0154df07afddcd1c8144961ee5b6ef5a1e6fad04cf9a9dc2a09f1628a4c2",
+      "context_review": "Manual recovery instruction does not falsely claim clipboard success; selected URL remains visible."
+    },
+    "KakaoTalk": {
+      "status": "ai-reviewed",
+      "translation_sha256": "7a4a99f4f8012711308eadab439365ebacdd95c429f2cbd6b6bc84cef6cb0376",
+      "context_review": "Localized recognizable service labels; provider code remains kakao."
+    },
+    "Naver": {
+      "status": "ai-reviewed",
+      "translation_sha256": "2648e53f44f4dde4dc10214c4dc43417a795b0ed936744408ef91feab7a5cc8c",
+      "context_review": "Regional brand spelling kept separate from the official Naver endpoint."
+    },
+    "WeChat": {
+      "status": "ai-reviewed",
+      "translation_sha256": "111425c96355ea969846cdf98cfa3151cdd20a1f6bab376bf2f6c1c470016e5d",
+      "context_review": "Uses 微信 in Simplified Chinese and 위챗 in Korean; no promise of automatic posting."
+    },
+    "Weibo": {
+      "status": "ai-reviewed",
+      "translation_sha256": "fda947d3f01c7cde1f81a912fbc51ec9536cc727b371f16edb47891f7e28c02e",
+      "context_review": "Uses 微博 in Simplified Chinese and 웨이보 in Korean; service identifier is not translated."
+    }
+  },
+  "invariants_review": "LINE, X, Hatena, Qzone, Facebook, WhatsApp, Messenger and Reddit retain brand spelling. MacIntel is a browser identifier, not translatable prose. Tab was reviewed as a KeyboardEvent.key identifier in the focus handler, not a label requiring translation.",
+  "corrections": [],
+  "limitations": [
+    "No native-speaker certification.",
+    "Actual delivery inside social apps is not a language-review result."
+  ],
+  "supplemental_invariant_reviews": [
+    {
+      "reviewer": "Codex",
+      "date": "2026-09-20",
+      "scope": "Tab is the standard KeyboardEvent.key identifier in the share-dialog focus handler. All 14 sharing messages and their translations remain unchanged.",
+      "method": "AI code and protocol review; no translation or native-speaker certification added.",
+      "reference": "https://developer.mozilla.org/en-US/docs/Web/API/UI_Events/Keyboard_event_key_values#whitespace_keys",
+      "previous_input_sha256": "83e99002cb409b1f5d28bcd1a08283c2337d00bebc7ed7ab153a3f34749c6f2f"
+    }
+  ]
+}

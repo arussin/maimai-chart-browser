@@ -40,7 +40,8 @@
     "README.md": "3af88da178337b468db796b35d6995ff1d2a68b07b51986a05476f3633717021",
     "README.zh-Hans.md": "bd14d58f6d0d4033c564cd143de9233d9a8e210bb339e53fa195209fdaf597bf",
     "README.ko.md": "16f88597ed58e405c4b14c820bca9e21b6341f9f3a131a3a1a164c83b48e3e93",
-    "README.ja.md": "a52749c6cd74759fd9a732a607fc7fc0defdd7958e3cd1f127a229c015a4f482"
+    "README.ja.md": "a52749c6cd74759fd9a732a607fc7fc0defdd7958e3cd1f127a229c015a4f482",
+    "src/maimai_intelligence/assets/locales/share.json": "20585e67f1443547ae3ba6b164a38b634f5b233f846f40d51af98ee9da825839"
   },
   "documentation": {
     "source": "README.md",
@@ -54,5 +55,19 @@
     "date": "2026-09-20",
     "scope": "Complete README prose, including Support, development, privacy, data limitations and source coverage. Commands, inline code, link destinations and heading structure match English. Linked technical documents remain English.",
     "github_behavior_source": "https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-readmes"
-  }
+  },
+  "supplemental_reviews": [
+    {
+      "reviewer": "ChatGPT",
+      "date": "2026-09-20",
+      "scope": "14 added sharing messages; earlier review fields above remain the original 773-entry pass.",
+      "record": "docs/localization-review/share-review-20260920.json"
+    },
+    {
+      "reviewer": "Codex",
+      "date": "2026-09-20",
+      "scope": "Reviewed the Tab keyboard identifier only; all sharing translations and earlier review scopes remain unchanged.",
+      "record": "docs/localization-review/share-review-20260920.json"
+    }
+  ]
 }

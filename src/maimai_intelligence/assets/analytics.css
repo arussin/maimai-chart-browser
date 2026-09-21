@@ -12,3 +12,31 @@
 @media(max-width:740px){.site-header nav{gap:8px}.site-header nav>button{flex:1;font-size:12px}.site-header nav>.settings-control{margin-bottom:0}}
 @media(max-width:420px){.site-header nav{gap:4px}.site-header nav>#catalog-tab,.site-header nav>#about-tab{flex:.65}.site-header nav .nav-status{font-size:9px}}
 @media print{.settings-control{display:none!important}}
+
+/* First-party share sheet; branded SVGs are bundled, with no provider code or requests. */
+.settings-control #site-share{flex-direction:row;align-items:center;justify-content:flex-start;gap:10px}.settings-control #site-share svg{flex:none}
+.site-share-dialog{box-sizing:border-box;width:min(472px,calc(100% - 32px));max-height:calc(100dvh - 32px);overflow:auto;margin:auto;padding:24px;border:1px solid #ffffffb3;border-radius:24px;background:#fafafb;color:#202124;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;box-shadow:0 24px 80px #14232c33}
+.site-share-dialog::backdrop{background:#17232d66;backdrop-filter:blur(5px)}
+.site-share-dialog header{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:22px}.site-share-dialog h2{margin:0;font-size:20px;font-weight:650;letter-spacing:-.4px;line-height:1.4}
+.site-share-dialog button,.site-share-dialog a{box-sizing:border-box;display:flex;justify-content:center;align-items:center;gap:9px;min-height:44px;padding:10px 12px;border:0;border-radius:12px;background:#fff;color:#006779;font:inherit;font-size:14px;font-weight:550;text-decoration:none;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.site-share-dialog button:hover,.site-share-dialog a:hover{background:#edf0f3}.site-share-dialog button:disabled{color:#606871;cursor:default}.site-share-dialog button:focus-visible,.site-share-dialog a:focus-visible,.site-share-dialog input:focus-visible{outline:3px solid #007887;outline-offset:3px}.site-share-dialog [hidden]{display:none!important}
+.site-share-dialog button svg,.site-share-dialog a>svg{width:20px;height:20px;flex:none}.site-share-dialog .site-share-close{width:36px;height:36px;min-height:36px;flex:none;padding:8px;border-radius:50%;background:#e9eaed;color:#62666c}.site-share-close svg{width:18px;height:18px}
+.site-share-services{display:flex;flex-wrap:wrap;justify-content:center;gap:12px 10px;margin:0 0 22px}.site-share-dialog .site-share-service{flex:0 0 72px;flex-direction:column;gap:8px;justify-content:flex-start;min-height:94px;padding:4px 0;background:transparent;color:#30343b;font-size:12px;font-weight:450;line-height:1.35;text-align:center;border-radius:14px}
+.site-share-app-icon{display:flex;align-items:center;justify-content:center;flex:none;width:56px;height:56px;border-radius:14px;background:#657581;color:#fff;box-shadow:inset 0 0 0 1px #00000006,0 2px 5px #14232c12}.site-share-app-icon svg{display:block;width:32px;height:32px;overflow:visible}.site-share-app-label{max-width:100%;overflow-wrap:anywhere}.site-share-dialog .site-share-service:hover .site-share-app-icon{filter:brightness(.94)}.site-share-dialog .site-share-service:active .site-share-app-icon{transform:scale(.94)}
+.site-share-service[data-share-service=facebook] .site-share-app-icon{background:#0866FF}
+.site-share-service[data-share-service=whatsapp] .site-share-app-icon{background:#25D366}
+.site-share-service[data-share-service=reddit] .site-share-app-icon{background:#FF4500}
+.site-share-service[data-share-service=x] .site-share-app-icon{background:#000000}
+.site-share-service[data-share-service=facebook_messenger] .site-share-app-icon{background:#0866FF}
+.site-share-service[data-share-service=line] .site-share-app-icon{background:#00C300}
+.site-share-service[data-share-service=hatena] .site-share-app-icon{background:#00A4DE}
+.site-share-service[data-share-service=kakao] .site-share-app-icon{background:#FFCD00;color:#3c1e1e}
+.site-share-service[data-share-service=naver] .site-share-app-icon{background:#03C75A}
+.site-share-service[data-share-service=wechat] .site-share-app-icon{background:#07C160}
+.site-share-service[data-share-service=sina_weibo] .site-share-app-icon{background:#E6162D}
+.site-share-service[data-share-service=qzone] .site-share-app-icon{background:#FECE00}
+.site-share-link-row{display:flex;align-items:center;gap:4px;padding:5px 5px 5px 12px;border-radius:14px;background:#eaecef}.site-share-link-row input{box-sizing:border-box;width:100%;min-width:0;min-height:44px;padding:8px 0;border:0;border-radius:6px;background:transparent;color:#454c56;font:inherit;font-size:13px}.site-share-link-row button{flex:none;min-height:40px;padding:9px 12px;border-radius:10px;font-size:13px;box-shadow:0 1px 3px #0000000c}
+.site-share-actions{display:flex;flex-direction:column;gap:1px;margin-top:12px;overflow:hidden;border-radius:14px;background:#e7e9ed}.site-share-actions>*{justify-content:flex-start!important;min-height:48px!important;padding:12px 16px!important;border-radius:0!important}.site-share-dialog .site-share-status{margin:8px 0 0;color:#006779;font-size:12px;line-height:1.45}.site-share-status:empty{display:none}
+.site-share-dialog #site-share-description,.site-share-dialog .site-share-note{margin:16px 2px 0;font-size:11px;font-weight:400;line-height:1.5;color:#62666c}.site-share-dialog .site-share-note{margin-top:6px}
+@media(max-width:520px){.site-share-dialog{inset:auto 0 0;width:100%;max-width:none;max-height:calc(100dvh - 12px);margin:0;padding:22px 20px max(24px,env(safe-area-inset-bottom));border-width:1px 0 0;border-radius:24px 24px 0 0}.site-share-dialog header{margin-bottom:20px}.site-share-services{gap:12px 8px}.site-share-dialog .site-share-service{flex-basis:72px}.site-share-link-row button span{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}.site-share-link-row button{width:44px;min-height:44px;padding:12px}.site-share-link-row input{font-size:14px}}
+@media print{.site-share-dialog{display:none!important}}
