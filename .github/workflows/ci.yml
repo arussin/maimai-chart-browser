@@ -83,3 +83,14 @@ jobs:
         working-directory: player-import-worker
         env:
           WRANGLER_SEND_METRICS: 'false'
+  browser-required:
+    name: browser
+    needs: browser
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 1
+    steps:
+      - name: Require every browser shard and its follow-up checks
+        env:
+          BROWSER_RESULT: ${{ needs.browser.result }}
+        run: test "$BROWSER_RESULT" = success
