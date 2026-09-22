@@ -2,13 +2,21 @@
 
 import base64
 import hashlib
+import json
 import shutil
 import subprocess
 import tempfile
 import unittest
+from copy import deepcopy
 from pathlib import Path
 
-from maimai_intelligence.contract_bundle import FILES, canonical, export_bundle
+from maimai_intelligence.contract_bundle import (
+    FILES,
+    canonical,
+    export_bundle,
+    load_bundle,
+    validate_bundle,
+)
 
 
 class ContractBundleTests(unittest.TestCase):
@@ -78,3 +86,37 @@ class ContractBundleTests(unittest.TestCase):
         (self.source / "LICENSE").write_text("local fallback must not be used")
         with self.assertRaises(ValueError):
             export_bundle(self.source, revision)
+
+    def test_closed_envelope_validation_and_reviewed_hash(self):
+        bundle = export_bundle(self.source, self.revision)
+        raw = canonical(bundle)
+        archive = self.source / "bundle.json"
+        archive.write_bytes(raw)
+        self.assertEqual(
+            load_bundle(archive, self.revision, hashlib.sha256(raw).hexdigest()), bundle
+        )
+        self.assertEqual(set(validate_bundle(bundle, self.revision)), set(FILES))
+        mutations = [
+            lambda b: b.update(extra="rejected"),
+            lambda b: b.update(api_version=True),
+            lambda b: b.update(upstream_revision="f" * 40),
+            lambda b: b["files"].update(unknown=b["files"]["LICENSE"]),
+            lambda b: b["files"]["LICENSE"].update(source_path="../private"),
+            lambda b: b["files"]["LICENSE"].update(bytes=True),
+            lambda b: b["files"]["LICENSE"].update(content_base64="!bad!"),
+            lambda b: b["files"]["LICENSE"].update(sha256="0" * 64),
+        ]
+        for mutate in mutations:
+            broken = deepcopy(bundle)
+            mutate(broken)
+            with self.assertRaises(ValueError):
+                validate_bundle(broken, self.revision)
+        with self.assertRaisesRegex(ValueError, "SHA256 mismatch"):
+            load_bundle(archive, self.revision, "0" * 64)
+        duplicate = b'{"schema_version":"ignored",' + raw[1:]
+        archive.write_bytes(duplicate)
+        with self.assertRaisesRegex(ValueError, "Duplicate"):
+            load_bundle(archive, self.revision, hashlib.sha256(duplicate).hexdigest())
+        with self.assertRaises(ValueError):
+            canonical({"invalid": float("nan")})
+        self.assertEqual(json.loads(raw)["upstream_revision"], self.revision)
