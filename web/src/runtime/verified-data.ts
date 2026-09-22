@@ -37,12 +37,23 @@ export class PublicReader {
   async verified(ref:VerifiedRef,signal?:AbortSignal):Promise<Uint8Array>{
     let bytes:Uint8Array;
     if('parts' in ref){
-      bytes=new Uint8Array(ref.bytes);let offset=0;
-      // Bounded concurrency applies equally to a full catalog and its startup index.
-      for(let i=0;i<ref.parts.length;i+=2){
-        const batch=await Promise.all(ref.parts.slice(i,i+2).map(part=>this.verified(part,signal)));
-        for(const part of batch){bytes.set(part,offset);offset+=part.length;}
+      bytes = new Uint8Array(ref.bytes);
+      const offsets: number[] = [];
+      let offset = 0;
+      for (const part of ref.parts) {
+        offsets.push(offset);
+        offset += part.bytes;
       }
+      let next = 0;
+      const consume = async (): Promise<void> => {
+        while (next < ref.parts.length) {
+          const index = next++;
+          const part = await this.verified(ref.parts[index], signal);
+          bytes.set(part, offsets[index]);
+        }
+      };
+      // Each verified slot advances independently; every part and the aggregate remain checked.
+      await Promise.all([consume(), consume()]);
     }else bytes=await this.read(ref.path,ref.bytes,signal);
     if(bytes.length!==ref.bytes||await sha256(bytes)!==ref.sha256)throw Error('Public data integrity check failed');
     return bytes;

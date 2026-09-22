@@ -64,8 +64,8 @@ Object.assign(values,{achievement:c=>personal?.record(c)?.achievement??null,grad
 
 
 const rowKey=c=>JSON.stringify([c.variant_id?c.song_id:(navigation.charts?.[c.chart_id]?.source_path||c.source_container_id||c.song_id),c.format,c.variant_id||'ordinary']);
-function compareCharts(a,b){
-  for(const rule of effectiveSortRules(state.sortRules,personal?.enabled()===true)){if(!rule.key)continue;const av=values[rule.key](a),bv=values[rule.key](b);
+function compareCharts(a,b,rules){
+  for(const rule of rules){if(!rule.key)continue;const av=values[rule.key](a),bv=values[rule.key](b);
     // Unknown measurements stay at the end in either direction.
     if(av==null||bv==null){if(av!==bv)return av==null?1:-1;continue;}
     const diff=typeof av==='number'?av-bv:collator.compare(av,bv);if(diff)return diff*rule.direction;
@@ -174,7 +174,8 @@ function catalog(focusKey=null){
   // replaces that row's contents; it must not reorder or hide other charts.
   const grouped=new Map();
   for(const chart of charts){const key=rowKey(chart);if(!grouped.has(key))grouped.set(key,[]);grouped.get(key).push(chart);}
-  const rows=charts.map(chart=>({key:chart.chart_id,chart})).sort((a,b)=>compareCharts(a.chart,b.chart));
+  const rules=effectiveSortRules(state.sortRules,personal?.enabled()===true);
+  const rows=charts.map(chart=>({key:chart.chart_id,chart})).sort((a,b)=>compareCharts(a.chart,b.chart,rules));
   if(focusKey){state.selectedCharts.delete(focusKey);state.visible=Math.max(state.visible,rows.findIndex(row=>row.key===focusKey)+1);}
   el('songs').replaceChildren();activeFilters();
   for(const [index,{key,chart}]of rows.slice(0,state.visible).entries()){

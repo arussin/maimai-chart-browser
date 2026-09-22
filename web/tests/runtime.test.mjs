@@ -33,6 +33,26 @@ test('one verified reader bounds concurrency to two and verifies every part plus
  reader.read=async()=>new Uint8Array([0]);await assert.rejects(()=>reader.verified(ref),/integrity/);
 });
 
+test('a completed reader slot starts the next part without waiting for its slower sibling',async()=>{
+ const parts=['one','two','three'].map(value=>new TextEncoder().encode(value));
+ const descriptors=await Promise.all(parts.map(async bytes=>{const sha256=await data.sha256(bytes);return {path:'catalog-index-parts/'+sha256+'.json',sha256,bytes:bytes.length};}));
+ const all=Buffer.concat(parts),ref={sha256:await data.sha256(all),bytes:all.length,parts:descriptors};
+ const reader=new data.PublicReader(new URL('http://127.0.0.1/'));
+ let releaseFirst,startedThird,active=0,maximum=0,timer;
+ const first=new Promise(resolve=>{releaseFirst=resolve;}),third=new Promise(resolve=>{startedThird=resolve;});
+ reader.read=async path=>{
+  const index=descriptors.findIndex(part=>part.path===path);active++;maximum=Math.max(maximum,active);
+  if(index===0)await first;
+  if(index===2)startedThird(true);
+  active--;return parts[index];
+ };
+ const result=reader.verified(ref);
+ try{
+  assert.equal(await Promise.race([third,new Promise(resolve=>{timer=setTimeout(()=>resolve(false),1000);})]),true);
+ }finally{clearTimeout(timer);releaseFirst();}
+ assert.equal(new TextDecoder().decode(await result),'onetwothree');assert.equal(maximum,2);
+});
+
 // The coordinator's original readiness invariant now exercises the real import transaction.
 import {supersededReadiness} from './player-session-fixture.mjs';
 test('superseded readiness cannot acquire a storage lease or commit an import',supersededReadiness);
