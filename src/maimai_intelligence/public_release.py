@@ -28,9 +28,9 @@ from .snapshots import MAX_BYTES, atomic_json, canonical, read_json
 
 PART_BYTES = 8 * 1024 * 1024
 INDEX_PART_BYTES = 8 * 1024 * 1024
-STARTUP_PART_THRESHOLD = 20 * 1024 * 1024
 # Cloudflare Pages Direct Upload limits, including retained releases.
 MAX_PUBLIC_FILE_BYTES = 25 * 1024 * 1024
+STARTUP_PART_THRESHOLD = MAX_PUBLIC_FILE_BYTES
 MAX_PUBLIC_FILES = 20_000
 SEARCH_TITLE = "maimai Chart Database & Patterns | maimai.party"
 SEARCH_DESCRIPTION = (
@@ -435,6 +435,11 @@ def plan_public_release(
         projection = prepare_catalog_projection(data, sha)
         generated_startup, derived = encode_catalog_projection(projection)
         shared, shared_assets = encode_catalog_projection(projection, shared=True)
+        # A historical reader can always fall back to the full catalog parts.
+        # Do not emit an oversized legacy index even when the shared index fits.
+        if generated_startup and generated_startup["bytes"] > MAX_PUBLIC_FILE_BYTES:
+            derived.pop(generated_startup["path"])
+            generated_startup = None
         startup_parts = None
         startup_part_assets = {}
         if shared and shared["bytes"] > STARTUP_PART_THRESHOLD:

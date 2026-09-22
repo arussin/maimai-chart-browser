@@ -282,6 +282,57 @@ class PublicReleaseTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "integrity mismatch"):
                 plan_public_release(self.source, previous_public=self.output)
 
+    def test_startup_splits_only_above_the_actual_hosting_asset_limit(self):
+        from maimai_intelligence.catalog_loading import (
+            encode_catalog_projection,
+            prepare_catalog_projection,
+        )
+        from maimai_intelligence.public_release import INDEX_PART_BYTES, MAX_PUBLIC_FILE_BYTES
+
+        data = {
+            "package": {"status": "research_preview"},
+            "catalog": [{"chart_id": "chart", "title": "Public", "source_hash": "a" * 64}],
+            "review": [""],
+        }
+        minimal, _ = encode_catalog_projection(
+            prepare_catalog_projection(data, "0" * 64), shared=True
+        )
+        for target_size in (
+            MAX_PUBLIC_FILE_BYTES - 1,
+            MAX_PUBLIC_FILE_BYTES,
+            MAX_PUBLIC_FILE_BYTES + 1,
+        ):
+            with self.subTest(bytes=target_size):
+                data["review"] = ["x" * (target_size - minimal["bytes"])]
+                raw = canonical(data)
+                digest = hashlib.sha256(raw).hexdigest()
+                path = f"catalogs/{digest}.json"
+                (self.source / path).write_bytes(raw)
+                self.manifest["releases"][0].update(path=path, sha256=digest)
+                atomic_json(self.source / "manifest.json", self.manifest)
+                plan = plan_public_release(self.source)
+                entry = plan.manifest["releases"][0]
+                if target_size <= MAX_PUBLIC_FILE_BYTES:
+                    self.assertNotIn("startup_parts", entry)
+                    reference = entry["startup_shared"]
+                    encoded = plan.assets[reference["path"]]
+                else:
+                    self.assertNotIn("startup_shared", entry)
+                    self.assertNotIn("startup", entry)
+                    reference = entry["startup_parts"]
+                    encoded = b"".join(plan.assets[part["path"]] for part in reference["parts"])
+                    self.assertTrue(
+                        all(part["bytes"] <= INDEX_PART_BYTES for part in reference["parts"])
+                    )
+                self.assertEqual(len(encoded), target_size)
+                self.assertEqual(hashlib.sha256(encoded).hexdigest(), reference["sha256"])
+                self.assertTrue(
+                    all(len(body) <= MAX_PUBLIC_FILE_BYTES for body in plan.assets.values())
+                )
+                self.assertEqual(
+                    b"".join(plan.assets[part["path"]] for part in entry["parts"]), raw
+                )
+
     def test_old_versions_and_default_are_preserved(self):
         self.manifest["releases"].append({**self.manifest["releases"][0], "version": "older"})
         atomic_json(self.source / "manifest.json", self.manifest)
