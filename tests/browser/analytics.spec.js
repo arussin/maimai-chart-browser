@@ -32,7 +32,7 @@ async function hosted(context,{sdk='window.__analyticsStubLoaded=true;',fail=fal
 }
 async function ready(page,path='/lab/',origin='https://maimai.party'){
   await page.goto(origin+path,{waitUntil:'domcontentloaded'});
-  if(path.startsWith('/lab'))await expect(page.locator('#catalog-count strong')).toHaveText('6');
+  if(path.startsWith('/lab'))await expect.poll(()=>page.evaluate(()=>window.maimaiResearchCatalog?.catalog?.length)).toBe(6);
   else await expect(page.locator('#explore-search')).toBeVisible();
 }
 async function allow(page){await page.locator('#analytics-notice [data-analytics-choice=granted]').click();}
