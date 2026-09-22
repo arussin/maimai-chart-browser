@@ -2,23 +2,16 @@
 
 import hashlib
 import json
-import math
 from collections import defaultdict
 from copy import deepcopy
 from datetime import datetime
 
 from .catalog_identity import key
+from .metadata_policy import FIELDS, PRIORITY
+from .metadata_policy import number as number
 from .registry import digest, validate
 
 VERSION = "metadata-waterfall-1"
-FIELDS = ("bpm", "chart_constant")
-PRIORITY = {
-    "reviewed-page": 10,
-    "gamerch-wiki": 15,
-    "arcade-songs": 20,
-    "otoge-db": 30,
-    "mai-notes": 40,
-}
 LABELS = {
     "reviewed-page": "Reviewed public page",
     "gamerch-wiki": "maimai Wiki (Gamerch)",
@@ -27,17 +20,6 @@ LABELS = {
     "otoge-db": "OTOGE DB",
 }
 MAX_BYTES = 16 * 1024 * 1024
-
-
-def number(value, field):
-    if isinstance(value, bool) or value in (None, ""):
-        return None
-    try:
-        result = float(value)
-    except (TypeError, ValueError):
-        return None
-    ceiling = 15 if field == "chart_constant" else 2000
-    return result if math.isfinite(result) and 0 < result <= ceiling else None
 
 
 def parse(raw, provider):

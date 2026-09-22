@@ -1,12 +1,12 @@
 """Revision-bound public Kamaitachi reconciliation, independent of player records."""
 
-import json
 import re
 from collections import defaultdict
 from copy import deepcopy
 
+from .coverage_types import ReconciliationDecision, ReviewError, SnapshotError
 from .enrichment import CHART_VERSION
-from .provider_mapping import normalized, variant
+from .identity_policy import normalized, variant
 from .registry import DIFFICULTIES, accept_mapping, digest, resolve
 
 POLICY = "kamaitachi-reconciliation-1"
@@ -14,36 +14,21 @@ REVISION_URL = "https://api.github.com/repos/zkldi/Tachi/commits?per_page=1"
 BASE = "https://raw.githubusercontent.com/zkldi/Tachi/"
 
 
-def capture_snapshot(capture):
-    """Resolve the configured repository's default branch once, then pin both files."""
-    raw, revision_source = capture.get(REVISION_URL)
-    commits = json.loads(raw)
-    if (
-        not isinstance(commits, list)
-        or not commits
-        or not re.fullmatch(r"[a-f0-9]{40}", commits[0].get("sha", ""))
-    ):
-        raise ValueError("Invalid public provider revision")
-    revision = commits[0]["sha"]
-    records, sources = {}, {"revision": revision_source}
-    for kind in ("songs", "charts"):
-        url = BASE + revision + "/db/seeds/" + kind + "-maimaidx.json"
-        body, sources[kind] = capture.get(url)
-        records[kind] = json.loads(body)
-    return {"revision": revision, "sources": sources, **records}
-
-
 def validate_snapshot(snapshot, previous_counts=None):
-    if not re.fullmatch(r"[a-f0-9]{40}", snapshot.get("revision", "")):
-        raise ValueError("Provider snapshot requires an immutable revision")
+    if not isinstance(snapshot, dict) or not re.fullmatch(
+        r"[a-f0-9]{40}", snapshot.get("revision", "")
+    ):
+        raise SnapshotError("Provider snapshot requires an immutable revision")
     ids, charts = set(), set()
     for kind in ("songs", "charts"):
         if not isinstance(snapshot.get(kind), list) or not snapshot[kind]:
-            raise ValueError("Incomplete provider snapshot")
+            raise SnapshotError("Incomplete provider snapshot")
         old = (previous_counts or {}).get(kind, 0)
         if old and abs(len(snapshot[kind]) - old) > max(50, old * 0.25):
-            raise ValueError("Provider count change requires explicit review")
+            raise SnapshotError("Provider count change requires explicit review")
     for song in snapshot["songs"]:
+        if not isinstance(song, dict):
+            raise SnapshotError("Invalid provider song structure")
         sid = song.get("id")
         if (
             not isinstance(sid, str)
@@ -51,10 +36,12 @@ def validate_snapshot(snapshot, previous_counts=None):
             or sid in ids
             or any(not isinstance(song.get(k), str) for k in ("title", "artist"))
         ):
-            raise ValueError("Invalid or duplicate provider song")
+            raise SnapshotError("Invalid or duplicate provider song")
         ids.add(sid)
     aliases = set()
     for chart in snapshot["charts"]:
+        if not isinstance(chart, dict):
+            raise SnapshotError("Invalid provider chart structure")
         cid = chart.get("chartID", chart.get("id"))
         if (
             not isinstance(cid, str)
@@ -63,15 +50,15 @@ def validate_snapshot(snapshot, previous_counts=None):
             or chart.get("songID") not in ids
             or not isinstance(chart.get("difficulty"), str)
         ):
-            raise ValueError("Invalid provider chart reference or duplicate")
+            raise SnapshotError("Invalid provider chart reference or duplicate")
         charts.add(cid)
         alias = chart.get("legacyChartID")
         if alias:
             if not isinstance(alias, str) or alias in aliases:
-                raise ValueError("Duplicate historical provider alias")
+                raise SnapshotError("Duplicate historical provider alias")
             aliases.add(alias)
     if aliases & charts:
-        raise ValueError("Historical alias collides with provider identity")
+        raise SnapshotError("Historical alias collides with provider identity")
     return snapshot
 
 
@@ -161,7 +148,7 @@ def reconcile(value, snapshot, reviews=()):
     reviewed = {r["provider_chart_id"]: r for r in reviews if "provider_chart_id" in r}
     reviewed_songs = {r["provider_song_id"]: r for r in reviews if "provider_song_id" in r}
     if len(reviewed) + len(reviewed_songs) != len(reviews):
-        raise ValueError("Duplicate or unsupported provider review")
+        raise ReviewError("Duplicate or unsupported provider review")
     existing = {
         m["provider_id"]: m
         for m in value["mappings"].values()
@@ -190,7 +177,7 @@ def reconcile(value, snapshot, reviews=()):
                 or song_review.get("canonical_assertion") != digest(value["songs"][sid]["metadata"])
                 or song_review.get("expected_source") != {k: row[k] for k in ("title", "artist")}
             ):
-                raise ValueError("Stale or invalid provider song review")
+                raise ReviewError("Stale or invalid provider song review")
             slots = [
                 cid
                 for cid, chart in value["charts"].items()
@@ -220,7 +207,7 @@ def reconcile(value, snapshot, reviews=()):
                 or (value["charts"][cid]["format"], value["charts"][cid]["difficulty"])
                 != identity[2:]
             ):
-                raise ValueError("Stale or invalid provider review")
+                raise ReviewError("Stale or invalid provider review")
             candidates = [cid]
         elif old:
             cid = resolve(value, old["subject_id"])
@@ -278,3 +265,15 @@ def reconcile(value, snapshot, reviews=()):
     if report["conflicts"]:
         report["status"] = "conflicting"
     return result, report
+
+
+def decide_reconciliation(value, snapshot, reviews=()):
+    """Return typed blockers separately from accepted/retained provider state."""
+    try:
+        result, report = reconcile(value, snapshot, reviews)
+    except ReviewError as error:
+        return ReconciliationDecision(
+            value, {"status": "blocked", "conflicts": [], "added": []}, (str(error),)
+        )
+    blockers = ("Conflicting provider assignment requires review",) if report["conflicts"] else ()
+    return ReconciliationDecision(result, report, blockers)

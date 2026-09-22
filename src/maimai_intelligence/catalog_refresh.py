@@ -10,6 +10,7 @@ from .catalog_capture import CaptureStore
 from .catalog_identity import discovery_labels
 from .catalog_sources import WIKI, discovery_pages, mai_catalog, page_links, wiki_catalog
 from .catalog_transcriptions import implementation, prepare_body, qualify
+from .coverage_types import IntegrityError
 from .mai_notes import SOURCE_URL
 from .metadata_waterfall import FIELDS, accept, key, number, propose
 from .registry import accept_mapping, digest, resolve, select_transcription, write_registry
@@ -142,6 +143,8 @@ def refresh(
                         "sha256": metadata["sha256"],
                     }
                 mai_meta = metadata
+        except IntegrityError:
+            raise
         except ValueError as error:
             audit["failures"].append({"provider": provider, "reason": str(error)})
     ingest(inputs)
@@ -265,6 +268,8 @@ def refresh(
         ):
             try:
                 read_wiki(target["wiki_url"])
+            except IntegrityError:
+                raise
             except ValueError as error:
                 audit["failures"].append(
                     {"chart_id": cid, "provider": "gamerch-wiki", "reason": str(error)}
@@ -278,6 +283,8 @@ def refresh(
     for url in sorted(used_wiki):
         try:
             read_wiki(url)
+        except IntegrityError:
+            raise
         except ValueError as error:
             audit["failures"].append({"provider": "gamerch-wiki", "url": url, "reason": str(error)})
     # Aliases discover candidate pages; full identity still gates every value/body.
@@ -300,6 +307,8 @@ def refresh(
                     for name, found in page_links(capture.get(url)[0]).items():
                         if name in undiscovered:
                             discovered[name].update(found)
+                except IntegrityError:
+                    raise
                 except ValueError as error:
                     audit["failures"].append(
                         {"provider": "gamerch-wiki-discovery", "url": url, "reason": str(error)}
@@ -308,6 +317,8 @@ def refresh(
                 for url in sorted(urls):
                     try:
                         read_wiki(url)
+                    except IntegrityError:
+                        raise
                     except ValueError as error:
                         audit["failures"].append(
                             {
@@ -317,6 +328,8 @@ def refresh(
                                 "reason": str(error),
                             }
                         )
+        except IntegrityError:
+            raise
         except ValueError as error:
             audit["failures"].append({"provider": "gamerch-wiki-discovery", "reason": str(error)})
 
@@ -484,6 +497,8 @@ def refresh(
                     **validation,
                 )
                 break
+            except IntegrityError:
+                raise
             except (ValueError, KeyError, UnicodeError) as error:
                 outcome["attempts"].append({"provider": provider, "url": url, "reason": str(error)})
                 outcome["status"] = "unavailable_or_unsupported"

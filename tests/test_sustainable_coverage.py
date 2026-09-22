@@ -6,9 +6,11 @@ from copy import deepcopy
 from pathlib import Path
 from unittest.mock import patch
 
+from maimai_intelligence.artwork_store import migrate_artwork
 from maimai_intelligence.catalog_capture import CaptureStore
 from maimai_intelligence.coverage import CONFIG, _queue, _retry, prepare_coverage, wiki_jacket
-from maimai_intelligence.enrichment import classify_titles, migrate_artwork, validate_enrichment
+from maimai_intelligence.coverage_types import Failure, FailureKind
+from maimai_intelligence.enrichment import classify_titles, validate_enrichment
 from maimai_intelligence.provider_reconciliation import REVISION_URL, reconcile
 from maimai_intelligence.registry import (
     admit_chart,
@@ -58,6 +60,10 @@ class CoverageTests(unittest.TestCase):
                 raw = canonical(snapshot["songs"])
             elif url.endswith("charts-maimaidx.json"):
                 raw = canonical(snapshot["charts"])
+            elif "/otoge-db/" in url:
+                raw = b"[]"
+            elif url == "https://maimai.lxns.net/api/v0/maimai/song/list":
+                raw = b'{"songs": []}'
             elif "/Music/" in url:
                 if not official:
                     raise OSError("authored source unavailable")
@@ -327,7 +333,10 @@ class CoverageTests(unittest.TestCase):
         )
         self.assertEqual(_retry([{"status": 404}], 1, 100, [])[0], "not_found")
         self.assertEqual(_retry([], 1, 100, ["schema invalid"])[0], "unavailable")
-        self.assertEqual(_retry([], 1, 100, ["shared page budget reached"]), ("deferred", 0))
+        self.assertEqual(
+            _retry([], 1, 100, [Failure(FailureKind.DEFERRED, "shared page budget reached")]),
+            ("deferred", 0),
+        )
 
     def test_shared_page_budget_and_replay_do_not_read_newer_cache_bytes(self):
         captures = self.root / "captures"

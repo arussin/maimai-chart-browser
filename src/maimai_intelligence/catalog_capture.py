@@ -4,12 +4,15 @@ import hashlib
 import ipaddress
 import re
 import socket
+import ssl
+import time
 import urllib.error
 import urllib.request
 from datetime import UTC, datetime
 from pathlib import Path
 from urllib.parse import urlsplit
 
+from .coverage_types import CaptureError, Failure, FailureKind, IntegrityError
 from .mai_notes import NoRedirect
 from .snapshots import atomic_json, read_json
 
@@ -22,6 +25,9 @@ ALLOWED = re.compile(
     r"|api\.github\.com/repos/zkldi/Tachi/commits\?per_page=1"
     r"|raw\.githubusercontent\.com/zkldi/Tachi/[a-f0-9]{40}/db/seeds/(?:songs|charts)-maimaidx\.json"
     r"|(?:maimaidx\.jp|maimaidx-eng\.com)/maimai-mobile/img/Music/[A-Za-z0-9_-]+\.(?:png|jpg|jpeg|webp)"
+    r"|raw\.githubusercontent\.com/zvuc/otoge-db/[a-f0-9]{40}/maimai/(?:data/music-ex(?:-intl|-deleted)?\.json|jacket/[A-Za-z0-9_-]+\.(?:png|jpg|jpeg))"
+    r"|maimai\.lxns\.net/api/v0/maimai/song/list"
+    r"|assets2\.lxns\.net/maimai/jacket/[0-9]{1,9}\.png"
     r"|cdn\.gamerch\.com/[A-Za-z0-9_./-]+\.(?:png|jpg|jpeg|webp))"
 )
 MAX_CAPTURE_BYTES = 16 * 1024 * 1024
@@ -57,8 +63,12 @@ class CaptureStore:
     Failures never masquerade as a fresh empty provider response.
     """
 
-    def __init__(self, root, *, offline=False, fetcher=fetch_public, replay=None):
+    def __init__(
+        self, root, *, offline=False, fetcher=fetch_public, replay=None, now=None, cooldowns=None
+    ):
         self.root = Path(root)
+        self.now = int(time.time()) if now is None else now
+        self.cooldowns = dict(cooldowns or {})
         self.offline = offline
         self.fetcher = fetcher
         replay_record = read_json(replay) if replay else None
@@ -72,16 +82,20 @@ class CaptureStore:
         self.failure_details = {}
         self.wiki_requests = set()
         self.memo = {}
+        self.last_requests = {}
 
     def _read(self, record):
         digest, size = record["sha256"], record["bytes"]
         if not re.fullmatch(r"[a-f0-9]{64}", digest) or not 0 < size <= MAX_CAPTURE_BYTES:
-            raise ValueError("Invalid cached source identity or size")
+            raise IntegrityError("Invalid cached source identity or size")
         path = self.root / "blobs" / digest
-        with path.open("rb") as stream:
-            raw = stream.read(MAX_CAPTURE_BYTES + 1)
+        try:
+            with path.open("rb") as stream:
+                raw = stream.read(MAX_CAPTURE_BYTES + 1)
+        except OSError as error:
+            raise IntegrityError("Retained source bytes are unavailable") from error
         if len(raw) != size or hashlib.sha256(raw).hexdigest() != digest:
-            raise ValueError("Cached source integrity mismatch")
+            raise IntegrityError("Cached source integrity mismatch")
         return raw
 
     def get(self, url):
@@ -90,20 +104,40 @@ class CaptureStore:
         if url in self.recorded_failures:
             self.failures[url] = self.recorded_failures[url]
             self.failure_details[url] = self.recorded_failure_details.get(url, {})
-            raise ValueError(self.failures[url])
+            details = self.failure_details[url]
+            failure = Failure(
+                FailureKind(details.get("kind", "transport")),
+                self.failures[url],
+                status=details.get("status"),
+                retry_after=details.get("retry_after"),
+                verify_code=details.get("verify_code"),
+                verify_message=details.get("verify_message"),
+            )
+            self._cooldown(url, failure)
+            raise CaptureError(failure)
         if url in self.failures:
-            raise ValueError(self.failures[url])
+            details = self.failure_details[url]
+            raise CaptureError(
+                Failure(
+                    FailureKind(details.get("kind", "transport")),
+                    self.failures[url],
+                    status=details.get("status"),
+                    retry_after=details.get("retry_after"),
+                )
+            )
         if url in self.memo:
             return self.memo[url]
         if re.fullmatch(r"https://gamerch\.com/maimai/[1-9][0-9]{0,8}", url):
             if len(self.wiki_requests) >= 300:
-                raise ValueError("Shared Wiki page budget reached; work deferred")
+                raise CaptureError(
+                    Failure(FailureKind.DEFERRED, "Shared Wiki page budget reached; work deferred")
+                )
             self.wiki_requests.add(url)
         pointer = self.root / "urls" / (hashlib.sha256(url.encode()).hexdigest() + ".json")
         try:
             previous = read_json(pointer) if pointer.exists() else None
             if previous and previous.get("url") != url:
-                raise ValueError("Cached source URL mismatch")
+                raise IntegrityError("Cached source URL mismatch")
             if self.offline:
                 record = self.replay.get(url) if self.replay is not None else previous
                 if not record or record.get("url") != url:
@@ -120,6 +154,22 @@ class CaptureStore:
                     ):
                         if previous.get(field):
                             headers[header] = previous[field]
+                host = urlsplit(url).hostname
+                cooldown = self.cooldowns.get(host, {})
+                if cooldown.get("until", 0) > self.now:
+                    raise CaptureError(
+                        Failure(
+                            FailureKind.SOURCE_COOLDOWN,
+                            "Source is in a verified transport cooldown",
+                        )
+                    )
+                # Public LXNS resources explicitly rate-limit callers. Production
+                # reads are serial and at most one request per second per host.
+                if self.fetcher is fetch_public and host in {"maimai.lxns.net", "assets2.lxns.net"}:
+                    delay = self.last_requests.get(host, 0) + 1 - time.monotonic()
+                    if delay > 0:
+                        time.sleep(delay)
+                    self.last_requests[host] = time.monotonic()
                 status, raw, response_headers = self.fetcher(url, headers)
                 if status == 304:
                     if not previous:
@@ -151,15 +201,24 @@ class CaptureStore:
             self.captures[url] = record
             self.memo[url] = raw, record
             return raw, record
+        except IntegrityError:
+            raise
         except (OSError, ValueError, KeyError, TypeError) as error:
-            self.failures[url] = f"{type(error).__name__}: {error}"
-            self.failure_details[url] = {
-                "status": getattr(error, "code", None),
-                "retry_after": getattr(error, "headers", {}).get("Retry-After")
-                if getattr(error, "headers", None)
-                else None,
+            failure = classify_failure(error)
+            self.failures[url] = failure.message
+            self.failure_details[url] = failure.record()
+            self._cooldown(url, failure)
+            raise CaptureError(failure) from error
+
+    def _cooldown(self, url, failure):
+        if failure.kind in {FailureKind.TLS, FailureKind.RATE_LIMIT}:
+            from .coverage_queue import retry_policy
+
+            _, deadline = retry_policy([failure], 1, self.now)
+            self.cooldowns[urlsplit(url).hostname] = {
+                "until": deadline,
+                "failure": failure.record(),
             }
-            raise ValueError(self.failures[url]) from error
 
     def receipt(self):
         return {
@@ -168,3 +227,33 @@ class CaptureStore:
             "failures": self.failures,
             "failure_details": self.failure_details,
         }
+
+
+def classify_failure(error):
+    """Unwrap transport exceptions without interpreting their English messages."""
+    if isinstance(error, CaptureError):
+        return error.failure
+    cause = getattr(error, "reason", error)
+    if isinstance(cause, ssl.SSLCertVerificationError):
+        return Failure(
+            FailureKind.TLS,
+            str(error),
+            verify_code=cause.verify_code,
+            verify_message=cause.verify_message,
+        )
+    status = getattr(error, "code", None)
+    kind = (
+        FailureKind.RATE_LIMIT
+        if status == 429
+        else FailureKind.ABSENT
+        if status in {404, 410}
+        else FailureKind.TRANSPORT
+    )
+    return Failure(
+        kind,
+        f"{type(error).__name__}: {error}",
+        status=status,
+        retry_after=getattr(error, "headers", {}).get("Retry-After")
+        if getattr(error, "headers", None)
+        else None,
+    )

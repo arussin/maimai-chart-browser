@@ -1,24 +1,23 @@
 """Incremental song artwork and public mapping preparation shared by rebuild paths."""
 
-import hashlib
-import io
 import re
 import time
-import warnings
 from collections import Counter
 from copy import deepcopy
-from email.utils import parsedate_to_datetime
 from pathlib import Path
-from urllib.parse import urljoin, urlsplit
 
-from .catalog_identity import discovery_labels, label
-from .catalog_sources import WIKI, discovery_pages, page_links
-from .enrichment import classify_titles, migrate_artwork, select_artwork, verify_asset
-from .provider_reconciliation import capture_snapshot, failed_refresh, reconcile
+from .artwork_store import migrate_artwork, verify_asset
+from .coverage_queue import complete_job, empty_work, migrate_work, plan_batch, retry_policy
+from .coverage_runtime import producer_identity
+from .coverage_sources import ArtworkSources, WikiArtwork, capture_snapshot
+from .coverage_sources import wiki_jacket as wiki_jacket
+from .coverage_types import CaptureError, Failure, FailureKind, SnapshotError
+from .enrichment import classify_titles, select_artwork
+from .provider_reconciliation import decide_reconciliation, failed_refresh
 from .registry import digest, resolve
 from .snapshots import atomic_json, read_json
 
-POLICY = "sustainable-coverage-1"
+POLICY = "sustainable-coverage-2"
 IMAGE_BASES = {
     "JP": "https://maimaidx.jp/maimai-mobile/img/Music/",
     "INTL": "https://maimaidx-eng.com/maimai-mobile/img/Music/",
@@ -41,84 +40,15 @@ CONFIG = {
     "thumbnail_pixels": 128,
     "webp_quality": 85,
     "placeholder_sha256": [],
+    "artwork_sources": ["otoge-db", "lxns"],
+    "otoge_revision": "751705e5710a4c8bce3dc50573c6912e55283dd2",
 }
 
 
 def thumbnail(raw):
-    from PIL import Image
+    from .artwork_store import thumbnail as convert
 
-    if not raw or len(raw) > CONFIG["image_bytes"]:
-        raise ValueError("Artwork download exceeds limit")
-    with warnings.catch_warnings():
-        warnings.simplefilter("error", Image.DecompressionBombWarning)
-        with Image.open(io.BytesIO(raw)) as image:
-            if (
-                image.format not in {"PNG", "JPEG", "WEBP"}
-                or not 0 < image.width * image.height <= CONFIG["image_pixels"]
-            ):
-                raise ValueError("Unsupported artwork dimensions or format")
-            dimensions = {"width": image.width, "height": image.height}
-            image.load()
-            image.thumbnail((128, 128), Image.Resampling.LANCZOS)
-            output = io.BytesIO()
-            image.convert("RGB").save(output, "WEBP", quality=85, method=4)
-            converted = output.getvalue()
-    if len(converted) > 256 * 1024:
-        raise ValueError("Artwork thumbnail exceeds limit")
-    return converted, dimensions
-
-
-def wiki_jacket(raw, url, song):
-    """Only the identity-bearing metadata table's image is eligible."""
-    from .transcription_html import _Document, _label, _Node, _walk
-
-    root = _Document(raw.decode("utf-8")).root
-    matches = []
-    for table in (n for n in _walk(root) if n.tag == "table"):
-        fields = {}
-        for row in (n for n in _walk(table) if n.tag == "tr"):
-            cells = [n for n in row.children if isinstance(n, _Node) and n.tag in {"td", "th"}]
-            if len(cells) == 2 and _label(cells[0]) in {"タイトル", "アーティスト"}:
-                key = _label(cells[0])
-                if key in fields:
-                    raise ValueError("Ambiguous Wiki song metadata")
-                fields[key] = _label(cells[1])
-        if set(fields) != {"タイトル", "アーティスト"}:
-            continue
-        if not all(
-            label(fields[k]) and label(fields[k]) == label(song["metadata"].get(f))
-            for k, f in (("タイトル", "title"), ("アーティスト", "artist"))
-        ):
-            continue
-        images = set()
-        for node in _walk(table):
-            if node.tag != "img":
-                continue
-            href = next(
-                (
-                    node.attrs[k]
-                    for k in ("data-original", "data-original-src", "data-src", "src")
-                    if node.attrs.get(k)
-                ),
-                "",
-            )
-            target = urljoin(url, href)
-            parsed = urlsplit(target)
-            if (
-                parsed.scheme == "https"
-                and parsed.netloc == "cdn.gamerch.com"
-                and not parsed.query
-                and not parsed.fragment
-                and re.fullmatch(r"/[A-Za-z0-9_./-]+\.(?:png|jpg|jpeg|webp)", parsed.path, re.I)
-                and ".." not in parsed.path.split("/")
-            ):
-                images.add(target)
-        if len(images) != 1:
-            raise ValueError("Ambiguous or missing Wiki jacket")
-        matches.extend(images)
-    if len(set(matches)) != 1:
-        raise ValueError("Wiki jacket lacks unique complete song identity")
-    return matches[0]
+    return convert(raw, CONFIG)
 
 
 def _official_index(value):
@@ -147,113 +77,60 @@ def _official_index(value):
 
 
 def _state(path):
-    if path.exists():
-        result = read_json(path)
-        if result.get("version") != "coverage-work-1":
-            raise ValueError("Unsupported coverage work state")
-        return result
-    return {"version": "coverage-work-1", "generation": 0, "jobs": {}, "reviews": {}}
+    return migrate_work(read_json(path)) if path.exists() else empty_work()
 
 
 def _put_asset(raw, metadata, root, evidence, *, policy=POLICY):
-    if metadata["sha256"] in CONFIG["placeholder_sha256"]:
-        raise ValueError("Recognized generic artwork placeholder")
-    key = digest({"source": metadata["sha256"], "policy": policy, "conversion": CONFIG})
-    conversion = Path(root) / "conversions" / (key + ".json")
-    if conversion.exists():
-        selection = read_json(conversion)
-        verify_asset(root, selection["path"], selection["asset"])
-        return {
-            **selection,
-            "evidence": evidence,
-            "asset": {
-                **selection["asset"],
-                "source": metadata["url"],
-                "source_sha256": metadata["sha256"],
-            },
-        }
-    converted, dimensions = thumbnail(raw)
-    sha = hashlib.sha256(converted).hexdigest()
-    path = "media/" + sha + ".webp"
-    asset = {
-        "sha256": sha,
-        "bytes": len(converted),
-        "source": metadata["url"],
-        "source_sha256": metadata["sha256"],
-        **dimensions,
-    }
-    output = Path(root) / path
-    output.parent.mkdir(parents=True, exist_ok=True)
-    if output.exists():
-        verify_asset(root, path, asset)
-    else:
-        with output.open("xb") as stream:
-            stream.write(converted)
-    selection = {"path": path, "asset": asset, "policy": policy, "evidence": evidence}
-    atomic_json(conversion, selection)
-    return selection
+    from .artwork_store import put_asset
+
+    return put_asset(raw, metadata, root, evidence, policy=policy, config=CONFIG, codec=thumbnail)
 
 
 def _queue(value, state, now, official_index=None):
-    state = deepcopy(state)
-    state["generation"] += 1
-    eligible = []
     official_index = _official_index(value) if official_index is None else official_index
-    for sid, song in value["songs"].items():
-        if song.get("redirect"):
-            continue
-        evidence = digest(
+    evidence = {
+        sid: digest(
             {
                 "metadata": song["metadata"],
                 "official": official_index.get(sid, {}),
                 "policy": CONFIG,
+                "producer": state.get("producer_policy"),
+                "external": state.get("source_evidence", {}).get(sid, {}),
             }
         )
-        job = state["jobs"].setdefault(
-            sid, {"first_seen": state["generation"], "attempts": 0, "next_retry": 0}
-        )
-        changed = job.get("evidence") != evidence
-        selected = song.get("enrichment", {}).get("artwork", {}).get("selected", {})
-        retry = not selected or job.get("status") in {
-            "retained_on_failure",
-            "partial",
-            "deferred",
-            "unresolved",
-        }
-        rate_limited = job.get("reason") == "rate_limited" and job.get("next_retry", 0) > now
-        if not rate_limited and (changed or (retry and job.get("next_retry", 0) <= now)):
-            eligible.append((sid, changed))
-        job["pending_evidence"] = evidence
-    old = sorted(
-        (sid for sid, _ in eligible), key=lambda sid: (state["jobs"][sid]["first_seen"], sid)
+        for sid, song in value["songs"].items()
+        if not song.get("redirect")
+    }
+    selected = {
+        sid: song.get("enrichment", {}).get("artwork", {}).get("selected", {})
+        for sid, song in value["songs"].items()
+    }
+    return plan_batch(
+        evidence,
+        selected,
+        state,
+        now,
+        limit=CONFIG["song_budget"],
+        reserved=CONFIG["oldest_reserved"],
     )
-    fresh = [sid for sid, changed in eligible if changed]
-    ordered = old[: CONFIG["oldest_reserved"]]
-    ordered = list(dict.fromkeys(ordered + fresh + old))
-    return state, ordered[: CONFIG["song_budget"]]
 
 
-def _retry(details, attempts, now, errors):
-    statuses = {item.get("status") for item in details}
-    if 429 in statuses:
-        deadlines = []
-        for item in details:
-            value = item.get("retry_after")
-            try:
-                deadlines.append(now + max(0, int(value)))
-            except (ValueError, TypeError):
-                try:
-                    deadlines.append(int(parsedate_to_datetime(value).timestamp()))
-                except (ValueError, TypeError, AttributeError):
-                    continue
-        return "rate_limited", max([now + 900, *deadlines])
-    if 404 in statuses:
-        return "not_found", now + CONFIG["retry_seconds"]["not_found"]
-    if any("ambiguous" in error.lower() for error in errors):
-        return "ambiguous", now + CONFIG["retry_seconds"]["ambiguous"]
-    if any("budget" in error.lower() for error in errors):
-        return "deferred", 0
-    return "unavailable", now + min(86400, 900 * 2 ** min(attempts - 1, 7))
+def _retry(details, attempts, now, errors=()):
+    failures = [
+        Failure(
+            FailureKind.RATE_LIMIT
+            if item.get("status") == 429
+            else FailureKind.ABSENT
+            if item.get("status") == 404
+            else FailureKind.TRANSPORT,
+            "retained HTTP outcome",
+            status=item.get("status"),
+            retry_after=item.get("retry_after"),
+        )
+        for item in details
+    ]
+    failures.extend(error for error in errors if isinstance(error, Failure))
+    return retry_policy(failures, attempts, now)
 
 
 def coverage_inventory(value):
@@ -334,6 +211,90 @@ def coverage_changes(before, after):
     return result
 
 
+def _prepare_song(sid, song, job, official, capture, root, sources, wiki):
+    old = deepcopy(song.get("enrichment", {}).get("artwork", {}).get("selected", {}))
+    accepted, failures = [], []
+
+    def put(raw, metadata, evidence):
+        return _put_asset(raw, metadata, root, evidence)
+
+    for region, candidate in official.items():
+        evidence = {"song_id": sid, "region": region, **candidate}
+        if old.get(region, {}).get("evidence") == evidence:
+            accepted.append(region)
+            continue
+        try:
+            raw, metadata = capture.get(candidate["url"])
+            select_artwork(song, region, put(raw, metadata, evidence))
+            accepted.append(region)
+        except CaptureError as error:
+            failures.append(error.failure)
+    if not accepted and not old:
+        candidates = sources.for_song(sid, song)
+        failures.extend(sources.failures.values())
+        for candidate in candidates:
+            try:
+                raw, metadata = capture.get(candidate.url)
+                select_artwork(
+                    song, "default", put(raw, metadata, candidate.evidence(sid, song["metadata"]))
+                )
+                accepted.append("default")
+                break
+            except CaptureError as error:
+                failures.append(error.failure)
+        if not accepted:
+            try:
+                select_artwork(song, "default", wiki.selection(sid, song, job, put))
+                accepted.append("default")
+            except CaptureError as error:
+                failures.append(error.failure)
+    current = song.get("enrichment", {}).get("artwork", {}).get("selected", {})
+    if not current.get("default") and current:
+        select_artwork(song, "default", current.get("JP") or current.get("INTL"))
+    deferred = any(f.kind == FailureKind.DEFERRED for f in failures)
+    status = (
+        "accepted"
+        if current and not failures
+        else "partial"
+        if accepted
+        else "retained_on_failure"
+        if old
+        else "deferred"
+        if deferred
+        else "unresolved"
+    )
+    job["source_assessment"] = sources.assessments.get(
+        sid, [{"status": "retained_verified" if old else "official_verified"}]
+    )
+    return status, failures, not deferred
+
+
+def assessment_inventory(value, state):
+    gaps, unattempted = [], []
+    for sid, song in value["songs"].items():
+        if song.get("redirect"):
+            continue
+        job = state["jobs"].get(sid, {})
+        if not job.get("attempts") or job.get("evidence") != job.get("pending_evidence"):
+            unattempted.append(sid)
+        if not song.get("enrichment", {}).get("artwork", {}).get("selected"):
+            gaps.append(
+                {
+                    "song_id": sid,
+                    "title": song["metadata"].get("title"),
+                    "artist": song["metadata"].get("artist"),
+                    "status": job.get("status", "unattempted"),
+                    "reason": job.get("reason"),
+                    "sources": job.get("source_assessment", []),
+                }
+            )
+    return {
+        "songs": len([s for s in value["songs"].values() if not s.get("redirect")]),
+        "unattempted": unattempted,
+        "artwork_gaps": gaps,
+    }
+
+
 def prepare_coverage(
     value,
     published,
@@ -347,165 +308,103 @@ def prepare_coverage(
     now=None,
     title_reviews=(),
     provider_reviews=(),
+    artwork_reviews=(),
+    work=None,
+    reassess_policy=False,
 ):
-    """Return candidate state; only the caller commits progress after full preparation."""
+    """Prepare a validated batch; the caller can checkpoint it before publication."""
     now = int(time.time()) if now is None else now
     root, output = Path(root), Path(output)
     result = deepcopy(value)
-    state = _state(root / "work.json")
-    prior = None
-    if replay:
-        prior = read_json(Path(replay).parent / "coverage-inputs.json")
-        if prior["starting_registry_sha256"] != digest(value) or prior["config"] != CONFIG:
-            raise ValueError("Coverage replay starting state or policy differs")
-        state = prior["work"]
-        now = prior["checked_at"]
+    producer = producer_identity()
+    if reassess_policy and not replay:
+        raise ValueError("Policy reassessment requires an explicit captured replay")
+    state = migrate_work(work) if work is not None else _state(root / "work.json")
+    prior = read_json(Path(replay).parent / "coverage-inputs.json") if replay else None
+    if prior:
+        if prior["starting_registry_sha256"] != digest(value):
+            raise ValueError("Coverage replay starting state differs")
+        if not reassess_policy and (prior["config"] != CONFIG or prior.get("producer") != producer):
+            raise ValueError(
+                "Coverage replay producer or policy differs; explicitly reassess captures"
+            )
+        state, now = migrate_work(prior["work"]), prior["checked_at"]
     inputs = {
         "version": POLICY,
         "starting_registry_sha256": digest(value),
         "config": CONFIG,
+        "producer": producer,
+        "reassessment_of": digest(prior)
+        if reassess_policy
+        else prior.get("reassessment_of")
+        if prior
+        else None,
         "work": deepcopy(state),
         "checked_at": now,
         "title_reviews": list(title_reviews),
         "provider_reviews": list(provider_reviews),
+        "artwork_reviews": list(artwork_reviews),
     }
-    if prior and (
-        prior["title_reviews"] != inputs["title_reviews"]
-        or prior["provider_reviews"] != inputs["provider_reviews"]
+    if prior and any(
+        prior.get(k, []) != inputs[k]
+        for k in ("title_reviews", "provider_reviews", "artwork_reviews")
     ):
         raise ValueError("Coverage replay reviews differ")
     migration = migrate_artwork(result, published, roots, root)
     classify_titles(result, title_reviews)
     before = coverage_inventory(result)
+    capture.now = now
+    capture.cooldowns.update(state.get("source_cooldowns", {}))
     provider = {"status": "offline_retained", "conflicts": [], "added": []}
     if not offline or replay:
         try:
-            result, provider = reconcile(result, capture_snapshot(capture), provider_reviews)
-        except (OSError, ValueError, KeyError, TypeError) as error:
+            decision = decide_reconciliation(result, capture_snapshot(capture), provider_reviews)
+        except (CaptureError, SnapshotError) as error:
             result, provider = failed_refresh(result, str(error))
-    if provider["conflicts"]:
-        atomic_json(output / "coverage-conflicts.json", provider)
-        raise ValueError("Conflicting provider assignment requires review")
-    official_index = _official_index(result)
-    state, selected = _queue(result, state, now, official_index)
-    if prior:
-        selected = prior["selected_work"]
-    elif offline:
-        selected = []
+            provider["failure"] = (
+                error.failure
+                if isinstance(error, CaptureError)
+                else Failure(FailureKind.SCHEMA, str(error))
+            ).record()
+        else:
+            if decision.blockers:
+                atomic_json(
+                    output / "coverage-conflicts.json",
+                    {**decision.report, "blockers": decision.blockers},
+                )
+            result, provider = decision.require_valid()
+    sources = ArtworkSources(
+        capture, result["songs"], providers=CONFIG["artwork_sources"], reviews=artwork_reviews
+    )
+    # Capture each catalog once so new evidence invalidates a negative result.
+    if not offline or replay:
+        for name in sources.providers:
+            sources._rows(name)
+        sources.validate_reviews(result["songs"])
+        state["source_evidence"] = {
+            sid: sources.evidence(sid, song)
+            for sid, song in result["songs"].items()
+            if not song.get("redirect")
+        }
+    state["producer_policy"] = producer["policy_sha256"]
+    official = _official_index(result)
+    state, selected = _queue(result, state, now, official)
+    selected = prior["selected_work"] if prior else [] if offline else selected
     inputs["selected_work"] = selected
     atomic_json(output / "coverage-inputs.json", inputs)
     atomic_json(output / "coverage-start.json", value)
-    outcomes, links = [], None
-    wiki_identities = Counter(
-        (label(song["metadata"].get("title")), label(song["metadata"].get("artist")))
-        for song in result["songs"].values()
-        if not song.get("redirect")
-    )
+    outcomes, wiki = [], WikiArtwork(capture, result["songs"])
     for sid in selected:
         song, job = result["songs"][sid], state["jobs"][sid]
-        old = deepcopy(song.get("enrichment", {}).get("artwork", {}).get("selected", {}))
-        official = official_index.get(sid, {})
-        errors, accepted = [], []
-        attempted = set()
-
-        def acquire(url, attempted=attempted):
-            attempted.add(url)
-            return capture.get(url)
-
-        for region, candidate in official.items():
-            prior_selection = old.get(region)
-            evidence = {"song_id": sid, "region": region, **candidate}
-            if prior_selection and prior_selection.get("evidence") == evidence:
-                accepted.append(region)
-                continue
-            try:
-                raw, metadata = acquire(candidate["url"])
-                selection = _put_asset(raw, metadata, root, evidence)
-                select_artwork(song, region, selection)
-                accepted.append(region)
-            except (OSError, ValueError, Warning) as error:
-                errors.append(str(error))
-        if not accepted and not old:
-            try:
-                if (
-                    wiki_identities[
-                        (
-                            label(song["metadata"].get("title")),
-                            label(song["metadata"].get("artist")),
-                        )
-                    ]
-                    != 1
-                ):
-                    raise ValueError("Ambiguous accepted song identity for Wiki artwork")
-                if links is None:
-                    home, _ = acquire(WIKI)
-                    links = page_links(home)
-                    for url in sorted(discovery_pages(home)):
-                        try:
-                            for name, found in page_links(acquire(url)[0]).items():
-                                links.setdefault(name, set()).update(found)
-                        except ValueError:
-                            continue
-                names = discovery_labels(song["metadata"])
-                urls = set(job.get("wiki_urls", []))
-                for name in names:
-                    urls.update(links.get(name, []))
-                job["wiki_urls"] = sorted(urls)
-                if len(urls) > 4:
-                    raise ValueError("Ambiguous Wiki discovery")
-                candidates = []
-                for url in sorted(urls):
-                    raw, page_meta = acquire(url)
-                    image_url = wiki_jacket(raw, url, song)
-                    candidates.append((image_url, page_meta))
-                if len({url for url, _ in candidates}) != 1:
-                    raise ValueError("Missing or ambiguous verified Wiki jacket")
-                image_url, page_meta = candidates[0]
-                raw, metadata = acquire(image_url)
-                selection = _put_asset(
-                    raw,
-                    metadata,
-                    root,
-                    {
-                        "song_id": sid,
-                        "page": page_meta,
-                        "assertion": digest(song["metadata"]),
-                        "image": image_url,
-                    },
-                )
-                select_artwork(song, "default", selection)
-                accepted.append("default")
-            except (OSError, ValueError, Warning) as error:
-                errors.append(str(error))
-        current = song.get("enrichment", {}).get("artwork", {}).get("selected", {})
-        if not current.get("default") and current:
-            select_artwork(song, "default", current.get("JP") or current.get("INTL"))
-        status = (
-            "accepted"
-            if accepted and not errors
-            else "partial"
-            if accepted
-            else "retained_on_failure"
-            if old
-            else "deferred"
-            if any("budget" in e.lower() for e in errors)
-            else "unresolved"
+        status, failures, performed = _prepare_song(
+            sid, song, job, official.get(sid, {}), capture, root, sources, wiki
         )
-        job["evidence"] = job["pending_evidence"]
-        job["attempts"] += 1
-        job["checked_at"] = now
-        job["status"] = status
-        reason, deadline = _retry(
-            [capture.failure_details.get(url, {}) for url in attempted],
-            job["attempts"],
-            now,
-            errors,
-        )
-        job["reason"], job["next_retry"] = reason, deadline
-        if status == "accepted":
-            job["reason"], job["next_retry"] = "accepted", 0
-        if not current:
-            fingerprint = digest({"song_id": sid, "evidence": job["evidence"], "policy": POLICY})
+        complete_job(state, sid, status=status, failures=failures, now=now, performed=performed)
+        errors = [f.message for f in failures]
+        if not song.get("enrichment", {}).get("artwork", {}).get("selected"):
+            fingerprint = digest(
+                {"song_id": sid, "evidence": job["pending_evidence"], "policy": POLICY}
+            )
             state["reviews"].setdefault(
                 fingerprint,
                 {
@@ -514,7 +413,15 @@ def prepare_coverage(
                     "reason": errors[-1] if errors else "no verified source",
                 },
             )
-        outcomes.append({"song_id": sid, "status": status, "errors": errors})
+        outcomes.append(
+            {
+                "song_id": sid,
+                "status": status,
+                "errors": errors,
+                "failures": [f.record() for f in failures],
+            }
+        )
+    state["source_cooldowns"] = dict(capture.cooldowns)
     assets = {}
     for song in result["songs"].values():
         for selection in song.get("enrichment", {}).get("artwork", {}).get("selected", {}).values():
@@ -529,6 +436,8 @@ def prepare_coverage(
         "counts": dict(Counter(row["status"] for row in outcomes)),
         "assets": assets,
         "coverage": coverage_changes(before, coverage_inventory(result)),
+        "assessment": assessment_inventory(result, state),
+        "source_assessment": sources.report(),
     }
     atomic_json(output / "coverage-audit.json", report)
     return result, report
