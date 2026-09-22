@@ -47,6 +47,8 @@ import maimai_build_backend as backend
 result={'wheel':backend.build_wheel('artifacts')}
 if sys.argv[1]=='all':result['sdist']=backend.build_sdist('artifacts')
 result['network_attempts']=len(calls)
+result['hash_randomization']=sys.flags.hash_randomization
+result['hash_seed_probe']=hash('maimai-reproduction-seed')
 print(json.dumps(result))
 """
 
@@ -122,13 +124,13 @@ def extract_sdist(path, output):
 
 def run_build(source, mode):
     env = {
-        **os.environ,
+        **{k: v for k, v in os.environ.items() if not k.startswith("PYTHON")},
         "PYTHONDONTWRITEBYTECODE": "1",
         "PYTHONHASHSEED": "0",
         "SOURCE_DATE_EPOCH": "1577836800",
     }
     result = subprocess.run(  # noqa: S603 -- explicit interpreter/tool argv in disposable source
-        [sys.executable, "-I", "-B", "-c", BUILD, mode],
+        [sys.executable, "-B", "-s", "-P", "-c", BUILD, mode],
         cwd=source,
         env=env,
         text=True,
@@ -224,12 +226,19 @@ def verify(source, output, *, npm_cache=None):
                 "wheel_entries": wheel_entries(wheel),
                 "generated_assets": generated,
                 "network_attempts": built["network_attempts"],
+                "hash_randomization": built["hash_randomization"],
+                "hash_seed_probe": built["hash_seed_probe"],
             }
         )
     extracted = extract_sdist(output / "first/artifacts" / built["sdist"], output / "from-sdist")
     rebuilt = run_build(extracted, "wheel")
     rebuilt_entries = wheel_entries(extracted / "artifacts" / rebuilt["wheel"])
     checks = {
+        "fixed_hash_seed_verified": all(b["hash_randomization"] == 0 for b in builds)
+        and rebuilt["hash_randomization"] == 0
+        and builds[0]["hash_seed_probe"]
+        == builds[1]["hash_seed_probe"]
+        == rebuilt["hash_seed_probe"],
         "wheel_bytes_identical": builds[0]["wheel_sha256"] == builds[1]["wheel_sha256"],
         "sdist_bytes_identical": builds[0]["sdist_sha256"] == builds[1]["sdist_sha256"],
         "wheel_entries_identical": builds[0]["wheel_entries"] == builds[1]["wheel_entries"],

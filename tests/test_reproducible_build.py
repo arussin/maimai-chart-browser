@@ -43,6 +43,8 @@ class ReproducibleBuildTests(unittest.TestCase):
             result = verify(source, root / "proof")
             self.assertTrue(result["passed"])
             self.assertTrue(all(result["checks"].values()))
+            self.assertTrue(result["checks"]["fixed_hash_seed_verified"])
+            self.assertTrue(all(b["hash_randomization"] == 0 for b in result["builds"]))
             self.assertEqual(result["runtime"]["implementation"], "CPython")
             self.assertEqual((source / "payload.txt").read_bytes(), before)
             self.assertFalse((source / "artifacts").exists())

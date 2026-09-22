@@ -1,190 +1,168 @@
-/** Local comparative benchmark. Source assets are never edited; external traffic is denied. */
+/** Commit- and artifact-bound, same-corpus local performance comparison. */
 import http from 'node:http';
 import {readFile,writeFile,mkdir} from 'node:fs/promises';
 import {resolve,extname,sep} from 'node:path';
 import {createHash} from 'node:crypto';
 import {gzipSync} from 'node:zlib';
 import {createRequire} from 'node:module';
+import {pathToFileURL} from 'node:url';
 import os from 'node:os';
-const argv=process.argv.slice(2),arg=(name,fallback)=>{const i=argv.indexOf('--'+name);return i<0?fallback:argv[i+1];};
-const baseline=resolve(arg('baseline')),candidate=resolve(arg('candidate')),runtime=resolve(arg('runtime')),output=resolve(arg('output'));
-const candidateRegistry=arg('candidate-registry')?resolve(arg('candidate-registry')):null;
-const deepOnly=argv.includes('--deep-only'),rootsOnly=argv.includes('--roots-only'),actualOnly=argv.includes('--actual-only');
-const actualBaseline=arg('actual-baseline')?resolve(arg('actual-baseline')):null;
-const actualCandidate=arg('actual-candidate')?resolve(arg('actual-candidate')):null;
-const actualManifest=arg('actual-manifest')?resolve(arg('actual-manifest')):null;
-if([actualBaseline,actualCandidate,actualManifest].some(Boolean)&&![actualBaseline,actualCandidate,actualManifest].every(Boolean))throw Error('Supply all three actual corpus paths together');
-const iterations=Number(arg('iterations','5'));
-if(!Number.isInteger(iterations)||iterations<1||iterations>10)throw Error('iterations must be 1 to 10');
-const require=createRequire(resolve(runtime,'package.json')),{chromium}=require('playwright');
+import {startIsolationProxy} from '../tests/browser/isolation.mjs';
+
 const sha=bytes=>createHash('sha256').update(bytes).digest('hex');
 const types={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.json':'application/json','.css':'text/css','.svg':'image/svg+xml','.webp':'image/webp','.png':'image/png','.ico':'image/x-icon','.woff2':'font/woff2'};
-const rows=[],blocked=[],errors=[],adaptations=[];let current,origin,activeRequests;
-const cache=new Map();
-const server=http.createServer(async(req,res)=>{
- try{
-  const url=new URL(req.url,origin||'http://127.0.0.1');
-  if(url.origin!==origin){blocked.push({host:url.hostname,path:url.pathname});res.writeHead(204);res.end();return;}
-  if(url.pathname==='/__usage'){
-   let body='';for await(const chunk of req){body+=chunk;if(body.length>4096)throw Error('Oversized fixture usage');}
-   const parsed=JSON.parse(body);if(parsed.version!==1||!Array.isArray(parsed.events))throw Error('Usage adaptation failed');
-   activeRequests.push({path:url.pathname,status:204,bodyBytes:Buffer.byteLength(body),usage:true,events:parsed.events});res.writeHead(204,{'Cache-Control':'no-store'});res.end();return;
-  }
-  const decoded=decodeURIComponent(url.pathname),name=decoded.endsWith('/')?decoded+'index.html':decoded;
-  let fileRoot=current.root;
-  if(current.dataRoot&&/^\/(?:catalogs|catalog-index|catalog-parts|chart-details|integration|media)\//.test(name))fileRoot=current.dataRoot;
-  else if(current.runtimeRoot&&/^\/[^/]+\.(?:html|js|css|svg|png|ico)$/.test(name))fileRoot=current.runtimeRoot;
-  const virtualManifest=name==='/manifest.json'&&current.manifestPath;
-  const path=virtualManifest?current.manifestPath:resolve(fileRoot,'.'+name);if(!virtualManifest&&!path.startsWith(fileRoot+sep))throw Error('Escaped fixture root');
-  const key=current.config+'|'+path;
-  let item=cache.get(key);
-  if(!item){
-   let bytes=await readFile(path),extension=extname(path);const sourceSha=sha(bytes);
-   if(current.config==='seo-only'&&extension==='.html')bytes=Buffer.from(bytes.toString().replace(/<script\b[^>]*\bsrc=["'][^"']*\busage\.js(?:\?[^"']*)?["'][^>]*>\s*<\/script>/g,''));
-   if(current.config==='seo-usage'&&path.endsWith(sep+'usage.js')){
-    const source=bytes.toString(),needle='location.protocol==="https:"&&location.hostname==="maimai.party"';
-    if(source.split(needle).length!==2)throw Error('Exact eligibility-only benchmark adaptation did not match once');
-    bytes=Buffer.from(source.replace(needle,'location.origin==='+JSON.stringify(origin)));
-    adaptations.push({source:path,source_sha256:sha(source),served_sha256:sha(bytes),change:'Only exact production origin predicate changed to this localhost origin'});
-   }
-   const compress=['.html','.js','.json','.css','.svg'].includes(extension),encoded=compress?gzipSync(bytes):bytes;
-   item={bytes,encoded,compress,extension,sourceSha,etag:'"'+sha(bytes)+'"'};cache.set(key,item);
-  }
-  const headers={'Content-Type':types[item.extension]||'application/octet-stream','ETag':item.etag,'Cache-Control':item.extension==='.html'||name.endsWith('/manifest.json')?'no-cache':'public, max-age=3600','X-Content-Type-Options':'nosniff'};
-  if(req.headers['if-none-match']===item.etag){activeRequests.push({path:url.pathname,status:304,bodyBytes:0,source_sha256:item.sourceSha,served_sha256:item.etag.slice(1,-1)});res.writeHead(304,headers);res.end();return;}
-  if(item.compress)headers['Content-Encoding']='gzip';headers['Content-Length']=item.encoded.length;
-  activeRequests.push({path:url.pathname,status:200,bodyBytes:item.encoded.length,rawBytes:item.bytes.length,source_sha256:item.sourceSha,served_sha256:item.etag.slice(1,-1)});res.writeHead(200,headers);res.end(item.encoded);
- }catch(error){errors.push({path:req.url,message:String(error.message)});res.writeHead(404,{'Cache-Control':'no-store'});res.end('Fixture resource unavailable');}
-});
-// Chromium's proxy sends all non-loopback HTTP here; CONNECT is denied without opening sockets.
-server.on('connect',(req,socket)=>{blocked.push({host:req.url,connect:true});socket.end('HTTP/1.1 403 Forbidden\r\nConnection: close\r\n\r\n');});
-await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));origin='http://127.0.0.1:'+server.address().port;
-await mkdir(output,{recursive:true});
-const datasets=[{id:'authored-6',folder:'progressive'},{id:'registry-26',folder:'registry'},{id:'capacity-7000',folder:'progressive-capacity'}];
-if(actualBaseline)datasets.push({id:'public-retained-7251',actual:true},{id:'public-enriched',actual:true,enriched:true,configs:['seo-usage']});
-if(actualOnly){if(!actualBaseline)throw Error('actual-only requires actual corpus paths');datasets.splice(0,3);}
-const datasetRoot=(config,dataset)=>dataset.actual?(config==='baseline'?actualBaseline:actualCandidate):config!=='baseline'&&dataset.id==='registry-26'&&candidateRegistry?candidateRegistry:resolve(config==='baseline'?baseline:candidate,dataset.folder);
-const settings=(config,dataset)=>({config,root:datasetRoot(config,dataset),...(dataset.actual&&config!=='baseline'?{runtimeRoot:resolve(candidate,'registry'),dataRoot:dataset.enriched?null:actualBaseline,manifestPath:dataset.enriched?actualManifest:resolve(actualBaseline,'manifest.json')}:{})});
-const fixtureProof=[];
-async function catalog(root,manifestPath=resolve(root,'manifest.json')){const manifest=JSON.parse(await readFile(manifestPath,'utf8')); const release=manifest.releases.find(r=>r.version===manifest.default);let bytes;try{bytes=await readFile(resolve(root,release.path));}catch{bytes=Buffer.concat(await Promise.all(release.parts.map(p=>readFile(resolve(root,p.path)))));}if(sha(bytes)!==release.sha256)throw Error('Catalog integrity mismatch');return {release,data:JSON.parse(bytes)};}
-for(const dataset of datasets){
- const b=await catalog(datasetRoot('baseline',dataset));
- const candidateSettings=settings('seo-usage',dataset);
- const c=dataset.actual&&!dataset.enriched?b:await catalog(candidateSettings.root,candidateSettings.manifestPath);
- const identity=value=>JSON.stringify(value.catalog.map(r=>[...(dataset.id==='registry-26'&&!candidateRegistry?[]:[r.chart_id,r.song_id]),r.title,r.artist,r.format,r.difficulty,r.level,r.demand]).sort((a,b)=>JSON.stringify(a).localeCompare(JSON.stringify(b))));
- if(!dataset.enriched&&identity(b.data)!==identity(c.data))throw Error('Baseline and candidate chart identities differ: '+dataset.id);
- fixtureProof.push({dataset:dataset.id,charts:c.data.catalog.length,comparison:dataset.enriched?'Separate enriched candidate, not a same-data comparison':'Same-data comparison',identity_sha256:sha(identity(c.data)),identity_comparison:dataset.id==='registry-26'&&!candidateRegistry?'Equivalent title/artist/slot/level/demand; independently generated random fixture UUIDs differ':'Exact identities/title/artist/slot/level/demand',baseline_catalog_sha256:b.release.sha256,candidate_catalog_sha256:c.release.sha256});
- dataset.query=dataset.id==='capacity-7000'?'Capacity study 0000':b.data.catalog.find(r=>r.title?.trim()).title;
+
+export function distribution(values){
+ const v=[...values].sort((a,b)=>a-b),middle=Math.floor(v.length/2);
+ if(!v.length||v.some(n=>!Number.isFinite(n)))throw Error('Finite measurements are required');
+ return {n:v.length,min:v[0],median:v.length%2?v[middle]:(v[middle-1]+v[middle])/2,p95:v[Math.ceil(v.length*.95)-1],max:v.at(-1),values:v};
 }
-const browser=await chromium.launch({headless:true,proxy:{server:origin},args:['--disable-background-networking','--disable-component-update','--disable-default-apps','--disable-sync','--metrics-recording-only','--no-first-run']});
+
+export async function bindArtifact(config){
+ if(!/^[a-f0-9]{40}$/.test(config.commit||''))throw Error('Exact product source commits are required');
+ const bytes=await readFile(config.provenance),receipt=JSON.parse(bytes);
+ if(receipt.schema_version!=='maimai-full-review-reproduction-2'||receipt.passed!==true||receipt.published!==false||receipt.source?.commit!==config.commit||receipt.candidate_commit!==config.commit)throw Error('Artifact receipt does not verify the requested source commit');
+ const build=receipt.builds?.find(b=>resolve(b.directory,'review','planned-assets')===config.root&&resolve(b.directory,'review','planned-manifest.json')===config.manifest);
+ if(!build?.files||!receipt.source?.inventory_sha256||!receipt.verifier?.commit)throw Error('Artifact root is not bound by a complete reproduction receipt');
+ const expected={};
+ for(const [name,value] of Object.entries(build.files))if(name.startsWith('planned-assets/'))expected['/'+name.slice('planned-assets/'.length)]=value;
+ expected['/manifest.json']=build.files['planned-manifest.json'];
+ if(!expected['/manifest.json']||!expected['/index.html'])throw Error('Receipt omits required artifact files');
+ const manifest=await readFile(config.manifest);
+ verifyBytes('/manifest.json',manifest,expected);
+ return {expected,receipt_sha256:sha(bytes),source_inventory_sha256:receipt.source.inventory_sha256,verifier_commit:receipt.verifier.commit};
+}
+
+export function verifyBytes(name,raw,expected){
+ const item=expected[name];
+ if(!item||item.sha256!==sha(raw)||item.bytes!==raw.length)throw Error('Served artifact differs from committed build receipt: '+name);
+}
+
+async function catalog(config){
+ const raw=await readFile(config.manifest);verifyBytes('/manifest.json',raw,config.binding.expected);
+ const manifest=JSON.parse(raw),release=manifest.releases.find(r=>r.version===manifest.default);
+ const load=async reference=>{
+  const name='/'+reference.path,path=resolve(config.root,reference.path);
+  if(!path.startsWith(config.root+sep))throw Error('Catalog path escapes the verified artifact');
+  const bytes=await readFile(path);verifyBytes(name,bytes,config.binding.expected);return bytes;
+ };
+ const bytes=release.parts?Buffer.concat(await Promise.all(release.parts.map(load))):await load(release);
+ if(sha(bytes)!==release.sha256)throw Error('Catalog integrity mismatch');
+ return {release,data:JSON.parse(bytes),manifest_sha256:sha(raw)};
+}
+
 function instrument(){
- const state=window.__bench={ready:null,staticReady:null,longTasks:[],shifts:[],actions:[]};
- localStorage.setItem('maimai-catalog-filters-collapsed','0');
- for(const type of ['longtask','layout-shift'])try{new PerformanceObserver(list=>{for(const entry of list.getEntries())if(type==='longtask')state.longTasks.push({start:entry.startTime,duration:entry.duration});else state.shifts.push({start:entry.startTime,value:entry.value,recent:entry.hadRecentInput});}).observe({type,buffered:true});}catch{}
- const check=()=>{if(state.staticReady===null&&document.querySelector('main[data-seo-page]'))state.staticReady=performance.now();if(state.ready===null&&window.maimaiResearchCatalog&&document.querySelector('#songs .song-row')&&!document.getElementById('lab-status')?.textContent.trim())state.ready=performance.now();};
+ localStorage.clear();localStorage.setItem('maimai-catalog-filters-collapsed','0');
+ const state=window.__measurement={ready:null,longTasks:[],shifts:[]};
+ for(const type of ['longtask','layout-shift'])new PerformanceObserver(list=>{for(const e of list.getEntries())if(type==='longtask')state.longTasks.push(e.duration);else if(!e.hadRecentInput)state.shifts.push(e.value);}).observe({type,buffered:true});
+ const check=()=>{if(state.ready===null&&document.querySelector('#songs .song-row')&&document.querySelector('#catalog-count')?.textContent.trim()&&!document.querySelector('#lab-status')?.textContent.trim())state.ready=performance.now();};
  new MutationObserver(check).observe(document,{childList:true,subtree:true,characterData:true});
 }
-async function settle(page){await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));}
-async function snapshot(page){return page.evaluate(()=>{
- const navigation=performance.getEntriesByType('navigation')[0],resources=performance.getEntriesByType('resource');
- return {ready_ms:window.__bench.ready,static_ready_ms:window.__bench.staticReady,dom_content_ms:navigation.domContentLoadedEventEnd,load_ms:navigation.loadEventEnd,
-  transfer_bytes:[navigation,...resources].reduce((n,r)=>n+r.transferSize,0),encoded_body_bytes:[navigation,...resources].reduce((n,r)=>n+r.encodedBodySize,0),decoded_body_bytes:[navigation,...resources].reduce((n,r)=>n+r.decodedBodySize,0),resource_entries:resources.length,
-  cached_resources:resources.filter(r=>r.transferSize===0&&r.decodedBodySize>0).length,
-  long_tasks:window.__bench.longTasks.slice(),cls:window.__bench.shifts.filter(r=>!r.recent).reduce((n,r)=>n+r.value,0),all_layout_shifts:window.__bench.shifts.reduce((n,r)=>n+r.value,0),
-  details_requested:resources.filter(r=>/chart-details|shared-details/.test(r.name)).map(r=>new URL(r.name).pathname),
-  catalogs_requested:resources.filter(r=>/catalogs\/|catalog-parts\//.test(r.name)).map(r=>new URL(r.name).pathname),
-  rendered_rows:document.querySelectorAll('#songs .song-row').length};});}
-async function action(page,name,operation,value){
- const measurement=await page.evaluate(async({operation,value})=>{
-  const start=performance.now();
-  if(operation==='search'){const el=document.getElementById('search');el.value=value;el.dispatchEvent(new InputEvent('input',{bubbles:true,inputType:'insertText',data:value}));}
-  else document.querySelector(operation)?.click();
-  await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));return performance.now()-start;
- },{operation,value});return {name,ms:measurement};
+const frames=page=>page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
+const ready=page=>page.waitForFunction(()=>Number.isFinite(window.__measurement?.ready));
+async function timing(page,operation){const start=await page.evaluate(()=>performance.now());await operation();await frames(page);return page.evaluate(start=>performance.now()-start,start);}
+async function search(page,value){
+ await page.evaluate(value=>{const el=document.querySelector('#search');el.value=value;el.dispatchEvent(new InputEvent('input',{bubbles:true,inputType:'insertText',data:value}));},value);
 }
-async function oneRoot(page,dataset,temperature){
- activeRequests=[];await page.goto(origin+'/',{waitUntil:'load'});await page.waitForFunction(()=>window.__bench?.ready!==null,{timeout:30000});await settle(page);await page.waitForTimeout(150);
- const startup=await snapshot(page),startupRequests=activeRequests.slice();
- if(startup.rendered_rows===0)throw Error('No browser results');
- if(current.config==='seo-only'&&startupRequests.some(r=>/\busage\.js$/.test(r.path)))throw Error('SEO-only unexpectedly loaded usage module');
- const interactions=[];interactions.push(await action(page,'search','search',dataset.query));interactions.push(await action(page,'clear-search','search',''));interactions.push(await action(page,'sort','[data-sort-key="peak"]'));
- interactions.push(await action(page,'expand-chart','#songs .chart-row'));
- await page.waitForTimeout(100);await settle(page);
- const expanded=await snapshot(page);
- const compare=page.locator('#songs .song-row').first().getByRole('button',{name:'Compare this chart',exact:true});
- if(await compare.count()){
-  const started=await page.evaluate(()=>performance.now());await compare.click();await settle(page);interactions.push({name:'choose-comparison',ms:await page.evaluate(start=>performance.now()-start,started)});
-  if(await page.locator('#find-similar').isEnabled()){interactions.push(await action(page,'similar','#find-similar'));await page.waitForFunction(()=>document.querySelectorAll('#similar-results .similar-chart').length>0);}
- }
- await page.evaluate(async()=>{await window.maimaiUsage?.flush();});
- const usage=activeRequests.filter(r=>r.usage);
- if(current.config==='seo-usage'&&usage.length===0)throw Error('Usage eligibility adaptation did not emit a local batch');
- if(current.config!=='seo-usage'&&usage.length)throw Error('Usage unexpectedly active');
- return {temperature,startup,startup_requests:startupRequests,interactions,after_expansion:expanded,usage_batches:usage,server_requests:activeRequests.slice()};
-}
-async function arrival(page,kind,slug){
- const path='/en/'+(kind==='song'?'songs':'versions')+'/'+encodeURIComponent(slug)+'/';activeRequests=[];
- await page.goto(origin+path,{waitUntil:'load'});
- await page.locator('main[data-seo-page="'+kind+'"]').waitFor({state:'attached'});
- if(kind==='version')await page.waitForFunction(()=>!!window.maimaiBrowserState&&document.querySelector('[data-version-browser]')?.hidden===false);
- await settle(page);await page.waitForTimeout(150);const result={path,...await snapshot(page),requests:activeRequests.slice()};
- if(kind==='song'&&(result.catalogs_requested.length||result.details_requested.length||result.requests.some(r=>r.path.includes('catalog-index'))))throw Error('Lightweight song arrival loaded catalog');
- return result;
-}
-async function returnNavigation(page){
- const result={};activeRequests=[];await page.goto(origin+'/',{waitUntil:'load'});await page.waitForFunction(()=>window.__bench.ready!==null);
- await page.locator('#songs .chart-row').first().click();const link=page.locator('#songs .song-row').first().locator('a[data-song-page]');await link.waitFor({state:'visible'});
- const before=activeRequests.filter(r=>r.path.includes('catalog-index')).length;
- const start=await page.evaluate(()=>performance.now());await link.click();await page.locator('#seo-route-view').waitFor({state:'visible'});await settle(page);result.open_song_ms=await page.evaluate(t=>performance.now()-t,start);
- const back=await page.evaluate(()=>performance.now());await page.goBack();await page.locator('#songs').waitFor({state:'visible'});await page.waitForFunction(()=>{const state=history.state?.maimaiBrowserState;return !!state&&(!state.focus||document.activeElement?.id===state.focus)&&(!Array.isArray(state.scroll)||Math.abs(scrollX-state.scroll[0])<2&&Math.abs(scrollY-state.scroll[1])<2);});await settle(page);result.back_ms=await page.evaluate(t=>performance.now()-t,back);
- result.return_catalog_refetches=activeRequests.filter(r=>r.path.includes('catalog-index')).length-before;
- result.navigation_cls=(await snapshot(page)).cls;await page.evaluate(async()=>{await window.maimaiUsage?.flush();});return result;
-}
-async function deepConfiguration(config,iteration){
- current={config,root:resolve(candidate,'registry')};
- const map=JSON.parse(await readFile(resolve(current.root,'permalinks.json'),'utf8'));
- const song=Object.values(map.songs).find(s=>/[^\x00-\x7f]/.test(s))||Object.values(map.songs)[0],version=Object.values(map.versions)[0];
- const pair={cold:{iteration,config,temperature:'cold'},warm:{iteration,config,temperature:'warm'}};
- // Every arrival type has its own fresh context. A preceding song cannot warm a version arrival.
- for(const [kind,slug]of [['song',song],['version',version],['navigation',null]]){
-  const context=await browser.newContext({viewport:{width:1280,height:900},locale:'en-US',reducedMotion:'reduce',serviceWorkers:'block'});await context.addInitScript(instrument);const page=await context.newPage();
-  page.on('pageerror',error=>errors.push({dataset:'deep-'+kind,config,message:error.message}));
-  for(const temperature of ['cold','warm']){
-   if(kind==='navigation')Object.assign(pair[temperature],await returnNavigation(page));
-   else pair[temperature][kind]=await arrival(page,kind,slug);
-  }
-  await context.close();
- }
- return Object.values(pair);
-}
-const configurations=['baseline','seo-only','seo-usage'];
-try{
- // Populate only the local server's filesystem/gzip cache before measured cold browser contexts.
- for(const config of deepOnly?[]:configurations)for(const dataset of datasets){
-  if(dataset.configs&&!dataset.configs.includes(config))continue;current=settings(config,dataset);const context=await browser.newContext({viewport:{width:1280,height:900},locale:'en-US',reducedMotion:'reduce',serviceWorkers:'block'});await context.addInitScript(instrument);const page=await context.newPage();activeRequests=[];
-  await page.goto(origin+'/',{waitUntil:'load'});await page.waitForFunction(()=>window.__bench.ready!==null);await page.waitForTimeout(150);await context.close();
- }
 
- for(let iteration=0;iteration<(deepOnly?0:iterations);iteration++){
-  const order=configurations.slice(iteration%3).concat(configurations.slice(0,iteration%3));
-  for(const config of order)for(const dataset of datasets){
-   if(dataset.configs&&!dataset.configs.includes(config))continue;current=settings(config,dataset);
-   const context=await browser.newContext({viewport:{width:1280,height:900},locale:'en-US',reducedMotion:'reduce',serviceWorkers:'block'});await context.addInitScript(instrument);
-   const page=await context.newPage();page.on('pageerror',error=>errors.push({dataset:dataset.id,config,message:error.message}));
+export async function main(argv=process.argv.slice(2)){
+ const arg=(key,fallback)=>{const i=argv.indexOf('--'+key);return i<0?fallback:argv[i+1];};
+ const runtime=resolve(arg('runtime')),output=resolve(arg('output')),iterations=Number(arg('iterations','7'));
+ if(!Number.isInteger(iterations)||iterations<3||iterations>30)throw Error('Use 3 to 30 paired iterations');
+ const configs=[];
+ for(const id of ['baseline','candidate']){
+  const root=resolve(arg(id)),config={id,root,manifest:resolve(arg(id+'-manifest',resolve(root,'manifest.json'))),commit:arg(id+'-commit'),provenance:resolve(arg(id+'-provenance'))};
+  config.binding=await bindArtifact(config);configs.push(config);
+ }
+ const catalogs=await Promise.all(configs.map(catalog));
+ if(catalogs[0].release.sha256!==catalogs[1].release.sha256)throw Error('Runtime comparison requires byte-identical accepted catalogs; measure enrichment separately');
+ const query=catalogs[0].data.catalog.find(c=>c.title?.trim()&&c.artist?.trim()).title;
+ let current=configs[0],origin,requests=[];const content=new Map(),errors=[],rows=[];
+ const server=http.createServer(async(req,res)=>{
+  try{
+   const url=new URL(req.url,origin),decoded=decodeURIComponent(url.pathname),name=decoded.endsWith('/')?decoded+'index.html':decoded;
+   if(url.origin!==origin)throw Error('Foreign origin');
+   const path=name==='/manifest.json'?current.manifest:resolve(current.root,'.'+name);
+   if(path!==current.manifest&&!path.startsWith(current.root+sep))throw Error('Escaped public root');
+   const key=current.id+'|'+path;let file=content.get(key);
+   if(!file){
+    const raw=await readFile(path);verifyBytes(name,raw,current.binding.expected);
+    const extension=extname(path),compressed=['.html','.json','.js','.css','.svg'].includes(extension);
+    file={raw,extension,compressed,body:compressed?gzipSync(raw):raw,etag:'"'+sha(raw)+'"',name,config:current.id};content.set(key,file);
+   }
+   const immutable=/^\/(catalog-parts|catalog-index|catalog-index-parts|chart-details|integration|media)\//.test(name);
+   const headers={'Content-Type':types[file.extension]||'application/octet-stream','Cache-Control':immutable?'public,max-age=31536000,immutable':'no-cache','ETag':file.etag,'X-Content-Type-Options':'nosniff'};
+   if(req.headers['if-none-match']===file.etag){requests.push({path:name,status:304,bytes:0,sha256:file.etag.slice(1,-1)});res.writeHead(304,headers).end();return;}
+   if(file.compressed)headers['Content-Encoding']='gzip';headers['Content-Length']=file.body.length;
+   requests.push({path:name,status:200,bytes:file.body.length,sha256:file.etag.slice(1,-1)});res.writeHead(200,headers).end(file.body);
+  }catch(error){if(req.url!='/favicon.ico'||error.code!=='ENOENT')errors.push({config:current.id,url:req.url,error:error.message});res.writeHead(404).end();}
+ });
+
+ const require=createRequire(resolve(runtime,'package.json'));
+ const lockBytes=await readFile(resolve(runtime,'package-lock.json')),lock=JSON.parse(lockBytes);
+ const packagePath=require.resolve('playwright/package.json');
+ if(!packagePath.startsWith(resolve(runtime,'node_modules')+sep))throw Error('Playwright must come from the explicit prepared runtime');
+ const installed=JSON.parse(await readFile(packagePath));
+ if(installed.version!==lock.packages?.['node_modules/playwright']?.version)throw Error('Playwright runtime differs from its lock');
+ const {chromium}=require('playwright');
+ const runtimeBinding={node:process.version,executable:process.execPath,executable_sha256:sha(await readFile(process.execPath)),playwright_version:installed.version,playwright_lock_sha256:sha(lockBytes),chromium_sha256:sha(await readFile(chromium.executablePath()))};
+ await mkdir(output,{recursive:false});
+ await new Promise(r=>server.listen(0,'127.0.0.1',r));origin='http://127.0.0.1:'+server.address().port;
+ const proxy=await startIsolationProxy({origins:[origin]});
+ let browser;
+ async function one(page,temperature,session){
+  requests=[];await session.send('Performance.enable');const before=(await session.send('Performance.getMetrics')).metrics;
+  await page.goto(origin+'/',{waitUntil:'load'});await ready(page);await frames(page);
+  const startup=await page.evaluate(()=>{const all=[...performance.getEntriesByType('navigation'),...performance.getEntriesByType('resource')];return {ready_ms:window.__measurement.ready,transfer_bytes:all.reduce((n,e)=>n+e.transferSize,0),encoded_bytes:all.reduce((n,e)=>n+e.encodedBodySize,0),cached_resources:all.filter(e=>e.transferSize===0&&e.decodedBodySize>0).length,rows:document.querySelectorAll('#songs .song-row').length,long_task_ms:window.__measurement.longTasks.reduce((a,b)=>a+b,0),cls:window.__measurement.shifts.reduce((a,b)=>a+b,0)};});
+  const metrics=(await session.send('Performance.getMetrics')).metrics;for(const name of ['ScriptDuration','TaskDuration'])startup[name+'_ms']=1000*((metrics.find(v=>v.name===name)?.value||0)-(before.find(v=>v.name===name)?.value||0));
+  const startupRequests=requests.slice(),search_ms=await timing(page,()=>search(page,query));
+  if(await page.locator('#songs .song-row').count()===0)throw Error('Search failed');
+  await search(page,'');await frames(page);
+  await page.locator('#songs .chart-row').first().click();const link=page.locator('#songs .song-row').first().locator('a[data-song-page]');await link.waitFor({state:'visible'});await link.focus();
+  const beforeCatalog=requests.filter(r=>r.path.includes('catalog-index')).length;
+  const song_ms=await timing(page,async()=>{await link.click();await page.locator('#seo-route-view').waitFor({state:'visible'});});
+  const back_ms=await timing(page,async()=>{await page.goBack();await page.locator('#songs').waitFor({state:'visible'});await page.waitForFunction(()=>{const s=history.state?.maimaiBrowserState;return s&&(!s.focus||document.activeElement?.id===s.focus)&&(!s.scroll||Math.abs(scrollY-s.scroll[1])<2&&Math.abs(scrollX-s.scroll[0])<2);});});
+  const return_catalog_refetches=requests.filter(r=>r.path.includes('catalog-index')).length-beforeCatalog;
+  const comparison_ms=await timing(page,async()=>{
+   // Include activation and any deferred module initialization in the user-visible cost.
+   await page.locator('#compare-tab').click();
+   const inputs=[page.getByRole('combobox',{name:'First chart',exact:true}),page.getByRole('combobox',{name:'Second chart',exact:true})];
+   for(const [index,input] of inputs.entries()){await input.fill(query);await page.locator('#comparison-pickers').getByRole('option').nth(index).waitFor();await input.press('ArrowDown');if(index)await input.press('ArrowDown');await input.press('Enter');}
+   await page.locator('#direct-comparison .metric-comparison').waitFor({state:'visible'});
+  });
+  return {temperature,startup,search_ms,song_ms,back_ms,comparison_ms,return_catalog_refetches,startup_requests:startupRequests,requests:requests.slice()};
+ }
+ try{
+  browser=await chromium.launch({headless:true,proxy:{server:proxy.server},args:['--disable-background-networking','--disable-component-update','--disable-default-apps','--disable-sync','--no-first-run']});
+  const contextOptions={viewport:{width:1280,height:900},locale:'en-US',reducedMotion:'reduce',serviceWorkers:'block'};
+  // Prime the full journey's filesystem and compression work, never a retained browser cache.
+  for(const config of configs){
+   current=config;const context=await browser.newContext(contextOptions);await context.addInitScript(instrument);
+   const page=await context.newPage();page.on('pageerror',e=>errors.push({config:config.id,phase:'prime',error:e.message}));
+   await one(page,'prime',await context.newCDPSession(page));await context.close();
+  }
+  for(let iteration=0;iteration<iterations;iteration++)for(const config of iteration%2?[...configs].reverse():configs){
+   current=config;const context=await browser.newContext(contextOptions);await context.addInitScript(instrument);
    for(const temperature of ['cold','warm']){
-    const measured=await oneRoot(page,dataset,temperature);rows.push({iteration:iteration+1,config,dataset:dataset.id,...measured});
-    process.stdout.write(JSON.stringify({iteration:iteration+1,config,dataset:dataset.id,temperature,ready_ms:measured.startup.ready_ms,transfer_bytes:measured.startup.transfer_bytes})+'\n');
+    const page=await context.newPage(),session=await context.newCDPSession(page);page.on('pageerror',e=>errors.push({config:config.id,error:e.message}));
+    const row={iteration:iteration+1,config:config.id,...await one(page,temperature,session)};rows.push(row);
+    process.stdout.write(JSON.stringify({iteration:row.iteration,config:row.config,temperature,ready_ms:row.startup.ready_ms,transfer_bytes:row.startup.transfer_bytes})+'\n');await page.close();
    }
    await context.close();
   }
+  const summaries=[];
+  for(const config of configs)for(const temperature of ['cold','warm']){
+   const selected=rows.filter(r=>r.config===config.id&&r.temperature===temperature),entry={config:config.id,temperature};
+   for(const key of ['ready_ms','transfer_bytes','encoded_bytes','cached_resources','ScriptDuration_ms','TaskDuration_ms','long_task_ms','cls'])entry[key]=distribution(selected.map(r=>r.startup[key]));
+   for(const key of ['search_ms','song_ms','back_ms','comparison_ms'])entry[key]=distribution(selected.map(r=>r[key]));summaries.push(entry);
+  }
+  const browserVersion=browser.version();await browser.close();browser=null;await proxy.close();
+  const receipt={schema:'architecture-performance-3',passed:errors.length===0&&proxy.unexpected.length===0,created_at:new Date().toISOString(),harness_sha256:sha(await readFile(new URL(import.meta.url))),configs:configs.map(({binding,...config})=>({...config,binding:{receipt_sha256:binding.receipt_sha256,source_inventory_sha256:binding.source_inventory_sha256,verifier_commit:binding.verifier_commit}})),verified_served_files:[...content.values()].map(f=>({config:f.config,path:f.name,bytes:f.raw.length,sha256:sha(f.raw)})),catalogs:catalogs.map(c=>({sha256:c.release.sha256,manifest_sha256:c.manifest_sha256,charts:c.data.catalog.length})),query,iterations,browser:browserVersion,runtime:runtimeBinding,platform:{os:os.platform(),release:os.release(),cpu:os.cpus()[0]?.model,threads:os.cpus().length},method:{routing:false,outbound:'Exact loopback proxy only; all other origins denied',cache:'Production-like immutable data; other assets revalidated. A new page in the same context gives the immediate warm repeat; a fresh context gives cold readiness. Full measured journey filesystem/gzip primed in discarded browser contexts. No artificial network or CPU throttle.',readiness:'First populated catalog DOM observed (ready_ms is not a paint metric); action completion includes two animation frames. Search dispatches the synchronous input event. Comparison includes tab activation and deferred initialization.',usage:'Collector remains suppressed by the unchanged nonproduction origin predicate.',execution:'CDP Performance ScriptDuration and TaskDuration deltas through two animation frames after catalog readiness',limitations:'Desktop Chromium on this Windows/font platform only; local-server latency, not internet Core Web Vitals. Concurrent host load is uncontrolled; paired order alternates.'},rows,summaries,errors,blocked:proxy.unexpected};
+  await writeFile(resolve(output,'measurements.json'),JSON.stringify(receipt,null,2)+'\n');
+  if(!receipt.passed)throw Error('Invalid measurement: resource, application or outbound errors');
+ }finally{
+  if(browser)await browser.close();await proxy.close();server.closeAllConnections();await new Promise(r=>server.close(r));
  }
- const deep=[];
- for(const config of rootsOnly?[]:['seo-only','seo-usage'])await deepConfiguration(config,0);
- for(let iteration=0;iteration<(rootsOnly?0:iterations);iteration++)for(const config of iteration%2?['seo-usage','seo-only']:['seo-only','seo-usage']){
-  deep.push(...await deepConfiguration(config,iteration+1));process.stdout.write(JSON.stringify({deep_iteration:iteration+1,config})+'\n');
- }
- const result={schema_version:'architecture-performance-1',created_at:new Date().toISOString(),harness_sha256:sha(await readFile(new URL(import.meta.url))),baseline,candidate,candidateRegistry,runtime,iterations,deepOnly,rootsOnly,actualOnly,actualBaseline,actualCandidate,actualManifest,browser:browser.version(),environment:{platform:os.platform(),release:os.release(),cpu:os.cpus()[0]?.model,cpu_threads:os.cpus().length,memory_gib:os.totalmem()/2**30},method:{same_origin:origin,gzip:true,cache:'HTML/manifest revalidated; public assets max-age=3600. Local server filesystem/gzip cache primed outside measurement. Fresh browser context cold; immediate same-context repeat warm.',network:'Local server; browser outbound proxy refuses every nonlocal HTTP host and every HTTPS CONNECT; no external requests forwarded.',usage:'SEO-only omits only usage.js script tags. SEO+usage substitutes exact production origin eligibility with this localhost origin only; generated asset hash and served hash retained.',timing:'No CPU or bandwidth throttle. Startup from MutationObserver readiness; actions to second animation frame; browser/OS and cross-run code caches are not cleared.',deep_contexts:'Separate fresh contexts for song, version, and root-to-song navigation; warm repeats retain only that same flow cache. Back completion requires the saved focus and scroll position, then two animation frames.',scope:actualBaseline?'Synthetic comparisons plus retained public runtime comparison and separately identified enriched public data. No personal data or hosted provider calls.':'Three synthetic datasets. No real catalog, personal data, or hosted provider calls.',actual_overlay:actualBaseline?'For new-runtime public comparisons only root-level HTML/JS/CSS/SVG/PNG/ICO come from final synthetic public runtime assets; manifest and data are pinned separately. The review manifest is served virtually and never written into planned-assets.':null},fixtureProof,adaptations:[...new Map(adaptations.map(r=>[r.source,r])).values()],rows,deep,blocked,errors};
- await writeFile(resolve(output,'measurements.json'),JSON.stringify(result,null,2)+'\n');
- if(errors.length)throw Error('Benchmark saw resource/page errors; inspect measurements.json');
- process.stdout.write(JSON.stringify({complete:true,output:resolve(output,'measurements.json'),runs:rows.length,deep_runs:deep.length})+'\n');
-}finally{await browser.close();await new Promise(resolve=>server.close(resolve));}
+}
+
+if(process.argv[1]&&import.meta.url===pathToFileURL(resolve(process.argv[1])).href)await main();
