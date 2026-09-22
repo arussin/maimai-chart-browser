@@ -190,3 +190,67 @@ test('a changed refresh preserves the selected chart and expanded PB history',as
   await context.unroute('https://public-report.example/**');await mock(context,page,changed);await age(page);await page.evaluate(()=>dispatchEvent(new Event('online')));
   await expect.poll(async()=>(await saved(page)).active.source.sourceRevision).toBe(changed.revision);expect(page.url()).toBe(url);await expect(page.locator('.player-pb-toggle')).toHaveAttribute('aria-expanded','true');
 });
+
+test('real popup handoff imports, reuses and declines without returning private data to the report',async({page,context})=>{
+  await boot(page);
+  const data=await fixture(page);
+  const offer=await page.evaluate(value=>maimaiPlayerData.offer(value),data);
+  const browserURL=new URL('/lab/',page.url()).href;
+  const bytes=[...gzipSync(Buffer.from(JSON.stringify(data)))];
+  await context.route('https://public-report.example/handoff-fixture',route=>route.fulfill({
+    contentType:'text/html',body:'<!doctype html><html lang="en"><title>Fictional report</title><body>Fictional report</body></html>'
+  }));
+  await page.goto('https://public-report.example/handoff-fixture');
+  async function open(offered){
+    const popupReady=page.waitForEvent('popup');
+    await page.evaluate(({browserURL,offer,bytes})=>{
+      const protocol='maimai-player-handoff/1',nonce=crypto.randomUUID();
+      window.handoffReplies=[];window.handoffReady=[];window.handoffSentBytes=0;
+      const target=new URL(browserURL);target.hash='party-import='+nonce;
+      let child;
+      function receive(event){
+        if(event.source!==child||event.origin!==target.origin||event.data?.protocol!==protocol||event.data?.nonce!==nonce||event.data?.type!=='ready')return;
+        window.removeEventListener('message',receive);window.handoffReady.push(event.data);
+        const channel=new MessageChannel();
+        channel.port1.onmessage=event=>{
+          window.handoffReplies.push(event.data);
+          if(event.data?.type==='accept'){
+            const payload=new Uint8Array(bytes);window.handoffSentBytes+=payload.byteLength;
+            channel.port1.postMessage({type:'data',bytes:payload.buffer},[payload.buffer]);
+          }
+        };
+        child.postMessage({protocol,type:'offer',nonce,offer},target.origin,[channel.port2]);
+      }
+      window.addEventListener('message',receive);child=window.open(target.href,'_blank');
+    },{browserURL,offer:offered,bytes});
+    const popup=await popupReady;
+    await expect.poll(()=>popup.evaluate(()=>!!window.maimaiPersonal)).toBe(true);
+    await popup.evaluate(()=>maimaiPersonal.ready);
+    await expect.poll(()=>page.evaluate(()=>handoffReady.length)).toBe(1);
+    expect(popup.url()).not.toContain('party-import');
+    return popup;
+  }
+  const imported=await open(offer);
+  await expect(imported.getByRole('heading',{name:'Import this profile?',exact:true})).toBeVisible();
+  await imported.locator('.player-remember input').check();
+  await imported.getByRole('button',{name:'Import data',exact:true}).click();
+  await expect.poll(()=>page.evaluate(()=>handoffReplies.map(value=>value.type))).toEqual(['accept','imported']);
+  expect(await imported.evaluate(()=>maimaiPersonal.enabled())).toBe(true);
+  expect((await saved(imported)).active.revision).toBe(data.revision);
+  expect((await saved(imported)).active.source).toBeNull();
+  expect(await page.evaluate(()=>handoffSentBytes)).toBe(bytes.length);
+  expect(await page.evaluate(()=>handoffReplies.every(value=>Object.keys(value).join(',')==='type'))).toBe(true);
+  expect(await page.evaluate(()=>Object.keys(handoffReady[0]).sort())).toEqual(['nonce','protocol','type']);
+  await imported.close();
+  const reused=await open(offer);
+  await expect.poll(()=>page.evaluate(()=>handoffReplies)).toEqual([{type:'reused'}]);
+  expect(await page.evaluate(()=>handoffSentBytes)).toBe(0);
+  await expect(reused.locator('.player-dialog')).not.toBeVisible();
+  await reused.close();
+  const declined=await open({...offer,player:{...offer.player,key:'kamaitachi:maimaidx:another-fixture',username:'another-fixture',displayName:'Another fictional player'}});
+  await declined.getByRole('button',{name:'Not now',exact:true}).click();
+  await expect.poll(()=>page.evaluate(()=>handoffReplies)).toEqual([{type:'declined'}]);
+  expect(await page.evaluate(()=>handoffSentBytes)).toBe(0);
+  expect((await saved(declined)).active.revision).toBe(data.revision);
+  await declined.close();
+});

@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import http from 'node:http';
 import {chromium, firefox, webkit} from '@playwright/test';
-import {launchIsolated, startIsolationProxy} from './isolation.mjs';
+import {launchIsolated, startIsolationProxy, isolatedTest} from './isolation.mjs';
 
 for (const [name, engine] of Object.entries({chromium, firefox, webkit, ...(process.env.MAIMAI_ISOLATION_BRANDED === "1" ? {chrome:chromium,edge:chromium} : {})})) {
   test(`${name}: popup, iframe, beacon, redirect and route escape cannot leave fixture origins`, async () => {
@@ -75,6 +75,12 @@ for (const [name, engine] of Object.entries({chromium, firefox, webkit, ...(proc
       for(let attempt=0;attempt<80&&!run.unexpected.slice(beforeBrowserRedirect).some(item=>item.target.includes('redirect.example.invalid'));attempt++)await new Promise(resolve=>setTimeout(resolve,25));
       assert.ok(run.unexpected.slice(beforeBrowserRedirect).some(item=>item.target.includes('redirect.example.invalid')), 'Browser redirects are attributed through routing or request events');
       assert.equal((await run.context.request.get(origin+'/local-redirect')).status(),200,'Explicit loopback GET redirects remain functional');
+      const fixtures=isolatedTest({extend:value=>value},{origins:[origin]});
+      await fixtures.context({context:run.context,baseURL:origin+'/configured-prefix/'},async context=>{
+        assert.equal((await context.request.get('artwork.webp')).url(),origin+'/configured-prefix/artwork.webp','Default fixture API uses the configured base URL, not the current page');
+        assert.equal((await context.request.get('/local-redirect')).status(),200);
+        await assert.rejects(context.request.get('//accounts.google.com/escape'),/denied non-loopback/);
+      });
       for (let attempt=0; attempt<80 && !["popup.example.invalid","iframe.example.invalid","beacon.example.invalid","redirect.example.invalid","escape.example.invalid","accounts.google.com","aus5.mozilla.org","clients2.google.com"].every(label=>run.unexpected.some(item=>item.target.includes(label))); attempt++) await new Promise(resolve => setTimeout(resolve,25));
       const targets = run.unexpected.map(item => item.target).join(' ');
       for (const label of ['popup.example.invalid','iframe.example.invalid','beacon.example.invalid','redirect.example.invalid','escape.example.invalid','accounts.google.com','aus5.mozilla.org','clients2.google.com']) assert.ok(targets.includes(label), `${name}: missing ${label}: ${targets}`);

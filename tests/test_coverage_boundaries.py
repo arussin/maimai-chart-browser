@@ -61,6 +61,51 @@ class CoverageBoundaryTests(unittest.TestCase):
             with self.subTest(body=body), self.assertRaises(SnapshotError):
                 capture_snapshot(Capture(body))
 
+    def test_1694_successful_jobs_finish_in_six_disjoint_batches(self):
+        evidence = {f"s{i:04}": "fixture-evidence" for i in range(1694)}
+        work, selected, seen, sizes = empty_work(), {}, set(), []
+        for batch_number in range(6):
+            work, batch = plan_batch(evidence, selected, work, batch_number)
+            self.assertFalse(seen.intersection(batch))
+            self.assertEqual(len(batch), len(set(batch)))
+            sizes.append(len(batch))
+            seen.update(batch)
+            for sid in batch:
+                complete_job(work, sid, status="accepted", failures=[], now=batch_number)
+                selected[sid] = {"path": f"fixture/{sid}.webp"}
+        self.assertEqual(sizes, [300, 300, 300, 300, 300, 194])
+        self.assertEqual(seen, set(evidence))
+        self.assertTrue(all(job["status"] == "accepted" for job in work["jobs"].values()))
+        self.assertTrue(all(job["attempts"] == 1 for job in work["jobs"].values()))
+        self.assertEqual(plan_batch(evidence, selected, work, 6)[1], [])
+
+    def test_600_persistent_retries_rotate_using_completed_attempts(self):
+        evidence = {f"s{i:04}": "fixture-evidence" for i in range(600)}
+        work = empty_work()
+        failures = [Failure(FailureKind.TRANSPORT, "persistent fixture outage")]
+        # Establish the negative cache by actually completing both initial batches.
+        for _ in range(2):
+            work, batch = plan_batch(evidence, {}, work, 0)
+            self.assertEqual(len(batch), 300)
+            for sid in batch:
+                complete_job(work, sid, status="unresolved", failures=failures, now=0)
+        self.assertTrue(all(job["attempts"] == 1 for job in work["jobs"].values()))
+        first_due = max(job["next_retry"] for job in work["jobs"].values())
+        work, first = plan_batch(evidence, {}, work, first_due)
+        self.assertEqual(len(first), 300)
+        for sid in first:
+            complete_job(work, sid, status="unresolved", failures=failures, now=first_due)
+        # Both the just-retried and untouched halves are due at this point.
+        all_due = max(job["next_retry"] for job in work["jobs"].values())
+        work, second = plan_batch(evidence, {}, work, all_due)
+        self.assertEqual(len(second), 300)
+        self.assertFalse(set(first).intersection(second))
+        self.assertEqual(set(first).union(second), set(evidence))
+        for sid in second:
+            complete_job(work, sid, status="unresolved", failures=failures, now=all_due)
+        self.assertTrue(all(job["attempts"] == 2 for job in work["jobs"].values()))
+        self.assertTrue(all(job["status"] == "unresolved" for job in work["jobs"].values()))
+
     def test_all_1694_due_jobs_progress_despite_daily_retries_and_new_arrivals(self):
         evidence = {f"s{i:04}": "old" for i in range(1694)}
         state, _ = plan_batch(evidence, {}, empty_work(), 0)

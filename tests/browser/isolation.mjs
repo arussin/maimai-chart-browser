@@ -5,6 +5,8 @@ import {mkdir,writeFile} from 'node:fs/promises';
 import {join} from 'node:path';
 
 // Only the disposable Playwright profile is affected. Never allow updater traffic.
+const contextBaseUrls = new WeakMap();
+
 const firefoxUserPrefs = {'app.update.disabledForTesting':true, 'app.update.auto':false,
   'app.update.enabled':false, 'app.update.background.scheduling.enabled':false,
   'app.update.url':'', 'app.update.url.override':'', 'media.gmp-manager.updateEnabled':false, 'media.gmp-manager.url':'',
@@ -123,6 +125,7 @@ function guardRoutes(surface, {allowed, unexpected}) {
 
 export async function isolateContext(context, {origins, handlers = [], unexpected = [], allowed = originSet(origins), baseURL}) {
   const options = {allowed, unexpected};
+  if (baseURL) contextBaseUrls.set(context,baseURL);
   guardRoutes(context, options);
   context.on("request", request => {
     const url = new URL(request.url());
@@ -142,7 +145,7 @@ export async function isolateContext(context, {origins, handlers = [], unexpecte
   for (const method of ["fetch", "get", "post", "put", "patch", "delete", "head"]) {
     const original = context.request[method].bind(context.request);
     context.request[method] = async (input, ...args) => {
-      const url = new URL(typeof input.url === "function" ? input.url() : String(input), baseURL);
+      const url = new URL(typeof input.url === "function" ? input.url() : String(input), contextBaseUrls.get(context));
       if (!allowed.has(url.origin)) {
         unexpected.push({kind:"api-"+method,target:url.origin});
         throw new Error("Fixture API request denied non-loopback destination");
@@ -191,6 +194,12 @@ export function isolatedTest(base, {origins}) {
       await use({proxy: {server: _networkProxy.server}, firefoxUserPrefs});
     }, {scope: 'worker'}],
     serviceWorkers: 'block',
+    context: async ({context,baseURL}, use) => {
+      // Playwright may create its default context from internal default options;
+      // browser.newContext() does not necessarily receive baseURL in its argument.
+      if (baseURL) contextBaseUrls.set(context,baseURL);
+      await use(context);
+    },
     fixtureOrigins: async ({_networkProxy}, use) => {
       const releases=[];
       const scoped = register => value => { const release=register(value); releases.push(release); return release; };

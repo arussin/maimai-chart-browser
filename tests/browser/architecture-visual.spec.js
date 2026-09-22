@@ -9,11 +9,11 @@ for(const locale of ['en','ja','ko','zh-Hans'])for(const width of [320,768,1280]
   await page.goto('/registry/');await expect(page.locator('#catalog-count')).toHaveText('26 charts');
   await page.locator('.site-header [data-language="'+locale+'"]').click();
   await page.evaluate(()=>document.fonts.ready);await environment(page,browser,testInfo);
-  await expect(page).toHaveScreenshot(locale+'-'+width+'-catalog.png',{fullPage:true});
+  await decodedImages(page);await expect(page).toHaveScreenshot(locale+'-'+width+'-catalog.png',{fullPage:true});
   await page.locator('#use-international-data').check();
-  await expect(page).toHaveScreenshot(locale+'-'+width+'-international.png',{fullPage:true});
+  await decodedImages(page);await expect(page).toHaveScreenshot(locale+'-'+width+'-international.png',{fullPage:true});
   await page.locator('#settings-toggle').click();
-  await expect(page).toHaveScreenshot(locale+'-'+width+'-settings.png');
+  await decodedImages(page);await expect(page).toHaveScreenshot(locale+'-'+width+'-settings.png');
  });
 }
 
@@ -31,22 +31,22 @@ for(const locale of ['en','ja','ko','zh-Hans'])for(const width of [320,768,1280]
   await page.locator('.site-header [data-language="'+locale+'"]').click();await page.evaluate(()=>document.fonts.ready);await environment(page,browser,testInfo);
   const first=page.locator('#songs .song-row').first();await first.locator('.chart-row').click();
   await expect(first.locator('.chart-pattern-detail')).toBeVisible();
-  await expect(page).toHaveScreenshot(locale+'-'+width+'-expanded.png',{fullPage:true});
+  await decodedImages(page);await expect(page).toHaveScreenshot(locale+'-'+width+'-expanded.png',{fullPage:true});
   const bytes=gzipSync(Buffer.from(await readFile(new URL('../../output/reconciliation-fixture.json',import.meta.url))));
   await page.locator('input[type=file]').setInputFiles({name:'fictional-profile.gz',mimeType:'application/gzip',buffer:bytes});
   await expect(page.locator('.player-dialog')).toBeVisible();
-  await expect(page).toHaveScreenshot(locale+'-'+width+'-import-dialog.png');
+  await decodedImages(page);await expect(page).toHaveScreenshot(locale+'-'+width+'-import-dialog.png');
   await page.locator('.player-remember input').uncheck();await page.locator('.player-dialog .player-actions button').first().click();
   await expect(page.locator('.player-dialog')).not.toBeVisible();await expect(page.locator('.player-filters')).toBeVisible();
-  await expect(page).toHaveScreenshot(locale+'-'+width+'-personal.png',{fullPage:true});
+  await decodedImages(page);await expect(page).toHaveScreenshot(locale+'-'+width+'-personal.png',{fullPage:true});
   const link=page.locator('#songs a[data-song-page]').first();await expect(link).toBeVisible();await link.focus();
   await link.click();await expect(page.locator('#seo-route-view')).toBeVisible();await page.locator('#seo-route-view [data-back-results]').click();
   await expect(link).toBeFocused();await expect(page.locator('#seo-route-view')).not.toBeVisible();
-  await expect(page).toHaveScreenshot(locale+'-'+width+'-return.png',{fullPage:true});
+  await decodedImages(page);await expect(page).toHaveScreenshot(locale+'-'+width+'-return.png',{fullPage:true});
   await page.locator('#compare-tab').click();await page.locator('#compare-left-search').fill('ソテリア');await page.locator('#compare-left-search').press('ArrowDown');await page.locator('#compare-left-search').press('Enter');
   await page.locator('#compare-right-search').fill('ソテリア');await page.locator('#compare-right-search').press('ArrowDown');await page.locator('#compare-right-search').press('ArrowDown');await page.locator('#compare-right-search').press('Enter');
   await expect(page.locator('#direct-comparison')).not.toBeEmpty();
-  await expect(page).toHaveScreenshot(locale+'-'+width+'-comparison.png',{fullPage:true});
+  await decodedImages(page);await expect(page).toHaveScreenshot(locale+'-'+width+'-comparison.png',{fullPage:true});
  });
 }
 
@@ -59,4 +59,16 @@ async function environment(page,browser,testInfo){
   const {fonts}=await session.send('CSS.getPlatformFontsForNode',{nodeId});await session.detach();actualFonts=fonts;actualFontStatus='CDP platform font report';
  }
  await testInfo.attach('visual-platform-fonts',{body:JSON.stringify({browser:browser.version(),engine:testInfo.project.name,platform:process.platform,release:os.release(),arch:process.arch,actualFonts,actualFontStatus,computed}),contentType:'application/json'});
+}
+
+// Full-page screenshots include offscreen lazy artwork. Decode it in both inputs
+// so capture order cannot decide whether the same version logo is painted.
+async function decodedImages(page){
+ await page.evaluate(async()=>{
+  const images=[...document.images];
+  images.forEach(image=>{image.loading='eager';});
+  await Promise.all(images.map(image=>image.decode().catch(()=>{})));
+  await document.fonts.ready;
+  await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+ });
 }

@@ -15,12 +15,17 @@ previewStatus.textContent='Local preview — loading fictional player data…';
 previewStatus.style.cssText='margin:12px auto;max-width:1104px;padding:8px 16px;'+
   'background:#eaf5f5;color:#183b43';
 document.body.prepend(previewStatus);
-let importing=false;
-const previewObserver=new MutationObserver(async()=>{
+window.addEventListener('maimai:browser-ready',async()=>{
+  const entry=document.querySelector('script[type=module][src*="browser-entry.js"]');
+  const {loadApplication}=await import(entry.src);
+  const {services:{personal}}=await loadApplication();
+  await personal.ready;
   const input=document.querySelector('input[type=file]');
-  if(!window.maimaiPersonal||!input||importing)return;
-  importing=true;
-  await maimaiPersonal.ready;
+  window.addEventListener('maimai-personal-change',()=>{
+    if(!personal.enabled())return;
+    previewStatus.textContent='Local preview — fictional player data loaded. '+
+      'Try Filters and Your results; selected filters and Clear stay visible when closed.';
+  });
   const consent=new MutationObserver(()=>{
     const dialog=document.querySelector('.player-dialog[open]');
     const remember=dialog?.querySelector('.player-remember input');
@@ -33,14 +38,7 @@ const previewObserver=new MutationObserver(async()=>{
   const file=new File([bytes],'fictional-player.gz',{type:'application/gzip'});
   const transfer=new DataTransfer();transfer.items.add(file);input.files=transfer.files;
   input.dispatchEvent(new Event('change',{bubbles:true}));
-});
-previewObserver.observe(document.body,{subtree:true,childList:true});
-window.addEventListener('maimai-personal-change',()=>{
-  if(!maimaiPersonal.enabled())return;
-  previewStatus.textContent='Local preview — fictional player data loaded. '+
-    'Try Filters and Your results; selected filters and Clear stay visible when closed.';
-  previewObserver.disconnect();
-});
+},{once:true});
 </script>
 """.replace("PLAYER_BYTES", encoded)
     index = root / "registry" / "index.html"
