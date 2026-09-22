@@ -3,11 +3,12 @@ import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {Miniflare,convertV4MiniflareOptions} from 'miniflare';
 import worker,{dayKey} from '../worker.mjs';
-let mf,db;
+import staging from '../staging.mjs';
+let mf,db,stageDB;
 before(async()=>{
- mf=new Miniflare(convertV4MiniflareOptions({modules:true,script:'export default {fetch(){return new Response("local fixture")}}',compatibilityDate:'2026-09-22',d1Databases:['USAGE_DB'],outboundService:()=>{throw Error('No external requests allowed')}}));
- db=await mf.getD1Database('USAGE_DB');
- for(const sql of (await readFile(new URL('../migrations/0001_daily.sql',import.meta.url),'utf8')).replace(/--[^\n]*/g,'').split(';').filter(s=>s.trim()))await db.prepare(sql).run();
+ mf=new Miniflare(convertV4MiniflareOptions({modules:true,script:'export default {fetch(){return new Response("local fixture")}}',compatibilityDate:'2026-09-22',d1Databases:['USAGE_DB','STAGING_DB'],outboundService:()=>{throw Error('No external requests allowed')}}));
+ db=await mf.getD1Database('USAGE_DB');stageDB=await mf.getD1Database('STAGING_DB');
+ for(const database of [db,stageDB])for(const sql of (await readFile(new URL('../migrations/0001_daily.sql',import.meta.url),'utf8')).replace(/--[^\n]*/g,'').split(';').filter(s=>s.trim()))await database.prepare(sql).run();
 });
 after(async()=>{await mf?.dispose();});
 const row={event:'page_view',page:'charts',detail:'',count:1};
@@ -68,4 +69,21 @@ test('stream limits ignore forged length and reject malformed bytes before any d
   {version:1,events:[{...row,count:1.5}]}
  ])assert.equal((await call(req(batch))).status,400);
  assert.deepEqual(await db.prepare('SELECT SUM(count) AS n FROM usage_daily').first(),before);
+});
+
+
+test('staging and production origins cannot cross their collector boundary',async()=>{
+ const origin='https://maimai-party-staging.pages.dev';
+ const stageRequest=()=>req(undefined,{url:origin+'/__usage',headers:{Origin:origin}});
+ const prior=await db.prepare('SELECT SUM(count) AS n FROM usage_daily').first();
+ await stageDB.prepare('DELETE FROM usage_daily').run();
+ const stageEnv={USAGE_DB:stageDB,USAGE_ENABLED:'true'};
+ assert.equal((await worker.fetch(stageRequest(),{USAGE_DB:db,USAGE_ENABLED:'true'})).status,404);
+ assert.equal((await staging.fetch(req(),stageEnv)).status,404);
+ assert.equal((await staging.fetch(stageRequest(),stageEnv)).status,204);
+ assert.equal((await stageDB.prepare('SELECT SUM(count) AS n FROM usage_daily').first()).n,1);
+ assert.deepEqual(await db.prepare('SELECT SUM(count) AS n FROM usage_daily').first(),prior);
+ assert.equal((await staging.fetch(req(undefined,{url:origin+'/__usage'}),stageEnv)).status,400);
+ assert.equal((await staging.fetch(req(undefined,{url:origin+'/__usage',headers:{Origin:origin,DNT:'1'}}),stageEnv)).status,204);
+ assert.equal((await stageDB.prepare('SELECT SUM(count) AS n FROM usage_daily').first()).n,1);
 });

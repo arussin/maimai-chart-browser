@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "esbuild worker.ts --bundle --format=esm --platform=browser --target=es2022 --outfile=worker.mjs",
+    "build": "esbuild worker.ts staging.ts --bundle --format=esm --platform=browser --target=es2022 --outdir=. --out-extension:.js=.mjs",
     "test": "npm run build && node --test test/*.test.mjs",
     "types": "wrangler types --env-interface Env",
     "check": "tsc --noEmit"

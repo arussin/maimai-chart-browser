@@ -2,7 +2,7 @@
 
 This local candidate replaces the public Cloudflare Web Analytics browser beacon. Existing opt-in Google Analytics stays separate. It is not a deployed collector.
 
-The Worker accepts only POST https://maimai.party/__usage with the production Origin and exact application/json type. The contract is web/src/usage-contract.ts: at most 16 rows, 4 KiB, count 1–100 and known event/page/detail/failure combinations. Unknown fields reject the whole batch. D1 receives only reconstructed daily totals; no individual event table, IP or hash, identity, URL, referrer, query/search/filter value, chart identity, player data, raw error or client timestamp is stored. USAGE_ENABLED=false is the independent server-write kill. window.maimaiUsageEnabled=false (set before startup) or maimaiUsage.disable() suppresses client requests. GPC and DNT suppress both. Network failures drop data and never retry.
+The Worker accepts only POST https://maimai.party/__usage with the production Origin and exact application/json type. The contract is web/src/usage-contract.ts: at most 16 rows, 4 KiB, count 1–100 and known event/page/detail/failure combinations. Unknown fields reject the whole batch. D1 receives only reconstructed daily totals; no individual event table, IP or hash, identity, URL, referrer, query/search/filter value, chart identity, player data, raw error or client timestamp is stored. USAGE_ENABLED=false is the independent server-write kill. window.maimaiUsageEnabled=false (set before startup) suppresses client requests. The application uses an imported collector instance; no global service API is exposed. GPC and DNT suppress both. Network failures drop data and never retry.
 
 Days use America/New_York. Totals are retained indefinitely. The optional owner-maintained usage_coverage ledger records complete/partial/off by day and instrumentation version. Missing ledger rows mean unknown coverage, even when counts exist; zero is measurable only for a day the owner has confirmed complete. Never infer exact unobserved drop counts, users, sessions, funnels, retention, geography or owner exclusion.
 
@@ -16,6 +16,21 @@ After building, run from the disposable usage-worker directory:
     node report.mjs --database maimai-usage-local --persist-to C:\DevCache\path\local-state --output C:\DevCache\path\usage-report
 
 The second form issues exactly two read-only SELECTs through Wrangler. It defaults to local. The --remote flag must be explicitly supplied by the owner after production setup review. Optional --from/--to select completed New York dates; the default is 30 completed days. --activated records the owner-supplied activation date. Reports include JSON, Markdown and CSV; JSON/Markdown carry coverage and limitations; a companion `.coverage.csv` preserves activation, daily UTC boundaries, and unknown versus measured-zero days. Query failure is an error, never a zero report.
+
+## Separate staging adapter
+
+`worker.ts` binds the collector to `https://maimai.party`. `staging.ts` is a separate
+entry that binds the same implementation to `https://maimai-party-staging.pages.dev`.
+Neither accepts an environment override for origin. Local tests exercise both
+entries against distinct real local D1 databases and reject cross-origin requests.
+This is local isolation evidence, not evidence that hosted staging exists.
+
+Provision staging with its own D1 database and an explicitly reviewed access policy.
+The Pages project base hostname and every preview/custom hostname must be covered;
+protecting only branch preview URLs is insufficient. Browser staging must use a
+separate explicit test collector adapter. Never relax production eligibility to
+make staging tests send events. Verify signed-out denial and intended-owner access
+before enabling a staging collector or exposing a hosted preview.
 
 ## Coordinated activation
 
