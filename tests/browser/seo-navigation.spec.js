@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.js';
 
 // Mount the synthetic release at the production root without external requests.
 test.beforeEach(async({page,baseURL})=>{
@@ -209,7 +209,8 @@ test('a delayed route ledger never steals focus after the user resumes typing',a
   await expect(page.locator('#search')).toBeFocused();expect(await page.evaluate(()=>scrollY)).toBe(scroll);
 });
 
-for(const sourceReload of [false,true])test(`Open in browser commits its explicit target and one page view (${sourceReload?'reloaded':'mounted'})`,async({page,baseURL})=>{
+for(const sourceReload of [false,true])test(`Open in browser commits its explicit target and one page view (${sourceReload?'reloaded':'mounted'})`,async({page,baseURL,fixtureOrigins})=>{
+  fixtureOrigins.synthetic('https://maimai.party');
   const batches=[];
   await page.addInitScript(()=>{window.maimaiUsageEnabled=true;localStorage.setItem('maimai.party.analytics.v1',JSON.stringify({choice:'denied',expires:Date.now()+86400000}));});
   await page.route('**/*',async route=>{
@@ -265,4 +266,50 @@ test('version browser to song and results restores version metadata and exact br
   await expect.poll(()=>page.evaluate(()=>document.activeElement.id)).toBe(before.state.focus);
   await expect.poll(()=>page.evaluate(()=>Math.abs(scrollY-history.state.maimaiBrowserState.scroll[1]))).toBeLessThan(2);
   expect(await page.evaluate(()=>window.navigationEvents)).toEqual([{page:'version'},{page:'song'},{page:'version'}]);
+});
+
+test('a later root tab selection supersedes a pending song navigation',async({page})=>{
+  await page.goto('/');await ready(page);await page.locator('#search').fill('ソテリア');
+  const row=page.locator('#songs .song-row').first();await row.locator('.chart-row').click();
+  const link=row.locator('a[data-song-page]');await expect(link).toBeVisible();
+  let release,started;const gate=new Promise(resolve=>release=resolve),requestStarted=new Promise(resolve=>started=resolve);
+  await page.route('**/en/songs/**',async route=>{started();await gate;await route.fallback();});
+  await link.click();await requestStarted;await page.locator('#patterns-tab').click();
+  await expect(page.locator('#patterns')).toBeVisible();release();
+  await page.waitForLoadState('networkidle');
+  await expect(page).toHaveURL(/\?view=patterns$/);await expect(page.locator('#patterns')).toBeVisible();
+  await expect(page.locator('#seo-route-view')).toBeHidden();
+});
+
+test('remembered personal sorting survives return while player storage is still loading',async({page})=>{
+  await page.addInitScript(()=>{
+    localStorage.setItem('maimai-personal-filters-collapsed','0');
+    const open=IDBFactory.prototype.open;
+    IDBFactory.prototype.open=function(...args){
+      const request=open.apply(this,args);
+      const descriptor=Object.getOwnPropertyDescriptor(IDBRequest.prototype,'onsuccess');
+      Object.defineProperty(request,'onsuccess',{configurable:true,set(handler){descriptor.set.call(request,async event=>{
+        if(sessionStorage.getItem('fixture-delay-player')==='1'){
+          window.fixtureStorageHeld=true;await new Promise(resolve=>window.fixtureReleaseStorage=resolve);
+        }
+        handler?.call(request,event);
+      });}});
+      return request;
+    };
+  });
+  await page.goto('/');await ready(page);await expect.poll(()=>page.evaluate(()=>!!window.maimaiPersonal)).toBe(true);await page.evaluate(()=>maimaiPersonal.ready);
+  const {readFile}=await import('node:fs/promises'),{gzipSync}=await import('node:zlib');
+  const template=JSON.parse(await readFile(new URL('../../output/reconciliation-fixture.json',import.meta.url),'utf8'));
+  const data=await page.evaluate(value=>maimaiPlayerData.reconcile(value),template);
+  await page.locator('input[type=file]').setInputFiles({name:'fictional.gz',mimeType:'application/gzip',buffer:gzipSync(Buffer.from(JSON.stringify(data)))});
+  await page.getByLabel('Remember on this device',{exact:true}).check();await page.getByRole('button',{name:'Import data',exact:true}).click();
+  await expect.poll(()=>page.evaluate(()=>maimaiPersonal.enabled())).toBe(true);
+  await page.locator('[data-sort-key=rating]').click();await page.locator('#search').fill('ソテリア');
+  const row=page.locator('#songs .song-row').first();await row.locator('.chart-row').click();
+  const link=row.locator('a[data-song-page]');await expect(link).toBeVisible();await link.click();
+  await expect(page.locator('#seo-route-view')).toBeVisible();
+  await page.evaluate(()=>sessionStorage.setItem('fixture-delay-player','1'));await page.reload();
+  await page.locator('[data-back-results]').click();await ready(page);await expect.poll(()=>page.evaluate(()=>window.fixtureStorageHeld)).toBe(true);
+  await page.evaluate(()=>{sessionStorage.removeItem('fixture-delay-player');fixtureReleaseStorage();});await expect.poll(()=>page.evaluate(()=>!!window.maimaiPersonal)).toBe(true);await page.evaluate(()=>maimaiPersonal.ready);
+  expect(await page.evaluate(()=>maimaiBrowserState.capture().sortRules)).toEqual([{key:'rating',direction:-1}]);
 });

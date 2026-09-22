@@ -32,5 +32,3 @@ export function titleLabel(chart:Pick<Chart,'title'|'title_state'>,locale='en'):
   const labels=translations[locale]??translations.en;
   return chart.title_state==='intentional_blank'?labels[0]:chart.title_state==='missing'?labels[1]:chart.title;
 }
-declare global {interface Window {maimaiCatalogQuery:{createView:typeof createView;regionalValues:typeof regionalValues;titleLabel:typeof titleLabel}}}
-window.maimaiCatalogQuery=Object.freeze({createView,regionalValues,titleLabel});

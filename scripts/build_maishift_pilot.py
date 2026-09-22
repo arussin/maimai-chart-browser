@@ -168,6 +168,9 @@ def build_browser(output, registry, retained_package=None):
         "player-import-help.css",
         *(f"player-import-help.{locale}.html" for locale in ("en", "zh-Hans", "ko", "ja")),
     }
+    graph = json.loads((destination / "browser-assets.json").read_text("utf-8"))
+    allowed.difference_update(graph["replaces"])
+    allowed.update({"browser-assets.json", "browser-config.json", "browser-shell.html"})
     for path in destination.iterdir():
         if path.is_file() and path.name not in allowed:
             path.unlink()

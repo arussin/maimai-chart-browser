@@ -2,17 +2,53 @@
   "version": 1,
   "tool": "esbuild-0.28.2",
   "assets": {
-    "usage.js": {
-      "sha256": "4c8c72638c9612af07198092805b468b223f59651be3380e15290386e5116342",
-      "bytes": 3274
+    "localization.js": {
+      "sha256": "293fb298fe144775138670c2567de21eb5e4753d5d3e0ecae30226d582562e42",
+      "bytes": 5673
     },
-    "player-session.js": {
-      "sha256": "acb6443c1e50a5e72ad4a982cd2dbd4f82e962a875e7fe686eb2d780c400e86e",
-      "bytes": 1511
+    "song-search.js": {
+      "sha256": "b69d2ff222c6d0868e0ff4a8f395a3d49c983b7c0d2fb4c50f503ee9d1080234",
+      "bytes": 1384
     },
-    "catalog-query.js": {
-      "sha256": "eb2b12daf4995d0bbabff5a0231d837e582b8aa8eb4a32f78ab83ff8933418f3",
-      "bytes": 1635
+    "support-config.js": {
+      "sha256": "fa84866da34daff44fd98f6ba978f8cda7e19d95cd2881fb2099015989c568ff",
+      "bytes": 502
+    },
+    "support-client.js": {
+      "sha256": "4038db4f0ff0093c622ae013b2090201c35002930fe38118665a56a8c59cf86b",
+      "bytes": 1958
+    },
+    "support-stripe.js": {
+      "sha256": "bbe7b99e4f141efa8ca0c0ab67d607f1f501a1f82e72a194f61b3f261a49b74c",
+      "bytes": 6392
+    },
+    "settings-menu.js": {
+      "sha256": "02db09b11f0257aa7c805a3af1a190c4bc8cd38aca67230d91771890d6c0dbf9",
+      "bytes": 18363
+    },
+    "player-data-core.js": {
+      "sha256": "a14c6fe8555e0133ccf572ae7d573ff2f31f21d47946874fc24b3569a6f4c137",
+      "bytes": 10601
+    },
+    "player-maishift.js": {
+      "sha256": "48bc2e85717fc9a1d7a734be180c2dbebe93b79af19828ef886d8275218d669b",
+      "bytes": 6585
+    },
+    "chart-visuals.js": {
+      "sha256": "f25692e731976e0ebdfb73256d24435752c0d11cbaf137681fd7b081fa632934",
+      "bytes": 4281
+    },
+    "challenge-matching.js": {
+      "sha256": "6a77f80677433550ef92391bad297c8d3050db94565b2cbb7b054b8f0bd2bc6d",
+      "bytes": 2527
+    },
+    "chart-overview.js": {
+      "sha256": "60eaa5e1f3551c6ac8f24ac0ca8f78c5664b3d94ed95d6ad861e5667f1ba721e",
+      "bytes": 13283
+    },
+    "analytics.js": {
+      "sha256": "91deb65188a8bbed735ca6345f7ed0d968b85e1be0541f11d4d954542a575756",
+      "bytes": 4868
     }
   }
 }

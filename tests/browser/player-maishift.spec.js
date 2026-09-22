@@ -1,14 +1,14 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.js';
 import {readFile} from 'node:fs/promises';
 import {gzipSync} from 'node:zlib';
 import {createService,PATH} from '../../player-import-worker/index.mjs';
 import {tracks,publicProfile,wire} from '../../player-import-worker/fixtures.mjs';
 const saved=page=>page.evaluate(()=>maimaiPlayerStorage.read());
-async function boot(page){await page.goto('/lab/');await page.evaluate(()=>maimaiPersonal.ready);}
+async function boot(page){await page.goto('/lab/');await expect.poll(()=>page.evaluate(()=>!!window.maimaiPersonal)).toBe(true);await page.evaluate(()=>maimaiPersonal.ready);}
 async function prepare(context,{locale='en'}={}){
   await context.addInitScript(locale=>{localStorage.setItem('maimai-language-v1',locale);sessionStorage.setItem('maimai-announcement:player-import-sources-v1','seen');},locale);
   // The public asset is disabled. Only this synthetic harness enables it.
-  await context.route('**/player-import-config.js*',async route=>{const response=await route.fetch();await route.fulfill({response,body:(await response.text()).replace('maishift:false','maishift:true')});});
+  await context.route('**/browser-config.json*',async route=>{const response=await route.fetch();await route.fulfill({response,body:JSON.stringify({...await response.json(),features:{maishift:true}})});});
   const state={calls:0,delay:null,profile:publicProfile(),tracks:tracks(),status:200,html:false};
   await context.route('**'+PATH,async route=>{
     state.calls++;if(state.delay)await state.delay();
@@ -88,7 +88,7 @@ test('proxy preview has explicit consent, region, precision and unmatched covera
   await open(page);await expect(page.locator('input[value=maishift]')).toBeChecked();
 });
 test('Import once stores no refresh connection and remains available in this tab',async({page,context})=>{
-  const state=await prepare(context);await boot(page);await commit(page,false);expect((await saved(page)).active).toBeNull();await page.reload();await page.evaluate(()=>maimaiPersonal.ready);expect(await page.evaluate(()=>maimaiPersonal.enabled())).toBe(true);expect(state.calls).toBe(1);await expect(page.locator('#player-refresh')).toBeHidden();
+  const state=await prepare(context);await boot(page);await commit(page,false);expect((await saved(page)).active).toBeNull();await page.reload();await expect.poll(()=>page.evaluate(()=>!!window.maimaiPersonal)).toBe(true);await page.evaluate(()=>maimaiPersonal.ready);expect(await page.evaluate(()=>maimaiPersonal.enabled())).toBe(true);expect(state.calls).toBe(1);await expect(page.locator('#player-refresh')).toBeHidden();
 });
 test('unchanged PBs with a newer profile timestamp create no history; corrected lower PB does',async({page,context})=>{
   const state=await prepare(context);await boot(page);await commit(page);const before=(await saved(page)).active;state.profile.userRecord.profile.updatedAt=new Date('2026-09-21T00:00:00Z');await age(page);
@@ -132,7 +132,7 @@ test('throttling and login HTML preserve the remembered dataset',async({page,con
 test('cross-tab Forget aborts a delayed proxy refresh and stale tabs cannot resurrect it',async({page,context})=>{
   const state=await prepare(context);await boot(page);await commit(page);const other=await context.newPage();await boot(other);await age(page);
   let release,started;const waiting=new Promise(resolve=>started=resolve),held=new Promise(resolve=>release=resolve);state.delay=()=>{started();return held;};await refresh(page);await waiting;
-  await other.locator('#settings-toggle').click();await other.locator('#player-forget').click();release();await expect.poll(async()=>(await saved(page)).active).toBeNull();await expect(page.locator('#player-refresh')).toBeHidden();await page.reload();await page.evaluate(()=>maimaiPersonal.ready);expect(await page.evaluate(()=>maimaiPersonal.enabled())).toBe(false);
+  await other.locator('#settings-toggle').click();await other.locator('#player-forget').click();release();await expect.poll(async()=>(await saved(page)).active).toBeNull();await expect(page.locator('#player-refresh')).toBeHidden();await page.reload();await expect.poll(()=>page.evaluate(()=>!!window.maimaiPersonal)).toBe(true);await page.evaluate(()=>maimaiPersonal.ready);expect(await page.evaluate(()=>maimaiPersonal.enabled())).toBe(false);
 });
 test('newer file import invalidates an outstanding proxy refresh',async({page,context})=>{
   const state=await prepare(context);await boot(page);await commit(page);await age(page);let release,started;const waiting=new Promise(resolve=>started=resolve),held=new Promise(resolve=>release=resolve);state.delay=()=>{started();return held;};await refresh(page);await waiting;

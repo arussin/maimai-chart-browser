@@ -1,4 +1,5 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.js';
+test.beforeEach(async({fixtureOrigins})=>{for(const origin of ["https://maimai.party"])fixtureOrigins.synthetic(origin);});
 import {readFile} from 'node:fs/promises';
 import {resolve,extname,sep} from 'node:path';
 const root=resolve(process.env.MAIMAI_BROWSER_OUTPUT||'../../output/browser-tests');

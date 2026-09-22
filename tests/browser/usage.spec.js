@@ -1,7 +1,8 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.js';
 import {readFile} from 'node:fs/promises';
 import {resolve,extname,sep} from 'node:path';
 const root=resolve(process.env.MAIMAI_BROWSER_OUTPUT||'../../output/browser-tests');
+test.beforeEach(async({fixtureOrigins})=>{fixtureOrigins.synthetic('https://maimai.party');});
 const types={'.html':'text/html','.js':'application/javascript','.css':'text/css','.json':'application/json','.svg':'image/svg+xml','.png':'image/png','.webp':'image/webp','.ico':'image/x-icon'};
 async function hosted(context,{gpc=false,dnt=false,disabled=false,fail=false}={}){
  const counts=[],external=[];
@@ -13,7 +14,7 @@ async function hosted(context,{gpc=false,dnt=false,disabled=false,fail=false}={}
  await context.route('**/*',async route=>{
   const request=route.request(),url=new URL(request.url());
   if(url.hostname!=='maimai.party'){external.push(url.href);return route.fulfill({status:204,body:''});}
-  if(url.pathname==='/__usage'){counts.push(JSON.parse(request.postData()));return fail?route.abort():route.fulfill({status:204,body:''});}
+  if(url.pathname==='/__usage'){counts.push(JSON.parse(request.postData()));return route.fulfill({status:fail?503:204,body:''});}
   const file=resolve(root,'lab','.'+decodeURIComponent(url.pathname)+(url.pathname.endsWith('/')?'index.html':''));
   if(!file.startsWith(root+sep))return route.abort();
   try{await route.fulfill({contentType:types[extname(file)]||'application/octet-stream',body:await readFile(file)});}

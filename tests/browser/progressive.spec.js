@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.js';
 import {readFile} from 'node:fs/promises';
 import {gzipSync} from 'node:zlib';
 import {createHash} from 'node:crypto';
@@ -15,7 +15,7 @@ test('fetched startup shares the parsed catalog without retaining an embedded JS
   expect(available).toEqual({overview:true,artwork:true});
 });
 
-for(const restoreTiming of ['before','after'])test(`saved player restore ${restoreTiming} controller startup uses one mapping configuration`,async({page})=>{
+for(const restoreTiming of ['before','after'])test(`saved player restore ${restoreTiming} catalog controls remains stable`,async({page})=>{
   const errors=[];page.on('pageerror',error=>errors.push(error.message));
   const data=JSON.parse(await readFile(new URL('../../output/reconciliation-fixture.json',import.meta.url),'utf8'));
   await page.goto('/registry/?search=ソテリア');
@@ -26,32 +26,29 @@ for(const restoreTiming of ['before','after'])test(`saved player restore ${resto
   await expect(page.locator('#songs .song-row[data-difficulty=MASTER] .player-achievement')).toContainText('97.0000%');
   await expect.poll(()=>page.evaluate(async()=>!!(await maimaiPlayerStorage.read()).active)).toBe(true);
   await page.addInitScript(timing=>{
-    window.startupConfigureCalls=0;
-    let personal,storage,release;
-    const restored=new Promise(resolve=>{release=resolve;});
-    window.releaseSavedRestore=release;
-    Object.defineProperty(window,'maimaiPersonal',{configurable:true,get:()=>personal,set:value=>{
-      personal={...value,configure(...args){window.startupConfigureCalls++;return value.configure(...args);}};
-    }});
-    Object.defineProperty(window,'maimaiPlayerStorage',{configurable:true,get:()=>storage,set:value=>{
-      storage=timing==='after'?{...value,read:async(...args)=>{await restored;return value.read(...args);}}:value;
-    }});
+    let release;const restored=new Promise(resolve=>{release=resolve;});window.releaseSavedRestore=release;
+    if(timing==='after'){
+      const original=IDBFactory.prototype.open;
+      IDBFactory.prototype.open=function(...args){
+        const request=original.apply(this,args);let handler;
+        Object.defineProperty(request,'onsuccess',{configurable:true,get:()=>handler,set:callback=>{
+          handler=callback;request.addEventListener('success',async event=>{await restored;callback.call(request,event);},{once:true});
+        }});return request;
+      };
+    }
   },restoreTiming);
-  if(restoreTiming==='before')await page.route('**/registry/challenge-review.js*',async route=>{
-    await page.waitForFunction(()=>!!window.maimaiPersonal);
-    await page.evaluate(()=>maimaiPersonal.ready);
-    expect(await page.evaluate(()=>({enabled:maimaiPersonal.enabled(),calls:startupConfigureCalls}))).toEqual({enabled:true,calls:0});
-    await route.continue();
-  });
   await page.reload();
   await expect(page.locator('#catalog-count')).toHaveText('4 charts');
   if(restoreTiming==='after'){
+    await expect.poll(()=>page.evaluate(()=>!!window.maimaiPersonal)).toBe(true);
     expect(await page.evaluate(()=>maimaiPersonal.enabled())).toBe(false);
     await page.evaluate(()=>releaseSavedRestore());
   }
-  await page.evaluate(()=>maimaiPersonal.ready);
+  await expect.poll(()=>page.evaluate(()=>!!window.maimaiPersonal)).toBe(true);await page.evaluate(()=>maimaiPersonal.ready);
   await expect(page.locator('#songs .song-row[data-difficulty=MASTER] .player-achievement')).toContainText('97.0000%');
-  expect(await page.evaluate(()=>startupConfigureCalls)).toBe(1);
+  const configured=await page.evaluate(()=>maimaiResearchCatalog.catalog.map(chart=>maimaiPersonal.record(chart)));
+  await page.locator('#search').fill('');await page.locator('#search').fill('ソテリア');
+  expect(await page.evaluate(()=>maimaiResearchCatalog.catalog.map(chart=>maimaiPersonal.record(chart)))).toEqual(configured);
   await expect(page.locator('#challenge-data')).toHaveCount(0);
   expect(errors).toEqual([]);
 });

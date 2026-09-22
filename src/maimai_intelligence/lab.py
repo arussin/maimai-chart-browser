@@ -11,9 +11,10 @@ from pathlib import Path
 from maimai_analyzer.dataset import SOURCE_LOCK
 
 from .artwork import prepare_artwork
+from .browser_bundle import write_browser_assets
 from .catalog_loading import MAX_CATALOG_BYTES
 from .catalog_preparation import prepare_catalog
-from .challenge_review import render_prepared_review, review_scripts
+from .challenge_review import render_prepared_review
 from .io import atomic_write_text
 from .localization import localization_script
 from .mai_notes import validate_links
@@ -87,7 +88,7 @@ def build_lab(
         loaded.get("browser-metadata.json"),
         loaded.get("maishift-mapping.json"),
     )
-    html = render_prepared_review(prepared)
+    html = render_prepared_review(prepared, hosted=True)
     data = canonical(prepared.data)
     if len(data) > MAX_CATALOG_BYTES:
         raise ValueError("Full research catalog exceeds 64 MiB")
@@ -126,50 +127,15 @@ def build_lab(
     manifest["default"] = catalog_version
     assets = files("maimai_intelligence.assets")
     build_player_help(root)
-    early_scripts = []
-    atomic_write_text(
-        root / "catalog-query.js", assets.joinpath("catalog-query.js").read_text("utf-8")
-    )
-    for name in (
-        "localization.js",
-        *(("maishift-browser-pilot.js",) if player_pilot else ()),
-        "settings-menu.js",
-        "player-import-config.js",
-        "player-ranges.js",
-        "player-data-core.js",
-        "player-maishift.js",
-        "player-sources.js",
-        "player-storage.js",
-        "player-session.js",
-        "player-data.js",
-        "usage.js",
-        "seo-navigation.js",
-        "feature-announcements.js",
-        "analytics.js",
-        "support-config.js",
-        "support-client.js",
-        "support-stripe.js",
-    ):
-        if player_pilot and name in {
-            "feature-announcements.js",
-            "analytics.js",
-            "usage.js",
-            "seo-navigation.js",
-            "support-config.js",
-            "support-client.js",
-            "support-stripe.js",
-        }:
-            continue
+    bundle = write_browser_assets(root, player_pilot=player_pilot, player_maishift=player_maishift)
+    # Separate public support documents use small entry adapters from the same source graph.
+    for name in ("localization.js", "support-config.js", "support-client.js", "support-stripe.js"):
         content = (
             localization_script()
             if name == "localization.js"
             else assets.joinpath(name).read_text("utf-8")
         )
-        if name == "player-import-config.js" and player_maishift:
-            content = content.replace("maishift:false", "maishift:true")
         atomic_write_text(root / name, content)
-        revision = hashlib.sha256(content.encode("utf-8")).hexdigest()[:16]
-        early_scripts.append(f'<script defer src="{name}?v={revision}"></script>')
     for name in (
         "support.html",
         "localization.css",
@@ -183,19 +149,6 @@ def build_lab(
         "stripe-wordmark.svg",
     ):
         atomic_write_text(root / name, assets.joinpath(name).read_text("utf-8"))
-    view_script = assets.joinpath("view-navigation.js").read_text("utf-8")
-    view_revision = hashlib.sha256(view_script.encode("utf-8")).hexdigest()[:16]
-    atomic_write_text(root / "view-navigation.js", view_script)
-    scripts = review_scripts(player_pilot=player_pilot)
-    script_revision = hashlib.sha256(scripts.encode("utf-8")).hexdigest()[:16]
-    loader = (
-        assets.joinpath("lab-loader.js")
-        .read_text("utf-8")
-        .replace("challenge-review.js", f"challenge-review.js?v={script_revision}")
-    )
-    loader_revision = hashlib.sha256(loader.encode("utf-8")).hexdigest()[:16]
-    atomic_write_text(root / "challenge-review.js", scripts)
-    atomic_write_text(root / "lab-loader.js", loader)
     styles = (
         assets.joinpath("challenge-review.css").read_text("utf-8")
         + "\n"
@@ -229,10 +182,7 @@ def build_lab(
         html,
         flags=re.S,
     )
-    html = (
-        html[: html.index('<script id="challenge-data"')]
-        + f'<script defer src="lab-loader.js?v={loader_revision}"></script></body></html>'
-    )
+    html = html[: html.index('<script id="challenge-data"')] + "</body></html>"
     html = html.replace(
         "<body>", '<body><p id="lab-status" role="status">Loading research catalog…</p>'
     )
@@ -257,12 +207,20 @@ def build_lab(
         "form-action 'none'"
         '">\n<title>',
     )
+    # The enhancement shell is an explicit, inert template; it never contains executable scripts.
+    shell_head, shell_body = html.split("<body>", 1)
+    shell_body = shell_body.rsplit("</body>", 1)[0]
+    shell = (
+        shell_head
+        + "<body><template data-browser-shell>"
+        + shell_body
+        + "</template></body></html>"
+    )
+    atomic_write_text(root / "browser-shell.html", shell)
     html = html.replace(
         "</head>",
-        f'<link rel="preload" as="script" href="challenge-review.js?v={script_revision}">'
-        + "".join(early_scripts)
-        + f'<script defer src="view-navigation.js?v={view_revision}"></script>'
-        + "</head>",
+        '<meta name="maimai-browser-base" content="./">'
+        + f'<script type="module" src="{bundle["entries"]["hosted"]}"></script></head>',
     )
     atomic_write_text(root / "index.html", html)
     atomic_json(manifest_path, manifest)

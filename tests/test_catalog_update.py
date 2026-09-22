@@ -59,6 +59,55 @@ class CatalogUpdateTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "Candidate changed"):
             update.verify_candidate(first)
 
+    def test_refresh_preserves_retained_public_maishift_capability(self):
+        enabled_browser = self.root / "enabled-browser"
+        build_lab(self.package, enabled_browser, catalog_version="old", player_maishift=True)
+        preceding = self.root / "preceding-public"
+        update.build_public_release(enabled_browser, preceding)
+        run = self.prepare(previous_public=preceding)
+        receipt = update.verify_candidate(run)
+        self.assertEqual(receipt["browser_features"], {"maishift": True})
+        self.assertEqual(
+            read_json(run / "public/browser-config.json")["features"], {"maishift": True}
+        )
+        disabled = self.prepare(previous_public=preceding, player_maishift=False)
+        self.assertEqual(update.verify_candidate(disabled)["browser_features"], {"maishift": False})
+
+    def test_retained_legacy_capability_is_parsed_without_execution(self):
+        root = self.root / "legacy-capabilities"
+        root.mkdir()
+        path = root / "player-import-config.js"
+        for enabled in (True, False):
+            path.write_text(
+                "globalThis.maimaiPlayerFeatures ||= Object.freeze({maishift:"
+                + str(enabled).lower()
+                + "});",
+                encoding="utf-8",
+            )
+            self.assertEqual(update.retained_browser_features(root), {"maishift": enabled})
+        path.write_text("arbitraryCode();", encoding="utf-8")
+        with self.assertRaisesRegex(ValueError, "Unknown retained"):
+            update.retained_browser_features(root)
+
+    def test_paid_capacity_is_private_bound_and_target_specific(self):
+        from tests.test_publication_capacity import capacity_fixture
+
+        path, digest = capacity_fixture(self.root / "capacity-input")
+        run = self.prepare(capacity_review=path, capacity_sha256=digest)
+        receipt = update.verify_candidate(run)
+        self.assertEqual(receipt["release"]["capacity"]["review_sha256"], digest)
+        self.assertFalse(any("capacity" in name for name in receipt["files"]))
+        self.calls, self.actor, self.deployed = [], "arussin", False
+        with self.assertRaisesRegex(ValueError, "different publication target"):
+            update.publish_update(run, runner=self.runner)
+        self.assertFalse(self.deployed)
+        self.assertFalse((run / "publish-attempt.json").exists())
+        (run / "capacity/cost.json").write_text("changed")
+        with self.assertRaisesRegex(ValueError, "integrity mismatch"):
+            update.verify_candidate(run)
+        with self.assertRaisesRegex(ValueError, "required together"):
+            self.prepare(capacity_review=path)
+
     def test_prepare_retains_preceding_public_references_and_binds_inputs(self):
         preceding = self.root / "preceding-public"
         update.build_public_release(self.browser, preceding)

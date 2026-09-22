@@ -13,6 +13,7 @@ from maimai_intelligence.catalog_identity import key, rules
 from maimai_intelligence.catalog_refresh import METADATA_URLS, refresh
 from maimai_intelligence.catalog_sources import WIKI, discovery_pages, mai_catalog, wiki_catalog
 from maimai_intelligence.catalog_transcriptions import prepare_body
+from maimai_intelligence.coverage_types import IntegrityError
 from maimai_intelligence.lab import build_lab
 from maimai_intelligence.overview_codec import compact_overview
 from maimai_intelligence.registry import read_registry, write_registry
@@ -282,6 +283,7 @@ class WaterfallTests(unittest.TestCase):
                 "coverage-state.json",
                 "coverage-audit.json",
                 "source-captures.json",
+                "coverage-checkpoint.json",
             },
         )
         for name in receipt["coverage_files"]:
@@ -300,6 +302,58 @@ class WaterfallTests(unittest.TestCase):
             verify_candidate(run)
         with self.assertRaisesRegex(ValueError, "Published registry changed"):
             refresh_latest(run.parent.parent)
+
+    def test_failed_publication_plan_preserves_coverage_and_resumed_batch_replays(self):
+        registry, browser, initial = (
+            self.root / name for name in ("registry", "browser", "initial")
+        )
+        write_registry(self.value, registry)
+        build_registry_package(self.value, self.package, initial)
+        build_lab(initial, browser, catalog_version="before")
+        store = self.root / "updates"
+        with (
+            patch(
+                "scripts.update_catalog.build_public_release",
+                side_effect=ValueError("authored capacity gate"),
+            ),
+            self.assertRaisesRegex(ValueError, "capacity gate"),
+        ):
+            prepare_update(
+                store, browser, package=initial, registry=registry, source_fetcher=self.fetch
+            )
+        self.assertTrue((store / "cache/coverage/checkpoint.json").is_file())
+        self.assertFalse((store / "latest.json").exists())
+        self.assertFalse(any((store / "runs").glob("*/ready.json")))
+        resumed = prepare_update(
+            store, browser, package=initial, registry=registry, source_fetcher=self.fetch
+        )
+        first = verify_candidate(resumed)
+        with patch("socket.socket", side_effect=AssertionError("replay network forbidden")):
+            replay = prepare_update(
+                store,
+                browser,
+                package=initial,
+                registry=registry,
+                offline=True,
+                replay_sources=resumed / "source-captures.json",
+            )
+        self.assertEqual(read_registry(resumed / "registry"), read_registry(replay / "registry"))
+        self.assertEqual(first["files"], verify_candidate(replay)["files"])
+        self.assertEqual(read_registry(registry), self.value)
+
+    def test_waterfall_does_not_relabel_corrupted_capture_as_provider_outage(self):
+        capture = CaptureStore(self.root / "captures", fetcher=self.fetch)
+        _, record = capture.get(METADATA_URLS["mai-notes"])
+        (capture.root / "blobs" / record["sha256"]).write_bytes(b"corrupt")
+        with self.assertRaises(IntegrityError):
+            refresh(
+                self.value,
+                self.legacy,
+                self.cache,
+                self.root / "corrupt-run",
+                capture_store=CaptureStore(capture.root, fetcher=self.fetch),
+            )
+        self.assertFalse((self.root / "corrupt-run/registry").exists())
 
     def test_changed_source_or_outage_retains_accepted_analysis(self):
         value, additions, _ = refresh(

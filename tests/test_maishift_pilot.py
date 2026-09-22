@@ -222,10 +222,12 @@ class MaishiftPilotArtifactTests(unittest.TestCase):
             self.assertIn("/pilot/maishift/index.html\n  Content-Security-Policy:", headers)
             browser = output / "pilot/maishift/browser"
             browser_html = (browser / "index.html").read_text("utf-8")
-            self.assertIn('src="maishift-browser-pilot.js?', browser_html)
+            configuration = json.loads((browser / "browser-config.json").read_text("utf-8"))
+            self.assertTrue(configuration["pilot"])
+            self.assertTrue(configuration["features"]["maishift"])
             for script in re.findall(r'<script[^>]+src="([^"?]+)', browser_html):
                 self.assertTrue((browser / script).is_file(), script)
-            self.assertIn('src="player-session.js?', browser_html)
+            self.assertIn('type="module" src="browser/browser-entry.js', browser_html)
             self.assertNotIn('src="usage.js', browser_html)
             self.assertNotIn('src="analytics.js', browser_html)
             self.assertNotIn('src="feature-announcements.js', browser_html)
@@ -275,9 +277,7 @@ class MaishiftPilotArtifactTests(unittest.TestCase):
                 self.assertIn('id="session-report"', help_html)
                 self.assertIn('id="maishift"', help_html)
                 self.assertNotIn("<script", help_html)
-            self.assertNotIn(
-                "function seen(id)", (browser / "challenge-review.js").read_text("utf-8")
-            )
+            self.assertFalse((browser / "challenge-review.js").exists())
             with self.assertRaisesRegex(ValueError, "never overwrite"):
                 build(output)
 

@@ -35,7 +35,7 @@ def messages():
     return combined
 
 
-def localization_script(*, sources=None):
+def localization_data(*, sources=None):
     assets = files("maimai_intelligence.assets")
     flags = {
         locale: "data:image/png;base64,"
@@ -45,6 +45,12 @@ def localization_script(*, sources=None):
     catalog = messages()
     if sources is not None:
         catalog = {source: catalog[source] for source in sorted(sources)}
+    return {"messages": catalog, "flags": flags}
+
+
+def localization_script(*, sources=None):
+    data = localization_data(sources=sources)
+    catalog, flags = data["messages"], data["flags"]
     encoded = json.dumps(catalog, ensure_ascii=False, separators=(",", ":"))
     encoded = encoded.replace("&", "\\u0026").replace("<", "\\u003c").replace(">", "\\u003e")
     return (

@@ -1,4 +1,5 @@
-import {test, expect} from '@playwright/test';
+import {test, expect} from './fixtures.js';
+test.beforeEach(async({fixtureOrigins})=>{for(const origin of ["https://maimai.party", "https://js.stripe.com", "https://checkout.stripe.com"])fixtureOrigins.synthetic(origin);});
 import AxeBuilder from '@axe-core/playwright';
 import {readFile} from 'node:fs/promises';
 import {resolve, extname, sep} from 'node:path';
@@ -55,9 +56,10 @@ async function hosted(context, {enabled = true, failScript = false, failCreate =
     if (!path.startsWith(resolve(root, 'registry') + sep)) return route.abort();
     try {
       let bytes = await readFile(path);
-      if (url.pathname.endsWith('/support-config.js'))
-        bytes = Buffer.from(bytes.toString().replace(/enabled: (?:true|false)/, 'enabled: ' + enabled)
-          .replace(/publishableKey: '[^']*'/, "publishableKey: 'pk_test_fixture'"));
+      if(url.pathname.endsWith('/browser-config.json')){
+        const configuration=JSON.parse(bytes);configuration.support={...configuration.support,enabled,publishableKey:'pk_test_fixture'};bytes=Buffer.from(JSON.stringify(configuration));
+      }
+      if(url.pathname.endsWith('/support-config.js'))bytes=Buffer.from(bytes.toString().replace(/enabled:\s*(?:!0|!1|true|false)/,'enabled:'+enabled).replace(/publishableKey:\s*['"][^'"]*['"]/,"publishableKey:'pk_test_fixture'"));
       return route.fulfill({contentType: mime[extname(path)] || 'application/octet-stream', body: bytes});
     } catch { return route.fulfill({status: 404, body: 'Missing fixture'}); }
   });

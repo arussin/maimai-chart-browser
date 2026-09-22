@@ -6,6 +6,7 @@ import json
 import shutil
 from pathlib import Path
 
+from maimai_intelligence.browser_bundle import read_browser_assets
 from maimai_intelligence.overview_codec import compact_overview
 from maimai_intelligence.public_release import PUBLIC_FILES
 
@@ -44,7 +45,14 @@ def build_capacity_fixture(root: Path, count: int = 7000):
     raw = json.dumps(data, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
     digest = hashlib.sha256(raw).hexdigest()
     target.mkdir(parents=True, exist_ok=True)
-    for name in PUBLIC_FILES:
+    graph, runtime = read_browser_assets(lambda name, limit: (source / name).read_bytes())
+    names = (
+        (set(PUBLIC_FILES) - set(graph["replaces"]))
+        | set(runtime)
+        | {"browser-config.json", "browser-shell.html"}
+    )
+    for name in names:
+        (target / name).parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(source / name, target / name)
     if (source / "media").exists():
         shutil.copytree(source / "media", target / "media", dirs_exist_ok=True)

@@ -30,11 +30,3 @@ export function preferredProviderID(ids:readonly string[],pbs:ReadonlyMap<string
   return ids.filter(id=>pbs.has(id)).sort((a,b)=>(dates.get(b)??0)-(dates.get(a)??0)||
     Number(!!mapping?.charts[a]?.aliasOf)-Number(!!mapping?.charts[b]?.aliasOf)||a.localeCompare(b))[0]??ids[0]??null;
 }
-export function operationGate(){
-  let generation=0;
-  return Object.freeze({invalidate:()=>++generation,assert:(expected:number)=>{
-    if(expected!==generation)throw new DOMException('Cancelled','AbortError');
-  }});
-}
-declare global {interface Window {maimaiPlayerSession:{providerIndex:typeof providerIndex;preferredProviderID:typeof preferredProviderID;operationGate:typeof operationGate}}}
-window.maimaiPlayerSession=Object.freeze({providerIndex,preferredProviderID,operationGate});

@@ -2,7 +2,7 @@
 const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm'),assert=require('node:assert/strict');
 const {webcrypto,createHash}=require('node:crypto');
 const shared=process.argv.includes('--shared');
-const root=process.argv[2],loader=fs.readFileSync(path.join(root,'lab-loader.js'),'utf8');
+const root=process.argv[2],loader=fs.readFileSync(path.join(__dirname,'fixtures/legacy-lab-loader.js'),'utf8');
 const digest=bytes=>createHash('sha256').update(bytes).digest('hex');
 async function start(change=()=>{}){
   const manifest=JSON.parse(fs.readFileSync(path.join(root,'manifest.json'))),entry=manifest.releases[0];
@@ -27,7 +27,7 @@ async function start(change=()=>{}){
     }};
   await vm.runInNewContext(loader,scope);
   assert.equal(status.textContent,'');assert.equal(appended.length,1);
-  assert.match(appended[0].src,/^challenge-review\.js\?v=[a-f0-9]{16}$/);
+  assert.equal(appended[0].src,'challenge-review.js');
   assert.deepEqual(JSON.parse(JSON.stringify(scope.window.maimaiResearchCatalog)),initial);
   assert.deepEqual(requests,['manifest.json',entry.startup.path]);
   return {...test,requests,scope,api:scope.window.maimaiCatalogDetails,data:scope.window.maimaiResearchCatalog,maxActive:()=>maxActive};

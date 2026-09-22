@@ -1,17 +1,12 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {readFile} from 'node:fs/promises';
-import vm from 'node:vm';
-const ctx=vm.createContext({window:{},DOMException});for(const name of ['player-session','catalog-query'])vm.runInContext(await readFile(new URL('../../src/maimai_intelligence/assets/'+name+'.js',import.meta.url),'utf8'),ctx);
-const {maimaiPlayerSession:player,maimaiCatalogQuery:catalog}=ctx.window;
+import {loadModule} from './module.mjs';
+const player=await loadModule('player-session',{DOMException}),catalog=await loadModule('catalog-query');
 test('policy_exact joins only the matching format/difficulty; provider evidence remains distinct',()=>{
   const data={catalog:[{chart_id:'c',source_hash:'h',format:'DX',difficulty:'MASTER'}],provider_mapping:{schema_version:'provider-mapping-2',charts:{a:{chart_id:'c',format:'DX',difficulty:'MASTER',acceptance_basis:'policy_exact'},b:{chart_id:'c',format:'STD',difficulty:'MASTER',acceptance_basis:'policy_exact'}}}};
   assert.equal(JSON.stringify(player.providerIndex(data).kamaitachi.get('c')),'["a"]');
   data.maishift_mapping={schema_version:'maishift-mapping-1',provider:'maishift',game:'maimaidx',charts:{'maishift:intl:1':{chart_id:'c',acceptance_basis:'policy_exact',expected_source:{title:'x',artist:'a',format:'DX',difficulty:'MASTER'}}}};
   assert.equal(player.providerIndex(data).maishift.size,0);
-});
-test('new operation invalidates stale completion without changing newest generation',()=>{
-  const gate=player.operationGate(),first=gate.invalidate();gate.assert(first);const next=gate.invalidate();assert.throws(()=>gate.assert(first),{name:'AbortError'});gate.assert(next);
 });
 test('regional projection cannot modify canonical title or navigation',()=>{
   const original={catalog:[{chart_id:'c',title:'JP',artist:'a',regional:{INTL:{metadata:{title:'International'},level:'14'}}}],navigation:{charts:{c:{genre:'original',regional_metrics:{bpm:{INTL:180}}}},genres:[]}};

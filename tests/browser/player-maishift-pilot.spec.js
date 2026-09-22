@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.js';
 import {readFile} from 'node:fs/promises';
 import path from 'node:path';
 import {createService,PATH} from '../../player-import-worker/index.mjs';

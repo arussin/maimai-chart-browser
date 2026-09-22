@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.js';
 
 // Existing control tests exercise the remembered-open state. Disclosure tests
 // below separately cover first visits and persistence across pages.
@@ -369,15 +369,8 @@ test('explicit historical URLs stay pinned and Open latest removes only the vers
   await expect(page.locator('#search')).toHaveValue('fixture');
 });
 
-test('regional availability filters rows, counts, comparison eligibility and chips independently of metadata',async({page})=>{
-  // Observe the comparison component's public eligibility callback, not its search picker
-  // (direct pair selection intentionally allows all charts).
-  await page.addInitScript(()=>{
-    let comparison;
-    Object.defineProperty(window,'maimaiChartComparison',{configurable:true,get:()=>comparison,set:value=>{
-      comparison={...value,mount(options){window.testEligibleIds=options.eligibleIds;return value.mount(options);}};
-    }});
-  });
+test('regional availability filters rows, counts and chips independently of metadata',async({page})=>{
+  // Similar-search filter eligibility is exercised through rendered results in standalone.spec.js.
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   const remote=[];page.on('request',r=>{if(!r.url().startsWith('http://127.0.0.1:'))remote.push(r.url());});
   await page.goto('/registry/');await expect(page.locator('#catalog-count')).toHaveText('26 charts');
@@ -389,13 +382,10 @@ test('regional availability filters rows, counts, comparison eligibility and chi
   await preference.uncheck();await region.locator('[data-region="JP"]').click();
   await expect(page.locator('#catalog-count')).toHaveText('16 charts');await expect(jp).toBeVisible();await expect(intl).toHaveCount(0);
   await expect(preference).not.toBeChecked();await expect(page.locator('#catalog-filter-count')).toHaveText('1 active');
-  expect(await page.evaluate(()=>testEligibleIds().length)).toBe(16);
   await region.locator('[data-region="INTL"]').click();await expect(preference).toBeChecked();
   await expect(page.locator('#catalog-count')).toHaveText('8 charts');await expect(intl).toBeVisible();await expect(jp).toHaveCount(0);
   expect((await page.locator('#catalog-count').boundingBox()).height).toBeGreaterThan(10);
   await expect(page.locator('#songs')).toContainText('Soteria fixture');await expect(page.locator('#catalog-filter-count')).toHaveText('2 active');
-  expect(await page.evaluate(()=>testEligibleIds().length)).toBe(8);
-  expect(await page.evaluate(()=>testEligibleIds().every(id=>maimaiResearchCatalog.catalog.find(c=>c.chart_id===id).regional.INTL.listing==='listed'))).toBe(true);
   await preference.uncheck();await expect(region.locator('[aria-checked="true"]')).toHaveAttribute('data-region','INTL');await expect(page.locator('#catalog-count')).toHaveText('8 charts');await expect(page.locator('#songs')).toContainText('ソテリア');
   for(const value of ['JP','']){
     await region.locator('[data-region="INTL"]').click();await expect(preference).toBeChecked();
@@ -409,7 +399,6 @@ test('regional availability filters rows, counts, comparison eligibility and chi
   await expect(region.locator('[aria-checked="true"]')).toHaveAttribute('data-region','');await expect(preference).not.toBeChecked();await expect(page.locator('#catalog-count')).toHaveText('26 charts');await expect(page.locator('#songs')).toContainText('ソテリア');
   await region.locator('[data-region="INTL"]').click();await page.locator('#reset-filters').click();
   await expect(region.locator('[aria-checked="true"]')).toHaveAttribute('data-region','');await expect(preference).not.toBeChecked();await expect(page.locator('#catalog-filter-count')).toBeEmpty();await expect(page.locator('#active-filters')).toBeEmpty();
-  expect(await page.evaluate(()=>testEligibleIds().length)).toBe(26);
   expect(await page.evaluate(()=>[undefined,'unknown','not_observed_in_latest_capture','listed'].map(listing=>maimaiRegistryBrowser.matchesRegion({regional:{JP:{listing}}},'JP')))).toEqual([false,false,false,true]);
   expect(errors).toEqual([]);expect(remote).toEqual([]);
 });

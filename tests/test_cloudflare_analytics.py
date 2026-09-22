@@ -1,3 +1,5 @@
+import hashlib
+import json
 import tempfile
 import unittest
 from html.parser import HTMLParser
@@ -88,12 +90,19 @@ class CloudflareAnalyticsTests(unittest.TestCase):
             self.assert_replacement_policy(
                 (published / "index.html").read_text("utf-8"), report_sources=True
             )
-            # Asset builds normalize platform newlines; compare complete source text.
-            original = (
-                files("maimai_intelligence.assets").joinpath("analytics.js").read_text("utf-8")
-            )
-            self.assertEqual((preview / "analytics.js").read_text("utf-8"), original)
-            self.assertEqual((published / "analytics.js").read_text("utf-8"), original)
+            # The hosted application uses the verified module closure, with no
+            # standalone analytics script inserted by either builder.
+            graph = json.loads((preview / "browser-assets.json").read_text("utf-8"))
+            entry = graph["entries"]["hosted"]
+            for path, reference in graph["assets"].items():
+                original = (preview / path).read_bytes()
+                self.assertEqual(hashlib.sha256(original).hexdigest(), reference["sha256"])
+                self.assertEqual(len(original), reference["bytes"])
+                self.assertEqual((published / path).read_bytes(), original)
+            for directory in (preview, published):
+                scripts = PagePolicy((directory / "index.html").read_text("utf-8")).scripts
+                self.assertTrue(any(src.split("?")[0].lstrip("/") == entry for src in scripts))
+                self.assertFalse(any(src.split("?")[0].endswith("analytics.js") for src in scripts))
             redirect = PagePolicy((published / "lab/index.html").read_text("utf-8"))
             self.assertEqual(redirect.policies[0]["script-src"], ["'self'"])
             self.assertEqual(redirect.scripts, ["/lab-redirect.js"])

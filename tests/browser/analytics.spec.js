@@ -1,4 +1,5 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.js';
+test.beforeEach(async({fixtureOrigins})=>{for(const origin of ["https://maimai.party", "https://www.maimai.party", "https://preview.invalid", "https://www.googletagmanager.com", "https://www.google-analytics.com", "https://region1.google-analytics.com", "https://github.com"])fixtureOrigins.synthetic(origin);});
 import AxeBuilder from '@axe-core/playwright';
 import {readFile} from 'node:fs/promises';
 import {resolve,extname,sep} from 'node:path';
@@ -56,10 +57,11 @@ test('versioned settings scripts refresh returning visitors with an older cached
     await page.route('https://maimai.party/'+asset,route=>route.fulfill({contentType:'application/javascript',body:'window.__staleAnalyticsUsed=true;'}));
     await ready(page,path);
     expect(await page.evaluate(()=>window.__staleAnalyticsUsed===true)).toBe(false);
-    for(const name of ['analytics.js','settings-menu.js']){
+    for(const name of path==='/lab/'?[]:['analytics.js','settings-menu.js']){
       const src=await page.locator('script[src*="'+name+'"]').getAttribute('src');
       expect(new URL(src,page.url()).searchParams.get('v')).toMatch(/^[a-f0-9]{16}$/);
     }
+    if(path==='/lab/')await expect(page.locator('script[type=module][src*="browser-entry.js"]')).toHaveCount(1);
     await settings(page);await expect(page.locator('#analytics-dialog')).toBeVisible();
     await page.keyboard.press('Escape');await expect(page.locator('#settings-toggle')).toBeFocused();
   }

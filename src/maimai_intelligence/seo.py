@@ -283,8 +283,8 @@ def _document(locale, kind, slug, title, description, body, words, browser_csp=N
         f'<link rel="canonical" href="{ORIGIN}{path}">{alternates}'
         '<link rel="stylesheet" '
         'href="/seo-pages.css">'
-        '<script defer src="/usage.js"></script><script defer src="/seo-navigation.js"><'
-        "/script></head><body>"
+        '<meta name="maimai-browser-base" content="/">'
+        '<script type="module" src="/browser/browser-entry.js"></script></head><body>'
         f'<a class="skip-link" href="#seo-content">{escape(words["details"])}</a>'
         '<header class="site-header"><a class="brand" href="/">maimai.party</a><nav '
         f'aria-label="{escape(words["language"])}">{languages}</nav></header>'

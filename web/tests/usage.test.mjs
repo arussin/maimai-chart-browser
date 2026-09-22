@@ -1,17 +1,17 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
-import {readFile} from 'node:fs/promises';
+import {moduleSource,evaluateModule} from './module.mjs';
 import {gzipSync} from 'node:zlib';
-const source=await readFile(new URL('../../src/maimai_intelligence/assets/usage.js',import.meta.url),'utf8');
+const source=await moduleSource('usage');
 function fixture({host='maimai.party',gpc=false,dnt='0',enabled=true,fail=false}={}){
  const listeners={},requests=[];const win={maimaiUsageEnabled:enabled,addEventListener:(key,fn)=>listeners[key]=fn,setTimeout:()=>1};
  const context=vm.createContext({window:win,location:{protocol:'https:',hostname:host},navigator:{globalPrivacyControl:gpc,doNotTrack:dnt},document:{prerendering:false,addEventListener:(key,fn)=>listeners[key]=fn},TextEncoder,AbortSignal,clearTimeout(){},fetch:async(url,options)=>{requests.push({url,options});if(fail)throw Error('private network error');return {ok:true};}});
- vm.runInContext(source,context);return {api:win.maimaiUsage,requests,listeners,context};
+ const api=evaluateModule(source,context).createUsage();return {api,requests,listeners,context};
 }
 test('first-party counts are bounded finite data, with no application or persistent access',async()=>{
  const {api,requests,listeners}=fixture();
- listeners['maimai:navigation']({detail:{page:'song',song:'PRIVATE-SENTINEL'}});
+ api.activate('song');
  api.emit('filter_first_used','song','genre');api.emit('filter_first_used','song','genre');
  api.emit('search_used','charts','PRIVATE-SENTINEL');api.emit('private_event');
  await api.flush();assert.equal(requests.length,1);
@@ -33,6 +33,6 @@ test('restore is suppressed; failures drop without retry and disable clears buff
 });
 test('same broad page category counts each committed navigation but no automatic page view',async()=>{
  const {api,requests,listeners}=fixture();await api.flush();assert.equal(requests.length,0);
- listeners['maimai:navigation']({detail:{page:'song'}});listeners['maimai:navigation']({detail:{page:'song'}});
+ api.activate('song');api.activate('song');
  await api.flush();assert.equal(JSON.parse(requests[0].options.body).events[0].count,2);
 });

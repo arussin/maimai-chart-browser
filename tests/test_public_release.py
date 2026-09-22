@@ -6,7 +6,6 @@ import tempfile
 import unittest
 import xml.etree.ElementTree as ET
 from html.parser import HTMLParser
-from importlib.resources import files
 from pathlib import Path
 from unittest.mock import patch
 
@@ -70,6 +69,23 @@ class PublicReleaseTests(unittest.TestCase):
         self.assertFalse((review / "manifest.json").exists())
         self.assertFalse((review / "planned-assets/manifest.json").exists())
 
+    def test_only_reviewed_capacity_can_raise_the_default_limit(self):
+        from maimai_intelligence.publication_capacity import read_capacity_review
+        from tests.test_publication_capacity import capacity_fixture
+
+        path, digest = capacity_fixture(self.root / "capacity")
+        reviewed = read_capacity_review(path, digest)
+        with patch("maimai_intelligence.public_release.MAX_PUBLIC_FILES", 1):
+            self.assertFalse(plan_public_release(self.source).summary["deployable"])
+            plan = plan_public_release(self.source, capacity=reviewed)
+            self.assertTrue(plan.summary["deployable"])
+            self.assertEqual(plan.summary["capacity"]["review_sha256"], digest)
+            self.assertEqual(plan.summary["capacity"]["max_files"], 100000)
+            with self.assertRaisesRegex(ValueError, "reviewed capacity"):
+                plan_public_release(self.source, capacity={"max_files": 100000})
+        plan.write_to(self.output)
+        self.assertFalse((self.output / "capacity").exists())
+
     def test_previous_release_is_bound_to_exact_catalog_bytes_and_allowlisted_closure(self):
         build_public_release(self.source, self.output)
         (self.output / "personal.json").write_text("PRIVATE")
@@ -118,6 +134,90 @@ class PublicReleaseTests(unittest.TestCase):
         self.assertEqual(plan.assets[historical_ref["path"]], historical)
         self.assertNotIn(ref["path"], plan.assets)
 
+    def test_missing_or_changed_published_permalink_ledger_blocks_new_routes(self):
+        data = {
+            "package": {"status": "research_preview"},
+            "catalog": [
+                {
+                    "chart_id": "chart",
+                    "song_id": "song",
+                    "title": "Original title",
+                    "artist": "Fictional artist",
+                    "source_hash": "a" * 64,
+                }
+            ],
+            "snippets": {},
+        }
+        raw = canonical(data)
+        sha = hashlib.sha256(raw).hexdigest()
+        path = f"catalogs/{sha}.json"
+        (self.source / path).write_bytes(raw)
+        self.manifest["releases"][0].update(path=path, sha256=sha)
+        atomic_json(self.source / "manifest.json", self.manifest)
+        build_public_release(self.source, self.output)
+        ledger = self.output / "permalinks.json"
+        original = ledger.read_bytes()
+        previous_manifest = read_json(self.output / "manifest.json")
+        changed = json.loads(original)
+        changed["songs"]["song"] = "replacement-slug"
+        atomic_json(ledger, changed)
+        with self.assertRaisesRegex(ValueError, "permalink ledger integrity"):
+            plan_public_release(self.source, previous_public=self.output)
+        ledger.unlink()
+        with self.assertRaisesRegex(ValueError, "permalink ledger"):
+            plan_public_release(self.source, previous_public=self.output)
+        # Initial SEO releases predate the additive ledger hash; their marker and
+        # canonical identities still establish that URLs have already been issued.
+        previous_manifest.pop("permalinks", None)
+        atomic_json(self.output / "manifest.json", previous_manifest)
+        with self.assertRaisesRegex(ValueError, "permalink ledger"):
+            plan_public_release(self.source, previous_public=self.output)
+        ledger.write_bytes(original)
+        self.assertEqual(
+            plan_public_release(self.source, previous_public=self.output).assets["permalinks.json"],
+            original,
+        )
+
+    def test_generated_application_manifest_is_the_only_runtime_asset_list(self):
+        (self.source / "browser").mkdir()
+        body = b"export const fictional = true;"
+        refs = {}
+        for name in (
+            "browser/browser-entry.js",
+            "browser/browser-offline.js",
+            "browser/chunk-ABC.js",
+        ):
+            (self.source / name).write_bytes(body)
+            refs[name] = {"sha256": hashlib.sha256(body).hexdigest(), "bytes": len(body)}
+        manifest = {
+            "version": 1,
+            "tool": "test",
+            "entries": {
+                "hosted": "browser/browser-entry.js",
+                "offline": "browser/browser-offline.js",
+            },
+            "assets": refs,
+            "replaces": ["lab-loader.js"],
+        }
+        atomic_json(self.source / "browser-assets.json", manifest)
+        atomic_json(self.source / "browser-config.json", {"fictional": True})
+        (self.source / "browser-shell.html").write_bytes((self.source / "index.html").read_bytes())
+        (self.source / "browser/private.json").write_text("UNRELATED_PRIVATE")
+        (self.source / "lab-loader.js").unlink()
+        plan = plan_public_release(self.source)
+        self.assertTrue(set(refs) <= set(plan.assets))
+        self.assertNotIn("lab-loader.js", plan.assets)
+        self.assertNotIn("browser/private.json", plan.assets)
+        (self.source / "browser/chunk-ABC.js").write_bytes(b"tampered")
+        with self.assertRaisesRegex(ValueError, "asset integrity"):
+            plan_public_release(self.source)
+        (self.source / "browser/chunk-ABC.js").write_bytes(body)
+        for invalid in ("../private.js", "browser/../../private.js", "browser/private.json"):
+            manifest["assets"] = {**refs, invalid: refs["browser/browser-entry.js"]}
+            atomic_json(self.source / "browser-assets.json", manifest)
+            with self.subTest(invalid=invalid), self.assertRaises(ValueError):
+                plan_public_release(self.source)
+
     def test_exact_catalog_bytes_and_only_allowlisted_assets_survive(self):
         (self.source / "personal.json").write_text("PRIVATE", encoding="utf-8")
         (self.source / "raw-response.json").write_text("PRIVATE", encoding="utf-8")
@@ -143,6 +243,44 @@ class PublicReleaseTests(unittest.TestCase):
         self.assertIn(
             "location.search+location.hash", (self.output / "lab-redirect.js").read_text("utf-8")
         )
+
+    def test_large_startup_uses_verified_parts_and_retains_old_reader_fallback(self):
+        data = {
+            "package": {"status": "research_preview"},
+            "catalog": [{"chart_id": "chart", "title": "Public", "source_hash": "a" * 64}],
+            "review": ["x" * 2000],
+        }
+        raw = canonical(data)
+        sha = hashlib.sha256(raw).hexdigest()
+        path = f"catalogs/{sha}.json"
+        (self.source / path).write_bytes(raw)
+        self.manifest["releases"][0].update(path=path, sha256=sha)
+        atomic_json(self.source / "manifest.json", self.manifest)
+        with (
+            patch("maimai_intelligence.public_release.STARTUP_PART_THRESHOLD", 512),
+            patch("maimai_intelligence.public_release.INDEX_PART_BYTES", 1024),
+        ):
+            plan = plan_public_release(self.source)
+            plan.write_to(self.output)
+            manifest = read_json(self.output / "manifest.json")
+            entry = manifest["releases"][0]
+            self.assertNotIn("startup", entry)
+            self.assertNotIn("startup_shared", entry)
+            self.assertEqual(b"".join(plan.assets[p["path"]] for p in entry["parts"]), raw)
+            reference = entry["startup_parts"]
+            encoded = b"".join(plan.assets[p["path"]] for p in reference["parts"])
+            self.assertEqual(len(encoded), reference["bytes"])
+            self.assertEqual(hashlib.sha256(encoded).hexdigest(), reference["sha256"])
+            self.assertEqual(json.loads(encoded)["source_catalog_sha256"], sha)
+            self.assertLessEqual(max(p["bytes"] for p in reference["parts"]), 1024)
+            retained = plan_public_release(self.source, previous_public=self.output)
+            self.assertEqual(
+                dict(retained.manifest["releases"][0]["startup_parts"])["sha256"],
+                reference["sha256"],
+            )
+            (self.output / reference["parts"][0]["path"]).write_bytes(b"tampered")
+            with self.assertRaisesRegex(ValueError, "integrity mismatch"):
+                plan_public_release(self.source, previous_public=self.output)
 
     def test_old_versions_and_default_are_preserved(self):
         self.manifest["releases"].append({**self.manifest["releases"][0], "version": "older"})
@@ -319,7 +457,7 @@ async function run(change=()=>{},alter=()=>{}){
 """
         loader = self.root / "loader.js"
         loader.write_text(
-            files("maimai_intelligence.assets").joinpath("lab-loader.js").read_text("utf-8"),
+            (Path(__file__).parent / "fixtures" / "legacy-lab-loader.js").read_text("utf-8"),
             encoding="utf-8",
         )
         result = subprocess.run(  # noqa: S603

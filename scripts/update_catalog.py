@@ -25,6 +25,7 @@ from maimai_intelligence.catalog_loading import MAX_CATALOG_BYTES
 from maimai_intelligence.lab import build_lab
 from maimai_intelligence.mai_notes import MAX_INDEX_BYTES, download_index, prepare_links
 from maimai_intelligence.public_release import _read, build_public_release
+from maimai_intelligence.publication_capacity import read_capacity_review, stage_capacity_review
 from maimai_intelligence.research_package import extend_package, read_package
 from maimai_intelligence.snapshots import MAX_BYTES, atomic_json, read_json
 
@@ -133,14 +134,46 @@ def published_public(store):
     return previous / "public"
 
 
+def retained_browser_features(root):
+    """Read retained capabilities without executing historical browser scripts."""
+    root = Path(root)
+    config = root / "browser-config.json"
+    if config.is_file():
+        features = read_json(config).get("features")
+        if (
+            not isinstance(features, dict)
+            or set(features) != {"maishift"}
+            or type(features["maishift"]) is not bool
+        ):
+            raise ValueError("Invalid retained browser capability configuration")
+        return features
+    legacy = root / "player-import-config.js"
+    if legacy.is_file():
+        text = legacy.read_text("utf-8")
+        text = re.sub(r"/\*.*?\*/", "", text, flags=re.S).strip()
+        match = re.fullmatch(
+            r"globalThis\.maimaiPlayerFeatures\s*\|\|=\s*Object\.freeze\(\{maishift:(true|false)\}\);",
+            text,
+        )
+        if match is None:
+            raise ValueError("Unknown retained browser capability adapter")
+        return {"maishift": match[1] == "true"}
+    return {"maishift": False}
+
+
 def previous_public_identity(root):
     """Bind immutable publication inputs separately from regenerated browser files."""
     if root is None:
         return None
     root = Path(root)
     files = {}
-    for name in ("manifest.json", "permalinks.json"):
-        if name == "permalinks.json" and not (root / name).is_file():
+    for name in (
+        "manifest.json",
+        "permalinks.json",
+        "browser-config.json",
+        "player-import-config.js",
+    ):
+        if name != "manifest.json" and not (root / name).is_file():
             continue
         raw = _read(root, name, 2 * 1024 * 1024)
         files[name] = {"bytes": len(raw), "sha256": hashlib.sha256(raw).hexdigest()}
@@ -277,8 +310,16 @@ def prepare_update(
     replay_sources=None,
     source_fetcher=None,
     coverage_reviews=None,
+    reassess_captured_policy=False,
     previous_public=None,
+    capacity_review=None,
+    capacity_sha256=None,
+    player_maishift=None,
 ):
+    if player_maishift is not None and type(player_maishift) is not bool:
+        raise ValueError("Maishift capability must be an explicit boolean")
+    if (capacity_review is None) != (capacity_sha256 is None):
+        raise ValueError("Capacity review and its explicitly reviewed SHA256 are required together")
     store, previous_browser = Path(store).resolve(), Path(previous_browser).resolve()
     previous_public = Path(previous_public).resolve() if previous_public is not None else None
     if (package is not None and revision is not None) or (
@@ -309,6 +350,11 @@ def prepare_update(
         run.mkdir(parents=True)
         atomic_json(run / "state.json", {"status": "preparing"})
         try:
+            capacity = (
+                stage_capacity_review(capacity_review, capacity_sha256, run / "capacity")
+                if capacity_review is not None
+                else None
+            )
             current_public = published_public(store)
             if previous_public is None:
                 previous_public = current_public
@@ -325,6 +371,16 @@ def prepare_update(
                     raise ValueError("Source replay preceding public inputs differ")
             if previous_identity is not None:
                 atomic_json(run / "previous-public.json", previous_identity)
+            features = retained_browser_features(previous_public or previous_browser)
+            if player_maishift is not None:
+                features = {"maishift": player_maishift}
+            if replay_sources:
+                prior_ready = Path(replay_sources).parent / "ready.json"
+                if (
+                    prior_ready.is_file()
+                    and read_json(prior_ready).get("browser_features", features) != features
+                ):
+                    raise ValueError("Source replay browser capabilities differ")
             before = retain_history(previous_browser, run / "browser")
             if registry is None and not offline:
                 from maimai_intelligence.registry import read_registry
@@ -387,6 +443,28 @@ def prepare_update(
                     if coverage_reviews is not None
                     else read_json(REPO_ROOT / "config" / "coverage-reviews.json")
                 )
+                from maimai_intelligence.coverage import CONFIG as COVERAGE_CONFIG
+                from maimai_intelligence.coverage_store import (
+                    checkpoint_work,
+                    commit_checkpoint,
+                    policy_identity,
+                    replay_checkpoint_start,
+                    restore_checkpoint,
+                )
+
+                coverage_root = store / "cache" / "coverage"
+                coverage_base = accepted
+                coverage_policy = policy_identity(COVERAGE_CONFIG, reviews)
+                coverage_parent = None
+                coverage_work = None
+                if replay_sources:
+                    accepted = replay_checkpoint_start(coverage_root, accepted, replay_sources)
+                else:
+                    accepted, coverage_parent = restore_checkpoint(
+                        coverage_root, accepted, coverage_policy
+                    )
+                    if coverage_parent:
+                        coverage_work = checkpoint_work(coverage_root, coverage_parent)
                 accepted, coverage_audit = prepare_coverage(
                     accepted,
                     before,
@@ -398,11 +476,24 @@ def prepare_update(
                     replay=replay_sources,
                     title_reviews=reviews.get("titles", ()),
                     provider_reviews=reviews.get("providers", ()),
+                    artwork_reviews=reviews.get("artwork", ()),
+                    work=coverage_work,
+                    reassess_policy=reassess_captured_policy,
                 )
                 from maimai_intelligence.registry import write_registry
 
                 write_registry(accepted, run / "registry")
                 atomic_json(run / "source-captures.json", shared_capture.receipt())
+                if not offline and not replay_sources:
+                    checkpoint = commit_checkpoint(
+                        coverage_root,
+                        coverage_base,
+                        accepted,
+                        run,
+                        coverage_policy,
+                        predecessor=coverage_parent,
+                    )
+                    atomic_json(run / "coverage-checkpoint.json", checkpoint)
                 from maimai_intelligence.multilingual_search import enrich_registry
 
                 # Search aids belong to the projection and its retained report;
@@ -456,9 +547,14 @@ def prepare_update(
                 "research-"
                 + hashlib.sha256((run / "package" / "package.json").read_bytes()).hexdigest()[:12]
             )
-            build_lab(run / "package", run / "browser", catalog_version=version)
+            build_lab(
+                run / "package",
+                run / "browser",
+                catalog_version=version,
+                player_maishift=features["maishift"],
+            )
             release = build_public_release(
-                run / "browser", run / "public", previous_public=previous_public
+                run / "browser", run / "public", previous_public=previous_public, capacity=capacity
             )
             if previous_public_identity(previous_public) != previous_identity:
                 raise ValueError("Preceding public inputs changed during preparation")
@@ -542,6 +638,7 @@ def prepare_update(
                 "source": descriptor["source"],
                 "base_catalog_version": read_json(previous_browser / "manifest.json")["default"],
                 "implementation_hash": implementation_hash(),
+                "browser_features": features,
                 "release": release,
                 "files": file_inventory(run / "public"),
                 **(
@@ -568,6 +665,11 @@ def prepare_update(
                                 "coverage-state.json",
                                 "coverage-audit.json",
                                 "source-captures.json",
+                                *(
+                                    ("coverage-checkpoint.json",)
+                                    if (run / "coverage-checkpoint.json").is_file()
+                                    else ()
+                                ),
                             )
                         },
                     }
@@ -575,11 +677,6 @@ def prepare_update(
                     else {}
                 ),
             }
-            if registry:
-                atomic_json(
-                    store / "cache" / "coverage" / "work.json",
-                    read_json(run / "coverage-state.json"),
-                )
             atomic_json(run / "state.json", {"status": "ready"})
             # Last write is the sole marker that a complete candidate can be published.
             atomic_json(run / "ready.json", receipt)
@@ -630,6 +727,15 @@ def verify_candidate(run):
         raw = (run / name).read_bytes()
         if len(raw) != record["bytes"] or hashlib.sha256(raw).hexdigest() != record["sha256"]:
             raise ValueError("Candidate coverage inputs changed")
+    capacity = receipt.get("release", {}).get("capacity", {})
+    if capacity.get("profile") == "pages-paid-100000":
+        verified = read_capacity_review(
+            run / "capacity" / "review.json", capacity.get("review_sha256")
+        )
+        if verified.receipt() != capacity:
+            raise ValueError("Candidate capacity review changed")
+    elif capacity and capacity != {"profile": "pages-default", "max_files": 20000}:
+        raise ValueError("Unknown candidate capacity profile")
     return receipt
 
 
@@ -692,6 +798,14 @@ def publish_update(
         env = {**os.environ, "CLOUDFLARE_ACCOUNT_ID": ACCOUNT, "WRANGLER_SEND_METRICS": "false"}
         wrangler = str(Path(wrangler).resolve())
         prefix = [str(node), wrangler]
+        capacity = receipt.get("release", {}).get("capacity", {})
+        if capacity.get("profile") == "pages-paid-100000":
+            if capacity.get("account_id") != ACCOUNT or capacity.get("project") != PROJECT:
+                raise ValueError("Capacity review names a different publication target")
+            version = runner(prefix + ["--version"], env=env)
+            if not re.fullmatch(r"4\.\d+\.\d+(?:-[a-zA-Z0-9.-]+)?", version.strip()):
+                raise ValueError("Reviewed paid capacity requires Wrangler major version 4")
+            env["PAGES_WRANGLER_MAJOR_VERSION"] = "4"
         projects = json.loads(runner(prefix + ["pages", "project", "list", "--json"], env=env))
         project = next((p for p in projects if p.get("Project Name") == PROJECT), None)
         if project is None:
@@ -750,7 +864,16 @@ def publish_update(
         return publication
 
 
-def refresh_latest(store, *, offline=False, replay_sources=None):
+def refresh_latest(
+    store,
+    *,
+    offline=False,
+    replay_sources=None,
+    capacity_review=None,
+    capacity_sha256=None,
+    reassess_captured_policy=False,
+    player_maishift=None,
+):
     """Continue from the last verified publication, including its accepted registry."""
     store = Path(store).resolve()
     preceding_public = published_public(store)
@@ -769,10 +892,14 @@ def refresh_latest(store, *, offline=False, replay_sources=None):
         store,
         previous / "browser",
         previous_public=preceding_public,
+        player_maishift=player_maishift,
         package=previous / "package",
         registry=registry,
         offline=offline,
         replay_sources=replay_sources,
+        reassess_captured_policy=reassess_captured_policy,
+        capacity_review=capacity_review,
+        capacity_sha256=capacity_sha256,
     )
 
 
@@ -812,6 +939,29 @@ def main(argv=None):
     refresh.add_argument("--store", type=Path, required=True)
     refresh.add_argument("--offline", action="store_true")
     refresh.add_argument("--replay-sources", type=Path)
+    for action in (prepare, refresh):
+        action.add_argument(
+            "--player-maishift",
+            action=argparse.BooleanOptionalAction,
+            default=None,
+            help="Override capability; otherwise preserve the preceding public configuration",
+        )
+        action.add_argument(
+            "--reassess-captured-policy",
+            action="store_true",
+            help=(
+                "Reassess retained source captures under the current policy; "
+                "not an exact old-policy replay"
+            ),
+        )
+        action.add_argument(
+            "--capacity-review",
+            type=Path,
+            help="Private reviewed capacity evidence; default is 20,000 files",
+        )
+        action.add_argument(
+            "--capacity-sha256", help="Explicitly reviewed SHA256 of the capacity review"
+        )
     publish = commands.add_parser("publish", help="Publish a reviewed candidate as the owner")
     publish.add_argument("run", type=Path)
     publish.add_argument("--gh", default="gh")

@@ -1,4 +1,5 @@
-import {test, expect} from '@playwright/test';
+import {test, expect} from './fixtures.js';
+test.beforeEach(async({fixtureOrigins})=>{for(const origin of ["https://maimai.party"])fixtureOrigins.synthetic(origin);});
 import AxeBuilder from '@axe-core/playwright';
 import {readFile} from 'node:fs/promises';
 import {resolve, extname, sep} from 'node:path';
@@ -208,8 +209,9 @@ test('share survives a catalog failure and is present on the older standalone pa
 
 test('reloading the settings asset does not duplicate the share dialog or listeners', async ({page, context}) => {
   await hosted(context); await ready(page);
-  const src = await page.locator('script[src*="settings-menu.js"]').first().getAttribute('src');
-  await page.addScriptTag({url:new URL(src, page.url()).href});
+  const entry=page.locator('script[type=module][src*="browser-entry.js"]');
+  if(await entry.count())await page.evaluate(async()=>{const {loadApplication}=await import(document.querySelector('script[type=module][src*="browser-entry.js"]').src);const a=await loadApplication(),b=await loadApplication();if(a!==b)throw Error('Application initialized twice');});
+  else {const src=await page.locator('script[src*="settings-menu.js"]').first().getAttribute('src');await page.addScriptTag({url:new URL(src,page.url()).href});}
   await expect(page.locator('#site-share-dialog')).toHaveCount(1);
   await open(page); await expect(page.locator('#site-share-dialog')).toBeVisible();
   await page.locator('#site-share-copy').click();
