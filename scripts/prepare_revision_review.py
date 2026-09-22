@@ -19,6 +19,7 @@ import subprocess
 import sys
 import tarfile
 import time
+from collections.abc import Mapping
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -43,6 +44,14 @@ def sha(raw):
 
 def record(raw):
     return {"bytes": len(raw), "sha256": sha(raw)}
+
+
+def plain(value):
+    if isinstance(value, Mapping):
+        return {key: plain(item) for key, item in value.items()}
+    if isinstance(value, (tuple, list)):
+        return [plain(item) for item in value]
+    return value
 
 
 def canonical(value):
@@ -119,7 +128,7 @@ def runtime_identity():
     }
 
 
-def build_child(source, package, retained, previous, output, version):
+def build_child(source, package, retained, previous, output, version, *, player_maishift=False):
     attempts = []
 
     def deny(*args, **kwargs):
@@ -136,7 +145,7 @@ def build_child(source, package, retained, previous, output, version):
 
     start = time.monotonic()
     retain_history(retained, output / "browser")
-    build_lab(package, output / "browser", catalog_version=version)
+    build_lab(package, output / "browser", catalog_version=version, player_maishift=player_maishift)
     plan = plan_public_release(output / "browser", previous_public=previous)
     plan.write_review_to(output / "review")
     preserved = {}
@@ -153,9 +162,10 @@ def build_child(source, package, retained, previous, output, version):
     result = {
         "directory": str(output),
         "process_id": os.getpid(),
+        "build_options": {"player_maishift": player_maishift},
         "runtime": runtime_identity(),
         "elapsed_seconds": round(time.monotonic() - start, 3),
-        "summary": dict(plan.summary),
+        "summary": plain(plan.summary),
         "files": inventory(output / "review"),
         "network_attempts": attempts,
         "historical_immutable_files": len(preserved),
@@ -164,7 +174,7 @@ def build_child(source, package, retained, previous, output, version):
     (output / "result.json").write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
 
 
-def run_build(source, package, retained, previous, output, version):
+def run_build(source, package, retained, previous, output, version, *, player_maishift=False):
     output.mkdir(parents=True, exist_ok=False)
     command = [
         sys.executable,
@@ -185,6 +195,7 @@ def run_build(source, package, retained, previous, output, version):
         str(output),
         "--version",
         version,
+        "--player-maishift" if player_maishift else "--no-player-maishift",
     ]
     result = subprocess.run(  # noqa: S603 -- fixed interpreter and explicit local child arguments
         command,
@@ -200,7 +211,7 @@ def run_build(source, package, retained, previous, output, version):
     return json.loads((output / "result.json").read_text(encoding="utf-8"))
 
 
-def run(package, retained, previous, output, version, *, source=ROOT):
+def run(package, retained, previous, output, version, *, source=ROOT, player_maishift=False):
     roots = {"package": package, "retained": retained, "previous": previous}
     for root in [source, ROOT, *roots.values()]:
         if output.is_relative_to(root) or root.is_relative_to(output):
@@ -213,7 +224,17 @@ def run(package, retained, previous, output, version, *, source=ROOT):
     for number in (1, 2):
         if any(value["files"] != inventory(roots[name]) for name, value in inputs.items()):
             raise ValueError("Review input changed before a build")
-        result = run_build(source, package, retained, previous, output / f"build-{number}", version)
+        result = run_build(
+            source,
+            package,
+            retained,
+            previous,
+            output / f"build-{number}",
+            version,
+            player_maishift=player_maishift,
+        )
+        if result["build_options"] != {"player_maishift": player_maishift}:
+            raise ValueError("Child build options differ from the requested options")
         results.append(result)
         if any(value["files"] != inventory(roots[name]) for name, value in inputs.items()):
             raise ValueError("Review input changed during a build")
@@ -240,6 +261,7 @@ def run(package, retained, previous, output, version, *, source=ROOT):
         "passed": True,
         "published": False,
         "candidate_commit": source_binding["commit"],
+        "build_options": {"player_maishift": player_maishift},
         "source": source_binding,
         "verifier": verifier,
         "inputs": inputs,
@@ -257,6 +279,7 @@ def main():
         parser.add_argument("--" + name, required=True, type=Path)
     parser.add_argument("--source", type=Path, default=ROOT)
     parser.add_argument("--version", required=True)
+    parser.add_argument("--player-maishift", action=argparse.BooleanOptionalAction, default=False)
     parser.add_argument("--build-child", action="store_true", help=argparse.SUPPRESS)
     args = parser.parse_args()
     args.source = args.source.resolve(strict=True)
@@ -269,9 +292,9 @@ def main():
         args.version,
     )
     if args.build_child:
-        build_child(*values)
+        build_child(*values, player_maishift=args.player_maishift)
     else:
-        run(*values[1:], source=values[0])
+        run(*values[1:], source=values[0], player_maishift=args.player_maishift)
 
 
 if __name__ == "__main__":

@@ -52,13 +52,17 @@ class RevisionReviewTests(unittest.TestCase):
             source = root / "source"
             modules = {
                 "src/maimai_intelligence/__init__.py": "",
-                "src/maimai_intelligence/lab.py": "def build_lab(*args, **kwargs): pass\n",
+                "src/maimai_intelligence/lab.py": (
+                    "def build_lab(*args, **kwargs):\n"
+                    '    assert kwargs.get("player_maishift") is True\n'
+                ),
                 "scripts/__init__.py": "",
                 "scripts/update_catalog.py": "def retain_history(*args): pass\n",
                 "src/maimai_intelligence/public_release.py": """import json,os,sys
+from types import MappingProxyType
 class Plan:
     assets={}
-    summary={"fixture":True}
+    summary=MappingProxyType({"fixture":True,"nested":MappingProxyType({"values":(1,2)})})
     def write_review_to(self, output):
         assert not sys.flags.hash_randomization
         assert 'PYTHONPATH' not in os.environ
@@ -76,10 +80,17 @@ def plan_public_release(*args, **kwargs): return Plan()
             with patch.dict(
                 os.environ, {"PYTHONPATH": "must-not-be-used", "PYTHONHASHSEED": "random"}
             ):
-                first = run_build(source, inputs, inputs, inputs, root / "first", "fixture")
-                second = run_build(source, inputs, inputs, inputs, root / "second", "fixture")
+                first = run_build(
+                    source, inputs, inputs, inputs, root / "first", "fixture", player_maishift=True
+                )
+                second = run_build(
+                    source, inputs, inputs, inputs, root / "second", "fixture", player_maishift=True
+                )
             self.assertNotEqual(first["process_id"], second["process_id"])
             self.assertEqual(first["files"], second["files"])
+            self.assertEqual(first["summary"]["nested"], {"values": [1, 2]})
+            self.assertEqual(first["build_options"], {"player_maishift": True})
+            self.assertEqual(second["build_options"], first["build_options"])
             self.assertEqual(first["runtime"], second["runtime"])
             self.assertEqual(first["runtime"]["hash_randomization"], 0)
             module = source / "src/maimai_intelligence/public_release.py"
@@ -88,7 +99,15 @@ def plan_public_release(*args, **kwargs): return Plan()
                 "except PermissionError: pass\n" + module.read_text()
             )
             with self.assertRaisesRegex(ValueError, "build failed"):
-                run_build(source, inputs, inputs, inputs, root / "caught-network", "fixture")
+                run_build(
+                    source,
+                    inputs,
+                    inputs,
+                    inputs,
+                    root / "caught-network",
+                    "fixture",
+                    player_maishift=True,
+                )
             self.assertIn("attempted network", (root / "caught-network/build.log").read_text())
 
     def test_mutating_input_after_first_build_never_writes_acceptance_receipt(self):
@@ -101,9 +120,13 @@ def plan_public_release(*args, **kwargs): return Plan()
                 folder.mkdir()
                 (folder / "manifest.json").write_text("original")
 
-            def mutate(*args):
+            def mutate(*args, **kwargs):
                 (roots[0] / "manifest.json").write_text("changed")
-                return {"files": {}, "elapsed_seconds": 0}
+                return {
+                    "files": {},
+                    "elapsed_seconds": 0,
+                    "build_options": {"player_maishift": False},
+                }
 
             with (
                 patch(

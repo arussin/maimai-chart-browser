@@ -22,6 +22,8 @@ export async function bindArtifact(config){
  if(!/^[a-f0-9]{40}$/.test(config.commit||''))throw Error('Exact product source commits are required');
  const bytes=await readFile(config.provenance),receipt=JSON.parse(bytes);
  if(receipt.schema_version!=='maimai-full-review-reproduction-2'||receipt.passed!==true||receipt.published!==false||receipt.source?.commit!==config.commit||receipt.candidate_commit!==config.commit)throw Error('Artifact receipt does not verify the requested source commit');
+ const buildOptions=receipt.build_options||(receipt.verifier?.commit==='4d5584b43e2ef1f4cfd1398739aa80e8acb74136'?{player_maishift:false}:null);
+ if(!buildOptions||typeof buildOptions.player_maishift!=='boolean'||Object.keys(buildOptions).length!==1)throw Error('Explicit build options are required');
  const build=receipt.builds?.find(b=>resolve(b.directory,'review','planned-assets')===config.root&&resolve(b.directory,'review','planned-manifest.json')===config.manifest);
  if(!build?.files||!receipt.source?.inventory_sha256||!receipt.verifier?.commit)throw Error('Artifact root is not bound by a complete reproduction receipt');
  const expected={};
@@ -30,9 +32,21 @@ export async function bindArtifact(config){
  if(!expected['/manifest.json']||!expected['/index.html'])throw Error('Receipt omits required artifact files');
  const manifest=await readFile(config.manifest);
  verifyBytes('/manifest.json',manifest,expected);
- return {expected,receipt_sha256:sha(bytes),source_inventory_sha256:receipt.source.inventory_sha256,verifier_commit:receipt.verifier.commit};
+ return {expected,build_options:buildOptions,receipt_sha256:sha(bytes),source_inventory_sha256:receipt.source.inventory_sha256,verifier_commit:receipt.verifier.commit};
 }
 
+export function validateExperiment(experiment,configs,catalogs){
+ if(!['runtime','enrichment'].includes(experiment))throw Error('Experiment must be runtime or enrichment');
+ const [left,right]=configs;
+ if(JSON.stringify(left.binding.build_options)!==JSON.stringify(right.binding.build_options))throw Error('Comparisons require identical build options');
+ if(experiment==='runtime'){
+  if(catalogs[0].release.sha256!==catalogs[1].release.sha256)throw Error('Runtime comparison requires byte-identical accepted catalogs; measure enrichment separately');
+ }else{
+  if(left.commit!==right.commit)throw Error('Enrichment comparison requires the same product commit');
+  const runtimeFiles=config=>Object.fromEntries(Object.entries(config.binding.expected).filter(([name])=>/\.(?:js|css|woff2?|ttf)$/.test(name)||/\/(?:browser-assets|player-import-config|support-config)\.json$/.test(name)).sort(([a],[b])=>a.localeCompare(b)));
+  if(JSON.stringify(runtimeFiles(left))!==JSON.stringify(runtimeFiles(right)))throw Error('Enrichment comparison requires byte-identical runtime assets');
+ }
+}
 export function verifyBytes(name,raw,expected){
  const item=expected[name];
  if(!item||item.sha256!==sha(raw)||item.bytes!==raw.length)throw Error('Served artifact differs from committed build receipt: '+name);
@@ -75,7 +89,8 @@ export async function main(argv=process.argv.slice(2)){
   config.binding=await bindArtifact(config);configs.push(config);
  }
  const catalogs=await Promise.all(configs.map(catalog));
- if(catalogs[0].release.sha256!==catalogs[1].release.sha256)throw Error('Runtime comparison requires byte-identical accepted catalogs; measure enrichment separately');
+
+ const experiment=arg('experiment','runtime');validateExperiment(experiment,configs,catalogs);
  const query=catalogs[0].data.catalog.find(c=>c.title?.trim()&&c.artist?.trim()).title;
  let current=configs[0],origin,requests=[];const content=new Map(),errors=[],rows=[];
  const server=http.createServer(async(req,res)=>{
@@ -112,8 +127,8 @@ export async function main(argv=process.argv.slice(2)){
  let browser;
  async function one(page,temperature,session){
   requests=[];await session.send('Performance.enable');const before=(await session.send('Performance.getMetrics')).metrics;
-  await page.goto(origin+'/',{waitUntil:'load'});await ready(page);await frames(page);
-  const startup=await page.evaluate(()=>{const all=[...performance.getEntriesByType('navigation'),...performance.getEntriesByType('resource')];return {ready_ms:window.__measurement.ready,transfer_bytes:all.reduce((n,e)=>n+e.transferSize,0),encoded_bytes:all.reduce((n,e)=>n+e.encodedBodySize,0),cached_resources:all.filter(e=>e.transferSize===0&&e.decodedBodySize>0).length,rows:document.querySelectorAll('#songs .song-row').length,long_task_ms:window.__measurement.longTasks.reduce((a,b)=>a+b,0),cls:window.__measurement.shifts.reduce((a,b)=>a+b,0)};});
+  await page.goto(origin+'/',{waitUntil:'load'});await ready(page);await page.evaluate(()=>document.fonts.ready.then(()=>true));await frames(page);
+  const startup=await page.evaluate(()=>{const sample=document.querySelector('#songs .song-row')||document.body,style=getComputedStyle(sample);const all=[...performance.getEntriesByType('navigation'),...performance.getEntriesByType('resource')];return {fonts:{status:document.fonts.status,sample_family:style.fontFamily,sample_size:style.fontSize,sample_weight:style.fontWeight,faces:[...document.fonts].map(font=>({family:font.family,style:font.style,weight:font.weight,status:font.status}))},ready_ms:window.__measurement.ready,transfer_bytes:all.reduce((n,e)=>n+e.transferSize,0),encoded_bytes:all.reduce((n,e)=>n+e.encodedBodySize,0),cached_resources:all.filter(e=>e.transferSize===0&&e.decodedBodySize>0).length,rows:document.querySelectorAll('#songs .song-row').length,long_task_ms:window.__measurement.longTasks.reduce((a,b)=>a+b,0),cls:window.__measurement.shifts.reduce((a,b)=>a+b,0)};});
   const metrics=(await session.send('Performance.getMetrics')).metrics;for(const name of ['ScriptDuration','TaskDuration'])startup[name+'_ms']=1000*((metrics.find(v=>v.name===name)?.value||0)-(before.find(v=>v.name===name)?.value||0));
   const startupRequests=requests.slice(),search_ms=await timing(page,()=>search(page,query));
   if(await page.locator('#songs .song-row').count()===0)throw Error('Search failed');
@@ -133,7 +148,7 @@ export async function main(argv=process.argv.slice(2)){
   return {temperature,startup,search_ms,song_ms,back_ms,comparison_ms,return_catalog_refetches,startup_requests:startupRequests,requests:requests.slice()};
  }
  try{
-  browser=await chromium.launch({headless:true,proxy:{server:proxy.server},args:['--disable-background-networking','--disable-component-update','--disable-default-apps','--disable-sync','--no-first-run']});
+  browser=await chromium.launch({headless:true,executablePath:chromium.executablePath(),proxy:{server:proxy.server},args:['--disable-background-networking','--disable-component-update','--disable-default-apps','--disable-sync','--no-first-run']});
   const contextOptions={viewport:{width:1280,height:900},locale:'en-US',reducedMotion:'reduce',serviceWorkers:'block'};
   // Prime the full journey's filesystem and compression work, never a retained browser cache.
   for(const config of configs){
@@ -157,7 +172,7 @@ export async function main(argv=process.argv.slice(2)){
    for(const key of ['search_ms','song_ms','back_ms','comparison_ms'])entry[key]=distribution(selected.map(r=>r[key]));summaries.push(entry);
   }
   const browserVersion=browser.version();await browser.close();browser=null;await proxy.close();
-  const receipt={schema:'architecture-performance-3',passed:errors.length===0&&proxy.unexpected.length===0,created_at:new Date().toISOString(),harness_sha256:sha(await readFile(new URL(import.meta.url))),configs:configs.map(({binding,...config})=>({...config,binding:{receipt_sha256:binding.receipt_sha256,source_inventory_sha256:binding.source_inventory_sha256,verifier_commit:binding.verifier_commit}})),verified_served_files:[...content.values()].map(f=>({config:f.config,path:f.name,bytes:f.raw.length,sha256:sha(f.raw)})),catalogs:catalogs.map(c=>({sha256:c.release.sha256,manifest_sha256:c.manifest_sha256,charts:c.data.catalog.length})),query,iterations,browser:browserVersion,runtime:runtimeBinding,platform:{os:os.platform(),release:os.release(),cpu:os.cpus()[0]?.model,threads:os.cpus().length},method:{routing:false,outbound:'Exact loopback proxy only; all other origins denied',cache:'Production-like immutable data; other assets revalidated. A new page in the same context gives the immediate warm repeat; a fresh context gives cold readiness. Full measured journey filesystem/gzip primed in discarded browser contexts. No artificial network or CPU throttle.',readiness:'First populated catalog DOM observed (ready_ms is not a paint metric); action completion includes two animation frames. Search dispatches the synchronous input event. Comparison includes tab activation and deferred initialization.',usage:'Collector remains suppressed by the unchanged nonproduction origin predicate.',execution:'CDP Performance ScriptDuration and TaskDuration deltas through two animation frames after catalog readiness',limitations:'Desktop Chromium on this Windows/font platform only; local-server latency, not internet Core Web Vitals. Concurrent host load is uncontrolled; paired order alternates.'},rows,summaries,errors,blocked:proxy.unexpected};
+  const receipt={schema:'architecture-performance-3',experiment,passed:errors.length===0&&proxy.unexpected.length===0,created_at:new Date().toISOString(),harness_sha256:sha(await readFile(new URL(import.meta.url))),configs:configs.map(({binding,...config})=>({...config,binding:{receipt_sha256:binding.receipt_sha256,source_inventory_sha256:binding.source_inventory_sha256,verifier_commit:binding.verifier_commit,build_options:binding.build_options}})),verified_served_files:[...content.values()].map(f=>({config:f.config,path:f.name,bytes:f.raw.length,sha256:sha(f.raw)})),catalogs:catalogs.map(c=>({sha256:c.release.sha256,manifest_sha256:c.manifest_sha256,charts:c.data.catalog.length})),query,iterations,browser:browserVersion,runtime:runtimeBinding,platform:{os:os.platform(),release:os.release(),cpu:os.cpus()[0]?.model,threads:os.cpus().length},method:{routing:false,outbound:'Exact loopback proxy only; all other origins denied',cache:'Production-like immutable data; other assets revalidated. A new page in the same context gives the immediate warm repeat; a fresh context gives cold readiness. Full measured journey filesystem/gzip primed in discarded browser contexts. No artificial network or CPU throttle.',readiness:'First populated catalog DOM observed (ready_ms is not a paint metric); action completion includes two animation frames. Search dispatches the synchronous input event. Comparison includes tab activation and deferred initialization.',usage:'Collector remains suppressed by the unchanged nonproduction origin predicate.',execution:'CDP Performance ScriptDuration and TaskDuration deltas through two animation frames after catalog and font readiness',limitations:'Explicit full Chromium executable on this Windows/font platform only. Web font bytes are verified served assets; operating-system fallback font files are not individually hashed; local-server latency, not internet Core Web Vitals. Concurrent host load is uncontrolled; paired order alternates.'},rows,summaries,errors,blocked:proxy.unexpected};
   await writeFile(resolve(output,'measurements.json'),JSON.stringify(receipt,null,2)+'\n');
   if(!receipt.passed)throw Error('Invalid measurement: resource, application or outbound errors');
  }finally{
