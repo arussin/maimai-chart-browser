@@ -69,8 +69,10 @@ Open issues were checked in both repositories before the rollout:
 Run the complete Python/browser/Worker and localization checks for the final
 commit. Test the exact assembled artifact with fictional data before publishing,
 then verify immutable and canonical assets and all four former pilot entry
-forms. Run only the explicitly approved sample for the real-source smoke check;
-keep raw account data, URLs and screenshots out of saved results.
+forms. Adam designated `shiftpsh` as the approved account for future live Maishift
+tests on September 22, 2026. Use that account for the release smoke check; keep
+deterministic CI fixtures fictional and do not reuse another historical sample.
+Keep raw account data, URLs and screenshots out of saved results.
 
 The immediate rollback baseline is Pages deployment
 `e4ce3121-1b10-4889-8b3f-1e8243e3ec41`. Recheck canonical state before rollback.

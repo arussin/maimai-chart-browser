@@ -37,7 +37,11 @@ jobs:
       - run: maimai-chart demo --output output/site
   browser:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3]
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
         with:
@@ -61,12 +65,21 @@ jobs:
       - run: node scripts/localization_sources.mjs .
       - run: npx playwright install --with-deps chromium firefox webkit chrome msedge
         working-directory: tests/browser
-      - run: npm test
+      - name: Browser coverage (shard ${{ matrix.shard }}/3)
+        run: npm test -- --shard=${{ matrix.shard }}/3 --grep-invert='7000-chart startup and interactions'
+        working-directory: tests/browser
+      # Wall-clock budgets run without competing browser tests on this runner.
+      - name: Isolated browser performance budgets
+        if: matrix.shard == 1
+        run: npm test -- performance.spec.js --project=desktop --workers=1
         working-directory: tests/browser
       - run: node --test support-worker/index.test.mjs
+        if: matrix.shard == 1
       - run: npm ci --no-audit --no-fund
+        if: matrix.shard == 1
         working-directory: player-import-worker
       - run: npm test
+        if: matrix.shard == 1
         working-directory: player-import-worker
         env:
           WRANGLER_SEND_METRICS: 'false'

@@ -72,6 +72,7 @@ test('production enables Maishift without adopting pilot storage or launching a 
   const requests=[];page.on('request',r=>{if(r.url().includes('/api/player-import'))requests.push(r.url());});
   await page.goto('/production/');await page.evaluate(()=>maimaiPersonal.ready);await expect(page.locator('#lab-status')).toBeHidden();
   expect(await page.evaluate(()=>({enabled:maimaiPlayerSources.capabilities.maishift,pilot:globalThis.maimaiPlayerContext?.pilot===true}))).toEqual({enabled:true,pilot:false});
+  await expect(page.locator('.feature-announcement')).toBeVisible();await page.keyboard.press('Escape');await expect(page.locator('.feature-announcement')).toBeHidden();
   await page.locator('#player-import-primary').click();await page.locator('input[value=maishift]').check();await page.locator('#player-maishift-url').fill('fictional-player');await expect(page.getByRole('button',{name:'Continue',exact:true})).toBeEnabled();expect(requests).toEqual([]);
   await page.keyboard.press('Escape');
   const stores=await page.evaluate(async()=>indexedDB.databases());expect(stores.some(s=>s.name==='maimai-player-data')).toBe(true);expect(stores.some(s=>s.name.includes('pilot'))).toBe(false);
