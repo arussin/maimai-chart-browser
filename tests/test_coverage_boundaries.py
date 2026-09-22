@@ -61,6 +61,30 @@ class CoverageBoundaryTests(unittest.TestCase):
             with self.subTest(body=body), self.assertRaises(SnapshotError):
                 capture_snapshot(Capture(body))
 
+    def test_optional_artwork_sources_reject_malformed_encoding_as_source_failure(self):
+        class MalformedCapture:
+            def get(self, url):
+                return bytes([255]), {}
+
+        for provider in ("otoge-db", "lxns"):
+            with self.subTest(provider=provider):
+                sources = ArtworkSources(MalformedCapture(), {}, providers=(provider,))
+                self.assertEqual(sources._rows(provider), [])
+                self.assertEqual(sources.failures[provider].kind, FailureKind.SCHEMA)
+                self.assertEqual(sources.indexes[provider], {})
+
+    def test_optional_artwork_sources_do_not_hide_programming_errors(self):
+        class BrokenCapture:
+            def get(self, url):
+                raise TypeError("authored artwork adapter defect")
+
+        for provider in ("otoge-db", "lxns"):
+            with self.subTest(provider=provider):
+                sources = ArtworkSources(BrokenCapture(), {}, providers=(provider,))
+                with self.assertRaisesRegex(TypeError, "authored artwork adapter defect"):
+                    sources._rows(provider)
+                self.assertNotIn(provider, sources.failures)
+
     def test_1694_successful_jobs_finish_in_six_disjoint_batches(self):
         evidence = {f"s{i:04}": "fixture-evidence" for i in range(1694)}
         work, selected, seen, sizes = empty_work(), {}, set(), []

@@ -112,7 +112,7 @@ class ArtworkSources:
                     if source_id not in seen:
                         seen.add(source_id)
                         candidates.append(candidate)
-        except (CaptureError, SnapshotError, json.JSONDecodeError) as error:
+        except (CaptureError, SnapshotError, json.JSONDecodeError, UnicodeDecodeError) as error:
             self.failures[provider] = (
                 error.failure
                 if isinstance(error, CaptureError)
