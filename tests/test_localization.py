@@ -40,12 +40,14 @@ class LocalizationTests(unittest.TestCase):
             assets.mkdir(parents=True)
             aliases = assets / "song-pronunciations.json"
             aliases.write_text('{"songs": {}}', encoding="utf-8")
+            readings = assets / "song-display-readings.json"
+            readings.write_text('{"entries": []}', encoding="utf-8")
             source, translation = root / "README.md", root / "README.ja.md"
             source.write_text("# Original\n", encoding="utf-8")
             translation.write_text("# 翻訳\n", encoding="utf-8")
             reviewed = {
                 p.relative_to(root).as_posix(): file_fingerprint(p)
-                for p in (source, translation, aliases)
+                for p in (source, translation, aliases, readings)
             }
             source.write_bytes(b"# Original\r\n")
             self.assertEqual(stale_inputs(root, reviewed), [])
@@ -66,9 +68,11 @@ class LocalizationTests(unittest.TestCase):
             source.write_text('{"Support": {"ko": "후원"}}', encoding="utf-8")
             aliases = assets / "song-pronunciations.json"
             aliases.write_text('{"songs": {}}', encoding="utf-8")
+            readings = assets / "song-display-readings.json"
+            readings.write_text('{"entries": []}', encoding="utf-8")
             reviewed = {
                 p.relative_to(root).as_posix(): fingerprint(json.loads(p.read_text("utf-8")))
-                for p in (source, aliases)
+                for p in (source, aliases, readings)
             }
             self.assertEqual(stale_inputs(root, reviewed), [])
             source.write_text('{"Support": {"ko": "지원"}}', encoding="utf-8")

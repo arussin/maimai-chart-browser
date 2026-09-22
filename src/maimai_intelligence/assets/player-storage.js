@@ -4,7 +4,8 @@
 (()=>{'use strict';
 if(globalThis.maimaiPlayerStorage)return;
 const conflict=()=>new Error('Player data changed in another tab. Reload before importing again.');
-function db(){return new Promise((resolve,reject)=>{const q=indexedDB.open('maimai-player-data',2);q.onupgradeneeded=()=>{if(!q.result.objectStoreNames.contains('datasets'))q.result.createObjectStore('datasets');};q.onsuccess=()=>{q.result.onversionchange=()=>q.result.close();resolve(q.result);};q.onerror=()=>reject(new Error('Device storage is unavailable.'));q.onblocked=()=>reject(new Error('Close other maimai.party tabs to update device storage.'));});}
+const databaseName=globalThis.maimaiPlayerContext?.key('maimai-player-data')||'maimai-player-data';
+function db(){return new Promise((resolve,reject)=>{const q=indexedDB.open(databaseName,2);q.onupgradeneeded=()=>{if(!q.result.objectStoreNames.contains('datasets'))q.result.createObjectStore('datasets');};q.onsuccess=()=>{q.result.onversionchange=()=>q.result.close();resolve(q.result);};q.onerror=()=>reject(new Error('Device storage is unavailable.'));q.onblocked=()=>reject(new Error('Close other maimai.party tabs to update device storage.'));});}
 const defaults=()=>({epoch:0,version:0,lease:null});
 const token=(active,control)=>({revision:active?.revision??null,epoch:control.epoch,version:control.version});
 function matches(expected,active,control){return expected&&expected.revision===(active?.revision??null)&&expected.epoch===control.epoch&&expected.version===control.version;}
@@ -27,10 +28,11 @@ async function save(value,expected,leaseID=null){return transaction('readwrite',
   if(value.source)value.source={...value.source,generation:control.version};
   store.put(value,'active');store.put(control,'control');return token(value,control);
 });}
-async function forget(expected=null){return transaction('readwrite',(active,control,store)=>{
+async function forget(expected=null,clear=false){return transaction('readwrite',(active,control,store)=>{
   if(expected&&!matches(expected,active,control))throw conflict();
-  control.epoch++;control.version++;control.lease=null;store.delete('active');store.put(control,'control');return token(null,control);
+  control.epoch++;control.version++;control.lease=null;if(clear)control.clearedEpoch=control.epoch;store.delete('active');store.put(control,'control');return token(null,control);
 });}
+const clear=()=>forget(null,true);
 async function claim(expected,manual,now=Date.now()){return transaction('readwrite',(active,control,store)=>{
   if(!matches(expected,active,control))throw conflict();const source=active?.source;
   if(!source?.autoRefresh)return null;
@@ -41,5 +43,5 @@ async function finish(expected,id,patch){return transaction('readwrite',(active,
   if(!matches(expected,active,control)||control.lease?.id!==id)throw conflict();
   active.source={...active.source,...patch};control.lease=null;store.put(active,'active');store.put(control,'control');return active.source;
 });}
-globalThis.maimaiPlayerStorage=Object.freeze({read,begin,verify,save,forget,claim,finish});
+globalThis.maimaiPlayerStorage=Object.freeze({read,begin,verify,save,forget,clear,claim,finish});
 })();

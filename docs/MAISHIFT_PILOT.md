@@ -1,8 +1,11 @@
 # Invited Maishift pilot
 
-Prepared September 21, 2026. **Built and tested locally; not published.**
-The proposed page is `https://maimai.party/pilot/maishift/`, using the separate
-`/api/player-import/maishift` Worker. Normal Party imports and the combined
+**Published September 22, 2026 UTC for the invited trial.**
+The [hosted release record](MAISHIFT_HOSTED_PILOT_RELEASE.md) contains the exact
+deployment, approvals, asset verification and successful real-account browser
+check. Workers Paid and the minimal deployment permissions were approved.
+The page is `https://maimai.party/pilot/maishift/`, using the separate
+`/api/player-import/maishift` Worker. Normal Party Maishift imports and the combined
 announcement remain disabled. This is an unlisted public link, not an access
 control system. It does not add sign-in or change existing authentication.
 
@@ -18,6 +21,57 @@ Each read uses the existing strict adapter and all 12,474 reviewed chart joins.
 There are no fuzzy matches, guessed chart IDs, fabricated plays or sessions.
 Source identity remains provider + game region + the exact supplied username;
 it is not proof of account ownership or protection against username reassignment.
+
+## Chart browser trial
+
+The artifact now also contains `/pilot/maishift/browser/`: the actual Party chart
+browser, with the existing source selector, profile preview, score overlays,
+filters, remembered refresh and Forget. The upload-check page links to it with
+**Open chart browser**. Both surfaces are now hosted under the unlisted pilot path.
+
+1. Open the chart browser, choose **Import player data**, then **Maishift**.
+   Enter your own public profile. A regional URL selects its record region;
+   a username starts with International and uses the region Maishift returns.
+   When both exist, use an explicit `@jp` link for Japan. The username link opens the selected regional profile.
+2. Review the identity, PB coverage and any unmatched/excluded counts. The
+   official rating decoration is shared with Settings and uses Maishift's reported
+   total rating. An unknown rating shows dashes, with no invented rating or tier.
+3. Choose **Import & remember** to test saved refresh, or uncheck remembering and
+   choose **Import once** for this tab. Select **My PBs**, browse charts and try
+   the filters. Ordinary file and hosted-report sources remain available.
+4. For remembered data, reopen the page to check restoration, or use Settings →
+   **Refresh now**. Automatic attempts occur only on an eligible visible/online
+   event, outside imports, at most once per source per 15 minutes across tabs.
+   Manual attempts have a 30-second cooldown. Upstream retry timing still applies.
+5. Open a second pilot tab and use **Forget remembered player data**. Both tabs
+   stop refresh; a pending read cannot restore the saved connection. Current
+   scores can remain visible until reload. No unattended polling is added.
+
+The pilot uses its own IndexedDB database, session keys, cross-tab channel and
+filter/group preference keys under `maimai-pilot-maishift-v1:`. The normal site's
+saved profile is separate, including on the eventual shared origin. Language
+preferences remain shared. Announcement preferences are untouched; the browser
+pilot omits analytics, announcements and payment scripts. The prototype is
+unlisted, not access-controlled. It adds no authentication or public tunnel.
+
+The browser is built from the canonical registry inventory and exact joins.
+All version logos use the shared verified artwork manifest, including MAGiCAL.
+Pass `--retained-package` to the builder (or `-RetainedPackage` to the local
+launcher) to include accepted jackets and prepared chart analysis. The current
+local preview uses the verified retained `20260917T194602Z-e44dfbe4` package,
+projected onto the current canonical registry; missing or inexact artwork still
+uses the normal fallback. No artwork is fetched by testers from a third party.
+The published filter changes remain included (`e2ee969`, integrated at `f9dd8a9`).
+Per-chart ratings now use verified source integer contributions. Estimated or
+missing source ratings remain unknown; total profile rating is kept separately.
+
+
+The separate `browserBuild` manifest fingerprint covers the browser artifact.
+Its CSP permits HTTPS reads for an explicitly selected public CORS-enabled Session
+Report; Maishift still uses only the fixed same-origin API. The upload-check page
+retains its self-only connection policy and memory-only before/after workflow.
+Use that page to gather genuine upload/correction evidence: passing deterministic
+refresh tests does not establish upstream snapshot chronology.
 
 ## Tester steps
 
@@ -143,7 +197,7 @@ requires `MAISHIFT_CANARY_APPROVED=true`, an explicitly approved public
 environment and set `MAIMAI_NODE_MODULES_ROOT` to a prepared DevCache browser
 workspace. `TEMP` must remain in DevCache. Run with Node from canonical source.
 
-It opens a fresh Chrome context on Party's proposed pilot URL, checks the no-store,
+It opens a fresh Chrome context on Party's pilot URL, checks the no-store,
 no-referrer, noindex and self-only connection headers, consents to exactly one
 approved baseline read and checks the expected build, coverage and exact matches.
 It rejects other origins, profile-bearing URLs, cookies/auth/referrers on the API,
@@ -166,6 +220,12 @@ for that server lifetime. Its in-memory coordinator is a development substitute,
 not evidence of deployed Cloudflare rate limiting or Durable Object behavior.
 To test a different profile/region, stop it and start with that explicit selection.
 No profile content or raw errors are written to server logs or disk.
+
+The actual chart browser is at the same origin under `/pilot/maishift/browser/`.
+Use `-Port 8896` to keep an existing upload-check tab and its in-memory baseline
+running on 8895 while testing the browser separately. The server prints both
+entry URLs. In the browser artifact, consented remembered refresh shares the
+same six-read lifetime limit; exhausting it preserves scores and reports failure.
 
 Profile URLs may end at the username, optionally with a trailing slash, as well
 as `/home`, `/records` or `/export`. Other hosts, query strings, fragments and
@@ -197,6 +257,8 @@ The shared v1 library pin remains
 `f1abe2c7d93ff7f0b6610dd0bb57d4e038f609c0`; no Session Report contract or pin changed.
 Earlier file/report/remember/Forget checks remain in
 [PLAYER_IMPORT_DELIVERY.md](PLAYER_IMPORT_DELIVERY.md). Still incomplete:
-published-origin acceptance and operating limits, genuine upload/correction/version
-evidence, full snapshot semantics, and general Maishift/announcement release.
+broader operating limits, genuine upload/correction/version evidence, full snapshot
+semantics, and general Maishift/announcement release. The hosted release record
+supersedes earlier local-only status: sample import, grades/ratings, remembered
+refresh and cross-tab Forget have now passed on the actual Party origin.
 Preparing this pilot does not mark the original integration plan complete.

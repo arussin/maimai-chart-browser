@@ -1,12 +1,33 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {createService,PATH,boundedJSON} from './index.mjs';
-import {decode,profile,minimize,upstreamURL,FUNCTIONS} from './contract.mjs';
+import {decode,profile,minimize,upstreamURL,FUNCTIONS,validInput} from './contract.mjs';
 import {wire,tracks,publicProfile} from './fixtures.mjs';
 import '../src/maimai_intelligence/assets/player-data-core.js';
 import '../src/maimai_intelligence/assets/player-maishift.js';
 const adapter=globalThis.maimaiPlayerMaishift,core=globalThis.maimaiPlayerData;
 const input={handle:'fictional-player',region:'intl',manual:true};
+
+test('automatic initial region follows the verified profile; every score read and refresh stays explicit',async()=>{
+  for(const [region,expected]of [['ASIA','intl'],['JAPAN','jp']]){
+    const selected={...input,region:'auto'},s=setup({responses:[publicProfile(region),tracks(),publicProfile(region)]});
+    const res=await s.service.fetch(request(selected),s.env);assert.equal(res.status,200);const body=await res.json();assert.equal(body.identity.region,expected);
+    assert.deepEqual(s.calls.map(c=>JSON.parse(new URL(c.url).searchParams.get('payload')).t.p.v[0].p.v[1].s),['ASIA',region,region]);
+    const result=await adapter.normalize(body,selected);assert.equal(result.data.player.key,'maishift:maimaidx:'+expected+':fictional-player');assert.equal(Object.keys(result.data.plays).length,0);
+    await assert.rejects(adapter.normalize({...body,identity:{...body.identity,region:'auto'}},selected));
+  }
+  assert.equal(validInput({...input,region:'auto',manual:false}),false);
+  assert.throws(()=>upstreamURL('tracks',{...input,region:'auto'}));
+  const a=setup(),b=setup();await a.service.fetch(request(),a.env);await b.service.fetch(request({...input,region:'auto'}),b.env);assert.equal(a.keys[1],b.keys[1]);
+  const c=setup({responses:[publicProfile('JAPAN')]});assert.equal((await c.service.fetch(request(),c.env)).status,409);assert.equal(c.calls.length,1);
+});
+
+test('automatic profile resolution cannot change region midway or create auto identities',async()=>{
+  const s=setup({responses:[publicProfile('JAPAN'),tracks(),publicProfile('ASIA')]});
+  assert.equal((await s.service.fetch(request({...input,region:'auto'}),s.env)).status,409);
+  assert.equal(adapter.location('fictional-player').region,'auto');
+  for(const [suffix,region]of [['jp','jp'],['intl','intl'],['na','intl']])assert.equal(adapter.location('https://maimai.shiftpsh.com/en@'+suffix+'/profile/fictional-player').region,region);
+});
 
 test('shared multibyte song metadata cannot expand beyond the browser response limit',async()=>{
   const data={songs:[{title:'界'.repeat(512),artist:'語'.repeat(512),type:'STANDARD'}],
@@ -83,9 +104,12 @@ test('public import minimizes fields, bounds requests and normalizes without inv
   assert.equal(s.calls.length,3);assert.ok(s.calls.every(c=>c.options.credentials==='omit'&&c.options.referrerPolicy==='no-referrer'&&c.options.redirect==='manual'&&!c.options.headers.Cookie&&!c.options.headers.Authorization));
   assert.ok(s.keys.every(k=>/^[a-f0-9]{64}$/.test(k)));assert.equal(s.finishes.length,1);
   assert.equal(body.records.length,3);assert.equal(body.records[0].achievement,987654);assert.equal(body.records[2].constant,null);
-  assert.equal(body.records[0].rate,null);
+  assert.equal(body.records[0].rate,12);
+  assert.equal(body.identity.rating,15432);
   assert.doesNotMatch(JSON.stringify(body),/friendCode|SYNTHETIC-PRIVATE|private\.example|jacketUrl|playCount/);
   const first=await adapter.normalize(body,input),again=await adapter.normalize(body,input);assert.equal(first.data.revision,again.data.revision);
+  assert.equal(first.profileRating,15432);assert.equal(core.offer(first.data).profile.rating,null);
+  assert.doesNotMatch(JSON.stringify(first.data),/profileRating|15432/);
   assert.deepEqual(first.data.plays,{});assert.equal(core.offer(first.data).pbCoverage,'partial');assert.equal(Object.values(first.data.records)[0].timeAchieved,null);assert.equal(Object.values(first.data.charts)[0].inGameID,null);
   const corrected=structuredClone(body);corrected.records[0].achievement=950000;corrected.identity.updatedAt+=1000;
   const next=await adapter.normalize(corrected,input),merged=await core.merge(first.data,next.data);assert.equal(core.current(merged).pbs.get('maishift:intl:1').achievement,950000);assert.equal(Object.keys(merged.plays).length,0);
@@ -134,6 +158,47 @@ test('conservative handles and region-specific URLs never infer region from lang
   assert.equal(adapter.location('https://maimai.shiftpsh.com/ja/profile/fictional-player/home','intl').region,'intl');
   assert.equal(adapter.location('https://maimai.shiftpsh.com/en@na/profile/fictional-player/records','intl').handle,input.handle);
   for(const url of ['https://evil.example/en/profile/x/home','https://maimai.shiftpsh.com/en@jp/profile/x','https://maimai.shiftpsh.com/en@jp/profile/x/home','https://maimai.shiftpsh.com/en/profile/x:1/home','https://maimai.shiftpsh.com/en/profile/x/home?foo=1','https://maimai.shiftpsh.com/en/profile/x/unknown','https://maimai.shiftpsh.com/en/profile/x#secret'])assert.throws(()=>adapter.location(url,'intl'));
+});
+test('chart contributions follow the source floor, preserve zero and reject invalid ratings',async()=>{
+  const identity=profile(decode(wire(publicProfile())),input);
+  for(const [value,expected]of [[0,0],[315.789,315],[10000,10000],[null,null],[undefined,null]]){
+    const data=tracks();data.tracks[0].r.g=value;assert.equal(minimize(data,identity).records[0].rate,expected);
+    data.tracks[0].x=0;assert.equal(minimize(data,identity).records[0].rate,null);
+  }
+  for(const value of [-1,Infinity,NaN,10001,'315']){const data=tracks();data.tracks[0].r.g=value;assert.throws(()=>minimize(data,identity));}
+});
+test('rating enrichment replaces only the same source observation without invented history',async()=>{
+  const envelope=minimize(tracks(),profile(decode(wire(publicProfile())),input)),legacy=structuredClone(envelope);legacy.adapterVersion=1;legacy.records.forEach(r=>r.rate=null);
+  const old=(await adapter.normalize(legacy,input)).data,fresh=(await adapter.normalize(envelope,input)).data,original=core.canonical(old);
+  const enriched=await adapter.enrichRatings(old,fresh);await core.validate(enriched);
+  assert.equal(enriched.revision,fresh.revision);assert.equal(core.canonical(old),original);
+  assert.equal(Object.keys(enriched.snapshots).length,1);assert.equal(Object.keys(enriched.captures).length,1);assert.equal(Object.keys(enriched.plays).length,0);
+  assert.equal(core.chartHistory(enriched,['maishift:intl:1']).changes.length,1);
+  assert.equal((await adapter.enrichRatings(enriched,fresh)).revision,enriched.revision);
+  for(const delta of [-1000,1000]){const other=structuredClone(envelope);other.identity.updatedAt+=delta;const d=(await adapter.normalize(other,input)).data;assert.equal((await adapter.enrichRatings(old,d)).revision,old.revision);}
+  const corrected=structuredClone(envelope);corrected.records[0].achievement=950000;const d=(await adapter.normalize(corrected,input)).data;
+  assert.equal(core.current(await adapter.enrichRatings(old,d)).pbs.get('maishift:intl:1').achievement,987654);
+  const previous=structuredClone(legacy);previous.identity.updatedAt-=1000;const retained=await core.merge((await adapter.normalize(previous,input)).data,old);
+  const upgraded=await adapter.enrichRatings(retained,fresh);await core.validate(upgraded);
+  const snapshots=Object.values(upgraded.snapshots).sort((a,b)=>a.capturedAt-b.capturedAt);
+  assert.equal(upgraded.records[snapshots[0].pbs['maishift:intl:1']].rate,null);
+  assert.equal(upgraded.records[snapshots[1].pbs['maishift:intl:1']].rate,12);
+  assert.equal(core.chartHistory(upgraded,['maishift:intl:1']).changes.length,1);
+  const jp=structuredClone(envelope);jp.identity.region='jp';assert.equal((await adapter.enrichRatings(old,(await adapter.normalize(jp,{...input,region:'jp'})).data)).revision,old.revision);
+});
+
+test('reported profile rating is optional, validated and independent of PB history',async()=>{
+  const p=publicProfile();for(const invalid of [-1,1.5,'15432',1000001]){p.userRecord.profile.rating=invalid;assert.throws(()=>profile(decode(wire(p)),input),{code:'contract_changed'});}
+  delete p.userRecord.profile.rating;const identity=profile(decode(wire(p)),input);assert.equal(identity.rating,null);
+  const payload=minimize(tracks(),identity),unknown=await adapter.normalize(payload,input);
+  payload.identity.rating=0;const zero=await adapter.normalize(payload,input);assert.equal(zero.profileRating,0);assert.equal(zero.data.revision,unknown.data.revision);
+  payload.identity.rating=15432;const known=await adapter.normalize(payload,input);assert.equal(known.data.revision,unknown.data.revision);
+  payload.identity.rating='15432';await assert.rejects(adapter.normalize(payload,input));
+});
+
+test('explicit URL region hints preserve International and Japan identity without requests',()=>{
+  for(const [part,expected]of [['jp','jp'],['na','intl'],['intl','intl']])assert.equal(adapter.regionFromURL('https://maimai.shiftpsh.com/en@'+part+'/profile/fictional-player'),expected);
+  for(const value of ['fictional-player','https://maimai.shiftpsh.com/ja/profile/fictional-player','https://evil.example/en@jp/profile/fictional-player'])assert.equal(adapter.regionFromURL(value),null);
 });
 test('a known region fallback stops before reading tracks and is never relabeled',async()=>{
   const s=setup({responses:[publicProfile('JAPAN')]});

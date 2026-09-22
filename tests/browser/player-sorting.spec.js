@@ -63,18 +63,18 @@ test('personal sorts rank offscreen PB difficulties across the complete catalog 
     await expect(rows.first()).toHaveAttribute('data-chart-id','synthetic:capacity:'+id);
     await expect(rows).toHaveCount(40);
   }
-  // A manual difficulty choice remains usable, but the next personal sort
-  // must reconsider that song's other scored difficulties.
-  await rows.first().locator('.row-difficulty').selectOption('synthetic:capacity:6798');
-  await expect(rows.filter({hasText:'Capacity study 1699'})).toHaveAttribute('data-chart-id','synthetic:capacity:6798');
+  // Every difficulty is independent; changing sort reaches the other PB too.
+  await sort('achievement').click();
+  await expect(rows.first()).toHaveAttribute('data-chart-id','synthetic:capacity:6798');
   await sort('rating').click();
   await expect(rows.first()).toHaveAttribute('data-chart-id','synthetic:capacity:6799');
   await page.locator('#more').click();
   await expect(rows).toHaveCount(80);
-  expect(await rows.evaluateAll(nodes=>nodes.map(n=>n.dataset.chartId))).toEqual(Array.from({length:80},(_,i)=>'synthetic:capacity:'+((1699-i)*4+3)));
+  const ranked=Array.from({length:100},(_,i)=>({id:(1600+i)*4+3,rate:100+i*2,title:1600+i}));ranked.push({id:6798,rate:150,title:1699});ranked.sort((a,b)=>b.rate-a.rate||a.title-b.title);
+  expect(await rows.evaluateAll(nodes=>nodes.map(n=>n.dataset.chartId))).toEqual(ranked.slice(0,80).map(r=>'synthetic:capacity:'+r.id));
   await sort('rating').click();
   await expect(sort('rating')).toHaveAttribute('aria-label',/ascending/);
-  // The lower rated EXPERT PB now represents its song. Unknown BASIC charts stay last.
+  // Unknown BASIC charts stay last; the EXPERT and MASTER PBs both remain listed.
   await expect(rows.first()).toHaveAttribute('data-chart-id','synthetic:capacity:6403');
   await expect(rows).toHaveCount(40);
   await expect(rows.locator('.player-chart-rating')).toHaveCount(40);

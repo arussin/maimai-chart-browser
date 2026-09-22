@@ -10,18 +10,19 @@ from pathlib import Path
 
 from maimai_analyzer.dataset import SOURCE_LOCK
 
-from .artwork import copy_artwork, validate_artwork
+from .artwork import prepare_artwork
 from .catalog_loading import MAX_CATALOG_BYTES
 from .challenge_review import render_review, review_scripts
 from .io import atomic_write_text
 from .localization import localization_script
 from .mai_notes import validate_links
+from .player_help import build_player_help
 from .provider_mapping import integration_catalog
 from .research_overview import validate_overview
 from .snapshots import MAX_BYTES, atomic_json, canonical, read_json
 
 
-def build_lab(package_directory, output, *, catalog_version):
+def build_lab(package_directory, output, *, catalog_version, player_pilot=False):
     source, root = Path(package_directory), Path(output)
     package = read_json(source / "package.json")
     if package.get("status") != "research_preview" or package.get("source") != SOURCE_LOCK:
@@ -59,10 +60,13 @@ def build_lab(package_directory, output, *, catalog_version):
     overview = loaded.get("analysis.json")
     if overview is not None:
         validate_overview(overview, loaded["catalog.json"])
-    artwork = loaded.get("artwork.json")
-    if artwork is not None:
-        validate_artwork(artwork, loaded["catalog.json"], loaded["navigation.json"]["versions"])
-        copy_artwork(artwork, source, root)
+    artwork = prepare_artwork(
+        loaded.get("artwork.json"),
+        source,
+        root,
+        loaded["catalog.json"],
+        loaded["navigation.json"]["versions"],
+    )
     mai_notes = loaded.get("mai-notes.json")
     if mai_notes is not None:
         validate_links(mai_notes, loaded["catalog.json"])
@@ -120,10 +124,11 @@ def build_lab(package_directory, output, *, catalog_version):
         manifest["releases"].append(entry)
     manifest["default"] = catalog_version
     assets = files("maimai_intelligence.assets")
-    (root / "version-magical.png").write_bytes(assets.joinpath("version-magical.png").read_bytes())
+    build_player_help(root)
     early_scripts = []
     for name in (
         "localization.js",
+        *(("maishift-browser-pilot.js",) if player_pilot else ()),
         "settings-menu.js",
         "player-data-core.js",
         "player-maishift.js",
@@ -136,6 +141,14 @@ def build_lab(package_directory, output, *, catalog_version):
         "support-client.js",
         "support-stripe.js",
     ):
+        if player_pilot and name in {
+            "feature-announcements.js",
+            "analytics.js",
+            "support-config.js",
+            "support-client.js",
+            "support-stripe.js",
+        }:
+            continue
         content = (
             localization_script()
             if name == "localization.js"
@@ -160,7 +173,7 @@ def build_lab(package_directory, output, *, catalog_version):
     view_script = assets.joinpath("view-navigation.js").read_text("utf-8")
     view_revision = hashlib.sha256(view_script.encode("utf-8")).hexdigest()[:16]
     atomic_write_text(root / "view-navigation.js", view_script)
-    scripts = review_scripts()
+    scripts = review_scripts(player_pilot=player_pilot)
     script_revision = hashlib.sha256(scripts.encode("utf-8")).hexdigest()[:16]
     loader = (
         assets.joinpath("lab-loader.js")

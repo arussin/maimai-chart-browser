@@ -38,14 +38,16 @@ and static jackets. Version logos are retained from Matsuk1/JiETNG-maimai-dx-bot
 revision `f6eb5ebc6e1f3200b9769060a34325b2ea4e1eb7`. Jackets and logos belong to
 SEGA and their respective rights holders; they are not covered by this code's
 MIT license. The generated artwork manifest records every source URL and hash.
-No upstream artwork or code from that logo repository is included in this source
-package. Exact title/artist matching follows arussin/maimai-session-report's
+The retained version logos are bundled under `assets/version-artwork`, with
+source URLs, original hashes and provenance in its manifest. No code from that
+logo repository is included. Jackets remain separately prepared. Exact
+title/artist matching follows arussin/maimai-session-report's
 artwork helper, without taking a runtime dependency on the report library.
 
 ## Website identity and visible credits
 
 The browser is branded **maimai.party**. Its custom text wordmark uses the five
-Deluxe-inspired colors for `.party`; no additional game logo asset is bundled.
+Deluxe-inspired colors for `.party`; version logos identify game releases.
 The site is an independent fan project, not affiliated with or endorsed by SEGA
 or the projects below. The code license grants no rights to third-party game
 content. Game names, logos, charts, music and artwork belong to SEGA and their
@@ -158,4 +160,4 @@ No Simple Icons, AddToAny, or social-provider request is made to render these ic
 
 ### MAGiCAL version logo
 
-The bundled MAGiCAL logo comes from [SEGA’s official maimai site](https://maimai.sega.jp/storage/root/logo.png), retrieved September 21, 2026. The PNG SHA-256 is `9f659f914d7d8c7fea2a49331166748ade47dfc0f194e9d8c54e9878878966d7`. It is served unchanged from this site for release identification; ownership remains with SEGA and the respective rights holders. This display fallback does not change retained catalog data.
+The bundled MAGiCAL logo comes from [SEGA’s official maimai site](https://maimai.sega.jp/storage/root/logo.png), retrieved September 21, 2026. The PNG SHA-256 is `9f659f914d7d8c7fea2a49331166748ade47dfc0f194e9d8c54e9878878966d7`. The original PNG is retained for provenance. Its lossless WebP copy has identical RGBA pixels and is served through the same verified manifest and fallback as every other version logo. The manifest records both hashes. Ownership remains with SEGA and the respective rights holders; this artwork does not establish chart identity.

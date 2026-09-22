@@ -44,7 +44,6 @@ def build_capacity_fixture(root: Path, count: int = 7000):
     digest = hashlib.sha256(raw).hexdigest()
     target.mkdir(parents=True, exist_ok=True)
     for name in [
-        "version-magical.png",
         "index.html",
         "lab-loader.js",
         "localization.js",
@@ -74,6 +73,8 @@ def build_capacity_fixture(root: Path, count: int = 7000):
         "feature-announcements.js",
     ]:
         shutil.copyfile(source / name, target / name)
+    if (source / "media").exists():
+        shutil.copytree(source / "media", target / "media", dirs_exist_ok=True)
     (target / "catalogs").mkdir(exist_ok=True)
     path = f"catalogs/{digest}.json"
     (target / path).write_bytes(raw)

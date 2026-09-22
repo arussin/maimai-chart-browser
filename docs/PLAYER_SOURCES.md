@@ -5,12 +5,19 @@ clearly unavailable Maishift option. Selecting a radio makes no request.
 
 Files retain the existing compressed v1 validation and optional remembering.
 Hosted reports accept complete HTTPS URLs with no credentials, custom ports,
-query or fragment. Only `/<installation>/`, `/<installation>/index.html` and
+query or fragment. Only `/<installation>` (with or without a trailing slash), `/<installation>/index.html` and
 `/<installation>/party/latest.json` resolve directly to the existing manifest.
 Other report paths use an explicit Open report recovery link, without discovery
 crawls or interpreting report HTML. A public manifest requires readable CORS;
 protected reports keep their own sign-in, Open in Party and download flows.
 No report Access rules, cookies, credentials or private deployment are changed.
+
+A page being visible in a browser does not by itself enable direct import.
+The report host must explicitly allow cross-origin reads of its public
+`party/latest.json` and referenced `party/data/<sha256>.gz` payload. A missing
+CORS header or protected response uses the report's existing Open in Party /
+download route. The main report's Open in Party action targets the main site;
+use its downloaded player file to test in an isolated local or hosted pilot.
 
 The public adapter reads at most 1 MiB of JSON metadata and verifies the existing
 offer, same-installation immutable gzip path, SHA256, length, decoded revision
@@ -61,7 +68,8 @@ old tab must reload. Portable dataset and handoff versions remain **1**.
 imports. The version-1 source descriptor contains type, canonical URL, player
 key, adapter version, consent, generation, attempt/check/success/source dates,
 source revision and retry time. None are added to the hashed portable dataset.
-`control` contains only an epoch, mutation version and temporary lease ID/deadline.
+`control` contains only an epoch, mutation version, optional clear epoch and
+temporary lease ID/deadline. The clear epoch contains no player information.
 Dataset and descriptor writes share a transaction and compare epoch, version,
 revision and the refresh lease. A manual import invalidates outstanding leases.
 
@@ -72,9 +80,15 @@ Legacy tab caches are accepted only before an epoch change. In-memory scores may
 remain viewable until reload; refresh stops. Notifications contain no identity,
 source URL or scores. BroadcastChannel uses a source-free storage-event fallback.
 
+Clear player data additionally removes in-memory scores in the current and other
+open tabs, and is available for temporary imports too. Its durable clear epoch is
+checked on focus/visibility/online recovery, so missed notifications do not leave
+an old tab able to restore scores. A Clear failure keeps the working state and
+reports the error; it does not claim that device data was removed.
+
 Storage denial/quota failures preserve the current usable view. Tab-only imports
 remain possible when device storage is unavailable. Announcement seen-state is
-stored separately and is unaffected by Forget.
+stored separately and is unaffected by Forget or Clear.
 
 ## Release checklist
 

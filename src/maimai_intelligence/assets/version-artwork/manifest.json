@@ -1,0 +1,212 @@
+{
+  "version": "public-artwork-1",
+  "songs": {},
+  "versions": {
+    "maimai": "media/dfe3901103f50106bc7194571b3a8731946330a1baa2d0621bbb51d7f5f8f2c3.webp",
+    "maimai DX": "media/e20aa76ef19e5435f8698c152980b6ec3292685b796fc735c37b7181e9b9608e.webp",
+    "maimai DX BUDDiES": "media/d3f93cb44c8bb47cdbddea8f3ea8117866d9f82391bbaafc752191a438d1e0ee.webp",
+    "maimai DX BUDDiES PLUS": "media/56b2ad073957e757d7b07eb54151f326bec4135b850784795c8d0446ddf898a4.webp",
+    "maimai DX CiRCLE": "media/41070c10c8cc13635cc9f9eb19accb40ee6798faee56039e31a7191f4c2ecafe.webp",
+    "maimai DX CiRCLE PLUS": "media/0c805f8724dbd834bc8d13726f55eec8b3d0c0c28acc12e72704f91edda7a563.webp",
+    "maimai DX FESTiVAL": "media/70e12995ae975ede14e67a54b10cda134e056bcf5d4b5009de5a1c08b9963083.webp",
+    "maimai DX FESTiVAL PLUS": "media/1ebed04a77d32821ccc34f081126a9a2c8bee595cbd925d9abc516761e7e1df0.webp",
+    "maimai DX PLUS": "media/e47e208e903b8c8ec448bb9d30e4bbbbf2dd85ef12aceea008522a9235f55f03.webp",
+    "maimai DX PRiSM": "media/08a2a792609800bdc0ed91ed6e28f4b5ea5e629559b2c1d516ff830b465c1d30.webp",
+    "maimai DX PRiSM PLUS": "media/5a985390527b9955191b5155886c0ee894099b642afa96ca5291e65ffbacbd42.webp",
+    "maimai DX Splash": "media/d169399add5f858da28b7824e42014b8caa851e5bdf57eae0ba720399de278ca.webp",
+    "maimai DX Splash PLUS": "media/d38fa8b5f047c169d55edce1257f5743620fed03acfb242b5ad87c35cd09c1a5.webp",
+    "maimai DX UNiVERSE": "media/4909df17934d645812702e37f5b4dde869dee9779d64e1b375b85811aaa1d861.webp",
+    "maimai DX UNiVERSE PLUS": "media/d833e90c377d592973f3aa67831711e1ad1148d2222a1b720421689aa9d1acdd.webp",
+    "maimai FiNALE": "media/b18af6823de0e87c197d5ff2beaebf218c1344ae5e10b5e22155afb3b0c4f44c.webp",
+    "maimai GreeN": "media/15f8e10cc6b8782acbb86d536e3ff8abc3a472485f71e0ff96e9c57faeb2357a.webp",
+    "maimai GreeN PLUS": "media/3ebf345a6d03a54481c594a6942e4382efef0fc6e69ad021b12bdf65f14513c7.webp",
+    "maimai MURASAKi": "media/57ebea6b80bb79df1e2fcb77301d3cfca3a2634922c3722e6b1e0fc7ee84f956.webp",
+    "maimai MURASAKi PLUS": "media/506be500201a3b9f87759708939736ea994e19e4a70de1f4e74e62726efaf0a2.webp",
+    "maimai MiLK": "media/5af064091d539c7e6d2bb5c3757f83d2f26ce10e99373b6ab99f0b565d37f6db.webp",
+    "maimai MiLK PLUS": "media/eee59cd04ac315cf0dc01b37658fccadb49aebda35c7881c162606796089949f.webp",
+    "maimai ORANGE": "media/69ef17ced814819e1c5472d331846a03d39d3542480c8a66e010052904f1f2b8.webp",
+    "maimai ORANGE PLUS": "media/11b97ea6c2359fd9f9381dc59eb6897f1e76bfc2c85e72e4c23052f41ddcfc8a.webp",
+    "maimai PLUS": "media/f947d00d5707067c84fe0037656368a6e1cf8b08285ab1dd26aca0516cbbb58f.webp",
+    "maimai PiNK": "media/4e02a6b22a6947cabbb95a8c0964135250959ce4fb89c0ee8fd8c76ea9ab90d7.webp",
+    "maimai PiNK PLUS": "media/16c76e6e3da080038160efdc961f5fc735248cd3ff037acf7fd4a4fa7a8f63a8.webp",
+    "maimai DX MAGiCAL": "media/1c66a78dc026d731afbd40043709f3622589844739f820f6ef525180bb287e81.webp"
+  },
+  "assets": {
+    "media/08a2a792609800bdc0ed91ed6e28f4b5ea5e629559b2c1d516ff830b465c1d30.webp": {
+      "bytes": 7284,
+      "sha256": "08a2a792609800bdc0ed91ed6e28f4b5ea5e629559b2c1d516ff830b465c1d30",
+      "source": "https://raw.githubusercontent.com/Matsuk1/JiETNG-maimai-dx-bot/f6eb5ebc6e1f3200b9769060a34325b2ea4e1eb7/assets/versions/prism.png",
+      "source_sha256": "f3814389ee6fa89f51da934a85a4dabd6eb1234b6e36d21c8f30880c33f104cb"
+    },
+    "media/0c805f8724dbd834bc8d13726f55eec8b3d0c0c28acc12e72704f91edda7a563.webp": {
+      "bytes": 5788,
+      "sha256": "0c805f8724dbd834bc8d13726f55eec8b3d0c0c28acc12e72704f91edda7a563",
+      "source": "https://raw.githubusercontent.com/Matsuk1/JiETNG-maimai-dx-bot/f6eb5ebc6e1f3200b9769060a34325b2ea4e1eb7/assets/versions/circle_plus.png",
+      "source_sha256": "7a3827222ac9956866485cd9bd9f1762a2ba8e877289cb40aab041bed51eb36a"
+    },
+    "media/11b97ea6c2359fd9f9381dc59eb6897f1e76bfc2c85e72e4c23052f41ddcfc8a.webp": {
+      "bytes": 5556,
+      "sha256": "11b97ea6c2359fd9f9381dc59eb6897f1e76bfc2c85e72e4c23052f41ddcfc8a",
+      "source": "https://raw.githubusercontent.com/Matsuk1/JiETNG-maimai-dx-bot/f6eb5ebc6e1f3200b9769060a34325b2ea4e1eb7/assets/versions/orange_plus.png",
+      "source_sha256": "2579f2ca47921912409fb29f08ccff404d1882ed2153d91bcdd515dcda22e298"
+    },
+    "media/15f8e10cc6b8782acbb86d536e3ff8abc3a472485f71e0ff96e9c57faeb2357a.webp": {
+      "bytes": 2710,
+      "sha256": "15f8e10cc6b8782acbb86d536e3ff8abc3a472485f71e0ff96e9c57faeb2357a",
+      "source": "https://raw.githubusercontent.com/Matsuk1/JiETNG-maimai-dx-bot/f6eb5ebc6e1f3200b9769060a34325b2ea4e1eb7/assets/versions/green.png",
+      "source_sha256": "1f7f956a7d9dcb23e324df20133591a1269ff716b82a90ce9136e891cc2f6211"
+    },
+    "media/16c76e6e3da080038160efdc961f5fc735248cd3ff037acf7fd4a4fa7a8f63a8.webp": {
+      "bytes": 6252,
+      "sha256": "16c76e6e3da080038160efdc961f5fc735248cd3ff037acf7fd4a4fa7a8f63a8",
+      "source": "https://raw.githubusercontent.com/Matsuk1/JiETNG-maimai-dx-bot/f6eb5ebc6e1f3200b9769060a34325b2ea4e1eb7/assets/versions/pink_plus.png",
+      "source_sha256": "9015d65593291039a15b73351422ddf807c72c3c733a2a002a6e2b2813d46c5c"
+    },
+    "media/1ebed04a77d32821ccc34f081126a9a2c8bee595cbd925d9abc516761e7e1df0.webp": {
+      "bytes": 9086,
+      "sha256": "1ebed04a77d32821ccc34f081126a9a2c8bee595cbd925d9abc516761e7e1df0",
+      "source": "https://raw.githubusercontent.com/Matsuk1/JiETNG-maimai-dx-bot/f6eb5ebc6e1f3200b9769060a34325b2ea4e1eb7/assets/versions/festival_plus.png",
+      "source_sha256": "dae28ed27f4500a3059b00a38c2af1be75b51ae0a68ca395783f40d5b7508ed2"
+    },
+    "media/3ebf345a6d03a54481c594a6942e4382efef0fc6e69ad021b12bdf65f14513c7.webp": {
+      "bytes": 2754,
+      "sha256": "3ebf345a6d03a54481c594a6942e4382efef0fc6e69ad021b12bdf65f14513c7",
+      "source": "https://raw.githubusercontent.com/Matsuk1/JiETNG-maimai-dx-bot/f6eb5ebc6e1f3200b9769060a34325b2ea4e1eb7/assets/versions/green_plus.png",
+      "source_sha256": "0044b599e7b1cfba72e2642a4915bd7dd6f79ec7819d33ccbfb4b555205678af"
+    },
+    "media/41070c10c8cc13635cc9f9eb19accb40ee6798faee56039e31a7191f4c2ecafe.webp": {
+      "bytes": 9206,
+      "sha256": "41070c10c8cc13635cc9f9eb19accb40ee6798faee56039e31a7191f4c2ecafe",
+      "source": "https://raw.githubusercontent.com/Matsuk1/JiETNG-maimai-dx-bot/f6eb5ebc6e1f3200b9769060a34325b2ea4e1eb7/assets/versions/circle.png",
+      "source_sha256": "4790421a7eb99b26cdad5e2dfea5214454a35d9976aa1b3aa915548795a282c5"
+    },
+    "media/4909df17934d645812702e37f5b4dde869dee9779d64e1b375b85811aaa1d861.webp": {
+      "bytes": 7624,
+      "sha256": "4909df17934d645812702e37f5b4dde869dee9779d64e1b375b85811aaa1d861",
+      "source": "https://raw.githubusercontent.com/Matsuk1/JiETNG-maimai-dx-bot/f6eb5ebc6e1f3200b9769060a34325b2ea4e1eb7/assets/versions/universe.png",
+      "source_sha256": "68f2a9c52cec2fd1d60b8233c0becdf915cfe5efb4b7fcaff286b32632ca561f"
+    },
+    "media/4e02a6b22a6947cabbb95a8c0964135250959ce4fb89c0ee8fd8c76ea9ab90d7.webp": {
+      "bytes": 6098,
+      "sha256": "4e02a6b22a6947cabbb95a8c0964135250959ce4fb89c0ee8fd8c76ea9ab90d7",
+      "source": "https://raw.githubusercontent.com/Matsuk1/JiETNG-maimai-dx-bot/f6eb5ebc6e1f3200b9769060a34325b2ea4e1eb7/assets/versions/pink.png",
+      "source_sha256": "0d7f5bcd6db28e6675e7ee56dbf82f8b00221cbd746b910e20f8108701f96749"
+    },
+    "media/506be500201a3b9f87759708939736ea994e19e4a70de1f4e74e62726efaf0a2.webp": {
+      "bytes": 7394,
+      "sha256": "506be500201a3b9f87759708939736ea994e19e4a70de1f4e74e62726efaf0a2",
+      "source": "https://raw.githubusercontent.com/Matsuk1/JiETNG-maimai-dx-bot/f6eb5ebc6e1f3200b9769060a34325b2ea4e1eb7/assets/versions/murasaki_plus.png",
+      "source_sha256": "2b5a4a5d1cefc193d7e731fd47a320996112f2b04b3db77f77e0a8558502038a"
+    },
+    "media/56b2ad073957e757d7b07eb54151f326bec4135b850784795c8d0446ddf898a4.webp": {
+      "bytes": 6902,
+      "sha256": "56b2ad073957e757d7b07eb54151f326bec4135b850784795c8d0446ddf898a4",
+      "source": "https://raw.githubusercontent.com/Matsuk1/JiETNG-maimai-dx-bot/f6eb5ebc6e1f3200b9769060a34325b2ea4e1eb7/assets/versions/buddies_plus.png",
+      "source_sha256": "86abd0d393e68187e4e3681f49ea05f96c2bfc00812cf1706026e6d749a0c262"
+    },
+    "media/57ebea6b80bb79df1e2fcb77301d3cfca3a2634922c3722e6b1e0fc7ee84f956.webp": {
+      "bytes": 7972,
+      "sha256": "57ebea6b80bb79df1e2fcb77301d3cfca3a2634922c3722e6b1e0fc7ee84f956",
+      "source": "https://raw.githubusercontent.com/Matsuk1/JiETNG-maimai-dx-bot/f6eb5ebc6e1f3200b9769060a34325b2ea4e1eb7/assets/versions/murasaki.png",
+      "source_sha256": "cd2b2674bd96faf99652febac0828eed8b3eab4b7587d6c3bda04a876b025fbf"
+    },
+    "media/5a985390527b9955191b5155886c0ee894099b642afa96ca5291e65ffbacbd42.webp": {
+      "bytes": 7670,
+      "sha256": "5a985390527b9955191b5155886c0ee894099b642afa96ca5291e65ffbacbd42",
+      "source": "https://raw.githubusercontent.com/Matsuk1/JiETNG-maimai-dx-bot/f6eb5ebc6e1f3200b9769060a34325b2ea4e1eb7/assets/versions/prism_plus.png",
+      "source_sha256": "dfdd583488f36928cfb72d2b0e97b5a6d7acc8e656fb125121a735d0d3c2b062"
+    },
+    "media/5af064091d539c7e6d2bb5c3757f83d2f26ce10e99373b6ab99f0b565d37f6db.webp": {
+      "bytes": 4828,
+      "sha256": "5af064091d539c7e6d2bb5c3757f83d2f26ce10e99373b6ab99f0b565d37f6db",
+      "source": "https://raw.githubusercontent.com/Matsuk1/JiETNG-maimai-dx-bot/f6eb5ebc6e1f3200b9769060a34325b2ea4e1eb7/assets/versions/milk.png",
+      "source_sha256": "f3d53583e1bf654834c3d5a409758b4962066db6ff9498a2b1c74d02edb6f41f"
+    },
+    "media/69ef17ced814819e1c5472d331846a03d39d3542480c8a66e010052904f1f2b8.webp": {
+      "bytes": 4602,
+      "sha256": "69ef17ced814819e1c5472d331846a03d39d3542480c8a66e010052904f1f2b8",
+      "source": "https://raw.githubusercontent.com/Matsuk1/JiETNG-maimai-dx-bot/f6eb5ebc6e1f3200b9769060a34325b2ea4e1eb7/assets/versions/orange.png",
+      "source_sha256": "fb8d92ead814479e6033868b9e7bf5ff41b8760a4e6bd3d355c6b7ed091e3b7d"
+    },
+    "media/70e12995ae975ede14e67a54b10cda134e056bcf5d4b5009de5a1c08b9963083.webp": {
+      "bytes": 7208,
+      "sha256": "70e12995ae975ede14e67a54b10cda134e056bcf5d4b5009de5a1c08b9963083",
+      "source": "https://raw.githubusercontent.com/Matsuk1/JiETNG-maimai-dx-bot/f6eb5ebc6e1f3200b9769060a34325b2ea4e1eb7/assets/versions/festival.png",
+      "source_sha256": "7da0b24b25953853f1f33fa14181f7fef082cab3946e61004337dcc29f61548d"
+    },
+    "media/b18af6823de0e87c197d5ff2beaebf218c1344ae5e10b5e22155afb3b0c4f44c.webp": {
+      "bytes": 10906,
+      "sha256": "b18af6823de0e87c197d5ff2beaebf218c1344ae5e10b5e22155afb3b0c4f44c",
+      "source": "https://raw.githubusercontent.com/Matsuk1/JiETNG-maimai-dx-bot/f6eb5ebc6e1f3200b9769060a34325b2ea4e1eb7/assets/versions/finale.png",
+      "source_sha256": "08260d90f84a510119ad8586f26d71b88eb68ea509c22ddd4b24eb4c7ca3bb0d"
+    },
+    "media/d169399add5f858da28b7824e42014b8caa851e5bdf57eae0ba720399de278ca.webp": {
+      "bytes": 7486,
+      "sha256": "d169399add5f858da28b7824e42014b8caa851e5bdf57eae0ba720399de278ca",
+      "source": "https://raw.githubusercontent.com/Matsuk1/JiETNG-maimai-dx-bot/f6eb5ebc6e1f3200b9769060a34325b2ea4e1eb7/assets/versions/splash.png",
+      "source_sha256": "2b87c7f62a2128141e3ee14aa3995138385cbd54cc72fc1e1924997d9658dd24"
+    },
+    "media/d38fa8b5f047c169d55edce1257f5743620fed03acfb242b5ad87c35cd09c1a5.webp": {
+      "bytes": 7686,
+      "sha256": "d38fa8b5f047c169d55edce1257f5743620fed03acfb242b5ad87c35cd09c1a5",
+      "source": "https://raw.githubusercontent.com/Matsuk1/JiETNG-maimai-dx-bot/f6eb5ebc6e1f3200b9769060a34325b2ea4e1eb7/assets/versions/splash_plus.png",
+      "source_sha256": "62b5e38963a8fb33fd68abcf781864f0fb3410129801a3632488b6eb7aab7e70"
+    },
+    "media/d3f93cb44c8bb47cdbddea8f3ea8117866d9f82391bbaafc752191a438d1e0ee.webp": {
+      "bytes": 7032,
+      "sha256": "d3f93cb44c8bb47cdbddea8f3ea8117866d9f82391bbaafc752191a438d1e0ee",
+      "source": "https://raw.githubusercontent.com/Matsuk1/JiETNG-maimai-dx-bot/f6eb5ebc6e1f3200b9769060a34325b2ea4e1eb7/assets/versions/buddies.png",
+      "source_sha256": "b7fc7e1c7b7ba45ce264e38df48274da778d7ce4309ded96e0e6cf6b5db5209e"
+    },
+    "media/d833e90c377d592973f3aa67831711e1ad1148d2222a1b720421689aa9d1acdd.webp": {
+      "bytes": 8564,
+      "sha256": "d833e90c377d592973f3aa67831711e1ad1148d2222a1b720421689aa9d1acdd",
+      "source": "https://raw.githubusercontent.com/Matsuk1/JiETNG-maimai-dx-bot/f6eb5ebc6e1f3200b9769060a34325b2ea4e1eb7/assets/versions/universe_plus.png",
+      "source_sha256": "10a337f668ee2a15aae8e57e3766644e55be3054bafcec53e9d9df47c3247c4b"
+    },
+    "media/dfe3901103f50106bc7194571b3a8731946330a1baa2d0621bbb51d7f5f8f2c3.webp": {
+      "bytes": 4036,
+      "sha256": "dfe3901103f50106bc7194571b3a8731946330a1baa2d0621bbb51d7f5f8f2c3",
+      "source": "https://raw.githubusercontent.com/Matsuk1/JiETNG-maimai-dx-bot/f6eb5ebc6e1f3200b9769060a34325b2ea4e1eb7/assets/versions/maimai.png",
+      "source_sha256": "ae6b2b361c5fe703c37bad7ed18f3a172c6c3fb68c83d89f8c14164f04830cbb"
+    },
+    "media/e20aa76ef19e5435f8698c152980b6ec3292685b796fc735c37b7181e9b9608e.webp": {
+      "bytes": 7250,
+      "sha256": "e20aa76ef19e5435f8698c152980b6ec3292685b796fc735c37b7181e9b9608e",
+      "source": "https://raw.githubusercontent.com/Matsuk1/JiETNG-maimai-dx-bot/f6eb5ebc6e1f3200b9769060a34325b2ea4e1eb7/assets/versions/maimai%E3%81%A7%E3%82%89%E3%81%A3%E3%81%8F%E3%81%99.png",
+      "source_sha256": "ddffa07054a5ed59f7782f39e281d2447b5d6fb170f7a2844756c94075169ad9"
+    },
+    "media/e47e208e903b8c8ec448bb9d30e4bbbbf2dd85ef12aceea008522a9235f55f03.webp": {
+      "bytes": 7636,
+      "sha256": "e47e208e903b8c8ec448bb9d30e4bbbbf2dd85ef12aceea008522a9235f55f03",
+      "source": "https://raw.githubusercontent.com/Matsuk1/JiETNG-maimai-dx-bot/f6eb5ebc6e1f3200b9769060a34325b2ea4e1eb7/assets/versions/maimai%E3%81%A7%E3%82%89%E3%81%A3%E3%81%8F%E3%81%99_plus.png",
+      "source_sha256": "75a24758e6b11efc9d5e3497049830ce86840a0b2281ae74b0c7bf3836d04c1a"
+    },
+    "media/eee59cd04ac315cf0dc01b37658fccadb49aebda35c7881c162606796089949f.webp": {
+      "bytes": 8132,
+      "sha256": "eee59cd04ac315cf0dc01b37658fccadb49aebda35c7881c162606796089949f",
+      "source": "https://raw.githubusercontent.com/Matsuk1/JiETNG-maimai-dx-bot/f6eb5ebc6e1f3200b9769060a34325b2ea4e1eb7/assets/versions/milk_plus.png",
+      "source_sha256": "243e62ad42c3310cdce65bababf4d89c853afed3fdf400aa8410ba64ebc20583"
+    },
+    "media/f947d00d5707067c84fe0037656368a6e1cf8b08285ab1dd26aca0516cbbb58f.webp": {
+      "bytes": 4774,
+      "sha256": "f947d00d5707067c84fe0037656368a6e1cf8b08285ab1dd26aca0516cbbb58f",
+      "source": "https://raw.githubusercontent.com/Matsuk1/JiETNG-maimai-dx-bot/f6eb5ebc6e1f3200b9769060a34325b2ea4e1eb7/assets/versions/maimai_plus.png",
+      "source_sha256": "9572c06e0c20920018cf804701b19dcda89a201b8b8ac10322d2a8d0603d3b70"
+    },
+    "media/1c66a78dc026d731afbd40043709f3622589844739f820f6ef525180bb287e81.webp": {
+      "sha256": "1c66a78dc026d731afbd40043709f3622589844739f820f6ef525180bb287e81",
+      "bytes": 47212,
+      "source": "Existing reviewed version-magical.png from f9dd8a9",
+      "source_sha256": "9f659f914d7d8c7fea2a49331166748ade47dfc0f194e9d8c54e9878878966d7",
+      "conversion": "Lossless WebP; RGBA pixels verified identical"
+    }
+  },
+  "credit": "Jackets and maimai logos belong to SEGA and their respective rights holders. Version logos retained from Matsuk1/JiETNG-maimai-dx-bot.",
+  "logo_source": {
+    "repository": "Matsuk1/JiETNG-maimai-dx-bot",
+    "revision": "f6eb5ebc6e1f3200b9769060a34325b2ea4e1eb7"
+  },
+  "retained_run": "20260917T194602Z-e44dfbe4",
+  "retained_artwork_sha256": "ffb467c6b2977a22091361791b36491bdd575d150d942a26bda717b30117ebe2"
+}

@@ -14,7 +14,7 @@ export function encode(value) {
 export const wire = value => encode({result:value,error:undefined,context:Object.create(null)});
 export function publicProfile(region='ASIA') {
   return {handle:'fictional-player',region,versionOverride:null,isPrimaryRegion:true,ban:{banned:false},userRecord:{tracksComplete:false,profile:{
-    name:'Fictional Player',createdAt:new Date('2026-01-01T00:00:00Z'),updatedAt:new Date('2026-09-20T00:00:00Z'),
+    name:'Fictional Player',rating:15432,createdAt:new Date('2026-01-01T00:00:00Z'),updatedAt:new Date('2026-09-20T00:00:00Z'),
     friendCode:'SYNTHETIC-PRIVATE',profileImageSrc:'https://private.example/fictional-avatar',playCount:{total:12345},
   }}};
 }

@@ -199,44 +199,26 @@ test('difficulty sorts displayed levels numerically across chart types in both d
   expect(await levels()).toEqual(['14','13+','12','11','10+','10']);
 });
 
-test('difficulty sorting keeps unknown levels last, honors tie-breakers and follows selected charts',async({page})=>{
+test('difficulty sorting keeps every chart, unknown levels last and explicit tie-breakers',async({page})=>{
   await page.goto('/difficulty-sort/');
-  await expect(page.locator('#songs .song-row')).toHaveCount(5);
   const rows=page.locator('#songs .song-row'),sort=page.locator('[data-sort-key=difficulty]');
+  await expect(rows).toHaveCount(6);
   const levels=()=>rows.evaluateAll(nodes=>nodes.map(row=>row.dataset.level));
-  const grouped=rows.filter({has:page.locator('.song-title',{hasText:'Fictional study 3'})});
-  const picker=grouped.locator('.row-difficulty');
-  expect(await picker.locator('option').allTextContents()).toEqual(['MASTER · 11','RE:MASTER · 10+']);
-  await sort.click();
-  expect(await levels()).toEqual(['9+','10','10+','11','']);
-  await sort.click();
-  expect(await levels()).toEqual(['11','10+','10','9+','']);
-  const remaster=await picker.locator('option').filter({hasText:'RE:MASTER'}).getAttribute('value');
-  await picker.selectOption(remaster);await expect(picker).toBeFocused();
-  expect(await levels()).toEqual(['10+','10+','10','9+','']);
-  await page.locator('#sort-keep').check();
-  await page.locator('[data-sort-key=title]').click();await page.locator('[data-sort-key=title]').click();
-  expect(await rows.evaluateAll(nodes=>nodes.slice(0,2).map(row=>row.dataset.title))).toEqual(['Fictional study 3','Fictional study 1']);
-  await sort.click();
-  expect(await levels()).toEqual(['9+','10','10+','10+','']);
-  await expect(grouped).toHaveAttribute('data-difficulty','RE:MASTER');
+  await sort.click();expect(await levels()).toEqual(['9+','10','10+','10+','11','']);
+  await sort.click();expect(await levels()).toEqual(['11','10+','10+','10','9+','']);
+  await page.locator('#sort-keep').check();await page.locator('[data-sort-key=title]').click();await page.locator('[data-sort-key=title]').click();
+  expect(await rows.evaluateAll(nodes=>nodes.slice(1,3).map(row=>row.dataset.title))).toEqual(['Fictional study 3','Fictional study 1']);
+  await sort.click();expect(await levels()).toEqual(['9+','10','10+','10+','11','']);
 });
 
-test('decimal constants sort numerically with unknowns last and follow difficulty selection',async({page})=>{
-  await page.goto('/constants/');await expect(page.locator('#songs .song-row')).toHaveCount(5);
+test('decimal constants sort all difficulties numerically with unknowns last',async({page})=>{
+  await page.goto('/constants/');await expect(page.locator('#songs .song-row')).toHaveCount(6);
   const requests=[];page.on('request',r=>requests.push(r.url()));
   const values=()=>page.locator('#songs .chart-constant').allTextContents();
-  const sort=page.getByRole('button',{name:'Source constant unsorted',exact:true});await sort.click();
-  expect(await values()).toEqual(['9.9','10.4','10.5','11.0','—']);
-  await page.locator('[data-sort-key=constant]').press('Enter');
-  expect(await values()).toEqual(['11.0','10.5','10.4','9.9','—']);
-  const grouped=page.locator('.song-row').filter({has:page.locator('.song-title',{hasText:'Fictional study 3'})});
-  const picker=grouped.locator('.row-difficulty');
-  const remaster=await picker.locator('option').filter({hasText:'RE:MASTER'}).getAttribute('value');
-  await picker.selectOption(remaster);await expect(picker).toBeFocused();
-  await expect(grouped.locator('.chart-constant')).toHaveText('11.6');
-  expect(await values()).toEqual(['11.6','10.5','10.4','9.9','—']);
-  await grouped.locator('.chart-constant').click();await expect(grouped.locator('.chart-measurements')).toBeVisible();await expect(grouped.locator('.chart-summary .chart-constant')).toHaveText('11.6');
+  await page.locator('[data-sort-key=constant]').click();expect(await values()).toEqual(['9.9','10.4','10.5','11.0','11.6','—']);
+  await page.locator('[data-sort-key=constant]').press('Enter');expect(await values()).toEqual(['11.6','11.0','10.5','10.4','9.9','—']);
+  const row=page.locator('.song-row[data-difficulty="RE:MASTER"]');
+  await row.locator('.chart-constant').click();await expect(row.locator('.chart-measurements')).toBeVisible();await expect(row.locator('.chart-summary .chart-constant')).toHaveText('11.6');
   expect(requests).toEqual([]);expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
 });
 
@@ -434,26 +416,19 @@ test('clean headings, filter placement and lesson actions align without overflow
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
 });
 
-test('song rows retain same-level difficulty choices and update exact chart actions',async({page})=>{
-  await page.goto('/grouped/');await expect(page.locator('#songs .song-row')).toHaveCount(5);
+test('same-level difficulties have separate rows, colors and exact chart actions',async({page})=>{
+  await page.goto('/grouped/');await expect(page.locator('#songs .song-row')).toHaveCount(6);
   await page.locator('#search').fill('Fictional study 3');
-  const row=page.locator('#songs .song-row'),picker=row.locator('.row-difficulty');
-  await expect(picker.locator('option')).toHaveCount(2);
-  await expect(row.locator('.chart-bpm')).toHaveText('160');
+  const rows=page.locator('#songs .song-row'),row=page.locator('#songs .song-row[data-difficulty="RE:MASTER"]');
+  await expect(rows).toHaveCount(2);
+  expect(await rows.evaluateAll(rows=>rows.map(r=>r.dataset.difficulty))).toEqual(['RE:MASTER','MASTER']);
+  expect(await rows.evaluateAll(rows=>getComputedStyle(rows[0]).backgroundColor!==getComputedStyle(rows[1]).backgroundColor)).toBe(true);
   await row.locator('.chart-level').click();await expect(row.locator('.chart-measurements')).toBeVisible();
-  const before=await row.evaluate(el=>getComputedStyle(el).backgroundColor);
-  const remaster=await picker.locator('option').filter({hasText:'RE:MASTER'}).getAttribute('value');
-  await picker.selectOption(remaster);await expect(picker).toBeFocused();
-  await expect(row).toHaveAttribute('data-difficulty','RE:MASTER');
-  expect(await row.evaluate(el=>getComputedStyle(el).backgroundColor)).not.toBe(before);
-  await expect(row.locator('[data-chart-section=chart]>h3')).toContainText('RE:MASTER');
-  await setLevel(page,'min','11');await setLevel(page,'max','11');
-  await expect(picker.locator('option')).toHaveCount(2);await expect(picker).toHaveValue(remaster);
-  await selectDifficulties(page,['MASTER']);
-  await expect(picker.locator('option')).toHaveCount(1);await expect(row).toHaveAttribute('data-difficulty','MASTER');
-  await selectDifficulties(page,[]);await expect(picker).toHaveValue(remaster);
-  await row.getByRole('button',{name:'Compare this chart',exact:true}).click();
-  expect(new URL(page.url()).searchParams.get('left')).toBe(remaster);
+  const remaster=await row.getAttribute('data-chart-id');
+  await setLevel(page,'min','11');await setLevel(page,'max','11');await expect(rows).toHaveCount(2);
+  await selectDifficulties(page,['MASTER']);await expect(rows).toHaveCount(1);await expect(rows).toHaveAttribute('data-difficulty','MASTER');
+  await selectDifficulties(page,[]);await expect(rows).toHaveCount(2);await expect(row.locator('.chart-measurements')).toBeVisible();
+  await row.getByRole('button',{name:'Compare this chart',exact:true}).click();expect(new URL(page.url()).searchParams.get('left')).toBe(remaster);
   await expect(page.locator('#comparison-pickers')).toContainText('RE:MASTER');
 });
 
@@ -462,10 +437,8 @@ test('YouTube searches follow difficulty and comparisons without background requ
   await page.goto('/grouped/');await expect(page.locator('#loaded-count')).toHaveText('6');
   const requests=[];context.on('request',r=>requests.push({url:r.url(),referrer:r.headers().referer}));
   await page.locator('#search').fill('Fictional study 3');
-  const row=page.locator('#songs .song-row'),link=row.locator('.youtube-search'),picker=row.locator('.row-difficulty');
-  const original=await link.getAttribute('href');
-  const remaster=await picker.locator('option').filter({hasText:'RE:MASTER'}).getAttribute('value');
-  await picker.selectOption(remaster);
+  const row=page.locator('#songs .song-row[data-difficulty="RE:MASTER"]'),link=row.locator('.youtube-search');
+  const original=await page.locator('#songs .song-row[data-difficulty=MASTER] .youtube-search').getAttribute('href');
   const href=await link.getAttribute('href'),query=new URL(href).searchParams.get('search_query');
   expect(href).not.toBe(original);expect(query).toMatch(/^maimai Fictional study 3 (STD|DX) RE:MASTER$/);
   await expect(link).toHaveAttribute('aria-label',/YouTube search.*RE:MASTER.*new tab/);
@@ -549,7 +522,7 @@ test('column sorting works by keyboard and keeps explicit priority order',async(
 test('unknown pattern coverage is not treated as absence or a pattern match',async({page})=>{
   await page.goto('/lab/');await expect(page.locator('#loaded-count')).toHaveText('6');
   const result=await page.evaluate(()=>{
-    const data=JSON.parse(document.getElementById('challenge-data').textContent),left=data.catalog[0],right=data.catalog[1];
+    const data=window.maimaiResearchCatalog,left=data.catalog[0],right=data.catalog[1];
     const unknown={...right,source_hash:'wrong-source'};
     return {comparison:window.maimaiChartOverview.compare(left,unknown),record:window.maimaiChartOverview.get(unknown),patterns:window.maimaiChartOverview.patternIds};
   });
@@ -561,7 +534,7 @@ test('unknown pattern coverage is not treated as absence or a pattern match',asy
 test('pattern priority can promote a structural match and leaves unknown coverage last',async({page})=>{
   await page.goto('/lab/');await expect(page.locator('#loaded-count')).toHaveText('6');
   const result=await page.evaluate(()=>{
-    const data=JSON.parse(document.getElementById('challenge-data').textContent),ids=['a-source','b-measurements','c-patterns','d-unknown'];
+    const data=window.maimaiResearchCatalog,ids=['a-source','b-measurements','c-patterns','d-unknown'];
     const charts=ids.map((id,i)=>({...data.catalog[i===2?3:0],chart_id:id,song_id:id,song_family:id}));
     const index=window.maimaiChallengeMatching.createIndex(charts);
     return{plain:index.similar(ids[0]).map(r=>r.chart_id),patterns:index.similar(ids[0],{patternCompare:(_,c)=>({patternDistance:c.chart_id===ids[2]?0:c.chart_id===ids[1]?1:null})}).map(r=>r.chart_id)};
@@ -573,7 +546,7 @@ test('pattern priority can promote a structural match and leaves unknown coverag
 test('pattern comparison distinguishes frequency even when chart tags are identical',async({page})=>{
   await page.goto('/lab/');await expect(page.locator('#loaded-count')).toHaveText('6');
   const result=await page.evaluate(()=>{
-    const data=JSON.parse(document.getElementById('challenge-data').textContent),[left,right]=data.catalog,overview=window.maimaiChartOverview;
+    const data=window.maimaiResearchCatalog,[left,right]=data.catalog,overview=window.maimaiChartOverview;
     const record=overview.get(right),sourceHash=record.source_hash;Object.assign(record,structuredClone(overview.get(left)),{source_hash:sourceHash});
     const same=overview.compare(left,right);
     for(const tag of record.tags)if(overview.patternIds[tag[0]].startsWith('pattern.')&&tag[1]==='detected')tag[2]*=5;
@@ -678,16 +651,13 @@ async function selectDifficulties(page,values){
   await page.keyboard.press('Escape');
 }
 
-test('difficulty checkboxes combine choices and preserve matching row selections',async({page})=>{
-  await page.goto('/grouped/');await expect(page.locator('.song-row')).toHaveCount(5);
+test('difficulty checkboxes combine independent rows and preserve sorting',async({page})=>{
+  await page.goto('/grouped/');await expect(page.locator('.song-row')).toHaveCount(6);
   await selectDifficulties(page,['MASTER','RE:MASTER']);await expect(page.locator('#difficulty-summary')).toHaveText('2 difficulties selected');
-  await page.locator('#search').fill('Fictional study 3');const row=page.locator('.song-row'),picker=row.locator('.row-difficulty');
-  await expect(picker.locator('option')).toHaveCount(2);const remaster=await picker.locator('option').filter({hasText:'RE:MASTER'}).getAttribute('value');await picker.selectOption(remaster);
-  await page.locator('[data-sort-key=constant]').click();await expect(picker).toHaveValue(remaster);
-  await page.getByRole('button',{name:'Remove difficulty MASTER',exact:true}).click();await expect(picker.locator('option')).toHaveCount(1);await expect(row).toHaveAttribute('data-difficulty','RE:MASTER');
-  await page.locator('#difficulty-summary').click();const master=page.locator('#difficulty-options').getByRole('checkbox',{name:'MASTER',exact:true});await master.focus();await page.keyboard.press('Space');await page.keyboard.press('Escape');await expect(page.locator('#difficulty-summary')).toBeFocused();
-  await expect(picker.locator('option')).toHaveCount(2);await expect(picker).toHaveValue(remaster);
-  await page.locator('#reset-filters').click();await expect(page.locator('#difficulty-summary')).toHaveText('All difficulties');await expect(page.locator('.song-row')).toHaveCount(5);
+  await page.locator('#search').fill('Fictional study 3');const rows=page.locator('.song-row');await expect(rows).toHaveCount(2);
+  await page.locator('[data-sort-key=constant]').click();await expect(rows).toHaveCount(2);
+  await page.getByRole('button',{name:'Remove difficulty MASTER',exact:true}).click();await expect(rows).toHaveCount(1);await expect(rows).toHaveAttribute('data-difficulty','RE:MASTER');
+  await page.locator('#reset-filters').click();await expect(page.locator('#difficulty-summary')).toHaveText('All difficulties');await expect(rows).toHaveCount(6);
 });
 
 test('level handles and typed plus values stay in sync, validate input and retain ordered bounds',async({page})=>{

@@ -4,6 +4,7 @@ const i18n=window.maimaiI18n||{text:(node,value)=>node.textContent=value,attribu
 
 // Shared disclosure behavior for catalog and personal filters.
 window.maimaiFilterDisclosure=(root,toggle,body,key)=>{
+  key=globalThis.maimaiPlayerContext?.key(key)||key;
   const hint=document.createElement('small');hint.className='filter-disclosure-hint';hint.setAttribute('aria-hidden','true');toggle.insertBefore(hint,toggle.lastElementChild);
   let expanded=false;
   try{expanded=(localStorage.getItem(key)??sessionStorage.getItem(key))==='0';}catch{}

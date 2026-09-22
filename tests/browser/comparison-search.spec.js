@@ -7,7 +7,7 @@ test('comparison autocomplete starts empty and reaches every chart independently
   await page.goto('/progressive-capacity/');
   await expect(page.locator('#songs .song-row')).toHaveCount(40);
   await page.locator('#search').fill('Capacity study 0000');
-  await expect(page.locator('#songs .song-row')).toHaveCount(1);
+  await expect(page.locator('#songs .song-row')).toHaveCount(4);
   await page.locator('#compare-tab').click();
   const left=page.getByRole('combobox',{name:'First chart',exact:true}),right=page.getByRole('combobox',{name:'Second chart',exact:true});
   for(const input of [left,right]){

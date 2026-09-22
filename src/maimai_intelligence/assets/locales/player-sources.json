@@ -1,5 +1,35 @@
 {
   "messages": {
+    "Clear player data": {
+      "zh-Hans": "清除玩家数据",
+      "ko": "플레이어 데이터 지우기",
+      "ja": "プレイヤーデータを消去"
+    },
+    "Player data cleared": {
+      "zh-Hans": "玩家数据已清除",
+      "ko": "플레이어 데이터를 지웠습니다",
+      "ja": "プレイヤーデータを消去しました"
+    },
+    "Imported scores and the saved connection were removed from this browser.": {
+      "zh-Hans": "已从此浏览器移除导入的成绩和保存的连接。",
+      "ko": "이 브라우저에서 가져온 성적과 저장된 연결을 삭제했습니다.",
+      "ja": "このブラウザーから読み込んだ成績と保存済みの接続を削除しました。"
+    },
+    "Could not clear player data": {
+      "zh-Hans": "无法清除玩家数据",
+      "ko": "플레이어 데이터를 지울 수 없습니다",
+      "ja": "プレイヤーデータを消去できませんでした"
+    },
+    "Importing will overwrite data from the currently imported account.": {
+      "zh-Hans": "导入将覆盖当前已导入账号的数据。",
+      "ko": "가져오면 현재 가져온 계정의 데이터를 덮어씁니다.",
+      "ja": "読み込むと、現在読み込み済みのアカウントのデータが上書きされます。"
+    },
+    "Last Updated: {0}": {
+      "zh-Hans": "最后更新：{0}",
+      "ko": "최근 업데이트: {0}",
+      "ja": "最終更新：{0}"
+    },
     "Choose a source": {
       "zh-Hans": "选择来源",
       "ko": "가져올 소스 선택",
@@ -204,9 +234,46 @@
       "zh-Hans": "来源返回了较旧的数据。已保留你保存的数据。",
       "ko": "소스에서 이전 데이터를 반환했습니다. 저장된 데이터를 유지했습니다.",
       "ja": "読み込み元から古いデータが返されました。保存済みデータを保持しました。"
+    },
+    "About Session Report imports": {
+      "zh-Hans": "关于 Session Report 导入",
+      "ko": "Session Report 가져오기 도움말",
+      "ja": "Session Reportの読み込みについて"
+    },
+    "About Maishift imports": {
+      "zh-Hans": "关于 Maishift 导入",
+      "ko": "Maishift 가져오기 도움말",
+      "ja": "Maishiftの読み込みについて"
+    },
+    "Maishift rating": {
+      "zh-Hans": "Maishift Rating",
+      "ko": "Maishift 레이팅",
+      "ja": "Maishiftレーティング"
+    },
+    "Maishift rating {0}": {
+      "zh-Hans": "Maishift Rating {0}",
+      "ko": "Maishift 레이팅 {0}",
+      "ja": "Maishiftレーティング {0}"
+    },
+    "{0} PBs": {
+      "zh-Hans": "{0} 项个人最佳成绩",
+      "ko": "개인 최고 기록 {0}개",
+      "ja": "自己ベスト {0}件"
     }
   },
   "invariants": {
+    "<svg viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M12 16V3m-5 5 5-5 5 5M4 15v5a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-5\"/></svg>": {
+      "reason": "Decorative import icon markup with no text; the adjacent button label is localized.",
+      "sources": [
+        "src/maimai_intelligence/assets/player-data.js"
+      ]
+    },
+    "player-profile-history player-profile-link": {
+      "reason": "CSS class identifiers for the public profile link, not user-visible copy.",
+      "sources": [
+        "src/maimai_intelligence/assets/player-data.js"
+      ]
+    },
     "Maishift": {
       "reason": "Provider brand name; integration is disabled pending verified full PB access.",
       "sources": [

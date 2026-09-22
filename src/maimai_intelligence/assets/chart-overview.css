@@ -1,4 +1,5 @@
 /* Pattern discovery, sortable columns and activity plots share the catalog layout. */
+#catalog-count{margin:12px 0 4px;text-align:right;font-size:1.05rem;font-weight:700;line-height:1.4;font-variant-numeric:tabular-nums}
 .chart-flow.compact{min-height:50px}.chart-flow.compact>p,.chart-flow.compact>span{font-size:11px}.chart-flow.compact>button{font-size:11px;max-width:100%;white-space:normal}
 .pattern-metrics{table-layout:fixed;border-collapse:collapse;width:100%;font-size:12px;margin-top:18px}.pattern-metrics th,.pattern-metrics td{text-align:left;vertical-align:top;padding:10px 8px;border-bottom:1px solid var(--line);overflow-wrap:anywhere}.pattern-metrics th:first-child{width:40%;padding-left:0}.pattern-metrics th{font-weight:500}.pattern-metrics td strong,.pattern-metrics td span{display:block}.pattern-metrics td strong{font-size:15px;font-weight:600}.pattern-metrics td span{font-size:11px}.pattern-metrics .pattern-chip{font-size:11px}
 .column-labels,.chart-summary{grid-template-columns:minmax(220px,1fr) 170px 80px 60px 88px 150px;gap:12px}
@@ -40,3 +41,8 @@
 @media(max-width:740px){.chart-card-footer{grid-row:5;flex-wrap:wrap;gap:8px}.chart-card-footer .chart-detail-actions{margin-left:auto}.chart-card-footer .chart-detail-actions button{min-height:40px}.chart-summary>.player-achievement{grid-row:6}.chart-detail-identity{gap:4px}.chart-section-toggle{gap:8px}.chart-section-name{font-size:12px}.chart-section .metric{padding:8px;font-size:10px}.chart-section .metric strong{font-size:14px}}
 @media(max-width:380px){.chart-section .demand{grid-template-columns:repeat(2,minmax(0,1fr))}.chart-card-footer .chart-detail-actions{width:100%}.chart-difficulty-badge{font-size:10px}}
 @media(prefers-reduced-motion:reduce){.chart-section-reveal,.chart-section-chevron{transition:none}}
+/* Romanized readings supplement the original title only in the English UI. */
+.song-title-line{display:flex;flex-wrap:wrap;align-items:baseline;column-gap:.5em;row-gap:.15em;min-width:0}
+.song-title-line .song-title{min-width:0;overflow-wrap:anywhere}
+.song-romaji{font-size:13px;font-weight:400;line-height:1.4;color:#506b75;overflow-wrap:anywhere}
+html:not([lang="en"]) .song-romaji{display:none}

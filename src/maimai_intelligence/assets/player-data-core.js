@@ -51,10 +51,13 @@ function current(d){let refs={},snapshot=null;for(const [id,s]of Object.entries(
 function chartHistory(d,chartIDs){
   const ids=new Set(chartIDs),plays=Object.entries(d.plays).map(([id,ref])=>({id,r:d.records[ref]})).filter(e=>ids.has(e.r.chartID)).map(e=>({...e,time:e.r.timeAchieved}));
   plays.sort((a,b)=>(b.time??-1)-(a.time??-1)||a.id.localeCompare(b.id));
-  const changes=[];let previous=null;
+  const changes=[];let previous=null,previousRecord=null;
   for(const [id,s] of Object.entries(d.snapshots).sort(([a,x],[b,y])=>x.capturedAt-y.capturedAt||Number(x.phase==='after')-Number(y.phase==='after')||a.localeCompare(b))){
     const cid=chartIDs.find(cid=>s.pbs[cid]);if(!cid)continue;const r=d.records[s.pbs[cid]],key=canonical([r.achievement,r.grade,r.rate,r.lamp,r.sync]);
-    if(key!==previous)changes.push({id,time:s.capturedAt,r});previous=key;
+    // Learning a previously unknown Maishift contribution is metadata, not a
+    // new PB. Keep observation dates and known-to-known corrections intact.
+    const enrichment=d.player.provider==='maishift'&&previousRecord&&(previousRecord.rate===null||r.rate===null)&&canonical([r.achievement,r.grade,r.lamp,r.sync])===canonical([previousRecord.achievement,previousRecord.grade,previousRecord.lamp,previousRecord.sync]);
+    if(key!==previous&&!enrichment)changes.push({id,time:s.capturedAt,r});previous=key;previousRecord=r;
   }
   return {plays,changes:changes.reverse()};
 }

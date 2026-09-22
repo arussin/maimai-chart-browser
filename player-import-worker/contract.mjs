@@ -24,10 +24,10 @@ const unescape = value => value.replace(/\\(?:\\|"|n|r|b|t|f|x3C|u2028|u2029)/g,
 export function validInput(v) {
   return object(v) && Object.keys(v).sort().join(',') === 'handle,manual,region' &&
     typeof v.handle === 'string' && /^[A-Za-z0-9_-]{1,64}$/.test(v.handle) &&
-    ['intl','jp'].includes(v.region) && typeof v.manual === 'boolean';
+    (['intl','jp'].includes(v.region) || v.region === 'auto' && v.manual === true) && typeof v.manual === 'boolean';
 }
 export function upstreamURL(kind, input) {
-  if (!Object.hasOwn(FUNCTIONS, kind) || !validInput(input)) fail();
+  if (!Object.hasOwn(FUNCTIONS, kind) || !validInput(input) || kind === 'tracks' && input.region === 'auto') fail();
   const payload = {t:{t:10,i:0,p:{k:['data'],v:[{t:10,i:1,p:{k:['handle','region'],v:[
     {t:1,s:input.handle},{t:1,s:input.region === 'jp' ? 'JAPAN' : 'ASIA'},
   ]},o:0}]},o:0},f:63,m:[]};
@@ -68,12 +68,13 @@ function timestamp(value) {
 export function profile(value, input) {
   if (value == null || value?.ban?.banned === true || value?.userRecord == null) throw new ImportError('profile_unavailable',404);
   if (!object(value) || value.handle !== input.handle || !['ASIA','JAPAN'].includes(value.region) || value.versionOverride !== null || value?.ban?.banned !== false) fail();
-  if (value.region !== (input.region === 'jp' ? 'JAPAN' : 'ASIA')) throw new ImportError('region_mismatch',409);
+  if (input.region !== 'auto' && value.region !== (input.region === 'jp' ? 'JAPAN' : 'ASIA')) throw new ImportError('region_mismatch',409);
   const p = value.userRecord.profile;
   if (!object(p) || !text(p.name,200)) fail();
   const createdAt = timestamp(p.createdAt), updatedAt = timestamp(p.updatedAt);
   if (updatedAt < createdAt) fail();
-  return {handle:input.handle,region:input.region,displayName:p.name,createdAt,updatedAt};
+  if (p.rating != null && !integer(p.rating,1000000)) fail();
+  return {handle:input.handle,region:value.region === 'JAPAN' ? 'jp' : 'intl',displayName:p.name,createdAt,updatedAt,rating:p.rating??null};
 }
 export function minimize(value, identity) {
   if (!object(value) || !Array.isArray(value.songs) || !Array.isArray(value.tracks) || value.songs.length > 5000 || value.tracks.length > 20000) fail();
@@ -93,14 +94,14 @@ export function minimize(value, identity) {
     // Unknown numbers stay null. Invalid supplied measurements invalidate the
     // response rather than silently dropping a corrected or malformed PB.
     for (const [field,max] of [['a',1010000],['d',1000000],['m',1000000]]) if (r[field] != null && !integer(r[field],max)) fail();
-    // The live source supplies fractional ratings. v1's integer rate has no
-    // verified lossless conversion, so leave it unknown instead of rounding.
+    // Match the public client's integer contribution display. x=0 marks an
+    // estimated constant and rating; never present that estimate as exact.
     if (r.g != null && (typeof r.g !== 'number' || !Number.isFinite(r.g) || r.g < 0 || r.g > 10000)) fail();
     if (r.d != null && r.m != null && r.d > r.m) fail();
     if (r.c != null && !combos.has(r.c) || r.y != null && !syncs.has(r.y)) fail();
     if (t.l != null && !integer(t.l,200) || t.dl != null && !text(t.dl,20)) fail();
     const record = {id:String(t.i),title:song.title,artist:song.artist,format:song.type === 'STANDARD' ? 'STD' : 'DX',difficulty:difficulty[t.d],
-      constant:t.x === 0 ? null : t.l ?? null,level:t.dl ?? '',achievement:r.a ?? null,dxScore:r.d ?? null,maxDxScore:r.m ?? null,rate:null,lamp:r.c ?? '',sync:r.y ?? ''};
+      constant:t.x === 0 ? null : t.l ?? null,level:t.dl ?? '',achievement:r.a ?? null,dxScore:r.d ?? null,maxDxScore:r.m ?? null,rate:t.x === 0 || r.g == null ? null : Math.floor(r.g),lamp:r.c ?? '',sync:r.y ?? ''};
     // Shared song metadata expands once per PB in the portable response. Bound
     // that expansion before assembling a potentially much larger JSON body.
     recordBytes += encoder.encode(JSON.stringify(record)).byteLength + (records.length ? 1 : 0);
@@ -108,5 +109,5 @@ export function minimize(value, identity) {
     records.push(record);
   }
   records.sort((a,b) => Number(a.id)-Number(b.id));
-  return {schemaVersion:1,adapterVersion:1,provider:'maishift',identity,coverage:{kind:'partial',totalCharts:value.tracks.length,playedCharts:played,importedCharts:records.length,diagnosticCount},records,diagnostics};
+  return {schemaVersion:1,adapterVersion:2,provider:'maishift',identity,coverage:{kind:'partial',totalCharts:value.tracks.length,playedCharts:played,importedCharts:records.length,diagnosticCount},records,diagnostics};
 }

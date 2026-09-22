@@ -38,9 +38,10 @@ details summary{cursor:pointer;min-height:44px;padding:12px 0}.sources{border-to
 .chart-external-links{display:flex;flex-wrap:wrap;gap:0 14px;min-width:0}
 
 /* Source selection and the local release announcement. */
-.player-source-options {display:grid;gap:.7rem;border:0;padding:0;margin:1rem 0}
+.player-source-options {display:grid;gap:8px;border:0;padding:0;margin:12px 0}
 .player-source-options legend {margin-bottom:.6rem;font-weight:600}
-.player-source-options label {display:flex;flex-direction:row;align-items:center;gap:.65rem;min-height:40px;cursor:pointer;color:var(--ink);font-size:14px}
+.player-source-options label {display:flex;flex-direction:row;align-items:center;gap:8px;min-height:40px;margin:0;cursor:pointer;color:var(--ink);font-size:14px;min-width:0}
+.player-source-group{display:grid;grid-template-columns:minmax(0,1fr) 32px;align-items:center;gap:4px;padding:4px 6px 4px 10px;border:1px solid #d7e5e8;border-radius:10px;background:#f7fbfc}.player-source-group:has(input:checked){border-color:#79b9c2;background:#eef9f8}.player-source-rows{display:grid;gap:0}.player-source-options img{flex:none;object-fit:contain}.player-source-options label span{min-width:0;overflow-wrap:anywhere}.player-source-help{display:grid;place-items:center;width:30px;min-height:36px;color:#37666f;text-decoration:none;font-size:12px;position:relative}.player-source-help:before{content:"";position:absolute;width:18px;height:18px;border:1px solid #91b6bd;border-radius:50%}.player-source-help:hover{color:#007887}.player-source-help:focus-visible{outline:3px solid #007887;outline-offset:1px;border-radius:4px}
 .player-source-options input {accent-color:var(--aqua);width:18px;height:18px;min-height:18px;margin:0;padding:0;flex:none}
 .player-source-fields {display:grid;gap:.8rem;overflow-wrap:anywhere}
 .player-source-fields label:not(.player-remember) {display:grid;gap:.5rem}

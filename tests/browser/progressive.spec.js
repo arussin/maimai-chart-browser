@@ -1,4 +1,59 @@
 import {test,expect} from '@playwright/test';
+import {readFile} from 'node:fs/promises';
+import {gzipSync} from 'node:zlib';
+
+test('fetched startup shares the parsed catalog without retaining an embedded JSON copy',async({page})=>{
+  await page.goto('/progressive/?view=catalog');
+  await expect(page.locator('#loaded-count')).toHaveText('6');
+  await expect(page.locator('#challenge-data')).toHaveCount(0);
+  await expect(page.locator('#songs .song-row')).toHaveCount(6);
+  const available=await page.evaluate(()=>{
+    const chart=maimaiResearchCatalog.catalog[0];
+    return {overview:!!maimaiChartOverview.get(chart),artwork:!!maimaiChartArtwork.jacket(chart)};
+  });
+  expect(available).toEqual({overview:true,artwork:true});
+});
+
+for(const restoreTiming of ['before','after'])test(`saved player restore ${restoreTiming} controller startup uses one mapping configuration`,async({page})=>{
+  const errors=[];page.on('pageerror',error=>errors.push(error.message));
+  const data=JSON.parse(await readFile(new URL('../../output/reconciliation-fixture.json',import.meta.url),'utf8'));
+  await page.goto('/registry/?search=ソテリア');
+  await expect(page.locator('#catalog-count')).toHaveText('4 charts found');
+  await page.locator('input[type=file]').setInputFiles({name:'fictional-player.gz',mimeType:'application/gzip',buffer:gzipSync(Buffer.from(JSON.stringify(data)))});
+  await page.getByLabel('Remember on this device',{exact:true}).check();
+  await page.getByRole('button',{name:'Import data',exact:true}).click();
+  await expect(page.locator('#songs .song-row[data-difficulty=MASTER] .player-achievement')).toContainText('97.0000%');
+  await expect.poll(()=>page.evaluate(async()=>!!(await maimaiPlayerStorage.read()).active)).toBe(true);
+  await page.addInitScript(timing=>{
+    window.startupConfigureCalls=0;
+    let personal,storage,release;
+    const restored=new Promise(resolve=>{release=resolve;});
+    window.releaseSavedRestore=release;
+    Object.defineProperty(window,'maimaiPersonal',{configurable:true,get:()=>personal,set:value=>{
+      personal={...value,configure(...args){window.startupConfigureCalls++;return value.configure(...args);}};
+    }});
+    Object.defineProperty(window,'maimaiPlayerStorage',{configurable:true,get:()=>storage,set:value=>{
+      storage=timing==='after'?{...value,read:async(...args)=>{await restored;return value.read(...args);}}:value;
+    }});
+  },restoreTiming);
+  if(restoreTiming==='before')await page.route('**/registry/challenge-review.js*',async route=>{
+    await page.waitForFunction(()=>!!window.maimaiPersonal);
+    await page.evaluate(()=>maimaiPersonal.ready);
+    expect(await page.evaluate(()=>({enabled:maimaiPersonal.enabled(),calls:startupConfigureCalls}))).toEqual({enabled:true,calls:0});
+    await route.continue();
+  });
+  await page.reload();
+  await expect(page.locator('#catalog-count')).toHaveText('4 charts found');
+  if(restoreTiming==='after'){
+    expect(await page.evaluate(()=>maimaiPersonal.enabled())).toBe(false);
+    await page.evaluate(()=>releaseSavedRestore());
+  }
+  await page.evaluate(()=>maimaiPersonal.ready);
+  await expect(page.locator('#songs .song-row[data-difficulty=MASTER] .player-achievement')).toContainText('97.0000%');
+  expect(await page.evaluate(()=>startupConfigureCalls)).toBe(1);
+  await expect(page.locator('#challenge-data')).toHaveCount(0);
+  expect(errors).toEqual([]);
+});
 
 test('browsing and matching work without details; failed evidence can be retried',async({page})=>{
   const requested=[];page.on('request',r=>requested.push(r.url()));

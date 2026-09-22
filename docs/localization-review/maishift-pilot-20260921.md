@@ -29,3 +29,7 @@ does not claim that a failed Japan read is an International import, and the loca
 notice no longer describes a loopback preview as a public link. Existing game
 region terminology is preserved. Narrow-browser tests also exercise the translated
 region error while keeping the earlier baseline visible.
+
+## Browser preview follow-up
+
+AI contextual review of three new labels (56 pilot entries total): browser preview, separate test-score storage, and opening the chart browser. Simplified Chinese, Korean and Japanese distinguish the preview from the normal site without suggesting account authentication or public score submission. Existing import labels remain unchanged. This is not native-speaker certification.

@@ -51,5 +51,8 @@
 "This upload passed the observed timestamp, mapping and stability checks.":{"zh-Hans":"本次上传已通过观察到的时间顺序、谱面匹配和稳定性检查。","ko":"이번 업로드는 관찰된 시간 순서, 채보 연결, 안정성 검사를 통과했습니다.","ja":"このアップロードは、観察された日時の順序、譜面の対応付け、安定性の確認に合格しました。"},
 "Unmatched charts: {0}":{"zh-Hans":"未匹配的谱面：{0}","ko":"연결되지 않은 채보: {0}","ja":"一致しなかった譜面: {0}"},
 "Waiting for a genuine score change. An unchanged profile is not a passed upload test.":{"zh-Hans":"等待真实的成绩变化。资料未变化时，不算通过上传测试。","ko":"실제 점수 변경을 기다리는 중입니다. 바뀌지 않은 프로필은 업로드 테스트 통과로 인정되지 않습니다.","ja":"実際のスコア変更を待っています。変化のないプロフィールではアップロードテストに合格したことにはなりません。"},
-"The latest read failed. Earlier test results were kept.":{"zh-Hans":"最近一次读取失败。先前的测试结果已保留。","ko":"최근 읽기에 실패했습니다. 이전 테스트 결과는 유지됩니다.","ja":"最新の読み取りに失敗しました。以前のテスト結果は保持されています。"}
+"The latest read failed. Earlier test results were kept.":{"zh-Hans":"最近一次读取失败。先前的测试结果已保留。","ko":"최근 읽기에 실패했습니다. 이전 테스트 결과는 유지됩니다.","ja":"最新の読み取りに失敗しました。以前のテスト結果は保持されています。"},
+"Maishift browser preview":{"zh-Hans":"Maishift 谱面浏览器预览","ko":"Maishift 채보 브라우저 미리보기","ja":"Maishift 譜面ブラウザーのプレビュー"},
+"Test scores are saved separately from the main site.":{"zh-Hans":"测试成绩与主站成绩分开保存。","ko":"테스트 기록은 본 사이트의 기록과 별도로 저장됩니다.","ja":"テスト用の成績は通常サイトの成績とは別に保存されます。"},
+"Open chart browser":{"zh-Hans":"打开谱面浏览器","ko":"채보 브라우저 열기","ja":"譜面ブラウザーを開く"}
 }}

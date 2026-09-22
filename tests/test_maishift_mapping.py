@@ -104,9 +104,20 @@ class MaishiftMappingTests(unittest.TestCase):
                 validate_mapping(mapping, self.data["catalog"])
 
     def test_progressive_catalog_retains_source_guards_and_legacy_export_is_unchanged(self):
+        original = deepcopy(self.mapping)
         manifest, assets = progressive_catalog(self.data, "0" * 64)
         projected = json.loads(assets[manifest["path"]])
-        self.assertEqual(projected["maishift_mapping"], self.mapping)
+        self.assertEqual(self.data["maishift_mapping"], original)
+        self.assertEqual(
+            projected["maishift_mapping"],
+            {
+                **original,
+                "charts": {
+                    cid: {key: value for key, value in row.items() if key != "snapshot_id"}
+                    for cid, row in original["charts"].items()
+                },
+            },
+        )
         without = {k: v for k, v in self.data.items() if k != "maishift_mapping"}
         self.assertEqual(
             integration_catalog(self.data, "test"), integration_catalog(without, "test")

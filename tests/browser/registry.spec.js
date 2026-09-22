@@ -18,8 +18,7 @@ test('metadata-only search, difficulty selection, comparison and detail absence 
   const requests=[];page.on('request',r=>{if(r.url().includes('/chart-details/'))requests.push(r.url());});
   await page.goto('/registry/?search=ソテリア');
   await expect(page.locator('#catalog-count')).toHaveText('4 charts found');
-  const row=page.locator('#songs .song-row');await expect(row).toHaveCount(1);
-  await row.locator('.row-difficulty').selectOption({label:'MASTER · 14'});
+  const row=page.locator('#songs .song-row[data-difficulty=MASTER]');await expect(page.locator('#songs .song-row')).toHaveCount(4);
   await expect(row.locator('.chart-constant')).toHaveText('—');
   await expect(row.getByRole('button',{name:'Find similar',exact:true})).toBeDisabled();
   await row.locator('.chart-row').click();
@@ -48,11 +47,11 @@ test('regional preference keeps every chart, prefers Japan by default and falls 
   const preference=page.getByRole('checkbox',{name:'Use maimai international data',exact:true});
   await expect(preference).not.toBeChecked();
   await expect(page.locator('#filter-region [aria-checked="true"]')).toHaveAttribute('data-region','');
-  const row=page.locator('#songs .song-row').filter({hasText:/ソテリア|Soteria fixture/});
-  const japanOnly=page.locator('#songs .song-row').filter({hasText:'ANiMA'});
-  const internationalOnly=page.locator('#songs .song-row').filter({hasText:'International fixture song'});
+  let row=page.locator('#songs .song-row[data-difficulty=ADVANCED]').filter({hasText:/ソテリア|Soteria fixture/});
+  const japanOnly=page.locator('#songs .song-row').filter({hasText:'ANiMA'}).first();
+  const internationalOnly=page.locator('#songs .song-row').filter({hasText:'International fixture song'}).first();
   await expect(japanOnly).toBeVisible();await expect(internationalOnly).toBeVisible();
-  await row.locator('.row-difficulty').selectOption({label:'ADVANCED · 8'});
+  row=page.locator('#songs .song-row[data-difficulty=ADVANCED]').filter({hasText:/ソテリア|Soteria fixture/});
   await expect(row).toHaveAttribute('data-version','maimai DX CiRCLE PLUS');
   await expect(row.locator('.chart-constant')).toHaveText('8.2');
   await expect(row.locator('.chart-constant')).toHaveAttribute('title',/JP/);
@@ -68,13 +67,13 @@ test('regional preference keeps every chart, prefers Japan by default and falls 
   await expect(row.locator('.chart-constant')).toHaveText('7.4');
   await expect(row.locator('.chart-constant')).toHaveAttribute('title',/INTL/);
   await expect(japanOnly).toHaveAttribute('data-version','maimai DX CiRCLE PLUS');
-  await row.locator('.row-difficulty').selectOption({label:'EXPERT · 12'});
+  row=page.locator('#songs .song-row[data-difficulty=EXPERT]').filter({hasText:/ソテリア|Soteria fixture/});
   await expect(row.locator('.chart-constant')).toHaveText('12.1');
   await expect(row.locator('.chart-constant')).toHaveAttribute('title',/JP/);
   await expect(row.locator('.chart-bpm')).toHaveText('160');
   await preference.uncheck();
   expect(await page.evaluate(()=>JSON.stringify({catalog:maimaiResearchCatalog.catalog,navigation:maimaiResearchCatalog.navigation}))).toBe(original);
-  await row.locator('.row-difficulty').selectOption({label:'ADVANCED · 8'});
+  row=page.locator('#songs .song-row[data-difficulty=ADVANCED]').filter({hasText:/ソテリア|Soteria fixture/});
   await expect(row.locator('.chart-constant')).toHaveText('8.2');
   await preference.check();await page.locator('#reset-filters').click();
   await expect(preference).not.toBeChecked();
@@ -101,7 +100,7 @@ test('a schema-1 synthetic player file maps to a metadata-only chart without qua
   const template=JSON.parse(await readFile(new URL('../../output/reconciliation-fixture.json',import.meta.url),'utf8'));
   await page.locator('input[type=file]').setInputFiles({name:'fictional-player.gz',mimeType:'application/gzip',buffer:gzipSync(Buffer.from(JSON.stringify(template)))});
   await page.getByRole('button',{name:'Import data',exact:true}).click();
-  const row=page.locator('#songs .song-row');
+  const row=page.locator('#songs .song-row[data-difficulty=MASTER]');
   await expect(row).toHaveAttribute('data-difficulty','MASTER');
   await expect(row.locator('.player-achievement')).toContainText('97.0000%');
   await expect(row.getByRole('button',{name:'Find similar',exact:true})).toBeDisabled();
@@ -110,7 +109,7 @@ test('a schema-1 synthetic player file maps to a metadata-only chart without qua
 
 test('regional labels preserve the jacket through repeated preference, difficulty and comparison changes',async({page})=>{
   await page.goto('/registry/?search=ソテリア');
-  const row=page.locator('#songs .song-row'),preference=page.getByRole('checkbox',{name:'Use maimai international data',exact:true});
+  const row=page.locator('#songs .song-row[data-difficulty=MASTER]'),preference=page.getByRole('checkbox',{name:'Use maimai international data',exact:true});
   await expect(row).toHaveCount(1);
   const jacket=row.locator('.song-jacket');
   await expect(jacket).not.toHaveClass(/artwork-missing/);
@@ -119,7 +118,6 @@ test('regional labels preserve the jacket through repeated preference, difficult
     await preference.check();await expect(row).toContainText('Soteria fixture');
     await expect(jacket).not.toHaveClass(/artwork-missing/);
     await expect(jacket.locator('img')).toHaveAttribute('src',source);
-    await row.locator('.row-difficulty').selectOption({label:'MASTER · 14'});
     await expect(jacket).not.toHaveClass(/artwork-missing/);
     await row.getByRole('button',{name:'Compare this chart'}).click();
     await expect(page.locator('#compare-left-search')).toHaveValue(/Soteria fixture/);
@@ -128,7 +126,7 @@ test('regional labels preserve the jacket through repeated preference, difficult
   }
   await preference.check();await page.locator('#reset-filters').click();
   await expect(preference).not.toBeChecked();
-  await expect(page.locator('#songs .song-row').filter({hasText:'ソテリア'}).locator('.song-jacket')).not.toHaveClass(/artwork-missing/);
+  await expect(page.locator('#songs .song-row').filter({hasText:'ソテリア'}).first().locator('.song-jacket')).not.toHaveClass(/artwork-missing/);
 });
 
 test('filter disclosures default closed, count active groups and remember independent choices',async({page,context})=>{
@@ -155,7 +153,7 @@ test('filter disclosures default closed, count active groups and remember indepe
   await expect(personal).toHaveAttribute('aria-expanded','false');
   await expect(personal).toHaveAttribute('title','Click to expand');
   await personal.click();await expect(personal).toHaveAttribute('aria-expanded','true');
-  await page.locator('#personal-lamp').selectOption('FULL COMBO');
+  await page.locator('#personal-lamp-button').click();await page.locator('#personal-lamp-choices [data-value="FULL COMBO"]').click();
   await expect(page.locator('.player-filter-count').last()).toHaveText('1 active');
   await personal.click();
   await page.getByRole('button',{name:'Clear personal filters',exact:true}).click();
@@ -214,7 +212,7 @@ test('filter disclosures preview keeps scopes, aligned headings and removable ch
     await expect(root.locator('.filter-disclosure-clear')).toBeHidden();
   }
   await page.locator('#catalog-filters-toggle').click();await personal.locator('.player-filter-toggle').click();
-  await page.locator('#personal-lamp').selectOption('FULL COMBO');
+  await page.locator('#personal-lamp-button').click();await page.locator('#personal-lamp-choices [data-value="FULL COMBO"]').click();
   await expect(personal.locator('.filter-chip')).toHaveText('Combo: FULL COMBO ×');
   await personal.locator('.filter-chip').click();await expect(page.locator('#personal-lamp')).toHaveValue('');
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
@@ -229,7 +227,7 @@ for(const width of [280,320,390,1280])for(const locale of ['en','zh-Hans','ko','
   await page.locator('.site-header [data-language="'+locale+'"]').click();
   for(const selected of [false,true]){
     for(const toggle of await toggles.all())if(await toggle.getAttribute('aria-expanded')==='false')await toggle.click();
-    if(selected){await page.locator('#format-DX').click();await page.locator('#use-international-data').check();await page.locator('#personal-lamp').selectOption('FULL COMBO');await page.locator('#personal-min').fill('90');}
+    if(selected){await page.locator('#format-DX').click();await page.locator('#use-international-data').check();await page.locator('#personal-lamp-button').click();await page.locator('#personal-lamp-choices [data-value="FULL COMBO"]').click();await page.locator('#personal-min').fill('90');}
     else{await page.locator('#reset-filters').evaluate(n=>n.click());await personal.locator('.filter-disclosure-clear').evaluate(n=>n.click());}
     for(const expanded of [true,false]){
       for(const toggle of await toggles.all())if(await toggle.getAttribute('aria-expanded')!==String(expanded))await toggle.click();
@@ -249,17 +247,23 @@ for(const width of [280,320,390,1280])for(const locale of ['en','zh-Hans','ko','
 });
 
 
-test('MAGiCAL logo is available when retained catalogs have no artwork mapping',async({page})=>{
-  await page.goto('/registry/');
-  await expect(page.locator('#songs .song-row').first()).toBeVisible();
-  await page.evaluate(()=>{
-    const logo=maimaiChartArtwork.version('maimai DX MAGiCAL');
-    logo.id='magical-logo-regression';document.body.prepend(logo);
+test('version logos use mapped assets and the shared missing-artwork fallback',async({page})=>{
+  await page.goto('/registry/');await expect(page.locator('#songs .song-row').first()).toBeVisible();
+  const names=await page.evaluate(()=>{
+    const names=Object.keys(maimaiResearchCatalog.artwork.versions);
+    for(const name of names){const logo=maimaiChartArtwork.version(name);logo.classList.add('version-logo-regression');document.body.prepend(logo);}
+    const missing=maimaiChartArtwork.version('Fictional unavailable version');missing.id='missing-version-regression';document.body.prepend(missing);
+    return names;
   });
-  const logo=page.locator('#magical-logo-regression');
-  await expect(logo.locator('img')).toHaveAttribute('src','version-magical.png');
-  await expect(logo).not.toHaveClass(/artwork-missing/);
-  expect(await logo.locator('img').evaluate(n=>n.complete&&n.naturalWidth>0)).toBe(true);
+  expect(names.length).toBeGreaterThan(0);
+  const logos=page.locator('.version-logo-regression');await expect(logos.locator('img')).toHaveCount(names.length);
+  for(const logo of await logos.all()){
+    await expect(logo.locator('img')).toHaveAttribute('src',/^media\/[a-f0-9]{64}\.webp$/);
+    await expect(logo).not.toHaveClass(/artwork-missing/);
+    expect(await logo.locator('img').evaluate(n=>n.complete&&n.naturalWidth>0)).toBe(true);
+  }
+  await expect(page.locator('#missing-version-regression')).toHaveClass(/artwork-missing/);
+  await expect(page.locator('#missing-version-regression img')).toHaveCount(0);
 });
 
 const genreVectors=JSON.parse(await readFile(new URL('../fixtures/genre-aliases.json',import.meta.url),'utf8'));
@@ -284,7 +288,10 @@ test('immutable historical duplicate genres collapse before filters initialize',
   await expect(page.locator('#catalog-count')).toHaveText('26 charts found');
   const select=page.locator('#filter-genre');
   await expect(select.locator('option')).toHaveCount(7);
-  const raw=await page.evaluate(()=>JSON.parse(document.querySelector('#challenge-data').textContent));
+  const manifest=await (await page.request.get('/registry/manifest.json')).json();
+  const release=manifest.releases.find(entry=>entry.version==='duplicate-genres-fixture');
+  const parts=await Promise.all(release.parts.map(async part=>(await page.request.get('/registry/'+part.path)).body()));
+  const raw=JSON.parse(Buffer.concat(parts).toString('utf8'));
   expect(raw.navigation.genres.some(g=>g.id.startsWith('sega:'))).toBe(true);
   for(const vector of genreVectors){
     const before=raw.catalog.filter(c=>[vector.id,...vector.aliases.map(a=>'sega:'+a)].includes(raw.navigation.charts[c.chart_id].genre));
@@ -372,7 +379,7 @@ test('regional availability filters rows, counts, comparison eligibility and chi
   const remote=[];page.on('request',r=>{if(!r.url().startsWith('http://127.0.0.1:'))remote.push(r.url());});
   await page.goto('/registry/');await expect(page.locator('#catalog-count')).toHaveText('26 charts found');
   const region=page.locator('#filter-region'),preference=page.locator('#use-international-data');
-  const jp=page.locator('#songs .song-row').filter({hasText:'ANiMA'}),intl=page.locator('#songs .song-row').filter({hasText:'International fixture song'});
+  const jp=page.locator('#songs .song-row').filter({hasText:'ANiMA'}).first(),intl=page.locator('#songs .song-row').filter({hasText:'International fixture song'}).first();
   await expect(jp).toBeVisible();await expect(intl).toBeVisible();
   await expect(region.locator('[role=radio]')).toHaveText(['All regions','JP','International']);
   await preference.check();await expect(region.locator('[aria-checked="true"]')).toHaveAttribute('data-region','');await expect(page.locator('#catalog-count')).toHaveText('26 charts found');

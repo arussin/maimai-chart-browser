@@ -6,6 +6,8 @@
   const entries = __MAIMAI_SONG_ALIASES__;
   const aliases = new Map(entries.map(([title, artist, names]) => [JSON.stringify([normalize(title), normalize(artist)]), names]));
   const multilingual = __MAIMAI_MULTILINGUAL_ALIASES__;
+  const readings = new Map(__MAIMAI_DISPLAY_READINGS__.map(([title, artist, reading]) => [JSON.stringify([normalize(title), normalize(artist)]), reading]));
+  const romaji = chart => readings.get(JSON.stringify([normalize(chart.title), normalize(chart.artist)])) || '';
   const cached = new WeakMap();
   function fields(chart) {
     const prior=cached.get(chart);
@@ -28,5 +30,5 @@
       return !!joined && [...indexed.compact, ...more.map(compact)].some(name => name.includes(joined));
     };
   }
-  window.maimaiSongSearch = {query};
+  window.maimaiSongSearch = {query,romaji};
 })();

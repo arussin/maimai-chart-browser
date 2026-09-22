@@ -23,7 +23,9 @@ async function start(change=()=>{}){
       return new Response(body||'missing',{status:body?200:404});
     }};
   await vm.runInNewContext(loader,scope);
-  assert.equal(status.textContent,'');assert.equal(appended.length,2);
+  assert.equal(status.textContent,'');assert.equal(appended.length,1);
+  assert.match(appended[0].src,/^challenge-review\.js\?v=[a-f0-9]{16}$/);
+  assert.deepEqual(JSON.parse(JSON.stringify(scope.window.maimaiResearchCatalog)),initial);
   assert.deepEqual(requests,['manifest.json',entry.startup.path]);
   return {...test,requests,scope,api:scope.window.maimaiCatalogDetails,data:scope.window.maimaiResearchCatalog,maxActive:()=>maxActive};
 }

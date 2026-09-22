@@ -1,5 +1,18 @@
 # Player import delivery — 2026-09-21 UTC
 
+The current [general-release plan](PLAYER_IMPORT_RELEASE_PLAN.md) collects the
+remaining acceptance gates and the new banner-free import-button proposal. It
+is planning/design work; it does not activate the main-site feature.
+
+September 22 UTC: the **unlisted pilot is published**, with Adam's test-page,
+$5/month-plus-usage Workers Paid and minimal deployment-permission approvals.
+The [hosted release record](MAISHIFT_HOSTED_PILOT_RELEASE.md) preserves the exact
+deployment and evidence: 1,719 real sample PBs matched, grades/ratings visible,
+remembered restore and unchanged refresh passed, and cross-tab Forget survived
+reloads. Existing production content is byte-identical. The complete feature's
+general-release gates remain open; earlier local-only statements below describe
+their dated validation stages and are superseded by that hosted record.
+
 The independent import, refresh, storage and localization changes are implemented
 for review. **The complete Maishift integration remains incomplete and disabled.**
 The approved local proxy now verifies extraction and normalization of all 2,010
@@ -14,18 +27,110 @@ local mapping consumption is implemented and tested as recorded in
 [mapping test evidence](MAISHIFT_MAPPING_TESTS.md): all 2,010 International and
 200 Japan sample PBs match in Chrome, Edge, Firefox and narrow WebKit. Player source identity uses
 the supplied username plus game region, with rename/reuse limits documented in
-[the mapping decisions](MAISHIFT_MAPPING_DECISIONS.md). The preview was shortened,
-with secondary copy under native Import details; new validation and fictional
-screenshots are in the proxy delivery.
+[the mapping decisions](MAISHIFT_MAPPING_DECISIONS.md). The preview was shortened;
+secondary documentation now lives only behind localized source question marks.
+The duplicate guide link and Import details disclosure are removed. Initial
+region selection and remaining image/chart-rating limitations are recorded in
+[the presentation follow-up](IMPORT_SOURCE_PRESENTATION.md).
 The [runtime verification](MAISHIFT_RUNTIME_VERIFICATION.md) now also passes both
 regions in local workerd, adds bounded output expansion and per-isolate admission,
 and separates the remaining upstream chronology and deployed resource gates.
 The [invited pilot](MAISHIFT_PILOT.md) is now built as a separate unlisted page
 and deployment artifact. Its baseline/upload/stability sequence collects the
 missing evidence without writing experimental data into saved Party history.
-It is not published and does not enable the normal import or announcement.
+It is now published as a pilot and does not enable the normal import or announcement.
 
-## Local preview repair and real-account baseline — September 21
+## Actual chart browser pilot and import presentation — September 21
+
+The pilot now includes `/pilot/maishift/browser/`, using Party's actual chart
+browser and import pipeline. Its saved dataset, temporary import, cross-tab
+notifications and filter/group preferences use a separate pilot namespace.
+The main-site Maishift capability and announcement remain disabled. The browser
+pilot omits analytics, announcement and payment scripts. File/report imports,
+remembered refresh, corrections, cross-tab Forget and source-switch cancellation
+remain part of the same tested pipeline. No Session Report pin or portable v1
+schema changed, so no downstream pinned-library update was required.
+
+Published filter changes (#39) and the MAGiCAL logo (#40) were fetched and merged
+from `origin/main` at `e2ee969`, integrated locally as `f9dd8a9`. All 25 incoming
+files matched their preserved pre-merge working copies afterward. The scoped
+stash remains available. Unrelated retention tooling, artwork and badge work was
+preserved and excluded from these changes.
+
+The import menu question mark moved into the popup: one shared help link for
+the grouped file/report options, and one for Maishift. Both open the corresponding
+section of a locally bundled README in English, Simplified Chinese, Korean or
+Japanese. The compact radio rows use Party's favicon and the verified Maishift
+favicon. Explicit regional URLs select International/Japan without a request;
+bare names retain the region choice. North America uses the International player
+record set. See [presentation and source evidence](IMPORT_SOURCE_PRESENTATION.md).
+
+Maishift's verified integer total profile rating now appears in the official
+badge, in both import preview and Settings. Optional display metadata is stored
+beside the dataset, including temporary imports; it never changes the portable
+format or creates history. Missing values and per-chart fractional ratings remain
+unknown. A real-source browser preview again showed 1,719 PBs and the reported
+total rating. The user-approved source was imported once into the isolated local
+test tab; no raw score artifact or real-player screenshot was retained.
+
+The build uses registry inventory, with exact mappings and the latest version
+logo. Jackets and the retained transcription/pattern/Flow package are not included;
+their placeholders/unavailable sections are an explicit current pilot limitation.
+The upload-check surface is still available separately for genuine before/after
+evidence. This browser pilot does not establish genuine upload chronology,
+deployed-origin access or operational limits, and does not complete general release.
+
+Validation after the presentation/rating changes:
+
+| Check | Result | DevCache workspace |
+| --- | --- | --- |
+| Python wrapper | 525 tests, OK, 7 skipped | `20260921T214627710-82771ce7` |
+| Worker wrapper and binding generation | 34 passed | `20260921T214628436-399df369` |
+| Complete player browser matrix | 376 passed | `20260921T214628481-394c39a2` |
+| Localization, JS copy inventory and review fingerprints | Passed, 919 messages | Canonical source with DevCache tools |
+
+The matrix covers Chrome, Edge, Firefox and WebKit plus desktop/mobile/320px,
+all four languages, actual built catalog overlays, main-site storage isolation,
+restoration, unknown/known rating, rating-only refresh without new history,
+corrections, hidden results, unchanged filter selection, delayed responses,
+cross-tab Forget, newer file imports and private/login/throttled/oversized inputs.
+The source-side badge padding was subsequently tightened and focused final-tree
+validation is recorded below. Fictional screenshots are under the browser
+workspace's `tests/browser/test-results/player-maishift-browser-*` directories.
+
+Final focused browser validation passed 70 checks in
+`20260921T215039549-3f7f8533`, including the final profile-card padding and
+provider-specific metadata guard. That workspace's
+`output/browser-tests/maishift-pilot` is the exact artifact served locally on
+port 8896. Its upload-check fingerprint is
+`cbeb35315994ff79ee9589f14c6b890363b57e9b429e803e07d7368d7c3d6ca2`;
+browser fingerprint is
+`7eafc35b498f9bff2a46b3d3f641e2fa021e7874b9d14b95fd6d4ba293c8456f`.
+The gateway verifies every manifest file at startup. No live deployment occurred.
+
+Staged-only export `browser-pilot-staged-20260921T215810037` passed its three
+artifact tests and produced the identical manifest and file digests. Text asset
+packaging now normalizes LF/CRLF so checkout line endings cannot change release
+fingerprints. The resulting artifact passed another 70 browser checks in
+`20260921T215758224-73df5b60`; it is byte-identical to the artifact served above.
+Final style checks passed; the subsequent helper-only line wrap was confirmed
+to preserve its parsed Python program. Changes are staged for review, with the
+unrelated working-tree files and preservation stash left intact.
+
+During the final check, additional unstaged genre/availability work appeared in
+`challenge-review.html`, `challenge-review.js`, `chart-filters.css`, `lab-loader.js`,
+`registry-browser.js` and `registry_catalog.py`. It is preserved, not included in
+the staged pilot or its tested artifact, and is distinct from the published
+filter/MAGiCAL changes already merged above.
+
+Settings keyboard/accessibility and analytics privacy regression checks then
+passed 22 tests, with three opt-in live checks skipped, in
+`20260921T215332042-4aa2c5b7`. An earlier run collided with the other test server;
+the sequential rerun exposed one test that still expected the removed help-menu
+item. Its expected keyboard sequence was updated, and the complete selected
+suite passed. No assertions were suppressed and no live analytics audit was run.
+
+## Earlier local preview repair and real-account baseline — September 21
 
 The initial loopback preview was a static server: its API POST returned 501.
 The replacement `tools/Start-MaishiftPilot.ps1` serves the verified artifact and
@@ -210,8 +315,40 @@ Native-language human review and real-device mobile checks are not claimed.
 - [ ] Obtain a separate owner release action; separately approve proxy deployment,
   monitoring schedule, alert publication and long-term canary.
 
-No deployment, push, maintainer contact, issue update, live workflow dispatch,
-monitoring schedule activation or private-data refresh was performed. The
-subsequently approved proxy was implemented and tested locally; it is not deployed.
+The subsequently approved pilot and isolated proxy are now deployed; see the
+hosted record above. No push, maintainer contact, issue update, live workflow
+dispatch, monitoring schedule activation or private-data refresh was performed.
 See [the source/storage contract](PLAYER_SOURCES.md) and
 [the Maishift investigation](MAISHIFT_INTEGRATION.md) for operational limits.
+
+
+## Current local rating/artwork follow-up
+
+The compact profile card now omits the regional label and links its username.
+Adapter v2 imports verified integer per-chart contributions and safely enriches
+legacy null ratings at identical source observations. Unknown/known Maishift
+rating metadata alone does not create a PB-change row; known corrections retain
+existing history semantics. Portable schema and validation are unchanged. The
+local UI reader now differs from the previously pinned Session Report reader
+only in this presentation deduplication rule; no downstream pin was updated.
+
+All 28 version logos share the verified public artwork manifest and fallback.
+The local pilot includes the accepted retained jackets/chart package projected
+onto the current registry (1,425 song images and 6,959 prepared charts). See
+`IMPORT_SOURCE_PRESENTATION.md` for provenance and final verification. No public
+release, canary schedule, hosted pilot or combined announcement was activated.
+
+Settings now also offers Clear player data for temporary and remembered imports.
+It removes the visible dataset and saved connection, aborts pending work, and
+propagates a persistent clear marker across tabs. The import picker warns in red
+when data is loaded; different-account confirmation repeats the concise overwrite
+notice. Same-account confirmation and refresh do not repeat it. Same-player
+history reconciliation is unchanged. The existing Forget action and file /
+report import defaults remain intact. See `IMPORT_SOURCE_PRESENTATION.md` for
+the follow-up checks; this does not change the outstanding hosted release gates.
+
+Maishift list, filter, sort and history grades now derive from exact achievement
+values when the source grade is blank, using verified upstream thresholds. This
+display fallback also fixes already saved imports without changing portable
+observations or adding history. Last Updated uses Party's local successful import
+time, and the filtered count sits right-aligned immediately above the chart list.

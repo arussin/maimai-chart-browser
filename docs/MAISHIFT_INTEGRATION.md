@@ -1,7 +1,12 @@
 # Maishift investigation and release gate
 
-Status: **local proxy and browser adapter implemented; release remains incomplete
-and disabled**. The approved official sample now passes the frozen server reader
+Current status: the approved unlisted pilot and its isolated Worker are
+[deployed and verified](MAISHIFT_HOSTED_PILOT_RELEASE.md). **General release remains
+incomplete and disabled**; [merge gates](PLAYER_IMPORT_MERGE_CHECKLIST.md) include
+invited-account chronology and integration of the accepted pilot layout.
+The following local investigation records the evidence preceding that pilot.
+
+The approved official sample passes the frozen server reader
 and v1 normalization: 6,031 chart rows, 2,010 played PBs, 2,010 imported PBs, zero
 excluded records, and zero invented plays. The [follow-up matching and completeness
 research](MAISHIFT_MATCHING_RESEARCH.md) verifies agreement with Maishift's full
@@ -133,6 +138,38 @@ FULL_COMBO, FULL_COMBO_PLUS, ALL_PERFECT and ALL_PERFECT_PLUS; sync values inclu
 SYNC_PLAY, FULL_SYNC, FULL_SYNC_PLUS, FULL_SYNC_DX and FULL_SYNC_DX_PLUS.
 Absence of combo/sync is not an invented game result. No per-chart play timestamp
 was observed. No play/session can be constructed from this PB response alone.
+
+### Displayed grades (September 21 follow-up)
+
+The served [Maishift main client](https://maimai.shiftpsh.com/assets/main-B0wkGPQy.js)
+was read again without credentials or personal data. SHA-256:
+`8e8e0485856e2da861e630feeebd2ba13ac897334114be1b26eeaa41a0ec7d8d`.
+Its `J8e` achievement-to-rank function confirms these inclusive lower bounds
+in the observed integer units (10,000 units per percentage point):
+
+| Grade | Lower bound |
+| --- | ---: |
+| SSS+ | 1,005,000 |
+| SSS | 1,000,000 |
+| SS+ | 995,000 |
+| SS | 990,000 |
+| S+ | 980,000 |
+| S | 970,000 |
+| AAA | 940,000 |
+| AA | 900,000 |
+| A | 800,000 |
+| BBB | 750,000 |
+| BB | 700,000 |
+| B | 600,000 |
+| C | 500,000 |
+| D | 0 |
+
+Party applies these only as a display fallback for blank Maishift grades, using
+the exact validated achievement integer. It covers list/detail grades, grade
+filters, sorting and PB-history rows. Unknown or invalid achievements stay
+unknown; an actual zero is D. Reported grades and Kamaitachi records are unchanged.
+Portable observations, hashes, timestamps and history stay unchanged, so already
+saved imports gain their grades on reload without another upstream request.
 
 The main client maps `jp` to the record region JAPAN and both `intl` and `na` to
 ASIA. NA therefore changes availability display, not the underlying player region.

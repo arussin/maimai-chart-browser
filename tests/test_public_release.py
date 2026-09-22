@@ -218,13 +218,13 @@ async function run(change=()=>{},alter=()=>{}){
     catalog:scope.window.maimaiResearchCatalog};
 }
 (async()=>{
-  let r=await run();assert.equal(r.appended.length,2);
-  assert.equal(r.appended[0].textContent,bytes.toString('utf8'));
+  let r=await run();assert.equal(r.appended.length,1);
+  assert.equal(r.appended[0].src,'challenge-review.js');
   assert.equal(JSON.stringify(r.catalog),bytes.toString('utf8'));
   assert.equal(r.pinned,undefined); // Clean/latest URLs must not acquire a version pin.
   assert(!r.requests.some(p=>p.includes('chart-id')));
   r=await run(m=>{m.schema_version='1.0.0';delete m.releases[0].parts;});
-  assert.equal(r.appended.length,2);assert(r.requests.includes(entry.path));
+  assert.equal(r.appended.length,1);assert(r.requests.includes(entry.path));
   for(const change of [m=>m.schema_version='9.0.0',m=>m.releases[0].parts=[],
     m=>m.releases[0].parts[0].path='https://example.org/private',
     m=>m.releases[0].parts[0].bytes=8*1024*1024+1,

@@ -34,7 +34,7 @@ function response(status, data, retryAt, now) {
   if (new TextEncoder().encode(body).byteLength > MAX_RESPONSE_BYTES) throw new ImportError('response_too_large');
   return new Response(body,{status,headers});
 }
-export function createService({fetcher = fetch, now = Date.now, timeoutMs = 30000} = {}) {
+export function createService({fetcher = fetch, now = Date.now, timeoutMs = 30000, allowedRegion = null} = {}) {
   // A transient count, never player data or a global rate quota. Several large
   // JSON decodes share one isolate's memory; reject excess work without queuing
   // bodies. Durable Objects still coordinate each profile across isolates.
@@ -57,13 +57,15 @@ export function createService({fetcher = fetch, now = Date.now, timeoutMs = 3000
       if (!validInput(input)) throw new ImportError('invalid_request',400);
       if (activeImports >= 2) return response(429,{error:'rate_limited'},now()+30000,now());
       activeImports++; reserved = true;
-      coordinator = env.PROFILE_LIMITER.getByName(await hash(input.region+':'+input.handle.toLowerCase()));
+      // All region choices share a handle's quota, including initial automatic
+      // selection; resolving a different region must not bypass the cooldown.
+      coordinator = env.PROFILE_LIMITER.getByName(await hash('profile:'+input.handle.toLowerCase()));
       lease = await coordinator.claim(input.manual);
       if (!lease.id) return response(429,{error:'rate_limited'},lease.retryAt,now());
       const signal = AbortSignal.any([request.signal,AbortSignal.timeout(timeoutMs)]);
-      async function read(kind) {
+      async function read(kind, selected = input) {
         signal.throwIfAborted();
-        const result = await fetcher(upstreamURL(kind,input),{method:'GET',headers:{Accept:'application/json','x-tsr-serverFn':'true'},
+        const result = await fetcher(upstreamURL(kind,selected),{method:'GET',headers:{Accept:'application/json','x-tsr-serverFn':'true'},
           credentials:'omit',referrerPolicy:'no-referrer',redirect:'manual',cache:'no-store',signal});
         if (!result.ok) {
           await result.body?.cancel();
@@ -74,8 +76,10 @@ export function createService({fetcher = fetch, now = Date.now, timeoutMs = 3000
         return decode(await boundedJSON(result,MAX_BYTES,signal));
       }
       const before = profile(await read('profile'),input);
-      const payload = minimize(await read('tracks'),before);
-      const after = profile(await read('profile'),input);
+      if (allowedRegion && before.region !== allowedRegion) throw new ImportError('profile_not_approved',403);
+      const selected = {...input,region:before.region};
+      const payload = minimize(await read('tracks',selected),before);
+      const after = profile(await read('profile',selected),selected);
       if (JSON.stringify(before) !== JSON.stringify(after)) throw new ImportError('snapshot_changed',409);
       signal.throwIfAborted();
       return response(200,payload,null,now());

@@ -9,8 +9,11 @@ import {validInput} from '../player-import-worker/contract.mjs';
 import '../src/maimai_intelligence/assets/player-maishift.js';
 
 const PREFIX='/pilot/maishift/';
+const BROWSER=PREFIX+'browser/';
+const browserFiles=new Set(['index.html','manifest.json','localization.js','settings-menu.js','maishift-browser-pilot.js','maishift-browser-pilot.css','player-data-core.js','player-maishift.js','player-sources.js','player-storage.js','player-data.js','view-navigation.js','challenge-review.js','challenge-review.css','lab-loader.js','maishift-favicon.ico','player-import-help.css',...['en','zh-Hans','ko','ja'].map(locale=>'player-import-help.'+locale+'.html')]);
 const policy={'Cache-Control':'no-store','Referrer-Policy':'no-referrer','X-Robots-Tag':'noindex, nofollow','X-Content-Type-Options':'nosniff','X-Frame-Options':'DENY',
   'Content-Security-Policy':"default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'none'"};
+const browserPolicy={...policy,'Content-Security-Policy':"default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https:; base-uri 'none'; frame-ancestors 'none'; form-action 'none'"};
 const json=(status,error,extra={})=>Response.json({error},{status,headers:{...policy,...extra}});
 export async function loadAssets(directory){
   const root=resolve(directory);
@@ -20,10 +23,12 @@ export async function loadAssets(directory){
   const names=new Set(['index.html','pilot.css','pilot.js','pilot-core.js','player-data-core.js','player-maishift.js','localization.css','localization.js','mapping.json']);
   for(const [name,digest]of Object.entries(manifest.files)){
     if(name==='_headers')continue;
-    if(!name.startsWith(PREFIX.slice(1))||!names.delete(name.slice(PREFIX.length-1)))throw Error('Invalid artifact file');
+    const browserName=name.startsWith(BROWSER.slice(1))?name.slice(BROWSER.length-1):null;
+    if(browserName!==null){if(!browserFiles.has(browserName)&&!/^(?:catalogs|catalog-parts|catalog-index|chart-details)\/[a-f0-9]{64}\.json$/.test(browserName)&&!/^media\/[a-f0-9]{64}\.webp$/.test(browserName))throw Error('Invalid browser artifact file');}
+    else if(!name.startsWith(PREFIX.slice(1))||!names.delete(name.slice(PREFIX.length-1)))throw Error('Invalid artifact file');
     const bytes=await readFile(join(root,name));
     if(createHash('sha256').update(bytes).digest('hex')!==digest)throw Error('Artifact integrity failed');
-    const type=name.endsWith('.html')?'text/html':name.endsWith('.css')?'text/css':name.endsWith('.js')?'text/javascript':'application/json';
+    const type=name.endsWith('.html')?'text/html':name.endsWith('.css')?'text/css':name.endsWith('.js')?'text/javascript':name.endsWith('.png')?'image/png':name.endsWith('.ico')?'image/x-icon':name.endsWith('.webp')?'image/webp':'application/json';
     assets.set('/'+name,{bytes,type});
   }
   if(names.size)throw Error('Incomplete artifact');
@@ -32,7 +37,7 @@ export async function loadAssets(directory){
 
 export function createPreview({assets,origin,approved=null,fetcher=fetch,now=Date.now}){
   if(!/^http:\/\/127\.0\.0\.1:\d+$/.test(origin))throw Error('Loopback origin required');
-  const service=createService({fetcher,now});let attempts=0,lastAttempt=null,lease=null,leaseUntil=0,retryAt=0;
+  const service=createService({fetcher,now,allowedRegion:approved?.region});let attempts=0,lastAttempt=null,lease=null,leaseUntil=0,retryAt=0;
   // Explicit local equivalents, not a claim of deployed Durable Object behavior.
   const coordinator={
     async claim(){const until=Math.max(retryAt,leaseUntil,lastAttempt===null?0:lastAttempt+30000);if(until>now())return {retryAt:until};lastAttempt=now();lease=crypto.randomUUID();leaseUntil=now()+45000;return {id:lease};},
@@ -40,13 +45,14 @@ export function createPreview({assets,origin,approved=null,fetcher=fetch,now=Dat
   };
   return async request=>{
     const url=new URL(request.url);
-    if(url.origin!==origin||url.search||url.hash)return json(404,'not_found');
+    if(url.origin!==origin||url.hash)return json(404,'not_found');
     if(url.pathname!==PATH){
       if(!['GET','HEAD'].includes(request.method))return json(405,'method_not_allowed');
-      const asset=assets.get(url.pathname===PREFIX?PREFIX+'index.html':url.pathname);
-      return asset?new Response(request.method==='HEAD'?null:asset.bytes,{headers:{...policy,'Content-Type':asset.type+'; charset=utf-8'}}):json(404,'not_found');
+      const asset=assets.get([PREFIX,BROWSER].includes(url.pathname)?url.pathname+'index.html':url.pathname);
+      return asset?new Response(request.method==='HEAD'?null:asset.bytes,{headers:{...(url.pathname.startsWith(BROWSER)?browserPolicy:policy),'Content-Type':asset.type+'; charset=utf-8'}}):json(404,'not_found');
     }
     if(request.method!=='POST')return json(405,'method_not_allowed');
+    if(url.search)return json(404,'not_found');
     if(request.headers.get('origin')!==origin||['cross-site','none'].includes(request.headers.get('sec-fetch-site'))||['cookie','authorization','referer'].some(k=>request.headers.has(k)))return json(403,'origin_not_allowed');
     if(!approved)return json(503,'integration_disabled');
     if(!/^application\/json(?:;|$)/i.test(request.headers.get('content-type')||'')||Number(request.headers.get('content-length'))>2048)return json(400,'invalid_request');
@@ -54,8 +60,8 @@ export function createPreview({assets,origin,approved=null,fetcher=fetch,now=Dat
     const chunks=[];let size=0,input;
     try{for(;;){const {value,done}=await reader.read();if(done)break;size+=value.length;if(size>2048)return json(413,'invalid_request');chunks.push(value);}input=JSON.parse(Buffer.concat(chunks).toString('utf8'));}
     catch{return json(400,'invalid_request');}finally{await reader.cancel().catch(()=>{});reader.releaseLock();}
-    if(!validInput(input)||!input.manual)return json(400,'invalid_request');
-    if(input.handle!==approved.handle||input.region!==approved.region)return json(403,'profile_not_approved');
+    if(!validInput(input)||!input.manual&&!assets.has(BROWSER+'index.html'))return json(400,'invalid_request');
+    if(input.handle!==approved.handle||input.region!==approved.region&&input.region!=='auto')return json(403,'profile_not_approved');
     if(attempts>=6)return json(429,'rate_limited',{'Retry-After':'3600'});
     const until=Math.max(retryAt,leaseUntil,lastAttempt===null?0:lastAttempt+30000);
     if(until>now())return json(429,'rate_limited',{'Retry-After':String(Math.ceil((until-now())/1000))});
@@ -91,7 +97,7 @@ if(process.argv[1]&&import.meta.url===pathToFileURL(resolve(process.argv[1])).hr
     }
     const port=Number(process.env.MAISHIFT_PREVIEW_PORT||8895);
     const server=await startPreview({artifact:process.env.MAISHIFT_PREVIEW_ARTIFACT||'',port,approved});
-    console.log(JSON.stringify({preview:'http://127.0.0.1:'+port+PREFIX,liveReads:!!approved,maximumReads:6,public:false}));
+    console.log(JSON.stringify({preview:'http://127.0.0.1:'+port+PREFIX,browserPreview:'http://127.0.0.1:'+port+BROWSER,liveReads:!!approved,maximumReads:6,public:false}));
     for(const signal of ['SIGINT','SIGTERM'])process.once(signal,()=>{server.close();server.closeAllConnections();});
   }catch{console.error('Local pilot could not start. Check the artifact, port and explicit profile approval.');process.exitCode=1;}
 }

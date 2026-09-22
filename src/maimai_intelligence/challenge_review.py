@@ -21,7 +21,7 @@ def _encoded(value):
     )
 
 
-def review_scripts():
+def review_scripts(*, player_pilot=False):
     assets = files("maimai_intelligence.assets")
     theme = assets.joinpath("chart-theme.json").read_text("utf-8")
     lessons = _encoded(json.loads(assets.joinpath("pattern-lessons.json").read_text("utf-8")))
@@ -59,6 +59,14 @@ def review_scripts():
                 "chart-comparison.js",
                 "challenge-review.js",
             )
+            if not player_pilot
+            or name
+            not in {
+                "feature-announcements.js",
+                "support-config.js",
+                "support-client.js",
+                "support-stripe.js",
+            }
         )
     )
 

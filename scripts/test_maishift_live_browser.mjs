@@ -58,7 +58,7 @@ try{
           requests++;const body=request.postDataJSON();check(body.handle===selected.handle&&body.region===selected.region,'unexpected_profile_request');
           await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(payload)});return;
         }
-        if(url.pathname.endsWith('/player-sources.js')){const asset=await route.fetch();await route.fulfill({response:asset,body:(await asset.text()).replace('maishift:false','maishift:true')});return;}
+        if(url.pathname.endsWith('/player-sources.js')){const asset=await route.fetch();await route.fulfill({response:asset,body:(await asset.text()).replace('maishift:globalThis.maimaiPlayerContext?.pilot===true','maishift:true')});return;}
         await route.continue();
       });
       stage=name+':load';await page.goto(origin+'/');await page.waitForFunction(()=>!!globalThis.maimaiResearchCatalog&&!!globalThis.maimaiPersonal);await page.evaluate(()=>maimaiPersonal.ready);

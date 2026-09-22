@@ -4,6 +4,12 @@ import {createPreview} from '../scripts/serve_maishift_pilot.mjs';
 import {wire,publicProfile,tracks} from './fixtures.mjs';
 const origin='http://127.0.0.1:8895',input={handle:'fictional-player',region:'intl',manual:true};
 const request=(body=input,headers={})=>new Request(origin+'/api/player-import/maishift',{method:'POST',headers:{Origin:origin,'Content-Type':'application/json',...headers},body:JSON.stringify(body)});
+
+test('automatic selection retains the local canary region limit before reading scores',async()=>{
+  let calls=0;const run=createPreview({assets:new Map(),origin,approved:input,fetcher:async()=>{calls++;return Response.json(wire(publicProfile('JAPAN')));}});
+  const res=await run(request({...input,region:'auto'}));assert.equal(res.status,403);assert.deepEqual(await res.json(),{error:'profile_not_approved'});assert.equal(calls,1);
+  const s=setup();assert.equal((await s.run(request({...input,region:'auto'}))).status,200);assert.equal(s.calls(),3);
+});
 function setup(approved=input){let time=1e12,calls=0;const assets=new Map([['/pilot/maishift/index.html',{bytes:'fictional page',type:'text/html'}]]);
   const run=createPreview({assets,origin,approved,now:()=>time,fetcher:async(_url,options)=>{assert.equal(options.credentials,'omit');assert.equal(options.referrerPolicy,'no-referrer');return Response.json(wire(++calls%3===2?tracks():publicProfile()));}});
   return {run,advance:()=>{time+=31000;},calls:()=>calls};}
@@ -23,4 +29,13 @@ test('local preview respects upstream retry timing and keeps response failures s
   let calls=0;const run=createPreview({assets:new Map(),origin,approved:input,fetcher:async()=>{calls++;return new Response('private source details',{status:429,headers:{'Retry-After':'120'}});}});
   const failed=await run(request());assert.equal(failed.status,503);assert.ok(Number(failed.headers.get('Retry-After'))>=119);assert.ok(!(await failed.text()).includes('private'));
   assert.equal((await run(request())).status,429);assert.equal(calls,1);
+});
+
+test('browser preview serves versioned assets and permits consented refresh only for its approved source',async()=>{
+  const assets=new Map([['/pilot/maishift/browser/index.html',{bytes:'browser',type:'text/html'}],['/pilot/maishift/browser/player-data.js',{bytes:'source',type:'text/javascript'}]]);
+  let calls=0;const run=createPreview({assets,origin,approved:input,fetcher:async()=>Response.json(wire(++calls%3===2?tracks():publicProfile()))});
+  const page=await run(new Request(origin+'/pilot/maishift/browser/?version=maishift-pilot-v1'));assert.equal(page.status,200);assert.match(page.headers.get('Content-Security-Policy'),/style-src 'self' 'unsafe-inline'/);
+  assert.equal((await run(new Request(origin+'/pilot/maishift/browser/player-data.js?v=abc'))).status,200);
+  assert.equal((await run(request({...input,manual:false}))).status,200);
+  assert.equal((await run(request({...input,handle:'other',manual:false}))).status,403);
 });

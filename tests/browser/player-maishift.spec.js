@@ -8,7 +8,7 @@ async function boot(page){await page.goto('/lab/');await page.evaluate(()=>maima
 async function prepare(context,{locale='en'}={}){
   await context.addInitScript(locale=>{localStorage.setItem('maimai-language-v1',locale);sessionStorage.setItem('maimai-announcement:player-import-sources-v1','seen');},locale);
   // The public asset is disabled. Only this synthetic harness enables it.
-  await context.route('**/player-sources.js*',async route=>{const response=await route.fetch();await route.fulfill({response,body:(await response.text()).replace('maishift:false','maishift:true')});});
+  await context.route('**/player-sources.js*',async route=>{const response=await route.fetch();await route.fulfill({response,body:(await response.text()).replace('maishift:globalThis.maimaiPlayerContext?.pilot===true','maishift:true')});});
   const state={calls:0,delay:null,profile:publicProfile(),tracks:tracks(),status:200,html:false};
   await context.route('**'+PATH,async route=>{
     state.calls++;if(state.delay)await state.delay();
@@ -26,6 +26,14 @@ async function preview(page){await open(page);await page.locator('input[value=ma
 async function commit(page,remember=true){await preview(page);await page.locator('.player-dialog .player-remember input').setChecked(remember);await page.locator('.player-dialog .player-actions button').first().click();await expect.poll(()=>page.evaluate(()=>maimaiPersonal.enabled())).toBe(true);}
 async function age(page){await page.evaluate(async()=>{const db=await new Promise(resolve=>{const q=indexedDB.open('maimai-player-data',2);q.onsuccess=()=>resolve(q.result);});await new Promise((resolve,reject)=>{const t=db.transaction('datasets','readwrite'),s=t.objectStore('datasets'),q=s.get('active');q.onsuccess=()=>s.put({...q.result,source:{...q.result.source,lastAttempt:0}},'active');t.oncomplete=resolve;t.onabort=reject;});db.close();});}
 async function refresh(page){await page.locator('#settings-toggle').click();await page.locator('#player-refresh').click();}
+
+test('Maishift grades use exact integer boundaries and preserve unknown achievements',async({page})=>{
+  await boot(page);
+  const thresholds=[[0,'D'],[500000,'C'],[600000,'B'],[700000,'BB'],[750000,'BBB'],[800000,'A'],[900000,'AA'],[940000,'AAA'],[970000,'S'],[980000,'S+'],[990000,'SS'],[995000,'SS+'],[1000000,'SSS'],[1005000,'SSS+']];
+  const examples=thresholds.flatMap(([n,grade],i)=>[[n,grade],...(i?[[n-1,thresholds[i-1][1]]]:[])]);
+  examples.push([1005028,'SSS+'],[1006528,'SSS+'],[1010000,'SSS+'],[null,''],[-1,''],[1010001,''],[987654.5,''],['1005000','']);
+  expect(await page.evaluate(rows=>rows.map(([value])=>maimaiPlayerMaishift.grade(value)),examples)).toEqual(examples.map(([,grade])=>grade));
+});
 
 test('a 6000-PB profile reaches preview and preserves every observation',async({page,context})=>{
   const state=await prepare(context),template=state.tracks.tracks[0];state.tracks.tracks=Array.from({length:6000},(_,i)=>({...template,i:i+1}));await boot(page);await commit(page);
@@ -69,10 +77,9 @@ test('proxy preview has explicit consent, region, precision and unmatched covera
   await open(page);await page.locator('input[value=maishift]').check();expect(state.calls).toBe(0);
   await expect(page.getByLabel('Remember and refresh')).toBeChecked();
   await page.locator('#player-maishift-url').fill('fictional-player');await page.getByRole('button',{name:'Continue',exact:true}).click();
-  await expect(page.locator('.player-dialog')).toContainText('International · 3 PBs');await expect(page.locator('.player-dialog')).toContainText('Unmatched PB charts: 3');
+  await expect(page.locator('.player-dialog')).toContainText('3 PBs');await expect(page.locator('.player-dialog')).toContainText('Unmatched PB charts: 3');
   await expect(page.getByRole('button',{name:'Import & remember',exact:true})).toBeVisible();expect((await saved(page)).active).toBeNull();
-  await expect(page.locator('.player-import-details')).not.toHaveAttribute('open');await expect(page.getByText('Only PB observations are imported. Play dates and sessions are unavailable.',{exact:true})).not.toBeVisible();await page.screenshot({path:testInfo.outputPath('maishift-fictional-preview.png')});
-  await page.getByText('Import details',{exact:true}).click();await expect(page.getByText('Only PB observations are imported. Play dates and sessions are unavailable.',{exact:true})).toBeVisible();await page.getByText('Import details',{exact:true}).click();
+  await expect(page.locator('.player-import-details')).toHaveCount(0);await page.screenshot({path:testInfo.outputPath('maishift-fictional-preview.png')});
   await page.getByRole('button',{name:'Import & remember',exact:true}).click();await expect.poll(async()=>!!(await saved(page)).active).toBe(true);
   const source=(await saved(page)).active.source;expect(source.type).toBe('maishift');expect(source.region).toBe('intl');expect(source.autoRefresh).toBe(true);
   const options=await page.evaluate(()=>requests[0]);expect(options.url).toBe(PATH);expect(options.credentials).toBe('omit');expect(options.referrerPolicy).toBe('no-referrer');expect(page.url()).not.toContain('fictional-player');
@@ -132,6 +139,6 @@ test('newer file import invalidates an outstanding proxy refresh',async({page,co
   const fixture=JSON.parse(await readFile(new URL('../../output/reconciliation-fixture.json',import.meta.url),'utf8'));const bytes=gzipSync(Buffer.from(JSON.stringify(await page.evaluate(d=>maimaiPlayerData.reconcile(d),fixture))));
   await page.locator('input[type=file]').setInputFiles({name:'fictional.gz',mimeType:'application/gzip',buffer:bytes});await expect(page.getByRole('heading',{name:'Import this profile?',exact:true})).toBeVisible();await page.getByRole('button',{name:'Import data',exact:true}).click();release();await expect(page.locator('#player-refresh')).toBeHidden();await expect(page.locator('#player-status')).not.toContainText('Fictional Player');
 });
-for(const [locale,region,excluded] of [['en','International · 3 PBs','Records excluded for missing chart identity: 1'],['zh-Hans','国际版 · 3 项个人最佳成绩','因缺少谱面标识而排除的记录：1'],['ko','국제판 · 개인 최고 기록 3개','채보 식별 정보가 없어 제외된 기록: 1'],['ja','海外版 · 自己ベスト 3件','譜面の識別情報がないため除外された記録：1']])test(`localized Maishift preview ${locale} fits narrow screens and supports keyboard cancellation`,async({page,context})=>{
+for(const [locale,region,excluded] of [['en','3 PBs','Records excluded for missing chart identity: 1'],['zh-Hans','3 项个人最佳成绩','因缺少谱面标识而排除的记录：1'],['ko','개인 최고 기록 3개','채보 식별 정보가 없어 제외된 기록: 1'],['ja','自己ベスト 3件','譜面の識別情報がないため除外された記録：1']])test(`localized Maishift preview ${locale} fits narrow screens and supports keyboard cancellation`,async({page,context})=>{
   const state=await prepare(context,{locale});state.tracks.tracks.push({s:9000,r:{a:987654}});await boot(page);await preview(page);await expect(page.locator('.player-dialog')).toContainText(region);await expect(page.locator('.player-dialog')).toContainText(excluded);expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);await page.keyboard.press('Escape');await expect(page.locator('.player-dialog')).not.toBeVisible();expect((await saved(page)).active).toBeNull();
 });

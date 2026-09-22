@@ -92,7 +92,11 @@ def _integer(value, maximum=2**53 - 1, nullable=False):
 def validate_player(player):
     """Validate portable provider identity without linking accounts or regions."""
     if not isinstance(player, dict) or set(player) != {
-        "key", "provider", "game", "username", "displayName"
+        "key",
+        "provider",
+        "game",
+        "username",
+        "displayName",
     }:
         raise ValueError("Invalid player identity")
     for value in player.values():
@@ -143,7 +147,7 @@ def validate(data, *, check_revision=True):
     for key, c in data["charts"].items():
         if data["player"]["provider"] == "maishift":
             prefix = "maishift:" + data["player"]["key"].split(":")[2] + ":"
-            if not key.startswith(prefix) or not key[len(prefix):]:
+            if not key.startswith(prefix) or not key[len(prefix) :]:
                 raise ValueError("Invalid chart reference")
         if not isinstance(c, dict) or set(c) != CHART_FIELDS or c["chartID"] != key:
             raise ValueError("Invalid chart reference")

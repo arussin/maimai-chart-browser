@@ -42,9 +42,14 @@
     "README.ko.md": "16f88597ed58e405c4b14c820bca9e21b6341f9f3a131a3a1a164c83b48e3e93",
     "README.ja.md": "a52749c6cd74759fd9a732a607fc7fc0defdd7958e3cd1f127a229c015a4f482",
     "src/maimai_intelligence/assets/locales/share.json": "20585e67f1443547ae3ba6b164a38b634f5b233f846f40d51af98ee9da825839",
-    "src/maimai_intelligence/assets/locales/player-sources.json": "6223dd50b4a37e09dc9af00ba08fa655ca1105b9b2ac20f7be17bc262e1c0012",
-    "src/maimai_intelligence/assets/locales/player-maishift.json": "cd1b8916093f79ba25b54de665790aec2e1f9c251ff369f2977b36f512a1d001",
-    "src/maimai_intelligence/assets/locales/maishift-pilot.json": "1bf242e512d4f7f9993f7e723a31a9fb88cb578677f418fe096a02d19940d85e"
+    "src/maimai_intelligence/assets/locales/player-sources.json": "dabeb3b2b16cc0d4429016116f329a0748caf73e8aecc323828e04afc4e42052",
+    "src/maimai_intelligence/assets/locales/player-maishift.json": "3818565f5eae7310e64f79292312a424a07d517a26bcadafc98ee994629bb8e4",
+    "src/maimai_intelligence/assets/locales/maishift-pilot.json": "8ea2ab02f9b74fb0995a3610b840a9bf3889b684000d4fae09a071977abeb104",
+    "src/maimai_intelligence/assets/import-help/README.ja.md": "16d1a8101988175ef04e8c8cfbe4c8286a05209431ada449c035687f9d878fdd",
+    "src/maimai_intelligence/assets/import-help/README.ko.md": "04315564a5330cf1c01b14d25255b98f08330d28281b4712e94b9643ecb5edf7",
+    "src/maimai_intelligence/assets/import-help/README.md": "e2285c3a70b8152b7183f4f179131c9912c581800959b09300503d569b319eb8",
+    "src/maimai_intelligence/assets/import-help/README.zh-Hans.md": "2459877f40b219ff720ed7e2053587f2f1609b09b2e1d5db2dc0e14586d9f21a",
+    "src/maimai_intelligence/assets/song-display-readings.json": "94d944ed0f56d8a36d5565af9893f6701b99666b224a1f7db6e767413b67973c"
   },
   "documentation": {
     "source": "README.md",
@@ -118,9 +123,9 @@
       "ko",
       "ja"
     ],
-    "entries": 53,
+    "entries": 56,
     "record": "docs/localization-review/maishift-pilot-20260921.md",
-    "scope": "Opt-in pilot form, consent, result states, errors and privacy copy; includes local-only notice and region-mismatch follow-up. Existing regional terminology and placeholders retained."
+    "scope": "Opt-in upload test plus browser preview. Reviewed three added labels for preview status, separate score storage, and opening the chart browser; all four UI languages. No song or region terminology changes."
   },
   "catalog_hotfix_review": {
     "date": "2026-09-21",
@@ -128,5 +133,45 @@
     "method": "AI contextual language review; not native-speaker certification.",
     "record": "docs/localization-review/catalog-hotfix-20260921.md",
     "scope": "Availability controls, unrecognized-genre error, six fixed genres and all five difficulty names across en, zh-Hans, ko and ja. Cabinet vocabulary and source limits are documented. Version identities remain literal; annual CN release mapping is explicitly deferred."
+  },
+  "import_source_presentation": {
+    "date": "2026-09-21",
+    "method": "AI review against source dialog and all four help READMEs",
+    "record": "docs/IMPORT_SOURCE_PRESENTATION.md",
+    "locales": [
+      "en",
+      "zh-Hans",
+      "ko",
+      "ja"
+    ],
+    "scope": "Compact linked username without visible region label; localized PB count and Last Updated; verified per-chart source contributions, unknown estimates; unchanged regional identity and consent. Reviewed EN, zh-Hans, ko and ja help copy."
+  },
+  "player_data_clear": {
+    "date": "2026-09-21",
+    "reviewer": "Codex",
+    "method": "AI contextual review; not native-speaker certification.",
+    "record": "docs/IMPORT_SOURCE_PRESENTATION.md",
+    "scope": "Seven Clear and import replacement messages in en, zh-Hans, ko and ja; distinguishes saved-data deletion from upstream account deletion and same-player history retention from replacement."
+  },
+  "import_overwrite_copy": {
+    "date": "2026-09-21",
+    "reviewer": "Codex",
+    "method": "AI contextual review; not native-speaker certification.",
+    "record": "docs/IMPORT_SOURCE_PRESENTATION.md",
+    "scope": "User-requested concise overwrite notice in en, zh-Hans, ko and ja. Appears for a new manual import with an active account, and a confirmed different-account offer; omitted from same-account confirmation and refresh. Reviewed browser-only import meaning and overwrite wording; no account deletion implied. Replaces the three earlier verbose import messages; underlying same-player reconciliation is unchanged."
+  },
+  "player_results_invariants": {
+    "date": "2026-09-22",
+    "reviewer": "Codex",
+    "method": "Technical source review of two nonlinguistic literals; no translation changes.",
+    "scope": "Classified the decorative import SVG (aria-hidden, no text) and profile-link CSS class list as invariants. Verified the button uses its existing localized label. All 940 message entries and song pronunciation records remain unchanged; existing Combo and Sync translations are reused. Popup fit was checked in all four languages."
+  },
+  "display_readings_review": {
+    "date": "2026-09-22",
+    "method": "AI linguistic review; no native-speaker certification",
+    "reviewedCandidates": 445,
+    "accepted": 321,
+    "sourceRevision": "f08148f8644e40de9b178445df4bd59da712d3de",
+    "record": "docs/localization-review/display-readings-20260922.md"
   }
 }

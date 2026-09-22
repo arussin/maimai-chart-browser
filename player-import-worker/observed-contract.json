@@ -55,7 +55,8 @@
   "profileMetadata": [
     "name",
     "createdAt",
-    "updatedAt"
+    "updatedAt",
+    "rating"
   ],
   "fullTrackFields": [
     "songs",
@@ -73,7 +74,7 @@
     "a": "achievement integer, 1000000 = 100%",
     "d": "DX score",
     "m": "maximum DX score",
-    "g": "fractional source rating; no verified lossless integer v1 conversion, so canonical rate is null",
+    "g": "Fractional source contribution. The public client displays Math.floor(r.g). Import that integer when t.x !== 0; missing or estimated (t.x === 0) stays null. No achievement rounding or guessed constant.",
     "c": "optional combo",
     "y": "optional sync"
   },
@@ -84,7 +85,7 @@
   },
   "coverage": "The full tracks and export loaders agree on all 2010 International and 200 Japan played PBs for the approved official sample. Completeness for other users is unverified. Use partial PB observations; no invented plays.",
   "identity": "The supplied username plus provider and region identifies the public source. It is not proof of account ownership and cannot detect reassigned usernames.",
-  "regionFallback": "A user-approved profile returned ASIA when JAPAN was requested on 2026-09-21. Reject known mismatches with region_mismatch before fetching tracks; never relabel or silently switch the selected region. The identifying profile and payload are not retained in this fixture.",
+  "regionFallback": "A user-approved profile returned ASIA when JAPAN was requested on 2026-09-21. Explicit regions and refresh reject mismatches before fetching tracks. Initial manual auto selection requests ASIA, validates the returned ASIA/JAPAN identity, and uses that explicit region for tracks and closing profile reads. Both-region profiles default to International; a regional URL selects Japan. The profile link targets the resolved regional source; the compact card omits a region label. No language-based identity inference, relabeling, second-profile probe or auto refresh identity is allowed. The identifying profile and payload are not retained in this fixture.",
   "chronology": "Profile dates are observed record metadata. Strict update ordering and atomic full-track snapshots across real uploads, corrections and version changes remain unverified; release stays disabled.",
   "displayMetadata": "Empty title or artist strings exist. Preserve known provider chart identity with empty display metadata; do not discard these PBs.",
   "omitted": [
@@ -96,5 +97,13 @@
     "plate details",
     "user/session/auth data"
   ],
-  "fixtures": "All checked-in fixtures are fictional. Numeric IDs in synthetic tests never authorize chart joins."
+  "fixtures": "All checked-in fixtures are fictional. Numeric IDs in synthetic tests never authorize chart joins.",
+  "profileRating": "Verified 2026-09-21: userRecord.profile.rating is the nonnegative integer total profile rating (distinct from fractional per-chart r.g). Optional display metadata; no portable v1 field or reconstructed history is added. Invalid supplied values fail closed.",
+  "adapterVersion": 2,
+  "ratingEvidence": {
+    "observedAt": "2026-09-21",
+    "packedTracks": "https://maimai.shiftpsh.com/assets/packedTracks-BdfXGpoT.js",
+    "rowDisplay": "https://maimai.shiftpsh.com/assets/RecordRow-CUnLZSM2.js",
+    "migration": "Adapter v2 fills only null rates at identical source timestamps and exact other fields. Existing observation references are rehashed, never assigned a new date or play. Unknown-to-known rating metadata alone is not a PB change."
+  }
 }

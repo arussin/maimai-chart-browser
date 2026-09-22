@@ -32,6 +32,7 @@ test('public source previews and remembers atomically; requests omit credentials
   await boot(page);const data=await fixture(page);await mock(context,page,data);
   await page.evaluate(()=>{const original=window.fetch;window.sourceOptions=[];window.fetch=(url,options)=>{if(String(url).includes('public-report'))window.sourceOptions.push(options);return original(url,options);};});
   await importReport(page);const state=await saved(page);expect(state.active.source.url).toBe(manifest);expect(state.active.source.playerKey).toBe(data.player.key);expect(state.active.source.generation).toBe(state.control.version);
+  await expect(page.locator('#player-status .player-profile .player-profile-link')).toHaveAttribute('href',manifest);await expect(page.locator('#player-status > a')).toHaveCount(0);await expect(page.locator('#player-status .player-storage-label')).toContainText('Last Updated:');
   expect(await page.evaluate(()=>sourceOptions.every(o=>o.credentials==='omit'&&o.referrerPolicy==='no-referrer'&&o.redirect==='error'))).toBe(true);
   await page.reload();await page.evaluate(()=>maimaiPersonal.ready);expect((await saved(page)).active.revision).toBe(state.active.revision);await openImport(page);await expect(page.getByLabel('Hosted Session Report',{exact:true})).toBeChecked();
 });
@@ -40,10 +41,34 @@ test('one-time source import reloads in this tab without storing a connection',a
   await boot(page);await mock(context,page,await fixture(page));await importReport(page,false);expect((await saved(page)).active).toBeNull();await page.reload();await page.evaluate(()=>maimaiPersonal.ready);expect(await page.evaluate(()=>maimaiPersonal.enabled())).toBe(true);await expect(page.locator('#player-refresh')).toBeHidden();
 });
 
+test('installation URLs with or without a trailing slash read only the documented manifest',async({page,context})=>{
+  await boot(page);const data=await fixture(page);await mock(context,page,data);
+  const result=await page.evaluate(async()=>{
+    const base='https://public-report.example/fixture',accepted=[base,base+'/',base+'/index.html',base+'/party/latest.json'];
+    return {manifests:accepted.map(url=>maimaiPlayerSources.reportURL(url).manifest),revision:(await maimaiPlayerSources.readReport(base)).data.revision,unsupported:[base+'/history',base+'/archive/page.html',base+'/party/',base+'//',base+'.html'].map(url=>maimaiPlayerSources.reportURL(url).manifest)};
+  });
+  expect(result.manifests).toEqual(Array(4).fill(manifest));expect(result.revision).toBe(data.revision);expect(result.unsupported).toEqual(Array(5).fill(null));
+});
+
+test('report recovery actions remain separated and accessible on narrow localized screens',async({page,context},testInfo)=>{
+  await boot(page);await mock(context,page,await fixture(page),{html:true});
+  for(const width of [320,430,1280])for(const locale of ['en','zh-Hans','ko','ja']){
+    await page.setViewportSize({width,height:932});await page.evaluate(locale=>maimaiI18n.setLocale(locale),locale);
+    await openImport(page);await page.locator('input[value=report]').check();await page.locator('#player-report-url').fill('https://public-report.example/fixture');await page.locator('.player-dialog .player-actions button').first().click();
+    const actions=page.locator('.player-message-actions');await expect(actions.locator('a')).toHaveAttribute('href','https://public-report.example/fixture');
+    const layout=await actions.evaluate(root=>{const a=root.querySelector('a'),b=root.querySelector('button'),ar=a.getBoundingClientRect(),br=b.getBoundingClientRect(),d=root.closest('dialog'),dr=d.getBoundingClientRect();return {separated:ar.right+10<=br.left||br.right+10<=ar.left||ar.bottom+10<=br.top||br.bottom+10<=ar.top,targets:[a,b].every(n=>n.getBoundingClientRect().height>=44),contained:[ar,br].every(r=>r.left>=dr.left&&r.right<=dr.right),clipped:[a,b].some(n=>n.scrollWidth>n.clientWidth+1),overflow:document.documentElement.scrollWidth>innerWidth+1,labels:[a,b].map(n=>n.textContent)};});
+    expect(layout.separated).toBe(true);expect(layout.targets).toBe(true);expect(layout.contained).toBe(true);expect(layout.clipped).toBe(false);expect(layout.overflow).toBe(false);if(locale!=='en')expect(layout.labels).not.toContain('Open report');
+    await expect(actions.locator('button')).toBeFocused();await page.keyboard.press('Shift+Tab');await expect(actions.locator('a')).toBeFocused();
+    if(width===430)await page.screenshot({path:testInfo.outputPath('report-recovery-'+locale+'.png')});
+    await page.keyboard.press('Escape');await expect(page.locator('.player-dialog')).not.toBeVisible();
+  }
+});
+
 test('unchanged refresh preserves hidden results and dataset history',async({page,context})=>{
   await boot(page);await mock(context,page,await fixture(page));await importReport(page);const before=await saved(page);await age(page);
   await page.locator('#settings-toggle').click();await page.locator('#player-toggle').click();await page.locator('#settings-toggle').click();await page.locator('#player-refresh').click();
   await expect.poll(async()=>((await saved(page)).active.source.lastChecked)).toBeGreaterThan(before.active.source.lastChecked);expect((await saved(page)).active.revision).toBe(before.active.revision);expect(await page.evaluate(()=>maimaiPersonal.enabled())).toBe(false);
+  await expect(page.locator('#player-refresh')).toBeEnabled();await expect(page.locator('#player-status > small')).toHaveCount(1);await expect(page.locator('#player-status')).not.toContainText('Your saved data is up to date.');
 });
 
 test('a login response preserves saved scores and offers report recovery',async({page,context})=>{
@@ -104,7 +129,7 @@ test('upstream throttling records backoff without replacing scores',async({page,
 
 test('announcement waits for a modal, shows once, replays, and survives Forget',async({page,context})=>{
   // Enable only the capability fixture. No production/debug switch is shipped.
-  await context.route('**/player-sources.js?*',async route=>{const response=await route.fetch();await route.fulfill({response,body:(await response.text()).replace('maishift:false','maishift:true')});});
+  await context.route('**/player-sources.js?*',async route=>{const response=await route.fetch();await route.fulfill({response,body:(await response.text()).replace('maishift:globalThis.maimaiPlayerContext?.pilot===true','maishift:true')});});
   await page.addInitScript(()=>document.addEventListener('DOMContentLoaded',()=>{const d=document.createElement('dialog');d.id='blocking-fixture';d.textContent='Fixture';document.body.append(d);d.showModal();},{once:true}));
   await boot(page);await expect(page.locator('.feature-announcement')).toBeHidden();expect(await page.evaluate(()=>localStorage.getItem('maimai-announcement:player-import-sources-v1'))).toBeNull();
   await page.evaluate(()=>document.getElementById('blocking-fixture').close());await expect(page.locator('.feature-announcement')).toBeVisible();expect(await page.evaluate(()=>document.activeElement.closest('.feature-announcement')===null)).toBe(true);
@@ -142,7 +167,7 @@ test('cancelled reads cannot clear the busy state of a newer import',async({page
 });
 
 test('announcement suppression falls back to the tab session when device preferences fail',async({page,context})=>{
-  await context.route('**/player-sources.js?*',async route=>{const response=await route.fetch();await route.fulfill({response,body:(await response.text()).replace('maishift:false','maishift:true')});});
+  await context.route('**/player-sources.js?*',async route=>{const response=await route.fetch();await route.fulfill({response,body:(await response.text()).replace('maishift:globalThis.maimaiPlayerContext?.pilot===true','maishift:true')});});
   await page.addInitScript(()=>{const set=Storage.prototype.setItem;Storage.prototype.setItem=function(key,value){if(this===localStorage&&key.startsWith('maimai-announcement:'))throw new DOMException('Storage unavailable','QuotaExceededError');return set.call(this,key,value);};});
   await boot(page);await expect(page.locator('.feature-announcement')).toBeVisible();await expect.poll(()=>page.evaluate(()=>sessionStorage.getItem('maimai-announcement:player-import-sources-v1'))).toBe('seen');await page.reload();await page.evaluate(()=>maimaiPersonal.ready);await expect(page.locator('.feature-announcement')).toBeHidden();
 });

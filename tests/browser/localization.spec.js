@@ -64,8 +64,8 @@ for(const width of [320,1280])test(`cabinet genre labels follow language without
 
 test('cabinet difficulty names update in filters, chart controls and comparison while preserving IDs',async({page})=>{
   await page.goto('/registry/?search=ソテリア&view=catalog');await settle(page);
-  const row=page.locator('#songs .song-row');await row.locator('.row-difficulty').selectOption({label:'MASTER · 14'});
-  const selected=await row.locator('.row-difficulty').inputValue();
+  const row=page.locator('#songs .song-row[data-difficulty=MASTER]');
+  const selected=await row.getAttribute('data-chart-id');
   await row.locator('.chart-row').click();
   await page.locator('#difficulty-summary').click();
   await page.locator('#difficulty-options input[value="MASTER"]').check();
@@ -78,7 +78,7 @@ test('cabinet difficulty names update in filters, chart controls and comparison 
     await expect(row.locator('.chart-difficulty-badge')).toHaveText(label);
     await expect(row.locator('.chart-row')).toHaveAttribute('aria-label',new RegExp(label));
     await expect(row.locator('.chart-row')).toHaveAttribute('aria-label',new RegExp({en:'Chart constant unknown','zh-Hans':'谱面定数未知',ko:'채보 상수 알 수 없음',ja:'譜面定数不明'}[locale]));
-    await expect(row.locator('.row-difficulty')).toHaveValue(selected);
+    await expect(row).toHaveAttribute('data-chart-id',selected);
     await expect(page.locator('#active-filters')).toContainText(label);
     await expect(row).toHaveAttribute('data-difficulty','MASTER');
   }
@@ -99,7 +99,8 @@ test('cabinet difficulty names update in filters, chart controls and comparison 
 
 test('cabinet difficulty names reach chart activity accessibility labels',async({page})=>{
   await page.goto('/progressive/?view=catalog');await settle(page);
-  await page.locator('#songs .chart-flow').first().scrollIntoViewIfNeeded();
+  // Activity replaces its loading figure; scroll the stable chart row instead.
+  await page.locator('#songs .song-row').first().scrollIntoViewIfNeeded();
   const graph=page.locator('#songs .chart-flow svg').first();await expect(graph).toBeVisible();
   const original=await graph.getAttribute('aria-label');
   for(const locale of ['zh-Hans','ko','ja','en']){
@@ -170,9 +171,8 @@ test('all languages switch instantly, preserve state and return exact English te
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto('/registry/');await settle(page);
   await page.locator('#search').fill('ソテリア');
-  const row=page.locator('#songs .song-row');await expect(row).toHaveCount(1);
-  await row.locator('.row-difficulty').selectOption({label:'MASTER · 14'});
-  const selected=await row.locator('.row-difficulty').inputValue();
+  const row=page.locator('#songs .song-row[data-difficulty=MASTER]');await expect(row).toHaveCount(1);
+  const selected=await row.getAttribute('data-chart-id');
   const snapshot=()=>page.locator('body').evaluate(body=>{
     const clone=body.cloneNode(true);clone.querySelectorAll('script,.language-controls').forEach(n=>n.remove());
     return clone.textContent;
@@ -183,7 +183,7 @@ test('all languages switch instantly, preserve state and return exact English te
     await expect(page.locator('#catalog h1')).toHaveText(labels[locale]);
     await expect(page.locator('#sort-keep')).toHaveAccessibleName({en:'Enable multi-sorting','zh-Hans':'启用多条件排序',ko:'다중 기준 정렬 사용',ja:'複数条件で並べ替え'}[locale]);
     await expect(page.locator('#search')).toHaveValue('ソテリア');
-    await expect(row.locator('.row-difficulty')).toHaveValue(selected);
+    await expect(row).toHaveAttribute('data-chart-id',selected);
     await expect(row).toContainText('ソテリア');await expect(row).toContainText(locale==='zh-Hans'?'大师':'MASTER');
     expect(await page.evaluate(()=>JSON.stringify(maimaiResearchCatalog))).toBe(data);
     expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
@@ -211,8 +211,8 @@ test('multilingual search works independently of UI language and keeps titles li
   for(const locale of ['en','zh-Hans','ko','ja']){
     await choose(page,locale);
     for(const query of ['Soteria','そてりあ','소테리아','索特里亚','suo te li ya']){
-      await page.locator('#search').fill(query);await expect(page.locator('#songs .song-row')).toHaveCount(1);
-      await expect(page.locator('#songs .song-row')).toContainText('ソテリア');
+      await page.locator('#search').fill(query);await expect(page.locator('#songs .song-row')).toHaveCount(4);
+      await expect(page.locator('#songs .song-row').first()).toContainText('ソテリア');
     }
   }
   const values=await page.evaluate(()=>{
@@ -244,5 +244,5 @@ test('IME composition does not prematurely filter the song catalog',async({page}
   await page.locator('#search').evaluate(input=>{input.dispatchEvent(new CompositionEvent('compositionstart'));input.value='소테리아';input.dispatchEvent(new InputEvent('input',{bubbles:true,isComposing:true}));});
   await expect(page.locator('#songs .song-row')).toHaveCount(count);
   await page.locator('#search').evaluate(input=>input.dispatchEvent(new CompositionEvent('compositionend',{bubbles:true})));
-  await expect(page.locator('#songs .song-row')).toHaveCount(1);
+  await expect(page.locator('#songs .song-row')).toHaveCount(4);
 });

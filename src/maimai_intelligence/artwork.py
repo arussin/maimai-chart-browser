@@ -7,8 +7,11 @@ Downloads and image conversion happen only during explicit package preparation.
 from __future__ import annotations
 
 import hashlib
+import json
 import re
 import unicodedata
+from copy import deepcopy
+from importlib.resources import files
 from pathlib import Path
 
 VERSION = "public-artwork-1"
@@ -93,3 +96,30 @@ def copy_artwork(value, source, output):
         if not destination.exists():
             with destination.open("xb") as stream:
                 stream.write(raw)
+
+
+def prepare_artwork(value, source, output, catalog, versions):
+    """Every version uses the same verified manifest and same-site media path."""
+    value = (
+        deepcopy(value)
+        if value
+        else {"version": VERSION, "assets": {}, "songs": {}, "versions": {}}
+    )
+    validate_artwork(value, catalog, versions)
+    copy_artwork(value, source, output)
+    bundled = files("maimai_intelligence.assets").joinpath("version-artwork")
+    logos = json.loads(bundled.joinpath("manifest.json").read_text("utf-8"))
+    # A retained package can supply newer artwork. The bundled collection fills
+    # missing versions, including inventory-only builds, without UI exceptions.
+    logos["versions"] = {
+        name: path
+        for name, path in logos["versions"].items()
+        if name in versions and name not in value["versions"]
+    }
+    used = set(logos["versions"].values())
+    logos["assets"] = {path: record for path, record in logos["assets"].items() if path in used}
+    validate_artwork(logos, catalog, versions)
+    copy_artwork(logos, bundled, output)
+    value["assets"].update(logos["assets"])
+    value["versions"].update(logos["versions"])
+    return validate_artwork(value, catalog, versions)

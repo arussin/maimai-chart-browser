@@ -1,15 +1,19 @@
 param(
  [Parameter(Mandatory=$true)][string]$ProfileUrl,
  [ValidateSet('intl','jp')][string]$Region='intl',
- [ValidateRange(1024,65535)][int]$Port=8895
+ [ValidateRange(1024,65535)][int]$Port=8895,
+ [string]$RetainedPackage
 )
 $ErrorActionPreference='Stop'
 . (Join-Path $PSScriptRoot 'Use-DevelopmentEnvironment.ps1')
 $pilotOutput=Join-Path $RegistryCache ('workspaces\pilot-preview-'+[DateTime]::UtcNow.ToString('yyyyMMddTHHmmssfff')+'-'+[guid]::NewGuid().ToString('N').Substring(0,8))
 $env:PYTHONPATH=(Join-Path $RegistrySource 'src')+[IO.Path]::PathSeparator+$RegistrySource
-& $RegistryPython -B (Join-Path $RegistrySource 'scripts\build_maishift_pilot.py') --output $pilotOutput | Out-Null
+$buildArgs=@('--output',$pilotOutput)
+if($RetainedPackage){$buildArgs+=@('--retained-package',$RetainedPackage)}
+& $RegistryPython -B (Join-Path $RegistrySource 'scripts\build_maishift_pilot.py') @buildArgs | Out-Null
 if($LASTEXITCODE){throw 'Pilot artifact build failed'}
-# Passing one public profile is approval for manual reads of that profile only.
+# Passing one public profile permits only that profile/region. The browser pilot
+# also supports explicitly consented remembered refresh within the same read cap.
 # Environment values belong to this process, not a saved machine/user setting.
 $pilotPrevious=@{}
 $pilotValues=@{MAISHIFT_PREVIEW_ARTIFACT=$pilotOutput;MAISHIFT_PREVIEW_PORT=[string]$Port;MAISHIFT_PREVIEW_LIVE='true';MAISHIFT_CANARY_APPROVED='true';MAISHIFT_CANARY_URL=$ProfileUrl;MAISHIFT_CANARY_REGION=$Region}

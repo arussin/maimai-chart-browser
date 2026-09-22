@@ -1,6 +1,10 @@
 # Local Maishift proxy delivery
 
-Implemented locally on `codex/maishift-proxy`. Nothing deployed or enabled.
+Implemented on `codex/maishift-proxy`. The separately approved unlisted pilot
+and isolated proxy were deployed September 22, 2026 UTC; see the
+[hosted release record](MAISHIFT_HOSTED_PILOT_RELEASE.md). General availability
+and the announcement remain disabled. Earlier local measurements below are
+historical evidence, not deployed capacity measurements.
 The user approved the described proxy after the original proposal-only plan.
 
 ## Flow and contract
@@ -126,11 +130,12 @@ not a deployed Cloudflare-to-Maishift connection or completeness for other users
   and concurrent imports. See [runtime evidence](MAISHIFT_RUNTIME_VERIFICATION.md).
 - [ ] Verify the proposed paid 1,000-ms CPU cap and memory behavior after owner
   provisioning; review account-wide abuse/spending limits before enabling.
-- [ ] Final browser acceptance against the deployed same-origin endpoint.
+- [x] Pilot browser acceptance against the deployed same-origin endpoint;
+  broader account, chronology and operating-limit acceptance remains open.
 - [ ] Enable Maishift and the truthful combined announcement only after those gates.
 
-No maintainer contact, workflow dispatch, scheduling, alert publishing, or
-deployment occurred. The existing manual workflow and all automation holds remain
+The owner-approved pilot deployment is complete. No maintainer contact, workflow
+dispatch, scheduling or alert publishing occurred. The manual workflow and all automation holds remain
 unchanged. A proposed daily 05:17 UTC check, alert after three consecutive failures,
 and recovery notice remain owner actions documented in `MAISHIFT_INTEGRATION.md`.
 
@@ -174,10 +179,11 @@ Concurrent filter UI edits and pre-existing untracked work are preserved separat
 
 ## Simpler import UI and research follow-up
 
-The preview now keeps the player, handle, region/PB count, date and nonzero
-unmatched/excluded warnings visible. Secondary coverage/privacy information and
-the source link sit in native **Import details**. The consent label is **Remember
-and refresh**; Import & remember / Import once remains explicit. Existing file
+The preview keeps the player, handle, region/PB count, date and nonzero
+unmatched/excluded warnings visible. Secondary coverage/privacy information is
+in the localized source help; the subsequent simplification removed **Import
+details**. The consent label is **Remember and refresh**;
+Import & remember / Import once remains explicit. Existing file
 import defaults are unchanged. The two fictional screenshots above were refreshed
 and visually checked at desktop and 320px widths.
 
