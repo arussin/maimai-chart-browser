@@ -7,13 +7,12 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from tests.test_simai_subset import parse
-
 from maimai_analyzer.challenge import _tokens, path_geometry, profile_chart, snippet
 from maimai_analyzer.challenge_similarity import align, query_challenges, reference_scale
 from maimai_analyzer.contracts import content_hash, normalize_chart
 from maimai_analyzer.dataset import identity_join, inventory_delta, review_benchmark
 from maimai_analyzer.fixtures import synthetic_charts
+from tests.test_simai_subset import parse
 
 
 class ChallengeTests(unittest.TestCase):
@@ -63,10 +62,9 @@ class ChallengeTests(unittest.TestCase):
             evaluate_review(benchmark, review, {**supplied, "benchmark_hash": "b" * 64})
 
     def test_offline_package_build_is_reproducible_and_checks_corruption(self):
-        from tests.test_maichart_pack import REVISION, fixture
-
         from scripts import build_challenge_package as package
         from scripts.prepare_maichart_pack import prepare
+        from tests.test_maichart_pack import REVISION, fixture
 
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory) / "source"

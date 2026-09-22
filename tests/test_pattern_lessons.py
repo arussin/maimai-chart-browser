@@ -5,11 +5,10 @@ import math
 import unittest
 from importlib.resources import files
 
-from tests.test_simai_subset import parse
-
 from maimai_analyzer.pattern_evidence import phased_pairs
 from maimai_analyzer.patterns import pattern_registry
 from scripts.build_pattern_lessons import build_lessons
+from tests.test_simai_subset import parse
 
 
 class PatternLessonTests(unittest.TestCase):

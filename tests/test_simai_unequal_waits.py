@@ -2,9 +2,8 @@
 
 import unittest
 
-from tests.test_simai_subset import parse
-
 from maimai_analyzer.contracts import normalize_chart
+from tests.test_simai_subset import parse
 
 
 class UnequalWaitTests(unittest.TestCase):
