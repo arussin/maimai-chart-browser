@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import http from 'node:http';
 import {chromium, firefox, webkit} from '@playwright/test';
 import {launchIsolated, startIsolationProxy, isolatedTest} from './isolation.mjs';
+import {observeApplicationNetwork} from '../../scripts/measure_architecture.mjs';
 
 for (const [name, engine] of Object.entries({chromium, firefox, webkit, ...(process.env.MAIMAI_ISOLATION_BRANDED === "1" ? {chrome:chromium,edge:chromium} : {})})) {
   test(`${name}: popup, iframe, beacon, redirect and route escape cannot leave fixture origins`, async () => {
@@ -135,4 +136,95 @@ test('context-attributed proxy retains denied maintenance transports without gra
     assert.equal(proxy.unexpected.length,0);
     assert.deepEqual(proxy.blockedTransports,[{kind:'CONNECT',target:'accounts.google.com:443',attribution:'unattributed-browser-transport'}]);
   } finally { await proxy.close(); }
+});
+
+test('no-routing performance audit preserves native warm cache and records every application escape', {timeout:30000}, async t => {
+  let forbiddenHits = 0, scriptHits = 0;
+  const forbidden = http.createServer((_request, response) => { forbiddenHits++; response.end('must never arrive'); });
+  forbidden.on('upgrade', (_request, socket) => { forbiddenHits++; socket.destroy(); });
+  await new Promise(resolve => forbidden.listen(0, '127.0.0.1', resolve));
+  const forbiddenOrigin = `http://127.0.0.1:${forbidden.address().port}`;
+  const server = http.createServer((request, response) => {
+    if (request.url === '/cached.js') {
+      scriptHits++;
+      response.writeHead(200, {'Content-Type':'text/javascript', 'Cache-Control':'public, max-age=31536000, immutable'});
+      response.end('window.cacheFixtureLoaded = true;');
+    } else if (request.url === '/redirect') {
+      response.writeHead(302, {Location:'https://redirect.example.invalid/observer'}).end();
+    } else if (request.url === '/forbidden-redirect') {
+      response.writeHead(302, {Location:forbiddenOrigin+'/redirect-target'}).end();
+    } else {
+      response.writeHead(200, {'Content-Type':'text/html', 'Cache-Control':'no-store'});
+      response.end('<!doctype html><title>No-routing audit fixture</title><script src="/cached.js"></script>');
+    }
+  });
+  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+  const origin = `http://127.0.0.1:${server.address().port}`;
+  const proxy = await startIsolationProxy({origins:[origin], contextRouting:true});
+  const attempts = [];
+  let browser, warmResource;
+  try {
+    // Match the measurement launch; no page/context routing or response mocks.
+    browser = await chromium.launch({headless:true, executablePath:chromium.executablePath(), proxy:{server:proxy.server}, args:['--disable-background-networking','--disable-component-update','--disable-default-apps','--disable-sync','--no-first-run']});
+    const context = await browser.newContext({serviceWorkers:'block'});
+    observeApplicationNetwork(context, origin, attempts);
+    const cold = await context.newPage();
+    await cold.goto(origin);
+    assert.equal(await cold.evaluate(() => window.cacheFixtureLoaded), true);
+    assert.equal(scriptHits, 1);
+    const warm = await context.newPage();
+    await warm.goto(origin);
+    assert.equal(await warm.evaluate(() => window.cacheFixtureLoaded), true);
+    const resource = await warm.evaluate(() => {
+      const entry = performance.getEntriesByType('resource').find(item => item.name.endsWith('/cached.js'));
+      return {transferSize:entry.transferSize, decodedBodySize:entry.decodedBodySize};
+    });
+    warmResource = resource;
+    assert.equal(scriptHits, 1, 'The second page must reuse native HTTP cache without another server hit');
+    assert.equal(resource.transferSize, 0);
+    assert.ok(resource.decodedBodySize > 0);
+    assert.deepEqual(attempts, [], 'Allowed fixture traffic is not application egress');
+    await warm.evaluate(blocked => {
+      // Maintenance-looking hosts receive no exemption when application code uses them.
+      window.open('https://accounts.google.com/observer-popup', '_blank');
+      for (const target of ['https://aus5.mozilla.org/observer-frame', blocked+'/iframe']) {
+        const frame = document.createElement('iframe'); frame.src = target; document.body.append(frame);
+      }
+      navigator.sendBeacon('https://clients2.google.com/observer-beacon', 'fictional-only');
+      navigator.sendBeacon(blocked+'/beacon', 'fictional-only');
+      fetch(blocked+'/fetch').catch(() => {});
+      for (const target of ['wss://clients2.google.com/observer-socket', blocked.replace('http:', 'ws:')+'/socket']) {
+        const socket = new WebSocket(target); socket.onerror = () => {};
+      }
+    }, forbiddenOrigin);
+    const redirect = await context.newPage();
+    await redirect.goto(origin+'/redirect').catch(() => {});
+    await redirect.goto(origin+'/forbidden-redirect').catch(() => {});
+    const expected = [
+      ['document','https://accounts.google.com'],
+      ['document','https://aus5.mozilla.org'],
+      ['ping','https://clients2.google.com'],
+      ['document','https://redirect.example.invalid'],
+      ['websocket','https://clients2.google.com'],
+      ['document',forbiddenOrigin],
+      ['ping',forbiddenOrigin],
+      ['fetch',forbiddenOrigin],
+      ['websocket',forbiddenOrigin],
+    ];
+    const observed = ([kind, target]) => attempts.some(item => item.kind === kind && item.target === target);
+    for (let tries=0; tries<120 && !expected.every(observed); tries++) await new Promise(resolve => setTimeout(resolve,25));
+    for (const entry of expected) assert.ok(observed(entry), 'Missing application audit '+JSON.stringify(entry)+' in '+JSON.stringify(attempts));
+    await context.close();
+    await browser.close(); browser = null;
+    assert.equal(forbiddenHits, 0, 'The non-allowlisted local server must receive neither HTTP nor WebSocket traffic');
+    assert.equal(proxy.unexpected.length, 0, 'Proxy transports and observed application attempts are separate ledgers');
+    assert.ok(proxy.blockedTransports.some(item => item.target.includes('accounts.google.com')), 'Actual application transport was denied by the proxy');
+    assert.ok(proxy.blockedTransports.some(item => item.target.includes(String(forbidden.address().port))), 'Forbidden loopback transports were denied too');
+  } finally {
+    await browser?.close();
+    t.diagnostic(JSON.stringify({nativeWarmCache:warmResource,scriptHits,forbiddenHits,applicationAttempts:attempts,blockedTransports:proxy.blockedTransports}));
+    await proxy.close();
+    server.closeAllConnections(); forbidden.closeAllConnections();
+    await Promise.all([new Promise(resolve => server.close(resolve)), new Promise(resolve => forbidden.close(resolve))]);
+  }
 });
