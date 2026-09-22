@@ -1,6 +1,8 @@
 /** Local-only browser fixtures. No production origin is ever passed to the network. */
 import http from 'node:http';
 import net from 'node:net';
+import {mkdir,writeFile} from 'node:fs/promises';
+import {join} from 'node:path';
 
 // Only the disposable Playwright profile is affected. Never allow updater traffic.
 const firefoxUserPrefs = {'app.update.disabledForTesting':true, 'app.update.auto':false,
@@ -19,9 +21,12 @@ function originSet(origins) {
   }));
 }
 
-export async function startIsolationProxy({origins}) {
+export async function startIsolationProxy({origins, contextRouting = false}) {
   const allowed = originSet(origins), unexpected = [], blockedTransports = [], syntheticOrigins = new Set();
-  const deny = (kind, target) => unexpected.push({kind, target});
+  const deny = (kind, target) => {
+    blockedTransports.push({kind, target, attribution:'unattributed-browser-transport'});
+    if (!contextRouting) unexpected.push({kind, target});
+  };
   const server = http.createServer((request, response) => {
     let target;
     try { target = new URL(request.url); } catch { response.writeHead(400).end(); return; }
@@ -42,7 +47,7 @@ export async function startIsolationProxy({origins}) {
     let target;
     try { target = new URL('https://' + request.url); } catch { socket.destroy(); return; }
     if (!allowed.has(target.origin) && !allowed.has('http://' + target.host)) {
-      if (syntheticOrigins.has(target.origin)) blockedTransports.push({kind:'CONNECT',target:request.url});
+      if (syntheticOrigins.has(target.origin)) blockedTransports.push({kind:'CONNECT',target:request.url,attribution:'declared-synthetic-transport'});
       else deny('CONNECT', request.url); socket.end('HTTP/1.1 403 Forbidden\r\nConnection: close\r\n\r\n'); return;
     }
     // Playwright APIRequestContext also tunnels HTTP through CONNECT. Restrict
@@ -73,6 +78,23 @@ export async function startIsolationProxy({origins}) {
   };
 }
 
+async function fetchWithinOrigins(invoke, input, options, {allowed, unexpected}, kind) {
+  let url = new URL(input), remaining = options?.maxRedirects ?? 20;
+  for (;;) {
+    if (!allowed.has(url.origin)) {
+      unexpected.push({kind,target:url.origin});
+      throw new Error('Fixture request denied non-loopback destination');
+    }
+    const response = await invoke(url.href, {...options,maxRedirects:0});
+    const location = response.headers().location;
+    if (![301,302,303,307,308].includes(response.status()) || !location || options?.maxRedirects === 0) return response;
+    if (remaining-- === 0) throw new Error('Fixture redirect limit exceeded');
+    url = new URL(location,url);
+    // These helpers serve local GET/HEAD fixture files. Other redirect semantics
+    // must be fulfilled explicitly, rather than replaying a request body elsewhere.
+    if (!['GET','HEAD'].includes(options?.method || 'GET')) throw new Error('Fulfill fixture body redirects explicitly');
+  }
+}
 function guardRoutes(surface, {allowed, unexpected}) {
   const original = surface.route.bind(surface), remove = surface.unroute.bind(surface), handlers = new WeakMap();
   surface.route = async (pattern, handler, options) => {
@@ -86,6 +108,7 @@ function guardRoutes(surface, {allowed, unexpected}) {
             if (key === 'continue') return target.abort('blockedbyclient');
             throw new Error('Fixture route.fetch denied non-loopback destination');
           }
+          if (key === "fetch") return fetchWithinOrigins((url,next)=>value.call(target,{...next,url}), url.href, {...options,method:options?.method || request.method()}, {allowed,unexpected}, "route-fetch-redirect");
           return value.call(target, options);
         };
         return typeof value === 'function' ? value.bind(target) : value;
@@ -98,29 +121,53 @@ function guardRoutes(surface, {allowed, unexpected}) {
   surface.unroute = (pattern, handler) => remove(pattern, handler && (handlers.get(handler) || handler));
 }
 
-export async function isolateContext(context, {origins, handlers = [], unexpected = [], allowed = originSet(origins)}) {
+export async function isolateContext(context, {origins, handlers = [], unexpected = [], allowed = originSet(origins), baseURL}) {
   const options = {allowed, unexpected};
   guardRoutes(context, options);
-  context.on('page', page => guardRoutes(page, options));
-  for (const page of context.pages()) guardRoutes(page, options);
+  context.on("request", request => {
+    const url = new URL(request.url());
+    if (request.redirectedFrom() && !allowed.has(url.origin)) unexpected.push({kind:"redirect",target:url.origin,method:request.method()});
+  });
+  const guardPage = page => {
+    guardRoutes(page, options);
+    page.on("websocket", socket => {
+      const url = new URL(socket.url());
+      const origin = url.origin.replace(/^ws:/, "http:").replace(/^wss:/, "https:");
+      if (!allowed.has(origin)) unexpected.push({kind:"websocket",target:origin});
+    });
+  };
+  context.on("page", guardPage);
+  for (const page of context.pages()) guardPage(page);
+  // APIRequestContext bypasses page routing, so audit it before the deny-only proxy.
+  for (const method of ["fetch", "get", "post", "put", "patch", "delete", "head"]) {
+    const original = context.request[method].bind(context.request);
+    context.request[method] = async (input, ...args) => {
+      const url = new URL(typeof input.url === "function" ? input.url() : String(input), baseURL);
+      if (!allowed.has(url.origin)) {
+        unexpected.push({kind:"api-"+method,target:url.origin});
+        throw new Error("Fixture API request denied non-loopback destination");
+      }
+      return fetchWithinOrigins((url,next)=>original(url,next), url.href, {...args[0],method:method === "fetch" ? args[0]?.method || (typeof input.method === "function" ? input.method() : "GET") : method.toUpperCase()}, {allowed,unexpected}, "api-"+method+"-redirect");
+    };
+  }
   await context.route('**/*', async route => {
     const request = route.request();
     for (const handler of handlers) if (await handler(route, request)) return;
     const url = new URL(request.url());
     if (allowed.has(url.origin)) return route.continue();
-    unexpected.push({kind: request.resourceType(), target: url.origin});
+    unexpected.push({kind: request.resourceType(), target: url.origin, method:request.method()});
     await route.abort('blockedbyclient');
   });
   return unexpected;
 }
 
 export async function launchIsolated(browserType, {origins, handlers = [], launch = {}, context = {}}) {
-  const proxy = await startIsolationProxy({origins});
+  const proxy = await startIsolationProxy({origins, contextRouting:true});
   let browser;
   try {
     browser = await browserType.launch({...launch, firefoxUserPrefs:{...firefoxUserPrefs,...launch.firefoxUserPrefs}, proxy: {server: proxy.server}});
     const isolated = await browser.newContext({...context, serviceWorkers: 'block'});
-    await isolateContext(isolated, {origins, handlers, unexpected: proxy.unexpected, allowed: proxy.allowed, syntheticOrigins: proxy.syntheticOrigins});
+    await isolateContext(isolated, {origins, handlers, unexpected: proxy.unexpected, allowed: proxy.allowed, baseURL:context.baseURL, syntheticOrigins: proxy.syntheticOrigins});
     return {browser, context: isolated, unexpected: proxy.unexpected,
       blockedTransports: proxy.blockedTransports, synthetic: proxy.declareSynthetic,
       close: async () => { await browser.close(); await proxy.close(); }};
@@ -132,9 +179,13 @@ export async function launchIsolated(browserType, {origins, handlers = [], launc
 /** Extend Playwright once; the proxy also covers page routes that call continue(). */
 export function isolatedTest(base, {origins}) {
   return base.extend({
-    _networkProxy: [async ({}, use) => {
-      const proxy = await startIsolationProxy({origins});
-      try { await use(proxy); } finally { await proxy.close(); }
+    _networkProxy: [async ({}, use, workerInfo) => {
+      const proxy = await startIsolationProxy({origins, contextRouting:true});
+      try { await use(proxy); } finally {
+        await proxy.close();
+        await mkdir(workerInfo.project.outputDir,{recursive:true});
+        await writeFile(join(workerInfo.project.outputDir,`isolation-transports-worker-${workerInfo.workerIndex}.json`),JSON.stringify({blocked_transports:proxy.blockedTransports,unexpected_application_requests:proxy.unexpected},null,2));
+      }
     }, {scope: 'worker'}],
     launchOptions: [async ({_networkProxy}, use) => {
       await use({proxy: {server: _networkProxy.server}, firefoxUserPrefs});
@@ -150,18 +201,19 @@ export function isolatedTest(base, {origins}) {
       const original = browser.newContext.bind(browser);
       browser.newContext = async options => {
         const context = await original({...options, serviceWorkers: 'block'});
-        await isolateContext(context, {origins, unexpected: _networkProxy.unexpected, allowed: _networkProxy.allowed, syntheticOrigins: _networkProxy.syntheticOrigins});
+        await isolateContext(context, {origins, unexpected: _networkProxy.unexpected, allowed: _networkProxy.allowed, baseURL:options?.baseURL, syntheticOrigins: _networkProxy.syntheticOrigins});
         return context;
       };
       try { await use(browser); } finally { browser.newContext = original; }
     }, {scope: 'worker'}],
     _networkCheck: [async ({_networkProxy, fixtureOrigins, browser}, use, testInfo) => {
-      const start = _networkProxy.unexpected.length, transportStart = _networkProxy.blockedTransports.length;
+      const start = _networkProxy.unexpected.length, transportStart = _networkProxy.reportedTransportCount || 0;
       await use();
       // Finish each context before examining its ledger or releasing allocated origins.
       await Promise.all(browser.contexts().map(context => context.close()));
       const denied = _networkProxy.blockedTransports.slice(transportStart);
-      if (denied.length) await testInfo.attach('denied-synthetic-transports', {body:JSON.stringify(denied),contentType:'application/json'});
+      if (denied.length) await testInfo.attach('denied-browser-transports', {body:JSON.stringify(denied),contentType:'application/json'});
+      _networkProxy.reportedTransportCount = _networkProxy.blockedTransports.length;
       const blocked = _networkProxy.unexpected.slice(start);
       if (blocked.length) throw new Error(`Unexpected fixture network requests: ${JSON.stringify(blocked)}`);
     }, {auto: true}],
