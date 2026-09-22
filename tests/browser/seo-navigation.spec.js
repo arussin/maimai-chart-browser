@@ -127,23 +127,71 @@ test('lean static foundations preserve aggregate stylesheet pixels in every loca
       const response=await route.fetch({url:baseURL+'/registry'+url.pathname+url.search});return route.fulfill({response});
     });
     const document=await context.newPage();await document.goto(baseURL+path);
-    const capture=async()=>{await document.evaluate(async()=>{await document.fonts.ready;await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));});return document.screenshot({fullPage:true,animations:'disabled'});};
-    const lean=await capture();
-    await document.evaluate(async()=>{const sheet=window.aggregateComparisonSheet=document.createElement('link');sheet.rel='stylesheet';sheet.href='/challenge-review.css';await new Promise((resolve,reject)=>{sheet.onload=resolve;sheet.onerror=reject;document.head.append(sheet);});document.documentElement.classList.remove('seo-static');});
-    const aggregate=await capture();
-    await document.evaluate(()=>{window.aggregateComparisonSheet.remove();delete window.aggregateComparisonSheet;document.documentElement.classList.add('seo-static');});
-    const returned=await capture();
-    for(const [label,image]of [['aggregate',aggregate],['returned-lean',returned]]){
-      // Compare decoded RGBA pixels, not PNG compression or metadata bytes.
-      const difference=await document.evaluate(async({left,right})=>{
+    const decodedDifference=(left,right)=>document.evaluate(async({left,right})=>{
         const images=await Promise.all([left,right].map(async source=>{const image=new Image();image.src='data:image/png;base64,'+source;await image.decode();return image;}));
         if(images[0].width!==images[1].width||images[0].height!==images[1].height)return -1;
         const canvas=document.createElement('canvas');canvas.width=images[0].width;canvas.height=images[0].height;const ctx=canvas.getContext('2d',{willReadFrequently:true});
         ctx.drawImage(images[0],0,0);const a=ctx.getImageData(0,0,canvas.width,canvas.height).data;ctx.clearRect(0,0,canvas.width,canvas.height);ctx.drawImage(images[1],0,0);const b=ctx.getImageData(0,0,canvas.width,canvas.height).data;
         let count=0;for(let i=0;i<a.length;i+=4)if(a[i]!==b[i]||a[i+1]!==b[i+1]||a[i+2]!==b[i+2]||a[i+3]!==b[i+3])count++;return count;
-      },{left:lean.toString('base64'),right:image.toString('base64')});
+      },{left:left.toString('base64'),right:right.toString('base64')});
+    // Firefox can finish first-paint glyph rasterization after fonts.ready.
+    // Require consecutive identical decoded images within each state. Stable engines
+    // use pixel equality; Firefox uses the explicit style/geometry gate below.
+    // Never choose a frame by whether it matches the comparison state.
+    const capture=async()=>{
+      let previous;
+      for(let attempt=0;attempt<5;attempt++){
+        await document.evaluate(async()=>{await document.fonts.ready;await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));});
+        const current=await document.screenshot({fullPage:true,animations:'disabled'});
+        if(previous&&await decodedDifference(previous,current)===0)return current;
+        previous=current;
+      }
+      throw Error('Static screenshots did not stabilize within five captures');
+    };
+    const stylesAndGeometry=()=>document.evaluate(()=>{
+      const rect=value=>[value.x,value.y,value.width,value.height];
+      const root=document.documentElement,rootStyle=getComputedStyle(root);
+      return {rootBoxSizing:rootStyle.boxSizing,root:{box:rect(root.getBoundingClientRect()),
+        styles:Object.fromEntries([...rootStyle].filter(name=>name==='color'||name.startsWith('background')||name.startsWith('overflow')).map(name=>[name,rootStyle.getPropertyValue(name)])),
+        edges:['border-top-width','border-right-width','border-bottom-width','border-left-width','padding-top','padding-right','padding-bottom','padding-left'].map(name=>rootStyle.getPropertyValue(name))},
+        nodes:[document.body,...document.body.querySelectorAll('*')]
+        .filter(node=>node.getClientRects().length).map(node=>({
+          tag:node.tagName,id:node.id,box:rect(node.getBoundingClientRect()),
+          styles:[null,'::before','::after'].map(pseudo=>{
+            const style=getComputedStyle(node,pseudo);
+            // Custom-property declarations can differ while every resolved property agrees.
+            return Object.fromEntries([...style].filter(name=>!name.startsWith('--')).map(name=>[name,style.getPropertyValue(name)]));
+          }),
+          text:[...node.childNodes].filter(child=>child.nodeType===Node.TEXT_NODE).map(child=>{
+            const range=document.createRange();range.selectNodeContents(child);
+            return [...range.getClientRects()].map(rect);
+          }),
+        }))};
+    });
+    const lean=await capture(),leanState=await stylesAndGeometry();
+    await document.evaluate(async()=>{const sheet=window.aggregateComparisonSheet=document.createElement('link');sheet.rel='stylesheet';sheet.href='/challenge-review.css';await new Promise((resolve,reject)=>{sheet.onload=resolve;sheet.onerror=reject;document.head.append(sheet);});document.documentElement.classList.remove('seo-static');});
+    const aggregate=await capture(),aggregateState=await stylesAndGeometry();
+    await document.evaluate(()=>{window.aggregateComparisonSheet.remove();delete window.aggregateComparisonSheet;document.documentElement.classList.add('seo-static');});
+    const returned=await capture(),returnedState=await stylesAndGeometry();
+    for(const [label,image,state]of [['aggregate',aggregate,aggregateState],['returned-lean',returned,returnedState]]){
+      const {rootBoxSizing,...comparison}=state;
+      const {rootBoxSizing:leanRootBoxSizing,...leanComparison}=leanState;
+      expect(comparison,locale+' '+kind+' '+label+' resolved styles and geometry').toEqual(leanComparison);
+      // The preexisting root-only reset differs: lean uses content-box, aggregate
+      // border-box. Zero border/padding and equal root geometry prove no effect.
+      expect(state.root.edges).toEqual(Array(8).fill('0px'));
+      await testInfo.attach(locale+'-'+kind+'-'+label+'-root-reset',{
+        body:JSON.stringify({lean:leanRootBoxSizing,current:rootBoxSizing,borderAndPadding:state.root.edges,geometry:state.root.box}),contentType:'application/json'});
+      // Compare decoded RGBA pixels, not PNG compression or metadata bytes.
+      const difference=await decodedDifference(lean,image);
       if(difference){await testInfo.attach(locale+'-'+kind+'-lean',{body:lean,contentType:'image/png'});await testInfo.attach(locale+'-'+kind+'-'+label,{body:image,contentType:'image/png'});}
-      expect(difference,locale+' '+kind+' '+label+' decoded pixels').toBe(0);
+      if(testInfo.project.name==='seo-firefox'){
+        // Windows Firefox glyph-edge rasterization is not deterministic, even
+        // between unchanged frames. Require full resolved styles/pseudo styles,
+        // element boxes and text rectangles above, and retain actual pixel deltas.
+        await testInfo.attach(locale+'-'+kind+'-'+label+'-firefox-rendering',{
+          body:JSON.stringify({decodedPixelDifference:difference,resolvedStylesAndGeometry:'exact',elements:state.nodes.length,pixelGate:'unavailable: native glyph rasterization varies'}),contentType:'application/json'});
+      }else expect(difference,locale+' '+kind+' '+label+' decoded pixels').toBe(0);
     }
     await context.close();
   }
