@@ -38,6 +38,8 @@ def review_scripts(*, player_pilot=False):
             for name in (
                 "view-navigation.js",
                 "settings-menu.js",
+                "player-import-config.js",
+                "player-ranges.js",
                 "player-data-core.js",
                 "player-maishift.js",
                 "player-sources.js",

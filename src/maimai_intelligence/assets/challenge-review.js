@@ -102,7 +102,6 @@ function initializeFilters(){
   document.addEventListener('click',event=>{if(!el('version-filter').contains(event.target))el('version-filter').open=false;});
   el('reset-filters').onclick=()=>{for(const id of filters)el('filter-'+id).value='';regionFilter?.clear(false);selectedVersions.clear();updateVersions();updateVersionCounts();chartFilters.clear();patternFilter.clear();el('search').value='';format='all';visible=40;writePatternFilter();updateFormat();catalog();comparisonUI?.render();};
   renderSort();
-  const newest=(navigation.versions||[]).find(v=>data.catalog.some(c=>folderValue(c,'version')===v));i18n.text(el('catalog-era'), newest?i18n.message('Through {0}',[i18n.verbatim(versionLabel(newest))]):'Research catalog');
 }
 function writePatternFilter(){const url=new URL(location.href);url.searchParams.delete('pattern-filter');for(const id of patternFilter.ids())url.searchParams.append('pattern-filter',id);history.replaceState(null,'',url);}
 function updateVersionCounts(){
@@ -212,7 +211,7 @@ function catalog(focusKey=null){
     }
     el('songs').append(renderRow(selected||chart));
   }
-  i18n.text(el('catalog-count'), charts.length.toLocaleString()+' charts found');
+  const count=el('catalog-count'),number=document.createElement('strong'),unit=document.createElement('span');number.textContent=charts.length.toLocaleString();i18n.text(unit,'charts');count.replaceChildren(number,document.createTextNode(' '),unit);
   if(!charts.length)el('songs').append(make('p','No charts match this combination. Remove a filter or try another search.','empty-state'));
   el('more').hidden=rows.length<=visible;
 }
@@ -220,7 +219,6 @@ function catalog(focusKey=null){
 el('search').oninput=event=>{if(event.isComposing)return;visible=40;catalog();};el('search').addEventListener('compositionend',()=>{visible=40;catalog();});
 el('more').onclick=()=>{visible+=40;catalog();};
 for(const name of ['compare','catalog','patterns','about'])el(name+'-tab').onclick=()=>selectView(name);
-i18n.text(el('loaded-count'), data.catalog.length.toLocaleString());
 window.maimaiPreviewField=field;
 initializeFilters();
 regionFilter=window.maimaiRegistryBrowser.mount(data,()=>{updateVersionCounts();visible=40;catalog();comparisonUI?.render();});

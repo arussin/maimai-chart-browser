@@ -4,7 +4,7 @@ import {gzipSync} from 'node:zlib';
 
 test('fetched startup shares the parsed catalog without retaining an embedded JSON copy',async({page})=>{
   await page.goto('/progressive/?view=catalog');
-  await expect(page.locator('#loaded-count')).toHaveText('6');
+  await expect(page.locator('#catalog-count strong')).toHaveText('6');
   await expect(page.locator('#challenge-data')).toHaveCount(0);
   await expect(page.locator('#songs .song-row')).toHaveCount(6);
   const available=await page.evaluate(()=>{
@@ -18,7 +18,7 @@ for(const restoreTiming of ['before','after'])test(`saved player restore ${resto
   const errors=[];page.on('pageerror',error=>errors.push(error.message));
   const data=JSON.parse(await readFile(new URL('../../output/reconciliation-fixture.json',import.meta.url),'utf8'));
   await page.goto('/registry/?search=ソテリア');
-  await expect(page.locator('#catalog-count')).toHaveText('4 charts found');
+  await expect(page.locator('#catalog-count')).toHaveText('4 charts');
   await page.locator('input[type=file]').setInputFiles({name:'fictional-player.gz',mimeType:'application/gzip',buffer:gzipSync(Buffer.from(JSON.stringify(data)))});
   await page.getByLabel('Remember on this device',{exact:true}).check();
   await page.getByRole('button',{name:'Import data',exact:true}).click();
@@ -43,7 +43,7 @@ for(const restoreTiming of ['before','after'])test(`saved player restore ${resto
     await route.continue();
   });
   await page.reload();
-  await expect(page.locator('#catalog-count')).toHaveText('4 charts found');
+  await expect(page.locator('#catalog-count')).toHaveText('4 charts');
   if(restoreTiming==='after'){
     expect(await page.evaluate(()=>maimaiPersonal.enabled())).toBe(false);
     await page.evaluate(()=>releaseSavedRestore());
@@ -59,7 +59,7 @@ test('browsing and matching work without details; failed evidence can be retried
   const requested=[];page.on('request',r=>requested.push(r.url()));
   await page.route('**/chart-details/**',route=>route.abort());
   await page.goto('/progressive/');
-  await expect(page.locator('#loaded-count')).toHaveText('6');
+  await expect(page.locator('#catalog-count strong')).toHaveText('6');
   await expect(page.locator('#lab-status')).toBeEmpty();
   await page.locator('#search').fill('Fictional study 0');
   await expect(page.locator('#songs .song-row')).toHaveCount(1);
@@ -79,7 +79,7 @@ test('browsing and matching work without details; failed evidence can be retried
 
 test('linked comparisons retain exact pattern results and cache verified details in the session',async({page})=>{
   await page.goto('/lab/');
-  await expect(page.locator('#loaded-count')).toHaveText('6');
+  await expect(page.locator('#catalog-count strong')).toHaveText('6');
   const original=await page.evaluate(()=>{
     const data=window.maimaiResearchCatalog,[a,b]=data.catalog;
     return {left:a.chart_id,right:b.chart_id,comparison:window.maimaiChartOverview.compare(a,b),matches:window.maimaiChallengeMatching.createIndex(data.catalog).similar(a.chart_id,{patternCompare:window.maimaiChartOverview.compare})};
@@ -114,7 +114,7 @@ test('capacity startup fetches a smaller index and only requests visible chart e
   page.on('request',r=>requests.push(r.url()));
   page.on('response',r=>{if(r.url().includes('/catalog-index/'))sizes.push(Number(r.headers()['content-length']));});
   await page.goto('/progressive-capacity/');
-  await expect(page.locator('#catalog-count')).toHaveText('7,000 charts found');
+  await expect(page.locator('#catalog-count')).toHaveText('7,000 charts');
   await expect(page.locator('#songs .chart-flow svg').first()).toBeVisible();
   expect(sizes).toHaveLength(1);expect(sizes[0]).toBeLessThan(10*1024*1024);
   expect(requests.filter(url=>url.includes('/chart-details/')).length).toBeLessThanOrEqual(40);

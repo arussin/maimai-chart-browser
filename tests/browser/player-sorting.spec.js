@@ -18,7 +18,7 @@ async function importOffscreenPBs(page){
   // Detail downloads fail deliberately: ranking must use the complete startup index.
   await page.route('**/chart-details/**',route=>route.abort());
   await page.goto('/progressive-capacity/');
-  await expect(page.locator('#catalog-count')).toHaveText('7,000 charts found');
+  await expect(page.locator('#catalog-count')).toHaveText('7,000 charts');
   await expect(page.locator('#songs .song-row')).toHaveCount(40);
   const template=JSON.parse(await readFile(new URL('../../output/reconciliation-fixture.json',import.meta.url),'utf8'));
   const dataset=await page.evaluate(async template=>{
@@ -84,24 +84,24 @@ test('personal sorts rank offscreen PB difficulties across the complete catalog 
 test('My PBs is one click, works while minimized, and combines with grade and achievement filters',async({page})=>{
   const scope=await importOffscreenPBs(page),rows=page.locator('#songs .song-row');
   await scope.getByRole('button',{name:'My PBs',exact:true}).click();
-  await expect(page.locator('#catalog-count')).toHaveText('101 charts found');
+  await expect(page.locator('#catalog-count')).toHaveText('101 charts');
   await expect(rows.first()).toHaveAttribute('data-chart-id','synthetic:capacity:6403');
   await expect(rows.locator('.player-chart-rating')).toHaveCount(40);
   await page.getByRole('group',{name:'Filter by grade',exact:true}).getByRole('button',{name:'SSS+',exact:true}).click();
   await expect(rows).toHaveCount(1);
   await expect(rows.first()).toHaveAttribute('data-chart-id','synthetic:capacity:6798');
   await page.locator('#personal-min').fill('100.6');
-  await expect(page.locator('#catalog-count')).toHaveText('0 charts found');
+  await expect(page.locator('#catalog-count')).toHaveText('0 charts');
   await page.getByRole('button',{name:'Clear personal filters',exact:true}).click();
   await expect(scope.getByRole('button',{name:'All charts',exact:true})).toHaveAttribute('aria-pressed','true');
-  await expect(page.locator('#catalog-count')).toHaveText('7,000 charts found');
+  await expect(page.locator('#catalog-count')).toHaveText('7,000 charts');
   await page.locator('.player-filters .player-filter-toggle').click();
   await expect(page.locator('.player-filters .player-filter-toggle')).toHaveAttribute('aria-expanded','false');
   await scope.getByRole('button',{name:'My PBs',exact:true}).focus();
   await page.keyboard.press('Enter');
-  await expect(page.locator('#catalog-count')).toHaveText('101 charts found');
+  await expect(page.locator('#catalog-count')).toHaveText('101 charts');
   await scope.getByRole('button',{name:'No PB yet',exact:true}).click();
-  await expect(page.locator('#catalog-count')).toHaveText('6,899 charts found');
+  await expect(page.locator('#catalog-count')).toHaveText('6,899 charts');
   await expect(rows.locator('.player-chart-rating')).toHaveCount(0);
   await page.locator('.player-filters .player-filter-toggle').click();
   await expect(page.locator('.player-filters .player-filter-reveal')).toHaveCSS('opacity','1');

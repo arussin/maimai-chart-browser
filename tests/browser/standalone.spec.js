@@ -19,7 +19,7 @@ async function open(page){await page.goto('/');await expect(page.locator('#explo
 async function importValue(page,value){await page.locator('#site-import').setInputFiles({name:'results.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(value))});}
 
 test('About exposes credits and hides unconfigured support while preserving chart filters and keyboard navigation',async({page},testInfo)=>{
-  await page.goto('/lab/');await expect(page.locator('#loaded-count')).toHaveText('6');
+  await page.goto('/lab/');await expect(page.locator('#catalog-count strong')).toHaveText('6');
   await page.locator('#search').fill('Fictional study 0');
   await page.locator('[data-sort-key=bpm]').click();
   await page.locator('#about-tab').focus();await page.keyboard.press('Enter');
@@ -54,7 +54,7 @@ test('About links work even when the catalog cannot load',async({page})=>{
 });
 
 test('romaji searches share aliases across Charts and both comparison pickers',async({page})=>{
-  await page.goto('/romaji/');await expect(page.locator('#loaded-count')).toHaveText('6');
+  await page.goto('/romaji/');await expect(page.locator('#catalog-count strong')).toHaveText('6');
   const requests=[];page.on('request',r=>requests.push(r.url()));
   for(const query of ['Umiyuri','UMIYURI KAITEITAN','umi yuri','umiyuri-kaiteitan','Ｕｍｉｙｕｒｉ']){
     await page.locator('#search').fill(query);await expect(page.locator('#songs .song-row')).toHaveCount(1);
@@ -147,7 +147,7 @@ test('accessible controls and mobile reflow with personal cards',async({page})=>
 });
 test('research browser combines filters and retains them while sorting',async({page})=>{
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
-  await page.goto('/lab/?version=fixture-v5');await expect(page.locator('#loaded-count')).toHaveText('6');
+  await page.goto('/lab/?version=fixture-v5');await expect(page.locator('#catalog-count strong')).toHaveText('6');
   await page.locator('#search').fill('Fictional study 0');await expect(page.locator('#songs')).toContainText('Fictional study 0');
   await page.locator('#search').fill('');
   await page.locator('#version-summary').click();
@@ -267,7 +267,7 @@ test('complete dictionary supports demos, keyboard close and stable links',async
 });
 
 test('research controls and pattern demos remain accessible and reflow at 200 percent',async({page})=>{
-  await page.goto('/lab/');await expect(page.locator('#loaded-count')).toHaveText('6');
+  await page.goto('/lab/');await expect(page.locator('#catalog-count strong')).toHaveText('6');
   await page.locator('[data-sort-key=title]').focus();
   expect((await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21aa']).analyze()).violations).toEqual([]);
   await page.locator('#patterns-tab').click();
@@ -312,7 +312,7 @@ async function chooseComparisonChart(page,side,title){
 
 test('any two catalog charts compare and survive a shared link',async({page})=>{
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
-  await page.goto('/lab/?view=compare');await expect(page.locator('#loaded-count')).toHaveText('6');
+  await page.goto('/lab/?view=compare');await expect(page.locator('#catalog-count strong')).toHaveText('6');
   const requests=[];page.on('request',r=>requests.push(r.url()));
   const firstSearch=page.locator('#compare-left-search');
   await firstSearch.fill('Fictional study');await firstSearch.press('ArrowDown');
@@ -344,7 +344,7 @@ test('any chart can find similar charts and choose a result for comparison',asyn
 
 for(const route of ['lab','progressive'])test(route+': comparisons omit retired passage UI while retaining patterns and activity',async({page})=>{
   const errors=[],requests=[];page.on('pageerror',e=>errors.push(e.message));page.on('request',r=>requests.push(r.url()));
-  await page.goto('/lab/');await expect(page.locator('#loaded-count')).toHaveText('6');
+  await page.goto('/lab/');await expect(page.locator('#catalog-count strong')).toHaveText('6');
   const pairs=await page.evaluate(()=>{
     const data=window.maimaiResearchCatalog,prepared=data.review.flatMap(r=>r.candidates.filter(c=>c.passages.length).map(c=>[r.query_id,c.chart_id]));
     const known=new Set(prepared.flatMap(([a,b])=>[a+'|'+b,b+'|'+a]));
@@ -374,7 +374,7 @@ for(const route of ['lab','progressive'])test(route+': comparisons omit retired 
 });
 
 test('clean headings, filter placement and lesson actions align without overflow',async({page})=>{
-  await page.goto('/lab/');await expect(page.locator('#loaded-count')).toHaveText('6');
+  await page.goto('/lab/');await expect(page.locator('#catalog-count strong')).toHaveText('6');
   await expect(page).toHaveTitle('maimai.party');
   await expect(page.locator('.page-heading .eyebrow,.page-heading .lede,.brand-caption,.row-help,.sort-help,#mapping-note')).toHaveCount(0);
   expect(await page.locator('#pattern-filter').evaluate(node=>!!node.closest('.browser-filters'))).toBe(true);
@@ -434,7 +434,7 @@ test('same-level difficulties have separate rows, colors and exact chart actions
 
 test('YouTube searches follow difficulty and comparisons without background requests',async({page,context})=>{
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
-  await page.goto('/grouped/');await expect(page.locator('#loaded-count')).toHaveText('6');
+  await page.goto('/grouped/');await expect(page.locator('#catalog-count strong')).toHaveText('6');
   const requests=[];context.on('request',r=>requests.push({url:r.url(),referrer:r.headers().referer}));
   await page.locator('#search').fill('Fictional study 3');
   const row=page.locator('#songs .song-row[data-difficulty="RE:MASTER"]'),link=row.locator('.youtube-search');
@@ -459,7 +459,7 @@ test('YouTube searches follow difficulty and comparisons without background requ
 });
 
 test('YouTube queries preserve song punctuation and omit unknown titles and private fields',async({page})=>{
-  await page.goto('/lab/');await expect(page.locator('#loaded-count')).toHaveText('6');
+  await page.goto('/lab/');await expect(page.locator('#catalog-count strong')).toHaveText('6');
   const result=await page.evaluate(()=>{
     const link=window.maimaiChartLinks.youtube({title:'  曲 & # + ? / <test>  ',format:'STD',difficulty:'MASTER',artist:'Artist',chart_id:'internal-id',player:'private-player',achievement:99});
     const url=new URL(link.href);
@@ -470,7 +470,7 @@ test('YouTube queries preserve song punctuation and omit unknown titles and priv
 
 test('pattern mappings connect rows, lesson discovery, filters and observed sections',async({page})=>{
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
-  await page.goto('/lab/');await expect(page.locator('#loaded-count')).toHaveText('6');
+  await page.goto('/lab/');await expect(page.locator('#catalog-count strong')).toHaveText('6');
   const requests=[];page.on('request',r=>requests.push(r.url()));
   await expect(page.locator('#mapping-note')).toHaveCount(0);
   await expect(page.locator('.song-row>.chart-summary>.chart-flow svg')).toHaveCount(6);
@@ -493,7 +493,7 @@ test('pattern mappings connect rows, lesson discovery, filters and observed sect
 });
 
 test('comparisons foreground patterns and share a vertical activity scale',async({page})=>{
-  await page.goto('/lab/?view=compare');await expect(page.locator('#loaded-count')).toHaveText('6');
+  await page.goto('/lab/?view=compare');await expect(page.locator('#catalog-count strong')).toHaveText('6');
   const requests=[];page.on('request',r=>requests.push(r.url()));
   await chooseComparisonChart(page,'left','Fictional study 4');await chooseComparisonChart(page,'right','Fictional study 2');
   await expect(page.locator('#direct-comparison .pattern-comparison')).toBeVisible();
@@ -507,7 +507,7 @@ test('comparisons foreground patterns and share a vertical activity scale',async
 });
 
 test('column sorting works by keyboard and keeps explicit priority order',async({page})=>{
-  await page.goto('/lab/');await expect(page.locator('#loaded-count')).toHaveText('6');
+  await page.goto('/lab/');await expect(page.locator('#catalog-count strong')).toHaveText('6');
   await expect(page.locator('#sort-panel')).toHaveCount(0);
   const bpm=page.locator('[data-sort-key=bpm]');await bpm.focus();await page.keyboard.press('Enter');
   await expect(bpm).toHaveAttribute('aria-label',/priority 1, ascending/);
@@ -520,7 +520,7 @@ test('column sorting works by keyboard and keeps explicit priority order',async(
 });
 
 test('unknown pattern coverage is not treated as absence or a pattern match',async({page})=>{
-  await page.goto('/lab/');await expect(page.locator('#loaded-count')).toHaveText('6');
+  await page.goto('/lab/');await expect(page.locator('#catalog-count strong')).toHaveText('6');
   const result=await page.evaluate(()=>{
     const data=window.maimaiResearchCatalog,left=data.catalog[0],right=data.catalog[1];
     const unknown={...right,source_hash:'wrong-source'};
@@ -532,7 +532,7 @@ test('unknown pattern coverage is not treated as absence or a pattern match',asy
 });
 
 test('pattern priority can promote a structural match and leaves unknown coverage last',async({page})=>{
-  await page.goto('/lab/');await expect(page.locator('#loaded-count')).toHaveText('6');
+  await page.goto('/lab/');await expect(page.locator('#catalog-count strong')).toHaveText('6');
   const result=await page.evaluate(()=>{
     const data=window.maimaiResearchCatalog,ids=['a-source','b-measurements','c-patterns','d-unknown'];
     const charts=ids.map((id,i)=>({...data.catalog[i===2?3:0],chart_id:id,song_id:id,song_family:id}));
@@ -544,7 +544,7 @@ test('pattern priority can promote a structural match and leaves unknown coverag
 });
 
 test('pattern comparison distinguishes frequency even when chart tags are identical',async({page})=>{
-  await page.goto('/lab/');await expect(page.locator('#loaded-count')).toHaveText('6');
+  await page.goto('/lab/');await expect(page.locator('#catalog-count strong')).toHaveText('6');
   const result=await page.evaluate(()=>{
     const data=window.maimaiResearchCatalog,[left,right]=data.catalog,overview=window.maimaiChartOverview;
     const record=overview.get(right),sourceHash=record.source_hash;Object.assign(record,structuredClone(overview.get(left)),{source_hash:sourceHash});
@@ -618,7 +618,7 @@ test('primary lesson charts retain readable scales and work with reduced motion'
 
 test('public artwork sits left of rows, versions retain accessible multi-select and images stay local',async({page})=>{
   const requests=[],errors=[];page.on('request',r=>requests.push(r.url()));page.on('pageerror',e=>errors.push(e.message));
-  await page.goto('/artwork/');await expect(page.locator('#loaded-count')).toHaveText('6');
+  await page.goto('/artwork/');await expect(page.locator('#catalog-count strong')).toHaveText('6');
   const row=page.locator('.song-row').filter({has:page.getByText('Fictional study 0',{exact:true})});
   const jacket=row.locator('.song-jacket');await expect(jacket).not.toHaveClass(/artwork-missing/);
   const bounds=await jacket.boundingBox(),title=await row.locator('.chart-row').boundingBox();expect(bounds.x+bounds.width).toBeLessThanOrEqual(title.x);
@@ -637,7 +637,7 @@ test('public artwork sits left of rows, versions retain accessible multi-select 
 
 test('unavailable jacket files fall back without breaking chart interactions',async({page})=>{
   await page.route('**/media/*.webp',route=>route.fulfill({status:404,body:''}));
-  await page.goto('/artwork/');await expect(page.locator('#loaded-count')).toHaveText('6');
+  await page.goto('/artwork/');await expect(page.locator('#catalog-count strong')).toHaveText('6');
   const row=page.locator('.song-row').first();await expect(row.locator('.song-jacket')).toHaveClass(/artwork-missing/);
   await expect(row.locator('.song-jacket img')).toHaveCount(0);await row.locator('.chart-row').click();await expect(row.locator('.chart-measurements')).toBeVisible();
 });

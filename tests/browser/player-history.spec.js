@@ -3,7 +3,7 @@ import {readFile} from 'node:fs/promises';
 import {gzipSync} from 'node:zlib';
 
 async function configure(page){
-  await expect(page.locator('#loaded-count')).toHaveText('6');
+  await expect(page.locator('#catalog-count strong')).toHaveText('6');
   await page.evaluate(async()=>{
     await maimaiPersonal.ready;
     const data=maimaiResearchCatalog,c=data.catalog[0];

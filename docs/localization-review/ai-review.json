@@ -42,13 +42,13 @@
     "README.ko.md": "16f88597ed58e405c4b14c820bca9e21b6341f9f3a131a3a1a164c83b48e3e93",
     "README.ja.md": "a52749c6cd74759fd9a732a607fc7fc0defdd7958e3cd1f127a229c015a4f482",
     "src/maimai_intelligence/assets/locales/share.json": "20585e67f1443547ae3ba6b164a38b634f5b233f846f40d51af98ee9da825839",
-    "src/maimai_intelligence/assets/locales/player-sources.json": "dabeb3b2b16cc0d4429016116f329a0748caf73e8aecc323828e04afc4e42052",
+    "src/maimai_intelligence/assets/locales/player-sources.json": "b39950e73f1a0c72b065ff0ead3a8709e6ae7a513a91ceeb0adee0137a2d5b14",
     "src/maimai_intelligence/assets/locales/player-maishift.json": "3818565f5eae7310e64f79292312a424a07d517a26bcadafc98ee994629bb8e4",
     "src/maimai_intelligence/assets/locales/maishift-pilot.json": "8ea2ab02f9b74fb0995a3610b840a9bf3889b684000d4fae09a071977abeb104",
-    "src/maimai_intelligence/assets/import-help/README.ja.md": "16d1a8101988175ef04e8c8cfbe4c8286a05209431ada449c035687f9d878fdd",
-    "src/maimai_intelligence/assets/import-help/README.ko.md": "04315564a5330cf1c01b14d25255b98f08330d28281b4712e94b9643ecb5edf7",
-    "src/maimai_intelligence/assets/import-help/README.md": "e2285c3a70b8152b7183f4f179131c9912c581800959b09300503d569b319eb8",
-    "src/maimai_intelligence/assets/import-help/README.zh-Hans.md": "2459877f40b219ff720ed7e2053587f2f1609b09b2e1d5db2dc0e14586d9f21a",
+    "src/maimai_intelligence/assets/import-help/README.ja.md": "793eedaee7afbc4b2464e5ad33a35e6aa9f788a66afebeb7ca4c6f23dfa5dcd3",
+    "src/maimai_intelligence/assets/import-help/README.ko.md": "0c2ecd61b9e5f4af2642f7bba76e38d9665ddaae0ef15a92c54871ae7ae82300",
+    "src/maimai_intelligence/assets/import-help/README.md": "0f48fe33e30370ccd863268b0a454e9ac710a32b1db4921adc2e6756fc154dce",
+    "src/maimai_intelligence/assets/import-help/README.zh-Hans.md": "fc7cf8161fa13d19f052a5c9b5c66eae05be1b1ee98490e082e4441c9da996cf",
     "src/maimai_intelligence/assets/song-display-readings.json": "94d944ed0f56d8a36d5565af9893f6701b99666b224a1f7db6e767413b67973c"
   },
   "documentation": {
@@ -173,5 +173,11 @@
     "accepted": 321,
     "sourceRevision": "f08148f8644e40de9b178445df4bd59da712d3de",
     "record": "docs/localization-review/display-readings-20260922.md"
+  },
+  "production_import_ranges": {
+    "date": "2026-09-22",
+    "reviewer": "Codex",
+    "method": "AI contextual linguistic review; not native-speaker certification.",
+    "scope": "Reviewed achievement grade stepping, exact percentages, known and unknown imported chart rating limits, Clear labels, and the visible-import-action announcement in English, Simplified Chinese, Korean and Japanese. Canonical grade/percentage labels and keyboard identifiers are invariants. Wording preserves rating as chart rating and distinguishes missing data from zero. Reviewed the four help pages: main-site availability replaces the retired test-browser instructions; tester data remains separate and requires reimport."
   }
 }

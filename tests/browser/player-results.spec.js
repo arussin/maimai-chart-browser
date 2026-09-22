@@ -12,7 +12,7 @@ test.beforeEach(async({page})=>page.addInitScript(()=>{
 }));
 
 async function configure(page,data){
-  await expect(page.locator('#loaded-count')).toHaveText('6');
+  await expect(page.locator('#catalog-count strong')).toHaveText('6');
   await expect(page.locator('#songs .song-row')).toHaveCount(6);
   await page.evaluate(async data=>{
     await maimaiPersonal.ready;
@@ -28,7 +28,7 @@ async function configure(page,data){
 }
 
 for(const source of ['session-file','session-hosted','maishift-file'])test(`${source}: all combo and sync badges filter, restore and retain original observations`,async({page,context})=>{
-  await page.goto('/lab/');await expect(page.locator('#loaded-count')).toHaveText('6');await expect(page.locator('#songs .song-row')).toHaveCount(6);await page.evaluate(()=>maimaiPersonal.ready);
+  await page.goto('/lab/');await expect(page.locator('#catalog-count strong')).toHaveText('6');await expect(page.locator('#songs .song-row')).toHaveCount(6);await page.evaluate(()=>maimaiPersonal.ready);
   const template=JSON.parse(await readFile(new URL('../../output/reconciliation-fixture.json',import.meta.url),'utf8'));
   const data=await page.evaluate(async({template,shift})=>{
     const core=maimaiPlayerData,baseChart=Object.values(template.charts)[0],baseRecord=Object.values(template.records)[0];
@@ -143,7 +143,7 @@ test('difficulty changes stay in their row, preserve focus and refresh, and resp
 test('English titles add faithful romaji and other languages retain original titles at narrow widths',async({page})=>{
   await page.goto('/registry/?search=ソテリア');const row=page.locator('#songs .song-row').first();
   await expect(row.locator('.song-romaji')).toHaveText('soteria');
-  expect(await row.evaluate(n=>parseFloat(getComputedStyle(n.querySelector('.song-title')).fontSize)>parseFloat(getComputedStyle(n.querySelector('.song-romaji')).fontSize))).toBe(true);
+  await expect.poll(()=>row.evaluate(n=>n.isConnected&&parseFloat(getComputedStyle(n.querySelector('.song-title')).fontSize)>parseFloat(getComputedStyle(n.querySelector('.song-romaji')).fontSize))).toBe(true);
   const before=await row.locator('.song-title').textContent();
   for(const locale of ['en','zh-Hans','ko','ja','en']){
     await page.locator('[data-language="'+locale+'"]').click();

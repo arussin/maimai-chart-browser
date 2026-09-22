@@ -22,7 +22,9 @@ from .research_overview import validate_overview
 from .snapshots import MAX_BYTES, atomic_json, canonical, read_json
 
 
-def build_lab(package_directory, output, *, catalog_version, player_pilot=False):
+def build_lab(
+    package_directory, output, *, catalog_version, player_pilot=False, player_maishift=False
+):
     source, root = Path(package_directory), Path(output)
     package = read_json(source / "package.json")
     if package.get("status") != "research_preview" or package.get("source") != SOURCE_LOCK:
@@ -130,6 +132,8 @@ def build_lab(package_directory, output, *, catalog_version, player_pilot=False)
         "localization.js",
         *(("maishift-browser-pilot.js",) if player_pilot else ()),
         "settings-menu.js",
+        "player-import-config.js",
+        "player-ranges.js",
         "player-data-core.js",
         "player-maishift.js",
         "player-sources.js",
@@ -154,6 +158,8 @@ def build_lab(package_directory, output, *, catalog_version, player_pilot=False)
             if name == "localization.js"
             else assets.joinpath(name).read_text("utf-8")
         )
+        if name == "player-import-config.js" and player_maishift:
+            content = content.replace("maishift:false", "maishift:true")
         atomic_write_text(root / name, content)
         revision = hashlib.sha256(content.encode("utf-8")).hexdigest()[:16]
         early_scripts.append(f'<script defer src="{name}?v={revision}"></script>')

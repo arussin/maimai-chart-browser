@@ -152,6 +152,8 @@ def build_browser(output, registry, retained_package=None):
         "settings-menu.js",
         "maishift-browser-pilot.js",
         "maishift-browser-pilot.css",
+        "player-import-config.js",
+        "player-ranges.js",
         "player-data-core.js",
         "player-maishift.js",
         "player-sources.js",

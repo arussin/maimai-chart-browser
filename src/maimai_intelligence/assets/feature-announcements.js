@@ -2,7 +2,7 @@
 (()=>{'use strict';
 if(document.getElementById('feature-announcement-replay'))return;
 const i18n=window.maimaiI18n,settings=document.getElementById('settings-toggle'),menu=document.getElementById('settings-actions');if(!settings||!menu)return;
-const registry=[{id:'player-import-sources-v1',enabled:()=>Object.values(window.maimaiPlayerSources.capabilities).every(Boolean),title:'Bring your scores to maimai.party',body:'Import from Session Report or your public Maishift profile. Open Settings → Import player data to get started.'}];
+const registry=[{id:'player-import-sources-v1',enabled:()=>Object.values(window.maimaiPlayerSources.capabilities).every(Boolean),title:'Bring your scores to maimai.party',body:'Bring your Session Report or public Maishift scores into the chart browser. Choose Import player data to get started.'}];
 const sessionSeen=new Set();let current=null,manual=false,readyToShow=document.readyState==='complete';
 const bubble=document.createElement('aside');bubble.className='feature-announcement';bubble.hidden=true;bubble.setAttribute('role','region');bubble.setAttribute('aria-labelledby','feature-announcement-title');document.body.append(bubble);
 function seen(id){if(sessionSeen.has(id))return true;try{if(localStorage.getItem('maimai-announcement:'+id)==='seen')return true;}catch{}try{return sessionStorage.getItem('maimai-announcement:'+id)==='seen';}catch{return false;}}

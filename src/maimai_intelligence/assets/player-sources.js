@@ -2,7 +2,7 @@
 (()=>{'use strict';
 if(globalThis.maimaiPlayerSources)return;
 const core=globalThis.maimaiPlayerData;
-const capabilities=Object.freeze({file:true,report:true,maishift:globalThis.maimaiPlayerContext?.pilot===true});
+const capabilities=Object.freeze({file:true,report:true,maishift:globalThis.maimaiPlayerFeatures?.maishift===true||globalThis.maimaiPlayerContext?.pilot===true});
 const AUTO_INTERVAL=15*60*1000,MANUAL_INTERVAL=30000;
 function reportURL(value){
   let url;try{url=new URL(value);}catch{throw new Error('Enter a complete HTTPS Session Report URL.');}

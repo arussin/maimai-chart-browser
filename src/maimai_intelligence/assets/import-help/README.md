@@ -18,7 +18,7 @@ Importing another player switches the active profile; different players are neve
 
 ## Maishift
 
-Maishift imports are currently available in the separate test browser. Enter your own public username or profile URL. Party's import service reads the public profile and played-chart PBs only when you import or consent to remembered refresh. No Maishift password is needed.
+Choose Maishift in Import player data. Enter your own public username or profile URL. Party's import service reads the public profile and played-chart PBs only when you import or consent to remembered refresh. No Maishift password is needed.
 
 One username can have both International and Japan records. These remain separate; North America uses International records with different chart availability. A URL containing @jp, @intl or @na selects that record set. For a username or URL without a region, Party requests International and uses the region Maishift returns. If both exist, International is selected; paste the @jp profile link to import Japan instead. Remembered refresh stays in that region; display language does not select it.
 
@@ -28,4 +28,4 @@ All returned played-chart PBs are considered, including lower difficulties and S
 
 Import & remember saves the profile and connection in this browser. Import once keeps it only in this tab. Remembered refresh restores saved scores first, then checks on an eligible visible/online visit at most once per source per 15 minutes across tabs. Refresh now has a 30-second cooldown; upstream limits may require longer.
 
-Forget remembered player data removes the saved profile and connection and stops refresh across tabs. Scores already visible may remain until reload. The test browser's saved data is separate from the main site. A username identifies the public source; it does not prove ownership or protect against reassignment.
+Forget remembered player data removes the saved profile and connection and stops refresh across tabs. Scores already visible may remain until reload. Data from the retired test browser stays separate; import again on the main site. A username identifies the public source; it does not prove ownership or protect against reassignment.

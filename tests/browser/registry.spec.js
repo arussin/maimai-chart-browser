@@ -17,7 +17,7 @@ test('metadata-only search, difficulty selection, comparison and detail absence 
   const errors=[];page.on('pageerror',error=>errors.push(error.message));
   const requests=[];page.on('request',r=>{if(r.url().includes('/chart-details/'))requests.push(r.url());});
   await page.goto('/registry/?search=ソテリア');
-  await expect(page.locator('#catalog-count')).toHaveText('4 charts found');
+  await expect(page.locator('#catalog-count')).toHaveText('4 charts');
   const row=page.locator('#songs .song-row[data-difficulty=MASTER]');await expect(page.locator('#songs .song-row')).toHaveCount(4);
   await expect(row.locator('.chart-constant')).toHaveText('—');
   await expect(row.getByRole('button',{name:'Find similar',exact:true})).toBeDisabled();
@@ -34,14 +34,14 @@ test('metadata-only search, difficulty selection, comparison and detail absence 
   await expect(page.locator('#direct-comparison')).toContainText('not enough shared measurement coverage');
   await expect(page.locator('.metric-comparison')).toContainText('Unknown');
   await page.locator('#catalog-tab').click();await page.locator('#search').fill('そてりあ');
-  await expect(page.locator('#catalog-count')).toHaveText('4 charts found');
+  await expect(page.locator('#catalog-count')).toHaveText('4 charts');
   expect(errors).toEqual([]);
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
 });
 
 test('regional preference keeps every chart, prefers Japan by default and falls back per field',async({page})=>{
   const errors=[];page.on('pageerror',error=>errors.push(error.message));
-  await page.goto('/registry/');await expect(page.locator('#catalog-count')).toHaveText('26 charts found');
+  await page.goto('/registry/');await expect(page.locator('#catalog-count')).toHaveText('26 charts');
   const circlePlus=page.locator('#version-options label').filter({hasText:'DX CiRCLE PLUS'});
   await expect(circlePlus).toHaveAttribute('title','5 song / format entries, 20 charts');
   const preference=page.getByRole('checkbox',{name:'Use maimai international data',exact:true});
@@ -60,7 +60,7 @@ test('regional preference keeps every chart, prefers Japan by default and falls 
   await expect(preference).toBeChecked();
   await expect(page.locator('#filter-region [aria-checked="true"]')).toHaveAttribute('data-region','');
   await expect(circlePlus).toHaveAttribute('title','4 song / format entries, 16 charts');
-  await expect(page.locator('#catalog-count')).toHaveText('26 charts found');
+  await expect(page.locator('#catalog-count')).toHaveText('26 charts');
   await expect(japanOnly).toBeVisible();await expect(internationalOnly).toBeVisible();
   await expect(row).toHaveAttribute('data-level','7');
   await expect(row).toHaveAttribute('data-version','maimai DX CiRCLE');
@@ -78,13 +78,13 @@ test('regional preference keeps every chart, prefers Japan by default and falls 
   await preference.check();await page.locator('#reset-filters').click();
   await expect(preference).not.toBeChecked();
   await expect(circlePlus).toHaveAttribute('title','5 song / format entries, 20 charts');
-  await expect(page.locator('#catalog-count')).toHaveText('26 charts found');
+  await expect(page.locator('#catalog-count')).toHaveText('26 charts');
   expect(errors).toEqual([]);
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
 });
 
 test('legacy chart and pair links resolve in current inventory and remain unchanged in old releases',async({page})=>{
-  await page.goto('/registry/');await expect(page.locator('#catalog-count')).toHaveText('26 charts found');
+  await page.goto('/registry/');await expect(page.locator('#catalog-count')).toHaveText('26 charts');
   const [old,id]=await page.evaluate(()=>Object.entries(maimaiResearchCatalog.legacy_ids)[0]);
   await page.goto('/registry/?view=catalog&chart='+encodeURIComponent(old));
   await expect(page.locator('#songs .song-row[data-chart-id="'+id+'"] .chart-measurements')).toBeVisible();
@@ -96,7 +96,7 @@ test('legacy chart and pair links resolve in current inventory and remain unchan
 });
 
 test('a schema-1 synthetic player file maps to a metadata-only chart without qualifying analysis',async({page})=>{
-  await page.goto('/registry/?search=ソテリア');await expect(page.locator('#catalog-count')).toHaveText('4 charts found');
+  await page.goto('/registry/?search=ソテリア');await expect(page.locator('#catalog-count')).toHaveText('4 charts');
   const template=JSON.parse(await readFile(new URL('../../output/reconciliation-fixture.json',import.meta.url),'utf8'));
   await page.locator('input[type=file]').setInputFiles({name:'fictional-player.gz',mimeType:'application/gzip',buffer:gzipSync(Buffer.from(JSON.stringify(template)))});
   await page.getByRole('button',{name:'Import data',exact:true}).click();
@@ -286,7 +286,7 @@ test('shared genre vectors normalize only reviewed historical aliases and are id
 test('immutable historical duplicate genres collapse before filters initialize',async({page})=>{
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto('/registry/?version=duplicate-genres-fixture&view=catalog');
-  await expect(page.locator('#catalog-count')).toHaveText('26 charts found');
+  await expect(page.locator('#catalog-count')).toHaveText('26 charts');
   const select=page.locator('#filter-genre');
   await expect(select.locator('option')).toHaveCount(7);
   const manifest=await (await page.request.get('/registry/manifest.json')).json();
@@ -299,9 +299,9 @@ test('immutable historical duplicate genres collapse before filters initialize',
     expect(before.length).toBeGreaterThan(0);
     await expect(select.locator('option').filter({hasText:new RegExp('^'+vector.label.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'$')})).toHaveCount(1);
     await select.selectOption(vector.id);
-    await expect(page.locator('#catalog-count')).toHaveText(before.length+' charts found');
+    await expect(page.locator('#catalog-count')).toHaveText(before.length+' charts');
     await page.locator('#use-international-data').check();
-    await expect(page.locator('#catalog-count')).toHaveText(before.length+' charts found');
+    await expect(page.locator('#catalog-count')).toHaveText(before.length+' charts');
   }
   expect(errors).toEqual([]);
 });
@@ -343,7 +343,7 @@ test('an unreviewed catalog shows a localized error instead of publishing genre 
 
 test('clean catalog URLs follow a changed manifest default on reload without acquiring a pin',async({page})=>{
   await page.goto('/registry/?view=catalog');
-  await expect(page.locator('#catalog-count')).toHaveText('26 charts found');
+  await expect(page.locator('#catalog-count')).toHaveText('26 charts');
   expect(new URL(page.url()).searchParams.has('version')).toBe(false);
   await expect(page.locator('#filter-genre option[value="東方Project"]')).toHaveCount(0);
   await page.route('**/registry/manifest.json',async route=>{
@@ -361,7 +361,7 @@ test('explicit historical URLs stay pinned and Open latest removes only the vers
   await expect(page.locator('#lab-status')).toContainText('You are viewing an older catalog.');
   const link=page.getByRole('link',{name:'Open the latest catalog'}),latest=new URL(await link.getAttribute('href'));
   expect(latest.searchParams.has('version')).toBe(false);expect(latest.searchParams.get('view')).toBe('catalog');expect(latest.searchParams.get('search')).toBe('fixture');
-  await link.click();await expect(page.locator('#catalog-count')).toContainText('charts found');
+  await link.click();await expect(page.locator('#catalog-count')).toContainText('charts');
   expect(new URL(page.url()).searchParams.has('version')).toBe(false);
   await expect(page.locator('#filter-genre option[value="東方Project"]')).toHaveCount(0);
   await expect(page.locator('#search')).toHaveValue('fixture');
@@ -378,33 +378,33 @@ test('regional availability filters rows, counts, comparison eligibility and chi
   });
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   const remote=[];page.on('request',r=>{if(!r.url().startsWith('http://127.0.0.1:'))remote.push(r.url());});
-  await page.goto('/registry/');await expect(page.locator('#catalog-count')).toHaveText('26 charts found');
+  await page.goto('/registry/');await expect(page.locator('#catalog-count')).toHaveText('26 charts');
   const region=page.locator('#filter-region'),preference=page.locator('#use-international-data');
   const jp=page.locator('#songs .song-row').filter({hasText:'ANiMA'}).first(),intl=page.locator('#songs .song-row').filter({hasText:'International fixture song'}).first();
   await expect(jp).toBeVisible();await expect(intl).toBeVisible();
   await expect(region.locator('[role=radio]')).toHaveText(['All regions','JP','International']);
-  await preference.check();await expect(region.locator('[aria-checked="true"]')).toHaveAttribute('data-region','');await expect(page.locator('#catalog-count')).toHaveText('26 charts found');
+  await preference.check();await expect(region.locator('[aria-checked="true"]')).toHaveAttribute('data-region','');await expect(page.locator('#catalog-count')).toHaveText('26 charts');
   await preference.uncheck();await region.locator('[data-region="JP"]').click();
-  await expect(page.locator('#catalog-count')).toHaveText('16 charts found');await expect(jp).toBeVisible();await expect(intl).toHaveCount(0);
+  await expect(page.locator('#catalog-count')).toHaveText('16 charts');await expect(jp).toBeVisible();await expect(intl).toHaveCount(0);
   await expect(preference).not.toBeChecked();await expect(page.locator('#catalog-filter-count')).toHaveText('1 active');
   expect(await page.evaluate(()=>testEligibleIds().length)).toBe(16);
   await region.locator('[data-region="INTL"]').click();await expect(preference).toBeChecked();
-  await expect(page.locator('#catalog-count')).toHaveText('8 charts found');await expect(intl).toBeVisible();await expect(jp).toHaveCount(0);
+  await expect(page.locator('#catalog-count')).toHaveText('8 charts');await expect(intl).toBeVisible();await expect(jp).toHaveCount(0);
   expect((await page.locator('#catalog-count').boundingBox()).height).toBeGreaterThan(10);
   await expect(page.locator('#songs')).toContainText('Soteria fixture');await expect(page.locator('#catalog-filter-count')).toHaveText('2 active');
   expect(await page.evaluate(()=>testEligibleIds().length)).toBe(8);
   expect(await page.evaluate(()=>testEligibleIds().every(id=>maimaiResearchCatalog.catalog.find(c=>c.chart_id===id).regional.INTL.listing==='listed'))).toBe(true);
-  await preference.uncheck();await expect(region.locator('[aria-checked="true"]')).toHaveAttribute('data-region','INTL');await expect(page.locator('#catalog-count')).toHaveText('8 charts found');await expect(page.locator('#songs')).toContainText('ソテリア');
+  await preference.uncheck();await expect(region.locator('[aria-checked="true"]')).toHaveAttribute('data-region','INTL');await expect(page.locator('#catalog-count')).toHaveText('8 charts');await expect(page.locator('#songs')).toContainText('ソテリア');
   for(const value of ['JP','']){
     await region.locator('[data-region="INTL"]').click();await expect(preference).toBeChecked();
     await region.locator('[data-region="'+value+'"]').click();await expect(preference).not.toBeChecked();
     await expect(page.locator('#songs')).toContainText('ソテリア');await expect(page.locator('#songs')).not.toContainText('Soteria fixture');
-    await expect(page.locator('#catalog-count')).toHaveText(value?'16 charts found':'26 charts found');
+    await expect(page.locator('#catalog-count')).toHaveText(value?'16 charts':'26 charts');
     await expect(page.locator('#catalog-filter-count')).toHaveText(value?'1 active':'');
   }
   await region.locator('[data-region="INTL"]').click();await expect(preference).toBeChecked();
   await page.getByRole('button',{name:'Remove International filter',exact:true}).click();
-  await expect(region.locator('[aria-checked="true"]')).toHaveAttribute('data-region','');await expect(preference).not.toBeChecked();await expect(page.locator('#catalog-count')).toHaveText('26 charts found');await expect(page.locator('#songs')).toContainText('ソテリア');
+  await expect(region.locator('[aria-checked="true"]')).toHaveAttribute('data-region','');await expect(preference).not.toBeChecked();await expect(page.locator('#catalog-count')).toHaveText('26 charts');await expect(page.locator('#songs')).toContainText('ソテリア');
   await region.locator('[data-region="INTL"]').click();await page.locator('#reset-filters').click();
   await expect(region.locator('[aria-checked="true"]')).toHaveAttribute('data-region','');await expect(preference).not.toBeChecked();await expect(page.locator('#catalog-filter-count')).toBeEmpty();await expect(page.locator('#active-filters')).toBeEmpty();
   expect(await page.evaluate(()=>testEligibleIds().length)).toBe(26);

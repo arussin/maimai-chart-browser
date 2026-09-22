@@ -29,12 +29,12 @@ forgetButton=menuItem('player-forget','Forget remembered player data',()=>forget
 hideButton=menuItem('player-toggle','Hide player data',()=>{visible=!visible;saveVisibility();changed();});
 const refreshButton=menuItem('player-refresh','Refresh now',()=>refresh(true));refreshButton.hidden=true;
 const importButton=menuItem('player-import','Import player data',()=>{if(!busy)selectSource();});
-const header=document.querySelector('.site-header');
+const header=document.querySelector('.catalog-heading-actions');
 if(header){
-  const launch=make('button',undefined,'player-import-header');launch.id='player-import-header';launch.type='button';launch.setAttribute('aria-haspopup','dialog');launch.setAttribute('aria-controls',dialog.id);
+  const launch=make('button',undefined,'player-import-primary');launch.id='player-import-primary';launch.type='button';launch.setAttribute('aria-haspopup','dialog');launch.setAttribute('aria-controls',dialog.id);
   launch.innerHTML='<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 16V3m-5 5 5-5 5 5M4 15v5a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-5"/></svg>';
   launch.append(make('span','Import player data'));launch.onclick=()=>{if(!busy){dialogTrigger=launch;window.maimaiSettings?.close();selectSource();}};
-  header.classList.add('has-player-import');header.append(launch);
+  header.append(launch);
 }
 function helpLink(section,label){const link=external('?', '');link.className='player-source-help';link.dataset.importHelp=section;i18n.attribute(link,'aria-label',label);i18n.attribute(link,'title',label);updateHelpLink(link);return link;}
 function updateHelpLink(link){link.href='player-import-help.'+(window.maimaiI18n?.locale||'en')+'.html#'+link.dataset.importHelp;}
@@ -302,7 +302,8 @@ function controls(parent,onchange){const root=make('fieldset',undefined,'player-
     }
   }
   function syncFields(){for(const key of ['lamp','sync','min','max','rateMin','rateMax']){const field=document.getElementById('personal-'+key);if(field)field.value=state[key];}gradeSelection();scopeSelection();}
-  function change(){for(const selector of badgeSelectors)selector();summary();onchange();}
+  let ranges;
+  function change(){for(const selector of badgeSelectors)selector();ranges?.sync();summary();onchange();}
   const sorting=make('div',undefined,'player-sorting');sorting.setAttribute('role','group');i18n.attribute(sorting, 'aria-label', 'Sort personal results');sorting.append(make('span','Sort by'));
   for(const [key,label]of [['rating','Your RT'],['achievement','Achievement'],['grade','Grade'],['lastPlayed','Last recorded play']]){const button=make('button',label);button.type='button';button.dataset.sortKey=key;if(key==='rating')i18n.attribute(button, 'title', 'Sort by your chart rating (RT)');sorting.append(button);}fields.append(sorting);
   const gradeGroup=make('div',undefined,'player-grade-options');gradeGroup.setAttribute('role','group');i18n.attribute(gradeGroup, 'aria-label', 'Filter by grade');gradeGroup.append(make('span','Grade'));i18n.attribute(gradeGroup, 'title', 'Select one or more grades');
@@ -337,7 +338,7 @@ function controls(parent,onchange){const root=make('fieldset',undefined,'player-
     window.addEventListener('resize',position);window.addEventListener('scroll',e=>{if(e.target!==menu&&!menu.contains(e.target))position();},true);
     select.onchange=()=>{state[key]=select.value;change();};badgeSelectors.push(render);render();label.append(caption,select,button);fields.append(label);document.body.append(menu);
   }
-  for(const [key,title]of [['min','Achievement from %'],['max','Achievement to %'],['rateMin','Chart rating from'],['rateMax','Chart rating to']]){const label=make('label',title),field=make('input');field.type='number';field.min='0';if(['min','max'].includes(key)){field.max='101';field.step='.0001';}field.id='personal-'+key;field.value=state[key];field.oninput=()=>{state[key]=field.value;change();};label.append(field);fields.append(label);}
+  ranges=window.maimaiPlayerRanges(fields,state,change,()=>catalog.catalog.map(chart=>record(chart)?.rate));
   const clear=make('button','Clear');clear.type='button';clear.className='player-clear-filters';clear.classList.add('filter-disclosure-clear');i18n.attribute(clear,'aria-label','Clear personal filters');i18n.attribute(clear,'title','Clear personal filters');clear.onclick=()=>{for(const k in state)if(state[k] instanceof Set)state[k].clear();else state[k]='';root.querySelectorAll('select,input').forEach(n=>n.value='');gradeSelection();scopeSelection();change();};const actions=make('div',undefined,'filter-disclosure-actions'),empty=make('span','No filters selected','filter-empty'),chips=make('div',undefined,'active-filters');chips.setAttribute('role','group');i18n.attribute(chips,'aria-label','Active personal filters');actions.append(empty,chips,clear);summary();legend.after(actions);const toolbar=parent.querySelector('.sort-toolbar');if(toolbar)toolbar.before(root);else parent.append(root);root.hidden=!active||!visible;return {clear:()=>clear.click()};
 }
 window.maimaiPersonal=Object.freeze({configure,record,summary,details,matches,controls,lastPlayed,enabled:()=>!!active&&visible,gradeIndex:c=>{const r=record(c);return r&&grades.includes(r.grade)?grades.indexOf(r.grade):null;},ready});

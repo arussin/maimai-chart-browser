@@ -50,12 +50,17 @@ PUBLIC_FILES = (
     "support-return.js",
     "stripe-wordmark.svg",
     "view-navigation.js",
+    "player-import-config.js",
+    "player-ranges.js",
     "player-data-core.js",
     "player-maishift.js",
     "player-sources.js",
     "player-storage.js",
     "player-data.js",
     "feature-announcements.js",
+    "maishift-favicon.ico",
+    "player-import-help.css",
+    *(f"player-import-help.{locale}.html" for locale in ("en", "zh-Hans", "ko", "ja")),
 )
 
 

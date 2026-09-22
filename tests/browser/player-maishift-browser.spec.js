@@ -30,7 +30,7 @@ async function setup(page,context,locale='en'){
   await page.clock.install();await boot(page);return state;
 }
 async function importData(page,remember=true,expectedRating=15432){
-  await page.locator('#player-import-header').click();await page.locator('input[value=maishift]').check();
+  await page.locator('#player-import-primary').click();await page.locator('input[value=maishift]').check();
   await page.locator('#player-maishift-url').fill('fictional-player');await page.locator('.player-actions button').first().click();
   await expect(page.locator('.player-profile-name').last()).toHaveText('Fictional Player');
   await expect(page.locator('.player-dialog .player-rating')).toHaveAttribute('aria-label',expectedRating==null?'Rating unknown':'Maishift rating '+expectedRating);
@@ -44,32 +44,32 @@ const updatedLabel=page=>page.locator('#player-status>.player-storage-label');
 const localUpdateText=(page,time)=>page.evaluate(ms=>'Last Updated: '+new Date(ms).toLocaleString(),time);
 
 for(const [name,url]of [['main','/lab/'],['pilot',entry]]){
-  test(`prominent import opens from every ${name} view and restores keyboard focus`,async({page,context})=>{
+  test(`prominent Charts import and Settings import restore focus in the ${name} app and restores keyboard focus`,async({page,context})=>{
     const state=await setup(page,context);if(url!==entry){await page.goto(url);await page.evaluate(()=>maimaiPersonal.ready);}
-    const launch=page.locator('#player-import-header'),dialog=page.locator('#player-import-dialog');
+    const launch=page.locator('#player-import-primary'),dialog=page.locator('#player-import-dialog');
     await expect(launch).toHaveAccessibleName('Import player data');
-    for(const view of ['catalog','patterns','compare','about']){
+    for(const view of ['catalog']){
       await page.locator('#'+view+'-tab').click();await expect(launch).toBeVisible();
       await launch.focus();await page.keyboard.press('Enter');await expect(dialog).toBeVisible();
       await expect(page.locator('input[value=file]')).toBeFocused();
       await page.keyboard.press('Escape');await expect(dialog).toBeHidden();await expect(launch).toBeFocused();
       await launch.press('Enter');await page.getByRole('button',{name:'Cancel',exact:true}).click();await expect(launch).toBeFocused();
     }
-    await menu(page,'player-import');await expect(dialog).toBeVisible();await page.keyboard.press('Escape');
+    for(const view of ['patterns','compare','about']){await page.locator('#'+view+'-tab').click();await expect(launch).toBeHidden();await menu(page,'player-import');await expect(dialog).toBeVisible();await page.keyboard.press('Escape');}
     await expect(page.locator('#settings-toggle')).toBeFocused();expect(state.calls).toBe(0);
   });
 
-  test(`prominent import fits all four languages in the ${name} header`,async({page,context},testInfo)=>{
+  test(`prominent import fits all four languages in the ${name} Charts heading`,async({page,context},testInfo)=>{
     await setup(page,context);if(url!==entry){await page.goto(url);await page.evaluate(()=>maimaiPersonal.ready);}
     const translations={en:'Import player data','zh-Hans':'导入玩家数据',ko:'플레이어 데이터 가져오기',ja:'プレイヤーデータを読み込む'};
     for(const width of [320,390,600,740,1061,1100,1280]){
       await page.setViewportSize({width,height:900});
       for(const [locale,label]of Object.entries(translations)){
         await page.locator('.site-header [data-language="'+locale+'"]').click();
-        await expect(page.locator('#player-import-header')).toHaveAccessibleName(label);
-        const layout=await page.locator('.site-header').evaluate(header=>{
+        await expect(page.locator('#player-import-primary')).toHaveAccessibleName(label);
+        const layout=await page.locator('#catalog>.page-heading').evaluate(header=>{
           const visible=n=>n.getBoundingClientRect().width>0;
-          const controls=[...header.querySelectorAll('.party-brand,nav>button,#settings-toggle,.language-controls button,#player-import-header')].filter(visible);
+          const controls=[...header.querySelectorAll('h1,#player-import-primary')].filter(visible);
           const clipped=controls.filter(n=>{
             const b=n.getBoundingClientRect(),r=document.createRange();r.selectNodeContents(n);
             return n.scrollWidth>n.clientWidth+1||[...r.getClientRects()].some(t=>t.width&&(t.left<b.left-1||t.right>b.right+1||t.top<b.top-1||t.bottom>b.bottom+1));
@@ -79,7 +79,7 @@ for(const [name,url]of [['main','/lab/'],['pilot',entry]]){
             const a=controls[i].getBoundingClientRect(),b=controls[j].getBoundingClientRect();
             if(Math.min(a.right,b.right)-Math.max(a.left,b.left)>1&&Math.min(a.bottom,b.bottom)-Math.max(a.top,b.top)>1)overlaps.push([controls[i].id||controls[i].className,controls[j].id||controls[j].className]);
           }
-          const button=header.querySelector('#player-import-header').getBoundingClientRect();
+          const button=header.querySelector('#player-import-primary').getBoundingClientRect();
           return {clipped,overlaps,overflow:document.documentElement.scrollWidth>innerWidth+1,largeEnough:button.height>=44,inside:button.left>=0&&button.right<=innerWidth};
         });
         expect(layout,locale+' at '+width+'px').toEqual({clipped:[],overlaps:[],overflow:false,largeEnough:true,inside:true});
@@ -219,7 +219,7 @@ test('new file replaces a delayed refresh and temporary imports remain isolated'
 
 for(const locale of ['en','zh-Hans','ko','ja'])test(`browser pilot ${locale} fits narrow controls and supports keyboard import`,async({page,context},testInfo)=>{
   await page.setViewportSize({width:320,height:800});await setup(page,context,locale);
-  await page.locator('#player-import-header').focus();await page.keyboard.press('Enter');
+  await page.locator('#player-import-primary').focus();await page.keyboard.press('Enter');
   await expect(page.locator('.player-source-help')).toHaveCount(2);await expect(page.locator('.player-import-help')).toHaveCount(0);
   const help=page.locator('[data-import-help=maishift]');await expect(help).toHaveAttribute('href','player-import-help.'+locale+'.html#maishift');
   const opened=context.waitForEvent('page');await help.click();const guide=await opened;await expect(guide).toHaveURL(new RegExp('player-import-help\\.'+locale+'\\.html#maishift$'));
@@ -242,7 +242,7 @@ for(const locale of ['en','zh-Hans','ko','ja'])test(`browser pilot ${locale} fit
   await page.screenshot({path:testInfo.outputPath('profile-import-'+locale+'.png')});
   await page.locator('.player-dialog .player-actions button').first().click();await expect.poll(()=>page.evaluate(()=>maimaiPersonal.enabled())).toBe(true);
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
-  const clipped=await page.locator('#player-import-header,#settings-actions button,.personal-scope button').evaluateAll(nodes=>nodes.filter(n=>n.getBoundingClientRect().width&&n.scrollWidth>n.clientWidth+2).map(n=>n.id));expect(clipped).toEqual([]);
+  const clipped=await page.locator('#player-import-primary,#settings-actions button,.personal-scope button').evaluateAll(nodes=>nodes.filter(n=>n.getBoundingClientRect().width&&n.scrollWidth>n.clientWidth+2).map(n=>n.id));expect(clipped).toEqual([]);
   await page.locator('#settings-toggle').click();await expect(page.locator('#player-status .player-rating')).toBeVisible();
   const updated={en:'Last Updated:', 'zh-Hans':'最后更新：',ko:'최근 업데이트:',ja:'最終更新：'};
   await expect(page.locator('#player-status>.player-storage-label')).toContainText(updated[locale]);
@@ -262,16 +262,16 @@ for(const locale of ['en','zh-Hans','ko','ja'])test(`browser pilot ${locale} fit
 
 test('Clear removes a hidden temporary import and its reload cache without touching preferences',async({page,context})=>{
   const state=await setup(page,context);await importData(page,false);
-  await expect(page.locator('#player-import-header')).toBeVisible();
+  await expect(page.locator('#player-import-primary')).toBeVisible();
   await page.evaluate(()=>localStorage.setItem('maimai-announcement:player-import-sources-v1','preserve'));
-  await menu(page,'player-toggle');await expect(page.locator('#player-import-header')).toBeVisible();await page.locator('#settings-toggle').click();await expect(page.locator('#player-forget')).toBeHidden();
+  await menu(page,'player-toggle');await expect(page.locator('#player-import-primary')).toBeVisible();await page.locator('#settings-toggle').click();await expect(page.locator('#player-forget')).toBeHidden();
   await page.locator('#player-clear').focus();await page.keyboard.press('Enter');
   await expect(page.getByRole('heading',{name:'Player data cleared',exact:true})).toBeVisible();await page.getByRole('button',{name:'Okay!',exact:true}).click();
   expect(await record(page,state.chart)).toBeNull();expect(await page.locator('.player-achievement').evaluateAll(nodes=>nodes.every(n=>n.hidden))).toBe(true);await expect(page.locator('#player-status')).toBeHidden();
   expect(await page.evaluate(()=>sessionStorage.getItem('maimai-pilot-maishift-v1:maimai-player-session'))).toBeNull();
   expect(await page.evaluate(()=>localStorage.getItem('maimai-announcement:player-import-sources-v1'))).toBe('preserve');
   await page.reload();await page.evaluate(()=>maimaiPersonal.ready);expect(await page.evaluate(()=>maimaiPersonal.enabled())).toBe(false);
-  await page.locator('#player-import-header').click();await expect(page.locator('.player-import-replace-warning')).toHaveCount(0);expect(state.calls).toBe(1);
+  await page.locator('#player-import-primary').click();await expect(page.locator('.player-import-replace-warning')).toHaveCount(0);expect(state.calls).toBe(1);
 });
 
 test('Clear reaches other tabs, cancels refresh, and is caught after missed notifications',async({page,context})=>{
@@ -333,7 +333,7 @@ test('reported rating survives a temporary reload and missing rating stays unkno
 });
 
 test('pasted explicit regional URL selects its record region without a read',async({page,context})=>{
-  const state=await setup(page,context);await page.locator('#player-import-header').click();await page.locator('input[value=maishift]').check();
+  const state=await setup(page,context);await page.locator('#player-import-primary').click();await page.locator('input[value=maishift]').check();
   for(const part of ['jp','na','intl']){await page.locator('#player-maishift-url').fill('https://maimai.shiftpsh.com/en@'+part+'/profile/fictional-player');await expect(page.locator('.player-source-fields select')).toHaveCount(0);}
   expect(state.calls).toBe(0);
   await page.locator('.player-actions button').first().click();await expect(page.locator('.player-profile-name').last()).toHaveText('Fictional Player');expect(state.requests[0].region).toBe('intl');

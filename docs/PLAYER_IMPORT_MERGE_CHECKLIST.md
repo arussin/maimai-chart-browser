@@ -1,5 +1,10 @@
 # Player imports: review and merge checklist
 
+Production rollout is now authorized after CI. See
+[the production cutover record](PLAYER_IMPORT_PRODUCTION_RELEASE.md) for the
+completed shared UI/capability integration, dependency audit and issue review.
+The checklist below preserves the pre-integration review checkpoint.
+
 Prepared September 22, 2026 for `codex/maishift-proxy`, based on production
 `98d1cc8e62d90eff050117771e3e965158d115e1`. This is a review candidate for the
 complete import work, not an instruction to enable the main-site connector.

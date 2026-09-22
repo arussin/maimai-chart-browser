@@ -5,7 +5,7 @@ for(const route of ['/mai-notes/','/mai-notes-progressive/']){
   test('exact mai-notes links follow difficulty with no background requests '+route,async({page,context},testInfo)=>{
     const external=[],errors=[];page.on('pageerror',e=>errors.push(e.message));
     context.on('request',r=>{if(new URL(r.url()).hostname==='mai-notes.com')external.push({url:r.url(),referer:r.headers().referer});});
-    await page.goto(route);await expect(page.locator('#loaded-count')).toHaveText('6');
+    await page.goto(route);await expect(page.locator('#catalog-count strong')).toHaveText('6');
     await page.locator('#search').fill('Fictional study 3');
     let row=page.locator('#songs .song-row[data-difficulty="RE:MASTER"]');const link=row.locator('.mai-notes-player');
     await expect(link).toHaveText('mai-notes simai player ↗');
@@ -34,7 +34,7 @@ for(const route of ['/mai-notes/','/mai-notes-progressive/']){
 }
 
 test('legacy catalogs stay usable and invalid links cannot carry private data',async({page})=>{
-  await page.goto('/lab/');await expect(page.locator('#loaded-count')).toHaveText('6');
+  await page.goto('/lab/');await expect(page.locator('#catalog-count strong')).toHaveText('6');
   await expect(page.locator('.mai-notes-player')).toHaveCount(0);
   const result=await page.evaluate(()=>{
     const c=window.maimaiResearchCatalog.catalog[0],id='00000000-0000-0000-0000-000000000001';

@@ -200,11 +200,6 @@
       "ko": "maimai.party로 점수를 가져오세요",
       "ja": "スコアを maimai.party へ"
     },
-    "Import from Session Report or your public Maishift profile. Open Settings → Import player data to get started.": {
-      "zh-Hans": "从 Session Report 或公开的 Maishift 档案导入。打开设置 → 导入玩家数据即可开始。",
-      "ko": "Session Report 또는 공개 Maishift 프로필에서 가져오세요. 설정 → 플레이어 데이터 가져오기에서 시작할 수 있습니다.",
-      "ja": "Session Report または公開 Maishift プロフィールから読み込めます。設定 → プレイヤーデータを読み込む から始めましょう。"
-    },
     "Got it": {
       "zh-Hans": "知道了",
       "ko": "확인",
@@ -259,6 +254,36 @@
       "zh-Hans": "{0} 项个人最佳成绩",
       "ko": "개인 최고 기록 {0}개",
       "ja": "自己ベスト {0}件"
+    },
+    "Bring your Session Report or public Maishift scores into the chart browser. Choose Import player data to get started.": {
+      "zh-Hans": "将 Session Report 或公开 Maishift 个人主页中的成绩导入谱面浏览器。选择“导入玩家数据”即可开始。",
+      "ko": "Session Report 또는 공개 Maishift 프로필의 성적을 채보 브라우저로 가져오세요. “플레이어 데이터 가져오기”를 선택하면 시작할 수 있습니다.",
+      "ja": "Session Report または公開 Maishift プロフィールの成績を譜面ブラウザーに読み込めます。「プレイヤーデータを読み込む」から始めましょう。"
+    },
+    "Drag by grade or enter an exact %.": {
+      "zh-Hans": "按评级拖动，或输入精确百分比。",
+      "ko": "등급별로 드래그하거나 정확한 %를 입력하세요.",
+      "ja": "ランク刻みでドラッグ、または達成率を直接入力。"
+    },
+    "Based on your imported chart ratings.": {
+      "zh-Hans": "范围根据已导入的谱面 Rating 自动设置。",
+      "ko": "가져온 채보 레이팅에 맞춘 범위입니다.",
+      "ja": "読み込んだ譜面レーティングに合わせた範囲です。"
+    },
+    "No known chart ratings in this import.": {
+      "zh-Hans": "导入的数据中没有已知的谱面 Rating。",
+      "ko": "가져온 데이터에 알려진 채보 레이팅이 없습니다.",
+      "ja": "読み込んだデータに譜面レーティングがありません。"
+    },
+    "Remove Chart rating filter": {
+      "zh-Hans": "移除谱面 Rating 筛选",
+      "ko": "채보 레이팅 필터 제거",
+      "ja": "譜面レーティングの絞り込みを解除"
+    },
+    "Remove Achievement filter": {
+      "zh-Hans": "移除达成率筛选",
+      "ko": "달성률 필터 제거",
+      "ja": "達成率の絞り込みを解除"
     }
   },
   "invariants": {
@@ -309,6 +334,42 @@
       "reason": "Internal AbortError message; deliberately excluded from user-facing errors.",
       "sources": [
         "src/maimai_intelligence/assets/player-data.js"
+      ]
+    },
+    "ArrowRight": {
+      "reason": "Keyboard key identifier or canonical grade/percentage label; not translated prose.",
+      "sources": [
+        "src/maimai_intelligence/assets/player-ranges.js"
+      ]
+    },
+    "PageUp": {
+      "reason": "Keyboard key identifier or canonical grade/percentage label; not translated prose.",
+      "sources": [
+        "src/maimai_intelligence/assets/player-ranges.js"
+      ]
+    },
+    "ArrowLeft": {
+      "reason": "Keyboard key identifier or canonical grade/percentage label; not translated prose.",
+      "sources": [
+        "src/maimai_intelligence/assets/player-ranges.js"
+      ]
+    },
+    "PageDown": {
+      "reason": "Keyboard key identifier or canonical grade/percentage label; not translated prose.",
+      "sources": [
+        "src/maimai_intelligence/assets/player-ranges.js"
+      ]
+    },
+    "Page": {
+      "reason": "Keyboard key identifier or canonical grade/percentage label; not translated prose.",
+      "sources": [
+        "src/maimai_intelligence/assets/player-ranges.js"
+      ]
+    },
+    "S · 97%": {
+      "reason": "Keyboard key identifier or canonical grade/percentage label; not translated prose.",
+      "sources": [
+        "src/maimai_intelligence/assets/player-ranges.js"
       ]
     }
   }

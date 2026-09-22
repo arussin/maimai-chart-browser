@@ -42,7 +42,7 @@ async function hosted(context,{inject=false,suffix='/beacon.min.js',endpoint=col
 }
 async function ready(page,path='/',origin='https://maimai.party'){
   await page.goto(origin+path,{waitUntil:'load'});
-  if(path.startsWith('/lab'))await expect(page.locator('#loaded-count')).toHaveText('6');
+  if(path.startsWith('/lab'))await expect(page.locator('#catalog-count strong')).toHaveText('6');
   else await expect(page.locator('#explore-search')).toBeVisible();
 }
 async function settings(page){await page.locator('#settings-toggle').click();await page.locator('#analytics-settings').click();}
