@@ -71,7 +71,7 @@ const i18n=window.maimaiI18n||{text:(node,value)=>node.textContent=value,attribu
     }else bytes=await read(entry.path,catalogMaximum);
     // Startup bytes were already verified against their own manifest digest.
     if(!entry.startup&&await hash(bytes)!==entry.sha256)throw new Error('Research catalog integrity check failed');
-    const text=new TextDecoder('utf-8',{fatal:true}).decode(bytes),data=JSON.parse(text);
+    const data=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes));
     if(entry.inventory_schema&&data.schema_version!==entry.inventory_schema)throw new Error('Inventory schema mismatch');
     if(entry.startup){
       if(entry.inventory_schema&&data.index_schema_version!=='catalog-index-2')throw new Error('Unsupported inventory index');
@@ -81,8 +81,8 @@ const i18n=window.maimaiI18n||{text:(node,value)=>node.textContent=value,attribu
     // A clean URL follows manifest.default on every visit; explicit versions stay pinned.
     // Public catalog only. All interface modules share this one parsed object.
     window.maimaiResearchCatalog=data;
-    window.maimaiPersonal?.configure(data,data.provider_mapping);
-    const element=document.createElement('script');element.type='application/json';element.id='challenge-data';element.textContent=text;document.body.append(element);
+    // The controller configures personal mappings once, after normalization.
+    // Embedded exports retain #challenge-data; fetched catalogs need no second copy.
     const script=document.createElement('script');script.src='challenge-review.js';script.onload=()=>{if(status.dataset?.catalogError)return;i18n.text(status, '');if(version!==manifest.default){i18n.text(status, 'You are viewing an older catalog. ');const link=document.createElement('a'),latest=new URL(location.href);latest.searchParams.delete('version');link.href=latest.href;i18n.text(link, 'Open the latest catalog');status.append(link);}};script.onerror=()=>{i18n.text(status, 'The research browser could not start.');};document.body.append(script);
   }catch(error){i18n.text(status, error.message);}
 })();

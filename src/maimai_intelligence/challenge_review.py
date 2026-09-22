@@ -21,7 +21,7 @@ def _encoded(value):
     )
 
 
-def review_scripts():
+def review_scripts(*, player_pilot=False):
     assets = files("maimai_intelligence.assets")
     theme = assets.joinpath("chart-theme.json").read_text("utf-8")
     lessons = _encoded(json.loads(assets.joinpath("pattern-lessons.json").read_text("utf-8")))
@@ -38,8 +38,14 @@ def review_scripts():
             for name in (
                 "view-navigation.js",
                 "settings-menu.js",
+                "player-import-config.js",
+                "player-ranges.js",
                 "player-data-core.js",
+                "player-maishift.js",
+                "player-sources.js",
+                "player-storage.js",
                 "player-data.js",
+                "feature-announcements.js",
                 "support-config.js",
                 "support-client.js",
                 "support-stripe.js",
@@ -55,6 +61,14 @@ def review_scripts():
                 "chart-comparison.js",
                 "challenge-review.js",
             )
+            if not player_pilot
+            or name
+            not in {
+                "feature-announcements.js",
+                "support-config.js",
+                "support-client.js",
+                "support-stripe.js",
+            }
         )
     )
 
@@ -71,6 +85,7 @@ def render_review(
     mai_notes=None,
     provider_mapping=None,
     browser_metadata=None,
+    maishift_mapping=None,
 ):
     data = {
         "package": package,
@@ -89,6 +104,10 @@ def render_review(
         data["artwork"] = artwork
     if mai_notes is not None:
         data["mai_notes"] = mai_notes
+    if maishift_mapping is not None:
+        from .maishift_mapping import validate_mapping
+
+        data["maishift_mapping"] = validate_mapping(maishift_mapping, catalog)
     if browser_metadata is not None:
         if set(browser_metadata) != {"schema_version", "registry", "legacy_ids", "sources"}:
             raise ValueError("Unexpected browser registry metadata")

@@ -25,6 +25,7 @@ def stale_inputs(root, reviewed):
     stale = []
     current = set(root.glob("src/maimai_intelligence/assets/locales/*.json"))
     current.add(root / "src/maimai_intelligence/assets/song-pronunciations.json")
+    current.add(root / "src/maimai_intelligence/assets/song-display-readings.json")
     current.update(root.glob("README*.md"))
     expected = {root / name for name in reviewed}
     for path in sorted(current | expected):

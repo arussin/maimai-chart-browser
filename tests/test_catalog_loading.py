@@ -44,6 +44,8 @@ class ProgressiveCatalogTests(unittest.TestCase):
                     "chart_id": "official-chart",
                     "title": "Japan title",
                     "aliases": ["romaji"],
+                    "input_id": "retained-offline-input",
+                    "capabilities": {"metadata": "available", "similarity": "missing"},
                     "regional": {
                         region: {
                             "listing": "listed",
@@ -78,6 +80,25 @@ class ProgressiveCatalogTests(unittest.TestCase):
                     }
                 }
             },
+            "maishift_mapping": {
+                "schema_version": "maishift-mapping-1",
+                "provider": "maishift",
+                "game": "maimai",
+                "charts": {
+                    f"maishift:{region}:42": {
+                        "chart_id": "official-chart",
+                        "acceptance_basis": "reviewed",
+                        "expected_source": {
+                            "title": f"{region} title",
+                            "artist": "Artist",
+                            "format": "DX",
+                            "difficulty": "EXPERT",
+                        },
+                        "snapshot_id": "a" * 64,
+                    }
+                    for region in ("jp", "intl")
+                },
+            },
         }
         before = canonical(data)
         startup, assets = progressive_catalog(data, hashlib.sha256(before).hexdigest())
@@ -86,6 +107,15 @@ class ProgressiveCatalogTests(unittest.TestCase):
         self.assertEqual(index["navigation"], data["navigation"])
         chart = index["catalog"][0]
         self.assertEqual(chart["aliases"], ["romaji"])
+        self.assertNotIn("input_id", chart)
+        self.assertNotIn("capabilities", chart)
+        mapping = index["maishift_mapping"]
+        self.assertEqual(set(mapping["charts"]), set(data["maishift_mapping"]["charts"]))
+        for provider_id, original in data["maishift_mapping"]["charts"].items():
+            self.assertEqual(
+                mapping["charts"][provider_id],
+                {key: value for key, value in original.items() if key != "snapshot_id"},
+            )
         for region, original in data["catalog"][0]["regional"].items():
             projected = chart["regional"][region]
             for field in ("listing", "level", "genre", "version"):

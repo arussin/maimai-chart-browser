@@ -11,6 +11,8 @@ from maimai_analyzer.dataset import SOURCE_LOCK
 
 from .artwork import copy_artwork, validate_artwork
 from .catalog_loading import PROFILE_FIELDS
+from .maishift_mapping import SCHEMA as MAISHIFT_SCHEMA
+from .maishift_mapping import validate_mapping as validate_maishift
 from .metadata_waterfall import project as project_metadata
 from .registry import STATES, digest, resolve, validate
 from .research_overview import validate_overview
@@ -209,6 +211,12 @@ def project_registry(value, legacy):
             "game": "maimaidx",
             "charts": {},
         },
+        "maishift_mapping": {
+            "schema_version": MAISHIFT_SCHEMA,
+            "provider": "maishift",
+            "game": "maimaidx",
+            "charts": {},
+        },
     }
     id_map, genres, versions = {}, {}, set()
     for source_id, source in value["sources"].items():
@@ -401,7 +409,11 @@ def project_registry(value, legacy):
     for cid in data.get("analysis", {}).get("charts", {}):
         by_id[cid]["capabilities"].update(flow="available", patterns="available")
     for mapping in value["mappings"].values():
-        if mapping["state"] != "accepted" or mapping["provider"] not in {"kamaitachi", "mai-notes"}:
+        if mapping["state"] != "accepted" or mapping["provider"] not in {
+            "kamaitachi",
+            "mai-notes",
+            "maishift",
+        }:
             continue
         cid = resolve(value, mapping["subject_id"])
         chart = by_id.get(cid)
@@ -433,6 +445,13 @@ def project_registry(value, legacy):
             )
             data["provider_mapping"]["charts"][mapping["provider_id"]] = record
             chart["capabilities"]["provider_mapping"] = "available"
+        elif mapping["provider"] == "maishift":
+            data["maishift_mapping"]["charts"]["maishift:" + mapping["provider_id"]] = {
+                "chart_id": cid,
+                "expected_source": deepcopy(mapping["expected_source"]),
+                "acceptance_basis": mapping["acceptance_basis"],
+                "snapshot_id": mapping["snapshot_id"],
+            }
         elif mapping.get("available"):
             metadata = mapping.get("metadata", {})
             if "mai_notes" not in data:
@@ -522,6 +541,8 @@ def validate_catalog(data):
             raise ValueError("Metadata-only chart carries fabricated analysis")
     if any(target not in ids for target in data["legacy_ids"].values()):
         raise ValueError("Unresolvable legacy chart alias")
+    if "maishift_mapping" in data:
+        validate_maishift(data["maishift_mapping"], data["catalog"])
     return data
 
 
@@ -659,6 +680,7 @@ def build_registry_package(value, source, output, *, published=None, additions=N
         ("artwork", "artwork.json"),
         ("mai_notes", "mai-notes.json"),
         ("provider_mapping", "provider-mapping.json"),
+        ("maishift_mapping", "maishift-mapping.json"),
         ("snippets", "snippets.json"),
         ("review", "review.json"),
     ):

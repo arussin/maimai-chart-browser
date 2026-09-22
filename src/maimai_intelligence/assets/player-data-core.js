@@ -11,10 +11,19 @@ async function hash(v){const bytes=typeof v==='string'?new TextEncoder().encode(
 const digest=v=>hash(canonical(v));
 const recordFields=['chartID','achievement','grade','rate','lamp','sync','constant','displayVersion','timeAchieved','dxScore','maxDxScore','maxCombo','fast','slow','miss','good','great','perfect','pcrit'];
 const chartFields=['chartID','songID','title','artist','format','difficulty','level','constant','displayVersion','inGameID'];
+function validPlayer(p){
+  if(!keys(p,['key','provider','game','username','displayName'])||!Object.values(p).every(v=>text(v,200))||p.game!=='maimaidx')return false;
+  if(p.provider==='kamaitachi')return p.key==='kamaitachi:maimaidx:'+p.username.toLowerCase();
+  // This is our portable identity namespace, not an assertion about upstream
+  // handles or region resolution. The live Maishift adapter remains disabled.
+  if(p.provider==='maishift')return ['jp','intl'].some(region=>p.key==='maishift:maimaidx:'+region+':'+encodeURIComponent(p.username));
+  return false;
+}
 function structure(d){
   if(!keys(d,['format','schemaVersion','revision','player','charts','records','plays','snapshots','captures'])||d.format!=='maimai-player-data'||d.schemaVersion!==1)fail('Unsupported player file. Choose a maimai-player-data v1 export.');
-  const p=d.player;if(!keys(p,['key','provider','game','username','displayName'])||!Object.values(p).every(v=>text(v,200))||p.provider!=='kamaitachi'||p.game!=='maimaidx'||p.key!=='kamaitachi:maimaidx:'+p.username.toLowerCase())fail('Invalid player identity.');
+  const p=d.player;if(!validPlayer(p))fail('Invalid player identity.');
   for(const name of ['charts','records','plays','snapshots','captures'])if(!object(d[name])||Object.keys(d[name]).length>1000000||!Object.keys(d[name]).every(k=>text(k,256)&&!["__proto__","constructor","prototype"].includes(k)))fail('Invalid or oversized player collection.');
+  if(p.provider==='maishift'&&Object.keys(d.charts).some(id=>!id.startsWith('maishift:'+p.key.split(':')[2]+':')||id.split(':').slice(2).join(':')===''))fail('Invalid chart reference.');
   for(const [id,c]of Object.entries(d.charts))if(!keys(c,chartFields)||c.chartID!==id||!['STD','DX'].includes(c.format)||!['chartID','songID','format','difficulty'].every(k=>text(c[k],256))||!['title','artist','level','displayVersion'].every(k=>text(c[k],512,true))||!integer(c.constant,200,true)||!integer(c.inGameID,undefined,true))fail('Invalid chart reference.');
   for(const [id,r]of Object.entries(d.records)){
     if(!HEX.test(id)||!keys(r,recordFields)||typeof r.chartID!=="string"||!Object.hasOwn(d.charts,r.chartID)||!integer(r.achievement,1010000,true)||!integer(r.constant,200,true))fail('Invalid score observation.');
@@ -42,10 +51,13 @@ function current(d){let refs={},snapshot=null;for(const [id,s]of Object.entries(
 function chartHistory(d,chartIDs){
   const ids=new Set(chartIDs),plays=Object.entries(d.plays).map(([id,ref])=>({id,r:d.records[ref]})).filter(e=>ids.has(e.r.chartID)).map(e=>({...e,time:e.r.timeAchieved}));
   plays.sort((a,b)=>(b.time??-1)-(a.time??-1)||a.id.localeCompare(b.id));
-  const changes=[];let previous=null;
+  const changes=[];let previous=null,previousRecord=null;
   for(const [id,s] of Object.entries(d.snapshots).sort(([a,x],[b,y])=>x.capturedAt-y.capturedAt||Number(x.phase==='after')-Number(y.phase==='after')||a.localeCompare(b))){
     const cid=chartIDs.find(cid=>s.pbs[cid]);if(!cid)continue;const r=d.records[s.pbs[cid]],key=canonical([r.achievement,r.grade,r.rate,r.lamp,r.sync]);
-    if(key!==previous)changes.push({id,time:s.capturedAt,r});previous=key;
+    // Learning a previously unknown Maishift contribution is metadata, not a
+    // new PB. Keep observation dates and known-to-known corrections intact.
+    const enrichment=d.player.provider==='maishift'&&previousRecord&&(previousRecord.rate===null||r.rate===null)&&canonical([r.achievement,r.grade,r.lamp,r.sync])===canonical([previousRecord.achievement,previousRecord.grade,previousRecord.lamp,previousRecord.sync]);
+    if(key!==previous&&!enrichment)changes.push({id,time:s.capturedAt,r});previous=key;previousRecord=r;
   }
   return {plays,changes:changes.reverse()};
 }
@@ -55,7 +67,7 @@ function profile(d,pbs,snapshot){
   return {rating,sessionCount:new Set(Object.values(d.captures).map(c=>c.sessionID).filter(Boolean)).size};
 }
 function offer(d){const {pbs,snapshot}=current(d);return {format:d.format,schemaVersion:1,revision:d.revision,player:d.player,capturedAt:snapshot?.capturedAt||0,pbCount:pbs.size,pbCoverage:snapshot?.complete?'complete':'partial',playCount:Object.keys(d.plays).length,snapshotIDs:Object.keys(d.snapshots).sort(),captureIDs:Object.keys(d.captures).sort(),historyCoverage:'retained-only',profile:profile(d,pbs,snapshot)};}
-function validateOffer(o){if(!object(o)||o.format!=='maimai-player-data'||o.schemaVersion!==1||!HEX.test(o.revision)||!keys(o.player,['key','provider','game','username','displayName'])||!Object.values(o.player).every(v=>text(v,200))||o.player.provider!=='kamaitachi'||o.player.game!=='maimaidx'||o.player.key!=='kamaitachi:maimaidx:'+o.player.username.toLowerCase()||!integer(o.capturedAt)||!integer(o.pbCount,1000000)||!['complete','partial'].includes(o.pbCoverage)||o.historyCoverage!=='retained-only'||!integer(o.playCount,1000000))fail('Invalid report data offer.');for(const k of ['snapshotIDs','captureIDs'])if(!Array.isArray(o[k])||o[k].length>100000||!o[k].every(x=>typeof x==='string'&&HEX.test(x)))fail('Invalid report history offer.');if(Object.hasOwn(o,'profile')&&(!keys(o.profile,['rating','sessionCount'])||!integer(o.profile.rating,undefined,true)||!integer(o.profile.sessionCount,1000000)))fail('Invalid player profile.');return o;}
+function validateOffer(o){if(!object(o)||o.format!=='maimai-player-data'||o.schemaVersion!==1||!HEX.test(o.revision)||!validPlayer(o.player)||!integer(o.capturedAt)||!integer(o.pbCount,1000000)||!['complete','partial'].includes(o.pbCoverage)||o.historyCoverage!=='retained-only'||!integer(o.playCount,1000000))fail('Invalid report data offer.');for(const k of ['snapshotIDs','captureIDs'])if(!Array.isArray(o[k])||o[k].length>100000||!o[k].every(x=>typeof x==='string'&&HEX.test(x)))fail('Invalid report history offer.');if(Object.hasOwn(o,'profile')&&(!keys(o.profile,['rating','sessionCount'])||!integer(o.profile.rating,undefined,true)||!integer(o.profile.sessionCount,1000000)))fail('Invalid player profile.');return o;}
 function needsUpdate(d,o){validateOffer(o);if(!d||d.player.key!==o.player.key)return true;if(d.revision===o.revision)return false;return o.snapshotIDs.some(id=>!Object.hasOwn(d.snapshots,id))||o.captureIDs.some(id=>!Object.hasOwn(d.captures,id));}
 function observationDates(d){const dates={charts:{},plays:{}};for(const c of Object.values(d.captures))for(const id of c.playIDs)dates.plays[id]=Math.max(dates.plays[id]||0,c.capturedAt);for(const [id,time]of Object.entries(dates.plays)){const cid=d.records[d.plays[id]].chartID;dates.charts[cid]=Math.max(dates.charts[cid]||0,time);}for(const s of Object.values(d.snapshots))for(const cid of Object.keys(s.pbs))dates.charts[cid]=Math.max(dates.charts[cid]||0,s.capturedAt);return dates;}
 async function reconcile(d){
@@ -83,5 +95,5 @@ async function merge(a,b){structure(a);structure(b);if(a.player.key!==b.player.k
   for(const name of ['charts','plays'])for(const [id,row]of Object.entries(b[name])){const old=d[name][id];if(old===undefined||(bd[name][id]||0)>(ad[name][id]||0)||((bd[name][id]||0)===(ad[name][id]||0)&&canonical(row)>=canonical(old)))d[name][id]=row;}
   const {revision,...body}=d;d.revision=await digest(body);return reconcile(structure(d));
 }
-globalThis.maimaiPlayerData=Object.freeze({validate,structure,decode,encode,current,offer,validateOffer,needsUpdate,merge,reconcile,chartHistory,hash,digest,canonical,bounded,MAX_COMPRESSED,MAX_DECODED});
+globalThis.maimaiPlayerData=Object.freeze({validPlayer,validate,structure,decode,encode,current,offer,validateOffer,needsUpdate,merge,reconcile,chartHistory,hash,digest,canonical,bounded,MAX_COMPRESSED,MAX_DECODED});
 })();

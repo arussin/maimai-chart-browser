@@ -32,7 +32,7 @@ async function hosted(context,{sdk='window.__analyticsStubLoaded=true;',fail=fal
 }
 async function ready(page,path='/lab/',origin='https://maimai.party'){
   await page.goto(origin+path,{waitUntil:'domcontentloaded'});
-  if(path.startsWith('/lab'))await expect(page.locator('#loaded-count')).toHaveText('6');
+  if(path.startsWith('/lab'))await expect.poll(()=>page.evaluate(()=>window.maimaiResearchCatalog?.catalog?.length)).toBe(6);
   else await expect(page.locator('#explore-search')).toBeVisible();
 }
 async function allow(page){await page.locator('#analytics-notice [data-analytics-choice=granted]').click();}
@@ -180,7 +180,7 @@ test('analytics notice, privacy text and settings support keyboard, screen reade
   await expect(page.locator('#privacy summary')).toBeFocused();
   await page.locator('#settings-toggle').focus();await page.keyboard.press('Enter');
   await expect(page.locator('#player-import')).toBeFocused();
-  await page.keyboard.press('ArrowDown');await page.keyboard.press('ArrowDown');
+  await page.keyboard.press('ArrowDown');
   await expect(page.locator('#analytics-settings')).toBeFocused();
   expect((await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21aa']).analyze()).violations).toEqual([]);
   await page.keyboard.press('Enter');
@@ -225,7 +225,7 @@ test('issue reporting supports keyboard access in public and personal browsers w
     await page.keyboard.press('End');await expect(page.locator('#site-share')).toBeFocused();await page.keyboard.press('ArrowUp');await expect(link).toBeFocused();
     const hasPlayerImport=await page.locator('#player-import').count()>0;
     await page.keyboard.press('Home');await expect(page.locator(hasPlayerImport?'#player-import':'#analytics-settings')).toBeFocused();
-    await page.keyboard.press('ArrowDown');await expect(hasPlayerImport?page.locator('.player-import-help'):link).toBeFocused();
+    await page.keyboard.press('ArrowDown');await expect(hasPlayerImport?page.locator('#analytics-settings'):link).toBeFocused();
     await page.keyboard.press('Escape');await expect(page.locator('#settings-toggle')).toBeFocused();
     await page.keyboard.press('ArrowUp');await page.keyboard.press('ArrowUp');
     const opened=context.waitForEvent('page');

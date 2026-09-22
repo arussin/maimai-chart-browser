@@ -308,6 +308,12 @@ with tempfile.TemporaryDirectory() as temporary:
     atomic_json(historical / "package.json", old_descriptor)
     build_lab(historical, staging / "browser", catalog_version="duplicate-genres-fixture")
     build_lab(staging / "package", staging / "browser", catalog_version="registry-fixture")
+    build_lab(
+        staging / "package",
+        root / "production",
+        catalog_version="registry-fixture",
+        player_maishift=True,
+    )
     build_public_release(staging / "browser", staging / "public")
     shutil.copytree(staging / "public", root / "registry", dirs_exist_ok=True)
 

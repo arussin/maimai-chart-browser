@@ -14,7 +14,7 @@ for(const route of ['capacity','progressive-capacity'])test(route+': 7000-chart 
     },true);
   });
   await page.goto('/'+route+'/');
-  await expect(page.locator('#catalog-count')).toHaveText('7,000 charts found');
+  await expect(page.locator('#catalog-count')).toHaveText('7,000 charts');
   await expect(page.locator('#lab-status')).toBeEmpty();
   const startup=await page.evaluate(()=>({readyMs:performance.now(),parses:window.capacityTiming.parses}));
   expect(startup.parses).toHaveLength(1);
@@ -24,9 +24,9 @@ for(const route of ['capacity','progressive-capacity'])test(route+': 7000-chart 
     await page.locator('#search').fill(query);
     await expect.poll(()=>page.evaluate(()=>window.capacityTiming.events.filter(x=>x.type==='input').length)).toBeGreaterThanOrEqual(['Capacity','Capacity study 1','Capacity study 00','Capacity study 0000'].indexOf(query)+1);
   }
-  await expect(page.locator('#catalog-count')).toHaveText('4 charts found');
+  await expect(page.locator('#catalog-count')).toHaveText('4 charts');
   await page.locator('#search').fill('');
-  await expect(page.locator('#catalog-count')).toHaveText('7,000 charts found');
+  await expect(page.locator('#catalog-count')).toHaveText('7,000 charts');
   await page.locator('[data-sort-key=peak]').click();
   await expect.poll(()=>page.evaluate(()=>window.capacityTiming.events.filter(x=>x.type==='click').length)).toBe(1);
   const interactions=await page.evaluate(()=>window.capacityTiming.events);

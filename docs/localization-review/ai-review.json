@@ -41,7 +41,15 @@
     "README.zh-Hans.md": "bd14d58f6d0d4033c564cd143de9233d9a8e210bb339e53fa195209fdaf597bf",
     "README.ko.md": "16f88597ed58e405c4b14c820bca9e21b6341f9f3a131a3a1a164c83b48e3e93",
     "README.ja.md": "a52749c6cd74759fd9a732a607fc7fc0defdd7958e3cd1f127a229c015a4f482",
-    "src/maimai_intelligence/assets/locales/share.json": "20585e67f1443547ae3ba6b164a38b634f5b233f846f40d51af98ee9da825839"
+    "src/maimai_intelligence/assets/locales/share.json": "20585e67f1443547ae3ba6b164a38b634f5b233f846f40d51af98ee9da825839",
+    "src/maimai_intelligence/assets/locales/player-sources.json": "b39950e73f1a0c72b065ff0ead3a8709e6ae7a513a91ceeb0adee0137a2d5b14",
+    "src/maimai_intelligence/assets/locales/player-maishift.json": "3818565f5eae7310e64f79292312a424a07d517a26bcadafc98ee994629bb8e4",
+    "src/maimai_intelligence/assets/locales/maishift-pilot.json": "8ea2ab02f9b74fb0995a3610b840a9bf3889b684000d4fae09a071977abeb104",
+    "src/maimai_intelligence/assets/import-help/README.ja.md": "793eedaee7afbc4b2464e5ad33a35e6aa9f788a66afebeb7ca4c6f23dfa5dcd3",
+    "src/maimai_intelligence/assets/import-help/README.ko.md": "0c2ecd61b9e5f4af2642f7bba76e38d9665ddaae0ef15a92c54871ae7ae82300",
+    "src/maimai_intelligence/assets/import-help/README.md": "0f48fe33e30370ccd863268b0a454e9ac710a32b1db4921adc2e6756fc154dce",
+    "src/maimai_intelligence/assets/import-help/README.zh-Hans.md": "fc7cf8161fa13d19f052a5c9b5c66eae05be1b1ee98490e082e4441c9da996cf",
+    "src/maimai_intelligence/assets/song-display-readings.json": "94d944ed0f56d8a36d5565af9893f6701b99666b224a1f7db6e767413b67973c"
   },
   "documentation": {
     "source": "README.md",
@@ -70,6 +78,11 @@
       "record": "docs/localization-review/share-review-20260920.json"
     },
     {
+      "reviewer": "Codex",
+      "date": "2026-09-21",
+      "scope": "AI contextual review of six shorter import messages in English, Simplified Chinese, Korean and Japanese. Preserved public-only disclosure, browser storage, remembering consent, game region and PB terminology. Details remain available without crowding the preview. Not native-speaker certification."
+    },
+    {
       "date": "2026-09-21",
       "reviewer": "Codex",
       "method": "AI review of changed filter and sorting copy in UI context; not native-speaker certification",
@@ -77,11 +90,94 @@
       "record": "docs/localization-review/filter-disclosures-20260921.md"
     }
   ],
+  "player_sources_review": {
+    "reviewer": "Codex",
+    "method": "AI linguistic review against the import, refresh, error and disabled-capability UI; existing regional terminology retained. Not native-speaker certification.",
+    "date": "2026-09-21",
+    "locales": [
+      "zh-Hans",
+      "ko",
+      "ja"
+    ],
+    "entries": 41,
+    "scope": "New player source catalog only. Checked remembering consent, assisted-report copy, unavailable Maishift wording, PB terminology and unchanged placeholders."
+  },
+  "maishift_proxy_review": {
+    "reviewer": "Codex",
+    "date": "2026-09-21",
+    "method": "AI linguistic review in source-selector, preview and error contexts; not native-speaker certification.",
+    "locales": [
+      "zh-Hans",
+      "ko",
+      "ja"
+    ],
+    "entries": 15,
+    "scope": "Reviewed the new Maishift catalog for public-profile and proxy disclosure, game region independent of language, retained-data error wording, PB observations without sessions, and unchanged {0} placeholders. No song titles or aliases changed."
+  },
+  "maishift_pilot_review": {
+    "reviewer": "Codex",
+    "date": "2026-09-21",
+    "method": "AI contextual language review; not native-speaker certification.",
+    "locales": [
+      "zh-Hans",
+      "ko",
+      "ja"
+    ],
+    "entries": 56,
+    "record": "docs/localization-review/maishift-pilot-20260921.md",
+    "scope": "Opt-in upload test plus browser preview. Reviewed three added labels for preview status, separate score storage, and opening the chart browser; all four UI languages. No song or region terminology changes."
+  },
   "catalog_hotfix_review": {
     "date": "2026-09-21",
     "reviewer": "Codex",
     "method": "AI contextual language review; not native-speaker certification.",
     "record": "docs/localization-review/catalog-hotfix-20260921.md",
     "scope": "Availability controls, unrecognized-genre error, six fixed genres and all five difficulty names across en, zh-Hans, ko and ja. Cabinet vocabulary and source limits are documented. Version identities remain literal; annual CN release mapping is explicitly deferred."
+  },
+  "import_source_presentation": {
+    "date": "2026-09-21",
+    "method": "AI review against source dialog and all four help READMEs",
+    "record": "docs/IMPORT_SOURCE_PRESENTATION.md",
+    "locales": [
+      "en",
+      "zh-Hans",
+      "ko",
+      "ja"
+    ],
+    "scope": "Compact linked username without visible region label; localized PB count and Last Updated; verified per-chart source contributions, unknown estimates; unchanged regional identity and consent. Reviewed EN, zh-Hans, ko and ja help copy."
+  },
+  "player_data_clear": {
+    "date": "2026-09-21",
+    "reviewer": "Codex",
+    "method": "AI contextual review; not native-speaker certification.",
+    "record": "docs/IMPORT_SOURCE_PRESENTATION.md",
+    "scope": "Seven Clear and import replacement messages in en, zh-Hans, ko and ja; distinguishes saved-data deletion from upstream account deletion and same-player history retention from replacement."
+  },
+  "import_overwrite_copy": {
+    "date": "2026-09-21",
+    "reviewer": "Codex",
+    "method": "AI contextual review; not native-speaker certification.",
+    "record": "docs/IMPORT_SOURCE_PRESENTATION.md",
+    "scope": "User-requested concise overwrite notice in en, zh-Hans, ko and ja. Appears for a new manual import with an active account, and a confirmed different-account offer; omitted from same-account confirmation and refresh. Reviewed browser-only import meaning and overwrite wording; no account deletion implied. Replaces the three earlier verbose import messages; underlying same-player reconciliation is unchanged."
+  },
+  "player_results_invariants": {
+    "date": "2026-09-22",
+    "reviewer": "Codex",
+    "method": "Technical source review of two nonlinguistic literals; no translation changes.",
+    "scope": "Classified the decorative import SVG (aria-hidden, no text) and profile-link CSS class list as invariants. Verified the button uses its existing localized label. All 940 message entries and song pronunciation records remain unchanged; existing Combo and Sync translations are reused. Popup fit was checked in all four languages."
+  },
+  "display_readings_review": {
+    "date": "2026-09-22",
+    "method": "AI linguistic review; no native-speaker certification",
+    "reviewedCandidates": 445,
+    "accepted": 321,
+    "sourceRevision": "f08148f8644e40de9b178445df4bd59da712d3de",
+    "record": "docs/localization-review/display-readings-20260922.md"
+  },
+  "production_import_ranges": {
+    "date": "2026-09-22",
+    "reviewer": "Codex",
+    "method": "AI contextual linguistic review; not native-speaker certification.",
+    "scope": "Reviewed achievement grade stepping, exact percentages, known and unknown imported chart rating limits, Clear labels, and the visible-import-action announcement in English, Simplified Chinese, Korean and Japanese. Canonical grade/percentage labels and keyboard identifiers are invariants. Wording preserves rating as chart rating and distinguishes missing data from zero. Reviewed the four help pages: main-site availability replaces the retired test-browser instructions; tester data remains separate and requires reimport."
   }
 }

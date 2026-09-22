@@ -8,6 +8,24 @@ from tests.lab_fixture import write_package
 
 
 class LabTests(unittest.TestCase):
+    def test_maishift_capability_does_not_enable_pilot_storage(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = write_package(root / "package")
+            for enabled in (False, True):
+                site = root / str(enabled)
+                html = build_lab(
+                    source, site, catalog_version="fixture-v1", player_maishift=enabled
+                ).read_text("utf-8")
+                config = (site / "player-import-config.js").read_text("utf-8")
+                self.assertIn("maishift:" + str(enabled).lower(), config)
+                self.assertNotIn("maimaiPlayerContext", config)
+                self.assertNotIn('src="maishift-browser-pilot.js', html)
+                self.assertIn('src="feature-announcements.js', html)
+                self.assertIn('src="player-ranges.js', html)
+                self.assertNotIn('id="loaded-count"', html)
+                self.assertIn('class="catalog-heading-actions"', html)
+
     def test_chart_filters_dictionary_and_versioned_research_data(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

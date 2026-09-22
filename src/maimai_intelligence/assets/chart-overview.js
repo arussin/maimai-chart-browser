@@ -6,7 +6,7 @@ const data=window.maimaiResearchCatalog??=JSON.parse(document.getElementById('ch
 const definitions=new Map(JSON.parse(document.getElementById('pattern-data').textContent).map(p=>[p.pattern_id,p]));
 const make=(tag,text,cls)=>{const n=document.createElement(tag);if(text!==undefined)i18n.text(n, text);if(cls)n.className=cls;return n;};
 // Only presentation choices are remembered here, independently of player records.
-const sectionKey='maimai-chart-sections-v1',sectionState={chart:true,player:true};let sectionSerial=0;
+const sectionKey=globalThis.maimaiPlayerContext?.key('maimai-chart-sections-v1')||'maimai-chart-sections-v1',sectionState={chart:true,player:true};let sectionSerial=0;
 function readSections(){try{const saved=JSON.parse(localStorage.getItem(sectionKey));for(const key of Object.keys(sectionState))if(typeof saved?.[key]==='boolean')sectionState[key]=saved[key];}catch{}}
 function syncSections(){for(const root of document.querySelectorAll('[data-chart-section]')){
   const expanded=sectionState[root.dataset.chartSection],button=root.querySelector('.chart-section-toggle'),body=root.querySelector('.chart-section-body');

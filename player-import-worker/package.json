@@ -1,0 +1,8 @@
+{
+  "name": "maimai-player-imports",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {"test":"node --test *.test.mjs", "types":"wrangler types --env-interface Env --include-runtime false"},
+  "devDependencies": {"wrangler":"4.135.0", "miniflare":"5.20260918.0-alpha", "@cloudflare/workers-types":"5.20260921.1"}
+}

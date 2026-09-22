@@ -3,7 +3,7 @@ import {readFile} from 'node:fs/promises';
 import {gzipSync} from 'node:zlib';
 
 async function configure(page){
-  await expect(page.locator('#loaded-count')).toHaveText('6');
+  await expect(page.locator('#catalog-count strong')).toHaveText('6');
   await page.evaluate(async()=>{
     await maimaiPersonal.ready;
     const data=maimaiResearchCatalog,c=data.catalog[0];
@@ -32,7 +32,7 @@ test('old file imports and remembered data show one source play, with PB snapsho
   }
   // Simulate a profile saved by the previous release. Reload must repair it too.
   await page.evaluate(async({data,bytes})=>{
-    const db=await new Promise((resolve,reject)=>{const q=indexedDB.open('maimai-player-data',1);q.onsuccess=()=>resolve(q.result);q.onerror=()=>reject(q.error);});
+    const db=await new Promise((resolve,reject)=>{const q=indexedDB.open('maimai-player-data',2);q.onsuccess=()=>resolve(q.result);q.onerror=()=>reject(q.error);});
     await new Promise((resolve,reject)=>{const t=db.transaction('datasets','readwrite');t.objectStore('datasets').put({revision:data.revision,bytes:new Uint8Array(bytes)},'active');t.oncomplete=resolve;t.onerror=()=>reject(t.error);});db.close();
   },{data,bytes:[...bytes]});
   await page.reload();await configure(page);

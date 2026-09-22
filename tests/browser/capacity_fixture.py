@@ -44,7 +44,6 @@ def build_capacity_fixture(root: Path, count: int = 7000):
     digest = hashlib.sha256(raw).hexdigest()
     target.mkdir(parents=True, exist_ok=True)
     for name in [
-        "version-magical.png",
         "index.html",
         "lab-loader.js",
         "localization.js",
@@ -66,10 +65,21 @@ def build_capacity_fixture(root: Path, count: int = 7000):
         "support-return.js",
         "stripe-wordmark.svg",
         "view-navigation.js",
+        "player-import-config.js",
+        "player-ranges.js",
         "player-data-core.js",
+        "player-maishift.js",
+        "player-sources.js",
+        "player-storage.js",
         "player-data.js",
+        "feature-announcements.js",
+        "maishift-favicon.ico",
+        "player-import-help.css",
+        *(f"player-import-help.{locale}.html" for locale in ("en", "zh-Hans", "ko", "ja")),
     ]:
         shutil.copyfile(source / name, target / name)
+    if (source / "media").exists():
+        shutil.copytree(source / "media", target / "media", dirs_exist_ok=True)
     (target / "catalogs").mkdir(exist_ok=True)
     path = f"catalogs/{digest}.json"
     (target / path).write_bytes(raw)

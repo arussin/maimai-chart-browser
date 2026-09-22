@@ -29,7 +29,6 @@ SEARCH_DESCRIPTION = (
 )
 CANONICAL_URL = "https://maimai.party/"
 PUBLIC_FILES = (
-    "version-magical.png",
     "index.html",
     "localization.js",
     "localization.css",
@@ -51,8 +50,17 @@ PUBLIC_FILES = (
     "support-return.js",
     "stripe-wordmark.svg",
     "view-navigation.js",
+    "player-import-config.js",
+    "player-ranges.js",
     "player-data-core.js",
+    "player-maishift.js",
+    "player-sources.js",
+    "player-storage.js",
     "player-data.js",
+    "feature-announcements.js",
+    "maishift-favicon.ico",
+    "player-import-help.css",
+    *(f"player-import-help.{locale}.html" for locale in ("en", "zh-Hans", "ko", "ja")),
 )
 
 
@@ -146,6 +154,7 @@ def build_public_release(source, output):
             "artwork",
             "mai_notes",
             "provider_mapping",
+            "maishift_mapping",
             "schema_version",
             "registry",
             "legacy_ids",
@@ -164,6 +173,10 @@ def build_public_release(source, output):
             validate_links(data["mai_notes"], data["catalog"])
         if "provider_mapping" in data:
             validate_mapping(data["provider_mapping"], data["catalog"])
+        if "maishift_mapping" in data:
+            from .maishift_mapping import validate_mapping as validate_maishift
+
+            validate_maishift(data["maishift_mapping"], data["catalog"])
         if "integration" in entry:
             ref = entry["integration"]
             if ref.get("path") != f"integration/{ref.get('sha256')}.json" or not re.fullmatch(

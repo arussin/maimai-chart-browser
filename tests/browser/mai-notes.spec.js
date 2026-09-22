@@ -5,14 +5,13 @@ for(const route of ['/mai-notes/','/mai-notes-progressive/']){
   test('exact mai-notes links follow difficulty with no background requests '+route,async({page,context},testInfo)=>{
     const external=[],errors=[];page.on('pageerror',e=>errors.push(e.message));
     context.on('request',r=>{if(new URL(r.url()).hostname==='mai-notes.com')external.push({url:r.url(),referer:r.headers().referer});});
-    await page.goto(route);await expect(page.locator('#loaded-count')).toHaveText('6');
+    await page.goto(route);await expect(page.locator('#catalog-count strong')).toHaveText('6');
     await page.locator('#search').fill('Fictional study 3');
-    const row=page.locator('#songs .song-row'),link=row.locator('.mai-notes-player'),picker=row.locator('.row-difficulty');
+    let row=page.locator('#songs .song-row[data-difficulty="RE:MASTER"]');const link=row.locator('.mai-notes-player');
     await expect(link).toHaveText('mai-notes simai player ↗');
-    const first=await link.getAttribute('href');
+    const first=await page.locator('#songs .song-row[data-difficulty=MASTER] .mai-notes-player').getAttribute('href');
     await expect(row.locator('.chart-external-links .youtube-search')).toBeVisible();
-    const remaster=await picker.locator('option').filter({hasText:'RE:MASTER'}).getAttribute('value');
-    await picker.selectOption(remaster);const next=await link.getAttribute('href');
+    const next=await link.getAttribute('href');
     expect(next).not.toBe(first);await expect(link).toHaveAttribute('aria-label',/RE:MASTER.*new tab/);
     expect(external).toEqual([]);
     const url=new URL(next);expect(url.pathname).toBe('/player.html');expect([...url.searchParams.keys()]).toEqual(['chart']);
@@ -24,7 +23,7 @@ for(const route of ['/mai-notes/','/mai-notes-progressive/']){
     await row.locator('.chart-row').click();await row.getByRole('button',{name:'Compare this chart',exact:true}).click();
     await expect(page.locator('#comparison-pickers .mai-notes-player')).toHaveAttribute('href',next);
     await page.reload();await expect(page.locator('#comparison-pickers .mai-notes-player')).toHaveAttribute('href',next);
-    await page.getByRole('button',{name:'Charts',exact:true}).click();await page.locator('#search').fill('Fictional study 0');
+    await page.getByRole('button',{name:'Charts',exact:true}).click();await page.locator('#search').fill('Fictional study 0');row=page.locator('#songs .song-row');
     await expect(row.locator('.mai-notes-player')).toHaveCount(0);await expect(row.locator('.youtube-search')).toBeVisible();
     await page.locator('#search').fill('Fictional study 3');
     expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
@@ -35,7 +34,7 @@ for(const route of ['/mai-notes/','/mai-notes-progressive/']){
 }
 
 test('legacy catalogs stay usable and invalid links cannot carry private data',async({page})=>{
-  await page.goto('/lab/');await expect(page.locator('#loaded-count')).toHaveText('6');
+  await page.goto('/lab/');await expect(page.locator('#catalog-count strong')).toHaveText('6');
   await expect(page.locator('.mai-notes-player')).toHaveCount(0);
   const result=await page.evaluate(()=>{
     const c=window.maimaiResearchCatalog.catalog[0],id='00000000-0000-0000-0000-000000000001';

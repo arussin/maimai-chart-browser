@@ -1,6 +1,9 @@
 # Personal data and public integration v1
 
-maimai.party remains a static public chart browser. The optional personal layer reads a compressed player file in the browser, or receives the same file from a report after consent. There is no account, score upload service, report-generator import, or personalized recommendation engine in this layer.
+maimai.party remains a static public chart browser. The optional personal layer reads a compressed player file in the browser, receives the same file from a report after consent, or reads an explicitly public hosted report with browser CORS permission. There is no account, score upload service, report-generator import, or personalized recommendation engine in this layer.
+
+See [source selection and refresh](PLAYER_SOURCES.md) for remembered connections,
+cross-tab Forget behavior and the blocked Maishift release gate.
 
 ## Player file
 

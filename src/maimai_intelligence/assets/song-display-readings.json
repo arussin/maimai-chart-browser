@@ -1,0 +1,1938 @@
+{
+  "schema_version": "song-display-readings-1",
+  "purpose": "Reviewed full-title pronunciations for secondary English display; never translations, nicknames, canonical names or chart identity. Loanwords may retain their established Latin spelling.",
+  "source_revision": "f08148f8644e40de9b178445df4bd59da712d3de",
+  "review": {
+    "reviewer": "Codex",
+    "method": "AI linguistic review of title, artist and existing pinned Tachi aliases; rejected translations, truncated names and uncertain readings. Not native-speaker certification.",
+    "date": "2026-09-22"
+  },
+  "entries": [
+    {
+      "song_id": "song:0023af58-f2bf-44b5-8bf6-4590eb027d10",
+      "title": "ありきたりな恋の歌",
+      "artist": "GYARI",
+      "reading": "Arikitari na koi no uta"
+    },
+    {
+      "song_id": "song:002eca46-f0f1-4a56-902b-3746367decaf",
+      "title": "花となれ",
+      "artist": "雄之助　feat.音楽的同位体　可不（KAFU）",
+      "reading": "Hana to nare"
+    },
+    {
+      "song_id": "song:003b84a7-027c-4ab8-a310-ee6b0372c503",
+      "title": "脳漿炸裂ガール",
+      "artist": "れるりり",
+      "reading": "Nou shou sakuretsu girl"
+    },
+    {
+      "song_id": "song:0040c892-3ecb-4df8-82dc-1c666e6d0f51",
+      "title": "回レ！雪月花",
+      "artist": "歌組雪月花 夜々(原田ひとみ)/いろり(茅野愛衣)/小紫(小倉唯)「機巧少女は傷つかない」",
+      "reading": "Maware! setsugetsuka"
+    },
+    {
+      "song_id": "song:006d7f01-fa93-4b08-b105-b213814cc3d2",
+      "title": "蜘蛛の糸",
+      "artist": "きくお×cosMo＠暴走P feat.影縫英",
+      "reading": "Kumo no ito"
+    },
+    {
+      "song_id": "song:00891418-4df1-454f-94d8-4e7c9d5eca47",
+      "title": "届かない花束",
+      "artist": "ELECTROCUTICA",
+      "reading": "Todokanai Hanataba"
+    },
+    {
+      "song_id": "song:01dabec5-9e26-4f99-bcb8-c6f457603f42",
+      "title": "マイオドレ！舞舞タイム",
+      "artist": "キノシタ feat. そらみこ (ホロライブ ときのそら＆さくらみこ)",
+      "reading": "Maiodore! maimai Time"
+    },
+    {
+      "song_id": "song:034ea34c-2745-48e6-8470-762741521608",
+      "title": "記憶、記録",
+      "artist": "LOPIT(SEGA)",
+      "reading": "Kioku, kiroku"
+    },
+    {
+      "song_id": "song:03c1ccde-0ad1-47f9-8752-80a1a884dbbd",
+      "title": "玩具狂奏曲 -終焉-",
+      "artist": "きくお",
+      "reading": "Gangu kyousou kyoku shuuen"
+    },
+    {
+      "song_id": "song:047f9a68-f3e7-4c82-9a87-282e21d02dbe",
+      "title": "悪魔の踊り方",
+      "artist": "キタニタツヤ",
+      "reading": "Akuma no odori kata"
+    },
+    {
+      "song_id": "song:069dad7e-a015-45bd-98bf-b97e072c52ea",
+      "title": "超最終鬼畜妹フランドール・S",
+      "artist": "ビートまりお×まろん",
+      "reading": "Cho saishuu kichiku imouto flandre s"
+    },
+    {
+      "song_id": "song:0744a3de-a7cc-4a1b-8af6-0d2213a1f4ed",
+      "title": "イノコリ先生",
+      "artist": "HoneyWorks",
+      "reading": "Inokori Sensei"
+    },
+    {
+      "song_id": "song:074f77ea-0f71-4474-84ef-dcc6b81db2ff",
+      "title": "銀のめぐり",
+      "artist": "SYNC.ART'S feat. 3L",
+      "reading": "Gin no meguri"
+    },
+    {
+      "song_id": "song:09e5159f-4dac-4009-8bf5-57d482e3cee4",
+      "title": "疾走あんさんぶる",
+      "artist": "ビートまりお（COOL&CREATE）",
+      "reading": "Sissou Ensemble"
+    },
+    {
+      "song_id": "song:0ac3b1a6-673d-480a-9f46-fbdb695f502e",
+      "title": "お嫁にしなさいっ！",
+      "artist": "ARM＋夕野ヨシミ(IOSYS)",
+      "reading": "Oyome ni Shinasai!"
+    },
+    {
+      "song_id": "song:0ad31bf5-edf8-47ea-bccb-97d7c14b9284",
+      "title": "新人類",
+      "artist": "まらしぃ×じん×堀江晶太(kemu) feat.鏡音リン",
+      "reading": "Shin jinrui"
+    },
+    {
+      "song_id": "song:0c195c46-30f6-4148-b229-fe50d0231f36",
+      "title": "解けないように",
+      "artist": "KIHOW from MYTH & ROID",
+      "reading": "Hodokenai you ni"
+    },
+    {
+      "song_id": "song:0c8f9093-435d-436e-adff-55189ab77d77",
+      "title": "月に叢雲華に風",
+      "artist": "幽閉サテライト(Produce:嵯峨飛鳥 Arranged:Iceon)",
+      "reading": "Tsuki Ni Murakumo Hana Ni Kaze"
+    },
+    {
+      "song_id": "song:0e524649-f49a-42b7-a2ab-bcf93c27a471",
+      "title": "悪戯",
+      "artist": "ろん×田中秀和(MONACA)",
+      "reading": "Itazura"
+    },
+    {
+      "song_id": "song:0f2aaf5f-78d2-458f-9a54-e2fd7ff49351",
+      "title": "分解収束テイル",
+      "artist": "un:c・konoco×cosMo＠暴走P",
+      "reading": "Bunkai Shusoku Tale"
+    },
+    {
+      "song_id": "song:10fe89c1-fd2d-4068-8427-6dac2fdc21e4",
+      "title": "宙天",
+      "artist": "t+pazolite vs かねこちはる",
+      "reading": "Chuuten"
+    },
+    {
+      "song_id": "song:1113dd34-a41b-4097-b6c6-1cf095fe43e5",
+      "title": "デリヘル呼んだら君が来た",
+      "artist": "ナナホシ管弦楽団",
+      "reading": "Deriheru Yondara Kimi ga Kita"
+    },
+    {
+      "song_id": "song:11787f70-954f-4655-b7c5-6f122362f504",
+      "title": "言ノ葉遊戯",
+      "artist": "S!N・高橋菜々×ひとしずく・やま△",
+      "reading": "KOTONOHA Yu-Gi"
+    },
+    {
+      "song_id": "song:12423f5b-c4e7-4e82-a685-9c0734990903",
+      "title": "かくしん的☆めたまるふぉ～ぜっ！",
+      "artist": "土間うまる [CV.田中あいみ]「干物妹！うまるちゃん」",
+      "reading": "Kakushin teki metamarufooze"
+    },
+    {
+      "song_id": "song:13b5d6bd-1438-41eb-9fbc-41f416e878a0",
+      "title": "抜錨",
+      "artist": "ナナホシ管弦楽団",
+      "reading": "Batsubyou"
+    },
+    {
+      "song_id": "song:156986d7-79d3-4863-820d-4e1317ab565c",
+      "title": "くらべられっ子",
+      "artist": "ツユ",
+      "reading": "Kuraberarekko"
+    },
+    {
+      "song_id": "song:1572fa79-dd3a-4d96-a92f-c8fe32abee99",
+      "title": "生命不詳",
+      "artist": "蜂屋ななし",
+      "reading": "Seimei Fusho"
+    },
+    {
+      "song_id": "song:15bc8051-5e2c-4cce-aef8-95d3c79e8506",
+      "title": "分からない",
+      "artist": "ろん×黒魔",
+      "reading": "Wakaranai"
+    },
+    {
+      "song_id": "song:1602ce3d-8711-4c69-b37c-ad574351e48e",
+      "title": "儚きもの人間",
+      "artist": "豚乙女",
+      "reading": "Hakanaki mono Ningen"
+    },
+    {
+      "song_id": "song:16af3066-0118-45c0-a2e9-d133f4e90387",
+      "title": "明星ロケット",
+      "artist": "岸田教団＆THE明星ロケッツ",
+      "reading": "Akeboshi Rocket"
+    },
+    {
+      "song_id": "song:17509461-cc5c-44c3-a00d-361010033fb9",
+      "title": "雨とペトラ",
+      "artist": "バルーン",
+      "reading": "Ame to Petra"
+    },
+    {
+      "song_id": "song:1805c10e-fa71-49e0-bcb4-7e72406766fd",
+      "title": "人生リセットボタン",
+      "artist": "kemu",
+      "reading": "Jinsei Reset Button"
+    },
+    {
+      "song_id": "song:19ae03d1-35c4-4d70-9dd2-6bf02a4c9e18",
+      "title": "乙女解剖",
+      "artist": "DECO*27",
+      "reading": "Otome Kaibou"
+    },
+    {
+      "song_id": "song:19baa33f-3ffd-416d-a682-5146be3a1a70",
+      "title": "勝手に生きましょ",
+      "artist": "しぐれうい",
+      "reading": "Katte ni ikimasho"
+    },
+    {
+      "song_id": "song:1a68d7a2-cfd7-42e3-ad2b-e95060c63a0e",
+      "title": "地球",
+      "artist": "立秋 feat.ちょこ",
+      "reading": "Chikyuu"
+    },
+    {
+      "song_id": "song:1afa8d60-f0d6-4f50-9a06-14ef53f670a0",
+      "title": "時計の国のジェミニ",
+      "artist": "黒魔",
+      "reading": "Tokei no Kuni no Gemini"
+    },
+    {
+      "song_id": "song:1b2360a6-6605-49e2-85ef-28c26a785703",
+      "title": "天蓋",
+      "artist": "花徒めと（Metomate）",
+      "reading": "Tengai"
+    },
+    {
+      "song_id": "song:1e683937-b106-47fa-b92e-8ead0327e8fc",
+      "title": "炎歌 -ほむらうた-",
+      "artist": "Hiro/森山愛子",
+      "reading": "Homura uta"
+    },
+    {
+      "song_id": "song:1ece6f56-77c7-4fc9-a02f-004682cfbd14",
+      "title": "猫祭り",
+      "artist": "箱部 なる(CV:M・A・O)",
+      "reading": "Neko Matsuri"
+    },
+    {
+      "song_id": "song:212c0f5e-ecf6-4093-b0fe-a40a9d9901ab",
+      "title": "幻想のサテライト",
+      "artist": "豚乙女",
+      "reading": "Gensou no Satellite"
+    },
+    {
+      "song_id": "song:21840752-8edd-45b3-9f1b-677ae4019ff1",
+      "title": "約束",
+      "artist": "はるまきごはん",
+      "reading": "Yakusoku"
+    },
+    {
+      "song_id": "song:21be5e00-2893-4f11-933e-0f083d0d1b81",
+      "title": "怒槌",
+      "artist": "光吉猛修",
+      "reading": "Ikazuchi"
+    },
+    {
+      "song_id": "song:223c3041-6928-415d-8ad6-3a146fd6b07d",
+      "title": "キリキリ舞Mine",
+      "artist": "A-One",
+      "reading": "Kirikiri mai Mine"
+    },
+    {
+      "song_id": "song:22a258c1-173b-4da6-9acb-075354307cd4",
+      "title": "空回りライブラリ",
+      "artist": "雪乃イト",
+      "reading": "Karamawari library"
+    },
+    {
+      "song_id": "song:2381a927-31b9-478a-a442-95ec4bcfefe3",
+      "title": "夢花火",
+      "artist": "豚乙女",
+      "reading": "Yume hanabi"
+    },
+    {
+      "song_id": "song:23f25169-d59e-48fb-a365-adffe6a59aa3",
+      "title": "果ての空、僕らが見た光。",
+      "artist": "TAKU1175 ft.駄々子",
+      "reading": "Hate no sora, bokura ga mita hikari."
+    },
+    {
+      "song_id": "song:247d1539-56a9-4e50-9a6a-40686bd1ff63",
+      "title": "ナミダと流星",
+      "artist": "芳川よしの",
+      "reading": "Namida to Ryusei"
+    },
+    {
+      "song_id": "song:251b782f-1b88-4dcd-a48a-506a2c37f184",
+      "title": "最終鬼畜妹・一部声",
+      "artist": "ビートまりお",
+      "reading": "Saishuu kichiku imouto ichibu koe"
+    },
+    {
+      "song_id": "song:25e2490e-c808-46ea-a65b-130326b7cba4",
+      "title": "裏表ラバーズ",
+      "artist": "wowaka",
+      "reading": "Uraomote Lovers"
+    },
+    {
+      "song_id": "song:26837c1c-62a6-4f17-9041-d06967e45c11",
+      "title": "寝起きヤシの木",
+      "artist": "ゆこぴ",
+      "reading": "Neoki yashi no ki"
+    },
+    {
+      "song_id": "song:2799ebe7-ad07-4d3b-b230-ca7d699bacac",
+      "title": "火炎地獄",
+      "artist": "山根ミチル",
+      "reading": "Kaen Jigoku"
+    },
+    {
+      "song_id": "song:285ca428-d5b4-4495-8665-3148fc45170e",
+      "title": "星詠みとデスペラード",
+      "artist": "しょご/野村渉悟",
+      "reading": "Hoshiyomi to desperado"
+    },
+    {
+      "song_id": "song:2a04b853-5937-482e-b1aa-833091a09a12",
+      "title": "ももいろの鍵",
+      "artist": "いよわ",
+      "reading": "Momoiro no Kagi"
+    },
+    {
+      "song_id": "song:2a76230f-f848-4f61-aa8a-d14640367efb",
+      "title": "砂の函",
+      "artist": "Nego_tiator",
+      "reading": "Suna no hako"
+    },
+    {
+      "song_id": "song:2af37568-5046-4fc8-aa13-5c3fdefa5927",
+      "title": "右に曲ガール",
+      "artist": "はるふり",
+      "reading": "Migi ni ma girl"
+    },
+    {
+      "song_id": "song:2c8c0237-38c9-48f0-bbe4-dd8ddf337854",
+      "title": "ネコ日和。",
+      "artist": "Kai/能登有沙",
+      "reading": "Neko Biyori"
+    },
+    {
+      "song_id": "song:2cac11bc-51bf-4dc5-bb83-1aa3a3a32875",
+      "title": "咲キ誇レ常世ノ華",
+      "artist": "Sou×マチゲリータ",
+      "reading": "Sakihokore Tokoyo No Hana"
+    },
+    {
+      "song_id": "song:2cd4a4e7-dd0f-4fc1-8ee3-d747ef231f26",
+      "title": "洗脳",
+      "artist": "ゆりん・柿チョコ×Neru",
+      "reading": "Sennou"
+    },
+    {
+      "song_id": "song:2d971658-2e86-4070-9318-12fe3b892d42",
+      "title": "高気圧ねこロック",
+      "artist": "小野隊長とJimmy親分",
+      "reading": "Koukiatsu Neko Rock"
+    },
+    {
+      "song_id": "song:2f93fad1-1e86-4d39-b15d-90188967444c",
+      "title": "人間が大好きなこわれた妖怪の唄",
+      "artist": "ビートまりお",
+      "reading": "Ningen ga Daisuki na Kowareta Youkai no Uta"
+    },
+    {
+      "song_id": "song:2feaa3a5-7a9f-4cd0-ae84-fd753f1d8f82",
+      "title": "ゆけむり魂温泉 II",
+      "artist": "魂音泉",
+      "reading": "Yukemuri tamaonsen II"
+    },
+    {
+      "song_id": "song:30408f25-b3ae-4367-b651-a6bfd41f232f",
+      "title": "初音ミクの激唱",
+      "artist": "Storyteller",
+      "reading": "Hatsune miku no gekishou"
+    },
+    {
+      "song_id": "song:310ffa90-6ef7-41c8-a88a-48ac2eb24269",
+      "title": "デコボコ体操第二",
+      "artist": "光吉猛修＆体操隊",
+      "reading": "Dekoboko Taisou No.2"
+    },
+    {
+      "song_id": "song:312ddbef-772b-4dde-bdcb-416860238e70",
+      "title": "町かどタンジェント",
+      "artist": "shami momo（吉田優子・千代田桃）／CV：小原好美・鬼頭明里",
+      "reading": "Machi kado tangent"
+    },
+    {
+      "song_id": "song:324e9ac8-b9db-488e-8ee4-54acd3d13cbc",
+      "title": "宿題が終わらないっ！",
+      "artist": "Innocent Keyと梨本悠里、JUNCA、小宮真央、樹詩音、大瀬良あい",
+      "reading": "Shukudai ga owaranai"
+    },
+    {
+      "song_id": "song:3404527b-f67e-409f-906c-2b3aa93af8ab",
+      "title": "おいでよ！妖精の森",
+      "artist": "「gdgd妖精s」",
+      "reading": "Oideyo! yousei no mori"
+    },
+    {
+      "song_id": "song:35b0ecb0-68ac-4f92-a188-b16b93dab393",
+      "title": "幻想に咲いた花",
+      "artist": "岸田教団&THE明星ロケッツ×草野華余子「東方ダンマクカグラ」",
+      "reading": "Gensou ni saita hana"
+    },
+    {
+      "song_id": "song:36df8e17-56ef-41a3-a963-3004528b5587",
+      "title": "響縁",
+      "artist": "豚乙女",
+      "reading": "Kyouen"
+    },
+    {
+      "song_id": "song:3704d508-122f-4439-ac30-121b6c28a34f",
+      "title": "演劇",
+      "artist": "ナノウ",
+      "reading": "Engeki"
+    },
+    {
+      "song_id": "song:376e9466-6f1d-4883-8154-f6de23edbd9e",
+      "title": "未完成人",
+      "artist": "ンダホ&ぺけたん from Fischer's",
+      "reading": "Mikanseijin"
+    },
+    {
+      "song_id": "song:396b7f01-48d7-4f66-8505-45db83416e2e",
+      "title": "泡沫、哀のまほろば",
+      "artist": "幽閉サテライト(Produce:嵯峨飛鳥 Arranged:Iceon)",
+      "reading": "Utakata, Ai No Mahoroba"
+    },
+    {
+      "song_id": "song:3a915578-805c-4f6b-bc9f-c461eb79cf5e",
+      "title": "泣き虫O'clock",
+      "artist": "Hiro/友香",
+      "reading": "NAKIMUSHI O'clock"
+    },
+    {
+      "song_id": "song:3ba962d1-fe92-45c2-b7a4-417e2c3c9d60",
+      "title": "天国と地獄 -言ノ葉リンネ-",
+      "artist": "伊東歌詞太郎・ろん×れるりり",
+      "reading": "Tengoku to jigoku kotonoha rinne"
+    },
+    {
+      "song_id": "song:3bb69e33-d180-4ba3-980d-21698cfe0b47",
+      "title": "回る空うさぎ",
+      "artist": "Orangestar",
+      "reading": "Mawaru Sora Usagi"
+    },
+    {
+      "song_id": "song:3be78465-b1fb-4e6e-8d41-da3758c5b107",
+      "title": "終焉逃避行",
+      "artist": "柊マグネタイト",
+      "reading": "Shuuen Touhikou"
+    },
+    {
+      "song_id": "song:3c849003-0e48-4118-8823-02dfd1bf53a3",
+      "title": "絡めトリック利己ライザー",
+      "artist": "じーざす（ワンダフル☆オポチュニティ！）feat.Kradness",
+      "reading": "Karame trick riko riser"
+    },
+    {
+      "song_id": "song:3cfc49b6-f8b6-4fa4-a2a7-34bf8420300d",
+      "title": "東方妖々夢 ～the maximum moving about～",
+      "artist": "石鹸屋",
+      "reading": "Toho yoyomu -the maximum moving about-"
+    },
+    {
+      "song_id": "song:3da3616b-0cef-4e5a-8831-cc5c0ecca5e2",
+      "title": "劣等上等",
+      "artist": "Giga / 鏡音リン・レン / Vivid BAD SQUAD「プロジェクトセカイ カラフルステージ！ feat. 初音ミク」",
+      "reading": "Rettou Joutou"
+    },
+    {
+      "song_id": "song:3f285393-37a6-40a7-8610-03292c543cd0",
+      "title": "勦滅",
+      "artist": "siqlo",
+      "reading": "Soumetsu"
+    },
+    {
+      "song_id": "song:3f885b8f-0171-49c5-bd65-240c71d712ef",
+      "title": "ラストピースに祝福と栄光を",
+      "artist": "cosMo＠暴走P",
+      "reading": "Last Piece ni Shukufuku to Eikou wo"
+    },
+    {
+      "song_id": "song:3fb8c631-0d77-4ffb-8090-4b06fe328cb3",
+      "title": "星空パーティーチューン",
+      "artist": "OSTER project feat. そらこ",
+      "reading": "Hoshizora Party Tune"
+    },
+    {
+      "song_id": "song:3fd94e81-15b4-418f-8e48-4a530e6519e9",
+      "title": "強風オールバック",
+      "artist": "ゆこぴ",
+      "reading": "Kyoufuu all back"
+    },
+    {
+      "song_id": "song:4084a931-f4d7-4f96-af09-a77840a2e740",
+      "title": "最強 the サマータイム!!!!!",
+      "artist": "曲：村カワ基成／歌：オンゲキシューターズ",
+      "reading": "Saikyou the summertime"
+    },
+    {
+      "song_id": "song:421f0f44-4aa6-49bf-ba96-fa8acd2b434b",
+      "title": "林檎華憐歌",
+      "artist": "ビートまりお母(尾崎順子)",
+      "reading": "Ringo Karenka"
+    },
+    {
+      "song_id": "song:42750e99-3a64-494b-a1d7-98bd76e4d110",
+      "title": "少女レイ",
+      "artist": "みきとP",
+      "reading": "Shoujo rei"
+    },
+    {
+      "song_id": "song:433cc254-5d38-4997-bf07-2168e06f0be1",
+      "title": "愛のシュプリーム！",
+      "artist": "fhána",
+      "reading": "Ai no Supreme"
+    },
+    {
+      "song_id": "song:446bc7d5-9dfe-44dc-b544-2ae8cbd72ed4",
+      "title": "四月の雨",
+      "artist": "cubesato",
+      "reading": "Shigatsu no ame"
+    },
+    {
+      "song_id": "song:4526965f-ecb3-44dc-8354-e7256e528398",
+      "title": "木彫り鯰と右肩ゾンビ",
+      "artist": "hanzo/赤飯歌唱Ver",
+      "reading": "Kibori namazu to Migikata zombie"
+    },
+    {
+      "song_id": "song:46dc0cfd-609b-4f82-963a-8f978a001f8b",
+      "title": "勇者",
+      "artist": "YOASOBI",
+      "reading": "Yuusha"
+    },
+    {
+      "song_id": "song:473aa445-6d40-4b1b-8104-983cd8eddb6e",
+      "title": "心象蜃気楼",
+      "artist": "Orangestar",
+      "reading": "Shinshou shinkirou"
+    },
+    {
+      "song_id": "song:474bb7c7-6cf1-4cc7-8a66-b23922eb5631",
+      "title": "前前前世",
+      "artist": "RADWIMPS",
+      "reading": "Zenzenzense"
+    },
+    {
+      "song_id": "song:47b3d9c2-bcd1-4f1f-a7eb-2c2b1ce19704",
+      "title": "REVIVER オルタンシア・サーガ -蒼の騎士団- オリジナルVer.",
+      "artist": "MY FIRST STORY",
+      "reading": "REVIVER Hortensia Saga -Ao no Kishidan- Original Ver."
+    },
+    {
+      "song_id": "song:47b4bd4b-0043-4294-bd77-21b30a3ba859",
+      "title": "天国と地獄",
+      "artist": "スーパーラバーズ「赤ちゃんはどこからくるの？」",
+      "reading": "Tengoku to jigoku"
+    },
+    {
+      "song_id": "song:48635427-26c9-4c53-97ec-6125714424af",
+      "title": "夏にキスしていいですか？",
+      "artist": "アルスマグナ",
+      "reading": "Natsu ni kiss shite ii desu ka?"
+    },
+    {
+      "song_id": "song:48c99991-55a3-4533-aeb2-9ebfcf0d6f5f",
+      "title": "天狗の落とし文 feat. ｙｔｒ",
+      "artist": "魂音泉",
+      "reading": "Tengu No Otoshibumi feat. Ytr"
+    },
+    {
+      "song_id": "song:4b55055c-f58f-48b2-a029-25da2bc4c1de",
+      "title": "星見草",
+      "artist": "秋田 真典",
+      "reading": "Hoshimisou"
+    },
+    {
+      "song_id": "song:4b6864ec-9013-405a-8913-dceb5a1ad258",
+      "title": "失敗作少女",
+      "artist": "かいりきベア・MARETU feat.初音ミク",
+      "reading": "Shippai saku shoujo"
+    },
+    {
+      "song_id": "song:4b7658d9-2b15-472f-9b7b-8c2c681e379f",
+      "title": "ネガティブ進化論",
+      "artist": "DECO*27",
+      "reading": "Negative shinka ron"
+    },
+    {
+      "song_id": "song:4e0261cb-98f8-4c9c-b386-cbb01be10b33",
+      "title": "女々しくて",
+      "artist": "ゴールデンボンバー [PV]",
+      "reading": "Memeshikute"
+    },
+    {
+      "song_id": "song:4e45226b-9c3e-45ca-99a1-7f324632b56d",
+      "title": "秋の未確認生物",
+      "artist": "子牛 feat.音街ウナ",
+      "reading": "Aki no Mikakunin Seibutsu"
+    },
+    {
+      "song_id": "song:4fbd4c00-2fef-4047-810e-06e66147c2ce",
+      "title": "夏祭り",
+      "artist": "Jitterin' Jinn [covered by ろん]",
+      "reading": "Natsumatsuri"
+    },
+    {
+      "song_id": "song:5023aa6b-1ed2-467b-8fba-390f1dbce466",
+      "title": "全力☆Summer!",
+      "artist": "angela「アホガール」",
+      "reading": "Zenryoku summer!"
+    },
+    {
+      "song_id": "song:5043175c-d4b7-46a2-a610-b2fb49b313bd",
+      "title": "廃墟にいますキャンペーン",
+      "artist": "吉田夜世 feat.ちっく。",
+      "reading": "Haikyo ni imasu campaign"
+    },
+    {
+      "song_id": "song:5134caf5-307f-4675-8088-cb156494ebcf",
+      "title": "お願いマッスル",
+      "artist": "紗倉ひびき（CV:ファイルーズあい）＆街雄鳴造（CV:石川界人）",
+      "reading": "Onegai Muscle"
+    },
+    {
+      "song_id": "song:51b01393-04ff-4bc0-8966-5b9375dcebcc",
+      "title": "神々が恋した幻想郷",
+      "artist": "Unlucky Morpheus",
+      "reading": "Kamigami ga koishita gensoukyou"
+    },
+    {
+      "song_id": "song:51d666f0-62f9-48b1-bbb4-7495809092aa",
+      "title": "炭★坑★節",
+      "artist": "Kai/光吉猛修",
+      "reading": "Tankoubushi"
+    },
+    {
+      "song_id": "song:52fe820b-18f0-48a5-83fe-ecd01bba17cc",
+      "title": "敗北の少年",
+      "artist": "kemu",
+      "reading": "Haiboku no shounen"
+    },
+    {
+      "song_id": "song:5396eac8-742c-4b6c-9114-55110caeae8d",
+      "title": "炉心融解",
+      "artist": "iroha(sasaki)／kuma(alfred)",
+      "reading": "Roshin Yukai"
+    },
+    {
+      "song_id": "song:54763632-b1e7-4caa-8d75-2d2240d72148",
+      "title": "有頂天ドリーマーズ",
+      "artist": "森羅万象",
+      "reading": "Uchouten dreamers"
+    },
+    {
+      "song_id": "song:54b0d63d-341d-44fc-8f57-da654f038686",
+      "title": "酔いどれ知らず",
+      "artist": "Kanaria",
+      "reading": "Yoidore shirazu"
+    },
+    {
+      "song_id": "song:5640579e-5c73-4ad0-8aff-e302d86c4c71",
+      "title": "橙の幻想郷音頭",
+      "artist": "発熱巫女～ず",
+      "reading": "Chen No Gensoukyo Ondo"
+    },
+    {
+      "song_id": "song:57e00a91-1ceb-4bd1-afb7-96166fe5c782",
+      "title": "星屑ユートピア",
+      "artist": "otetsu",
+      "reading": "Hoshikuzu Utopia"
+    },
+    {
+      "song_id": "song:59f33982-cbda-45cf-9ac4-edbd37d9a8b4",
+      "title": "バカ通信",
+      "artist": "isonosuke",
+      "reading": "Baka tsuushin"
+    },
+    {
+      "song_id": "song:5b3ed9bc-3532-49e5-ada3-19fbd13294a1",
+      "title": "蒼穹舞楽",
+      "artist": "Capchii",
+      "reading": "Soukyu Bugaku"
+    },
+    {
+      "song_id": "song:5bd4bcbe-a0f1-44f7-bf06-8c0e7cbe0579",
+      "title": "猛進ソリストライフ！",
+      "artist": "月鈴 那知(CV:今村 彩夏)",
+      "reading": "Mo-shin Soliste Life!"
+    },
+    {
+      "song_id": "song:5d257020-262a-44a9-a97e-6339103e1f8f",
+      "title": "犬日和。",
+      "artist": "RYOHEI KOHNO/森綾香",
+      "reading": "Inu Biyori"
+    },
+    {
+      "song_id": "song:5df622c4-0160-432d-9d04-5025b61af96e",
+      "title": "お願い！コンコンお稲荷さま",
+      "artist": "ARM×狐夢想 feat. ななひら",
+      "reading": "Onegai! konkon oinari-sama"
+    },
+    {
+      "song_id": "song:5eadc3f3-2b81-42a6-88fe-254c9b42e00e",
+      "title": "独りんぼエンヴィー",
+      "artist": "koyori（電ポルP）",
+      "reading": "Hitorinbo Envy"
+    },
+    {
+      "song_id": "song:5ec76d96-3e47-483a-9243-ce6e2ed03063",
+      "title": "神っぽいな",
+      "artist": "ピノキオピー",
+      "reading": "Kamippoina"
+    },
+    {
+      "song_id": "song:61118f13-514a-4b12-a4a5-c09dd7776818",
+      "title": "鼓動",
+      "artist": "青木 千紘「龍が如く 維新！」",
+      "reading": "Kodou"
+    },
+    {
+      "song_id": "song:614a0bd1-f050-4a6e-a8a2-bb1872360628",
+      "title": "阿修羅ちゃん",
+      "artist": "Ado",
+      "reading": "Ashura-chan"
+    },
+    {
+      "song_id": "song:6325abcb-bb4a-43d1-b1f3-7d79d3b8e959",
+      "title": "魔ジョ狩リ",
+      "artist": "Nothing But Requiem (feat.Aikapin & Chiyoko)",
+      "reading": "Majogari"
+    },
+    {
+      "song_id": "song:640a2de0-e4f6-4498-b1ec-87aff3d5a4e2",
+      "title": "僕は空気が嫁ない",
+      "artist": "cosMo＠暴走P",
+      "reading": "Boku wa kuuki ga yomenai"
+    },
+    {
+      "song_id": "song:6466ab11-64ac-4f05-8567-822c30ad0541",
+      "title": "目覚めRETURNER",
+      "artist": "フランシュシュ",
+      "reading": "Mezame RETURNER"
+    },
+    {
+      "song_id": "song:64b8e12e-aacb-46e0-8236-403c40de1510",
+      "title": "紅に染まる恋の花",
+      "artist": "幽閉サテライト(Produce:嵯峨飛鳥 Arranged:Iceon)",
+      "reading": "Kurenai ni somaru koi no hana"
+    },
+    {
+      "song_id": "song:64eaadc1-744d-4a2c-b0f2-fd9b4cf103f1",
+      "title": "放課後ストライド",
+      "artist": "Last Note.",
+      "reading": "Houkago Stride"
+    },
+    {
+      "song_id": "song:66587106-0a03-46b9-91ae-10c0244cda32",
+      "title": "超常マイマイン",
+      "artist": "ナユタン星人",
+      "reading": "Chojo maimain"
+    },
+    {
+      "song_id": "song:66cb75b1-ec6b-4089-b02d-450d6076e97d",
+      "title": "乙女のルートはひとつじゃない！",
+      "artist": "angela",
+      "reading": "Otome no route wa hitotsu janai"
+    },
+    {
+      "song_id": "song:66dc55af-0688-4c8a-ab4d-a794dd49591a",
+      "title": "拝啓、最高の思い出たち",
+      "artist": "ヤレギノ",
+      "reading": "Haikei, saikou no omoidetachi"
+    },
+    {
+      "song_id": "song:67cb7e45-3950-4078-91a4-160615323fbf",
+      "title": "最速最高シャッターガール",
+      "artist": "ビートまりお(COOL＆CREATE)",
+      "reading": "Saisoku Saikou Shutter Girl"
+    },
+    {
+      "song_id": "song:6a14b138-b12d-41c8-b438-4a199f7693cf",
+      "title": "鬼女紅妖",
+      "artist": "Earliri",
+      "reading": "Kijokouyou"
+    },
+    {
+      "song_id": "song:6a1c2775-a309-48ff-abe6-092dfab12aae",
+      "title": "表裏一体",
+      "artist": "すりぃ",
+      "reading": "Hyouri Ittai"
+    },
+    {
+      "song_id": "song:6a22f2e0-d39a-4b14-839f-67207c7dcf22",
+      "title": "深海少女",
+      "artist": "ゆうゆ",
+      "reading": "Shinkai Shoujo"
+    },
+    {
+      "song_id": "song:6aec8426-71bf-482b-aaa2-b5e1931ce1d3",
+      "title": "お気に召すまま",
+      "artist": "Eve",
+      "reading": "Okinimesumama"
+    },
+    {
+      "song_id": "song:6b01feb6-9ade-4338-922c-6e1804537cf9",
+      "title": "人マニア",
+      "artist": "原口沙輔 feat.重音テト",
+      "reading": "Hito mania"
+    },
+    {
+      "song_id": "song:6b7ee526-e02f-46aa-8016-cc776aa252b4",
+      "title": "拝啓ドッペルゲンガー",
+      "artist": "kemu",
+      "reading": "Haikei doppelganger"
+    },
+    {
+      "song_id": "song:6c024594-0347-4714-b4dc-d687f588386c",
+      "title": "月面基地",
+      "artist": "sasakure.UK",
+      "reading": "Getsumen kichi"
+    },
+    {
+      "song_id": "song:6d15836d-6834-4cf4-925b-60cd292826d3",
+      "title": "撩乱乙女†無双劇",
+      "artist": "曲：Haggy Rock & 佐藤厚仁／歌：⊿TRiEDGE [高瀬 梨緒(CV：久保 ユリカ)、結城 莉玖(CV：朝日奈 丸佳)、藍原 椿(CV：橋本 ちなみ)]",
+      "reading": "Ryouran otome musou geki"
+    },
+    {
+      "song_id": "song:6e6d6533-1024-4289-bf28-9579ff0b1f5f",
+      "title": "生きてるおばけは生きている",
+      "artist": "鬱P feat.flower",
+      "reading": "Ikiteru obake wa ikiteiru"
+    },
+    {
+      "song_id": "song:6fdb39e9-ecff-46fd-9226-32f52eb5bd3e",
+      "title": "残酷な天使のテーゼ",
+      "artist": "高橋洋子 [cover]",
+      "reading": "Zankoku na tenshi no these"
+    },
+    {
+      "song_id": "song:70445dc6-a7a7-4772-827e-3acd07f7aab6",
+      "title": "やめろ！聴くな！",
+      "artist": "SLAVE.V-V-R",
+      "reading": "Yamero kikuna"
+    },
+    {
+      "song_id": "song:71a057ce-5f00-477d-9230-2c1c2ede44cd",
+      "title": "死ぬな！",
+      "artist": "こっちのけんと",
+      "reading": "Shinuna"
+    },
+    {
+      "song_id": "song:71e5ce5d-ea04-432a-bd68-fd84c37c33cf",
+      "title": "ゆりゆららららゆるゆり大事件",
+      "artist": "七森中☆ごらく部「ゆるゆり」",
+      "reading": "Yuriyurararara YuruYuri daijiken"
+    },
+    {
+      "song_id": "song:722ff3cd-bd68-4949-9e4e-67ea12291d0d",
+      "title": "感情ディシーブ",
+      "artist": "ろーある",
+      "reading": "Kanjou deceive"
+    },
+    {
+      "song_id": "song:733ee9d1-b265-4085-8248-86ed6f9f9c58",
+      "title": "君の知らない物語",
+      "artist": "supercell「化物語」",
+      "reading": "Kimi no Shiranai Monogatari"
+    },
+    {
+      "song_id": "song:743c3e76-7e04-42ad-b5e7-1c8b5337c644",
+      "title": "愛を止めないで",
+      "artist": "倖田 來未 [PV]",
+      "reading": "Ai wo tomenaide"
+    },
+    {
+      "song_id": "song:74ab645b-7219-4703-b0ae-38e8198f7cb4",
+      "title": "過去を喰らう",
+      "artist": "花譜",
+      "reading": "Kako wo kurau"
+    },
+    {
+      "song_id": "song:74c3de59-3aac-4d3f-9ce4-3265260d65a0",
+      "title": "美夜月鏡",
+      "artist": "かゆき",
+      "reading": "Miya gekkyou"
+    },
+    {
+      "song_id": "song:75102f2e-86ce-487f-af50-0c8f3dcf7514",
+      "title": "群青シグナル",
+      "artist": "テヅカ feat. 獅子神レオナ",
+      "reading": "Gunjou signal"
+    },
+    {
+      "song_id": "song:7609b829-86c8-4a43-ae13-2469d4359fcc",
+      "title": "レッツゴー!陰陽師",
+      "artist": "「新豪血寺一族 -煩悩解放-」",
+      "reading": "Let's go! Onmyoji"
+    },
+    {
+      "song_id": "song:7635ef26-befc-4dcd-a3c9-981db18147ae",
+      "title": "弱虫モンブラン",
+      "artist": "DECO*27",
+      "reading": "Yowamushi Mont Blanc"
+    },
+    {
+      "song_id": "song:76acbfb7-62f2-4cee-921b-63f9b30a45e2",
+      "title": "最愛人生ランナー",
+      "artist": "かいりきベア",
+      "reading": "Saiai jinsei runner"
+    },
+    {
+      "song_id": "song:76f241f8-2818-4735-b0a0-a06bab91508e",
+      "title": "骸骨楽団とリリア",
+      "artist": "トーマ",
+      "reading": "Gaikotsu gakudan to lilia"
+    },
+    {
+      "song_id": "song:777e7847-e542-42c2-bdb3-609b479d2489",
+      "title": "雨露霜雪",
+      "artist": "かねこちはる vs t+pazolite",
+      "reading": "Uro sousetsu"
+    },
+    {
+      "song_id": "song:7904c4b2-9a7e-407c-936d-ed6ac59b6b34",
+      "title": "ナンセンス文学",
+      "artist": "Eve",
+      "reading": "Nonsense Bungaku"
+    },
+    {
+      "song_id": "song:7c15cb42-be11-4049-9b18-c469f487809d",
+      "title": "無敵We are one!!",
+      "artist": "イロドリミドリ「CHUNITHM」",
+      "reading": "MUTEKI We are one!!"
+    },
+    {
+      "song_id": "song:7c437316-67b7-4a9a-a9ea-05b8c607b285",
+      "title": "紅蓮華",
+      "artist": "LiSA",
+      "reading": "Gurenge"
+    },
+    {
+      "song_id": "song:7dff3273-72d3-484a-a89b-8aca55f1cbd4",
+      "title": "毒占欲",
+      "artist": "DECO*27",
+      "reading": "Dokusenyoku"
+    },
+    {
+      "song_id": "song:7ed28921-4b15-441c-8213-39cb67fcc20e",
+      "title": "今、誰が為のかがり火へ",
+      "artist": "幽閉サテライト(Produce:嵯峨飛鳥 Arranged:Iceon)",
+      "reading": "Ima, tagatame no kagaribihe"
+    },
+    {
+      "song_id": "song:7f0ea964-00a9-4ead-8ba3-40a601f3f2b3",
+      "title": "ずんだもんの朝食　〜目覚ましずんラップ〜",
+      "artist": "ひらうみ",
+      "reading": "Zundamon no choushoku mezamashi zun rap"
+    },
+    {
+      "song_id": "song:7fa3728e-f39c-4d5d-bd71-f9e2f6c64e3e",
+      "title": "命ばっかり",
+      "artist": "ぬゆり",
+      "reading": "Inochi bakkari"
+    },
+    {
+      "song_id": "song:8384f55e-ff36-4e91-8de8-fced4714ae5f",
+      "title": "創聖のアクエリオン",
+      "artist": "AKINO[cover]",
+      "reading": "Sousei no aquarion"
+    },
+    {
+      "song_id": "song:83fd7eea-7b21-490a-80aa-df21e6ecc74a",
+      "title": "うまるん体操",
+      "artist": "妹Ｓ「干物妹！うまるちゃんR」",
+      "reading": "Umarun taiso"
+    },
+    {
+      "song_id": "song:84ae0e67-eb41-454b-b2a2-e03892196046",
+      "title": "シカ色デイズ",
+      "artist": "シカ部 [鹿乃子のこ (CV.潘めぐみ)、虎視虎子 (CV.藤田 咲)、虎視餡子 (CV.田辺留依)、馬車芽めめ (CV.和泉風花)]",
+      "reading": "Shikairo Days"
+    },
+    {
+      "song_id": "song:84d5962f-b494-4cc5-a140-dac32aa5808b",
+      "title": "君の知らない物語",
+      "artist": "supercell「化物語」",
+      "reading": "Kimi no Shiranai Monogatari"
+    },
+    {
+      "song_id": "song:85d09ffc-8910-4544-83fb-4b28db079851",
+      "title": "転生林檎",
+      "artist": "ピノキオピー",
+      "reading": "Tensei ringo"
+    },
+    {
+      "song_id": "song:861f45fc-dba7-4775-a507-63f2c9250b5d",
+      "title": "スピカの天秤",
+      "artist": "Acotto",
+      "reading": "Spica no tenbin"
+    },
+    {
+      "song_id": "song:86caeef0-1b01-41da-878e-03dac326b11e",
+      "title": "初音天地開闢神話",
+      "artist": "cosMo＠暴走P",
+      "reading": "Hatsune Tenchikaibyaku Shinwa"
+    },
+    {
+      "song_id": "song:87d4c213-77ee-44a1-8686-0325e3e555ba",
+      "title": "しゅわスパ大作戦☆",
+      "artist": "SOUND HOLIC feat. Nana Takahashi",
+      "reading": "ShuwaSupa Daisakusen"
+    },
+    {
+      "song_id": "song:888b576d-d005-47dd-9555-628bc7d8dc74",
+      "title": "ファッとして桃源郷",
+      "artist": "新庄かなえ(CV:三森すずこ)「てーきゅう」",
+      "reading": "FA TOSHITE TOGENKYO"
+    },
+    {
+      "song_id": "song:88dbbbff-c435-4ff0-8bd4-a131d23b1110",
+      "title": "迷える音色は恋の唄",
+      "artist": "からとP⍺ոchii少年 feat.はるの",
+      "reading": "Mayoeru neiro wa koi no uta"
+    },
+    {
+      "song_id": "song:89283863-cb57-48ee-a796-183761185e81",
+      "title": "人里に下ったアタイがいつの間にか社畜になっていた件",
+      "artist": "ねこみりん + nora2r feat. 小宮真央",
+      "reading": "Hitozato ni kudatta atai ga itsunomanika syachiku ni natteita ken"
+    },
+    {
+      "song_id": "song:89ee1b3c-a93e-4e9a-9a5b-72ade180d4b0",
+      "title": "月光",
+      "artist": "歌：V.I.P／作詞・作曲：廉",
+      "reading": "Gekkou"
+    },
+    {
+      "song_id": "song:8a84f29d-0fc9-4b76-a650-0257db7954d1",
+      "title": "おじゃま虫",
+      "artist": "DECO*27",
+      "reading": "Ojamamushi"
+    },
+    {
+      "song_id": "song:8abfdd55-dccc-4f48-8d74-91668b07ab70",
+      "title": "電光刹歌",
+      "artist": "かめりあ",
+      "reading": "Denkou sekka"
+    },
+    {
+      "song_id": "song:8c5b6733-f219-4c40-af42-1a61ebf36c28",
+      "title": "美しく燃える森",
+      "artist": "東京スカパラダイスオーケストラ [cover]",
+      "reading": "Utsukushiku Moeru Mori"
+    },
+    {
+      "song_id": "song:8c697643-a516-494f-bc80-357845bf2b93",
+      "title": "馬と鹿",
+      "artist": "米津玄師",
+      "reading": "Uma to Shika"
+    },
+    {
+      "song_id": "song:8ca18b10-3120-4b75-903e-ec68e36e5527",
+      "title": "終わりなき物語",
+      "artist": "クーナ(CV 喜多村英梨)「PHANTASY STAR ONLINE 2」",
+      "reading": "Owari naki monogatari"
+    },
+    {
+      "song_id": "song:8cdf6203-4eed-498b-bd2f-32c7ce43f8d8",
+      "title": "願いを呼ぶ季節",
+      "artist": "舞風-MAIKAZE/時音-TOKINE",
+      "reading": "Negai wo yobu kisetsu"
+    },
+    {
+      "song_id": "song:8d1227e4-f96b-4878-923f-2299b47b7cc4",
+      "title": "教えて!! 魔法のLyric",
+      "artist": "ちょむP <advanced mix>",
+      "reading": "Oshiete mahou no lyric"
+    },
+    {
+      "song_id": "song:8d4390e6-4072-4695-bf65-46ecb32e13a2",
+      "title": "ただ選択があった",
+      "artist": "フロクロ",
+      "reading": "Tada Sentaku ga Atta"
+    },
+    {
+      "song_id": "song:8e38b658-0353-417a-850c-2d59b4dec815",
+      "title": "円舞曲、君に",
+      "artist": "「サクラ大戦奏組」",
+      "reading": "Enbukyoku Kimi ni"
+    },
+    {
+      "song_id": "song:8eb02153-882a-4b13-a5e5-32a7f459953e",
+      "title": "相思創愛",
+      "artist": "伊東歌詞太郎・ろん×まらしぃ",
+      "reading": "Soushi souai"
+    },
+    {
+      "song_id": "song:8f14df09-71c4-4917-8bf5-19fa80fb82b4",
+      "title": "地獄",
+      "artist": "164 feat.ELISA・小林太郎",
+      "reading": "Jigoku"
+    },
+    {
+      "song_id": "song:8fb9a9bb-565d-40d0-8407-d6bfd33e714e",
+      "title": "絶対敵対メチャキライヤー",
+      "artist": "メドミア",
+      "reading": "Zettai tekitai mecha kirai yaa"
+    },
+    {
+      "song_id": "song:8fc332d3-c298-4b8c-b1e8-c7237ce19808",
+      "title": "再会",
+      "artist": "はるまきごはん",
+      "reading": "Saikai"
+    },
+    {
+      "song_id": "song:8fe62001-73d1-488c-818b-c9784b6ca181",
+      "title": "白花の天使",
+      "artist": "Yu-dachi",
+      "reading": "Shirohana no tenshi"
+    },
+    {
+      "song_id": "song:902c4daa-54be-492b-a89d-69817e15a6f1",
+      "title": "終点",
+      "artist": "cosMo@暴走P",
+      "reading": "Shuuten"
+    },
+    {
+      "song_id": "song:906eccb2-ce66-4aaa-8f66-3e99fb6a6fe7",
+      "title": "神威",
+      "artist": "TJ.hangneil",
+      "reading": "Kamui"
+    },
+    {
+      "song_id": "song:9175f60b-ecf8-4484-8808-1b42148be40f",
+      "title": "曖昧mind",
+      "artist": "Halozy",
+      "reading": "Aimai Mind"
+    },
+    {
+      "song_id": "song:92186da0-4b3d-4a1e-96ca-310afb4675b5",
+      "title": "吉原ラメント",
+      "artist": "亜沙",
+      "reading": "Yoshiwara lament"
+    },
+    {
+      "song_id": "song:9286a961-acfe-4144-936a-a455d0fd107c",
+      "title": "熱異常",
+      "artist": "いよわ",
+      "reading": "Netsu ijou"
+    },
+    {
+      "song_id": "song:92a4f3a7-8e8e-4b1c-ae00-94cdafacca87",
+      "title": "自傷無色",
+      "artist": "ササノマリイ / 初音ミク / 25時、ナイトコードで。「プロジェクトセカイ カラフルステージ！ feat. 初音ミク」",
+      "reading": "Jishou Mushoku"
+    },
+    {
+      "song_id": "song:939b3823-2d50-47ba-850a-3e7fb487098f",
+      "title": "結ンデ開イテ羅刹ト骸",
+      "artist": "ハチ",
+      "reading": "Musunde Hiraite Rasetsu to Mukuro"
+    },
+    {
+      "song_id": "song:93d9a544-7587-45e5-a10f-2c7a59bcfd54",
+      "title": "夢現妄想世界",
+      "artist": "夢限大みゅーたいぷ",
+      "reading": "Yume utsutsu mousou sekai"
+    },
+    {
+      "song_id": "song:945f0d94-67b9-4846-b554-5f7667f0bf66",
+      "title": "名探偵連続殺人事件",
+      "artist": "てにをは",
+      "reading": "Mei tantei renzoku satsujin jiken"
+    },
+    {
+      "song_id": "song:94e021af-c90e-4d9a-b0aa-4a7be5d5dd9c",
+      "title": "サラバ、愛しき悲しみたちよ",
+      "artist": "ももいろクローバーZ [PV]",
+      "reading": "Saraba, itoshiki kanashimi tachi yo"
+    },
+    {
+      "song_id": "song:9516a1d2-f169-49e8-bf42-77b9a6680644",
+      "title": "隠然",
+      "artist": "豚乙女",
+      "reading": "Inzen"
+    },
+    {
+      "song_id": "song:95e7c44e-ee94-41b5-926d-2b8824a4ad87",
+      "title": "宿星審判",
+      "artist": "suzu",
+      "reading": "Shukusei Shinpan"
+    },
+    {
+      "song_id": "song:97aa83ac-e8dc-4dd8-9e76-507fc4b98446",
+      "title": "天使の翼。",
+      "artist": "A4。",
+      "reading": "Tenshi no tsubasa"
+    },
+    {
+      "song_id": "song:984a98f5-5ebc-42bf-b0e8-724bbcfb1f0c",
+      "title": "御旗のもとに",
+      "artist": "「サクラ大戦」",
+      "reading": "Mihata no motoni"
+    },
+    {
+      "song_id": "song:9bcc9f5b-1394-4563-ae33-a69605866feb",
+      "title": "阿吽のビーツ",
+      "artist": "羽生まゐご",
+      "reading": "Aun no Beats"
+    },
+    {
+      "song_id": "song:9cb3b8d4-a0f4-4f4f-89fa-052c99eae5d9",
+      "title": "魔法少女とチョコレゐト",
+      "artist": "ピノキオピー",
+      "reading": "Mahou shoujo to chocolate"
+    },
+    {
+      "song_id": "song:9e0582fd-78bd-4b13-b2ff-792dbd8bf005",
+      "title": "バラバラ〜仮初レインボーローズ〜",
+      "artist": "花畑チャイカ＆椎名唯華",
+      "reading": "Bara bara karisome rainbow rose"
+    },
+    {
+      "song_id": "song:9eca0a31-cde6-421d-a1f2-f58b2e720c32",
+      "title": "タカハせ！名人マン",
+      "artist": "ビートまりお + ARM feat. 高橋名人",
+      "reading": "Takahase! Meijin-Man"
+    },
+    {
+      "song_id": "song:9f047fdd-e296-4fba-8592-2e3ad3baf2d1",
+      "title": "いっしそう電☆舞舞神拳！",
+      "artist": "さつき が てんこもり feat. YURiCa/花たん",
+      "reading": "Isshi Souden maimai Shinken"
+    },
+    {
+      "song_id": "song:9f76d103-c3ab-48e7-90bc-39a12fbe754a",
+      "title": "東京レトロ",
+      "artist": "すこっぷ",
+      "reading": "Tokyo Retro"
+    },
+    {
+      "song_id": "song:a0077842-c6bb-49c5-82d6-4ad965984b3e",
+      "title": "不毛！",
+      "artist": "ぽてんしゃる0",
+      "reading": "Fumou!"
+    },
+    {
+      "song_id": "song:a0d0e12c-2ab4-480b-bec8-35b23394a248",
+      "title": "未来(ソラ)の歌",
+      "artist": "Questy「ポッピンQ」",
+      "reading": "Sora no uta"
+    },
+    {
+      "song_id": "song:a27277f1-a6c6-46f1-9db1-c79a96f76595",
+      "title": "田中",
+      "artist": "立秋 feat.ちょこ",
+      "reading": "Tanaka"
+    },
+    {
+      "song_id": "song:a2f1b2c2-70bb-43d0-ae42-a46aedfef65d",
+      "title": "真空都市",
+      "artist": "ナナツカゼ",
+      "reading": "Shinkuu toshi"
+    },
+    {
+      "song_id": "song:a2f7921f-7f7d-486d-98ee-567d6abbe2d9",
+      "title": "絡繰りドール",
+      "artist": "SOUND HOLIC feat. Nana Takahashi",
+      "reading": "Karakuri Doll"
+    },
+    {
+      "song_id": "song:a49cf43e-a71c-4dc7-8a8d-9819f31065b2",
+      "title": "光線チューニング",
+      "artist": "ナユタン星人",
+      "reading": "Kousen tuning"
+    },
+    {
+      "song_id": "song:a549bfb7-09fb-4e0b-b4fa-fda0ebe55904",
+      "title": "待チ人ハ来ズ。",
+      "artist": "豚乙女",
+      "reading": "Machibitohakozu"
+    },
+    {
+      "song_id": "song:a6cbda2c-196d-4782-b068-62d5b0897bf9",
+      "title": "不思議の国のクリスマス",
+      "artist": "SOUND HOLIC feat. 3L",
+      "reading": "Fushigi no kuni no Christmas"
+    },
+    {
+      "song_id": "song:a776bcfe-b48b-4929-a9ea-08203f90c2eb",
+      "title": "命に嫌われている",
+      "artist": "カンザキイオリ",
+      "reading": "Inochi ni kirawareteiru"
+    },
+    {
+      "song_id": "song:a7ece70c-cea2-4f87-964c-0641ccfe7355",
+      "title": "秒針を噛む",
+      "artist": "ずっと真夜中でいいのに。",
+      "reading": "Byoshin wo Kamu"
+    },
+    {
+      "song_id": "song:a8674727-8c24-406a-bbed-79e51d3c116f",
+      "title": "電車で電車でOPA!OPA!OPA! -GMT mashup-",
+      "artist": "Yuji Masubuchi(BNGI)「電車でGO!」「ファンタジーゾーン」",
+      "reading": "Densha de Densha de OPA!OPA!OPA! -GMT mashup-"
+    },
+    {
+      "song_id": "song:a8e9dbfb-fecc-4b0b-8378-8ed3a2aaae8b",
+      "title": "GET!! 夢&DREAM",
+      "artist": "加賀美 祥「学園ハンサム」",
+      "reading": "GET!! YUME&DREAM"
+    },
+    {
+      "song_id": "song:aa470cee-fad1-4249-a823-68ff138b810e",
+      "title": "廻廻奇譚",
+      "artist": "Eve TVアニメ「呪術廻戦」第1クールオープニングテーマ",
+      "reading": "Kaikai kitan"
+    },
+    {
+      "song_id": "song:aa5d3b24-8354-41c4-b29b-6ff3f3dbe023",
+      "title": "僕の和風本当上手",
+      "artist": "ボス",
+      "reading": "Boku no wafuu hontou jouzu"
+    },
+    {
+      "song_id": "song:ab66f18c-048c-49f2-9dce-263108815ba4",
+      "title": "神々の祈り",
+      "artist": "舞風-MAIKAZE/沙紗飛鳥",
+      "reading": "Kamigami no inori"
+    },
+    {
+      "song_id": "song:ab8ee07f-d810-425f-ba0c-6f3402943f99",
+      "title": "ド屑",
+      "artist": "なきそ",
+      "reading": "Do kuzu"
+    },
+    {
+      "song_id": "song:ad22a2d2-9f23-4345-968e-a18cf9cc2dea",
+      "title": "白ゆき",
+      "artist": "n-buna",
+      "reading": "Shirayuki"
+    },
+    {
+      "song_id": "song:adb2eee1-a6f6-4a09-86fc-423336ec4017",
+      "title": "系ぎて",
+      "artist": "rintaro soma",
+      "reading": "Tsunagite"
+    },
+    {
+      "song_id": "song:adfddf37-ad96-4be9-b8c9-73279efca55d",
+      "title": "紅蓮の弓矢",
+      "artist": "Linked Horizon「進撃の巨人」 [アニメPV]",
+      "reading": "Guren no yumiya"
+    },
+    {
+      "song_id": "song:b1a78e8c-9004-4f16-8e61-382e3adf6689",
+      "title": "甲賀忍法帖",
+      "artist": "陰陽座",
+      "reading": "Kouganinpouchou"
+    },
+    {
+      "song_id": "song:b1ac9ca9-3efd-465a-ba2c-70e3daf20b43",
+      "title": "彗星ハネムーン",
+      "artist": "ナユタン星人",
+      "reading": "Suisei honeymoon"
+    },
+    {
+      "song_id": "song:b1cb9eff-921b-4d18-8b8c-744cea667be8",
+      "title": "幽霊東京",
+      "artist": "Ayase",
+      "reading": "Yuurei Tokyo"
+    },
+    {
+      "song_id": "song:b21f78ec-8d49-4221-a502-02dbfac9b751",
+      "title": "ワンダーシャッフェンの法則",
+      "artist": "アリスシャッハと魔法の楽団",
+      "reading": "Wonder Schaffen no Housoku"
+    },
+    {
+      "song_id": "song:b4948c73-60e8-4338-b03a-277c3396f915",
+      "title": "宵の鳥",
+      "artist": "n.k feat.影縫英",
+      "reading": "Yoi no tori"
+    },
+    {
+      "song_id": "song:b4da79bb-dd56-4ed9-a67c-750d11463640",
+      "title": "踊",
+      "artist": "Ado",
+      "reading": "Odo"
+    },
+    {
+      "song_id": "song:b6b52d22-45e9-4e05-baa9-513192383b76",
+      "title": "かくしん的☆めたまるふぉ～ぜっ！",
+      "artist": "土間うまる [CV.田中あいみ]「干物妹！うまるちゃん」",
+      "reading": "Kakushin teki metamarufooze"
+    },
+    {
+      "song_id": "song:b6f15336-c06d-48d7-964b-c2103b979340",
+      "title": "新宝島",
+      "artist": "サカナクション",
+      "reading": "Shin takarajima"
+    },
+    {
+      "song_id": "song:b7631e29-5085-4323-9b1b-24975732beca",
+      "title": "夜に駆ける",
+      "artist": "YOASOBI",
+      "reading": "Yoru ni Kakeru"
+    },
+    {
+      "song_id": "song:b767af6f-fd75-4a65-a52a-77dcdaaed65e",
+      "title": "華天月兎",
+      "artist": "satella feat.Risa Yuzuki",
+      "reading": "Katengetto"
+    },
+    {
+      "song_id": "song:b7833555-ba59-4c29-ae1e-85f2a669ce9d",
+      "title": "華鳥風月",
+      "artist": "幽閉サテライト(Produce:嵯峨飛鳥 Arranged:Iceon)",
+      "reading": "Kachou fugetsu"
+    },
+    {
+      "song_id": "song:b8574b3a-71e7-41ea-98d8-42690c84446b",
+      "title": "渦状銀河のシンフォニエッタ",
+      "artist": "山本真央樹",
+      "reading": "Uzujoginga no Sinfonietta"
+    },
+    {
+      "song_id": "song:b87ba581-9d9c-452b-9bf7-5a6816d29b67",
+      "title": "乗ってけ！ジャパリビート",
+      "artist": "どうぶつビスケッツ×PPP「けものフレンズ２」",
+      "reading": "Notteke! japari beat"
+    },
+    {
+      "song_id": "song:b9c6bbe3-198b-41a7-8b1a-8d1e058a0af3",
+      "title": "囲い無き世は一期の月影",
+      "artist": "豚乙女",
+      "reading": "Kakoi naki yo wa ichigo no tsukikage"
+    },
+    {
+      "song_id": "song:ba13186f-0726-4dac-b4ac-cc7536f387d2",
+      "title": "残響散歌",
+      "artist": "Aimer",
+      "reading": "Zankyou Sanka"
+    },
+    {
+      "song_id": "song:ba94d64e-31cf-4d98-8369-5b7142ccc4a6",
+      "title": "きみのためなら死ねる",
+      "artist": "スーパーラバーズ「きみのためなら死ねる」",
+      "reading": "Kimi no tame nara shineru"
+    },
+    {
+      "song_id": "song:bc638153-1d17-48fc-b730-049421c49b31",
+      "title": "全力ハッピーライフ",
+      "artist": "森羅万象",
+      "reading": "Zenryoku Happy Life"
+    },
+    {
+      "song_id": "song:bd209631-0dfa-4ffc-87c0-c9b1d3b1702a",
+      "title": "麒麟",
+      "artist": "sasakure.UK",
+      "reading": "Kirin"
+    },
+    {
+      "song_id": "song:c051a028-7faa-4b56-b489-fe2984ae5f19",
+      "title": "リスペク風神",
+      "artist": "ビートまりおとまろん",
+      "reading": "Respec Fujin"
+    },
+    {
+      "song_id": "song:c0774a1e-cd6a-4955-b0af-318b849ddb66",
+      "title": "アイアイ傘",
+      "artist": "ハム feat. 雨衣",
+      "reading": "Aiaikasa"
+    },
+    {
+      "song_id": "song:c20aa7f0-4f33-40c7-b0cb-4e4ee2ff49a9",
+      "title": "異世界かるてっと",
+      "artist": "アインズ(日野聡)、カズマ(福島潤)、スバル(小林裕介)、ターニャ(悠木碧)",
+      "reading": "Isekai quartet"
+    },
+    {
+      "song_id": "song:c24490a8-aeb7-45f8-ab1c-3a0b4b68c8a8",
+      "title": "SUSHI食べたい feat.ソイソース",
+      "artist": "ORANGE RANGE",
+      "reading": "SUSHITABETAI feat.SoySauce"
+    },
+    {
+      "song_id": "song:c3998675-b0ca-40b2-93b6-2142b5190529",
+      "title": "天ノ弱",
+      "artist": "164",
+      "reading": "Amano jaku"
+    },
+    {
+      "song_id": "song:c3d84585-3080-4e5f-a38a-91045a77b051",
+      "title": "だからパンを焼いたんだ",
+      "artist": "あわのあゆむ",
+      "reading": "Dakara pan wo yaitanda"
+    },
+    {
+      "song_id": "song:c3f62076-be63-4066-a3a4-c0d3b6922688",
+      "title": "地上の戦士",
+      "artist": "「サクラ大戦」",
+      "reading": "Chizyou no senshi"
+    },
+    {
+      "song_id": "song:c4a19de1-f0dd-4b1e-8f75-753fed47c2c4",
+      "title": "夜咄ディセイブ",
+      "artist": "じん",
+      "reading": "Yobanashi Deceive"
+    },
+    {
+      "song_id": "song:c4e9ecd0-3aa0-45bb-8f55-5ba3b8591929",
+      "title": "うまぴょい伝説",
+      "artist": "スペシャルウィーク （CV.和氣あず未）、サイレンススズカ （CV.高野麻里佳）、トウカイテイオー （CV.Machico）",
+      "reading": "Umapyoi Densetsu"
+    },
+    {
+      "song_id": "song:c51e0e4f-c1ee-4b1a-b95b-c33e19adef66",
+      "title": "命テステス",
+      "artist": "ぱりぱりさらうどん",
+      "reading": "Inochi test test"
+    },
+    {
+      "song_id": "song:c7098fef-bee8-407f-bf26-20759b68df22",
+      "title": "群青讃歌",
+      "artist": "Eve / 初音ミク、星乃一歌、花里みのり、小豆沢こはね、天馬司、宵崎奏「プロジェクトセカイ カラフルステージ！ feat. 初音ミク」",
+      "reading": "Gunjo Sanka"
+    },
+    {
+      "song_id": "song:c852ae60-24f9-44e5-9e78-51d3efec0608",
+      "title": "ラットが死んだnew words",
+      "artist": "P.I.N.A.",
+      "reading": "Rat ga shinda new words"
+    },
+    {
+      "song_id": "song:c89bb0fd-a58f-4bd4-9f45-29180d593968",
+      "title": "忙シー日",
+      "artist": "原口沙輔, 式部めぐり",
+      "reading": "Isogashii hi"
+    },
+    {
+      "song_id": "song:c8a39c93-2475-4f0d-954c-2172053f0e47",
+      "title": "檄！帝国華撃団(改)",
+      "artist": "「サクラ大戦」",
+      "reading": "GEKI ! TEIKOKU KAGEKIDAN kai"
+    },
+    {
+      "song_id": "song:c8bb2a47-8376-4197-913b-4e678f7d718f",
+      "title": "ようかい体操第一",
+      "artist": "Dream5「妖怪ウォッチ」",
+      "reading": "Youkai taisou daiichi"
+    },
+    {
+      "song_id": "song:c9273907-6ae0-490b-bb24-cf1d8e89de35",
+      "title": "電車で電車でGO!GO!GO!GC! -GMT remix-",
+      "artist": "COSIO(ZUNTATA/TAITO)/沢城千春「電車でGO!」",
+      "reading": "Densha de Densha de GO!GO!GO!GC! -GMT remix-"
+    },
+    {
+      "song_id": "song:c9bbc035-54c6-4edc-9f09-e797213d726f",
+      "title": "永遠のメロディ",
+      "artist": "あ～るの～と（いえろ～ぜぶら）",
+      "reading": "Eien no melody"
+    },
+    {
+      "song_id": "song:cbdfbaae-fbf8-4bd6-a5c2-0617875d12c2",
+      "title": "竹",
+      "artist": "立秋 feat.ちょこ",
+      "reading": "Take"
+    },
+    {
+      "song_id": "song:cd329c52-5b6e-4896-9796-da835ba19090",
+      "title": "ポップミュージックは僕のもの",
+      "artist": "ONIGAWARA",
+      "reading": "Pop music wa boku no mono"
+    },
+    {
+      "song_id": "song:ce380ffd-c811-4a6a-90f7-5318a4bcd186",
+      "title": "ぽわわん劇場",
+      "artist": "ぽわわん劇場",
+      "reading": "Powa wan gekijou"
+    },
+    {
+      "song_id": "song:d1874068-afd0-4126-a33e-f3a579afe11f",
+      "title": "全人類ノ非想天則",
+      "artist": "SOUND HOLIC feat. 匠眞",
+      "reading": "Zen Jinrui no Hisoutensoku"
+    },
+    {
+      "song_id": "song:d2136ecb-8034-44fb-bf08-0f1a792b1718",
+      "title": "1/3の純情な感情",
+      "artist": "SIAM SHADE [covered by 湯毛]",
+      "reading": "1/3 no junjouna kanjou"
+    },
+    {
+      "song_id": "song:d2c752fa-d3b6-4271-8631-35ddcbab4fb4",
+      "title": "恋愛裁判",
+      "artist": "40mP",
+      "reading": "Renai saiban"
+    },
+    {
+      "song_id": "song:d2fd0de3-846c-4d36-b6b3-563e973bda3b",
+      "title": "ソーラン☆節",
+      "artist": "光吉猛修",
+      "reading": "Soran☆Bushi"
+    },
+    {
+      "song_id": "song:d327312f-0188-4668-a5df-e660695ec6e2",
+      "title": "春を告げる",
+      "artist": "yama",
+      "reading": "Haru wo Tsugeru"
+    },
+    {
+      "song_id": "song:d3cd7e72-0734-41c5-bbe8-077c9e5fd201",
+      "title": "彩りキャンバス",
+      "artist": "SUGAR RUSH「ブルーアーカイブ -Blue Archive-」",
+      "reading": "Irodori canvas"
+    },
+    {
+      "song_id": "song:d4a2fb45-9c00-4154-8bc8-95b732352d9f",
+      "title": "二息歩行",
+      "artist": "DECO*27",
+      "reading": "Ni Soku Ho Kou"
+    },
+    {
+      "song_id": "song:d4ae2f63-a08b-4253-be9c-f360c7c09aea",
+      "title": "星めぐり、果ての君へ。",
+      "artist": "TAKU1175 ft.駄々子",
+      "reading": "Hoshimeguri Hateno Kimihe"
+    },
+    {
+      "song_id": "song:d5651f68-e6cc-4273-871c-6ff02397cab4",
+      "title": "ほとんど違法行為",
+      "artist": "ネコネコカワイイ「ニンジャスレイヤー」",
+      "reading": "Hotondo ihoukoui"
+    },
+    {
+      "song_id": "song:d741c037-e5f7-4ceb-8017-0df117e9983f",
+      "title": "電光石火",
+      "artist": "HiTECH NINJA",
+      "reading": "Denkou Sekka"
+    },
+    {
+      "song_id": "song:d74bce87-f0c6-4e50-a81d-b06f6c901a55",
+      "title": "神室雪月花",
+      "artist": "桐生 一馬「龍が如く」",
+      "reading": "KAMURO-SETSUGEKKA"
+    },
+    {
+      "song_id": "song:d76dd316-ba2f-4817-8d1c-03cb9365c522",
+      "title": "赤心性：カマトト荒療治",
+      "artist": "スズム",
+      "reading": "Sekishinsei: Kamatoto Araryoji"
+    },
+    {
+      "song_id": "song:d79f2550-1bac-4c33-bee5-929e8f88143c",
+      "title": "色は匂へど散りぬるを",
+      "artist": "幽閉サテライト(Produce:嵯峨飛鳥 Arranged:Iceon)",
+      "reading": "Iro wa Nioedo Chirinuruwo"
+    },
+    {
+      "song_id": "song:d8787c75-e03b-4cfe-ba18-a1d93c79138c",
+      "title": "シリウスの輝きのように",
+      "artist": "鳳 ここな(CV.石見舞菜香)、静香(CV.長谷川育美)、カトリナ・グリーベル(CV.天城サリー)、新妻八恵(CV.長縄まりあ)、柳場ぱんだ(CV.大空直美)、流石知冴(CV.佐々木李子)",
+      "reading": "Sirius no kagayaki no you ni"
+    },
+    {
+      "song_id": "song:d9e1151b-7eef-485f-97b8-116578ac8e44",
+      "title": "絶え間なく藍色",
+      "artist": "獅子志司",
+      "reading": "Taema naku aiiro"
+    },
+    {
+      "song_id": "song:da9957d3-5b9e-4e3d-9d26-4240ee02c572",
+      "title": "脳天直撃",
+      "artist": "黒沢ダイスケ VS 穴山大輔",
+      "reading": "Nouten Chokugeki"
+    },
+    {
+      "song_id": "song:db2a62b8-6ba3-4781-b225-a76da1423b4c",
+      "title": "好きな惣菜発表ドラゴン",
+      "artist": "ンバヂ",
+      "reading": "Suki na souzai happyou dragon"
+    },
+    {
+      "song_id": "song:dba87595-135e-4617-81a2-a7af1cda730c",
+      "title": "電話革命ナイセン",
+      "artist": "ナイセン - momoco-",
+      "reading": "Denwa kakumei naisen"
+    },
+    {
+      "song_id": "song:dc8a286c-52e9-452e-adbb-c0f3d2f74f75",
+      "title": "幸せになれる隠しコマンドがあるらしい",
+      "artist": "うたたP",
+      "reading": "Shiawase ni Nareru Kakushi Command ga Arurashii"
+    },
+    {
+      "song_id": "song:dd0325ae-cee6-4705-8f72-50848f8359e5",
+      "title": "パーフェクト生命",
+      "artist": "ナユタン星人",
+      "reading": "Perfect seimei"
+    },
+    {
+      "song_id": "song:dfaa2e17-4375-4216-9da7-836e34930987",
+      "title": "若い力",
+      "artist": "作詞：セガ社員、作曲：若草恵、歌：135",
+      "reading": "Wakai Chikara"
+    },
+    {
+      "song_id": "song:e0073cde-afe2-4e7b-882d-912676aaa513",
+      "title": "若い力 -SEGA HARD GIRLS MIX-",
+      "artist": "SC-3000(シーさん)/CV.相沢 舞、SG-1000(せん)/CV.芹澤 優、SG-1000Ⅱ(せんつー)/CV.大空直美、ゲームギア(ムギ)/CV.田中美海、ロボピッチャ(ぴっちゃん)/CV.もものはるな「Hi☆sCoool! セハガール」 [アニメPV]",
+      "reading": "WAKAICHIKARA -SEGA HARD GIRLS MIX-"
+    },
+    {
+      "song_id": "song:e042700e-785d-4785-8742-004b58567390",
+      "title": "ニルヴの心臓",
+      "artist": "TJ.hangneil + Atomic Sphere feat.Annabel",
+      "reading": "Nirv no shinzou"
+    },
+    {
+      "song_id": "song:e113a7f8-e625-4113-8d4f-224ae13183ba",
+      "title": "真・ハンサム体操でズンドコホイ",
+      "artist": "10Re;「学園ハンサム」",
+      "reading": "SHIN HANDSOME TAISOU DE ZUNDOKOHOI"
+    },
+    {
+      "song_id": "song:e124cfbc-e3a5-4a62-bdfa-92b7f24357cf",
+      "title": "しゅ～しん？変身☆ハカイシンzzZ",
+      "artist": "YOFUKASHi Sound Team feat.編井うも",
+      "reading": "Shuushin henshin hakaishin zzz"
+    },
+    {
+      "song_id": "song:e2089e72-02bc-4c7a-9b86-dea6907340b4",
+      "title": "最強STRONGER",
+      "artist": "REDALiCE vs USAO",
+      "reading": "Saikyo stronger"
+    },
+    {
+      "song_id": "song:e2d1e3b7-6d29-44f0-9a8a-40ae3cfde99f",
+      "title": "噛み係",
+      "artist": "さつき が てんこもり feat.96猫",
+      "reading": "Kamigakari"
+    },
+    {
+      "song_id": "song:e48dd049-17ef-402c-919c-baaa3de9b6af",
+      "title": "初音ミクの暴走",
+      "artist": "cosMo＠暴走P",
+      "reading": "Hatsune miku no bousou"
+    },
+    {
+      "song_id": "song:e611c0a0-b774-46f1-86c3-9c239a01c9a4",
+      "title": "Backyun! －悪い女－",
+      "artist": "青木千紘/愛海",
+      "reading": "Backyun! Waruionna"
+    },
+    {
+      "song_id": "song:e6364684-dd80-49e8-a3c6-42a3eedcbe0b",
+      "title": "恋愛サーキュレーション",
+      "artist": "「化物語」 [cover]",
+      "reading": "Renai circulation"
+    },
+    {
+      "song_id": "song:e675fcea-c08f-4cd5-afb6-1386d0236bf9",
+      "title": "少女A",
+      "artist": "椎名もた",
+      "reading": "Shoujo a"
+    },
+    {
+      "song_id": "song:e960cd87-e05a-401b-8868-df26c9593985",
+      "title": "冬のこもりうた",
+      "artist": "原田知世",
+      "reading": "Fuyu no komori uta"
+    },
+    {
+      "song_id": "song:e96a817e-f6d5-4c84-85ae-0e086ca8523a",
+      "title": "徒花ネクロマンシー",
+      "artist": "フランシュシュ",
+      "reading": "Adabana necromancy"
+    },
+    {
+      "song_id": "song:e99d4eec-90b0-4288-9f70-475bdec26a7c",
+      "title": "幾四音-Ixion-",
+      "artist": "M.S.S Project",
+      "reading": "IKUSHION -Ixion-"
+    },
+    {
+      "song_id": "song:eace3d8f-2f23-4e49-bd89-1092ae902ac8",
+      "title": "蒼空に舞え、墨染の桜",
+      "artist": "Silver Forest",
+      "reading": "Sora ni mae Sumizome no sakura"
+    },
+    {
+      "song_id": "song:eaf07701-1779-434f-a7aa-6d2c0dd6bdf6",
+      "title": "腐れ外道とチョコレゐト",
+      "artist": "ピノキオP",
+      "reading": "Kusare gedou to chocolate"
+    },
+    {
+      "song_id": "song:eb89dd81-d00e-4955-ad2f-94b549dcc8e1",
+      "title": "四次元跳躍機関",
+      "artist": "koutaq",
+      "reading": "Yojigen chouyaku kikan"
+    },
+    {
+      "song_id": "song:eba1dd57-7d8c-4803-ba68-0a104b626fee",
+      "title": "虹と太陽",
+      "artist": "GOSH/manami",
+      "reading": "Niji to Taiyo"
+    },
+    {
+      "song_id": "song:ebd9f96d-f93d-4c64-83a8-5bb97242c1bf",
+      "title": "幾望の月",
+      "artist": "なきゃむりゃ",
+      "reading": "Kibou no Tsuki"
+    },
+    {
+      "song_id": "song:ed56a5cd-0028-49ad-b67c-a72c6c66058d",
+      "title": "秘密の扉から会いにきて",
+      "artist": "田村 ゆかり「のうりん」",
+      "reading": "Himitsu no tobira kara ai ni kite"
+    },
+    {
+      "song_id": "song:edf00bd7-e77d-432b-b7b4-83cb97b6fd28",
+      "title": "深海シティアンダーグラウンド",
+      "artist": "田中Ｂ",
+      "reading": "Shinkai City Underground"
+    },
+    {
+      "song_id": "song:ee8852b3-c4f2-4c6a-b54e-efba685d7364",
+      "title": "病み垢ステロイド",
+      "artist": "かいりきベア",
+      "reading": "Yamiaka steroid"
+    },
+    {
+      "song_id": "song:f1145290-68c8-4995-923d-fe54d540de5f",
+      "title": "㋰責任集合体",
+      "artist": "マサラダ",
+      "reading": "Musekinin shuugoutai"
+    },
+    {
+      "song_id": "song:f129911c-15f0-41e9-8856-70cb38421573",
+      "title": "源平大戦絵巻テーマソング",
+      "artist": "新小田夢童 ＆ キラ★ロッソ",
+      "reading": "Genpei Taisen Emaki Theme Song"
+    },
+    {
+      "song_id": "song:f417725b-1f55-4c04-b8e4-f070640638b8",
+      "title": "言ノ葉カルマ",
+      "artist": "そらる・ろん×れるりり",
+      "reading": "Kotonoha karma"
+    },
+    {
+      "song_id": "song:f4352a3a-0706-4427-b1e2-09408b3db484",
+      "title": "最っ高のエンタメだ!!",
+      "artist": "曲：本田正樹(Dream Monster)／歌：7EVENDAYS⇔HOLIDAYS [井之原 小星(CV：ももの はるな)、柏木 咲姫(CV：石見 舞菜香)]",
+      "reading": "Saikou no entame da"
+    },
+    {
+      "song_id": "song:f52cab4c-b1ba-42ef-946a-d76de0abcee8",
+      "title": "概して過誤",
+      "artist": "isonosuke feat.知声",
+      "reading": "Gaishite kago"
+    },
+    {
+      "song_id": "song:f86e4d37-d989-4211-bba2-46a675fad735",
+      "title": "進捗どうですか？",
+      "artist": "sumijun(Halozy) feat. ななひら(Confetto)",
+      "reading": "Shinchoku Doudesuka?"
+    },
+    {
+      "song_id": "song:f979c50d-048b-46ca-9153-ce6042ef0918",
+      "title": "下克上々",
+      "artist": "豚乙女",
+      "reading": "Gekokujyoujyou"
+    },
+    {
+      "song_id": "song:fa31bb01-3e1b-4f91-9d13-b1f89c0690b1",
+      "title": "三日月ステップ 2023",
+      "artist": "r-906",
+      "reading": "Mikazuki step 2023"
+    },
+    {
+      "song_id": "song:faf8b055-8bc4-4409-b303-2bc4f22ff219",
+      "title": "恋のヒメヒメぺったんこ",
+      "artist": "姫野湖鳥(CV 田村ゆかり)「弱虫ペダル」",
+      "reading": "Koi no hime hime pettanko"
+    },
+    {
+      "song_id": "song:fb6dcb97-be32-4be9-ad24-67eda3c7019f",
+      "title": "厨病激発ボーイ",
+      "artist": "れるりり",
+      "reading": "Chuubyou Gekihatsu Boy"
+    },
+    {
+      "song_id": "song:fcf91ccd-0010-4e34-9077-b4fcb5f8dbd7",
+      "title": "春嵐",
+      "artist": "john",
+      "reading": "Shunran"
+    },
+    {
+      "song_id": "song:fd5018df-811f-4148-ac08-1a7324f5e8d4",
+      "title": "匿名M",
+      "artist": "ピノキオピー",
+      "reading": "Tokumei M"
+    },
+    {
+      "song_id": "song:fddcd0a4-78be-4592-88ad-06eb23256bfd",
+      "title": "時空を超えて久しぶり！",
+      "artist": "アルル(CV 園崎未恵)「ぷよぷよ」",
+      "reading": "Jikuu Wo Koete Hisashiburi!"
+    },
+    {
+      "song_id": "song:fe64fd89-d2a6-4eef-ab19-a3b2bee5a8c1",
+      "title": "東京リアルワールド",
+      "artist": "out of service",
+      "reading": "TOKYO REAL WORLD"
+    },
+    {
+      "song_id": "song:fe8da43f-cab2-466c-9095-1ba7e65710a4",
+      "title": "妄想税",
+      "artist": "DECO*27",
+      "reading": "Mousou zei"
+    }
+  ]
+}

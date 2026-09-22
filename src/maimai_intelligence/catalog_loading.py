@@ -39,8 +39,17 @@ def progressive_catalog(data, catalog_sha):
     if inventory:
         from .registry_catalog import CHART_FIELDS
 
-        fields = CHART_FIELDS - {"legacy_identity", "transcription"}
+        # Capability summaries and input provenance are only used by offline
+        # validation. The browser reads the actual measurements and identities;
+        # retain these audit fields in the full immutable catalog only.
+        fields = CHART_FIELDS - {"legacy_identity", "transcription", "capabilities", "input_id"}
         index["index_schema_version"] = "catalog-index-2"
+    if "maishift_mapping" in index:
+        # Keep the complete reviewed join, including every expected source
+        # field and region-qualified provider ID. Snapshot provenance is not
+        # part of the browser join and remains in the full catalog.
+        for row in index["maishift_mapping"].get("charts", {}).values():
+            row.pop("snapshot_id", None)
     if "provider_mapping" in index:
         # Unmatched provider diagnostics belong to the full retained catalog,
         # not the first page load. Browsing only needs verified chart matches.

@@ -33,7 +33,7 @@ class PagePolicy(HTMLParser):
 
 
 class CloudflareAnalyticsTests(unittest.TestCase):
-    def assert_native_policy(self, html):
+    def assert_native_policy(self, html, *, report_sources=False):
         page = PagePolicy(html)
         self.assertEqual(len(page.policies), 1)
         policy = page.policies[0]
@@ -52,6 +52,7 @@ class CloudflareAnalyticsTests(unittest.TestCase):
             policy["connect-src"],
             [
                 "'self'",
+                *(["https:"] if report_sources else []),
                 "https://www.google-analytics.com",
                 "https://region1.google-analytics.com",
                 "https://cloudflareinsights.com/cdn-cgi/rum",
@@ -80,10 +81,14 @@ class CloudflareAnalyticsTests(unittest.TestCase):
             source = write_package(root / "package")
             preview = root / "preview"
             build_lab(source, preview, catalog_version="fixture-v1")
-            self.assert_native_policy((preview / "index.html").read_text("utf-8"))
+            self.assert_native_policy(
+                (preview / "index.html").read_text("utf-8"), report_sources=True
+            )
             published = root / "public"
             build_public_release(preview, published)
-            self.assert_native_policy((published / "index.html").read_text("utf-8"))
+            self.assert_native_policy(
+                (published / "index.html").read_text("utf-8"), report_sources=True
+            )
             # Asset builds normalize platform newlines; compare complete source text.
             original = (
                 files("maimai_intelligence.assets").joinpath("analytics.js").read_text("utf-8")

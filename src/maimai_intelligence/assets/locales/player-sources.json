@@ -1,0 +1,376 @@
+{
+  "messages": {
+    "Clear player data": {
+      "zh-Hans": "清除玩家数据",
+      "ko": "플레이어 데이터 지우기",
+      "ja": "プレイヤーデータを消去"
+    },
+    "Player data cleared": {
+      "zh-Hans": "玩家数据已清除",
+      "ko": "플레이어 데이터를 지웠습니다",
+      "ja": "プレイヤーデータを消去しました"
+    },
+    "Imported scores and the saved connection were removed from this browser.": {
+      "zh-Hans": "已从此浏览器移除导入的成绩和保存的连接。",
+      "ko": "이 브라우저에서 가져온 성적과 저장된 연결을 삭제했습니다.",
+      "ja": "このブラウザーから読み込んだ成績と保存済みの接続を削除しました。"
+    },
+    "Could not clear player data": {
+      "zh-Hans": "无法清除玩家数据",
+      "ko": "플레이어 데이터를 지울 수 없습니다",
+      "ja": "プレイヤーデータを消去できませんでした"
+    },
+    "Importing will overwrite data from the currently imported account.": {
+      "zh-Hans": "导入将覆盖当前已导入账号的数据。",
+      "ko": "가져오면 현재 가져온 계정의 데이터를 덮어씁니다.",
+      "ja": "読み込むと、現在読み込み済みのアカウントのデータが上書きされます。"
+    },
+    "Last Updated: {0}": {
+      "zh-Hans": "最后更新：{0}",
+      "ko": "최근 업데이트: {0}",
+      "ja": "最終更新：{0}"
+    },
+    "Choose a source": {
+      "zh-Hans": "选择来源",
+      "ko": "가져올 소스 선택",
+      "ja": "読み込み元を選択"
+    },
+    "Upload a file": {
+      "zh-Hans": "上传文件",
+      "ko": "파일 업로드",
+      "ja": "ファイルをアップロード"
+    },
+    "Hosted Session Report": {
+      "zh-Hans": "托管的 Session Report",
+      "ko": "호스팅된 Session Report",
+      "ja": "ホストされた Session Report"
+    },
+    "Hosted Session Report URL": {
+      "zh-Hans": "托管的 Session Report 网址",
+      "ko": "호스팅된 Session Report URL",
+      "ja": "ホストされた Session Report の URL"
+    },
+    "Choose a compressed player file exported by Session Report.": {
+      "zh-Hans": "选择从 Session Report 导出的压缩玩家文件。",
+      "ko": "Session Report에서 내보낸 압축 플레이어 파일을 선택하세요.",
+      "ja": "Session Report からエクスポートした圧縮プレイヤーファイルを選択してください。"
+    },
+    "Maishift import is not available yet. Full record access and exact chart matching are still being verified.": {
+      "zh-Hans": "Maishift 导入尚不可用。完整成绩访问和精确谱面匹配仍在验证中。",
+      "ko": "Maishift 가져오기는 아직 사용할 수 없습니다. 전체 기록 접근과 정확한 채보 매칭을 검증 중입니다.",
+      "ja": "Maishift の読み込みはまだ利用できません。全記録へのアクセスと正確な譜面照合を確認中です。"
+    },
+    "Public reports can refresh automatically. Reports that require sign-in use Open in Party from the report.": {
+      "zh-Hans": "公开报告可以自动刷新。需要登录的报告请在报告中使用 Open in Party。",
+      "ko": "공개 보고서는 자동으로 새로고침할 수 있습니다. 로그인이 필요한 보고서는 보고서의 Open in Party를 사용하세요.",
+      "ja": "公開レポートは自動更新できます。ログインが必要な場合は、レポート内の Open in Party を使用してください。"
+    },
+    "Remember this profile and refresh it when I return": {
+      "zh-Hans": "记住此档案并在我返回时刷新",
+      "ko": "이 프로필을 기억하고 다시 방문할 때 새로고침",
+      "ja": "このプロフィールを保存し、再訪問時に更新する"
+    },
+    "Session Report guide": {
+      "zh-Hans": "Session Report 指南",
+      "ko": "Session Report 가이드",
+      "ja": "Session Report ガイド"
+    },
+    "Import & remember": {
+      "zh-Hans": "导入并记住",
+      "ko": "가져오고 기억하기",
+      "ja": "読み込んで保存"
+    },
+    "Import once": {
+      "zh-Hans": "仅导入一次",
+      "ko": "한 번만 가져오기",
+      "ja": "今回のみ読み込む"
+    },
+    "Refresh now": {
+      "zh-Hans": "立即刷新",
+      "ko": "지금 새로고침",
+      "ja": "今すぐ更新"
+    },
+    "Last checked: {0}": {
+      "zh-Hans": "上次检查：{0}",
+      "ko": "마지막 확인: {0}",
+      "ja": "最終確認: {0}"
+    },
+    "Last successful refresh: {0}": {
+      "zh-Hans": "上次成功刷新：{0}",
+      "ko": "마지막 새로고침 성공: {0}",
+      "ja": "最終更新成功: {0}"
+    },
+    "Source updated: {0}": {
+      "zh-Hans": "来源更新：{0}",
+      "ko": "소스 업데이트: {0}",
+      "ja": "読み込み元の更新: {0}"
+    },
+    "The saved profile and connection were removed. You can keep viewing these scores in this tab; automatic refresh is off.": {
+      "zh-Hans": "已移除保存的档案及连接。你仍可在此标签页查看这些成绩；自动刷新已关闭。",
+      "ko": "저장된 프로필과 연결을 삭제했습니다. 이 탭에서 계속 점수를 볼 수 있으며 자동 새로고침은 꺼져 있습니다.",
+      "ja": "保存したプロフィールと接続を削除しました。このタブでは引き続きスコアを閲覧できます。自動更新は無効です。"
+    },
+    "Reading public player data": {
+      "zh-Hans": "正在读取公开玩家数据",
+      "ko": "공개 플레이어 데이터 읽는 중",
+      "ja": "公開プレイヤーデータを読み込み中"
+    },
+    "You can cancel this request.": {
+      "zh-Hans": "你可以取消此请求。",
+      "ko": "이 요청을 취소할 수 있습니다.",
+      "ja": "このリクエストはキャンセルできます。"
+    },
+    "Open your Session Report": {
+      "zh-Hans": "打开你的 Session Report",
+      "ko": "Session Report 열기",
+      "ja": "Session Report を開く"
+    },
+    "Open report": {
+      "zh-Hans": "打开报告",
+      "ko": "보고서 열기",
+      "ja": "レポートを開く"
+    },
+    "The public source could not be read. Open the report to use its import or download controls.": {
+      "zh-Hans": "无法读取公开来源。请打开报告，使用其导入或下载功能。",
+      "ko": "공개 소스를 읽을 수 없습니다. 보고서를 열어 가져오기 또는 다운로드 기능을 사용하세요.",
+      "ja": "公開データを読み取れませんでした。レポートを開き、読み込みまたはダウンロード機能を使用してください。"
+    },
+    "Please wait before refreshing again.": {
+      "zh-Hans": "请稍候再刷新。",
+      "ko": "잠시 후 다시 새로고침하세요.",
+      "ja": "少し待ってから再度更新してください。"
+    },
+    "Checking for updated player data…": {
+      "zh-Hans": "正在检查玩家数据更新…",
+      "ko": "플레이어 데이터 업데이트 확인 중…",
+      "ja": "プレイヤーデータの更新を確認中…"
+    },
+    "Your saved data is up to date.": {
+      "zh-Hans": "已保存的数据已是最新。",
+      "ko": "저장된 데이터가 최신 상태입니다.",
+      "ja": "保存済みデータは最新です。"
+    },
+    "Could not refresh — showing your saved data": {
+      "zh-Hans": "无法刷新 — 正在显示已保存的数据",
+      "ko": "새로고침 실패 — 저장된 데이터를 표시합니다",
+      "ja": "更新できませんでした — 保存済みデータを表示しています"
+    },
+    "Enter a complete HTTPS Session Report URL.": {
+      "zh-Hans": "请输入完整的 HTTPS Session Report 网址。",
+      "ko": "전체 HTTPS Session Report URL을 입력하세요.",
+      "ja": "Session Report の完全な HTTPS URL を入力してください。"
+    },
+    "Invalid saved source connection.": {
+      "zh-Hans": "保存的来源连接无效。",
+      "ko": "저장된 소스 연결이 올바르지 않습니다.",
+      "ja": "保存された接続情報が無効です。"
+    },
+    "The source response exceeds its size limit.": {
+      "zh-Hans": "来源响应超出大小限制。",
+      "ko": "소스 응답이 크기 제한을 초과했습니다.",
+      "ja": "読み込み元の応答がサイズ制限を超えています。"
+    },
+    "This report link needs assisted import. Open the report and choose Open in Party, or download its player file.": {
+      "zh-Hans": "此报告链接需要辅助导入。请打开报告并选择 Open in Party，或下载玩家文件。",
+      "ko": "이 보고서 링크는 수동 가져오기가 필요합니다. 보고서에서 Open in Party를 선택하거나 플레이어 파일을 다운로드하세요.",
+      "ja": "このリンクはレポート側での操作が必要です。レポートを開いて Open in Party を選ぶか、プレイヤーファイルをダウンロードしてください。"
+    },
+    "The source did not return player data. Open the report to sign in or download a player file.": {
+      "zh-Hans": "来源未返回玩家数据。请打开报告登录或下载玩家文件。",
+      "ko": "소스에서 플레이어 데이터를 반환하지 않았습니다. 보고서를 열어 로그인하거나 플레이어 파일을 다운로드하세요.",
+      "ja": "読み込み元からプレイヤーデータが返されませんでした。レポートを開いてログインするか、プレイヤーファイルをダウンロードしてください。"
+    },
+    "The source did not return valid player data.": {
+      "zh-Hans": "来源未返回有效的玩家数据。",
+      "ko": "소스에서 유효한 플레이어 데이터를 반환하지 않았습니다.",
+      "ja": "読み込み元から有効なプレイヤーデータが返されませんでした。"
+    },
+    "Invalid player data reference.": {
+      "zh-Hans": "玩家数据引用无效。",
+      "ko": "플레이어 데이터 참조가 올바르지 않습니다.",
+      "ja": "プレイヤーデータの参照が無効です。"
+    },
+    "The source now identifies a different player. Import it again to confirm the switch.": {
+      "zh-Hans": "来源现在指向另一位玩家。请重新导入以确认切换。",
+      "ko": "소스가 이제 다른 플레이어를 가리킵니다. 다시 가져와서 전환을 확인하세요.",
+      "ja": "読み込み元のプレイヤーが変わりました。再度読み込んで切り替えを確認してください。"
+    },
+    "Bring your scores to maimai.party": {
+      "zh-Hans": "将你的成绩带到 maimai.party",
+      "ko": "maimai.party로 점수를 가져오세요",
+      "ja": "スコアを maimai.party へ"
+    },
+    "Got it": {
+      "zh-Hans": "知道了",
+      "ko": "확인",
+      "ja": "了解"
+    },
+    "Session Report on GitHub": {
+      "zh-Hans": "GitHub 上的 Session Report",
+      "ko": "GitHub의 Session Report",
+      "ja": "GitHub の Session Report"
+    },
+    "What’s new": {
+      "zh-Hans": "新功能",
+      "ko": "새로운 기능",
+      "ja": "新機能"
+    },
+    "Earlier history may be missing": {
+      "zh-Hans": "可能缺少早期历史记录",
+      "ko": "이전 기록이 없을 수 있습니다",
+      "ja": "以前の履歴が不足している可能性があります"
+    },
+    "Unmatched PB charts: {0}": {
+      "zh-Hans": "未匹配的 PB 谱面：{0}",
+      "ko": "매칭되지 않은 PB 채보: {0}",
+      "ja": "未照合の PB 譜面: {0}"
+    },
+    "The source returned older data. Your saved data was kept.": {
+      "zh-Hans": "来源返回了较旧的数据。已保留你保存的数据。",
+      "ko": "소스에서 이전 데이터를 반환했습니다. 저장된 데이터를 유지했습니다.",
+      "ja": "読み込み元から古いデータが返されました。保存済みデータを保持しました。"
+    },
+    "About Session Report imports": {
+      "zh-Hans": "关于 Session Report 导入",
+      "ko": "Session Report 가져오기 도움말",
+      "ja": "Session Reportの読み込みについて"
+    },
+    "About Maishift imports": {
+      "zh-Hans": "关于 Maishift 导入",
+      "ko": "Maishift 가져오기 도움말",
+      "ja": "Maishiftの読み込みについて"
+    },
+    "Maishift rating": {
+      "zh-Hans": "Maishift Rating",
+      "ko": "Maishift 레이팅",
+      "ja": "Maishiftレーティング"
+    },
+    "Maishift rating {0}": {
+      "zh-Hans": "Maishift Rating {0}",
+      "ko": "Maishift 레이팅 {0}",
+      "ja": "Maishiftレーティング {0}"
+    },
+    "{0} PBs": {
+      "zh-Hans": "{0} 项个人最佳成绩",
+      "ko": "개인 최고 기록 {0}개",
+      "ja": "自己ベスト {0}件"
+    },
+    "Bring your Session Report or public Maishift scores into the chart browser. Choose Import player data to get started.": {
+      "zh-Hans": "将 Session Report 或公开 Maishift 个人主页中的成绩导入谱面浏览器。选择“导入玩家数据”即可开始。",
+      "ko": "Session Report 또는 공개 Maishift 프로필의 성적을 채보 브라우저로 가져오세요. “플레이어 데이터 가져오기”를 선택하면 시작할 수 있습니다.",
+      "ja": "Session Report または公開 Maishift プロフィールの成績を譜面ブラウザーに読み込めます。「プレイヤーデータを読み込む」から始めましょう。"
+    },
+    "Drag by grade or enter an exact %.": {
+      "zh-Hans": "按评级拖动，或输入精确百分比。",
+      "ko": "등급별로 드래그하거나 정확한 %를 입력하세요.",
+      "ja": "ランク刻みでドラッグ、または達成率を直接入力。"
+    },
+    "Based on your imported chart ratings.": {
+      "zh-Hans": "范围根据已导入的谱面 Rating 自动设置。",
+      "ko": "가져온 채보 레이팅에 맞춘 범위입니다.",
+      "ja": "読み込んだ譜面レーティングに合わせた範囲です。"
+    },
+    "No known chart ratings in this import.": {
+      "zh-Hans": "导入的数据中没有已知的谱面 Rating。",
+      "ko": "가져온 데이터에 알려진 채보 레이팅이 없습니다.",
+      "ja": "読み込んだデータに譜面レーティングがありません。"
+    },
+    "Remove Chart rating filter": {
+      "zh-Hans": "移除谱面 Rating 筛选",
+      "ko": "채보 레이팅 필터 제거",
+      "ja": "譜面レーティングの絞り込みを解除"
+    },
+    "Remove Achievement filter": {
+      "zh-Hans": "移除达成率筛选",
+      "ko": "달성률 필터 제거",
+      "ja": "達成率の絞り込みを解除"
+    }
+  },
+  "invariants": {
+    "<svg viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M12 16V3m-5 5 5-5 5 5M4 15v5a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-5\"/></svg>": {
+      "reason": "Decorative import icon markup with no text; the adjacent button label is localized.",
+      "sources": [
+        "src/maimai_intelligence/assets/player-data.js"
+      ]
+    },
+    "player-profile-history player-profile-link": {
+      "reason": "CSS class identifiers for the public profile link, not user-visible copy.",
+      "sources": [
+        "src/maimai_intelligence/assets/player-data.js"
+      ]
+    },
+    "Maishift": {
+      "reason": "Provider brand name; integration is disabled pending verified full PB access.",
+      "sources": [
+        "src/maimai_intelligence/assets/player-data.js",
+        "src/maimai_intelligence/assets/feature-announcements.js"
+      ]
+    },
+    "Session Report": {
+      "reason": "Existing application brand name.",
+      "sources": [
+        "src/maimai_intelligence/assets/player-data.js"
+      ]
+    },
+    "Retry-After": {
+      "reason": "HTTP response header identifier, not user-visible copy.",
+      "sources": [
+        "src/maimai_intelligence/assets/player-sources.js"
+      ]
+    },
+    "Content-Length": {
+      "reason": "HTTP response header identifier, not user-visible copy.",
+      "sources": [
+        "src/maimai_intelligence/assets/player-sources.js"
+      ]
+    },
+    "Content-Type": {
+      "reason": "HTTP response header identifier, not user-visible copy.",
+      "sources": [
+        "src/maimai_intelligence/assets/player-sources.js"
+      ]
+    },
+    "Cancelled": {
+      "reason": "Internal AbortError message; deliberately excluded from user-facing errors.",
+      "sources": [
+        "src/maimai_intelligence/assets/player-data.js"
+      ]
+    },
+    "ArrowRight": {
+      "reason": "Keyboard key identifier or canonical grade/percentage label; not translated prose.",
+      "sources": [
+        "src/maimai_intelligence/assets/player-ranges.js"
+      ]
+    },
+    "PageUp": {
+      "reason": "Keyboard key identifier or canonical grade/percentage label; not translated prose.",
+      "sources": [
+        "src/maimai_intelligence/assets/player-ranges.js"
+      ]
+    },
+    "ArrowLeft": {
+      "reason": "Keyboard key identifier or canonical grade/percentage label; not translated prose.",
+      "sources": [
+        "src/maimai_intelligence/assets/player-ranges.js"
+      ]
+    },
+    "PageDown": {
+      "reason": "Keyboard key identifier or canonical grade/percentage label; not translated prose.",
+      "sources": [
+        "src/maimai_intelligence/assets/player-ranges.js"
+      ]
+    },
+    "Page": {
+      "reason": "Keyboard key identifier or canonical grade/percentage label; not translated prose.",
+      "sources": [
+        "src/maimai_intelligence/assets/player-ranges.js"
+      ]
+    },
+    "S · 97%": {
+      "reason": "Keyboard key identifier or canonical grade/percentage label; not translated prose.",
+      "sources": [
+        "src/maimai_intelligence/assets/player-ranges.js"
+      ]
+    }
+  }
+}

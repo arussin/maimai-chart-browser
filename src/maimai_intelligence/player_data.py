@@ -17,6 +17,7 @@ import re
 import tempfile
 from copy import deepcopy
 from pathlib import Path
+from urllib.parse import quote
 
 FORMAT = "maimai-player-data"
 VERSION = 1
@@ -88,6 +89,32 @@ def _integer(value, maximum=2**53 - 1, nullable=False):
         raise ValueError("Invalid player-data integer")
 
 
+def validate_player(player):
+    """Validate portable provider identity without linking accounts or regions."""
+    if not isinstance(player, dict) or set(player) != {
+        "key",
+        "provider",
+        "game",
+        "username",
+        "displayName",
+    }:
+        raise ValueError("Invalid player identity")
+    for value in player.values():
+        _text(value, 200)
+    if player["game"] != "maimaidx":
+        raise ValueError("Unsupported player source")
+    if player["provider"] == "kamaitachi":
+        expected = {"kamaitachi:maimaidx:" + player["username"].lower()}
+    elif player["provider"] == "maishift":
+        identity = quote(player["username"], safe="~()*!.'-_")
+        expected = {"maishift:maimaidx:" + region + ":" + identity for region in ("jp", "intl")}
+    else:
+        raise ValueError("Unsupported player source")
+    if player["key"] not in expected:
+        raise ValueError("Player identity disagrees with source")
+    return player
+
+
 def validate(data, *, check_revision=True):
     if (
         not isinstance(data, dict)
@@ -108,22 +135,7 @@ def validate(data, *, check_revision=True):
         or data["schemaVersion"] != VERSION
     ):
         raise ValueError("Unsupported player file; expected maimai-player-data v1")
-    player = data["player"]
-    if not isinstance(player, dict) or set(player) != {
-        "key",
-        "provider",
-        "game",
-        "username",
-        "displayName",
-    }:
-        raise ValueError("Invalid player identity")
-    for value in player.values():
-        _text(value, 200)
-    if player["provider"] != "kamaitachi" or player["game"] != "maimaidx":
-        raise ValueError("Unsupported player source")
-    expected = "kamaitachi:maimaidx:" + player["username"].lower()
-    if player["key"] != expected:
-        raise ValueError("Player identity disagrees with source")
+    validate_player(data["player"])
     for name in ("charts", "records", "plays", "snapshots", "captures"):
         rows = data[name]
         if not isinstance(rows, dict) or len(rows) > MAX_RECORDS:
@@ -133,6 +145,10 @@ def validate(data, *, check_revision=True):
             if key in {"__proto__", "constructor", "prototype"}:
                 raise ValueError("Reserved player-data identity")
     for key, c in data["charts"].items():
+        if data["player"]["provider"] == "maishift":
+            prefix = "maishift:" + data["player"]["key"].split(":")[2] + ":"
+            if not key.startswith(prefix) or not key[len(prefix) :]:
+                raise ValueError("Invalid chart reference")
         if not isinstance(c, dict) or set(c) != CHART_FIELDS or c["chartID"] != key:
             raise ValueError("Invalid chart reference")
         for name in ("chartID", "songID", "format", "difficulty"):

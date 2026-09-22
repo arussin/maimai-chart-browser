@@ -1,0 +1,17 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "maimai-player-imports",
+  "main": "worker.mjs",
+  "compatibility_date": "2026-09-21",
+  "workers_dev": false,
+  "preview_urls": false,
+  // Proposed paid-plan ceiling. Local profiling is not deployed CPU acceptance.
+  "limits": {"cpu_ms":1000},
+  "vars": {"MAISHIFT_ENABLED": "false"},
+  // Owner assigns CLIENT_LIMITER a unique account namespace and 10/60s limit.
+  // Missing bindings fail closed. No route or account is provisioned here.
+  "ratelimits": [],
+  "durable_objects": {"bindings": [{"name":"PROFILE_LIMITER","class_name":"ProfileLimiter"}]},
+  "migrations": [{"tag":"v1","new_sqlite_classes":["ProfileLimiter"]}],
+  "observability": {"enabled":false}
+}

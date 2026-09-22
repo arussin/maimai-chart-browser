@@ -72,7 +72,10 @@ for(let batch=0;batch<2;batch++)test(`new patterns connect English alias search,
     await expect(page.locator(`[data-pattern-filter="${id}"]`)).toBeVisible();
     await page.keyboard.press('Escape');
   }
-  expect(errors).toEqual([]);expect(requests).toEqual([]);
+  expect(errors).toEqual([]);
+  // Version badges load lazily from the local, content-addressed artwork package.
+  // Pattern navigation still must not fetch catalog data or contact another host.
+  expect(requests.filter(value=>{const url=new URL(value);return url.origin!==new URL(page.url()).origin||!/^\/community\/media\/[a-f0-9]{64}\.webp$/.test(url.pathname);})).toEqual([]);
 });
 
 test('community slide lessons retain curved geometry and accessible mobile layout',async({page})=>{

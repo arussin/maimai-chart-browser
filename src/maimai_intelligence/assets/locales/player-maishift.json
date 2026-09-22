@@ -1,0 +1,105 @@
+{
+  "messages": {
+    "Maishift handle or profile URL": {
+      "zh-Hans": "Maishift 用户名或个人资料网址",
+      "ko": "Maishift 사용자 이름 또는 프로필 URL",
+      "ja": "Maishift のユーザー名またはプロフィール URL"
+    },
+    "Game region": {
+      "zh-Hans": "游戏区域",
+      "ko": "게임 지역",
+      "ja": "ゲーム地域"
+    },
+    "Game region: Japan": {
+      "zh-Hans": "游戏区域：日本",
+      "ko": "게임 지역: 일본",
+      "ja": "ゲーム地域：日本"
+    },
+    "Game region: International": {
+      "zh-Hans": "游戏区域：国际版",
+      "ko": "게임 지역: 국제판",
+      "ja": "ゲーム地域：海外版"
+    },
+    "Japan": {
+      "zh-Hans": "日本",
+      "ko": "일본",
+      "ja": "日本"
+    },
+    "Your Maishift profile must be public. Party’s import service reads it when you import or refresh; scores are stored in your browser.": {
+      "zh-Hans": "您的 Maishift 个人资料必须公开。导入或刷新时，Party 的导入服务会读取这些资料；成绩保存在您的浏览器中。",
+      "ko": "Maishift 프로필이 공개되어 있어야 합니다. 가져오거나 새로고침할 때 Party의 가져오기 서비스가 프로필을 읽으며, 점수는 브라우저에 저장됩니다.",
+      "ja": "Maishift のプロフィールを公開する必要があります。読み込みや更新の際に Party の読み込みサービスがプロフィールを取得し、スコアはブラウザーに保存されます。"
+    },
+    "Records excluded for missing chart identity: {0}": {
+      "zh-Hans": "因缺少谱面标识而排除的记录：{0}",
+      "ko": "채보 식별 정보가 없어 제외된 기록: {0}",
+      "ja": "譜面の識別情報がないため除外された記録：{0}"
+    },
+    "Only PB observations are imported. Play dates and sessions are unavailable.": {
+      "zh-Hans": "仅导入个人最佳成绩观测记录。不包含游玩日期或场次。",
+      "ko": "개인 최고 기록만 가져옵니다. 플레이 날짜와 세션 정보는 제공되지 않습니다.",
+      "ja": "自己ベストの観測記録のみ読み込みます。プレイ日時やセッション情報は含まれません。"
+    },
+    "Choose the game region for this profile.": {
+      "zh-Hans": "请选择此个人资料的游戏区域。",
+      "ko": "이 프로필의 게임 지역을 선택하세요.",
+      "ja": "このプロフィールのゲーム地域を選択してください。"
+    },
+    "Enter a Maishift handle or a public profile URL.": {
+      "zh-Hans": "请输入 Maishift 用户名或公开个人资料网址。",
+      "ko": "Maishift 사용자 이름 또는 공개 프로필 URL을 입력하세요.",
+      "ja": "Maishift のユーザー名または公開プロフィールの URL を入力してください。"
+    },
+    "The profile URL and selected game region do not match.": {
+      "zh-Hans": "个人资料网址与所选游戏区域不匹配。",
+      "ko": "프로필 URL과 선택한 게임 지역이 일치하지 않습니다.",
+      "ja": "プロフィールの URL と選択したゲーム地域が一致しません。"
+    },
+    "Maishift returned an unsupported response. Your saved data was kept.": {
+      "zh-Hans": "Maishift 返回了不支持的响应。已保留您的已保存数据。",
+      "ko": "Maishift에서 지원하지 않는 응답을 반환했습니다. 저장된 데이터는 유지됩니다.",
+      "ja": "Maishift から未対応の応答が返されました。保存済みのデータは保持されています。"
+    },
+    "Maishift could not be read. Your saved data was kept. Try again later or open your public profile.": {
+      "zh-Hans": "无法读取 Maishift。已保留您的已保存数据。请稍后重试或打开您的公开个人资料。",
+      "ko": "Maishift를 읽을 수 없습니다. 저장된 데이터는 유지됩니다. 나중에 다시 시도하거나 공개 프로필을 여세요.",
+      "ja": "Maishift を読み込めませんでした。保存済みのデータは保持されています。時間をおいて再試行するか、公開プロフィールを開いてください。"
+    },
+    "Maishift changed records without a newer source timestamp. Your saved data was kept.": {
+      "zh-Hans": "Maishift 的成绩已变化，但来源时间戳未更新。已保留您的已保存数据。",
+      "ko": "Maishift 기록이 변경되었지만 소스의 타임스탬프가 갱신되지 않았습니다. 저장된 데이터는 유지됩니다.",
+      "ja": "Maishift の記録が変更されましたが、取得元のタイムスタンプが新しくなっていません。保存済みのデータは保持されています。"
+    },
+    "Japan · {0} PBs": {
+      "zh-Hans": "日本版 · {0} 项个人最佳成绩",
+      "ko": "일본판 · 개인 최고 기록 {0}개",
+      "ja": "日本版 · 自己ベスト {0}件"
+    },
+    "International · {0} PBs": {
+      "zh-Hans": "国际版 · {0} 项个人最佳成绩",
+      "ko": "국제판 · 개인 최고 기록 {0}개",
+      "ja": "海外版 · 自己ベスト {0}件"
+    },
+    "Import details": {
+      "zh-Hans": "导入详情",
+      "ko": "가져오기 세부 정보",
+      "ja": "読み込みの詳細"
+    },
+    "Remember and refresh": {
+      "zh-Hans": "记住并刷新",
+      "ko": "기억하고 새로고침",
+      "ja": "保存して更新"
+    },
+    "Public profiles only. Party reads your scores; saving stays in your browser.": {
+      "zh-Hans": "仅支持公开个人资料。Party 读取您的成绩；保存的数据仅留在浏览器中。",
+      "ko": "공개 프로필만 지원합니다. Party가 점수를 읽으며, 데이터는 브라우저에만 저장됩니다.",
+      "ja": "公開プロフィールのみ対応しています。Party がスコアを取得し、データはブラウザー内にのみ保存します。"
+    },
+    "For private reports, use Open in Party from your report.": {
+      "zh-Hans": "私密报告请在报告中使用“在 Party 中打开”。",
+      "ko": "비공개 보고서는 보고서에서 “Party에서 열기”를 사용하세요.",
+      "ja": "非公開レポートは、レポート内の「Party で開く」を使用してください。"
+    }
+  },
+  "invariants": {}
+}
