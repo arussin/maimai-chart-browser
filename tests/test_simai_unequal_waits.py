@@ -2,7 +2,7 @@
 
 import unittest
 
-from test_simai_subset import parse
+from tests.test_simai_subset import parse
 
 from maimai_analyzer.contracts import normalize_chart
 

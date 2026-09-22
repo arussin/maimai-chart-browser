@@ -5,7 +5,7 @@ import math
 import unittest
 from importlib.resources import files
 
-from test_simai_subset import parse
+from tests.test_simai_subset import parse
 
 from maimai_analyzer.pattern_evidence import phased_pairs
 from maimai_analyzer.patterns import pattern_registry

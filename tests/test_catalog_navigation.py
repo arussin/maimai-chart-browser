@@ -103,7 +103,7 @@ class NavigationTests(unittest.TestCase):
         self.assertEqual(result, build_navigation(list(reversed(charts)), list(reversed(rows))))
 
     def test_refresh_is_offline_repeatable_and_preserves_analysis(self):
-        from test_maichart_pack import REVISION, fixture
+        from tests.test_maichart_pack import REVISION, fixture
 
         from scripts import build_challenge_package as builder
         from scripts.prepare_maichart_pack import prepare

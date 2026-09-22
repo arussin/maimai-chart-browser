@@ -1,8 +1,5 @@
-# Registry manifest digests bind exact file bytes on every platform.
-registry/*.json -text
+# Canonical source bytes are portable; wheel contents must match across Windows/Linux.
+* text=auto eol=lf
 
-# Generated browser bytes and manifest are reproducible on Windows and Linux.
-src/maimai_intelligence/assets/usage.js text eol=lf
-src/maimai_intelligence/assets/player-session.js text eol=lf
-src/maimai_intelligence/assets/catalog-query.js text eol=lf
-web/generated-assets.json text eol=lf
+# Registry manifest digests bind these exact existing file bytes.
+registry/*.json -text

@@ -7,7 +7,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from test_simai_subset import parse
+from tests.test_simai_subset import parse
 
 from maimai_analyzer.challenge import _tokens, path_geometry, profile_chart, snippet
 from maimai_analyzer.challenge_similarity import align, query_challenges, reference_scale
@@ -63,7 +63,7 @@ class ChallengeTests(unittest.TestCase):
             evaluate_review(benchmark, review, {**supplied, "benchmark_hash": "b" * 64})
 
     def test_offline_package_build_is_reproducible_and_checks_corruption(self):
-        from test_maichart_pack import REVISION, fixture
+        from tests.test_maichart_pack import REVISION, fixture
 
         from scripts import build_challenge_package as package
         from scripts.prepare_maichart_pack import prepare
