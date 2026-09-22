@@ -79,6 +79,19 @@ async function search(page,value){
  await page.evaluate(value=>{const el=document.querySelector('#search');el.value=value;el.dispatchEvent(new InputEvent('input',{bubbles:true,inputType:'insertText',data:value}));},value);
 }
 
+/** Observe application attempts without routing, so HTTP cache behavior stays native. */
+export function observeApplicationNetwork(context,origin,attempts){
+ const record=(kind,value)=>{
+  const url=new URL(value);
+  if(['data:','blob:','about:'].includes(url.protocol))return;
+  const target=url.origin.replace(/^ws:/,'http:').replace(/^wss:/,'https:');
+  if(target!==origin)attempts.push({kind,target});
+ };
+ context.on('request',request=>record(request.resourceType(),request.url()));
+ const observePage=page=>page.on('websocket',socket=>record('websocket',socket.url()));
+ context.on('page',observePage);for(const page of context.pages())observePage(page);
+}
+
 export async function main(argv=process.argv.slice(2)){
  const arg=(key,fallback)=>{const i=argv.indexOf('--'+key);return i<0?fallback:argv[i+1];};
  const runtime=resolve(arg('runtime')),output=resolve(arg('output')),iterations=Number(arg('iterations','7'));
@@ -92,7 +105,7 @@ export async function main(argv=process.argv.slice(2)){
 
  const experiment=arg('experiment','runtime');validateExperiment(experiment,configs,catalogs);
  const query=catalogs[0].data.catalog.find(c=>c.title?.trim()&&c.artist?.trim()).title;
- let current=configs[0],origin,requests=[];const content=new Map(),errors=[],rows=[];
+ let current=configs[0],origin,requests=[];const applicationOutbound=[];const content=new Map(),errors=[],rows=[];
  const server=http.createServer(async(req,res)=>{
   try{
    const url=new URL(req.url,origin),decoded=decodeURIComponent(url.pathname),name=decoded.endsWith('/')?decoded+'index.html':decoded;
@@ -123,7 +136,7 @@ export async function main(argv=process.argv.slice(2)){
  const runtimeBinding={node:process.version,executable:process.execPath,executable_sha256:sha(await readFile(process.execPath)),playwright_version:installed.version,playwright_lock_sha256:sha(lockBytes),chromium_sha256:sha(await readFile(chromium.executablePath()))};
  await mkdir(output,{recursive:false});
  await new Promise(r=>server.listen(0,'127.0.0.1',r));origin='http://127.0.0.1:'+server.address().port;
- const proxy=await startIsolationProxy({origins:[origin]});
+ const proxy=await startIsolationProxy({origins:[origin],contextRouting:true});
  let browser;
  async function one(page,temperature,session){
   requests=[];await session.send('Performance.enable');const before=(await session.send('Performance.getMetrics')).metrics;
@@ -152,12 +165,12 @@ export async function main(argv=process.argv.slice(2)){
   const contextOptions={viewport:{width:1280,height:900},locale:'en-US',reducedMotion:'reduce',serviceWorkers:'block'};
   // Prime the full journey's filesystem and compression work, never a retained browser cache.
   for(const config of configs){
-   current=config;const context=await browser.newContext(contextOptions);await context.addInitScript(instrument);
+   current=config;const context=await browser.newContext(contextOptions);observeApplicationNetwork(context,origin,applicationOutbound);await context.addInitScript(instrument);
    const page=await context.newPage();page.on('pageerror',e=>errors.push({config:config.id,phase:'prime',error:e.message}));
    await one(page,'prime',await context.newCDPSession(page));await context.close();
   }
   for(let iteration=0;iteration<iterations;iteration++)for(const config of iteration%2?[...configs].reverse():configs){
-   current=config;const context=await browser.newContext(contextOptions);await context.addInitScript(instrument);
+   current=config;const context=await browser.newContext(contextOptions);observeApplicationNetwork(context,origin,applicationOutbound);await context.addInitScript(instrument);
    for(const temperature of ['cold','warm']){
     const page=await context.newPage(),session=await context.newCDPSession(page);page.on('pageerror',e=>errors.push({config:config.id,error:e.message}));
     const row={iteration:iteration+1,config:config.id,...await one(page,temperature,session)};rows.push(row);
@@ -172,7 +185,7 @@ export async function main(argv=process.argv.slice(2)){
    for(const key of ['search_ms','song_ms','back_ms','comparison_ms'])entry[key]=distribution(selected.map(r=>r[key]));summaries.push(entry);
   }
   const browserVersion=browser.version();await browser.close();browser=null;await proxy.close();
-  const receipt={schema:'architecture-performance-3',experiment,passed:errors.length===0&&proxy.unexpected.length===0,created_at:new Date().toISOString(),harness_sha256:sha(await readFile(new URL(import.meta.url))),configs:configs.map(({binding,...config})=>({...config,binding:{receipt_sha256:binding.receipt_sha256,source_inventory_sha256:binding.source_inventory_sha256,verifier_commit:binding.verifier_commit,build_options:binding.build_options}})),verified_served_files:[...content.values()].map(f=>({config:f.config,path:f.name,bytes:f.raw.length,sha256:sha(f.raw)})),catalogs:catalogs.map(c=>({sha256:c.release.sha256,manifest_sha256:c.manifest_sha256,charts:c.data.catalog.length})),query,iterations,browser:browserVersion,runtime:runtimeBinding,platform:{os:os.platform(),release:os.release(),cpu:os.cpus()[0]?.model,threads:os.cpus().length},method:{routing:false,outbound:'Exact loopback proxy only; all other origins denied',cache:'Production-like immutable data; other assets revalidated. A new page in the same context gives the immediate warm repeat; a fresh context gives cold readiness. Full measured journey filesystem/gzip primed in discarded browser contexts. No artificial network or CPU throttle.',readiness:'First populated catalog DOM observed (ready_ms is not a paint metric); action completion includes two animation frames. Search dispatches the synchronous input event. Comparison includes tab activation and deferred initialization.',usage:'Collector remains suppressed by the unchanged nonproduction origin predicate.',execution:'CDP Performance ScriptDuration and TaskDuration deltas through two animation frames after catalog and font readiness',limitations:'Explicit full Chromium executable on this Windows/font platform only. Web font bytes are verified served assets; operating-system fallback font files are not individually hashed; local-server latency, not internet Core Web Vitals. Concurrent host load is uncontrolled; paired order alternates.'},rows,summaries,errors,blocked:proxy.unexpected};
+  const receipt={schema:'architecture-performance-3',experiment,passed:errors.length===0&&applicationOutbound.length===0,created_at:new Date().toISOString(),harness_sha256:sha(await readFile(new URL(import.meta.url))),configs:configs.map(({binding,...config})=>({...config,binding:{receipt_sha256:binding.receipt_sha256,source_inventory_sha256:binding.source_inventory_sha256,verifier_commit:binding.verifier_commit,build_options:binding.build_options}})),verified_served_files:[...content.values()].map(f=>({config:f.config,path:f.name,bytes:f.raw.length,sha256:sha(f.raw)})),catalogs:catalogs.map(c=>({sha256:c.release.sha256,manifest_sha256:c.manifest_sha256,charts:c.data.catalog.length})),query,iterations,browser:browserVersion,runtime:runtimeBinding,platform:{os:os.platform(),release:os.release(),cpu:os.cpus()[0]?.model,threads:os.cpus().length},method:{routing:false,outbound:'Exact loopback proxy only; all other origins denied. Observation-only request/WebSocket audit fails application attempts; unattributed browser transports are retained separately',cache:'Production-like immutable data; other assets revalidated. A new page in the same context gives the immediate warm repeat; a fresh context gives cold readiness. Full measured journey filesystem/gzip primed in discarded browser contexts. No artificial network or CPU throttle.',readiness:'First populated catalog DOM observed (ready_ms is not a paint metric); action completion includes two animation frames. Search dispatches the synchronous input event. Comparison includes tab activation and deferred initialization.',usage:'Collector remains suppressed by the unchanged nonproduction origin predicate.',execution:'CDP TaskDuration includes renderer task work through two animation frames after catalog and font readiness. ScriptDuration is retained diagnostically, not compared as total JS execution because async-module work is excluded by this engine metric',limitations:'Explicit full Chromium executable on this Windows/font platform only. Web font bytes are verified served assets; operating-system fallback font files are not individually hashed; local-server latency, not internet Core Web Vitals. Concurrent host load is uncontrolled; paired order alternates.'},rows,summaries,errors,applicationOutbound,blockedTransports:proxy.blockedTransports};
   await writeFile(resolve(output,'measurements.json'),JSON.stringify(receipt,null,2)+'\n');
   if(!receipt.passed)throw Error('Invalid measurement: resource, application or outbound errors');
  }finally{

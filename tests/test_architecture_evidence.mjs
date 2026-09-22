@@ -1,10 +1,11 @@
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
+import {EventEmitter} from 'node:events';
 import {mkdtemp,mkdir,writeFile,rm} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join,resolve} from 'node:path';
 import {createHash} from 'node:crypto';
-import {bindArtifact,distribution,verifyBytes,validateExperiment} from '../scripts/measure_architecture.mjs';
+import {bindArtifact,distribution,verifyBytes,validateExperiment,observeApplicationNetwork} from '../scripts/measure_architecture.mjs';
 const record=raw=>({bytes:Buffer.byteLength(raw),sha256:createHash('sha256').update(raw).digest('hex')});
 
 test('distribution uses both central samples and rejects incomplete data',()=>{
@@ -50,4 +51,21 @@ test('runtime and enrichment experiments reject every confounded comparison',()=
  assert.throws(()=>validateExperiment('enrichment',[config('a'),config('a',true)],catalogs),/build options/);
  assert.throws(()=>validateExperiment('enrichment',[config('a'),config('a',false,'different')],catalogs),/runtime assets/);
  assert.throws(()=>validateExperiment('other',[config(),config()],catalogs),/Experiment/);
+});
+
+test('performance network audit records app attempts without installing routes',()=>{
+ const context=new EventEmitter(),page=new EventEmitter(),attempts=[];
+ context.pages=()=>[page];
+ context.route=()=>{throw Error('Performance must retain native browser caching');};
+ observeApplicationNetwork(context,'http://127.0.0.1:1234',attempts);
+ const request=(type,url)=>context.emit('request',{resourceType:()=>type,url:()=>url});
+ request('fetch','http://127.0.0.1:1234/catalog.json');
+ request('image','data:image/png;base64,fixture');
+ assert.equal(attempts.length,0);
+ request('fetch','https://accounts.google.com/fixture-only');
+ request('document','https://redirect.example.invalid/');
+ page.emit('websocket',{url:()=> 'wss://clients2.google.com/fixture-only'});
+ const popup=new EventEmitter();context.emit('page',popup);
+ popup.emit('websocket',{url:()=> 'wss://popup.example.invalid/'});
+ assert.deepEqual(attempts.map(item=>item.target),['https://accounts.google.com','https://redirect.example.invalid','https://clients2.google.com','https://popup.example.invalid']);
 });
