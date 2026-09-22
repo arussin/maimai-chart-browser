@@ -14,7 +14,7 @@ from maimai_intelligence.catalog_capture import CaptureStore, classify_failure
 from maimai_intelligence.coverage import prepare_coverage
 from maimai_intelligence.coverage_policy import ArtworkCandidate, artwork_identity, choose_candidate
 from maimai_intelligence.coverage_queue import complete_job, empty_work, plan_batch
-from maimai_intelligence.coverage_sources import OTOGE_BASE, ArtworkSources
+from maimai_intelligence.coverage_sources import OTOGE_BASE, ArtworkSources, capture_snapshot
 from maimai_intelligence.coverage_store import (
     RECEIPTS,
     checkpoint_work,
@@ -27,6 +27,7 @@ from maimai_intelligence.coverage_types import (
     FailureKind,
     IntegrityError,
     ReviewError,
+    SnapshotError,
 )
 from maimai_intelligence.registry import digest
 from maimai_intelligence.snapshots import atomic_json, read_json
@@ -39,6 +40,26 @@ class CoverageBoundaryTests(unittest.TestCase):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name)
+
+    def test_provider_snapshot_does_not_hide_programming_errors(self):
+        class BrokenCapture:
+            def get(self, url):
+                raise TypeError("authored adapter programming defect")
+
+        with self.assertRaisesRegex(TypeError, "authored adapter programming defect"):
+            capture_snapshot(BrokenCapture())
+
+    def test_provider_revision_rejects_malformed_structure_as_source_failure(self):
+        class Capture:
+            def __init__(self, body):
+                self.body = body
+
+            def get(self, url):
+                return self.body, {}
+
+        for body in (b"[null]", b"[{}]", b'[{"sha":42}]', b"invalid-json", bytes([255])):
+            with self.subTest(body=body), self.assertRaises(SnapshotError):
+                capture_snapshot(Capture(body))
 
     def test_all_1694_due_jobs_progress_despite_daily_retries_and_new_arrivals(self):
         evidence = {f"s{i:04}": "old" for i in range(1694)}

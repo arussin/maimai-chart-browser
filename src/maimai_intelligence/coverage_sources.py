@@ -21,24 +21,28 @@ IMAGE_NAME = re.compile(r"[A-Za-z0-9_-]+\.(?:png|jpg|jpeg)", re.I)
 def capture_snapshot(capture):
     from .provider_reconciliation import BASE, REVISION_URL
 
-    try:
-        raw, revision_source = capture.get(REVISION_URL)
-        commits = json.loads(raw)
-        if (
-            not isinstance(commits, list)
-            or not commits
-            or not re.fullmatch(r"[a-f0-9]{40}", commits[0].get("sha", ""))
-        ):
-            raise SnapshotError("Invalid public provider revision")
-        revision = commits[0]["sha"]
-        records, sources = {}, {"revision": revision_source}
-        for kind in ("songs", "charts"):
-            url = BASE + revision + "/db/seeds/" + kind + "-maimaidx.json"
-            body, sources[kind] = capture.get(url)
-            records[kind] = json.loads(body)
-        return {"revision": revision, "sources": sources, **records}
-    except (json.JSONDecodeError, KeyError, TypeError, AttributeError) as error:
-        raise SnapshotError("Malformed public provider snapshot") from error
+    def read_capture(url):
+        raw, reference = capture.get(url)
+        try:
+            return json.loads(raw), reference
+        except (json.JSONDecodeError, UnicodeDecodeError) as error:
+            raise SnapshotError("Malformed public provider snapshot") from error
+
+    commits, revision_source = read_capture(REVISION_URL)
+    if (
+        not isinstance(commits, list)
+        or not commits
+        or not isinstance(commits[0], dict)
+        or not isinstance(commits[0].get("sha"), str)
+        or not re.fullmatch(r"[a-f0-9]{40}", commits[0]["sha"])
+    ):
+        raise SnapshotError("Invalid public provider revision")
+    revision = commits[0]["sha"]
+    records, sources = {}, {"revision": revision_source}
+    for kind in ("songs", "charts"):
+        url = BASE + revision + "/db/seeds/" + kind + "-maimaidx.json"
+        records[kind], sources[kind] = read_capture(url)
+    return {"revision": revision, "sources": sources, **records}
 
 
 class ArtworkSources:
