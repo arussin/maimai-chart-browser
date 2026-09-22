@@ -83,6 +83,16 @@ jobs:
         working-directory: player-import-worker
         env:
           WRANGLER_SEND_METRICS: 'false'
+      - name: Retain fictional browser failure diagnostics
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: browser-failure-${{ matrix.shard }}-${{ github.run_attempt }}
+          path: |
+            tests/browser/test-results/**/trace.zip
+            tests/browser/test-results/**/error-context.md
+          retention-days: 7
+          if-no-files-found: ignore
   browser-required:
     name: browser
     needs: browser

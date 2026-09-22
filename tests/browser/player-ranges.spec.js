@@ -11,9 +11,12 @@ async function importFictional(page,rates,updatedAt){
   await page.locator('.player-remember input').uncheck();await page.getByRole('button',{name:'Import data',exact:true}).click();
   await page.waitForFunction(()=>maimaiPersonal.enabled());
 }
-async function checkRanges(page,testInfo){
+async function openRanges(page){
+  await page.goto('/maishift-pilot/pilot/maishift/browser/');await page.evaluate(()=>maimaiPersonal.ready);await expect(page.locator('#lab-status')).toBeHidden();
   await importFictional(page,[0,150,240,315,null],100000);
   const disclosure=page.locator('.player-filters .player-filter-toggle');if(await disclosure.getAttribute('aria-expanded')==='false')await disclosure.click();
+}
+async function checkRanges(page){
   const min=page.locator('#personal-min'),max=page.locator('#personal-max'),rate=page.locator('#personal-rateMin');
   const lowSlider=page.locator('#personal-min-slider'),highSlider=page.locator('#personal-max-slider'),rateSlider=page.locator('#personal-rateMin-slider');
   await expect(rateSlider).toHaveAttribute('min','0');await expect(rateSlider).toHaveAttribute('max','315');
@@ -45,9 +48,31 @@ async function checkRanges(page,testInfo){
   await page.locator('.player-clear-filters').click();await expect(rate).toHaveValue('');await expect(min).toHaveValue('');await expect(lowSlider).toHaveValue('0');
   expect(await page.evaluate(()=>sessionStorage.getItem('maimai-pilot-maishift-v1:maimai-player-session'))).toBe(revision);
   await min.fill('97');await max.fill('100.5');await rate.fill('150');
-  for(const width of [320,537,1280]){
+  await rate.fill('240');
+  await test.step('Rating domain changes retain the selected filter',async()=>{
+    await importFictional(page,[100,200,250,400,null],200000);await expect(rateSlider).toHaveAttribute('min','100');await expect(rateSlider).toHaveAttribute('max','400');await expect(rate).toHaveValue('240');
+  });
+  await test.step('Single known rating disables the slider',async()=>{
+    await importFictional(page,[220,null,null,null,null],300000);await expect(rateSlider).toBeDisabled();await expect(rate).toHaveAttribute('placeholder','220');
+  });
+  await test.step('Unknown ratings disable the rating controls',async()=>{
+    await importFictional(page,[null,null,null,null,null],400000);await expect(rateSlider).toBeDisabled();await expect(rate).toBeDisabled();await expect(page.locator('[data-range=rating] .personal-range-hint')).toHaveText('No known chart ratings in this import.');
+  });
+}
+
+test('personal ranges preserve precision, grade stops and rating domains',async({page})=>{
+  await test.step('Open ranges with fictional player data',()=>openRanges(page));
+  await checkRanges(page);
+});
+
+// Keep screenshot/font/layout work out of the behavior test's 30-second budget.
+// Each width has its own fixture and still covers all four locales.
+for(const width of [320,537,1280]){
+  test(`personal range layouts fit all languages at ${width}px`,async({page},testInfo)=>{
     await page.setViewportSize({width,height:1000});
-    for(const locale of ['en','zh-Hans','ko','ja']){
+    await test.step('Open ranges with fictional player data',()=>openRanges(page));
+    await page.locator('#personal-min').fill('97');await page.locator('#personal-max').fill('100.5');await page.locator('#personal-rateMin').fill('150');
+    for(const locale of ['en','zh-Hans','ko','ja'])await test.step(`${locale} layout and screenshot`,async()=>{
       await page.locator('.site-header [data-language='+locale+']').click();await page.locator('.personal-range-sections').scrollIntoViewIfNeeded();
       const layout=await page.locator('.personal-range-sections').evaluate(root=>{
         const inputs=[...root.querySelectorAll('input[type=number],button,h3,.personal-range-hint')];
@@ -55,18 +80,9 @@ async function checkRanges(page,testInfo){
       });
       expect(layout).toEqual({overflow:false,clipped:false,cards:true,sliders:4});
       await page.screenshot({path:testInfo.outputPath(`ranges-${locale}-${width}.png`)});
-    }
-  }
-  await page.locator('.site-header [data-language=en]').click();await rate.fill('240');
-  await importFictional(page,[100,200,250,400,null],200000);await expect(rateSlider).toHaveAttribute('min','100');await expect(rateSlider).toHaveAttribute('max','400');await expect(rate).toHaveValue('240');
-  await importFictional(page,[220,null,null,null,null],300000);await expect(rateSlider).toBeDisabled();await expect(rate).toHaveAttribute('placeholder','220');
-  await importFictional(page,[null,null,null,null,null],400000);await expect(rateSlider).toBeDisabled();await expect(rate).toBeDisabled();await expect(page.locator('[data-range=rating] .personal-range-hint')).toHaveText('No known chart ratings in this import.');
+    });
+  });
 }
-
-test('personal ranges preserve precision, grade stops, rating domains and narrow layouts',async({page},testInfo)=>{
-  await page.goto('/maishift-pilot/pilot/maishift/browser/');await page.evaluate(()=>maimaiPersonal.ready);await expect(page.locator('#lab-status')).toBeHidden();
-  await checkRanges(page,testInfo);
-});
 
 test('production enables Maishift without adopting pilot storage or launching a request',async({page})=>{
   const requests=[];page.on('request',r=>{if(r.url().includes('/api/player-import'))requests.push(r.url());});
