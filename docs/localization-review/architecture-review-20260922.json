@@ -1,0 +1,32 @@
+{
+  "reviewer": "Codex",
+  "date": "2026-09-22",
+  "method": "AI contextual language review; not native-speaker certification",
+  "scope": "Four shared title/navigation labels with complete Simplified Chinese, Korean and Japanese translations; three non-user-facing code constants explicitly classified. Existing entries preserved.",
+  "messages": {
+    "Untitled (intentional)": {
+      "zh-Hans": "无题（有意留空）",
+      "ko": "무제 (의도적 공백)",
+      "ja": "無題（意図的な空欄）"
+    },
+    "Title unavailable": {
+      "zh-Hans": "曲名未知",
+      "ko": "제목 정보 없음",
+      "ja": "曲名不明"
+    },
+    "Open song page": {
+      "zh-Hans": "打开歌曲页面",
+      "ko": "곡 페이지 열기",
+      "ja": "楽曲ページを開く"
+    },
+    "Back to results": {
+      "zh-Hans": "返回搜索结果",
+      "ko": "검색 결과로 돌아가기",
+      "ja": "検索結果に戻る"
+    }
+  },
+  "inputs": {
+    "src/maimai_intelligence/assets/locales/messages.json": "a5e34cc9ebdfe5acfca15a39e4b4ddb62c97ae5196a3e688ea922aa26499c1f2",
+    "src/maimai_intelligence/assets/locales/invariants.json": "458e3d52902a40e8c649cc8a226b84ec18115f6e3b6e83de734e60c55df9a1e1"
+  }
+}

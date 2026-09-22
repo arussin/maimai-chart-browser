@@ -2,8 +2,12 @@
 (()=>{'use strict';
 const i18n=window.maimaiI18n||{text:(node,value)=>node.textContent=value,attribute:(node,key,value)=>node.setAttribute(key,value),option:(...args)=>new Option(...args),original:node=>node.textContent,verbatim:value=>value,parts:(values,separator)=>values.join(separator),message:(source,values)=>source.replace(/\{(\d+)\}/g,(_,n)=>values[n]),literal:(node,value)=>node.textContent=value};
 
-const data=window.maimaiResearchCatalog??=JSON.parse(document.getElementById('challenge-data').textContent);
-try{window.maimaiRegistryBrowser.normalize(data);}catch(error){
+let data=window.maimaiResearchCatalog??=JSON.parse(document.getElementById('challenge-data').textContent);
+try{
+  // Preserve the adapter's in-place normalization contract on a detached application view.
+  if(data.schema_version==='maimai-browser-catalog-2')data=window.maimaiCatalogQuery.createView(data);
+  data=window.maimaiRegistryBrowser.normalize(data);
+}catch(error){
   let status=document.getElementById('lab-status');
   if(!status){status=document.createElement('p');status.id='lab-status';status.setAttribute('role','alert');document.getElementById('catalog').prepend(status);}
   status.dataset.catalogError='genre';i18n.text(status,error.message);window.maimaiResearchCatalog=undefined;return;
@@ -20,7 +24,7 @@ function folderValue(c,mode){
   const n=navigation.charts[c.chart_id];
   return n&&n.source_hash===c.source_hash?(n[mode]||'unknown'):'unknown';
 }
-const displayTitle=c=>c.title.trim()?c.title:'〈Blank title〉';
+const displayTitle=c=>window.maimaiCatalogQuery?.titleLabel(c,i18n.locale)|| (c.title.trim()?c.title:'〈Blank title〉');
 function metrics(c){const root=make('div',undefined,'demand');for(const [group,key,label,unit] of [['cadence','mean_onsets_s','Average input speed',' /s'],['cadence','peak_onsets_s','Busiest 1 s',' inputs'],['coordination','simultaneous_fraction','Simultaneous inputs','%'],['holds','occupancy','Avg active holds',''],['slides','occupancy','Avg moving slides',''],['spatial','single_step_buttons','Single-input spacing',' buttons']]){let value=c.demand?.[group]?.[key];if(value!=null&&unit==='%')value*=100;const e=make('div',label,'metric');e.append(make('strong',value==null?'Unknown':value.toFixed(1)+unit));root.append(e);}return root;}
 function xy(pos){if(pos==='C')return[0,0];let n,r=1,offset=0;if(typeof pos==='number')n=pos;else if(/^[ABDE][1-8]$/.test(pos||'')){n=+pos[1];r='BE'.includes(pos[0])?.55:1;offset='DE'.includes(pos[0])?-.5:0;}else return null;let a=(n-.5+offset)*Math.PI/4;return[Math.sin(a)*r,-Math.cos(a)*r];}
 const ns='http://www.w3.org/2000/svg';
@@ -87,12 +91,12 @@ function initializeFilters(){
   for(const id of filters){const select=el('filter-'+id);let options=[];
     if(id==='genre')options=(navigation.genres||[]).map(g=>[g.id,g.label]);
     for(const [value,label]of options){const option=i18n.option(label, value);select.append(option);}
-    select.onchange=()=>{visible=40;catalog();};
+    select.onchange=()=>{window.maimaiUsage?.emit('filter_first_used',undefined,'genre');visible=40;catalog();};
   }
-  for(const key of ['all','STD','DX'])el('format-'+key).onclick=()=>{format=key;visible=40;updateFormat();catalog();};
+  for(const key of ['all','STD','DX'])el('format-'+key).onclick=()=>{window.maimaiUsage?.emit('filter_first_used',undefined,'format');format=key;visible=40;updateFormat();catalog();};
   for(const version of navigation.versions||[]){
     const label=make('label'),checkbox=make('input');checkbox.type='checkbox';checkbox.value=version;
-    checkbox.onchange=()=>{if(checkbox.checked)selectedVersions.add(version);else selectedVersions.delete(version);visible=40;updateVersions();catalog();};
+    checkbox.onchange=()=>{window.maimaiUsage?.emit('filter_first_used',undefined,'version');if(checkbox.checked)selectedVersions.add(version);else selectedVersions.delete(version);visible=40;updateVersions();catalog();};
     const text=make('span',i18n.verbatim(versionLabel(version)),'version-name'),detail=make('small','','version-count');detail.setAttribute('aria-hidden','true');text.append(detail);
     label.append(checkbox,window.maimaiChartArtwork.version(version),text);el('version-options').append(label);
   }
@@ -100,10 +104,10 @@ function initializeFilters(){
   el('version-clear').onclick=()=>{selectedVersions.clear();visible=40;updateVersions();catalog();};
   el('version-filter').addEventListener('keydown',event=>{if(event.key==='Escape'){el('version-filter').open=false;el('version-summary').focus();event.stopPropagation();}});
   document.addEventListener('click',event=>{if(!el('version-filter').contains(event.target))el('version-filter').open=false;});
-  el('reset-filters').onclick=()=>{for(const id of filters)el('filter-'+id).value='';regionFilter?.clear(false);selectedVersions.clear();updateVersions();updateVersionCounts();chartFilters.clear();patternFilter.clear();el('search').value='';format='all';visible=40;writePatternFilter();updateFormat();catalog();comparisonUI?.render();};
+  el('reset-filters').onclick=()=>{window.maimaiUsage?.emit('filters_reset',undefined,'catalog');for(const id of filters)el('filter-'+id).value='';regionFilter?.clear(false);selectedVersions.clear();updateVersions();updateVersionCounts();chartFilters.clear();patternFilter.clear();el('search').value='';format='all';visible=40;writePatternFilter();updateFormat();catalog();comparisonUI?.render();};
   renderSort();
 }
-function writePatternFilter(){const url=new URL(location.href);url.searchParams.delete('pattern-filter');for(const id of patternFilter.ids())url.searchParams.append('pattern-filter',id);history.replaceState(null,'',url);}
+function writePatternFilter(){const url=new URL(location.href);url.searchParams.delete('pattern-filter');for(const id of patternFilter.ids())url.searchParams.append('pattern-filter',id);history.replaceState(history.state,'',url);}
 function updateVersionCounts(){
   const counts=new Map();
   for(const chart of data.catalog){const version=folderValue(chart,'version');if(!counts.has(version))counts.set(version,{charts:0,songs:new Set()});const count=counts.get(version);count.charts++;count.songs.add(rowKey(chart));}
@@ -184,7 +188,7 @@ function catalog(focusKey=null){
     const picker=make('select',undefined,'row-difficulty');picker.id='row-difficulty-'+index;i18n.attribute(picker,'aria-label','Difficulty for '+displayTitle(c)+' '+c.format);
     for(const choice of [...choices].sort((a,b)=>(difficultyRank(b)??-1)-(difficultyRank(a)??-1)||a.chart_id.localeCompare(b.chart_id)))picker.append(i18n.option(i18n.parts([choice.difficulty,i18n.verbatim(choice.level||'?')],' · '),choice.chart_id));
     picker.value=c.chart_id;
-    picker.onchange=()=>{const next=choices.find(choice=>choice.chart_id===picker.value);if(!next)return;selectedCharts.set(key,next.chart_id);const replacement=renderRow(next);row.replaceWith(replacement);replacement.querySelector('.row-difficulty').focus({preventScroll:true});};
+    picker.onchange=()=>{const next=choices.find(choice=>choice.chart_id===picker.value);if(!next)return;if(expandedRows.has(key))window.maimaiUsage?.emit('chart_opened');selectedCharts.set(key,next.chart_id);const replacement=renderRow(next);row.replaceWith(replacement);replacement.querySelector('.row-difficulty').focus({preventScroll:true});};
     const level=make('span',constantLabel(c),'chart-level chart-constant'),bpm=make('span',values.bpm(c)==null?'—':String(values.bpm(c)),'chart-bpm'),speed=make('span',values.speed(c)==null?'—':values.speed(c).toFixed(1),'chart-speed');
     i18n.attribute(bpm, 'aria-label', values.bpm(c)==null?'BPM unknown':values.bpm(c)+' BPM');i18n.attribute(bpm, 'title', 'Source song BPM; individual passages may change tempo.');
     i18n.attribute(level, 'aria-label', 'Chart constant '+(chartConstant(c)==null?'unknown':constantLabel(c)));i18n.attribute(level, 'title', chartConstant(c)==null?'No verified source constant is available for this context.':(()=>{const source=navigation.charts?.[c.chart_id]?.metric_sources?.chart_constant;return source?[source.provider,source.region,source.release||'game version unspecified'].filter(Boolean).join(' · '):'Neskol source constant · regional and game-version scope unspecified.';})());i18n.attribute(speed, 'aria-label', (values.speed(c)==null?'Unknown':values.speed(c).toFixed(1))+' inputs per second');
@@ -204,9 +208,9 @@ function catalog(focusKey=null){
       const identity=make('span',undefined,'chart-detail-identity'),formatBadge=make('span',c.format,'chart-format-badge');formatBadge.dataset.format=c.format;
       identity.append(formatBadge,make('span',c.difficulty,'chart-difficulty-badge'),make('span',c.level||'?','chart-detail-level'));
       const track=overview.section('chart','Chart details',identity);track.content.append(metrics(c),overview.details(c));
-      panel.replaceChildren(track.root);if(personal)panel.append(personal.details(c));
+      panel.replaceChildren(track.root);if(window.maimaiSongPages)track.content.append(window.maimaiSongPages.link(c.song_id,c.chart_id));if(personal)panel.append(personal.details(c));
     };
-    summary.onclick=()=>{panel.hidden=!panel.hidden;row.classList.toggle('is-expanded',!panel.hidden);summary.setAttribute('aria-expanded',String(!panel.hidden));if(panel.hidden)expandedRows.delete(key);else{expandedRows.add(key);renderDetails();}};
+    summary.onclick=()=>{panel.hidden=!panel.hidden;row.classList.toggle('is-expanded',!panel.hidden);summary.setAttribute('aria-expanded',String(!panel.hidden));if(panel.hidden)expandedRows.delete(key);else{expandedRows.add(key);renderDetails();window.maimaiUsage?.emit('chart_opened');}};
     if(!panel.hidden)renderDetails();row.append(header,panel);return row;
     }
     el('songs').append(renderRow(selected||chart));
@@ -216,7 +220,7 @@ function catalog(focusKey=null){
   el('more').hidden=rows.length<=visible;
 }
 
-el('search').oninput=event=>{if(event.isComposing)return;visible=40;catalog();};el('search').addEventListener('compositionend',()=>{visible=40;catalog();});
+el('search').oninput=event=>{if(event.isComposing)return;window.maimaiUsage?.emit('search_used',undefined,'charts');visible=40;catalog();};el('search').addEventListener('compositionend',()=>{window.maimaiUsage?.emit('search_used',undefined,'charts');visible=40;catalog();});
 el('more').onclick=()=>{visible+=40;catalog();};
 for(const name of ['compare','catalog','patterns','about'])el(name+'-tab').onclick=()=>selectView(name);
 window.maimaiPreviewField=field;
@@ -235,9 +239,78 @@ comparisonUI=window.maimaiChartComparison.mount({data,eligibleIds:()=>data.catal
   return chartFilters.matches(c);
 }).map(c=>c.chart_id)});
 const params=new URLSearchParams(location.search),initialView=params.get('view'),initialPattern=params.get('pattern');
-window.maimaiPatternLibrary.setDiscovery(id=>{el('reset-filters').click();patternFilter.set([id]);writePatternFilter();selectView('catalog');catalog();el('pattern-filter-summary').focus();});
-window.maimaiPatternLibrary.setNavigation(id=>{const url=new URL(location.href);if(id)url.searchParams.set('pattern',id);else url.searchParams.delete('pattern');history.replaceState(null,'',url);});
+window.maimaiPatternLibrary.setDiscovery(id=>{window.maimaiUsage?.emit('filter_first_used',undefined,'pattern');if(window.maimaiUsage?.suspend)window.maimaiUsage.suspend(()=>el('reset-filters').click());else el('reset-filters').click();patternFilter.set([id]);writePatternFilter();selectView('catalog');catalog();el('pattern-filter-summary').focus();});
+window.maimaiPatternLibrary.setNavigation(id=>{const url=new URL(location.href);if(id)url.searchParams.set('pattern',id);else url.searchParams.delete('pattern');history.replaceState(history.state,'',url);});
 function applyRoute(){const p=new URLSearchParams(location.search),id=window.maimaiRegistryBrowser.resolve(data,p.get('chart'));if(id&&p.get('view')==='catalog'){const c=byId.get(id);if(c){expandedRows.add(id);selectView('catalog');catalog(id);const findRow=()=>[...el('songs').children].find(n=>n.dataset.rowKey===id);let row=findRow();if(!row){el('reset-filters').click();personalControls?.clear();catalog(id);row=findRow();}row?.scrollIntoView({block:'center'});}else{i18n.text(el('catalog-count'), 'The linked chart is unavailable in this catalog version. Search for the song below.');}}else if(['catalog','patterns','compare','about'].includes(p.get('view')))selectView(p.get('view'));if(p.get('search')){el('search').value=p.get('search');catalog();}}
-window.addEventListener('popstate',applyRoute);applyRoute();
+const restoreRoute=()=>window.maimaiUsage?.suspend?window.maimaiUsage.suspend(applyRoute):applyRoute();
+window.addEventListener('popstate',()=>{if(!history.state?.maimaiBrowserState)restoreRoute();});restoreRoute();
+// A late public-link lookup must never override a newer navigation or interaction.
+let restorationGeneration=0,restorationWaiting=false;
+const cancelRestoration=()=>{restorationGeneration++;restorationWaiting=false;};
+for(const type of ['pointerdown','keydown','input','focusin','wheel'])document.addEventListener(type,event=>{if(event.isTrusted)cancelRestoration();},{capture:true,passive:true});
+for(const type of ['popstate','hashchange','maimai:navigation'])window.addEventListener(type,()=>{if(restorationWaiting)cancelRestoration();});
+window.addEventListener('pagehide',cancelRestoration);
+function restorePosition(value){
+  const generation=restorationGeneration,url=location.href;
+  const current=()=>generation===restorationGeneration&&url===location.href;
+  const apply=()=>{
+    if(!current())return;
+    restorationWaiting=false;
+    const target=value.focus&&el(value.focus);
+    if(target?.isConnected&&!target.hidden&&target.getClientRects().length)target.focus({preventScroll:true});
+    if(Array.isArray(value.scroll)&&value.scroll.every(Number.isFinite))scrollTo(...value.scroll);
+  };
+  requestAnimationFrame(()=>{
+    if(!current())return;
+    const target=value.focus&&el(value.focus),pending=[];
+    if(target?.matches('.chart-song-page[hidden]'))pending.push(window.maimaiSongPages?.ready?.());
+    // Disclosure expansion changes layout; restore after it settles so scroll anchoring cannot shift the saved position.
+    for(const animation of el('catalog').getAnimations({subtree:true}))if(animation.playState==='running'&&Number.isFinite(animation.effect?.getComputedTiming().endTime))pending.push(animation.finished.catch(()=>{}));
+    if(document.fonts.status==='loading')pending.push(document.fonts.ready);
+    if(pending.length){
+      restorationWaiting=true;
+      Promise.all(pending).then(()=>requestAnimationFrame(apply),()=>{if(current())restorationWaiting=false;});
+    }else apply();
+  });
+}
+// Browsing state contains controls and navigation only, never player data or connections.
+window.maimaiBrowserState=Object.freeze({
+  capture(){return {
+    schemaVersion:1,catalogHash:data.source_catalog_sha256??null,search:el('search').value,
+    auxiliary:{sortKeep:el('sort-keep').checked,patternSearch:el('pattern-filter-search').value,menus:['version-filter','difficulty-filter','pattern-filter'].map(id=>[id,el(id).open])},
+    genre:el('filter-genre').value,format,versions:[...selectedVersions],sortRules:sortRules.map(r=>({...r})),
+    chartFilters:chartFilters.snapshot(),patterns:patternFilter.ids(),region:regionFilter?.snapshot?.(),
+    personal:personalControls?.snapshot?.(),visible,selectedCharts:[...selectedCharts],expandedRows:[...expandedRows],
+    history:[...document.querySelectorAll('.player-pb-toggle[aria-expanded="true"]')].map(n=>n.getAttribute('aria-controls')),
+    disclosures:['catalog-filters-toggle','player-filters-toggle'].map(id=>[id,el(id)?.getAttribute('aria-expanded')]),
+    scroll:[scrollX,scrollY],focus:document.activeElement?.id||null,
+    locale:window.maimaiI18n?.locale,
+  };},
+  restore(value){
+    cancelRestoration();
+    if(!value||value.schemaVersion!==1||value.catalogHash!==(data.source_catalog_sha256??null))return false;
+    const run=()=>{
+      if(value.locale)window.maimaiI18n?.setLocale(value.locale,{persist:false});
+      el('search').value=typeof value.search==='string'?value.search:'';
+      el('filter-genre').value=value.genre||'';format=['all','STD','DX'].includes(value.format)?value.format:'all';
+      selectedVersions.clear();for(const v of value.versions||[])if(navigation.versions.includes(v))selectedVersions.add(v);
+      sortRules=(value.sortRules||[]).filter(r=>Object.hasOwn(sortFields,r.key)&&[1,-1].includes(r.direction)).map(r=>({...r}));
+      if(!sortRules.length)sortRules=[{key:'title',direction:1}];
+      chartFilters.restore(value.chartFilters);patternFilter.set(value.patterns||[]);regionFilter?.restore?.(value.region);
+      personalControls?.restore?.(value.personal);visible=Number.isSafeInteger(value.visible)?Math.max(40,Math.min(data.catalog.length,value.visible)):40;
+      selectedCharts.clear();for(const [key,id]of value.selectedCharts||[])if(byId.has(id))selectedCharts.set(key,id);
+      expandedRows.clear();for(const id of value.expandedRows||[])if(byId.has(id))expandedRows.add(id);
+      updateFormat();updateVersions();updateVersionCounts();renderSort();catalog();comparisonUI?.render();
+      for(const [id,expanded]of value.disclosures||[]){const toggle=el(id);if(toggle&&expanded!=null&&toggle.getAttribute('aria-expanded')!==expanded)toggle.click();}
+      if(value.auxiliary){el('sort-keep').checked=value.auxiliary.sortKeep===true;el('pattern-filter-search').value=typeof value.auxiliary.patternSearch==='string'?value.auxiliary.patternSearch:'';el('pattern-filter-search').dispatchEvent(new Event('input'));for(const [id,open]of value.auxiliary.menus||[])if(['version-filter','difficulty-filter','pattern-filter'].includes(id))el(id).open=open===true;}
+      for(const id of value.history||[]){const toggle=el(id)?.previousElementSibling;if(toggle?.classList.contains('player-pb-toggle')&&toggle.getAttribute('aria-expanded')==='false')toggle.click();}
+      restorePosition(value);
+    };
+    if(window.maimaiUsage?.suspend)window.maimaiUsage.suspend(run);else run();return true;
+  },
+  version(value){if(!navigation.versions.includes(value))return false;selectedVersions.clear();selectedVersions.add(value);updateVersions();visible=40;catalog();return true;},
+  open(){cancelRestoration();restoreRoute();},
+});
+window.dispatchEvent(new Event('maimai:browser-ready'));
 if(initialPattern&&window.maimaiPatternLibrary.has(initialPattern)){window.maimaiPatternLibrary.show(initialPattern);}
 })();

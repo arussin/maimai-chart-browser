@@ -12,7 +12,8 @@ from maimai_analyzer.dataset import SOURCE_LOCK
 
 from .artwork import prepare_artwork
 from .catalog_loading import MAX_CATALOG_BYTES
-from .challenge_review import render_review, review_scripts
+from .catalog_preparation import prepare_catalog
+from .challenge_review import render_prepared_review, review_scripts
 from .io import atomic_write_text
 from .localization import localization_script
 from .mai_notes import validate_links
@@ -72,7 +73,7 @@ def build_lab(
     mai_notes = loaded.get("mai-notes.json")
     if mai_notes is not None:
         validate_links(mai_notes, loaded["catalog.json"])
-    html = render_review(
+    prepared = prepare_catalog(
         package,
         loaded["catalog.json"],
         loaded["review.json"],
@@ -86,10 +87,8 @@ def build_lab(
         loaded.get("browser-metadata.json"),
         loaded.get("maishift-mapping.json"),
     )
-    data_match = re.search(
-        r'<script id="challenge-data" type="application/json">(.*?)</script>', html, re.S
-    )
-    data = canonical(json.loads(data_match[1]))
+    html = render_prepared_review(prepared)
+    data = canonical(prepared.data)
     if len(data) > MAX_CATALOG_BYTES:
         raise ValueError("Full research catalog exceeds 64 MiB")
     sha = hashlib.sha256(data).hexdigest()
@@ -110,7 +109,7 @@ def build_lab(
     entry = {"version": catalog_version, "sha256": sha, "path": f"catalogs/{sha}.json"}
     if loaded.get("browser-metadata.json"):
         entry["inventory_schema"] = "maimai-browser-catalog-2"
-    integration = canonical(integration_catalog(json.loads(data), catalog_version))
+    integration = canonical(integration_catalog(prepared.data, catalog_version))
     integration_sha = hashlib.sha256(integration).hexdigest()
     (root / "integration").mkdir(exist_ok=True)
     (root / "integration" / f"{integration_sha}.json").write_bytes(integration)
@@ -128,6 +127,9 @@ def build_lab(
     assets = files("maimai_intelligence.assets")
     build_player_help(root)
     early_scripts = []
+    atomic_write_text(
+        root / "catalog-query.js", assets.joinpath("catalog-query.js").read_text("utf-8")
+    )
     for name in (
         "localization.js",
         *(("maishift-browser-pilot.js",) if player_pilot else ()),
@@ -138,7 +140,10 @@ def build_lab(
         "player-maishift.js",
         "player-sources.js",
         "player-storage.js",
+        "player-session.js",
         "player-data.js",
+        "usage.js",
+        "seo-navigation.js",
         "feature-announcements.js",
         "analytics.js",
         "support-config.js",
@@ -148,6 +153,8 @@ def build_lab(
         if player_pilot and name in {
             "feature-announcements.js",
             "analytics.js",
+            "usage.js",
+            "seo-navigation.js",
             "support-config.js",
             "support-client.js",
             "support-stripe.js",
@@ -229,20 +236,18 @@ def build_lab(
     html = html.replace(
         "<body>", '<body><p id="lab-status" role="status">Loading research catalog…</p>'
     )
-    # Pages supplies its own (possibly versioned) beacon after owner activation.
-    # Pages uses the external RUM endpoint; zone injection can use /cdn-cgi/rum.
-    # A CSP allowance alone neither installs a beacon nor changes GA consent.
+    # First-party usage replaces the former third-party browser beacon.
     html = html.replace(
         "<title>",
         '<meta name="referrer" content="no-referrer">'
         '<meta http-equiv="Content-Security-Policy" content="'
         "default-src 'none'; script-src 'self' https://www.googletagmanager.com/gtag/js "
-        "https://static.cloudflareinsights.com https://js.stripe.com "
+        "https://js.stripe.com "
         "https://*.js.stripe.com https://checkout.stripe.com; "
         "style-src 'self' 'unsafe-inline'; "
         "connect-src 'self' https: https://www.google-analytics.com "
         "https://region1.google-analytics.com "
-        "https://cloudflareinsights.com/cdn-cgi/rum https://api.stripe.com "
+        "https://api.stripe.com "
         "https://checkout.stripe.com https://link.com https://*.link.com; "
         "img-src 'self' data: https://www.google-analytics.com "
         "https://region1.google-analytics.com https://*.stripe.com https://*.link.com; "

@@ -13,6 +13,7 @@
     if (focus) toggle.focus();
   }
   function open(last = false, focus = true) {
+    if(menu.hidden)window.maimaiUsage?.emit('settings_opened');
     menu.hidden = false;
     toggle.setAttribute('aria-expanded', 'true');
     fitMenu();
@@ -24,6 +25,7 @@
     if (!menu.hidden) menu.style.maxHeight = Math.max(0, window.innerHeight - menu.getBoundingClientRect().top - 12) + 'px';
   }
   window.addEventListener('resize', fitMenu);
+  document.getElementById('report-issue')?.addEventListener('click',()=>window.maimaiUsage?.emit('report_issue_opened'));
   toggle.onclick = event => menu.hidden ? open(false, event.detail === 0) : close(true);
   toggle.onkeydown = event => {
     if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
@@ -160,6 +162,7 @@
     anchor.href = destination(service); anchor.target = '_blank';
     anchor.rel = 'noopener noreferrer'; anchor.referrerPolicy = 'no-referrer';
     anchor.dataset.shareService = service;
+    anchor.onclick=()=>window.maimaiUsage?.emit('share_destination_clicked',undefined,service);
   }
   external(more, 'more');
   function render() {
@@ -193,12 +196,14 @@
       pending = true; trigger.disabled = true; native.disabled = true;
       // Invoke synchronously in the click handler, before any await or lazy loading.
       await navigator.share(payload);
+      window.maimaiUsage?.emit('share_native_result',undefined,'resolved');
       if (dialog.open) dialog.close(); else window.maimaiSettings?.focus();
     } catch (error) {
       if (error?.name === 'AbortError') {
+        window.maimaiUsage?.emit('share_native_result',undefined,'cancelled');
         // Cancellation is not an error: do not open another picker or claim success.
         if (!dialog.open) window.maimaiSettings?.focus();
-      } else fallback();
+      } else {window.maimaiUsage?.emit('share_native_result',undefined,'failed');fallback();}
     } finally {
       pending = false; trigger.disabled = false; native.disabled = false;
     }
@@ -209,6 +214,7 @@
   }
   trigger.onclick = () => {
     if (pending) return;
+    window.maimaiUsage?.emit('share_opened');
     window.maimaiSettings?.close();
     if (mobileDevice() && typeof navigator.share === 'function') void shareNative();
     else fallback();
@@ -219,6 +225,7 @@
     try {
       if (typeof navigator.clipboard?.writeText !== 'function') throw new Error('clipboard-unavailable');
       await navigator.clipboard.writeText(siteURL);
+      window.maimaiUsage?.emit('share_copied');
       if (dialog.open) i18n.text(status, 'Link copied');
     } catch {
       if (dialog.open) {

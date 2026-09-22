@@ -7,6 +7,7 @@ import shutil
 from pathlib import Path
 
 from maimai_intelligence.overview_codec import compact_overview
+from maimai_intelligence.public_release import PUBLIC_FILES
 
 
 def build_capacity_fixture(root: Path, count: int = 7000):
@@ -43,40 +44,7 @@ def build_capacity_fixture(root: Path, count: int = 7000):
     raw = json.dumps(data, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
     digest = hashlib.sha256(raw).hexdigest()
     target.mkdir(parents=True, exist_ok=True)
-    for name in [
-        "index.html",
-        "lab-loader.js",
-        "localization.js",
-        "localization.css",
-        "challenge-review.js",
-        "challenge-review.css",
-        "analytics.js",
-        "settings-menu.js",
-        "support-config.js",
-        "support-client.js",
-        "support-stripe.js",
-        "support-checkout.css",
-        "support.html",
-        "support-page.js",
-        "support-page.css",
-        "site-brand.css",
-        "support-footer.css",
-        "support-return.html",
-        "support-return.js",
-        "stripe-wordmark.svg",
-        "view-navigation.js",
-        "player-import-config.js",
-        "player-ranges.js",
-        "player-data-core.js",
-        "player-maishift.js",
-        "player-sources.js",
-        "player-storage.js",
-        "player-data.js",
-        "feature-announcements.js",
-        "maishift-favicon.ico",
-        "player-import-help.css",
-        *(f"player-import-help.{locale}.html" for locale in ("en", "zh-Hans", "ko", "ja")),
-    ]:
+    for name in PUBLIC_FILES:
         shutil.copyfile(source / name, target / name)
     if (source / "media").exists():
         shutil.copytree(source / "media", target / "media", dirs_exist_ok=True)

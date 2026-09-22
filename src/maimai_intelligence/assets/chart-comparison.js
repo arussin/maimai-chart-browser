@@ -14,7 +14,7 @@ function mount({data,eligibleIds}){
   const overview=window.maimaiChartOverview;
   const el=id=>document.getElementById(id),make=(tag,text,cls)=>{const node=document.createElement(tag);if(text!==undefined)i18n.text(node, text);if(cls)node.className=cls;return node;};
   const byId=new Map(data.catalog.map(c=>[c.chart_id,c])),state={left:null,right:null},pickers={};
-  const name=c=>c.title.trim()||'〈Blank title〉';
+  const name=c=>window.maimaiCatalogQuery?.titleLabel(c,i18n.locale)||c.title.trim()||'〈Blank title〉';
   const chartType=c=>i18n.parts([i18n.verbatim(c.format),c.difficulty],' ');
   const label=c=>i18n.parts([i18n.verbatim(name(c)),chartType(c),i18n.verbatim('Lv. '+(c.level||'?'))],' · ');
   const collator=new Intl.Collator(undefined,{numeric:true,sensitivity:'base'}),difficultyOrder=['BASIC','ADVANCED','EXPERT','MASTER','RE:MASTER'];
@@ -22,13 +22,14 @@ function mount({data,eligibleIds}){
   let index=null,matches=null;
   const getIndex=()=>index||(index=window.maimaiChallengeMatching.createIndex(data.catalog));
   function identity(c){const box=make('div',undefined,'chosen-chart');box.append(window.maimaiChartArtwork.jacket(c),make('strong',i18n.verbatim(name(c))),make('p',i18n.parts([chartType(c),i18n.verbatim('Lv. '+(c.level||'?')),bpmText(c)],' · '),'muted'),make('p',i18n.verbatim(c.artist),'muted'),overview.chips(c),overview.graph(c,{compact:true}));const videoLink=window.maimaiChartLinks.group(c);if(videoLink)box.append(videoLink);if(window.maimaiPersonal)box.append(window.maimaiPersonal.summary(c));return box;}
-  function writeLink(){const url=new URL(location.href);for(const side of ['left','right']){if(state[side])url.searchParams.set(side,state[side]);else url.searchParams.delete(side);}history.replaceState(null,'',url);}
+  function writeLink(){const url=new URL(location.href);for(const side of ['left','right']){if(state[side])url.searchParams.set(side,state[side]);else url.searchParams.delete(side);}history.replaceState(history.state,'',url);}
   function choose(side,id,write=true){
     id=window.maimaiRegistryBrowser.resolve(data,id);
     if(!byId.has(id))return;
     if(side==='left'&&state.left!==id)matches=null;
+    const deliberate=write&&!!(side==='right'?state.left:state.right)&&(side==='right'?state.left:state.right)!==id;if(deliberate)window.maimaiUsage?.emit('compare_requested');
     state[side]=id;const picker=pickers[side];picker.input.value=name(byId.get(id));picker.close();picker.selection.replaceChildren(identity(byId.get(id)));
-    render();if(write)writeLink();
+    render();if(deliberate)window.maimaiUsage?.emit('compare_loaded');if(write)writeLink();
   }
   for(const [side,title]of [['left','First chart'],['right','Second chart']]){
     const container=make('div',undefined,'chart-picker'),labelNode=make('label',title),input=make('input'),selection=make('div'),results=make('div',undefined,'chart-choices'),more=make('button','Show more matches','chart-choices-more'),status=make('p','','muted');
@@ -59,7 +60,7 @@ function mount({data,eligibleIds}){
       found.sort((a,b)=>rank(a)-rank(b)||collator.compare(name(a),name(b))||collator.compare(a.format,b.format)||difficultyOrder.indexOf(a.difficulty)-difficultyOrder.indexOf(b.difficulty)||a.chart_id.localeCompare(b.chart_id));
       results.hidden=!found.length;input.setAttribute('aria-expanded',String(!!found.length));appendMatches();
     }
-    input.oninput=event=>{if(event.isComposing)return;if(side==='left')matches=null;state[side]=null;selection.replaceChildren();render();writeLink();search();};
+    input.oninput=event=>{if(event.isComposing)return;window.maimaiUsage?.emit('search_used',undefined,'compare');if(side==='left')matches=null;state[side]=null;selection.replaceChildren();render();writeLink();search();};
     input.addEventListener('compositionend',()=>input.oninput({isComposing:false}));input.onfocus=()=>{if(!state[side]&&results.hidden)search();};
     input.onkeydown=event=>{
       if(event.isComposing)return;
@@ -115,15 +116,15 @@ function mount({data,eligibleIds}){
     renderPair();renderMatches();
   }
   function find(){if(!state.left||!byId.get(state.left)?.demand)return;matches=getIndex().similar(state.left,{limit:8,eligibleIds:el('similar-use-filters').checked?eligibleIds():null,patternCompare:el('similar-priority').value==='patterns'?overview.compare:null});render();el('similar-results').scrollIntoView({block:'start',behavior:'instant'});}
-  el('similar-priority').onchange=()=>{if(matches!==null)find();};
-  el('find-similar').onclick=()=>{const u=new URL(location.href);u.searchParams.set('similar','1');history.replaceState(null,'',u);find();};el('similar-use-filters').onchange=()=>{if(matches!==null)find();};
+  el('similar-priority').onchange=()=>{if(matches!==null){window.maimaiUsage?.emit('similar_requested');find();}};
+  el('find-similar').onclick=()=>{window.maimaiUsage?.emit('similar_requested');const u=new URL(location.href);u.searchParams.set('similar','1');history.replaceState(history.state,'',u);find();};el('similar-use-filters').onchange=()=>{if(matches!==null){window.maimaiUsage?.emit('similar_requested');find();}};
   el('comparison-clear').onclick=()=>{state.left=state.right=null;matches=null;for(const picker of Object.values(pickers)){picker.input.value='';picker.selection.replaceChildren();picker.close();}render();writeLink();pickers.left.input.focus();};
   function restore(){const params=new URLSearchParams(location.search);let missing=false;matches=null;
     for(const side of ['left','right']){const id=window.maimaiRegistryBrowser.resolve(data,params.get(side));state[side]=null;pickers[side].input.value='';pickers[side].selection.replaceChildren();pickers[side].close();if(id){if(byId.has(id))choose(side,id,false);else missing=true;}}
     render();if(params.get('similar')==='1'&&state.left)find();if(missing)i18n.text(el('comparison-status'), 'A linked chart is not available in this catalog version. Choose a chart below.');
   }
   window.addEventListener('popstate',restore);restore();
-  return{render,first:()=>state.left,useAsFirst:(id,findNow=false)=>{state.right=null;pickers.right.input.value='';pickers.right.selection.replaceChildren();pickers.right.close();choose('left',id);if(findNow){const u=new URL(location.href);u.searchParams.set('similar','1');history.replaceState(null,'',u);find();}},useAsSecond:id=>choose('right',id)};
+  return{render,first:()=>state.left,useAsFirst:(id,findNow=false)=>{state.right=null;pickers.right.input.value='';pickers.right.selection.replaceChildren();pickers.right.close();choose('left',id);if(findNow){window.maimaiUsage?.emit('similar_requested');const u=new URL(location.href);u.searchParams.set('similar','1');history.replaceState(history.state,'',u);find();}},useAsSecond:id=>choose('right',id)};
 }
 window.maimaiChartComparison=Object.freeze({mount});
 })();

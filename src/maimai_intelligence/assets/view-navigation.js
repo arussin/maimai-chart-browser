@@ -8,7 +8,7 @@ function show(name,preservePattern=false){
   if(!names.includes(name))return;
   for(const id of names){document.getElementById(id).hidden=id!==name;document.getElementById(id+'-tab').setAttribute('aria-pressed',String(id===name));}
   const skip=document.querySelector('.skip-link');skip.href='#'+name;i18n.text(skip, 'Skip to '+labels[name]);
-  const url=new URL(location.href);url.searchParams.set('view',name);if(!preservePattern)url.searchParams.delete('pattern');history.replaceState(null,'',url);
+  const url=new URL(location.href);url.searchParams.set('view',name);if(!preservePattern)url.searchParams.delete('pattern');history.replaceState(history.state,'',url);
   window.dispatchEvent(new Event('maimai:viewchange'));
 }
 window.maimaiViews=Object.freeze({show});

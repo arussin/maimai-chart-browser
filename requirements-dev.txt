@@ -2,3 +2,6 @@
 # Install once while online; tests themselves use only synthetic/mocked data.
 ruff==0.16.5
 -r requirements-localization.txt
+
+# Offline artwork acquisition validates decoded content before publishing thumbnails.
+Pillow==12.3.0

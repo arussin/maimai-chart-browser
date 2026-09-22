@@ -9,14 +9,14 @@ from pathlib import Path
 from maimai_analyzer.challenge import VERSION, profile_chart
 from maimai_analyzer.contracts import content_hash
 from maimai_analyzer.simai_subset import PARSER_VERSION, parse_simai_subset
-from scripts.analyze_simai_corpus import _identity
-from scripts.evaluate_simai_pilot import COUNT_CONVENTION, count_comparison, note_counts
 
 from .metadata_waterfall import number
 from .overview_codec import compact_overview
 from .registry import analysis_fingerprint
 from .research_overview import chart_overview, overview_package
 from .snapshots import atomic_json, read_json
+from .transcription_counts import COUNT_CONVENTION, count_comparison, note_counts
+from .transcription_identity import input_identity
 
 POLICY = "catalog-transcription-1"
 
@@ -30,7 +30,7 @@ def implementation():
         if p.is_file() and p.name.endswith((".py", ".json"))
     } | {
         "count_validator": hashlib.sha256(
-            files("scripts").joinpath("evaluate_simai_pilot.py").read_bytes()
+            files("maimai_intelligence").joinpath("transcription_counts.py").read_bytes()
         ).hexdigest()
     }
 
@@ -73,7 +73,7 @@ def qualify(body, row, expected_counts, cache, *, fingerprints=None):
     fingerprints = fingerprints or implementation()
     cache_key = analysis_fingerprint(row, fingerprints, parser=PARSER_VERSION, analyzer=VERSION)
     path = Path(cache) / (cache_key + ".json")
-    identity = _identity(row)
+    identity = input_identity(row)
     hit = path.exists()
     if hit:
         envelope = read_json(path)

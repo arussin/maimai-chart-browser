@@ -1,0 +1,24 @@
+{
+  "version": "coverage-reviews-1",
+  "titles": [
+    {
+      "song_id": "song:a52f13bc-9503-4cbd-8e07-fe31d1d81f61",
+      "assertion": "9a094cacfc258bcbc201c8362bbf23e7cbf5c5c17038b2c438dadd78b4795029",
+      "evidence": {
+        "kind": "retained-official-blank-title",
+        "review": "maishift-review-20260921.json",
+        "official_records": [
+          {
+            "snapshot_id": "sega-jp:109e93dc03f476e385118ff557dcbb55f9ac7b2a819646d14123b081c832deae",
+            "raw_record_sha256": "d6ecb9cf0533eb7b1dd7979d575226dceeefadec377f3a117b7191dae3046453"
+          },
+          {
+            "snapshot_id": "sega-intl:78416cd5fa103d4e5c04c2123cb4f741810a806f8409bde53ff9a3a3d16bed41",
+            "raw_record_sha256": "623c843e45398fac5beefed351ea83dc99e08d88cc645b8745702edec69daac4"
+          }
+        ]
+      }
+    }
+  ],
+  "providers": []
+}

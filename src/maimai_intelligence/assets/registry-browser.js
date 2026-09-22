@@ -55,30 +55,17 @@ function mount(data,changed){
     for(const button of buttons){const selected=button.dataset.region===value;button.setAttribute('aria-checked',String(selected));button.tabIndex=selected?0:-1;}
   }
   const navigation=new Map(Object.entries(data.navigation.charts).map(([id,row])=>[id,{...row}]));
-  const originals=new Map(data.catalog.map(c=>[c.chart_id,{title:c.title,artist:c.artist,level:c.level,metadata_region:c.metadata_region}]));
+  const originals=new Map(data.catalog.map(c=>[c.chart_id,{...c}]));
   function apply(notify=true){
-    for(const c of data.catalog){
-      Object.assign(c,originals.get(c.chart_id));
-      const nav=data.navigation.charts[c.chart_id],original=navigation.get(c.chart_id);
-      Object.assign(nav,original);
-      if(!checkbox.checked)continue;
-      const entry=c.regional?.INTL;
-      for(const field of ['title','artist'])if(known(entry?.metadata?.[field]))c[field]=entry.metadata[field];
-      if(known(entry?.metadata?.title))c.metadata_region='INTL';
-      if(known(entry?.level))c.level=entry.level;
-      for(const field of ['genre','version'])if(known(entry?.metadata?.[field==='genre'?'catcode':'version'])&&known(entry?.[field]))nav[field]=entry[field];
-      for(const [field,scopes] of Object.entries(original.regional_metrics||{})){
-        if(!known(scopes.INTL))continue;
-        nav[field]=scopes.INTL;
-        const source=original.regional_metric_sources?.[field]?.INTL;
-        if(source)nav.metric_sources={...nav.metric_sources,[field]:source};
-      }
+    for(const chart of data.catalog){
+      const projected=window.maimaiCatalogQuery.regionalValues(originals.get(chart.chart_id),navigation.get(chart.chart_id),checkbox.checked);
+      Object.assign(chart,projected.fields);Object.assign(data.navigation.charts[chart.chart_id],projected.navigation);
     }
     if(notify)changed();
   }
-  checkbox.onchange=()=>apply();
+  checkbox.onchange=()=>{apply();window.maimaiUsage?.emit('filter_first_used',undefined,'international');};
   buttons.forEach((button,index)=>{
-    button.onclick=()=>{selectRegion(button.dataset.region);apply();};
+    button.onclick=()=>{selectRegion(button.dataset.region);apply();window.maimaiUsage?.emit('filter_first_used',undefined,'region');};
     button.onkeydown=event=>{
       const offset={ArrowRight:1,ArrowDown:1,ArrowLeft:-1,ArrowUp:-1}[event.key];
       const next=event.key==='Home'?0:event.key==='End'?buttons.length-1:offset?(index+offset+buttons.length)%buttons.length:null;
@@ -86,7 +73,9 @@ function mount(data,changed){
       event.preventDefault();buttons[next].focus();buttons[next].click();
     };
   });
-  return {value:()=>availability,label:()=>regionLabels[availability],clear:(notify=true)=>{selectRegion('');apply(notify);}};
+  return {value:()=>availability,label:()=>regionLabels[availability],clear:(notify=true)=>{selectRegion('');apply(notify);},
+    snapshot:()=>({availability,international:checkbox.checked}),
+    restore:saved=>{if(!saved||!['','JP','INTL'].includes(saved.availability)||typeof saved.international!=='boolean')return;selectRegion(saved.availability);checkbox.checked=saved.international;apply(false);}};
 }
 window.maimaiRegistryBrowser=Object.freeze({resolve,mount,normalize,matchesRegion});
 })();

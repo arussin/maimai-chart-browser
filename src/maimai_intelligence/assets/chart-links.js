@@ -9,7 +9,7 @@ function youtube(chart){
   const description=[title,chart.format,chart.difficulty].filter(Boolean).join(' ');
   const url=new URL('https://www.youtube.com/results');
   url.searchParams.set('search_query','maimai '+description);
-  const link=document.createElement('a');link.className='youtube-search';
+  const link=document.createElement('a');link.className='youtube-search';link.onclick=()=>window.maimaiUsage?.emit('resource_opened',undefined,'youtube');
   link.href=url.href;link.target='_blank';link.rel='noopener noreferrer';link.referrerPolicy='no-referrer';
   i18n.text(link, 'YouTube search ↗');
   i18n.attribute(link, 'aria-label', 'YouTube search for '+description+' (opens in a new tab)');
@@ -20,7 +20,7 @@ function maiNotes(chart){
   const record=playerLinks?.[chart.chart_id];
   if(!record||(identityVersion===1&&(!chart.source_hash||record.source_hash!==chart.source_hash))||record.format!==chart.format||record.difficulty!==chart.difficulty||
       typeof record.id!=='string'||!(/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/).test(record.id))return null;
-  const link=document.createElement('a');link.className='mai-notes-player';
+  const link=document.createElement('a');link.className='mai-notes-player';link.onclick=()=>window.maimaiUsage?.emit('resource_opened',undefined,'mai_notes');
   link.href='https://mai-notes.com/player.html?chart='+record.id;
   link.target='_blank';link.rel='noopener noreferrer';link.referrerPolicy='no-referrer';
   i18n.text(link, 'mai-notes simai player ↗');

@@ -18,7 +18,7 @@
     ratings=lo===Infinity?null:[lo,hi];queue();
   }
   function card(kind,keys,title){
-    const fields=keys.map(key=>{const field=document.createElement('input');field.type='number';field.min='0';if(kind==='achievement')field.max='101';field.id='personal-'+key;field.value=state[key];field.oninput=()=>{state[key]=field.value;onchange();};return field;});
+    const fields=keys.map(key=>{const field=document.createElement('input');field.type='number';field.min='0';if(kind==='achievement')field.max='101';field.id='personal-'+key;field.value=state[key];field.oninput=()=>{state[key]=field.value;window.maimaiUsage?.emit('filter_first_used',undefined,kind);onchange();};return field;});
     const root=document.createElement('section');root.className='personal-range-card';root.dataset.range=kind;
     const heading=document.createElement('div');heading.className='personal-range-heading';
     const name=document.createElement('h3');name.id='personal-range-'+kind;text(name,title);root.setAttribute('aria-labelledby',name.id);

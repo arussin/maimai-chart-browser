@@ -28,6 +28,7 @@ CHART_FIELDS = PROFILE_FIELDS | {
     "legacy_identity",
     "input_id",
     "transcription",
+    "title_state",
 }
 # Stable IDs, display labels and explicit source aliases. Keep browser compatibility
 # in registry-browser.js in sync through tests/fixtures/genre-aliases.json.
@@ -346,6 +347,8 @@ def project_registry(value, legacy):
             "metadata_region": preferred,
             "capabilities": capabilities,
         }
+        if "title" in song.get("enrichment", {}):
+            row["title_state"] = song["enrichment"]["title"]["state"]
         if profile:
             id_map[profile["chart_id"]] = cid
             row.update(
@@ -481,12 +484,36 @@ def project_registry(value, legacy):
                 }
         art["versions"] = {k: v for k, v in art["versions"].items() if k in versions}
         used = {r["path"] for r in art["songs"].values()} | set(art["versions"].values())
+        used.update(
+            r["path"] for song in art["songs"].values() for r in song.get("regions", {}).values()
+        )
         art["assets"] = {k: v for k, v in art["assets"].items() if k in used}
         validate_artwork(art, data["catalog"], data["navigation"]["versions"])
         data["artwork"] = art
         for row in data["catalog"]:
             if row["song_id"] in art["songs"]:
                 row["capabilities"]["artwork"] = "available"
+    from .enrichment import project_artwork
+
+    artwork = project_artwork(value, data["catalog"], data.get("artwork"))
+    if artwork["songs"] or artwork["versions"]:
+        validate_artwork(artwork, data["catalog"], data["navigation"]["versions"])
+        data["artwork"] = artwork
+        for row in data["catalog"]:
+            if row["song_id"] in artwork["songs"]:
+                row["capabilities"]["artwork"] = "available"
+    outcomes = {
+        cid: {k: outcome[k] for k in ("status", "usable")}
+        for cid, chart in value["charts"].items()
+        if not chart.get("redirect")
+        for provider, outcome in chart.get("enrichment", {}).get("providers", {}).items()
+        if provider == "kamaitachi"
+    }
+    if outcomes:
+        data["coverage"] = {
+            "version": "catalog-coverage-1",
+            "providers": {"kamaitachi": {"charts": outcomes}},
+        }
     return validate_catalog(data)
 
 
@@ -580,7 +607,9 @@ def _legacy_enrichment(data):
     return result
 
 
-def build_registry_package(value, source, output, *, published=None, additions=None):
+def build_registry_package(
+    value, source, output, *, published=None, additions=None, artwork_source=None
+):
     """Adapter retains accepted artifacts; inventory never depends on profile count."""
     if source is None:
         descriptor = {
@@ -667,7 +696,7 @@ def build_registry_package(value, source, output, *, published=None, additions=N
     legacy["catalog"] = [c for c in legacy["catalog"] if c["chart_id"] not in invalid]
     data = project_registry(value, legacy)
     if "artwork" in data:
-        copy_artwork(data["artwork"], source, output)
+        copy_artwork(data["artwork"], (artwork_source, source), output)
     values = {
         name: json.loads(raw)
         for name, raw in retained.items()
@@ -687,7 +716,9 @@ def build_registry_package(value, source, output, *, published=None, additions=N
         if key in data:
             values[name] = data[key]
     values["browser-metadata.json"] = {
-        k: data[k] for k in ("schema_version", "registry", "legacy_ids", "sources")
+        k: data[k]
+        for k in ("schema_version", "registry", "legacy_ids", "sources", "coverage")
+        if k in data
     }
     entries = []
     for name, entry in sorted(values.items()):

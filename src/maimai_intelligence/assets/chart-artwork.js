@@ -12,9 +12,13 @@ function image(path,className,label){
   const img=document.createElement('img');i18n.attribute(img, 'alt', '');img.loading='lazy';img.decoding='async';img.referrerPolicy='no-referrer';
   img.onload=()=>{box.classList.remove('artwork-missing');i18n.attribute(box, 'title', label);i18n.attribute(box, 'aria-label', label);};
   img.onerror=()=>{img.remove();box.classList.add('artwork-missing');i18n.attribute(box, 'title', label+' unavailable');i18n.attribute(box, 'aria-label', label+' unavailable');if(className==='song-jacket')i18n.text(box, '♪');};
-  box.replaceChildren(img);img.src=path;return box;
+  box.replaceChildren(img);img.src=window.maimaiSongPages?.asset(path)??path;return box;
 }
-function jacket(chart){const item=jackets.get(chart.chart_id);return image(item?.songId===chart.song_id?item.path:null,'song-jacket','Jacket for '+chart.title);}
+function jacket(chart){
+  const item=jackets.get(chart.chart_id),regional=art?.songs?.[chart.song_id]?.regions?.[chart.view_region||'JP'];
+  const path=regional?.path||item?.path;
+  return image(item?.songId===chart.song_id?path:null,'song-jacket','Jacket for '+(window.maimaiCatalogQuery?.titleLabel(chart,window.maimaiI18n?.locale)||chart.title));
+}
 function version(name){const box=image(art?.versions?.[name],'version-logo',name+' logo');box.setAttribute('aria-hidden','true');box.removeAttribute('role');box.removeAttribute('aria-label');return box;}
 window.maimaiChartArtwork=Object.freeze({jacket,version});
 })();

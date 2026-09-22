@@ -27,13 +27,13 @@
     "src/maimai_intelligence/assets/locales/analysis.json": "bc88b3aea276cc79ba6baded15ea885b1331a6670cb744802bda0ba358ade4e2",
     "src/maimai_intelligence/assets/locales/composed.json": "89786cba9b1582d81ac8b33cc1cd0d0234c8b4d030304235a05da5d1bdcab9b7",
     "src/maimai_intelligence/assets/locales/errors.json": "8d606884cd61cfef308458f60bccdfb124a725140e4827ef1edba6b3621128f5",
-    "src/maimai_intelligence/assets/locales/invariants.json": "420411e67ec7e7ee14edeffea844f69021be9369223aadc486b3bd4f394a3e25",
+    "src/maimai_intelligence/assets/locales/invariants.json": "458e3d52902a40e8c649cc8a226b84ec18115f6e3b6e83de734e60c55df9a1e1",
     "src/maimai_intelligence/assets/locales/lessons.json": "11c862874f1a6599defe50faf9973f909af473960079d798d93bc1c02c686cf4",
-    "src/maimai_intelligence/assets/locales/messages.json": "6b326bb708512dee5aadb41dc254336280a1e8a8eb69f0b36be27286d2f9d8b3",
+    "src/maimai_intelligence/assets/locales/messages.json": "a5e34cc9ebdfe5acfca15a39e4b4ddb62c97ae5196a3e688ea922aa26499c1f2",
     "src/maimai_intelligence/assets/locales/pattern-aliases.json": "32a3ba91edd588b54b530bf877ed456e193807a57ffad07894f830e9b1dae03b",
     "src/maimai_intelligence/assets/locales/patterns.json": "ace85290f6d7ac0190b9aadcab30bba72b88c613cb1a7dca97fe26aff2716dfb",
     "src/maimai_intelligence/assets/locales/player.json": "54b74fc2b934d066b612681224dce80bfeaf6409bc78a4795247837876a080b2",
-    "src/maimai_intelligence/assets/locales/privacy.json": "df7ca2df9df33dc8dae11c9783464b1f1082c27704ac5a5cbcb7cd97b1424bd2",
+    "src/maimai_intelligence/assets/locales/privacy.json": "6f48405c0b4f3f1f7c58dc78d72da442bd7f29690dbae732c087f0108a3d3b81",
     "src/maimai_intelligence/assets/locales/remaining.json": "e9bf3c25b346b4c700e921603d6a1fb039d4b6a521c8eb7ba8c0115e1f3854ac",
     "src/maimai_intelligence/assets/locales/support.json": "27a1b15fe77028ce8d635926c2c3956402f160f879162ecd03cd4c2525ade27d",
     "src/maimai_intelligence/assets/song-pronunciations.json": "fd237c304809ac65354b59a0f0defd51ea1bf4d57a920475915d155bd768a864",
@@ -88,6 +88,18 @@
       "method": "AI review of changed filter and sorting copy in UI context; not native-speaker certification",
       "scope": "Filter disclosures, selected-filter summaries, and multi-sorting in zh-Hans, ko, and ja",
       "record": "docs/localization-review/filter-disclosures-20260921.md"
+    },
+    {
+      "reviewer": "Codex",
+      "date": "2026-09-22",
+      "scope": "Four replacement privacy messages in English, Simplified Chinese, Korean and Japanese. Existing unaffected messages and previous review records preserved.",
+      "record": "docs/localization-review/usage-review-20260922.json"
+    },
+    {
+      "reviewer": "Codex",
+      "date": "2026-09-22",
+      "scope": "Four shared title/navigation labels with complete Simplified Chinese, Korean and Japanese translations; three non-user-facing code constants explicitly classified. Existing entries preserved.",
+      "record": "docs/localization-review/architecture-review-20260922.json"
     }
   ],
   "player_sources_review": {

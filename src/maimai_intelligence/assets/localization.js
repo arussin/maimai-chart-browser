@@ -23,6 +23,10 @@
   };
   let locale = negotiate(navigator.languages || [navigator.language]);
   try { const saved = localStorage.getItem(key); if (languages.includes(saved)) locale = saved; } catch {}
+  // Explicit public route language wins without overwriting the user's saved preference.
+  const routeLocale={en:'en',ja:'ja',ko:'ko','zh-hans':'zh-Hans'}[location.pathname.split('/')[1]];
+  const linkedLocale=new URLSearchParams(location.search).get('lang');
+  if(routeLocale)locale=routeLocale;else if(languages.includes(linkedLocale))locale=linkedLocale;
   const escape = value => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const patterns = Object.keys(catalogs).filter(source => /\{\d+\}/.test(source)).map(source => {
     const parts = source.split(/(\{\d+\})/);
@@ -127,7 +131,8 @@
     for(const link of document.querySelectorAll('a[data-localized-readme]')) readmeLinks.set(link,link.getAttribute('href'));
     staticText(document.body);
     const title=document.querySelector('head title');if(title && catalogs[title.textContent])text(title,title.textContent);
-    controls(document.querySelector('.site-header') || document.querySelector('main') || document.body);
+    const header=document.querySelector('[data-version-browser] .site-header') || document.querySelector('.site-header');
+    controls(header || document.querySelector('main') || document.body);
     setLocale(locale,{persist:false});
   }
   const searchTerms=value=>[value,...languages.filter(l=>l!=='en').map(l=>catalogs[value]?.[l] || '')].join(' ');

@@ -58,12 +58,44 @@ def implementation_hash(root=REPO_ROOT):
     root = Path(root)
     paths = sorted(
         p
-        for area in ("src", "scripts", "registry")
+        for area in (
+            "src",
+            "scripts",
+            "registry",
+            "config",
+            "build_backend",
+            "web/src",
+            "usage-worker/migrations",
+        )
         for p in (root / area).rglob("*")
         if p.is_file() and "__pycache__" not in p.parts and p.suffix != ".pyc"
     )
+    # Runtime code alone does not bind decoder, compiler or Worker policy changes.
+    paths.extend(
+        root / name
+        for name in (
+            "requirements-dev.txt",
+            "requirements-localization.txt",
+            "pyproject.toml",
+            "web/package.json",
+            "web/package-lock.json",
+            "web/build.mjs",
+            "web/tsconfig.json",
+            "web/generated-assets.json",
+            "usage-worker/worker.ts",
+            "usage-worker/wrangler.jsonc",
+            "usage-worker/package.json",
+            "usage-worker/package-lock.json",
+            "usage-worker/tsconfig.json",
+            "usage-worker/report.mjs",
+        )
+        if (root / name).is_file()
+    )
     return content_hash(
-        {p.relative_to(root).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest() for p in paths}
+        {
+            p.relative_to(root).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest()
+            for p in sorted(paths)
+        }
     )
 
 
@@ -80,6 +112,39 @@ def file_inventory(root):
                 "sha256": hashlib.sha256(raw).hexdigest(),
             }
     return result
+
+
+def published_public(store):
+    """Resolve only a verified current publication; never guess from directory age."""
+    store = Path(store)
+    pointer = store / "latest.json"
+    if not pointer.is_file():
+        return None
+    latest = read_json(pointer)
+    name = latest.get("run", "")
+    if not re.fullmatch(r"[0-9]{8}T[0-9]{6}Z-[a-f0-9]{8}", name):
+        raise ValueError("Invalid published run identity")
+    previous = store / "runs" / name
+    if read_json(previous / "publication.json") != latest:
+        raise ValueError("Latest update is not a verified publication")
+    receipt = read_json(previous / "ready.json")
+    if receipt.get("files") != file_inventory(previous / "public"):
+        raise ValueError("Published public files changed; restore the verified update state")
+    return previous / "public"
+
+
+def previous_public_identity(root):
+    """Bind immutable publication inputs separately from regenerated browser files."""
+    if root is None:
+        return None
+    root = Path(root)
+    files = {}
+    for name in ("manifest.json", "permalinks.json"):
+        if name == "permalinks.json" and not (root / name).is_file():
+            continue
+        raw = _read(root, name, 2 * 1024 * 1024)
+        files[name] = {"bytes": len(raw), "sha256": hashlib.sha256(raw).hexdigest()}
+    return {"version": "previous-public-inputs-1", "files": files}
 
 
 def retain_history(source, destination):
@@ -182,7 +247,6 @@ def source_package(run, store, revision, artwork_cache, *, offline=False):
     from scripts.build_challenge_package import build
     from scripts.build_research_overview import build as build_overview
     from scripts.prepare_maichart_pack import prepare as extract
-    from scripts.prepare_public_artwork import prepare as artwork
 
     capture_root = store / "sources" / revision
     capture(capture_root, revision, offline=offline)
@@ -194,10 +258,8 @@ def source_package(run, store, revision, artwork_cache, *, offline=False):
         run / "patterns",
         cache_directory=store / "cache" / "overview",
     )
-    artwork(
-        run / "patterns", run / "artwork", artwork_cache, offline=offline, refresh_metadata=True
-    )
-    return run / "artwork"
+    # Song artwork is prepared once by the shared accepted-registry coverage stage.
+    return run / "patterns"
 
 
 def prepare_update(
@@ -214,8 +276,11 @@ def prepare_update(
     fetcher=download_index,
     replay_sources=None,
     source_fetcher=None,
+    coverage_reviews=None,
+    previous_public=None,
 ):
     store, previous_browser = Path(store).resolve(), Path(previous_browser).resolve()
+    previous_public = Path(previous_public).resolve() if previous_public is not None else None
     if (package is not None and revision is not None) or (
         package is None and revision is None and registry is None
     ):
@@ -228,6 +293,7 @@ def prepare_update(
         raise ValueError("Offline preparation needs an explicit retained mai-notes snapshot")
     for value in (
         previous_browser,
+        previous_public,
         package,
         mai_notes_snapshot,
         registry,
@@ -243,7 +309,38 @@ def prepare_update(
         run.mkdir(parents=True)
         atomic_json(run / "state.json", {"status": "preparing"})
         try:
+            current_public = published_public(store)
+            if previous_public is None:
+                previous_public = current_public
+                if previous_public is None and any((store / "runs").glob("*/publication.json")):
+                    raise ValueError("A preceding publication exists; supply --previous-public")
+            previous_identity = previous_public_identity(previous_public)
+            if current_public is not None and previous_identity != previous_public_identity(
+                current_public
+            ):
+                raise ValueError("Preparation does not bind the current preceding publication")
+            if replay_sources:
+                prior = Path(replay_sources).parent / "previous-public.json"
+                if (read_json(prior) if prior.is_file() else None) != previous_identity:
+                    raise ValueError("Source replay preceding public inputs differ")
+            if previous_identity is not None:
+                atomic_json(run / "previous-public.json", previous_identity)
             before = retain_history(previous_browser, run / "browser")
+            if registry is None and not offline:
+                from maimai_intelligence.registry import read_registry
+
+                seed = REPO_ROOT / "registry"
+                accepted_seed = read_registry(seed)
+                known = set(accepted_seed["charts"])
+                known.update(
+                    old for entries in accepted_seed["legacy-ids"].values() for old in entries
+                )
+                if not all(chart["chart_id"] in known for chart in before["catalog"]):
+                    raise ValueError(
+                        "Online legacy preparation requires an explicit registry "
+                        "bound to its identities"
+                    )
+                registry = seed
             if package is None and revision is not None:
                 package = source_package(run, store, revision, Path(artwork_cache), offline=offline)
             if registry is not None:
@@ -262,6 +359,15 @@ def prepare_update(
                         "for JP and International"
                     )
                 additions = None
+                from maimai_intelligence.catalog_capture import CaptureStore
+                from maimai_intelligence.coverage import prepare_coverage
+
+                shared_capture = CaptureStore(
+                    store / "cache" / "waterfall" / "sources",
+                    offline=offline,
+                    replay=replay_sources,
+                    **({"fetcher": source_fetcher} if source_fetcher else {}),
+                )
                 if not offline or replay_sources:
                     from maimai_intelligence.catalog_refresh import refresh
 
@@ -273,11 +379,30 @@ def prepare_update(
                         offline=offline,
                         replay=replay_sources,
                         fetcher=source_fetcher,
+                        capture_store=shared_capture,
+                        write_candidate=False,
                     )
-                else:
-                    from maimai_intelligence.registry import write_registry
+                reviews = (
+                    coverage_reviews
+                    if coverage_reviews is not None
+                    else read_json(REPO_ROOT / "config" / "coverage-reviews.json")
+                )
+                accepted, coverage_audit = prepare_coverage(
+                    accepted,
+                    before,
+                    shared_capture,
+                    store / "cache" / "coverage",
+                    run,
+                    roots=(previous_browser, package),
+                    offline=offline,
+                    replay=replay_sources,
+                    title_reviews=reviews.get("titles", ()),
+                    provider_reviews=reviews.get("providers", ()),
+                )
+                from maimai_intelligence.registry import write_registry
 
-                    write_registry(accepted, run / "registry")
+                write_registry(accepted, run / "registry")
+                atomic_json(run / "source-captures.json", shared_capture.receipt())
                 from maimai_intelligence.multilingual_search import enrich_registry
 
                 # Search aids belong to the projection and its retained report;
@@ -290,6 +415,7 @@ def prepare_update(
                     run / "package",
                     published=before if revision is None else None,
                     additions=additions,
+                    artwork_source=store / "cache" / "coverage",
                 )
                 descriptor, _ = read_package(run / "package")
                 charts = prepared["catalog"]
@@ -331,7 +457,11 @@ def prepare_update(
                 + hashlib.sha256((run / "package" / "package.json").read_bytes()).hexdigest()[:12]
             )
             build_lab(run / "package", run / "browser", catalog_version=version)
-            release = build_public_release(run / "browser", run / "public")
+            release = build_public_release(
+                run / "browser", run / "public", previous_public=previous_public
+            )
+            if previous_public_identity(previous_public) != previous_identity:
+                raise ValueError("Preceding public inputs changed during preparation")
             changes = chart_changes(before["catalog"], charts)
             old_links = before.get("mai_notes", {}).get("charts", {})
             if registry:
@@ -341,6 +471,7 @@ def prepare_update(
                 from maimai_intelligence.registry_catalog import coverage_report
 
                 changes["registry"] = coverage(accepted) | coverage_report(prepared)
+                changes["coverage"] = coverage_audit
                 if additions is not None:
                     changes["sources"] = source_audit["counts"]
             changes["mai_notes"] = {
@@ -413,8 +544,42 @@ def prepare_update(
                 "implementation_hash": implementation_hash(),
                 "release": release,
                 "files": file_inventory(run / "public"),
-                **({"registry_files": file_inventory(run / "registry")} if registry else {}),
+                **(
+                    {
+                        "previous_public": {
+                            "inputs": previous_identity,
+                            "historical_references_verified": True,
+                        }
+                    }
+                    if previous_identity is not None
+                    else {}
+                ),
+                **(
+                    {
+                        "registry_files": file_inventory(run / "registry"),
+                        "coverage_files": {
+                            name: {
+                                "bytes": (run / name).stat().st_size,
+                                "sha256": hashlib.sha256((run / name).read_bytes()).hexdigest(),
+                            }
+                            for name in (
+                                "coverage-inputs.json",
+                                "coverage-start.json",
+                                "coverage-state.json",
+                                "coverage-audit.json",
+                                "source-captures.json",
+                            )
+                        },
+                    }
+                    if registry
+                    else {}
+                ),
             }
+            if registry:
+                atomic_json(
+                    store / "cache" / "coverage" / "work.json",
+                    read_json(run / "coverage-state.json"),
+                )
             atomic_json(run / "state.json", {"status": "ready"})
             # Last write is the sole marker that a complete candidate can be published.
             atomic_json(run / "ready.json", receipt)
@@ -439,6 +604,32 @@ def verify_candidate(run):
         )
     ):
         raise ValueError("Candidate changed or was prepared by different code; prepare it again")
+    preceding_public = published_public(run.parent.parent)
+    if preceding_public is not None and preceding_public.parent != run:
+        if receipt.get("previous_public", {}).get("inputs") != previous_public_identity(
+            preceding_public
+        ):
+            raise ValueError("Candidate does not bind the preceding publication")
+    elif (
+        preceding_public is None
+        and "previous_public" not in receipt
+        and any(path.parent != run for path in run.parent.glob("*/publication.json"))
+    ):
+        raise ValueError("Candidate does not bind the preceding publication")
+    if "previous_public" in receipt:
+        preceding = receipt["previous_public"]
+        if (
+            preceding.get("historical_references_verified") is not True
+            or not (run / "previous-public.json").is_file()
+            or read_json(run / "previous-public.json") != preceding.get("inputs")
+        ):
+            raise ValueError("Candidate preceding public inputs changed")
+    for name, record in receipt.get("coverage_files", {}).items():
+        if Path(name).name != name or not (run / name).is_file():
+            raise ValueError("Candidate coverage inputs changed")
+        raw = (run / name).read_bytes()
+        if len(raw) != record["bytes"] or hashlib.sha256(raw).hexdigest() != record["sha256"]:
+            raise ValueError("Candidate coverage inputs changed")
     return receipt
 
 
@@ -507,9 +698,17 @@ def publish_update(
             raise ValueError("Existing maimai-party project is unavailable; do not create another")
         if project.get("Git Provider") != "No":
             raise ValueError("Official publication requires the existing Direct Upload project")
-        live = json.loads(fetch_manifest("https://maimai.party/manifest.json"))
+        live_raw = fetch_manifest("https://maimai.party/manifest.json")
+        live = json.loads(live_raw)
         if live.get("default") != receipt["base_catalog_version"]:
             raise ValueError("The live catalog changed since preparation; prepare against it again")
+        if live.get("releases") and receipt.get("previous_public", {}).get("inputs", {}).get(
+            "files", {}
+        ).get("manifest.json") != {
+            "bytes": len(live_raw),
+            "sha256": hashlib.sha256(live_raw).hexdigest(),
+        }:
+            raise ValueError("Candidate does not bind the live preceding publication")
         # Preserve an attempt marker even if the process/network dies after a successful upload.
         atomic_json(run / "publish-attempt.json", {"commit": head, "status": "started"})
         # Isolated cwd prevents an unrelated functions/ directory from joining this static upload.
@@ -554,13 +753,10 @@ def publish_update(
 def refresh_latest(store, *, offline=False, replay_sources=None):
     """Continue from the last verified publication, including its accepted registry."""
     store = Path(store).resolve()
-    latest = read_json(store / "latest.json")
-    name = latest["run"]
-    if not re.fullmatch(r"[0-9]{8}T[0-9]{6}Z-[a-f0-9]{8}", name):
-        raise ValueError("Invalid published run identity")
-    previous = store / "runs" / name
-    if read_json(previous / "publication.json") != latest:
-        raise ValueError("Latest update is not a verified publication")
+    preceding_public = published_public(store)
+    if preceding_public is None:
+        raise ValueError("No verified current publication; use explicit preparation inputs")
+    previous = preceding_public.parent
     registry = previous / "registry"
     receipt = read_json(previous / "ready.json")
     if "registry_files" in receipt:
@@ -572,6 +768,7 @@ def refresh_latest(store, *, offline=False, replay_sources=None):
     return prepare_update(
         store,
         previous / "browser",
+        previous_public=preceding_public,
         package=previous / "package",
         registry=registry,
         offline=offline,
@@ -587,6 +784,11 @@ def main(argv=None):
     )
     prepare.add_argument("--store", type=Path, required=True)
     prepare.add_argument("--previous-browser", type=Path, required=True)
+    prepare.add_argument(
+        "--previous-public",
+        type=Path,
+        help="Retain preceding public startup references and permalink identities exactly",
+    )
     source = prepare.add_mutually_exclusive_group()
     source.add_argument("--package", type=Path, help="Reuse an accepted package without reanalysis")
     source.add_argument(

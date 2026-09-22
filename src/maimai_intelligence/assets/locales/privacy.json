@@ -55,20 +55,10 @@
       "ko": "방문 통계가 켜져 있습니다. 언제든 끌 수 있습니다.",
       "ja": "アクセス解析は有効です。いつでも無効にできます。"
     },
-    "Allow Google Analytics to count visits using cookies. Imported results, searches and chart selections are excluded. This choice applies to Google Analytics, not separate cookie-free Cloudflare traffic measurements on the published site.": {
-      "zh-Hans": "允许 Google Analytics 使用 Cookie 统计访问。导入成绩、搜索内容和谱面选择不包含在内。此选择仅适用于 Google Analytics，不影响已发布网站上独立的、不使用 Cookie 的 Cloudflare 流量统计。",
-      "ko": "Google Analytics가 쿠키로 방문 수를 집계하도록 허용합니다. 가져온 결과, 검색어, 채보 선택은 제외됩니다. 이 선택은 Google Analytics에만 적용되며, 공개 사이트의 별도 쿠키 없는 Cloudflare 트래픽 측정에는 적용되지 않습니다.",
-      "ja": "Google Analytics が Cookie を使って訪問数を集計することを許可します。読み込んだ結果、検索語、譜面の選択は含みません。この選択は Google Analytics のみに適用され、公開サイトの Cookie を使わない別の Cloudflare 計測には適用されません。"
-    },
     "Google Analytics counts visits and broad page views using cookies. Imported results, searches and chart selections are excluded. Advertising features are off.": {
       "zh-Hans": "Google Analytics 使用 Cookie 统计访问次数和大类页面浏览。导入成绩、搜索和谱面选择不包含在内。广告功能已关闭。",
       "ko": "Google Analytics는 쿠키로 방문 수와 주요 페이지 조회 수를 집계합니다. 가져온 결과, 검색어, 채보 선택은 제외됩니다. 광고 기능은 꺼져 있습니다.",
       "ja": "Google Analytics は Cookie で訪問数と大まかなページ閲覧数を集計します。読み込んだ結果、検索語、譜面の選択は含みません。広告機能は無効です。"
-    },
-    "Turning Google Analytics off keeps your personal results and chart filters in place. The published site may separately use cookie-free Cloudflare Web Analytics for aggregate traffic and performance; this Google Analytics choice does not control it.": {
-      "zh-Hans": "关闭 Google Analytics 会保留您的个人成绩和谱面筛选。已发布网站可能另行使用不带 Cookie 的 Cloudflare Web Analytics 统计总体流量和性能；Google Analytics 的选择不控制该统计。",
-      "ko": "Google Analytics를 꺼도 개인 결과와 채보 필터는 유지됩니다. 공개 사이트는 전체 트래픽과 성능을 위해 쿠키 없는 Cloudflare Web Analytics를 별도로 사용할 수 있으며, Google Analytics 설정으로는 제어되지 않습니다.",
-      "ja": "Google Analytics を無効にしても個人結果と譜面の絞り込みは保持されます。公開サイトでは総トラフィックと性能の計測に、Cookie を使わない Cloudflare Web Analytics を別途利用する場合があります。この設定はそちらには適用されません。"
     },
     "Imported personal results stay in this browser for the current tab session, or on this device if you choose to remember them. They are not uploaded, added to public catalogs or included in analytics. Open Settings to hide your results or forget remembered data.": {
       "zh-Hans": "导入的个人成绩保留在当前浏览器标签页会话中；若选择记住，则保存在此设备上。数据不会上传、加入公开曲库或纳入访问统计。您可在设置中隐藏成绩或删除记住的数据。",
@@ -139,6 +129,26 @@
       "zh-Hans": "Stripe 隐私政策",
       "ko": "Stripe 개인정보 처리방침",
       "ja": "Stripe のプライバシーポリシー"
+    },
+    "Allow Google Analytics to count visits using cookies. Imported results, searches and chart selections are excluded. This choice applies to Google Analytics; separate daily feature counts do not use visitor identifiers.": {
+      "zh-Hans": "允许 Google Analytics 使用 Cookie 统计访问。导入成绩、搜索内容和谱面选择不包含在内。此选择仅适用于 Google Analytics；独立的每日功能使用统计不使用访客标识符。",
+      "ko": "Google Analytics가 쿠키로 방문 수를 집계하도록 허용합니다. 가져온 결과, 검색 내용, 채보 선택은 제외됩니다. 이 선택은 Google Analytics에 적용되며, 별도의 일별 기능 사용 집계는 방문자 식별자를 사용하지 않습니다.",
+      "ja": "Google Analytics が Cookie を使って訪問数を集計することを許可します。インポートした成績、検索内容、譜面の選択は対象外です。この選択は Google Analytics に適用されます。別途行う機能利用の日次集計では訪問者識別子を使用しません。"
+    },
+    "Turning Google Analytics off keeps your personal results and chart filters in place. Separate daily feature counts use no visitor or session identifiers. This choice does not control those counts; Global Privacy Control and Do Not Track disable them.": {
+      "zh-Hans": "关闭 Google Analytics 会保留你的个人成绩和谱面筛选。独立的每日功能使用统计不使用访客或会话标识符。此选择不控制这些统计；Global Privacy Control 和 Do Not Track 可禁用它们。",
+      "ko": "Google Analytics를 꺼도 개인 결과와 채보 필터는 유지됩니다. 별도의 일별 기능 사용 집계는 방문자나 세션 식별자를 사용하지 않습니다. 이 선택은 해당 집계를 제어하지 않으며 Global Privacy Control과 Do Not Track으로 비활성화할 수 있습니다.",
+      "ja": "Google Analytics を無効にしても個人成績と譜面フィルターは保持されます。別途行う機能利用の日次集計では訪問者やセッションの識別子を使用しません。この設定は日次集計には適用されません。Global Privacy Control と Do Not Track により無効になります。"
+    },
+    "Separately, maimai.party counts broad page views and feature actions without cookies or visitor/session identifiers. Only daily totals are retained, without automatic expiry. Imported data, search text, chart identities, URLs and raw errors are excluded. Google Analytics settings do not control these counts. Global Privacy Control and Do Not Track disable them.": {
+      "zh-Hans": "此外，maimai.party 在不使用 Cookie、访客或会话标识符的情况下统计页面类别浏览量和功能操作。仅保留每日总数，不自动过期。不包含导入数据、搜索文本、谱面标识、网址和原始错误信息。Google Analytics 设置不控制这些统计。Global Privacy Control 和 Do Not Track 可禁用它们。",
+      "ko": "별도로 maimai.party는 쿠키, 방문자 또는 세션 식별자 없이 페이지 분류별 조회 수와 기능 사용을 집계합니다. 일별 합계만 보관하며 자동 만료되지 않습니다. 가져온 데이터, 검색어, 채보 식별 정보, URL, 원본 오류는 제외됩니다. Google Analytics 설정은 이 집계를 제어하지 않습니다. Global Privacy Control과 Do Not Track으로 비활성화할 수 있습니다.",
+      "ja": "maimai.party は別途、Cookie、訪問者識別子、セッション識別子を使わず、ページの大分類ごとの閲覧数と機能の操作回数を集計します。日次の合計のみを保持し、自動削除は行いません。インポートしたデータ、検索語、譜面識別情報、URL、生のエラー情報は対象外です。Google Analytics の設定はこの集計には適用されません。Global Privacy Control と Do Not Track により無効になります。"
+    },
+    "Cloudflare receives connection information to serve this website and its usage endpoint. This does not mean that all network processing is anonymous. See": {
+      "zh-Hans": "Cloudflare 在提供本网站和使用统计端点时会接收连接信息。这并不意味着所有网络处理都是匿名的。请参阅",
+      "ko": "Cloudflare는 웹사이트와 사용 집계 엔드포인트를 제공하기 위해 연결 정보를 받습니다. 모든 네트워크 처리가 익명이라는 뜻은 아닙니다. 참고:",
+      "ja": "Cloudflare はこのサイトと利用集計エンドポイントを提供するために接続情報を受け取ります。すべてのネットワーク処理が匿名であることを意味しません。参照："
     }
   }
 }

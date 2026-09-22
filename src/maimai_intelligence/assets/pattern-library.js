@@ -110,6 +110,6 @@ function show(id,button=null,navigate=true){
   if(window.maimaiChartOverview?.coverage.get(id)){const find=make('button','Find charts with this pattern');find.onclick=()=>{dialog.close();onDiscover(id);};dialog.append(find);}
   close.focus();if(navigate)onNavigate(id);return true;
 }
-dialog.addEventListener('close',()=>{dispose();if(opener?.isConnected)opener.focus();onNavigate(null);});el('pattern-search').oninput=render;el('pattern-scope').onchange=render;
+dialog.addEventListener('close',()=>{dispose();if(opener?.isConnected)opener.focus();onNavigate(null);});el('pattern-search').oninput=()=>{if(el('pattern-search').value.trim())window.maimaiUsage?.emit('search_used','patterns','patterns');render();};el('pattern-scope').onchange=()=>{window.maimaiUsage?.emit('filter_first_used','patterns','pattern');render();};
 window.maimaiPatternLibrary={render,show,stop:()=>dispose(),setNavigation:callback=>{onNavigate=callback;},setDiscovery:callback=>{onDiscover=callback;},has:id=>definitions.some(p=>p.pattern_id===id)};
 })();

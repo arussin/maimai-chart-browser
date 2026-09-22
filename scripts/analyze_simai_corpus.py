@@ -33,6 +33,7 @@ from maimai_analyzer.simai_subset import PARSER_VERSION, parse_simai_subset
 from maimai_analyzer.similarity import POLICY_VERSION, compact_descriptor, distance, query_profiles
 from maimai_intelligence.explorer import build_catalog_html
 from maimai_intelligence.io import atomic_write_text
+from maimai_intelligence.transcription_identity import input_identity as _identity
 
 VERSION = "simai-corpus-1"
 FAILURE_CLASSIFICATION_VERSION = 2
@@ -411,20 +412,6 @@ def _parse_evidence_summary(rows):
         "scope": (
             "Accepted analyzed rows with retained parser audit only; aliases are not chart tags."
         ),
-    }
-
-
-def _identity(row):
-    body_hash = _hash(row.get("body_sha256"))
-    revision = "sha256:" + body_hash if body_hash else "unavailable"
-    identifier = _sha(row["input_id"].encode())[:24]
-    song = _text(row.get("source_song_id", row.get("song_id")), row["input_id"], 240)
-    return {
-        "chart_id": f"evaluation:corpus:{identifier}:{revision[-12:]}",
-        "song_id": "evaluation:corpus-song:" + _sha(song.encode())[:24],
-        "format": _text(row.get("format")),
-        "difficulty": _text(row.get("difficulty")),
-        "revision": revision,
     }
 
 

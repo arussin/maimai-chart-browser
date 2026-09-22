@@ -140,3 +140,35 @@ def progressive_catalog(data, catalog_sha):
     path = f"catalog-index/{digest}.json"
     assets[path] = raw
     return {"path": path, "sha256": digest, "bytes": len(raw)}, assets
+
+
+def shared_catalog(data, catalog_sha, *, legacy=None):
+    """Add a content-addressed projection without retiring any legacy URL.
+
+    A catalog's index binds its shared shards to that catalog's exact identities;
+    identical detail bytes can then be reused across distinct accepted catalogs.
+    """
+    startup, original = legacy if legacy is not None else progressive_catalog(data, catalog_sha)
+    if startup is None:
+        return None, {}
+    import json
+
+    index = json.loads(original[startup["path"]])
+    index["index_schema_version"] = "catalog-index-shared-1"
+    assets = {}
+    for bucket, reference in index["detail_buckets"].items():
+        detail = json.loads(original[reference["path"]])
+        del detail["source_catalog_sha256"]
+        detail["schema_version"] = "chart-details-shared-1"
+        raw = canonical(detail)
+        digest = hashlib.sha256(raw).hexdigest()
+        path = f"chart-details/{digest}.json"
+        assets[path] = raw
+        index["detail_buckets"][bucket] = {"path": path, "sha256": digest, "bytes": len(raw)}
+    raw = canonical(index)
+    if len(raw) > MAX_BYTES:
+        raise ValueError("Shared browsing index exceeds 32 MiB")
+    digest = hashlib.sha256(raw).hexdigest()
+    path = f"catalog-index/{digest}.json"
+    assets[path] = raw
+    return {"path": path, "sha256": digest, "bytes": len(raw)}, assets

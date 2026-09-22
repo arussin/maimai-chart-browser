@@ -33,7 +33,7 @@ class PagePolicy(HTMLParser):
 
 
 class CloudflareAnalyticsTests(unittest.TestCase):
-    def assert_native_policy(self, html, *, report_sources=False):
+    def assert_replacement_policy(self, html, *, report_sources=False):
         page = PagePolicy(html)
         self.assertEqual(len(page.policies), 1)
         policy = page.policies[0]
@@ -42,7 +42,6 @@ class CloudflareAnalyticsTests(unittest.TestCase):
             [
                 "'self'",
                 GA_SCRIPT,
-                CF_ORIGIN,
                 "https://js.stripe.com",
                 "https://*.js.stripe.com",
                 "https://checkout.stripe.com",
@@ -55,13 +54,13 @@ class CloudflareAnalyticsTests(unittest.TestCase):
                 *(["https:"] if report_sources else []),
                 "https://www.google-analytics.com",
                 "https://region1.google-analytics.com",
-                "https://cloudflareinsights.com/cdn-cgi/rum",
                 "https://api.stripe.com",
                 "https://checkout.stripe.com",
                 "https://link.com",
                 "https://*.link.com",
             ],
         )
+        self.assertNotIn(CF_ORIGIN, policy["script-src"])
         self.assertEqual(policy["default-src"], ["'none'"])
         self.assertEqual(policy["object-src"], ["'none'"])
         self.assertEqual(policy["base-uri"], ["'none'"])
@@ -71,9 +70,9 @@ class CloudflareAnalyticsTests(unittest.TestCase):
         self.assertFalse(any("stripe.com" in src for src in page.scripts))
         self.assertIn('name="referrer" content="no-referrer"', html)
 
-    def test_site_template_permits_only_native_collection_without_installing_a_tag(self):
+    def test_site_template_retires_beacon_without_changing_ga_or_checkout(self):
         html = files("maimai_intelligence.assets").joinpath("index.html").read_text("utf-8")
-        self.assert_native_policy(html)
+        self.assert_replacement_policy(html)
 
     def test_generated_lab_and_public_release_preserve_ga_and_redirect_boundaries(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -81,12 +80,12 @@ class CloudflareAnalyticsTests(unittest.TestCase):
             source = write_package(root / "package")
             preview = root / "preview"
             build_lab(source, preview, catalog_version="fixture-v1")
-            self.assert_native_policy(
+            self.assert_replacement_policy(
                 (preview / "index.html").read_text("utf-8"), report_sources=True
             )
             published = root / "public"
             build_public_release(preview, published)
-            self.assert_native_policy(
+            self.assert_replacement_policy(
                 (published / "index.html").read_text("utf-8"), report_sources=True
             )
             # Asset builds normalize platform newlines; compare complete source text.

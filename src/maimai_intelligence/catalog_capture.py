@@ -1,11 +1,14 @@
 """Bounded public-source captures shared by repeatable catalog updates."""
 
 import hashlib
+import ipaddress
 import re
+import socket
 import urllib.error
 import urllib.request
 from datetime import UTC, datetime
 from pathlib import Path
+from urllib.parse import urlsplit
 
 from .mai_notes import NoRedirect
 from .snapshots import atomic_json, read_json
@@ -15,7 +18,11 @@ ALLOWED = re.compile(
     r"|gamerch\.com/maimai/(?:[0-9]{1,9})?"
     r"|w\.atwiki\.jp/simai/pages/[0-9]{1,6}\.html"
     r"|dp4p6x0xfi5o9\.cloudfront\.net/maimai/data\.json"
-    r"|raw\.githubusercontent\.com/zvuc/otoge-db/main/maimai/data/music-ex\.json)"
+    r"|raw\.githubusercontent\.com/zvuc/otoge-db/main/maimai/data/music-ex\.json"
+    r"|api\.github\.com/repos/zkldi/Tachi/commits\?per_page=1"
+    r"|raw\.githubusercontent\.com/zkldi/Tachi/[a-f0-9]{40}/db/seeds/(?:songs|charts)-maimaidx\.json"
+    r"|(?:maimaidx\.jp|maimaidx-eng\.com)/maimai-mobile/img/Music/[A-Za-z0-9_-]+\.(?:png|jpg|jpeg|webp)"
+    r"|cdn\.gamerch\.com/[A-Za-z0-9_./-]+\.(?:png|jpg|jpeg|webp))"
 )
 MAX_CAPTURE_BYTES = 16 * 1024 * 1024
 
@@ -23,6 +30,12 @@ MAX_CAPTURE_BYTES = 16 * 1024 * 1024
 def fetch_public(url, headers):
     if not ALLOWED.fullmatch(url):
         raise ValueError("Source URL is outside the catalog provider allowlist")
+    parsed = urlsplit(url)
+    if ".." in parsed.path.split("/"):
+        raise ValueError("Invalid public source path")
+    addresses = socket.getaddrinfo(parsed.hostname, 443, type=socket.SOCK_STREAM)
+    if not addresses or any(not ipaddress.ip_address(row[4][0]).is_global for row in addresses):
+        raise ValueError("Public source resolved to a private or local address")
     request = urllib.request.Request(  # noqa: S310 -- fixed public source allowlist.
         url,
         headers={"User-Agent": "maimai.party catalog updater/1", "Accept": "*/*", **headers},
@@ -48,9 +61,16 @@ class CaptureStore:
         self.root = Path(root)
         self.offline = offline
         self.fetcher = fetcher
-        self.replay = read_json(replay)["captures"] if replay else None
+        replay_record = read_json(replay) if replay else None
+        self.replay = replay_record["captures"] if replay_record else None
+        self.recorded_failures = replay_record.get("failures", {}) if replay_record else {}
+        self.recorded_failure_details = (
+            replay_record.get("failure_details", {}) if replay_record else {}
+        )
         self.captures = {}
         self.failures = {}
+        self.failure_details = {}
+        self.wiki_requests = set()
         self.memo = {}
 
     def _read(self, record):
@@ -67,10 +87,18 @@ class CaptureStore:
     def get(self, url):
         if not ALLOWED.fullmatch(url):
             raise ValueError("Source URL is outside the catalog provider allowlist")
+        if url in self.recorded_failures:
+            self.failures[url] = self.recorded_failures[url]
+            self.failure_details[url] = self.recorded_failure_details.get(url, {})
+            raise ValueError(self.failures[url])
         if url in self.failures:
             raise ValueError(self.failures[url])
         if url in self.memo:
             return self.memo[url]
+        if re.fullmatch(r"https://gamerch\.com/maimai/[1-9][0-9]{0,8}", url):
+            if len(self.wiki_requests) >= 300:
+                raise ValueError("Shared Wiki page budget reached; work deferred")
+            self.wiki_requests.add(url)
         pointer = self.root / "urls" / (hashlib.sha256(url.encode()).hexdigest() + ".json")
         try:
             previous = read_json(pointer) if pointer.exists() else None
@@ -125,6 +153,12 @@ class CaptureStore:
             return raw, record
         except (OSError, ValueError, KeyError, TypeError) as error:
             self.failures[url] = f"{type(error).__name__}: {error}"
+            self.failure_details[url] = {
+                "status": getattr(error, "code", None),
+                "retry_after": getattr(error, "headers", {}).get("Retry-After")
+                if getattr(error, "headers", None)
+                else None,
+            }
             raise ValueError(self.failures[url]) from error
 
     def receipt(self):
@@ -132,4 +166,5 @@ class CaptureStore:
             "version": "catalog-source-captures-1",
             "captures": self.captures,
             "failures": self.failures,
+            "failure_details": self.failure_details,
         }

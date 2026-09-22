@@ -24,13 +24,13 @@ function mount(overview,onChange){
     const detail=make('small',input.disabled?'No supported chart coverage':(overview.frequency.get(id)||0)+' charts');detail.id='pattern-filter-option-help-'+index;
     detail.setAttribute('aria-hidden','true');input.setAttribute('aria-describedby',detail.id);
     text.append(name,detail);label.append(input,text);
-    input.onchange=()=>{if(input.checked)selected.add(id);else selected.delete(id);update();onChange();};
+    input.onchange=()=>{window.maimaiUsage?.emit('filter_first_used',undefined,'pattern');if(input.checked)selected.add(id);else selected.delete(id);update();onChange();};
     const aliases=(definition?.aliases||[]).map(alias=>typeof alias==='string'?alias:alias.text);
     rows.push({id,input,label,text:normalize([overview.name(id),id,...aliases].map(i18n.searchTerms).join(' '))});
     el('pattern-filter-options').append(label);
   }
   const visibleInputs=()=>rows.filter(row=>!row.label.hidden&&!row.input.disabled).map(row=>row.input);
-  search.oninput=update;
+  search.oninput=()=>{if(search.value.trim())window.maimaiUsage?.emit('search_used',undefined,'charts');update();};
   menu.addEventListener('keydown',event=>{
     if(event.key==='Escape'){event.preventDefault();event.stopPropagation();menu.open=false;summary.focus();return;}
     if(!['ArrowDown','ArrowUp'].includes(event.key))return;

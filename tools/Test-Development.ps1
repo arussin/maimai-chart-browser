@@ -1,6 +1,6 @@
-param([ValidateSet('python','browser','worker','prepare')][string]$Check='python', [string]$TestFile='', [string]$BrowserProject='')
+param([ValidateSet('python','browser','worker','prepare')][string]$Check='python', [string]$TestFile='', [string]$BrowserProject='', [switch]$Offline)
 $ErrorActionPreference='Stop'
-. (Join-Path $PSScriptRoot 'Use-DevelopmentEnvironment.ps1') -Install
+. (Join-Path $PSScriptRoot 'Use-DevelopmentEnvironment.ps1') -Install -Offline:$Offline
 $workspace=Join-Path $RegistryCache ('workspaces\'+[DateTime]::UtcNow.ToString('yyyyMMddTHHmmssfff')+'-'+[guid]::NewGuid().ToString('N').Substring(0,8))
 if(-not [IO.Path]::GetFullPath($workspace).StartsWith($RegistryCache+'\',[StringComparison]::OrdinalIgnoreCase)){throw 'Workspace path validation failed'}
 if((Get-PSDrive C).Free -lt 31GB){throw 'Leave at least 30 GiB free before setup'}
@@ -9,6 +9,10 @@ New-Item -ItemType Directory -Path $workspace|Out-Null
 $copyLog='/LOG:'+(Join-Path $workspace 'source-copy.log')
 & robocopy.exe $RegistrySource $workspace /E /COPY:DAT /DCOPY:DAT /XJ /R:0 /W:0 /NP /NFL /NDL /XD .git .venv .ruff_cache .pytest_cache __pycache__ node_modules .wrangler output retained-results /XF .env .git $copyLog|Out-Null
 if($LASTEXITCODE -ge 8){throw 'Source copy failed'}
+# Native D1/SQLite paths must stay short; all temporary files still stay in DevCache.
+$env:TEMP=Join-Path $RegistryCache 'temp'
+$env:TMP=$env:TEMP
+New-Item -ItemType Directory -Path $env:TEMP -Force|Out-Null
 $env:PYTHONPATH=(Join-Path $workspace 'src')+[IO.Path]::PathSeparator+$workspace
 $env:MAIMAI_BROWSER_OUTPUT=Join-Path $workspace 'output\browser-tests'
 $env:WRANGLER_SEND_METRICS='false'

@@ -94,3 +94,9 @@ Raw provider pages, chart text, score fields and player names never enter public
 assets. About and THIRD_PARTY_NOTICES credit every participating source and its
 actual role. Source captures and analysis are reproducible local build inputs;
 no browser background requests to the providers are added.
+
+## Identity and artwork
+
+The same preparation stage reconciles immutable public Kamaitachi metadata and
+maintains durable title/artwork enrichment. See [sustainable coverage](SUSTAINABLE_COVERAGE.md)
+for matching, regional migration, the shared Wiki budget, retries and exact replay.

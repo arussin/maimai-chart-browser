@@ -223,6 +223,10 @@ class MaishiftPilotArtifactTests(unittest.TestCase):
             browser = output / "pilot/maishift/browser"
             browser_html = (browser / "index.html").read_text("utf-8")
             self.assertIn('src="maishift-browser-pilot.js?', browser_html)
+            for script in re.findall(r'<script[^>]+src="([^"?]+)', browser_html):
+                self.assertTrue((browser / script).is_file(), script)
+            self.assertIn('src="player-session.js?', browser_html)
+            self.assertNotIn('src="usage.js', browser_html)
             self.assertNotIn('src="analytics.js', browser_html)
             self.assertNotIn('src="feature-announcements.js', browser_html)
             self.assertNotIn('src="support-', browser_html)

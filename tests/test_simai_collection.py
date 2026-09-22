@@ -3,7 +3,7 @@
 import unittest
 from unittest.mock import patch
 
-from scripts import simai_collection
+from maimai_intelligence import transcription_html as simai_collection
 from scripts.simai_collection import (
     MAX_DEPTH,
     CollectionInputError,

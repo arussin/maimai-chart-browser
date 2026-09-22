@@ -4,14 +4,16 @@ const i18n=window.maimaiI18n||{text:(node,value)=>node.textContent=value,attribu
 if(window.maimaiPersonal)return;
 const core=window.maimaiPlayerData,sources=window.maimaiPlayerSources,storage=window.maimaiPlayerStorage,make=(tag,text,cls)=>{const n=document.createElement(tag);if(text!==undefined)i18n.text(n, text);if(cls)n.className=cls;return n;};
 const storageKey=globalThis.maimaiPlayerContext?.key||(name=>name);
+const session=window.maimaiPlayerSession,gate=session.operationGate();
+const usage=(event,detail='',failure='')=>window.maimaiUsage?.emit(event,undefined,detail,failure);
 const protocol='maimai-player-handoff/1',grades=['D','C','B','BB','BBB','A','AA','AAA','S','S+','SS','SS+','SSS','SSS+'];
 let active=null,remembered=false,storedRevision=null,visible=true,pbs=new Map(),pbDates=new Map(),catalog=null,mapping=null,reverse=new Map(),lastTimes=new Map(),busy=false;
 let source=null,sourceRating=null,lastImportedAt=null,storeToken=null,generation=0,pending=null,refreshing=false,refreshText='',cancelConsent=null;
 let maishiftMapping=null,maishiftReverse=new Map(),catalogByID=new Map();
 let channel;try{channel=new BroadcastChannel(storageKey('maimai-player-events'));}catch{}
 function notify(kind,token=storeToken){const value={kind,epoch:token?.epoch,version:token?.version};channel?.postMessage(value);try{localStorage.setItem(storageKey('maimai-player-event'),JSON.stringify({...value,id:crypto.randomUUID()}));}catch{}}
-function invalidate(){generation++;busy=false;pending?.abort();pending=null;refreshing=false;cancelConsent?.();cancelConsent=null;if(typeof refreshButton!=='undefined')refreshButton.disabled=false;}
-function assertCurrent(expected){if(expected!==generation)throw new DOMException('Cancelled','AbortError');}
+function invalidate(){generation=gate.invalidate();busy=false;pending?.abort();pending=null;refreshing=false;cancelConsent?.();cancelConsent=null;if(typeof refreshButton!=='undefined')refreshButton.disabled=false;}
+function assertCurrent(expected){gate.assert(expected);}
 async function beginImport(){invalidate();busy=true;const expected=generation;await ready;if(storeToken){storeToken=await storage.begin(storeToken);notify('invalidate');}assertCurrent(expected);return expected;}
 try{visible=sessionStorage.getItem(storageKey('maimai-generic'))!=='1';}catch{}
 const state={recorded:'',grade:new Set(),min:'',max:'',rateMin:'',rateMax:'',lamp:'',sync:''};
@@ -26,7 +28,7 @@ const menu=document.getElementById('settings-actions');document.getElementById('
 function menuItem(id,label,run){const b=make('button',label);b.id=id;b.type='button';b.setAttribute('role','menuitem');b.tabIndex=-1;b.onclick=()=>{dialogTrigger=document.getElementById('settings-toggle');window.maimaiSettings?.close();run();};menu?.prepend(b);return b;}
 clearButton=menuItem('player-clear','Clear player data',()=>clearPlayer());
 forgetButton=menuItem('player-forget','Forget remembered player data',()=>forget());
-hideButton=menuItem('player-toggle','Hide player data',()=>{visible=!visible;saveVisibility();changed();});
+hideButton=menuItem('player-toggle','Hide player data',()=>{visible=!visible;saveVisibility();changed();usage('data_action',visible?'show':'hide');});
 const refreshButton=menuItem('player-refresh','Refresh now',()=>refresh(true));refreshButton.hidden=true;
 const importButton=menuItem('player-import','Import player data',()=>{if(!busy)selectSource();});
 const header=document.querySelector('.catalog-heading-actions');
@@ -36,8 +38,8 @@ if(header){
   launch.append(make('span','Import player data'));launch.onclick=()=>{if(!busy){dialogTrigger=launch;window.maimaiSettings?.close();selectSource();}};
   header.append(launch);
 }
-function helpLink(section,label){const link=external('?', '');link.className='player-source-help';link.dataset.importHelp=section;i18n.attribute(link,'aria-label',label);i18n.attribute(link,'title',label);updateHelpLink(link);return link;}
-function updateHelpLink(link){link.href='player-import-help.'+(window.maimaiI18n?.locale||'en')+'.html#'+link.dataset.importHelp;}
+function helpLink(section,label){const link=external('?', '');link.className='player-source-help';link.dataset.importHelp=section;link.onclick=()=>usage('resource_opened','import_help');i18n.attribute(link,'aria-label',label);i18n.attribute(link,'title',label);updateHelpLink(link);return link;}
+function updateHelpLink(link){const path='player-import-help.'+(window.maimaiI18n?.locale||'en')+'.html#'+link.dataset.importHelp;link.href=window.maimaiSongPages?.asset(path)??path;}
 window.addEventListener('maimai-language-change',()=>document.querySelectorAll('[data-import-help]').forEach(updateHelpLink));
 function saveVisibility(){try{if(visible)sessionStorage.removeItem(storageKey('maimai-generic'));else sessionStorage.setItem(storageKey('maimai-generic'),'1');}catch{}}
 function clearTab(){try{sessionStorage.removeItem(storageKey('maimai-player-session'));}catch{}}
@@ -112,21 +114,21 @@ async function commit(data,remember,{connection=null,expected=generation,automat
   }
   active=next;lastImportedAt=importedAt;sourceRating=connection?.type==='maishift'?connection.profileRating??null:null;remembered=remember;source=remember?connection:null;refreshText='';if(!automatic){visible=true;saveVisibility();}changed();
 }
-async function forget(){invalidate();busy=false;try{storeToken=await storage.forget();storedRevision=null;clearTab();remembered=false;source=null;refreshText='';notify('forgotten');changed();message('Player data forgotten','The saved profile and connection were removed. You can keep viewing these scores in this tab; automatic refresh is off.',{success:true});}catch(e){message('Could not forget data',e.message);}}
+async function forget(){invalidate();busy=false;try{storeToken=await storage.forget();storedRevision=null;clearTab();remembered=false;source=null;refreshText='';notify('forgotten');changed();usage('data_action','forget');message('Player data forgotten','The saved profile and connection were removed. You can keep viewing these scores in this tab; automatic refresh is off.',{success:true});}catch(e){message('Could not forget data',e.message);}}
 function clearCurrent(){clearTab();active=null;sourceRating=null;lastImportedAt=null;remembered=false;source=null;refreshText='';}
 async function clearPlayer(){
   invalidate();const expected=generation;busy=true;
-  try{await ready;assertCurrent(expected);const cleared=await storage.clear();notify('cleared',cleared);if((storeToken?.version??-1)>cleared.version)return;invalidate();storeToken=cleared;storedRevision=null;clearCurrent();changed();message('Player data cleared','Imported scores and the saved connection were removed from this browser.',{success:true});}
+  try{await ready;assertCurrent(expected);const cleared=await storage.clear();notify('cleared',cleared);if((storeToken?.version??-1)>cleared.version)return;invalidate();storeToken=cleared;storedRevision=null;clearCurrent();changed();usage('data_action','clear');message('Player data cleared','Imported scores and the saved connection were removed from this browser.',{success:true});}
   catch(e){if(expected===generation&&e.name!=='AbortError')message('Could not clear player data',e.message);}
   finally{if(expected===generation)busy=false;}
 }
 const ready=(async()=>{let failed=false,saved;try{const state=await storage.read();saved=state.active;storeToken=state.token;storedRevision=storeToken.revision;}catch{failed=true;}try{let temporary=sessionStorage.getItem(storageKey('maimai-player-session'));if(temporary){if(temporary.length>Math.ceil(core.MAX_COMPRESSED*4/3)+256)throw new Error('Oversized temporary data');const entry=temporary.startsWith('{')?JSON.parse(temporary):{epoch:0,bytes:temporary};if(entry.epoch!==(storeToken?.epoch??null)){clearTab();temporary=null;}else{active=await core.reconcile(await core.decode(Uint8Array.from(atob(entry.bytes),c=>c.charCodeAt(0))));lastImportedAt=importTime(entry.lastImportedAt);if(active.player.provider==='maishift'&&Number.isSafeInteger(entry.profileRating)&&entry.profileRating>=0&&entry.profileRating<=1000000)sourceRating=entry.profileRating;}}if(!temporary&&saved){active=await core.reconcile(await core.decode(saved.bytes));remembered=true;try{source=sources.validateSource(saved.source??null,active.player.key);sourceRating=source?.type==='maishift'?source.profileRating??null:null;}catch{source=null;}lastImportedAt=importTime(saved.lastImportedAt)??importTime(source?.lastSuccess);}}catch{failed=true;}changed();if(failed&&!active){status.hidden=false;i18n.text(status, 'Saved data could not be loaded. You can still import a player file for this tab.');}})();
-input.onchange=async()=>{const file=input.files[0];input.value='';if(!file||busy)return;busy=true;let expected;try{expected=await beginImport();if(file.size>core.MAX_COMPRESSED)throw new Error('Player file exceeds 32 MiB.');const data=await core.decode(await file.arrayBuffer());assertCurrent(expected);const choice=await ask(core.offer(await core.reconcile(data)),{file:true});if(choice.accept)await commit(data,choice.remember,{expected});}catch(e){if(e.name!=='AbortError')message('Player data could not be imported',e.message);}finally{if(expected===generation||expected===undefined)busy=false;}};
+input.onchange=async()=>{const file=input.files[0];input.value='';if(!file||busy)return;usage('import_started','file');busy=true;let expected,stage='storage';try{expected=await beginImport();stage='invalid';if(file.size>core.MAX_COMPRESSED)throw new Error('Player file exceeds 32 MiB.');const data=await core.decode(await file.arrayBuffer());assertCurrent(expected);const choice=await ask(core.offer(await core.reconcile(data)),{file:true});if(choice.accept){stage='storage';await commit(data,choice.remember,{expected});usage('import_completed','file');}else usage('import_cancelled','file');}catch(e){if(e.name!=='AbortError'){usage('import_failed','file',stage);message('Player data could not be imported',e.message);}}finally{if(expected===generation||expected===undefined)busy=false;}};
 
-function external(label,url){const link=make('a',label);link.href=url;link.target='_blank';link.rel='noopener noreferrer';link.referrerPolicy='no-referrer';return link;}
+function external(label,url){const link=make('a',label);link.href=url;link.target='_blank';link.rel='noopener noreferrer';link.referrerPolicy='no-referrer';const resource=label==='Maishift'?'maishift':label==='Open report'?'session_report':null;if(resource)link.addEventListener('click',()=>usage('resource_opened',resource));return link;}
 function unmatchedPBs(data){const ids=new Set([...reverse.values()].flat());return [...core.current(data).pbs.keys()].filter(id=>data.player.provider==='maishift'?!maishiftMatch(data,id):data.player.provider!=='kamaitachi'||!ids.has(id)).length;}
 async function selectSource(){
-  await ready;
+  usage('import_opened');await ready;
   invalidate();dialog.replaceChildren();dialog.classList.remove('player-message');dialog.removeAttribute('aria-describedby');
   const heading=make('h2','Import player data');heading.id='player-dialog-title';
   const group=make('fieldset',undefined,'player-source-options');group.append(make('legend','Choose a source'));
@@ -136,7 +138,7 @@ async function selectSource(){
   let selected=source?.type||'file',rememberChoice=true;
   for(const [value,label]of [['file','Upload a file'],['report','Hosted Session Report'],['maishift','Maishift']]){
     const row=make('label'),radio=make('input'),icon=make('img');radio.type='radio';radio.name='player-source';radio.value=value;radio.checked=value===selected;radio.onchange=()=>{selected=value;render();};
-    icon.alt='';icon.width=22;icon.height=22;icon.setAttribute('aria-hidden','true');icon.src=value==='maishift'?'maishift-favicon.ico':document.querySelector('link[rel=icon][sizes="32x32"]')?.href||document.querySelector('link[rel=icon]')?.href||'';
+    icon.alt='';icon.width=22;icon.height=22;icon.setAttribute('aria-hidden','true');icon.src=value==='maishift'?(window.maimaiSongPages?.asset('maishift-favicon.ico')??'maishift-favicon.ico'):document.querySelector('link[rel=icon][sizes="32x32"]')?.href||document.querySelector('link[rel=icon]')?.href||'';
     row.append(radio,icon,make('span',label));(value==='maishift'?maishift:reportRows).append(row);
   }
   maishift.append(helpLink('maishift','About Maishift imports'));
@@ -161,13 +163,13 @@ async function selectSource(){
 async function importReport(value,rememberChoice){
   if(busy)return;let parsed;try{parsed=typeof value==='object'?{...value,type:'maishift'}:sources.reportURL(value);}catch(e){message('Player data could not be imported',e.message);return;}
   if(parsed.type!=='maishift'&&!parsed.manifest){reportRecovery(parsed.url);return;}
-  busy=true;let expected,reading=false;try{
-    expected=await beginImport();pending=new AbortController();message('Reading public player data','You can cancel this request.');
-    const cancel=()=>{if(expected===generation)invalidate();},close=dialog.querySelector('button');close.addEventListener('click',cancel);dialog.addEventListener('cancel',cancel);dialog.addEventListener('close',cancel);
+  const method=parsed.type==='maishift'?'maishift':'report';usage('import_started',method);busy=true;let expected,reading=false,cancelled=false,stage='storage';try{
+    expected=await beginImport();stage='invalid';pending=new AbortController();message('Reading public player data','You can cancel this request.');
+    const cancel=()=>{if(expected===generation){if(!cancelled){cancelled=true;usage('import_cancelled',method);}invalidate();}},close=dialog.querySelector('button');close.addEventListener('click',cancel);dialog.addEventListener('cancel',cancel);dialog.addEventListener('close',cancel);
     let result;try{reading=true;result=await sources.readSource(parsed.type==='maishift'?parsed:{type:'report',url:parsed.manifest},{signal:pending.signal});reading=false;}finally{close.removeEventListener('click',cancel);dialog.removeEventListener('cancel',cancel);dialog.removeEventListener('close',cancel);}
     assertCurrent(expected);const choice=await ask(core.offer(await core.reconcile(result.data)),{file:true,connection:result.source,rememberDefault:rememberChoice,unmatched:unmatchedPBs(result.data)});
-    if(choice.accept)await commit(result.data,choice.remember,{connection:result.source,expected});
-  }catch(e){if(e.name!=='AbortError'){if(reading&&parsed.type!=='maishift')reportRecovery(parsed.url);else message('Player data could not be imported',e.message);}}
+    if(choice.accept){stage='storage';await commit(result.data,choice.remember,{connection:result.source,expected});usage('import_completed',method);}else usage('import_cancelled',method);
+  }catch(e){if(e.name!=='AbortError'){usage('import_failed',method,reading?'unavailable':stage);if(reading&&parsed.type!=='maishift')reportRecovery(parsed.url);else message('Player data could not be imported',e.message);}}
   finally{if(expected===generation||expected===undefined){busy=false;pending=null;}}
 }
 function reportRecovery(url){message('Open your Session Report','The public source could not be read. Open the report to use its import or download controls.');const link=external('Open report',url);link.tabIndex=0;dialog.querySelector('.player-message-actions').prepend(link);}
@@ -224,30 +226,25 @@ if(nonce&&/^[a-f0-9-]{36}$/.test(nonce)&&window.opener){
   const opener=window.opener;let connected=false,tries=0;const announce=()=>{if(!connected&&tries++<40)opener.postMessage({protocol,type:'ready',nonce},'*');else clearInterval(timer);};const timer=setInterval(announce,500);
   window.addEventListener('message',async function receive(event){if((event.origin!=='null'&&!/^https?:\/\//.test(event.origin))||connected||event.source!==opener||event.data?.protocol!==protocol||event.data?.type!=='offer'||event.data?.nonce!==nonce||!event.ports[0])return;
     connected=true;clearInterval(timer);window.removeEventListener('message',receive);const port=event.ports[0];port.start();let ownsImport=false;
-    let expected;try{await ready;if(busy)throw new Error('Another import is in progress. Please try again.');busy=true;ownsImport=true;expected=await beginImport();const offer=core.validateOffer(event.data.offer);
+    let expected,measured=false,stage='invalid';try{await ready;if(busy)throw new Error('Another import is in progress. Please try again.');busy=true;ownsImport=true;expected=await beginImport();const offer=core.validateOffer(event.data.offer);
       if(active&&!core.needsUpdate(active,offer)){visible=true;saveVisibility();changed();port.postMessage({type:'reused'});port.close();busy=false;return;}
-      const choice=await ask(offer,{stale:event.data.stale===true});if(!choice.accept){visible=false;saveVisibility();changed();port.postMessage({type:'declined'});port.close();busy=false;return;}
-      const bytes=await new Promise((resolve,reject)=>{const timeout=setTimeout(()=>reject(new Error('The transfer was interrupted. Download the player file from the report and import it here.')),45000);port.onmessage=e=>{if(e.data?.type==='data'&&e.data.bytes instanceof ArrayBuffer){clearTimeout(timeout);resolve(e.data.bytes);}else if(e.data?.type==='error'){clearTimeout(timeout);reject(new Error('The latest data could not be transferred. Please try again.'));}};port.postMessage({type:'accept'});});
-      const data=await core.decode(bytes);if(!Object.entries(core.offer(data)).every(([key,value])=>key==='profile'&&!Object.hasOwn(offer,key)||core.canonical(value)===core.canonical(offer[key])))throw new Error('The report sent a different dataset from the one offered.');await commit(data,choice.remember,{expected});port.postMessage({type:'imported'});
-    }catch(e){port.postMessage({type:'error'});if(e.name!=='AbortError')message('Player data could not be imported',e.message);}finally{port.close();handoffPending=false;if(ownsImport&&(expected===generation||expected===undefined))busy=false;}
+      measured=true;usage('import_opened');usage('import_started','report');const choice=await ask(offer,{stale:event.data.stale===true});if(!choice.accept){usage('import_cancelled','report');visible=false;saveVisibility();changed();port.postMessage({type:'declined'});port.close();busy=false;return;}
+      stage='unavailable';const bytes=await new Promise((resolve,reject)=>{const timeout=setTimeout(()=>reject(new Error('The transfer was interrupted. Download the player file from the report and import it here.')),45000);port.onmessage=e=>{if(e.data?.type==='data'&&e.data.bytes instanceof ArrayBuffer){clearTimeout(timeout);resolve(e.data.bytes);}else if(e.data?.type==='error'){clearTimeout(timeout);reject(new Error('The latest data could not be transferred. Please try again.'));}};port.postMessage({type:'accept'});});
+      stage='invalid';const data=await core.decode(bytes);if(!Object.entries(core.offer(data)).every(([key,value])=>key==='profile'&&!Object.hasOwn(offer,key)||core.canonical(value)===core.canonical(offer[key])))throw new Error('The report sent a different dataset from the one offered.');stage='storage';await commit(data,choice.remember,{expected});usage('import_completed','report');port.postMessage({type:'imported'});
+    }catch(e){port.postMessage({type:'error'});if(e.name!=='AbortError'){if(measured)usage('import_failed','report',stage);message('Player data could not be imported',e.message);}}finally{port.close();handoffPending=false;if(ownsImport&&(expected===generation||expected===undefined))busy=false;}
   });announce();
 }
 
-function configure(data,providerMapping){catalog=data;mapping=providerMapping||data.provider_mapping||null;reverse=new Map();const byId=new Map(data.catalog.map(c=>[c.chart_id,c]));
-  if(['provider-mapping-1','provider-mapping-2'].includes(mapping?.schema_version))for(const [cid,row]of Object.entries(mapping.charts||{})){const c=byId.get(row.chart_id);if(c&&(mapping.schema_version==='provider-mapping-1'?c.source_hash===row.source_hash:['reviewed','legacy_published'].includes(row.acceptance_basis)&&c.format===row.format&&c.difficulty===row.difficulty)){if(!reverse.has(c.chart_id))reverse.set(c.chart_id,[]);reverse.get(c.chart_id).push(cid);}}
-  catalogByID=byId;maishiftReverse=new Map();maishiftMapping=data.maishift_mapping;
-  if(maishiftMapping?.schema_version==='maishift-mapping-1'&&maishiftMapping.provider==='maishift'&&maishiftMapping.game==='maimaidx')for(const [id,row]of Object.entries(maishiftMapping.charts||{})){
-    const c=byId.get(row.chart_id),region=/^maishift:(intl|jp):[1-9][0-9]{0,15}$/.exec(id)?.[1];
-    if(!region||!c||row.acceptance_basis!=='reviewed'||!['title','artist','format','difficulty'].every(k=>typeof row.expected_source?.[k]==='string')||!['format','difficulty'].every(k=>c[k]===row.expected_source[k]))continue;
-    const key=region+':'+c.chart_id;
-    // Multiple IDs claiming one regional chart invalidate that target.
-    maishiftReverse.set(key,maishiftReverse.has(key)?null:id);
-  }
+function configure(data,providerMapping){
+  catalog=data;mapping=providerMapping||data.provider_mapping||null;
+  const index=session.providerIndex(data,mapping);
+  reverse=index.kamaitachi;catalogByID=index.byId;maishiftReverse=index.maishift;maishiftMapping=data.maishift_mapping;
   changed();
 }
 function maishiftMatch(data,id){const row=maishiftMapping?.charts?.[id],c=catalogByID.get(row?.chart_id);return maishiftReverse.get(data.player.key.split(':')[2]+':'+c?.chart_id)===id&&window.maimaiPlayerMaishift.matchChart(data.player,data.charts[id],row,c);}
 function providerIDs(c){if(active?.player.provider==='kamaitachi')return reverse.get(c.chart_id)||[];if(active?.player.provider!=='maishift')return [];const id=maishiftReverse.get(active.player.key.split(':')[2]+':'+c.chart_id);return id&&maishiftMatch(active,id)?[id]:[];}
-function providerID(c){const ids=providerIDs(c);return ids.filter(id=>pbs.has(id)).sort((a,b)=>(pbDates.get(b)||0)-(pbDates.get(a)||0)||Number(!!mapping?.charts?.[a]?.aliasOf)-Number(!!mapping?.charts?.[b]?.aliasOf)||a.localeCompare(b))[0]||ids[0]||null;}
+function providerID(c){return session.preferredProviderID(providerIDs(c),pbs,pbDates,mapping);}
+
 function displayRecord(r){return r&&active?.player.provider==='maishift'&&!r.grade?{...r,grade:window.maimaiPlayerMaishift.grade(r.achievement)}:r;}
 function record(c){return visible&&active?displayRecord(pbs.get(providerID(c)))||null:null;}
 function lastPlayed(c){if(!visible||!active||active.player.provider!=='kamaitachi')return null;const times=(reverse.get(c.chart_id)||[]).map(id=>lastTimes.get(id)).filter(v=>v!=null);return times.length?Math.max(...times):null;}
@@ -287,10 +284,10 @@ function details(c){const group=window.maimaiChartOverview.section('player','You
 
 function matches(c){if(!active||!visible)return true;const r=record(c);if(state.recorded==='yes'&&!r||state.recorded==='no'&&r)return false;if(state.grade.size&&!state.grade.has(r?.grade))return false;if(state.lamp&&lampKey(r?.lamp)!==state.lamp||state.sync&&syncKey(r?.sync)!==state.sync)return false;for(const [key,value,minimum]of [['min',r?.achievement==null?null:r.achievement/10000,true],['max',r?.achievement==null?null:r.achievement/10000,false],['rateMin',r?.rate,true],['rateMax',r?.rate,false]])if(state[key]!==''&&(value==null||(minimum?value<Number(state[key]):value>Number(state[key]))))return false;return true;}
 function controls(parent,onchange){const root=make('fieldset',undefined,'player-filters'),badgeSelectors=[];root.dataset.personalControls='';
-  const legend=make('legend'),toggle=make('button',undefined,'player-filter-toggle'),title=make('span','Your results'),count=make('small','','player-filter-count'),chevron=make('span','','player-filter-chevron');toggle.type='button';toggle.append(title,count,chevron);chevron.setAttribute('aria-hidden','true');toggle.setAttribute('aria-controls','personal-filter-content');legend.append(toggle);root.append(legend);
+  const legend=make('legend'),toggle=make('button',undefined,'player-filter-toggle'),title=make('span','Your results'),count=make('small','','player-filter-count'),chevron=make('span','','player-filter-chevron');toggle.type='button';toggle.id='player-filters-toggle';toggle.append(title,count,chevron);chevron.setAttribute('aria-hidden','true');toggle.setAttribute('aria-controls','personal-filter-content');legend.append(toggle);root.append(legend);
   const scope=make('div',undefined,'format-switch');scope.classList.add('personal-scope');scope.setAttribute('role','group');i18n.attribute(scope, 'aria-label', 'Personal chart scope');
   function scopeSelection(){scope.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(state.recorded===b.dataset.recorded)));}
-  for(const [value,label]of [['','All charts'],['yes','My PBs'],['no','No PB yet']]){const b=make('button',label);b.type='button';b.dataset.recorded=value;b.onclick=()=>{if(value&&(!active||!visible)){importButton.click();return;}state.recorded=value;scopeSelection();change();};scope.append(b);}scopeSelection();document.getElementById('personal-scope-slot').append(scope);
+  for(const [value,label]of [['','All charts'],['yes','My PBs'],['no','No PB yet']]){const b=make('button',label);b.type='button';b.dataset.recorded=value;b.onclick=()=>{if(value&&(!active||!visible)){importButton.click();return;}state.recorded=value;scopeSelection();change();usage('filter_first_used','personal_scope');};scope.append(b);}scopeSelection();document.getElementById('personal-scope-slot').append(scope);
   const reveal=make('div',undefined,'player-filter-reveal'),body=make('div',undefined,'player-filter-body'),fields=make('div',undefined,'player-filter-fields');reveal.id='personal-filter-content';body.append(fields);reveal.append(body);root.append(reveal);window.maimaiFilterDisclosure(root,toggle,body,'maimai-personal-filters-collapsed');
   function summary(){
     const n=Object.values(state).filter(v=>v instanceof Set?v.size>0:v!=='').length;i18n.text(count,n?`${n} active`:'');empty.hidden=n>0;clear.hidden=n===0;chips.replaceChildren();
@@ -308,7 +305,7 @@ function controls(parent,onchange){const root=make('fieldset',undefined,'player-
   for(const [key,label]of [['rating','Your RT'],['achievement','Achievement'],['grade','Grade'],['lastPlayed','Last recorded play']]){const button=make('button',label);button.type='button';button.dataset.sortKey=key;if(key==='rating')i18n.attribute(button, 'title', 'Sort by your chart rating (RT)');sorting.append(button);}fields.append(sorting);
   const gradeGroup=make('div',undefined,'player-grade-options');gradeGroup.setAttribute('role','group');i18n.attribute(gradeGroup, 'aria-label', 'Filter by grade');gradeGroup.append(make('span','Grade'));i18n.attribute(gradeGroup, 'title', 'Select one or more grades');
   function gradeSelection(){gradeGroup.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.grade?state.grade.has(b.dataset.grade):state.grade.size===0)));}
-  for(const grade of ['',...grades.slice().reverse()]){const b=make('button');b.type='button';b.dataset.grade=grade;i18n.attribute(b, 'aria-label', grade||'Any grade');b.append(grade?gradeNode(grade):make('span','Any'));b.onclick=()=>{if(!grade)state.grade.clear();else if(state.grade.has(grade))state.grade.delete(grade);else state.grade.add(grade);gradeSelection();change();};gradeGroup.append(b);}gradeSelection();fields.append(gradeGroup);
+  for(const grade of ['',...grades.slice().reverse()]){const b=make('button');b.type='button';b.dataset.grade=grade;i18n.attribute(b, 'aria-label', grade||'Any grade');b.append(grade?gradeNode(grade):make('span','Any'));b.onclick=()=>{if(!grade)state.grade.clear();else if(state.grade.has(grade))state.grade.delete(grade);else state.grade.add(grade);gradeSelection();change();usage('filter_first_used','grade');};gradeGroup.append(b);}gradeSelection();fields.append(gradeGroup);
   const selects=[['lamp','Combo',[['','Any'],...['FULL COMBO','FULL COMBO+','ALL PERFECT','ALL PERFECT+'].map(g=>[g,g])]],['sync','Sync',[['','Any'],['FS','Full sync'],['FS+','Full sync+'],['FSD','Full sync DX'],['FSD+','Full sync DX+'],['SYNC','Sync play']]]];
   for(const [key,title,options]of selects){
     const label=make('div',undefined,'player-badge-field'),caption=make('span',title),select=make('select'),button=make('button',undefined,'player-badge-select'),menu=make('div',undefined,'player-badge-menu');
@@ -336,10 +333,19 @@ function controls(parent,onchange){const root=make('fieldset',undefined,'player-
     document.addEventListener('focusin',e=>{if(!menu.contains(e.target)&&e.target!==button)close();});
     document.addEventListener('maimai-badge-open',e=>{if(e.detail!==menu.id)close();});
     window.addEventListener('resize',position);window.addEventListener('scroll',e=>{if(e.target!==menu&&!menu.contains(e.target))position();},true);
-    select.onchange=()=>{state[key]=select.value;change();};badgeSelectors.push(render);render();label.append(caption,select,button);fields.append(label);document.body.append(menu);
+    select.onchange=()=>{state[key]=select.value;usage('filter_first_used',key);change();};badgeSelectors.push(render);render();label.append(caption,select,button);fields.append(label);document.body.append(menu);
   }
   ranges=window.maimaiPlayerRanges(fields,state,change,()=>catalog.catalog.map(chart=>record(chart)?.rate));
-  const clear=make('button','Clear');clear.type='button';clear.className='player-clear-filters';clear.classList.add('filter-disclosure-clear');i18n.attribute(clear,'aria-label','Clear personal filters');i18n.attribute(clear,'title','Clear personal filters');clear.onclick=()=>{for(const k in state)if(state[k] instanceof Set)state[k].clear();else state[k]='';root.querySelectorAll('select,input').forEach(n=>n.value='');gradeSelection();scopeSelection();change();};const actions=make('div',undefined,'filter-disclosure-actions'),empty=make('span','No filters selected','filter-empty'),chips=make('div',undefined,'active-filters');chips.setAttribute('role','group');i18n.attribute(chips,'aria-label','Active personal filters');actions.append(empty,chips,clear);summary();legend.after(actions);const toolbar=parent.querySelector('.sort-toolbar');if(toolbar)toolbar.before(root);else parent.append(root);root.hidden=!active||!visible;return {clear:()=>clear.click()};
+  const clear=make('button','Clear');clear.type='button';clear.className='player-clear-filters';clear.classList.add('filter-disclosure-clear');i18n.attribute(clear,'aria-label','Clear personal filters');i18n.attribute(clear,'title','Clear personal filters');clear.onclick=()=>{usage('filters_reset','personal');for(const k in state)if(state[k] instanceof Set)state[k].clear();else state[k]='';root.querySelectorAll('select,input').forEach(n=>n.value='');gradeSelection();scopeSelection();change();};const actions=make('div',undefined,'filter-disclosure-actions'),empty=make('span','No filters selected','filter-empty'),chips=make('div',undefined,'active-filters');chips.setAttribute('role','group');i18n.attribute(chips,'aria-label','Active personal filters');actions.append(empty,chips,clear);summary();legend.after(actions);const toolbar=parent.querySelector('.sort-toolbar');if(toolbar)toolbar.before(root);else parent.append(root);root.hidden=!active||!visible;return {clear:()=>clear.click(),
+    snapshot:()=>Object.fromEntries(Object.entries(state).map(([k,v])=>[k,v instanceof Set?[...v]:v])),
+    restore:saved=>{
+      if(!saved||typeof saved!=='object'||Array.isArray(saved))return;
+      for(const key of Object.keys(state)){
+        if(key==='grade'){state.grade=new Set(Array.isArray(saved.grade)?saved.grade.filter(v=>grades.includes(v)):[]);continue;}
+        const value=saved[key];state[key]=typeof value==='string'&&value.length<=32?value:'';
+      }
+      syncFields();for(const selector of badgeSelectors)selector();ranges?.sync();summary();
+    }};
 }
 window.maimaiPersonal=Object.freeze({configure,record,summary,details,matches,controls,lastPlayed,enabled:()=>!!active&&visible,gradeIndex:c=>{const r=record(c);return r&&grades.includes(r.grade)?grades.indexOf(r.grade):null;},ready});
 })();

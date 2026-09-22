@@ -13,7 +13,7 @@ window.maimaiFilterDisclosure=(root,toggle,body,key)=>{
     i18n.text(hint,expanded?'Collapse':'Expand');i18n.attribute(toggle,'title',expanded?'Click to collapse':'Click to expand');
     i18n.attribute(root,'title',expanded?'':'Click to expand');
   }
-  toggle.onclick=()=>{expanded=!expanded;update();try{localStorage.setItem(key,expanded?'0':'1');}catch{}};
+  toggle.onclick=()=>{expanded=!expanded;update();if(expanded)window.maimaiUsage?.emit('filters_opened',undefined,key.includes('personal')||key.includes('player')?'personal':'catalog');try{localStorage.setItem(key,expanded?'0':'1');}catch{}};
   update();
 };
 const el=id=>document.getElementById(id);
@@ -37,7 +37,7 @@ function mount(charts,onChange){
   for(const difficulty of difficulties){
     const row=document.createElement('label'),input=document.createElement('input'),text=document.createElement('span');
     row.dataset.difficulty=difficulty;input.type='checkbox';input.value=difficulty;i18n.text(text, difficulty);
-    input.onchange=()=>{if(input.checked)selected.add(difficulty);else selected.delete(difficulty);updateDifficulties();onChange();};
+    input.onchange=()=>{if(input.checked)selected.add(difficulty);else selected.delete(difficulty);updateDifficulties();window.maimaiUsage?.emit('filter_first_used',undefined,'difficulty');onChange();};
     row.append(input,text);el('difficulty-options').append(row);
   }
   el('difficulty-clear').onclick=()=>{selected.clear();updateDifficulties();onChange();};
@@ -59,7 +59,7 @@ function mount(charts,onChange){
   function setSlider(side,index){
     index=Math.max(0,Math.min(levels.length-1,index));
     if(side===0)low=Math.min(index,high);else high=Math.max(index,low);
-    sync();onChange();
+    sync();window.maimaiUsage?.emit('filter_first_used',undefined,'level');onChange();
   }
   function commit(side){
     const text=fields[side].value.trim(),value=number(text),index=text===''?(side?levels.length-1:0):levels.indexOf(value);
@@ -72,7 +72,7 @@ function mount(charts,onChange){
     // button receiving the click that moved focus out of the text field.
     if(index===(side?high:low)){sync();return;}
     if(side===0){low=index;if(low>high)high=low;}else{high=index;if(high<low)low=high;}
-    sync();onChange();
+    sync();window.maimaiUsage?.emit('filter_first_used',undefined,'level');onChange();
   }
   fields.forEach((field,i)=>{
     field.disabled=!levels.length;
@@ -97,6 +97,14 @@ function mount(charts,onChange){
   el('level-clear').onclick=()=>{clearLevels();onChange();fields[0].focus();};
   updateDifficulties();sync();
   return {
+    snapshot(){return {difficulties:[...selected],low:levels[low]??null,high:levels[high]??null};},
+    restore(value){
+      if(!value||!Array.isArray(value.difficulties))return;
+      selected.clear();for(const difficulty of value.difficulties)if(difficulties.includes(difficulty))selected.add(difficulty);
+      const minimum=levels.indexOf(value.low),maximum=levels.indexOf(value.high);
+      low=minimum<0?0:minimum;high=maximum<low?Math.max(low,levels.length-1):maximum;
+      updateDifficulties();sync();
+    },
     matches(chart){
       if(selected.size&&!selected.has(chart.difficulty))return false;
       if(low===0&&high===levels.length-1||!levels.length)return true;

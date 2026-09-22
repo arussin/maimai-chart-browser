@@ -5,10 +5,8 @@ from __future__ import annotations
 import json
 from importlib.resources import files
 
-from maimai_analyzer.patterns import pattern_registry
-
+from .catalog_preparation import PreparedCatalog, prepare_catalog
 from .localization import localization_script
-from .provider_mapping import default_mapping
 from .song_search import song_search_script
 
 
@@ -44,6 +42,7 @@ def review_scripts(*, player_pilot=False):
                 "player-maishift.js",
                 "player-sources.js",
                 "player-storage.js",
+                "player-session.js",
                 "player-data.js",
                 "feature-announcements.js",
                 "support-config.js",
@@ -57,6 +56,7 @@ def review_scripts(*, player_pilot=False):
                 "chart-filters.js",
                 "chart-overview.js",
                 "pattern-filter.js",
+                "catalog-query.js",
                 "registry-browser.js",
                 "chart-comparison.js",
                 "challenge-review.js",
@@ -87,53 +87,29 @@ def render_review(
     browser_metadata=None,
     maishift_mapping=None,
 ):
-    data = {
-        "package": package,
-        "catalog": catalog,
-        "review": review,
-        "snippets": snippets,
-        "benchmark_hash": benchmark["benchmark_hash"],
-        "navigation": navigation or {"charts": {}, "genres": [], "versions": []},
-        "provider_mapping": provider_mapping
-        if provider_mapping is not None
-        else default_mapping(catalog),
-    }
-    if overview is not None:
-        data["analysis"] = overview
-    if artwork is not None:
-        data["artwork"] = artwork
-    if mai_notes is not None:
-        data["mai_notes"] = mai_notes
-    if maishift_mapping is not None:
-        from .maishift_mapping import validate_mapping
+    """Compatibility facade for existing standalone catalog callers."""
+    prepared = prepare_catalog(
+        package,
+        catalog,
+        review,
+        snippets,
+        benchmark,
+        navigation,
+        overview,
+        artwork,
+        mai_notes,
+        provider_mapping,
+        browser_metadata,
+        maishift_mapping,
+    )
+    return render_prepared_review(prepared)
 
-        data["maishift_mapping"] = validate_mapping(maishift_mapping, catalog)
-    if browser_metadata is not None:
-        if set(browser_metadata) != {"schema_version", "registry", "legacy_ids", "sources"}:
-            raise ValueError("Unexpected browser registry metadata")
-        data.update(browser_metadata)
-        from .registry_catalog import validate_catalog
 
-        validate_catalog(data)
-    # Showing a public reference definition never assigns it to a catalog chart.
-    patterns = [
-        {
-            key: entry[key]
-            for key in (
-                "pattern_id",
-                "display_name",
-                "family",
-                "kind",
-                "aliases",
-                "definition",
-                "name_origin",
-                "definition_status",
-                "counterexamples_and_limits",
-                "source_ids",
-            )
-        }
-        for entry in pattern_registry()["entries"]
-    ]
+def render_prepared_review(prepared: PreparedCatalog) -> str:
+    """Render the existing presentation from an already prepared public catalog."""
+    if not isinstance(prepared, PreparedCatalog):
+        raise ValueError("Expected a prepared public catalog")
+    data, patterns = prepared.data, prepared.patterns
     assets = files("maimai_intelligence.assets")
     css = "\n".join(
         assets.joinpath(name).read_text("utf-8")

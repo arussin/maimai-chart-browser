@@ -158,6 +158,7 @@ def build_browser(output, registry, retained_package=None):
         "player-maishift.js",
         "player-sources.js",
         "player-storage.js",
+        "player-session.js",
         "player-data.js",
         "view-navigation.js",
         "challenge-review.js",

@@ -10,7 +10,11 @@ from importlib.resources import files
 from pathlib import Path
 from unittest.mock import patch
 
-from maimai_intelligence.public_release import PUBLIC_FILES, build_public_release
+from maimai_intelligence.public_release import (
+    PUBLIC_FILES,
+    build_public_release,
+    plan_public_release,
+)
 from maimai_intelligence.registry import empty
 from maimai_intelligence.registry_catalog import project_registry
 from maimai_intelligence.snapshots import atomic_json, canonical, read_json
@@ -42,6 +46,77 @@ class PublicReleaseTests(unittest.TestCase):
             "releases": [{"version": "accepted-v1", "path": self.path, "sha256": self.sha}],
         }
         atomic_json(self.source / "manifest.json", self.manifest)
+
+    def test_plan_is_immutable_and_does_not_write_until_requested(self):
+        plan = plan_public_release(self.source)
+        self.assertFalse(self.output.exists())
+        with self.assertRaises(TypeError):
+            plan.assets["unexpected"] = b"private"
+        with self.assertRaises(TypeError):
+            plan.manifest["releases"][0]["sha256"] = "0" * 64
+        self.assertTrue(plan.summary["deployable"])
+        self.assertEqual(plan.write_to(self.output)["files"], len(plan.assets) + 1)
+
+    def test_capacity_failure_is_reviewable_but_cannot_write_deployable_manifest(self):
+        with patch("maimai_intelligence.public_release.MAX_PUBLIC_FILES", 1):
+            plan = plan_public_release(self.source)
+        self.assertFalse(plan.summary["deployable"])
+        with self.assertRaisesRegex(ValueError, "Combined launch blocked"):
+            plan.write_to(self.output)
+        self.assertFalse(self.output.exists())
+        review = self.root / "review"
+        plan.write_review_to(review)
+        self.assertTrue((review / "planned-manifest.json").is_file())
+        self.assertFalse((review / "manifest.json").exists())
+        self.assertFalse((review / "planned-assets/manifest.json").exists())
+
+    def test_previous_release_is_bound_to_exact_catalog_bytes_and_allowlisted_closure(self):
+        build_public_release(self.source, self.output)
+        (self.output / "personal.json").write_text("PRIVATE")
+        plan = plan_public_release(self.source, previous_public=self.output)
+        self.assertNotIn("personal.json", plan.assets)
+        self.assertEqual(
+            plan.manifest["releases"][0]["parts"][0]["sha256"],
+            self.manifest["releases"][0]["sha256"],
+        )
+        ref = read_json(self.output / "manifest.json")["releases"][0]["parts"][0]
+        (self.output / ref["path"]).write_bytes(b"tampered")
+        with self.assertRaisesRegex(ValueError, "Retained public asset integrity mismatch"):
+            plan_public_release(self.source, previous_public=self.output)
+
+    def test_previous_historical_startup_bytes_are_preserved_when_projection_changes(self):
+        data = {
+            "package": {"status": "research_preview"},
+            "catalog": [
+                {"chart_id": "chart", "song_id": "song", "title": "Public", "source_hash": "a" * 64}
+            ],
+            "snippets": {"chart": []},
+        }
+        raw = canonical(data)
+        sha = hashlib.sha256(raw).hexdigest()
+        path = f"catalogs/{sha}.json"
+        (self.source / path).write_bytes(raw)
+        self.manifest["releases"][0].update(path=path, sha256=sha)
+        atomic_json(self.source / "manifest.json", self.manifest)
+        build_public_release(self.source, self.output)
+        old_manifest = read_json(self.output / "manifest.json")
+        ref = old_manifest["releases"][0]["startup"]
+        index = read_json(self.output / ref["path"])
+        index["historical_projection_note"] = "retained exact bytes"
+        historical = canonical(index)
+        historical_sha = hashlib.sha256(historical).hexdigest()
+        historical_ref = {
+            "path": f"catalog-index/{historical_sha}.json",
+            "sha256": historical_sha,
+            "bytes": len(historical),
+        }
+        (self.output / historical_ref["path"]).write_bytes(historical)
+        old_manifest["releases"][0]["startup"] = historical_ref
+        atomic_json(self.output / "manifest.json", old_manifest)
+        plan = plan_public_release(self.source, previous_public=self.output)
+        self.assertEqual(dict(plan.manifest["releases"][0]["startup"]), historical_ref)
+        self.assertEqual(plan.assets[historical_ref["path"]], historical)
+        self.assertNotIn(ref["path"], plan.assets)
 
     def test_exact_catalog_bytes_and_only_allowlisted_assets_survive(self):
         (self.source / "personal.json").write_text("PRIVATE", encoding="utf-8")
@@ -93,6 +168,10 @@ class PublicReleaseTests(unittest.TestCase):
 
         head = HeadParser()
         head.feed(published.split("</head>", 1)[0])
+        self.assertNotIn("maimai-song-pages", original)
+        self.assertEqual(
+            [a["content"] for t, a in head.tags if a.get("name") == "maimai-song-pages"], ["1"]
+        )
         descriptions = [a["content"] for t, a in head.tags if a.get("name") == "description"]
         self.assertEqual(len(descriptions), 1)
         self.assertIn("chart constants", descriptions[0])

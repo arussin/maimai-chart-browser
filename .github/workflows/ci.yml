@@ -55,7 +55,7 @@ jobs:
       - name: Use runner-local browser output
         run: echo "MAIMAI_BROWSER_OUTPUT=$RUNNER_TEMP/maimai-browser" >> "$GITHUB_ENV"
       - run: python -m pip install --no-deps .
-      - run: python -m pip install -r requirements-localization.txt
+      - run: python -m pip install -r requirements-dev.txt
       - run: python tests/browser/prepare.py
         env:
           PYTHONPATH: .
@@ -81,6 +81,22 @@ jobs:
       - run: npm test
         if: matrix.shard == 1
         working-directory: player-import-worker
+        env:
+          WRANGLER_SEND_METRICS: 'false'
+      - name: Verify typed browser source and immutable generated assets
+        if: matrix.shard == 1
+        run: |
+          npm ci --no-audit --no-fund
+          npm run check
+          npm test
+        working-directory: web
+      - name: Verify private usage schema, D1 and reports
+        if: matrix.shard == 1
+        run: |
+          npm ci --no-audit --no-fund
+          npm run check
+          npm test
+        working-directory: usage-worker
         env:
           WRANGLER_SEND_METRICS: 'false'
       - name: Retain fictional browser failure diagnostics

@@ -191,7 +191,8 @@ def validate_mapping(mapping, catalog):
             )
             or (
                 mapping["schema_version"] == "provider-mapping-2"
-                and row.get("acceptance_basis") not in {"reviewed", "legacy_published"}
+                and row.get("acceptance_basis")
+                not in {"reviewed", "legacy_published", "policy_exact"}
             )
             or (c["format"], c["difficulty"].upper()) != (row.get("format"), row.get("difficulty"))
         ):

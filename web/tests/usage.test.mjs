@@ -1,0 +1,38 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import vm from 'node:vm';
+import {readFile} from 'node:fs/promises';
+import {gzipSync} from 'node:zlib';
+const source=await readFile(new URL('../../src/maimai_intelligence/assets/usage.js',import.meta.url),'utf8');
+function fixture({host='maimai.party',gpc=false,dnt='0',enabled=true,fail=false}={}){
+ const listeners={},requests=[];const win={maimaiUsageEnabled:enabled,addEventListener:(key,fn)=>listeners[key]=fn,setTimeout:()=>1};
+ const context=vm.createContext({window:win,location:{protocol:'https:',hostname:host},navigator:{globalPrivacyControl:gpc,doNotTrack:dnt},document:{prerendering:false,addEventListener:(key,fn)=>listeners[key]=fn},TextEncoder,AbortSignal,clearTimeout(){},fetch:async(url,options)=>{requests.push({url,options});if(fail)throw Error('private network error');return {ok:true};}});
+ vm.runInContext(source,context);return {api:win.maimaiUsage,requests,listeners,context};
+}
+test('first-party counts are bounded finite data, with no application or persistent access',async()=>{
+ const {api,requests,listeners}=fixture();
+ listeners['maimai:navigation']({detail:{page:'song',song:'PRIVATE-SENTINEL'}});
+ api.emit('filter_first_used','song','genre');api.emit('filter_first_used','song','genre');
+ api.emit('search_used','charts','PRIVATE-SENTINEL');api.emit('private_event');
+ await api.flush();assert.equal(requests.length,1);
+ const request=requests[0];assert.equal(request.url,'/__usage');assert.ok(!request.options.body.includes('PRIVATE-SENTINEL'));
+ assert.equal(request.options.credentials,'omit');assert.equal(request.options.referrerPolicy,'no-referrer');assert.equal(request.options.redirect,'error');
+ const body=JSON.parse(request.options.body);assert.equal(body.events.length,2);assert.equal(body.events[1].count,1);
+ assert.ok(gzipSync(source).length<5120);
+});
+test('GA refusal is independent; GPC, DNT, previews and kill switch produce no requests',async()=>{
+ for(const settings of [{host:'preview.invalid'},{gpc:true},{dnt:'1'},{enabled:false}]){
+  const {api,requests}=fixture(settings);api.emit('settings_opened');await api.flush();assert.equal(requests.length,0);
+ }
+ const {api,requests}=fixture();api.emit('settings_opened');await api.flush();assert.equal(requests.length,1);
+});
+test('restore is suppressed; failures drop without retry and disable clears buffered rows',async()=>{
+ const {api,requests}=fixture({fail:true});api.suspend(()=>api.emit('settings_opened'));await api.flush();assert.equal(requests.length,0);
+ api.emit('settings_opened');await api.flush();await api.flush();assert.equal(requests.length,1);
+ api.emit('settings_opened');api.disable();await api.flush();assert.equal(requests.length,1);
+});
+test('same broad page category counts each committed navigation but no automatic page view',async()=>{
+ const {api,requests,listeners}=fixture();await api.flush();assert.equal(requests.length,0);
+ listeners['maimai:navigation']({detail:{page:'song'}});listeners['maimai:navigation']({detail:{page:'song'}});
+ await api.flush();assert.equal(JSON.parse(requests[0].options.body).events[0].count,2);
+});

@@ -1,6 +1,7 @@
 import {test,expect} from '@playwright/test';
 import {readFile} from 'node:fs/promises';
 import {gzipSync} from 'node:zlib';
+import {createHash} from 'node:crypto';
 
 test('fetched startup shares the parsed catalog without retaining an embedded JSON copy',async({page})=>{
   await page.goto('/progressive/?view=catalog');
@@ -123,4 +124,40 @@ test('capacity startup fetches a smaller index and only requests visible chart e
   await page.locator('#songs .song-row').last().scrollIntoViewIfNeeded();
   await expect(page.locator('#songs .song-row').last().locator('.chart-flow svg')).toBeVisible();
   expect(requests.filter(url=>url.includes('/chart-details/')).length).toBeGreaterThan(before);
+});
+
+
+test('stored PB gains a policy-exact catalog mapping without reimport or rewriting private history',async({page})=>{
+  const fixture=new URL('../../output/browser-tests/registry/',import.meta.url);
+  const manifest=JSON.parse(await readFile(new URL('manifest.json',fixture),'utf8'));
+  const entry=manifest.releases.find(item=>item.version===manifest.default);
+  const accepted=JSON.parse(Buffer.concat(await Promise.all(entry.parts.map(ref=>readFile(new URL(ref.path,fixture))))));
+  const startup=JSON.parse(await readFile(new URL(entry.startup_shared.path,fixture),'utf8'));
+  const assets=new Map(),releases=[];
+  const reference=(value,folder)=>{const bytes=Buffer.from(JSON.stringify(value)),sha256=createHash('sha256').update(bytes).digest('hex'),path=folder+'/'+sha256+'.json';assets.set(path,bytes);return {path,sha256,bytes:bytes.length};};
+  for(const [version,mapped]of [['coverage-n',false],['coverage-n-plus-one',true]]){
+    const data=structuredClone(accepted),index=structuredClone(startup);
+    if(mapped)data.provider_mapping.charts.chart.acceptance_basis='policy_exact';else data.provider_mapping.charts={};
+    index.provider_mapping=structuredClone(data.provider_mapping);
+    const part=reference(data,'catalog-parts');index.source_catalog_sha256=part.sha256;
+    releases.push({...entry,version,sha256:part.sha256,path:'catalogs/'+part.sha256+'.json',parts:[part],startup_shared:reference(index,'catalog-index')});
+  }
+  let current='coverage-n';
+  await page.route('**/registry/manifest.json',route=>route.fulfill({contentType:'application/json',body:JSON.stringify({...manifest,default:current,releases})}));
+  await page.route('**/registry/catalog-index/**',route=>{const path=new URL(route.request().url()).pathname.split('/registry/')[1];return assets.has(path)?route.fulfill({contentType:'application/json',body:assets.get(path)}):route.continue();});
+  await page.goto('/registry/?search=ソテリア');await expect(page.locator('#catalog-count')).toHaveText('4 charts');
+  const data=await readFile(new URL('../../output/reconciliation-fixture.json',import.meta.url));
+  await page.locator('input[type=file]').setInputFiles({name:'fictional-retained-pb.gz',mimeType:'application/gzip',buffer:gzipSync(data)});
+  await page.getByLabel('Remember on this device',{exact:true}).check();await page.getByRole('button',{name:'Import data',exact:true}).click();
+  const row=page.locator('#songs .song-row[data-difficulty=MASTER] .player-achievement');
+  await expect(row).toContainText('Personal chart match unavailable');
+  const saved=await page.evaluate(async()=>{const active=(await maimaiPlayerStorage.read()).active;return {revision:active.revision,bytes:[...new Uint8Array(active.bytes)]};});
+  current='coverage-n-plus-one';await page.reload();await expect(row).toContainText('97.0000%');
+  await expect(page.locator('#player-dialog')).not.toBeVisible();
+  expect(await page.evaluate(()=>maimaiResearchCatalog.provider_mapping.charts.chart.acceptance_basis)).toBe('policy_exact');
+  const restored=await page.evaluate(async()=>{const active=(await maimaiPlayerStorage.read()).active;return {revision:active.revision,bytes:[...new Uint8Array(active.bytes)]};});
+  expect(restored).toEqual(saved);
+  await page.goto('/registry/?search=ソテリア&version=coverage-n');await expect(row).toContainText('Personal chart match unavailable');
+  expect(await page.evaluate(()=>Object.keys(maimaiResearchCatalog.provider_mapping.charts))).toEqual([]);
+  expect(await page.evaluate(async()=>(await maimaiPlayerStorage.read()).active.revision)).toBe(saved.revision);
 });

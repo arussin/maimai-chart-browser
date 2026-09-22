@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "tool": "esbuild-0.28.2",
+  "assets": {
+    "usage.js": {
+      "sha256": "4c8c72638c9612af07198092805b468b223f59651be3380e15290386e5116342",
+      "bytes": 3274
+    },
+    "player-session.js": {
+      "sha256": "acb6443c1e50a5e72ad4a982cd2dbd4f82e962a875e7fe686eb2d780c400e86e",
+      "bytes": 1511
+    },
+    "catalog-query.js": {
+      "sha256": "eb2b12daf4995d0bbabff5a0231d837e582b8aa8eb4a32f78ab83ff8933418f3",
+      "bytes": 1635
+    }
+  }
+}

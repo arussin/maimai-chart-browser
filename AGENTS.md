@@ -14,3 +14,23 @@
 - For responsive or localized UI changes, test the affected controls with all
   supported languages, relevant states and narrow widths. Check text clipping and
   overlap within controls as well as whole-page overflow.
+
+
+# Architecture and validation boundaries
+
+- Keep canonical catalog and player identities separate from display projections.
+  Regional labels, artwork and generated routes must not become matching keys.
+- Assemble catalog/report data through their preparation interfaces; presentation
+  must not be parsed back into application data. Installed Python libraries must
+  not import owner scripts or require Node.
+- Edit typed browser domain/usage sources under `web/src`, build in the approved
+  DevCache workspace, and explicitly promote generated assets and their manifest.
+  Run `tools/Test-Web.ps1` plus the relevant Python/browser checks before delivery.
+- Keep usage hooks explicit and finite. Never pass URLs, DOM text, app state,
+  player data, identifiers or searches to the collector; restored state and
+  automatic refresh are not deliberate user actions.
+- Build publication through `plan_public_release`, retaining verified previous
+  manifest references. The 20,000-file guard remains mandatory. An over-capacity
+  review bundle is evidence only and is deliberately not a deployable release.
+- SEO, active usage and owner reports share a combined launch gate. Local tests
+  and configuration do not authorize account changes, provisioning or deployment.

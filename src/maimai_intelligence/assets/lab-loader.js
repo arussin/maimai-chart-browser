@@ -3,12 +3,14 @@
   'use strict';
 const i18n=window.maimaiI18n||{text:(node,value)=>node.textContent=value,attribute:(node,key,value)=>node.setAttribute(key,value),option:(...args)=>new Option(...args),literal:(node,value)=>node.textContent=value};
 
+  const scriptBase=document.currentScript?.src?new URL('.',document.currentScript.src):null;
+  const assetPath=path=>scriptBase?new URL(path,scriptBase).href:path;
   const status=document.getElementById('lab-status');
   const maximum=32*1024*1024;
   const catalogMaximum=64*1024*1024;
   const hash=async bytes=>[...new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))].map(x=>x.toString(16).padStart(2,'0')).join('');
   async function read(path,limit){
-    const response=await fetch(path,{credentials:'omit',redirect:'error'});
+    const response=await fetch(assetPath(path),{credentials:'omit',redirect:'error'});
     if(!response.ok)throw new Error('Research catalog could not be loaded');
     const reader=response.body.getReader(),chunks=[];let size=0;
     for(;;){const {done,value}=await reader.read();if(done)break;size+=value.length;if(size>limit){await reader.cancel();throw new Error('Research catalog exceeds its size limit');}chunks.push(value);}
@@ -26,7 +28,7 @@ const i18n=window.maimaiI18n||{text:(node,value)=>node.textContent=value,attribu
     async function fetchBucket(bucket){
       const raw=await verified(data.detail_buckets[bucket],'chart-details',8*1024*1024);
       const detail=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(raw));
-      if(detail.schema_version!==(data.index_schema_version==='catalog-index-2'?'chart-details-2':'chart-details-1')||detail.source_catalog_sha256!==sourceHash)throw new Error('Chart details belong to another catalog');
+      if(data.index_schema_version==='catalog-index-shared-1'?detail.schema_version!=='chart-details-shared-1':detail.schema_version!==(data.index_schema_version==='catalog-index-2'?'chart-details-2':'chart-details-1')||detail.source_catalog_sha256!==sourceHash)throw new Error('Chart details belong to another catalog');
       const expected=[...charts.values()].filter(c=>c.detail_bucket===bucket);
       if(!detail.identities||Object.keys(detail.identities).length!==expected.length||expected.some(c=>detail.identities[c.chart_id]!==c.source_hash))throw new Error('Chart detail identity mismatch');
       for(const [id,record]of Object.entries(detail.charts||{}))if(charts.get(id)?.detail_bucket!==bucket||record.source_hash!==charts.get(id).source_hash)throw new Error('Chart detail identity mismatch');
@@ -53,10 +55,11 @@ const i18n=window.maimaiI18n||{text:(node,value)=>node.textContent=value,attribu
     const manifest=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(await read('manifest.json',1024*1024))),version=new URLSearchParams(location.search).get('version')||manifest.default;
     const entry=Array.isArray(manifest.releases)&&manifest.releases.find(r=>r.version===version);
     if(!['1.0.0','1.1.0','1.2.0','1.3.0'].includes(manifest.schema_version)||!entry||!/^[a-f0-9]{64}$/.test(entry.sha256)||entry.path!==`catalogs/${entry.sha256}.json`)throw new Error('This research catalog version is unavailable');
+    const startup=entry.startup_shared??entry.startup;
     let bytes;
-    if(entry.startup!==undefined){
+    if(startup!==undefined){
       if(!['1.2.0','1.3.0'].includes(manifest.schema_version))throw new Error('Unsupported browsing index');
-      bytes=await verified(entry.startup,'catalog-index');
+      bytes=await verified(startup,'catalog-index');
     }else if(entry.parts!==undefined){
       if(!['1.1.0','1.2.0','1.3.0'].includes(manifest.schema_version)||!Array.isArray(entry.parts)||!entry.parts.length||entry.parts.length>8)throw new Error('Invalid catalog parts');
       let total=0;
@@ -70,11 +73,11 @@ const i18n=window.maimaiI18n||{text:(node,value)=>node.textContent=value,attribu
       }
     }else bytes=await read(entry.path,catalogMaximum);
     // Startup bytes were already verified against their own manifest digest.
-    if(!entry.startup&&await hash(bytes)!==entry.sha256)throw new Error('Research catalog integrity check failed');
+    if(!startup&&await hash(bytes)!==entry.sha256)throw new Error('Research catalog integrity check failed');
     const data=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes));
     if(entry.inventory_schema&&data.schema_version!==entry.inventory_schema)throw new Error('Inventory schema mismatch');
-    if(entry.startup){
-      if(entry.inventory_schema&&data.index_schema_version!=='catalog-index-2')throw new Error('Unsupported inventory index');
+    if(startup){
+      if(entry.startup_shared?data.index_schema_version!=='catalog-index-shared-1':entry.inventory_schema&&data.index_schema_version!=='catalog-index-2')throw new Error('Unsupported inventory index');
       if(data.source_catalog_sha256!==entry.sha256||!Array.isArray(data.catalog)||!data.detail_buckets||Object.keys(data.detail_buckets).length>1024)throw new Error('Invalid browsing index');
       window.maimaiCatalogDetails=details(data,entry.sha256);
     }
@@ -83,6 +86,6 @@ const i18n=window.maimaiI18n||{text:(node,value)=>node.textContent=value,attribu
     window.maimaiResearchCatalog=data;
     // The controller configures personal mappings once, after normalization.
     // Embedded exports retain #challenge-data; fetched catalogs need no second copy.
-    const script=document.createElement('script');script.src='challenge-review.js';script.onload=()=>{if(status.dataset?.catalogError)return;i18n.text(status, '');if(version!==manifest.default){i18n.text(status, 'You are viewing an older catalog. ');const link=document.createElement('a'),latest=new URL(location.href);latest.searchParams.delete('version');link.href=latest.href;i18n.text(link, 'Open the latest catalog');status.append(link);}};script.onerror=()=>{i18n.text(status, 'The research browser could not start.');};document.body.append(script);
+    const script=document.createElement('script');script.src=assetPath('challenge-review.js');script.onload=()=>{if(status.dataset?.catalogError)return;i18n.text(status, '');if(version!==manifest.default){i18n.text(status, 'You are viewing an older catalog. ');const link=document.createElement('a'),latest=new URL(location.href);latest.searchParams.delete('version');link.href=latest.href;i18n.text(link, 'Open the latest catalog');status.append(link);}};script.onerror=()=>{i18n.text(status, 'The research browser could not start.');};document.body.append(script);
   }catch(error){i18n.text(status, error.message);}
 })();

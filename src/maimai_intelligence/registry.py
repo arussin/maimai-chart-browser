@@ -174,7 +174,9 @@ def validate(value):
                 r"[0-9a-f]{64}", identity.get("source_hash", "")
             ):
                 raise ValueError("Invalid legacy chart identity")
-    return value
+    from .enrichment import validate_enrichment
+
+    return validate_enrichment(value)
 
 
 def read_registry(directory):

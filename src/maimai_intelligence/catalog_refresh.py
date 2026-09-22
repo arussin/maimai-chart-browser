@@ -6,8 +6,6 @@ from collections import Counter, defaultdict
 from copy import deepcopy
 from pathlib import Path
 
-from scripts.simai_collection import extract_chart
-
 from .catalog_capture import CaptureStore
 from .catalog_identity import discovery_labels
 from .catalog_sources import WIKI, discovery_pages, mai_catalog, page_links, wiki_catalog
@@ -17,6 +15,7 @@ from .metadata_waterfall import FIELDS, accept, key, number, propose
 from .registry import accept_mapping, digest, resolve, select_transcription, write_registry
 from .registry_catalog import _legacy_enrichment, project_registry
 from .snapshots import atomic_json
+from .transcription_html import extract_chart
 
 POLICY = "catalog-waterfall-2"
 METADATA_URLS = {
@@ -27,12 +26,23 @@ METADATA_URLS = {
 MAX_WIKI_PAGES = 300
 
 
-def refresh(value, published, cache, output, *, offline=False, replay=None, fetcher=None):
+def refresh(
+    value,
+    published,
+    cache,
+    output,
+    *,
+    offline=False,
+    replay=None,
+    fetcher=None,
+    capture_store=None,
+    write_candidate=True,
+):
     """Prepare a new registry and validated additions; never mutate accepted inputs."""
     value = deepcopy(value)
     output = Path(output)
     output.mkdir(parents=True, exist_ok=True)
-    capture = CaptureStore(
+    capture = capture_store or CaptureStore(
         Path(cache) / "sources",
         offline=offline,
         replay=replay,
@@ -212,7 +222,7 @@ def refresh(value, published, cache, output, *, offline=False, replay=None, fetc
     def read_wiki(url):
         if url in checked_urls:
             return
-        if len(checked_urls) >= MAX_WIKI_PAGES:
+        if len(checked_urls) >= (200 if capture_store is not None else MAX_WIKI_PAGES):
             raise ValueError("Wiki page budget reached; remaining sources deferred")
         checked_urls.add(url)
         raw, metadata = capture.get(url)
@@ -517,5 +527,6 @@ def refresh(value, published, cache, output, *, offline=False, replay=None, fetc
     }
     atomic_json(output / "source-captures.json", capture.receipt())
     atomic_json(output / "source-audit.json", audit)
-    write_registry(value, output / "registry")
+    if write_candidate:
+        write_registry(value, output / "registry")
     return value, additions, audit

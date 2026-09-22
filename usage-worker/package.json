@@ -1,0 +1,18 @@
+{
+  "name": "maimai-private-usage",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "esbuild worker.ts --bundle --format=esm --platform=browser --target=es2022 --outfile=worker.mjs",
+    "test": "npm run build && node --test test/*.test.mjs",
+    "types": "wrangler types --env-interface Env",
+    "check": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "wrangler": "4.135.0",
+    "miniflare": "5.20260918.0-alpha",
+    "@cloudflare/workers-types": "5.20260922.1",
+    "esbuild": "0.28.2",
+    "typescript": "7.0.2"
+  }
+}

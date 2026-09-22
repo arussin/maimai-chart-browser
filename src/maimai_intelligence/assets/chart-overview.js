@@ -19,7 +19,7 @@ function section(kind,title,decoration){
   root.dataset.chartSection=kind;button.type='button';button.append(name);if(decoration)button.append(decoration);chevron.setAttribute('aria-hidden','true');button.append(chevron);heading.append(button);
   const reveal=make('div',undefined,'chart-section-reveal'),body=make('div',undefined,'chart-section-body'),content=make('div',undefined,'chart-section-content');reveal.id='chart-section-'+(++sectionSerial);button.setAttribute('aria-controls',reveal.id);body.append(content);reveal.append(body);root.append(heading,reveal);
   button.setAttribute('aria-expanded',String(sectionState[kind]));root.classList.toggle('is-section-collapsed',!sectionState[kind]);body.inert=!sectionState[kind];
-  button.onclick=()=>{sectionState[kind]=!sectionState[kind];try{localStorage.setItem(sectionKey,JSON.stringify(sectionState));}catch{}syncSections();};
+  button.onclick=()=>{sectionState[kind]=!sectionState[kind];if(sectionState[kind])window.maimaiUsage?.emit('chart_section_opened',undefined,kind);try{localStorage.setItem(sectionKey,JSON.stringify(sectionState));}catch{}syncSections();};
   return {root,content};
 }
 const svg=(tag,attrs,text)=>{const n=document.createElementNS('http://www.w3.org/2000/svg',tag);for(const[k,v]of Object.entries(attrs))i18n.attribute(n,k,v);if(text!==undefined)i18n.text(n, text);return n;};
@@ -47,7 +47,7 @@ function graph(c,{compact=false,maximum=null,span=null}={}){
   if(record&&delivery&&!delivery.ready(c)){box.append(make('span','Loading activity…','muted'));onVisible(box,loadInto(box,c,()=>graph(c,{compact,maximum,span})));return box;}
   if(!record?.segments.length){box.append(make('span','Flow unavailable','muted'));return box;}
   const segments=record.segments;if(!segments.some(s=>s[2]!=null&&s[3]!=null&&s[4]>0)){box.append(make('span','Flow unavailable','muted'));return box;}const peak=Math.max(0,...segments.map(s=>s[3]||0)),max=maximum??Math.max(1,peak),height=compact?42:110,left=compact?0:30,right=240,bottom=compact?40:88,top=4,width=(right-left)/segments.length;
-  const chartName=i18n.parts([i18n.verbatim(c.title.trim()||'untitled chart'),c.difficulty],' '),title=i18n.message('Input activity through {0}',[chartName]);
+  const chartName=i18n.parts([i18n.verbatim(window.maimaiCatalogQuery?.titleLabel(c,window.maimaiI18n?.locale)||c.title.trim()||'untitled chart'),c.difficulty],' '),title=i18n.message('Input activity through {0}',[chartName]);
   const art=svg('svg',{viewBox:'0 0 244 '+height,role:'img',preserveAspectRatio:compact?'none':'xMidYMid meet','aria-label':i18n.message('Input activity through {0}. {1} to {2}. Peak {3} inputs per second.',[chartName,i18n.verbatim(clock(record.span[0])),i18n.verbatim(clock(record.span[1])),i18n.verbatim(peak.toFixed(1))])});
   art.append(svg('title',{},title));
   if(!compact)for(const y of [0,max/2,max])art.append(svg('text',{x:26,y:bottom-y/max*(bottom-top)+3,'text-anchor':'end','class':'flow-axis'},Number(y.toFixed(1))));
@@ -94,7 +94,7 @@ function pair(left,right){
     for(const id of ids){const row=make('tr'),label=make('th');label.scope='row';label.append(patternButton(id));row.append(label);for(const c of [left,right]){const t=tags(c).find(t=>t.id===id),cell=make('td');if(!t||t.status==='unknown')i18n.text(cell, 'Unknown');else{cell.append(make('strong',String(t.count)),make('span',(rate(c,t)??0).toFixed(1)+' / min'+(t.coverage==='partial'||t.truncated?' · lower bound':''),'muted'));}row.append(cell);}body.append(row);}table.append(body);box.append(table);}
   box.append(make('h2','Activity through each chart'));const graphs=make('div',undefined,'flow-comparison');
   const max=Math.max(1,...[left,right].map(c=>get(c)?.flow_peak??Math.max(0,...(get(c)?.segments||[]).map(s=>s[3]||0))));
-  for(const c of [left,right]){const figure=make('div');figure.append(make('h3',i18n.parts([i18n.verbatim(c.title.trim()||'Untitled'),c.difficulty],' · ')),graph(c,{maximum:max}));graphs.append(figure);}box.append(graphs);return box;
+  for(const c of [left,right]){const figure=make('div');figure.append(make('h3',i18n.parts([i18n.verbatim(window.maimaiCatalogQuery?.titleLabel(c,window.maimaiI18n?.locale)||c.title.trim()||'Untitled'),c.difficulty],' · ')),graph(c,{maximum:max}));graphs.append(figure);}box.append(graphs);return box;
 }
 window.maimaiChartOverview=Object.freeze({get,tags,detected,name,chips,graph,details,section,compare,pair,frequency,coverage,patternIds:pack?.patterns||[],definition:id=>pack?.definitions?.[id]||null});
 })();

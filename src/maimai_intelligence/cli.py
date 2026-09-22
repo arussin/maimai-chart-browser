@@ -53,12 +53,29 @@ def main(argv=None):
     )
     release.add_argument("--source", required=True, type=Path)
     release.add_argument("--output", required=True, type=Path)
+    release.add_argument(
+        "--previous-public",
+        type=Path,
+        help="Preceding immutable public release; retain its referenced URLs and permalink ledger",
+    )
+    release.add_argument(
+        "--permalinks", type=Path, help="Preceding accepted release permalink ledger"
+    )
+    release.add_argument(
+        "--song-redirects", type=Path, help="Reviewed registry song identity redirects"
+    )
     args = parser.parse_args(argv)
     try:
         if args.command == "public-release":
             from .public_release import build_public_release
 
-            result = build_public_release(args.source, args.output)
+            result = build_public_release(
+                args.source,
+                args.output,
+                permalinks=args.permalinks,
+                song_redirects=args.song_redirects,
+                previous_public=args.previous_public,
+            )
             print(f"Prepared {result['catalogs']} catalogs in {result['files']} public files")
         elif args.command == "lab":
             from .lab import build_lab

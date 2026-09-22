@@ -320,15 +320,17 @@ test('unreviewed historical genres fail before normalization changes any data',a
   for(const result of results){expect(result.error).toBe('This catalog contains an unrecognized genre and needs review.');expect(result.unchanged).toBe(true);}
 });
 
-test('an unreviewed catalog shows a localized error instead of publishing genre options',async({page})=>{
+for(const inventory of ['shared','legacy'])test('an unreviewed '+inventory+' catalog shows a localized error instead of publishing genre options',async({page})=>{
   const manifest=await(await page.request.get('/registry/manifest.json')).json();
   const entry=manifest.releases.find(r=>r.version==='duplicate-genres-fixture');
-  const data=await(await page.request.get('/registry/'+entry.startup.path)).json();
+  const reference=inventory==='shared'?'startup_shared':'startup';
+  if(inventory==='legacy')delete entry.startup_shared;
+  const data=await(await page.request.get('/registry/'+entry[reference].path)).json();
   data.navigation.genres.push({id:'sega:Future category',label:'Future category'});
   const bytes=Buffer.from(JSON.stringify(data)),sha=createHash('sha256').update(bytes).digest('hex');
-  entry.startup={path:'catalog-index/'+sha+'.json',sha256:sha,bytes:bytes.length};
+  entry[reference]={path:'catalog-index/'+sha+'.json',sha256:sha,bytes:bytes.length};
   await page.route('**/registry/manifest.json',route=>route.fulfill({json:manifest}));
-  await page.route('**/registry/'+entry.startup.path,route=>route.fulfill({body:bytes,contentType:'application/json'}));
+  await page.route('**/registry/'+entry[reference].path,route=>route.fulfill({body:bytes,contentType:'application/json'}));
   await page.goto('/registry/?version=duplicate-genres-fixture');
   const messages={en:'This catalog contains an unrecognized genre and needs review.','zh-Hans':'此曲目目录包含未识别的曲风分类，需要审核。',ko:'이 곡 목록에 알 수 없는 장르가 포함되어 있어 검토가 필요합니다.',ja:'この楽曲カタログには未対応のジャンルが含まれているため、確認が必要です。'};
   for(const [locale,message]of Object.entries(messages)){

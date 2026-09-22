@@ -273,6 +273,28 @@ class WaterfallTests(unittest.TestCase):
         with patch("scripts.update_catalog.prepare_update", return_value="prepared") as prepare:
             self.assertEqual(refresh_latest(run.parent.parent), "prepared")
             self.assertEqual(prepare.call_args.kwargs["registry"], run / "registry")
+            self.assertEqual(prepare.call_args.kwargs["previous_public"], run / "public")
+        self.assertEqual(
+            set(receipt["coverage_files"]),
+            {
+                "coverage-inputs.json",
+                "coverage-start.json",
+                "coverage-state.json",
+                "coverage-audit.json",
+                "source-captures.json",
+            },
+        )
+        for name in receipt["coverage_files"]:
+            path = run / name
+            original = path.read_bytes()
+            path.write_bytes(original + b" ")
+            with (
+                self.subTest(tampered=name),
+                self.assertRaisesRegex(ValueError, "coverage inputs changed"),
+            ):
+                verify_candidate(run)
+            path.write_bytes(original)
+        verify_candidate(run)
         (run / "registry/extra.json").write_text("{}")
         with self.assertRaisesRegex(ValueError, "Candidate changed"):
             verify_candidate(run)
