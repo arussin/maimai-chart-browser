@@ -216,7 +216,8 @@ test('filter disclosures preview keeps scopes, aligned headings and removable ch
   await expect(personal.locator('.filter-chip')).toHaveText('Combo: FULL COMBO ×');
   await personal.locator('.filter-chip').click();await expect(page.locator('#personal-lamp')).toHaveValue('');
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
-  await page.screenshot({path:test.info().outputPath('both-filters-expanded.png'),animations:'disabled',fullPage:true});
+  await general.screenshot({path:test.info().outputPath('catalog-filters-expanded.png'),animations:'disabled'});
+  await personal.screenshot({path:test.info().outputPath('personal-filters-expanded.png'),animations:'disabled'});
 });
 
 for(const width of [280,320,390,1280])for(const locale of ['en','zh-Hans','ko','ja'])test(`filter disclosures keep ${locale} text within heading columns at ${width}px`,async({page})=>{
