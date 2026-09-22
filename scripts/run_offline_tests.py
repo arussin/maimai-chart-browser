@@ -66,6 +66,8 @@ def main():
     suite = unittest.defaultTestLoader.discover(str(root / "tests"), top_level_dir=str(root))
     result = unittest.TextTestRunner(verbosity=1).run(suite)
     print(f"Offline network guard: {len(blocked)} non-loopback attempts denied")
+    if result.skipped:
+        print("Skipped tests:", [(test.id(), reason) for test, reason in result.skipped])
     if blocked:
         print("Tests that attempted external access:", blocked)
     return 0 if result.wasSuccessful() and not blocked else 1
