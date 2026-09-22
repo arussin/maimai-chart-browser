@@ -125,6 +125,13 @@ same scope. No new account permission or authentication change is proposed here.
 
 ## Rollback and follow-up
 
+The production rollout must retire the superseded Maishift pilot. Keep the
+current test page available during acceptance; remove its application from the
+main release package and redirect its former entry points when the main feature
+launches. Verify both pilot pages and their explicit index routes. Preserve
+tester storage and review historical immutable deployments separately from the
+main-site rollback baseline. See the merge checklist for the concrete gate.
+
 Before publishing, capture the then-current Pages/Worker versions; do not blindly
 restore an older receipt over newer unrelated production work. Rollback can
 disable Maishift availability/announcement and restore the accepted UI/Worker

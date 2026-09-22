@@ -36,12 +36,23 @@ production emergency fixes are included through the merged main baseline.
 - [x] Current pilot: 32 localized Settings layouts and 28 hosted hash/header checks.
 - [x] Ruff lint/format, all 940 localization messages, prose inventory and review
   fingerprints pass.
-- [ ] Complete browser regression run and GitHub CI on the pushed candidate.
+- [x] Browser regression coverage: 1,172 cases passed across the full run and
+  focused correction run; 15 skipped. The initial run passed 1,144 cases. Its
+  28 failures were stale success-message/lazy-artwork expectations and one
+  full-page WebKit screenshot exceeding the image limit. All 31 focused cases
+  pass after updating those checks, without changing product behavior.
+- [ ] GitHub CI on the pushed candidate. The invalid job-level `runner.temp`
+  reference was moved to a runner step; the corrected workflow starts normally.
 - [ ] Review the final diff and confirm the accepted design has no draft variants.
 
 Validation outputs stay under the approved registry DevCache root. Python:
 `20260922T065406088-737e95c0`; Worker: `20260922T065418318-97362b4d`;
 source browser suite: `20260922T065121382-859b41f7`.
+Full browser run: `20260922T065449223-b3cb5f30`; focused corrections:
+`20260922T070532945-c1e64f6d`. The wrapper's multi-file argument failed on Windows;
+the correction run used the installed Playwright CLI directly in that fresh
+workspace. Logs are retained in the registry DevCache `temp` directory as
+`review-browser-20260922.log` and `review-targeted-browser-20260922.log`.
 
 ## Before production merge and activation
 
@@ -69,6 +80,13 @@ source browser suite: `20260922T065121382-859b41f7`.
    rollback instructions. Obtain the production release instruction after review
    and tests. Monitoring scheduling, live dispatch and alert publication remain
    separate owner actions.
+8. Retire the superseded pilot as part of the main-site rollout. Keep the current
+   test page available during acceptance, then remove the pilot application from
+   the published package and route the old entry points to the main chart browser.
+   Verify `/pilot/maishift/` and `/pilot/maishift/browser/`, including their
+   `index.html` forms, no longer run the pilot. Do not erase or silently migrate
+   browser-local tester data. Inventory historical immutable deployment URLs
+   separately so their cleanup cannot destroy the main site's rollback baseline.
 
 The [general-release plan](PLAYER_IMPORT_RELEASE_PLAN.md) contains the detailed
 acceptance procedure. A passing pilot and green CI alone do not close these gates.
