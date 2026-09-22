@@ -66,24 +66,24 @@ class CoverageBoundaryTests(unittest.TestCase):
             def get(self, url):
                 return bytes([255]), {}
 
-        for provider in ("otoge-db", "lxns"):
-            with self.subTest(provider=provider):
-                sources = ArtworkSources(MalformedCapture(), {}, providers=(provider,))
-                self.assertEqual(sources._rows(provider), [])
-                self.assertEqual(sources.failures[provider].kind, FailureKind.SCHEMA)
-                self.assertEqual(sources.indexes[provider], {})
+        for source_name in ("otoge-db", "lxns"):
+            with self.subTest(provider=source_name):
+                sources = ArtworkSources(MalformedCapture(), {}, providers=(source_name,))
+                self.assertEqual(sources._rows(source_name), [])
+                self.assertEqual(sources.failures[source_name].kind, FailureKind.SCHEMA)
+                self.assertEqual(sources.indexes[source_name], {})
 
     def test_optional_artwork_sources_do_not_hide_programming_errors(self):
         class BrokenCapture:
             def get(self, url):
                 raise TypeError("authored artwork adapter defect")
 
-        for provider in ("otoge-db", "lxns"):
-            with self.subTest(provider=provider):
-                sources = ArtworkSources(BrokenCapture(), {}, providers=(provider,))
+        for source_name in ("otoge-db", "lxns"):
+            with self.subTest(provider=source_name):
+                sources = ArtworkSources(BrokenCapture(), {}, providers=(source_name,))
                 with self.assertRaisesRegex(TypeError, "authored artwork adapter defect"):
-                    sources._rows(provider)
-                self.assertNotIn(provider, sources.failures)
+                    sources._rows(source_name)
+                self.assertNotIn(source_name, sources.failures)
 
     def test_1694_successful_jobs_finish_in_six_disjoint_batches(self):
         evidence = {f"s{i:04}": "fixture-evidence" for i in range(1694)}
