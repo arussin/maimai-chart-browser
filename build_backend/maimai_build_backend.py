@@ -117,6 +117,7 @@ def build_sdist(sdist_directory, config_settings=None):
             "LICENSE",
             "THIRD_PARTY_NOTICES.md",
             "requirements-dev.txt",
+            "requirements-dev.lock",
             "requirements-localization.txt",
             ".gitignore",
         )
