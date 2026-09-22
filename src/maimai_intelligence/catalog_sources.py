@@ -6,7 +6,7 @@ from urllib.parse import parse_qs, urljoin, urlsplit
 
 from .catalog_identity import label as identity_label
 from .mai_notes import parse_index
-from .metadata_waterfall import number
+from .metadata_policy import number
 from .transcription_html import _Document, _label, _Node, _walk
 
 WIKI = "https://gamerch.com/maimai/"

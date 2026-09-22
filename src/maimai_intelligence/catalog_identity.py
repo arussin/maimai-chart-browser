@@ -5,15 +5,8 @@ import re
 from functools import lru_cache
 from importlib.resources import files
 
-from .provider_mapping import normalized
-
-
-def label(value):
-    # Spaces and typographic quote styles do not identify editions or artists.
-    # Keep all words, numbers, brackets and edition suffixes.
-    return "".join(normalized(value).split()).translate(
-        str.maketrans({"‘": "'", "’": "'", "“": '"', "”": '"'})
-    )
+from .identity_policy import label as label
+from .identity_policy import normalized
 
 
 @lru_cache(maxsize=1)

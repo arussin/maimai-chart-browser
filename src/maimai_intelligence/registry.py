@@ -12,7 +12,7 @@ from datetime import datetime
 from pathlib import Path
 from uuid import UUID, uuid4
 
-from .provider_mapping import normalized
+from .identity_policy import normalized
 from .snapshots import MAX_BYTES, atomic_json, canonical, read_json
 
 VERSION = "maimai-registry-1"
@@ -98,7 +98,7 @@ def validate(value):
         counts = source_counts.setdefault(observation["snapshot_id"], {})
         counts[observation["field"]] = counts.get(observation["field"], 0) + 1
         if observation.get("policy") == "metadata-waterfall-1":
-            from .metadata_waterfall import FIELDS, PRIORITY, number
+            from .metadata_policy import FIELDS, PRIORITY, number
 
             provider = value["sources"][observation["snapshot_id"]].get("provider")
             if (
@@ -127,7 +127,7 @@ def validate(value):
                 raise ValueError(
                     "Removal and announcement require explicit dated official notice evidence"
                 )
-    from .official_inventory import PARSER, URLS
+    from .official_contract import PARSER, URLS
 
     for source_id, source in value["sources"].items():
         if source.get("provider") not in {"sega-jp", "sega-intl"}:

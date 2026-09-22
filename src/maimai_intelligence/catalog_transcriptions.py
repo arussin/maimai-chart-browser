@@ -10,7 +10,7 @@ from maimai_analyzer.challenge import VERSION, profile_chart
 from maimai_analyzer.contracts import content_hash
 from maimai_analyzer.simai_subset import PARSER_VERSION, parse_simai_subset
 
-from .metadata_waterfall import number
+from .metadata_policy import number
 from .overview_codec import compact_overview
 from .registry import analysis_fingerprint
 from .research_overview import chart_overview, overview_package

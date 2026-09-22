@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import contextlib
-import hashlib
 import json
 import os
 import tempfile
@@ -12,18 +11,11 @@ import urllib.parse
 import urllib.request
 from pathlib import Path
 
-MAX_BYTES = 32 * 1024 * 1024
+from .serialization import MAX_BYTES as MAX_BYTES
+from .serialization import canonical as canonical
+from .serialization import digest as digest
+
 SCHEMA_VERSION = "1.0.0"
-
-
-def canonical(value):
-    return json.dumps(
-        value, sort_keys=True, separators=(",", ":"), ensure_ascii=False, allow_nan=False
-    ).encode("utf-8")
-
-
-def digest(value):
-    return hashlib.sha256(canonical(value)).hexdigest()
 
 
 def read_json(path):

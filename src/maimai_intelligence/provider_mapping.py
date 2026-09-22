@@ -3,14 +3,12 @@
 import gzip
 import hashlib
 import json
-import unicodedata
 from collections import defaultdict
 from functools import lru_cache
 from importlib.resources import files
 
-
-def normalized(value):
-    return " ".join(unicodedata.normalize("NFKC", value or "").casefold().split())
+from .identity_policy import normalized as normalized
+from .identity_policy import variant as variant
 
 
 @lru_cache(maxsize=1)
@@ -43,7 +41,7 @@ def default_mapping(catalog):
 def integration_catalog(data, version):
     from copy import deepcopy
 
-    from .catalog_loading import PROFILE_FIELDS
+    from .catalog_schema import PROFILE_FIELDS
 
     if data.get("schema_version") == "maimai-browser-catalog-2":
         # Session Report v1 consumes genuine experimental profiles and legacy IDs.
@@ -95,17 +93,6 @@ def integration_catalog(data, version):
         "analysis": analysis,
         "provider_mapping": data.get("provider_mapping", {"charts": {}}),
     }
-
-
-def variant(difficulty):
-    value = normalized(difficulty).upper()
-    format_ = "DX" if value.startswith("DX ") else "STD"
-    value = (
-        value.removeprefix("DX ")
-        .replace("REMASTER", "RE:MASTER")
-        .replace("RE: MASTER", "RE:MASTER")
-    )
-    return format_, value
 
 
 def build_mapping(catalog, charts, songs, *, overrides=None):

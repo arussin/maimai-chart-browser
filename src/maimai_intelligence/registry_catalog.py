@@ -10,7 +10,8 @@ from pathlib import Path
 from maimai_analyzer.dataset import SOURCE_LOCK
 
 from .artwork import copy_artwork, validate_artwork
-from .catalog_loading import PROFILE_FIELDS
+from .catalog_schema import CHART_FIELDS as CHART_FIELDS
+from .catalog_schema import PROFILE_FIELDS
 from .maishift_mapping import SCHEMA as MAISHIFT_SCHEMA
 from .maishift_mapping import validate_mapping as validate_maishift
 from .metadata_waterfall import project as project_metadata
@@ -20,16 +21,6 @@ from .research_package import read_package
 from .snapshots import atomic_json, canonical
 
 SCHEMA = "maimai-browser-catalog-2"
-CHART_FIELDS = PROFILE_FIELDS | {
-    "variant_id",
-    "capabilities",
-    "regional",
-    "metadata_region",
-    "legacy_identity",
-    "input_id",
-    "transcription",
-    "title_state",
-}
 # Stable IDs, display labels and explicit source aliases. Keep browser compatibility
 # in registry-browser.js in sync through tests/fixtures/genre-aliases.json.
 # JP/INTL observations captured 2026-09-17 include fullwidth ampersands and VOCALOID™.
