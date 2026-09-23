@@ -42,6 +42,8 @@ for(const locale of ['en','ja','ko','zh-Hans'])for(const width of [320,768,1280]
   const link=page.locator('#songs a[data-song-page]').first();await expect(link).toBeVisible();await link.focus();
   await link.click();await expect(page.locator('#seo-route-view')).toBeVisible();await page.locator('#seo-route-view [data-back-results]').click();
   await expect(link).toBeFocused();await expect(page.locator('#seo-route-view')).not.toBeVisible();
+  // The song workspace has its own layout. Compare restored focus with the pointer outside controls.
+  await page.mouse.move(0,0);
   await decodedImages(page);await expect(page).toHaveScreenshot(locale+'-'+width+'-return.png',{fullPage:true});
   await page.locator('#compare-tab').click();await page.locator('#compare-left-search').fill('ソテリア');await page.locator('#compare-left-search').press('ArrowDown');await page.locator('#compare-left-search').press('Enter');
   await page.locator('#compare-right-search').fill('ソテリア');await page.locator('#compare-right-search').press('ArrowDown');await page.locator('#compare-right-search').press('ArrowDown');await page.locator('#compare-right-search').press('Enter');
