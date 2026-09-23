@@ -14,6 +14,7 @@ import re
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
+from typing import Any
 
 PAID_FILES = 100_000
 MAX_REVIEW_AGE = timedelta(hours=24)
@@ -48,7 +49,7 @@ class ReviewedCapacity:
         if checked.tzinfo is None or not timedelta(0) <= now - checked <= MAX_REVIEW_AGE:
             raise ValueError("Paid capacity review is stale or has a future verification time")
 
-    def receipt(self):
+    def receipt(self) -> dict[str, Any]:
         return {
             "profile": "pages-paid-100000",
             "max_files": PAID_FILES,
@@ -154,7 +155,9 @@ def read_capacity_review(path, reviewed_sha256, *, now=None) -> ReviewedCapacity
     return review
 
 
-def stage_capacity_review(source, reviewed_sha256, destination):
+def stage_capacity_review(
+    source: Path | str, reviewed_sha256: str | None, destination: Path | str
+) -> ReviewedCapacity:
     """Retain only the reviewed capacity evidence in a private candidate directory."""
     source, destination = Path(source).resolve(), Path(destination)
     reviewed = read_capacity_review(source, reviewed_sha256)

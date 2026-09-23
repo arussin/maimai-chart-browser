@@ -32,6 +32,7 @@ jobs:
       - run: python -m ruff check .
       - run: python -m ruff format --check .
       - run: python scripts/run_offline_tests.py
+      - run: python scripts/check_corpus_boundaries.py
       - run: python scripts/check_localization.py
       - run: python scripts/check_localization_review.py
       - run: python scripts/prepare_multilingual_search.py --registry registry --output src/maimai_intelligence/assets/song-localizations.json --check

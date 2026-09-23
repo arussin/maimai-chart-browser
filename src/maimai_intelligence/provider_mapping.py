@@ -1,11 +1,14 @@
 """Exact public Kamaitachi metadata joins. Ambiguities require explicit review."""
 
+from __future__ import annotations
+
 import gzip
 import hashlib
 import json
 from collections import defaultdict
 from functools import lru_cache
 from importlib.resources import files
+from typing import Any
 
 from .identity_policy import normalized as normalized
 from .identity_policy import variant as variant
@@ -21,7 +24,7 @@ def registry():
     return json.loads(raw)
 
 
-def default_mapping(catalog):
+def default_mapping(catalog: list[dict[str, Any]]) -> dict[str, Any]:
     source = registry()
     usable = [
         c

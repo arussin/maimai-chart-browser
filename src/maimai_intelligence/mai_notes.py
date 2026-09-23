@@ -12,7 +12,9 @@ import re
 import unicodedata
 import urllib.request
 from collections import Counter, defaultdict
+from collections.abc import Sequence
 from datetime import UTC, datetime
+from typing import Any
 
 SOURCE_URL = "https://mai-notes.com/data/manifest.json"
 VERSION = "mai-notes-links-1"
@@ -26,7 +28,7 @@ class NoRedirect(urllib.request.HTTPRedirectHandler):
         raise ValueError("mai-notes index redirected; check the source before refreshing")
 
 
-def download_index():
+def download_index() -> bytes:
     request = urllib.request.Request(  # noqa: S310 -- fixed public HTTPS metadata URL.
         SOURCE_URL,
         headers={"User-Agent": "maimai.party-chart-links/1", "Accept": "application/json"},
@@ -116,7 +118,13 @@ def _key(chart):
     )
 
 
-def prepare_links(charts, raw, *, overrides=(), captured_at=None):
+def prepare_links(
+    charts: list[dict[str, Any]],
+    raw: bytes,
+    *,
+    overrides: Sequence[dict[str, Any]] = (),
+    captured_at: str | None = None,
+) -> tuple[dict[str, Any], dict[str, Any]]:
     targets, generated_at = parse_index(raw)
     index, own = defaultdict(list), defaultdict(list)
     for target in targets.values():

@@ -25,8 +25,13 @@ from .snapshots import MAX_BYTES, atomic_json, canonical, read_json
 
 
 def build_lab(
-    package_directory, output, *, catalog_version, player_pilot=False, player_maishift=False
-):
+    package_directory: Path | str,
+    output: Path | str,
+    *,
+    catalog_version: str,
+    player_pilot: bool = False,
+    player_maishift: bool = False,
+) -> Path:
     source, root = Path(package_directory), Path(output)
     package = read_json(source / "package.json")
     if package.get("status") != "research_preview" or package.get("source") != SOURCE_LOCK:

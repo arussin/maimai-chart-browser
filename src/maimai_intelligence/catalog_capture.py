@@ -1,5 +1,7 @@
 """Bounded public-source captures shared by repeatable catalog updates."""
 
+from __future__ import annotations
+
 import hashlib
 import ipaddress
 import re
@@ -8,8 +10,10 @@ import ssl
 import time
 import urllib.error
 import urllib.request
+from collections.abc import Callable
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 from urllib.parse import urlsplit
 
 from .coverage_types import CaptureError, Failure, FailureKind, IntegrityError
@@ -68,8 +72,15 @@ class CaptureStore:
     """
 
     def __init__(
-        self, root, *, offline=False, fetcher=fetch_public, replay=None, now=None, cooldowns=None
-    ):
+        self,
+        root: Path | str,
+        *,
+        offline: bool = False,
+        fetcher: Callable[[str, dict[str, str]], tuple[int, bytes, dict[str, str]]] = fetch_public,
+        replay: Path | str | None = None,
+        now: int | None = None,
+        cooldowns: dict[str, Any] | None = None,
+    ) -> None:
         self.root = Path(root)
         self.now = int(time.time()) if now is None else now
         self.cooldowns = dict(cooldowns or {})
@@ -236,7 +247,7 @@ class CaptureStore:
                 "failure": failure.record(),
             }
 
-    def receipt(self):
+    def receipt(self) -> dict[str, Any]:
         return {
             "version": "catalog-source-captures-1",
             "captures": self.captures,

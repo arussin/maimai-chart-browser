@@ -20,18 +20,18 @@ class PreparedCatalog:
 
 
 def prepare_catalog(
-    package,
-    catalog,
-    review,
-    snippets,
-    benchmark,
-    navigation=None,
-    overview=None,
-    artwork=None,
-    mai_notes=None,
-    provider_mapping=None,
-    browser_metadata=None,
-    maishift_mapping=None,
+    package: dict[str, Any],
+    catalog: list[dict[str, Any]],
+    review: dict[str, Any],
+    snippets: dict[str, Any],
+    benchmark: dict[str, Any],
+    navigation: dict[str, Any] | None = None,
+    overview: dict[str, Any] | None = None,
+    artwork: dict[str, Any] | None = None,
+    mai_notes: dict[str, Any] | None = None,
+    provider_mapping: dict[str, Any] | None = None,
+    browser_metadata: dict[str, Any] | None = None,
+    maishift_mapping: dict[str, Any] | None = None,
 ) -> PreparedCatalog:
     """Validate and assemble data once without rendering, parsing HTML, or writing files."""
     data = {

@@ -1,11 +1,14 @@
 """Immutable private coverage checkpoints, independent of publication readiness."""
 
+from __future__ import annotations
+
 import hashlib
 import json
 import os
 import re
 from copy import deepcopy
 from pathlib import Path
+from typing import Any
 
 from .artwork_store import verify_asset
 from .coverage_runtime import producer_identity
@@ -39,13 +42,13 @@ def read_registry_document(path):
     return value
 
 
-def policy_identity(config, reviews):
+def policy_identity(config: dict[str, Any], reviews: dict[str, Any]) -> str:
     return digest(
         {"config": config, "reviews": reviews, "producer": producer_identity()["policy_sha256"]}
     )
 
 
-def _read_checkpoint(root, identifier):
+def _read_checkpoint(root: Path | str, identifier: str) -> tuple[Path, dict[str, Any]]:
     if not re.fullmatch(r"[a-f0-9]{64}", identifier):
         raise ValueError("Invalid coverage checkpoint identity")
     path = Path(root) / "checkpoints" / identifier
@@ -100,7 +103,9 @@ def _recover_completion(root, base, policy, current):
         atomic_json(Path(root) / "checkpoint.json", {"checkpoint": current})
 
 
-def restore_checkpoint(root, base, policy):
+def restore_checkpoint(
+    root: Path | str, base: dict[str, Any], policy: str
+) -> tuple[dict[str, Any], str | None]:
     """Resume matching work; on changed inputs only carry revalidated song artwork."""
     pointer = Path(root) / "checkpoint.json"
     identifier = read_json(pointer)["checkpoint"] if pointer.exists() else None
@@ -133,12 +138,14 @@ def restore_checkpoint(root, base, policy):
     return result, identifier
 
 
-def checkpoint_work(root, identifier):
+def checkpoint_work(root: Path | str, identifier: str) -> dict[str, Any]:
     path, _ = _read_checkpoint(root, identifier)
     return read_json(path / "coverage-state.json")
 
 
-def replay_checkpoint_start(root, base, source_receipt):
+def replay_checkpoint_start(
+    root: Path | str, base: dict[str, Any], source_receipt: Path | str
+) -> dict[str, Any]:
     """Verify a resumed batch's exact starting state against its accepted base."""
     source_receipt = Path(source_receipt)
     receipt_path = source_receipt.parent / "coverage-checkpoint.json"
@@ -154,7 +161,15 @@ def replay_checkpoint_start(root, base, source_receipt):
     return read_registry_document(path / "coverage-start.json")
 
 
-def commit_checkpoint(root, base, result, run, policy, *, predecessor=None):
+def commit_checkpoint(
+    root: Path | str,
+    base: dict[str, Any],
+    result: dict[str, Any],
+    run: Path | str,
+    policy: str,
+    *,
+    predecessor: str | None = None,
+) -> dict[str, Any]:
     """Completion is immutable and written before the atomic advisory pointer."""
     validate(result)
     root, run = Path(root), Path(run)
@@ -241,3 +256,8 @@ def prepare_checkpoint_batch(
     receipt = commit_checkpoint(root, value, result, output, policy, predecessor=parent)
     atomic_json(output / "coverage-checkpoint.json", receipt)
     return result, audit, receipt
+
+
+def verify_checkpoint(root: Path | str, identifier: str) -> tuple[Path, dict[str, Any]]:
+    """Read-only public verification of a completed private checkpoint."""
+    return _read_checkpoint(root, identifier)

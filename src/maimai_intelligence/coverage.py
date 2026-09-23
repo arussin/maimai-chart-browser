@@ -1,12 +1,17 @@
 """Incremental song artwork and public mapping preparation shared by rebuild paths."""
 
+from __future__ import annotations
+
 import re
 import time
 from collections import Counter
+from collections.abc import Sequence
 from copy import deepcopy
 from pathlib import Path
+from typing import Any
 
 from .artwork_store import migrate_artwork, verify_asset
+from .catalog_capture import CaptureStore
 from .coverage_queue import complete_job, empty_work, migrate_work, plan_batch, retry_policy
 from .coverage_runtime import producer_identity
 from .coverage_sources import ArtworkSources, WikiArtwork, capture_snapshot
@@ -296,22 +301,22 @@ def assessment_inventory(value, state):
 
 
 def prepare_coverage(
-    value,
-    published,
-    capture,
-    root,
-    output,
+    value: dict[str, Any],
+    published: dict[str, Any],
+    capture: CaptureStore,
+    root: Path | str,
+    output: Path | str,
     *,
-    roots=(),
-    offline=False,
-    replay=None,
-    now=None,
-    title_reviews=(),
-    provider_reviews=(),
-    artwork_reviews=(),
-    work=None,
-    reassess_policy=False,
-):
+    roots: Sequence[Path | str | None] = (),
+    offline: bool = False,
+    replay: Path | str | None = None,
+    now: int | None = None,
+    title_reviews: Sequence[dict[str, Any]] = (),
+    provider_reviews: Sequence[dict[str, Any]] = (),
+    artwork_reviews: Sequence[dict[str, Any]] = (),
+    work: dict[str, Any] | None = None,
+    reassess_policy: bool = False,
+) -> tuple[dict[str, Any], dict[str, Any]]:
     """Prepare a validated batch; the caller can checkpoint it before publication."""
     now = int(time.time()) if now is None else now
     root, output = Path(root), Path(output)

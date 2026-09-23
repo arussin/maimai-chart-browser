@@ -64,9 +64,14 @@ def main(argv=None):
     release.add_argument(
         "--song-redirects", type=Path, help="Reviewed registry song identity redirects"
     )
+    from .corpus_cli import add_commands, execute
+
+    add_commands(commands)
     args = parser.parse_args(argv)
     try:
-        if args.command == "public-release":
+        if args.command == "corpus":
+            execute(args)
+        elif args.command == "public-release":
             from .public_release import build_public_release
 
             result = build_public_release(

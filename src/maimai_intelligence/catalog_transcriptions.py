@@ -10,6 +10,7 @@ from maimai_analyzer.challenge import VERSION, profile_chart
 from maimai_analyzer.contracts import content_hash
 from maimai_analyzer.simai_subset import PARSER_VERSION, parse_simai_subset
 
+from .coverage_types import IntegrityError, SnapshotError
 from .metadata_policy import number
 from .overview_codec import compact_overview
 from .registry import analysis_fingerprint
@@ -67,9 +68,9 @@ def qualify(body, row, expected_counts, cache, *, fingerprints=None):
         "touch",
         "break",
     }:
-        raise ValueError("Complete reference note counts are required for automatic analysis")
+        raise SnapshotError("Complete reference note counts are required for automatic analysis")
     if hashlib.sha256(body).hexdigest() != row["body_sha256"]:
-        raise ValueError("Transcription body integrity mismatch")
+        raise IntegrityError("Transcription body integrity mismatch")
     fingerprints = fingerprints or implementation()
     cache_key = analysis_fingerprint(row, fingerprints, parser=PARSER_VERSION, analyzer=VERSION)
     path = Path(cache) / (cache_key + ".json")
@@ -79,7 +80,7 @@ def qualify(body, row, expected_counts, cache, *, fingerprints=None):
         envelope = read_json(path)
         record = envelope["record"]
         if envelope.get("hash") != content_hash(record) or record["identity"] != identity:
-            raise ValueError("Supplemental analysis cache integrity mismatch")
+            raise IntegrityError("Supplemental analysis cache integrity mismatch")
     else:
         chart, audit = parse_simai_subset(
             body.decode("utf-8"),
@@ -95,7 +96,7 @@ def qualify(body, row, expected_counts, cache, *, fingerprints=None):
         counts = note_counts(chart, audit)
         comparison = count_comparison(chart, counts, expected_counts, COUNT_CONVENTION)
         if not comparison["comparable"] or not comparison["matches"]:
-            raise ValueError(
+            raise SnapshotError(
                 f"Transcription note-count mismatch: expected {expected_counts}, parsed {counts}"
             )
         profile = profile_chart(chart)
@@ -107,7 +108,7 @@ def qualify(body, row, expected_counts, cache, *, fingerprints=None):
         }
         atomic_json(path, {"record": record, "hash": content_hash(record)})
     if record["counts"] != expected_counts:
-        raise ValueError("Cached transcription disagrees with current reference note counts")
+        raise SnapshotError("Cached transcription disagrees with current reference note counts")
     profile = deepcopy(record["profile"])
     profile.update(
         title=row["title"],

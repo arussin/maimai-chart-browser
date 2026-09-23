@@ -14,6 +14,8 @@ PURE = {
         "maimai_intelligence." + name
         for name in (
             "catalog_loading",
+            "corpus_policy",
+            "corpus_explain",
             "catalog_schema",
             "coverage_policy",
             "coverage_queue",
@@ -21,6 +23,7 @@ PURE = {
             "enrichment",
             "identity_policy",
             "metadata_policy",
+            "metadata_selection",
             "official_contract",
             "serialization",
         )
@@ -93,3 +96,11 @@ class ArchitectureBoundaryTests(unittest.TestCase):
                             },
                             module,
                         )
+
+    def test_installed_preparation_never_imports_owner_scripts(self):
+        for module, imports in self.metrics["import_edges"].items():
+            if module.startswith(("maimai_intelligence", "maimai_analyzer")):
+                self.assertFalse(
+                    any(name == "scripts" or name.startswith("scripts.") for name in imports),
+                    module,
+                )

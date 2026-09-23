@@ -5,6 +5,7 @@ import re
 from urllib.parse import parse_qs, urljoin, urlsplit
 
 from .catalog_identity import label as identity_label
+from .coverage_types import SnapshotError
 from .mai_notes import parse_index
 from .metadata_policy import number
 from .transcription_html import _Document, _label, _Node, _walk
@@ -20,7 +21,7 @@ def mai_catalog(raw):
     try:
         targets, generated = parse_index(raw)
     except (ValueError, TypeError, KeyError, AttributeError) as error:
-        raise ValueError("Malformed mai-notes metadata: " + str(error)) from error
+        raise SnapshotError("Malformed mai-notes metadata: " + str(error)) from error
     data = json.loads(raw)
     for chart in data["charts"]:
         target = targets.get(chart["id"])
@@ -96,7 +97,7 @@ def discovery_pages(raw):
         ):
             urls.add(url)
     if len(urls) > 40:
-        raise ValueError("Wiki index budget exceeded")
+        raise SnapshotError("Wiki index budget exceeded")
     return urls
 
 
@@ -117,7 +118,7 @@ def wiki_label(node):
 def wiki_catalog(raw, url):
     """Read explicit constant and note-count columns, never derive decimals from Lv."""
     if not re.fullmatch(r"https://gamerch\.com/maimai/[1-9][0-9]{0,8}", url):
-        raise ValueError("Invalid Wiki song URL")
+        raise SnapshotError("Invalid Wiki song URL")
     root = _Document(raw.decode("utf-8")).root
     nodes = list(_walk(root))
     metadata = {}
@@ -127,10 +128,10 @@ def wiki_catalog(raw, url):
             if len(cells) == 2 and _label(cells[0]) in {"タイトル", "アーティスト", "BPM"}:
                 field = _label(cells[0])
                 if field in metadata:
-                    raise ValueError("Ambiguous Wiki song metadata")
+                    raise SnapshotError("Ambiguous Wiki song metadata")
                 metadata[field] = wiki_label(cells[1])
     if not metadata.get("タイトル") or not metadata.get("アーティスト"):
-        raise ValueError("Wiki page lacks explicit song identity")
+        raise SnapshotError("Wiki page lacks explicit song identity")
     rows, formats, current_format = [], set(), None
     for offset, node in enumerate(nodes):
         if node.tag in {"h2", "h3", "h4", "h5"}:
@@ -177,7 +178,7 @@ def wiki_catalog(raw, url):
             if color == "#00ced1":  # Historical EASY is not BASIC.
                 continue
             if color not in colors:
-                raise ValueError("Unknown Wiki difficulty marker")
+                raise SnapshotError("Unknown Wiki difficulty marker")
             chart_rows.append((colors[color], cells))
         if not chart_rows:
             continue
@@ -185,7 +186,7 @@ def wiki_catalog(raw, url):
             list(DIFFICULTIES[:4]),
             list(DIFFICULTIES),
         ] or current_format in formats:
-            raise ValueError("Ambiguous or incomplete Wiki difficulty table")
+            raise SnapshotError("Ambiguous or incomplete Wiki difficulty table")
         formats.add(current_format)
         release = None
         for following in nodes[offset + 1 :]:
@@ -200,7 +201,7 @@ def wiki_catalog(raw, url):
             width = 8 if current_format == "DX" else 7
             legacy_scores = current_format == "STD" and any("スコア" in row for row in labels)
             if len(cells) != width and not (legacy_scores and len(cells) in {9, 10}):
-                raise ValueError("Unknown Wiki chart table layout")
+                raise SnapshotError("Unknown Wiki chart table layout")
             # STD omits TOUCH. Ignore its separate historical maximum-score columns.
             count_cells = cells[3:width]
             counts = None
@@ -210,7 +211,7 @@ def wiki_catalog(raw, url):
                     values.insert(3, 0)
                 counts = dict(zip(COUNT_FIELDS, values, strict=True))
                 if not cells[2].isdigit() or sum(values) != int(cells[2]):
-                    raise ValueError("Wiki note categories disagree with total")
+                    raise SnapshotError("Wiki note categories disagree with total")
             rows.append(
                 {
                     "title": metadata["タイトル"],
@@ -228,7 +229,7 @@ def wiki_catalog(raw, url):
                 }
             )
     if not rows:
-        raise ValueError("Wiki page has no supported ordinary chart table")
+        raise SnapshotError("Wiki page has no supported ordinary chart table")
     simai_urls = set()
     for node in nodes:
         if node.tag != "a" or "simai" not in _label(node).lower():

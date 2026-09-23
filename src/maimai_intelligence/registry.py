@@ -4,12 +4,15 @@ Only explicit acceptance functions change identity. Normalized metadata is a
 candidate lookup, never an ID or an implicit provider mapping authorization.
 """
 
+from __future__ import annotations
+
 import hashlib
 import json
 import re
 from copy import deepcopy
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 from uuid import UUID, uuid4
 
 from .identity_policy import normalized
@@ -98,13 +101,13 @@ def validate(value):
         counts = source_counts.setdefault(observation["snapshot_id"], {})
         counts[observation["field"]] = counts.get(observation["field"], 0) + 1
         if observation.get("policy") == "metadata-waterfall-1":
-            from .metadata_policy import FIELDS, PRIORITY, number
+            from .metadata_policy import FIELDS, SOURCE_POLICIES, number
 
             provider = value["sources"][observation["snapshot_id"]].get("provider")
             if (
-                provider not in PRIORITY
+                provider not in SOURCE_POLICIES
                 or observation["field"] not in FIELDS
-                or observation.get("priority") != PRIORITY[provider]
+                or observation.get("priority") != SOURCE_POLICIES[provider].priority
                 or number(observation["value"], observation["field"]) is None
                 or observation["subject_id"] not in value["charts"]
                 or not observation.get("evidence")
@@ -179,7 +182,7 @@ def validate(value):
     return validate_enrichment(value)
 
 
-def read_registry(directory):
+def read_registry(directory: Path | str) -> dict[str, Any]:
     root = Path(directory).resolve()
     manifest = read_json(root / "manifest.json")
     if manifest.get("schema_version") != VERSION or set(manifest.get("files", {})) != set(TABLES):
@@ -203,7 +206,7 @@ def read_registry(directory):
     return validate(result)
 
 
-def write_registry(value, directory):
+def write_registry(value: dict[str, Any], directory: Path | str) -> None:
     """Write a fresh candidate. Existing registries are never partially overwritten."""
     validate(value)
     root = Path(directory)

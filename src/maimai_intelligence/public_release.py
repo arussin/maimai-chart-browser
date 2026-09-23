@@ -14,6 +14,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
 from types import MappingProxyType
+from typing import Any
 
 from .artwork import MEDIA_PATH
 from .catalog_loading import (
@@ -149,7 +150,7 @@ def _browser_csp(raw):
     return parser.policy
 
 
-def _read(source, name, limit):
+def _read(source: Path | str, name: str, limit: int) -> bytes:
     path = (source / name).resolve()
     if not path.is_relative_to(source):
         raise ValueError("Public asset leaves the accepted browser directory")
@@ -637,9 +638,14 @@ def plan_public_release(
 
 
 def build_public_release(
-    source, output, *, permalinks=None, song_redirects=None, previous_public=None, capacity=None
-):
-    # Keep destination rejection cheap and preserve the established public API.
+    source: Path | str,
+    output: Path | str,
+    *,
+    permalinks: Path | str | None = None,
+    song_redirects: Path | str | None = None,
+    previous_public: Path | str | None = None,
+    capacity: ReviewedCapacity | None = None,
+) -> dict[str, Any]:
     source, output = Path(source).resolve(), Path(output).resolve()
     if source == output or output.is_relative_to(source) or source.is_relative_to(output):
         raise ValueError("Public release must be separate from retained preview")

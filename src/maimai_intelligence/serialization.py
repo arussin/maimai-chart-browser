@@ -6,11 +6,11 @@ import json
 MAX_BYTES = 32 * 1024 * 1024
 
 
-def canonical(value):
+def canonical(value: object) -> bytes:
     return json.dumps(
         value, sort_keys=True, separators=(",", ":"), ensure_ascii=False, allow_nan=False
     ).encode("utf-8")
 
 
-def digest(value):
+def digest(value: object) -> str:
     return hashlib.sha256(canonical(value)).hexdigest()

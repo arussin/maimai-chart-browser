@@ -1,11 +1,14 @@
 """Allowlisted browser projection of accepted inventory and optional legacy analysis."""
 
+from __future__ import annotations
+
 import hashlib
 import json
 import unicodedata
 from collections import Counter, defaultdict
 from copy import deepcopy
 from pathlib import Path
+from typing import Any
 
 from maimai_analyzer.dataset import SOURCE_LOCK
 
@@ -508,7 +511,7 @@ def project_registry(value, legacy):
     return validate_catalog(data)
 
 
-def coverage_report(data):
+def coverage_report(data: dict[str, Any]) -> dict[str, Any]:
     """Report exact inventory and optional capability coverage without source payloads."""
     charts = data["catalog"]
     return {
@@ -533,7 +536,7 @@ def coverage_report(data):
     }
 
 
-def validate_catalog(data):
+def validate_catalog(data: dict[str, Any]) -> dict[str, Any]:
     if data.get("schema_version") != SCHEMA:
         raise ValueError("Unsupported browser inventory schema")
     validate_genres(data)
@@ -599,8 +602,14 @@ def _legacy_enrichment(data):
 
 
 def build_registry_package(
-    value, source, output, *, published=None, additions=None, artwork_source=None
-):
+    value: dict[str, Any],
+    source: Path | str | None,
+    output: Path | str,
+    *,
+    published: dict[str, Any] | None = None,
+    additions: dict[str, Any] | None = None,
+    artwork_source: Path | str | None = None,
+) -> dict[str, Any]:
     """Adapter retains accepted artifacts; inventory never depends on profile count."""
     if source is None:
         descriptor = {

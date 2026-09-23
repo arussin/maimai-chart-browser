@@ -313,7 +313,7 @@ class WaterfallTests(unittest.TestCase):
         store = self.root / "updates"
         with (
             patch(
-                "scripts.update_catalog.build_public_release",
+                "maimai_intelligence.corpus_update.build_public_release",
                 side_effect=ValueError("authored capacity gate"),
             ),
             self.assertRaisesRegex(ValueError, "capacity gate"),

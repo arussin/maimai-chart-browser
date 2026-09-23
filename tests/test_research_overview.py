@@ -87,14 +87,15 @@ class ResearchOverviewTests(unittest.TestCase):
             )
             retained = (package / "package.json").read_bytes()
             with patch(
-                "scripts.build_research_overview.parse_row",
+                "maimai_intelligence.source_preparation.build_research_overview.parse_row",
                 side_effect=[(charts[0], {}), RuntimeError("Interrupted")],
             ):
                 with self.assertRaisesRegex(RuntimeError, "Interrupted"):
                     build(source, package, output)
             self.assertFalse((output / "package.json").exists())
             with patch(
-                "scripts.build_research_overview.parse_row", return_value=(charts[1], {})
+                "maimai_intelligence.source_preparation.build_research_overview.parse_row",
+                return_value=(charts[1], {}),
             ) as parse:
                 self.assertEqual(build(source, package, output)["charts"], 2)
                 self.assertEqual(parse.call_count, 1)

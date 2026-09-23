@@ -254,7 +254,9 @@ class CatalogUpdateTests(unittest.TestCase):
                 package=self.package,
                 fetcher=lambda: (_ for _ in ()).throw(OSError("denied")),
             )
-        with patch.object(update, "build_public_release", side_effect=OSError("interrupted")):
+        with patch.object(
+            update.corpus_update, "build_public_release", side_effect=OSError("interrupted")
+        ):
             with self.assertRaises(OSError):
                 self.prepare()
         self.assertEqual(read_json(self.store / "latest.json"), publication)
@@ -345,7 +347,7 @@ class CatalogUpdateTests(unittest.TestCase):
             second = self.root / "second"
             second.mkdir()
             with patch(
-                "scripts.build_challenge_package.profile_chart",
+                "maimai_intelligence.source_preparation.build_challenge_package.profile_chart",
                 side_effect=AssertionError("cache miss"),
             ):
                 update.source_package(second, self.store, REVISION, self.root / "art", offline=True)

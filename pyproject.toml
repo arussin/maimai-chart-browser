@@ -24,3 +24,24 @@ extend-exclude = ["output", "dist", "extract_source.py"]
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "S", "UP"]
 ignore = ["S101"]
+
+# Incremental strict boundary checking: imported legacy implementations remain
+# subject to their existing runtime contracts and behavioral suites.
+[tool.mypy]
+python_version = "3.11"
+strict = true
+follow_imports = "silent"
+files = [
+  "src/maimai_intelligence/corpus_policy.py",
+  "src/maimai_intelligence/metadata_selection.py",
+  "src/maimai_intelligence/metadata_policy.py",
+  "src/maimai_intelligence/corpus_explain.py",
+  "src/maimai_intelligence/corpus_diagnostics.py",
+  "src/maimai_intelligence/corpus_attempts.py",
+  "src/maimai_intelligence/corpus_update.py",
+  "src/maimai_intelligence/corpus_cli.py",
+  "src/maimai_intelligence/corpus_workbench.py",
+  "src/maimai_intelligence/catalog_preparation.py",
+  "src/maimai_intelligence/store_lock.py",
+  "src/maimai_intelligence/serialization.py",
+]

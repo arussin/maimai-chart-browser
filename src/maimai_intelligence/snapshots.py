@@ -10,6 +10,7 @@ import time
 import urllib.parse
 import urllib.request
 from pathlib import Path
+from typing import Any
 
 from .serialization import MAX_BYTES as MAX_BYTES
 from .serialization import canonical as canonical
@@ -18,7 +19,7 @@ from .serialization import digest as digest
 SCHEMA_VERSION = "1.0.0"
 
 
-def read_json(path):
+def read_json(path: Path | str) -> dict[str, Any]:
     with Path(path).open("rb") as stream:
         data = stream.read(MAX_BYTES + 1)
     if len(data) > MAX_BYTES:
@@ -31,7 +32,7 @@ def read_json(path):
     return result
 
 
-def atomic_json(path, value):
+def atomic_json(path: Path | str, value: object) -> None:
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     descriptor, temporary = tempfile.mkstemp(prefix=".pending-", dir=path.parent)
