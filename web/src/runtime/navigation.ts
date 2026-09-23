@@ -51,6 +51,9 @@ export class NavigationCoordinator {
   private bfcacheKey: string | null = null;
   private restoreDepth = 0;
   private ledgerPromise: Promise<Ledger> | undefined;
+  private readonly interactions = new Set<string>();
+  private interactionIdle: Promise<void> = Promise.resolve();
+  private finishInteraction: (() => void) | undefined;
   private enabled = !!document.querySelector(
     'meta[name=maimai-song-pages][content="1"],main[data-seo-page]',
   );
@@ -211,6 +214,8 @@ export class NavigationCoordinator {
       const mountSong =
         content.dataset.seoPage === 'song' ? await browser.song(content) : undefined;
       if (!mountSong) await browser.load();
+      // Preserve the pressed target until pointer/key activation has dispatched its click.
+      await this.interactionIdle;
       if (!operation.current()) return false;
       this.browser = browser;
       this.browserMain ??= document.querySelector<HTMLElement>('main:not([data-seo-page])');
@@ -407,6 +412,35 @@ export class NavigationCoordinator {
     this.activate();
   }
   start() {
+    const hold = (key: string) => {
+      this.interactions.add(key);
+      if (!this.finishInteraction)
+        this.interactionIdle = new Promise((resolve) => {
+          this.finishInteraction = resolve;
+        });
+    };
+    const release = (key?: string) => {
+      if (key) this.interactions.delete(key);
+      else this.interactions.clear();
+      // Native click follows pointerup/keyup. A microtask here would run too early.
+      setTimeout(() => {
+        if (this.interactions.size) return;
+        this.finishInteraction?.();
+        this.finishInteraction = undefined;
+      }, 0);
+    };
+    document.addEventListener('pointerdown', (event) => hold('pointer:' + event.pointerId), true);
+    for (const type of ['pointerup', 'pointercancel'] as const)
+      document.addEventListener(type, (event) => release('pointer:' + event.pointerId), true);
+    document.addEventListener(
+      'keydown',
+      (event) => {
+        if (event.key === 'Enter' || event.key === ' ') hold('key:' + event.code);
+      },
+      true,
+    );
+    document.addEventListener('keyup', (event) => release('key:' + event.code), true);
+    window.addEventListener('blur', () => release());
     document.addEventListener('click', (event) => {
       const anchor = (event.target as Element)?.closest<HTMLAnchorElement>('a');
       if (

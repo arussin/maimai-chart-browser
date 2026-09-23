@@ -7,8 +7,8 @@
   },
   "assets": {
     "browser/browser-entry.js": {
-      "sha256": "6cbd176262b0cdaee599add2492b88b6d8c0e0b33abeba3a704d71068bc5276c",
-      "bytes": 16967
+      "sha256": "6ef9c620c5927532f5752657da9338f7ddbcbe0822985a35d01fa9bda671081d",
+      "bytes": 17727
     },
     "browser/application-IWMWFZ33.js": {
       "sha256": "9e34b8ca4a9f458c3c84a1db4bf9f108056fe8a37b30fb30f95e95729c6ec7db",
@@ -19,8 +19,8 @@
       "bytes": 2611
     },
     "browser/browser-offline.js": {
-      "sha256": "8bd8701c9a11f8c6e664069295da22105d58a5f88d254e9eead9b09081b447fe",
-      "bytes": 238879
+      "sha256": "0f3f6f6e5e6ab01ad9b56ba234ce18bb82803318fa76f413b634382618c16ad6",
+      "bytes": 239639
     }
   },
   "replaces": [

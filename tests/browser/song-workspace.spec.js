@@ -169,3 +169,24 @@ test('About stays available and supersedes a pending comparison catalog',async({
  await expect(page.locator('#catalog-count')).toHaveText('26 charts');
  expect(requests).toBe(1);
 });
+
+
+for(const target of ['.seo-primary[data-open-browser]','[data-back-results]'])test('static song navigation survives enhancement during a pointer press '+target,async({page,request})=>{
+ const map=await(await request.get('/registry/permalinks.json')).json();
+ const slug=Object.values(map.songs).find(value=>value.includes('ソテリア'));
+ let release,requested=false;
+ const held=new Promise(resolve=>{release=resolve;});
+ await page.route('**/song-catalog/**',async route=>{requested=true;await held;await route.fallback();});
+ await page.goto('/en/songs/'+encodeURIComponent(slug)+'/');
+ await expect.poll(()=>requested).toBe(true);
+ const link=page.locator('body>main[data-seo-page=song] '+target);
+ const box=await link.boundingBox();
+ await page.mouse.move(box.x+box.width/2,box.y+box.height/2);
+ await page.mouse.down();
+ const response=page.waitForResponse(url=>url.url().includes('/song-catalog/'));
+ release();await response;
+ await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+ try {await expect(link).toBeVisible();} finally {await page.mouse.up();}
+ await expect(page.locator('#songs')).toBeVisible();
+ expect(new URL(page.url()).pathname).toBe('/');
+});
