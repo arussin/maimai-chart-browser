@@ -1,7 +1,7 @@
 /** Commit- and artifact-bound, same-corpus local performance comparison. */
 import http from 'node:http';
 import {readFile,writeFile,mkdir} from 'node:fs/promises';
-import {resolve,extname,sep} from 'node:path';
+import {resolve,extname,sep,dirname} from 'node:path';
 import {createHash} from 'node:crypto';
 import {gzipSync} from 'node:zlib';
 import {createRequire} from 'node:module';
@@ -25,9 +25,36 @@ export function optionalDistribution(values){
  return {status:'measured',...distribution(values)};
 }
 
+/** The unchanged uploaded artifact is the primary production baseline, not a reconstruction. */
+async function bindProduction(config,receipt,bytes){
+ if(config.id!=='baseline'||receipt.uploaded!==true||receipt.verified_live!==true||receipt.source_commit!==config.commit||resolve(receipt.artifact_directory)!==config.root||resolve(config.root,'manifest.json')!==config.manifest)throw Error('Invalid accepted production baseline');
+ const folder=dirname(config.provenance),index=JSON.parse(await readFile(resolve(folder,'evidence-sha256.json')));
+ if(index['deployment.json']!==sha(bytes)||resolve(folder,'deployment.json')!==config.provenance)throw Error('Production receipt integrity mismatch');
+ async function evidence(name){
+  const raw=await readFile(resolve(folder,name));
+  if(index[name]!==sha(raw))throw Error('Production evidence integrity mismatch: '+name);
+  return JSON.parse(raw);
+ }
+ const inventory=await evidence('public-inventory.json'),source=await evidence('source-verification.json');
+ if(source.source_commit!==config.commit||source.tree!==receipt.tree||source.parser_sha256!==receipt.parser_sha256||inventory['player-maishift.js']!==source.parser_sha256||inventory['manifest.json']!==receipt.manifest_sha256||Object.keys(inventory).length!==receipt.total_files)throw Error('Production source or inventory binding mismatch');
+ const expected={};
+ for(const [name,hash] of Object.entries(inventory)){
+  const path=resolve(config.root,name);
+  if(!path.startsWith(config.root+sep)||name.includes('\\')||!/^[a-f0-9]{64}$/.test(hash))throw Error('Invalid production inventory path or hash');
+  const raw=await readFile(path);
+  if(sha(raw)!==hash)throw Error('Production artifact changed: '+name);
+  expected['/'+name]={bytes:raw.length,sha256:hash};
+ }
+ const configuration=await readFile(resolve(config.root,'player-import-config.js'),'utf8');
+ const capability=/Object\.freeze\(\{maishift:(true|false)\}\)/.exec(configuration);
+ if(!capability)throw Error('Unrecognized historical capability configuration');
+ return {kind:'accepted-production',expected,build_options:{player_maishift:capability[1]==='true'},receipt_sha256:sha(bytes),source_inventory_sha256:null,verifier_commit:null,production_deployment:receipt.deployment,source_tree:receipt.tree,artifact_inventory_sha256:index['public-inventory.json']};
+}
+
 export async function bindArtifact(config){
  if(!/^[a-f0-9]{40}$/.test(config.commit||''))throw Error('Exact product source commits are required');
  const bytes=await readFile(config.provenance),receipt=JSON.parse(bytes);
+ if(receipt.verified_live!==undefined)return bindProduction(config,receipt,bytes);
  if(receipt.schema_version!=='maimai-full-review-reproduction-2'||receipt.passed!==true||receipt.published!==false||receipt.source?.commit!==config.commit||receipt.candidate_commit!==config.commit)throw Error('Artifact receipt does not verify the requested source commit');
  const buildOptions=receipt.build_options||(receipt.verifier?.commit==='4d5584b43e2ef1f4cfd1398739aa80e8acb74136'?{player_maishift:false}:null);
  if(!buildOptions||typeof buildOptions.player_maishift!=='boolean'||Object.keys(buildOptions).length!==1)throw Error('Explicit build options are required');
@@ -39,7 +66,7 @@ export async function bindArtifact(config){
  if(!expected['/manifest.json']||!expected['/index.html'])throw Error('Receipt omits required artifact files');
  const manifest=await readFile(config.manifest);
  verifyBytes('/manifest.json',manifest,expected);
- return {expected,build_options:buildOptions,receipt_sha256:sha(bytes),source_inventory_sha256:receipt.source.inventory_sha256,verifier_commit:receipt.verifier.commit};
+ return {kind:'reproduced-candidate',expected,build_options:buildOptions,receipt_sha256:sha(bytes),source_inventory_sha256:receipt.source.inventory_sha256,verifier_commit:receipt.verifier.commit};
 }
 
 export function validateExperiment(experiment,configs,catalogs){
@@ -196,7 +223,7 @@ export async function main(argv=process.argv.slice(2)){
    for(const key of ['search_ms','song_ms','back_ms','comparison_ms'])entry[key]=optionalDistribution(selected.map(r=>r[key]));summaries.push(entry);
   }
   const browserVersion=browser.version();await browser.close();browser=null;await proxy.close();
-  const receipt={schema:'architecture-performance-3',experiment,passed:errors.length===0&&applicationOutbound.length===0,created_at:new Date().toISOString(),harness_sha256:sha(await readFile(new URL(import.meta.url))),configs:configs.map(({binding,...config})=>({...config,binding:{receipt_sha256:binding.receipt_sha256,source_inventory_sha256:binding.source_inventory_sha256,verifier_commit:binding.verifier_commit,build_options:binding.build_options}})),verified_served_files:[...content.values()].map(f=>({config:f.config,path:f.name,bytes:f.raw.length,sha256:sha(f.raw)})),catalogs:catalogs.map(c=>({sha256:c.release.sha256,manifest_sha256:c.manifest_sha256,charts:c.data.catalog.length})),query,iterations,browser:browserVersion,runtime:runtimeBinding,platform:{os:os.platform(),release:os.release(),cpu:os.cpus()[0]?.model,threads:os.cpus().length},method:{routing:false,outbound:'Exact loopback proxy only; all other origins denied. Observation-only request/WebSocket audit fails application attempts; unattributed browser transports are retained separately',cache:'Production-like immutable data; other assets revalidated. A new page in the same context gives the immediate warm repeat; a fresh context gives cold readiness. Full measured journey filesystem/gzip primed in discarded browser contexts. No artificial network or CPU throttle.',readiness:'First populated catalog DOM observed (ready_ms is not a paint metric); action completion includes two animation frames. Search dispatches the synchronous input event. Comparison includes tab activation and deferred initialization.',usage:'Collector remains suppressed by the unchanged nonproduction origin predicate.',execution:'CDP TaskDuration includes renderer task work through two animation frames after catalog and font readiness. ScriptDuration is retained diagnostically, not compared as total JS execution because async-module work is excluded by this engine metric',limitations:'Explicit full Chromium executable on this Windows/font platform only. Web font bytes are verified served assets; operating-system fallback font files are not individually hashed; local-server latency, not internet Core Web Vitals. Concurrent host load is uncontrolled; paired order alternates.'},rows,summaries,errors,applicationOutbound,blockedTransports:proxy.blockedTransports};
+  const receipt={schema:'architecture-performance-3',experiment,passed:errors.length===0&&applicationOutbound.length===0,created_at:new Date().toISOString(),harness_sha256:sha(await readFile(new URL(import.meta.url))),configs:configs.map(({binding,...config})=>({...config,binding:{kind:binding.kind,production_deployment:binding.production_deployment,source_tree:binding.source_tree,artifact_inventory_sha256:binding.artifact_inventory_sha256,receipt_sha256:binding.receipt_sha256,source_inventory_sha256:binding.source_inventory_sha256,verifier_commit:binding.verifier_commit,build_options:binding.build_options}})),verified_served_files:[...content.values()].map(f=>({config:f.config,path:f.name,bytes:f.raw.length,sha256:sha(f.raw)})),catalogs:catalogs.map(c=>({sha256:c.release.sha256,manifest_sha256:c.manifest_sha256,charts:c.data.catalog.length})),query,iterations,browser:browserVersion,runtime:runtimeBinding,platform:{os:os.platform(),release:os.release(),cpu:os.cpus()[0]?.model,threads:os.cpus().length},method:{routing:false,outbound:'Exact loopback proxy only; all other origins denied. Observation-only request/WebSocket audit fails application attempts; unattributed browser transports are retained separately',cache:'Production-like immutable data; other assets revalidated. A new page in the same context gives the immediate warm repeat; a fresh context gives cold readiness. Full measured journey filesystem/gzip primed in discarded browser contexts. No artificial network or CPU throttle.',readiness:'First populated catalog DOM observed (ready_ms is not a paint metric); action completion includes two animation frames. Search dispatches the synchronous input event. Comparison includes tab activation and deferred initialization.',usage:'Collector remains suppressed by the unchanged nonproduction origin predicate.',execution:'CDP TaskDuration includes renderer task work through two animation frames after catalog and font readiness. ScriptDuration is retained diagnostically, not compared as total JS execution because async-module work is excluded by this engine metric',limitations:'Explicit full Chromium executable on this Windows/font platform only. Web font bytes are verified served assets; operating-system fallback font files are not individually hashed; local-server latency, not internet Core Web Vitals. Concurrent host load is uncontrolled; paired order alternates.'},rows,summaries,errors,applicationOutbound,blockedTransports:proxy.blockedTransports};
   await writeFile(resolve(output,'measurements.json'),JSON.stringify(receipt,null,2)+'\n');
   if(!receipt.passed)throw Error('Invalid measurement: resource, application or outbound errors');
  }finally{

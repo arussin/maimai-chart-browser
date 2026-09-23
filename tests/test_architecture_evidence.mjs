@@ -77,3 +77,24 @@ test('unsupported historical journeys are explicit and never mixed with measurem
  assert.throws(()=>optionalDistribution([null,12]),/Inconsistent/);
  assert.throws(()=>optionalDistribution([12,NaN]),/Finite/);
 });
+
+test('production baseline requires the accepted deployment chain and unchanged complete bytes',async()=>{
+ const folder=await mkdtemp(join(tmpdir(),'maimai-production-evidence-'));
+ try{
+  const root=join(folder,'public');await mkdir(root);
+  const files={'index.html':'known','manifest.json':'{}','player-maishift.js':'parser','player-import-config.js':'globalThis.maimaiPlayerFeatures ||= Object.freeze({maishift:true});'};
+  const inventory={};for(const [name,raw]of Object.entries(files)){await writeFile(join(root,name),raw);inventory[name]=record(raw).sha256;}
+  const commit='a'.repeat(40),tree='b'.repeat(40),parser_sha256=inventory['player-maishift.js'];
+  const source={source_commit:commit,tree,parser_sha256};
+  const deployment={source_commit:commit,tree,parser_sha256,uploaded:true,verified_live:true,artifact_directory:root,manifest_sha256:inventory['manifest.json'],total_files:4,deployment:'fixture-deployment'};
+  const evidence={'source-verification.json':source,'public-inventory.json':inventory,'deployment.json':deployment},index={};
+  for(const [name,value]of Object.entries(evidence)){const raw=JSON.stringify(value);await writeFile(join(folder,name),raw);index[name]=record(raw).sha256;}
+  await writeFile(join(folder,'evidence-sha256.json'),JSON.stringify(index));
+  const config={id:'baseline',commit,root:resolve(root),manifest:join(root,'manifest.json'),provenance:join(folder,'deployment.json')};
+  const binding=await bindArtifact(config);assert.equal(binding.kind,'accepted-production');assert.equal(binding.production_deployment,'fixture-deployment');assert.equal(binding.build_options.player_maishift,true);
+  await assert.rejects(bindArtifact({...config,id:'candidate'}),/Invalid accepted/);
+  await assert.rejects(bindArtifact({...config,commit:'c'.repeat(40)}),/Invalid accepted/);
+  await writeFile(join(root,'index.html'),'tampered');await assert.rejects(bindArtifact(config),/artifact changed/);
+  await writeFile(join(root,'index.html'),'known');await writeFile(join(folder,'source-verification.json'),'{}');await assert.rejects(bindArtifact(config),/evidence integrity/);
+ }finally{await rm(folder,{recursive:true,force:true});}
+});
