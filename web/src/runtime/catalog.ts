@@ -1,3 +1,4 @@
+import type { Catalog, Chart } from '../catalog-query';
 import {
   PublicReader,
   MiB,
@@ -12,13 +13,32 @@ export interface ChartIdentity {
   source_hash: string;
   detail_bucket?: string;
 }
-export interface PublicCatalog {
+export interface CatalogChart extends ChartIdentity, Chart {
+  title: string;
+  artist: string;
+  song_id: string;
+  version?: string;
+  demand?: Record<string, Record<string, number | null>> | null;
+  aliases?: string[];
+  format: string;
+  difficulty: string;
+  [key: string]: unknown;
+}
+export interface PublicCatalog extends Catalog {
   schema_version: string;
   index_schema_version?: string;
   source_catalog_sha256?: string;
-  catalog: ChartIdentity[];
+  catalog: CatalogChart[];
+  artwork?: unknown;
+  provider_mapping?: import('../player-session').ProviderMapping;
+  maishift_mapping?: import('../player-session').ProviderMapping;
+  legacy_ids?: Record<string, string>;
   detail_buckets?: Record<string, SingleVerifiedRef>;
-  analysis?: { charts: Record<string, Record<string, unknown>> };
+  analysis?: {
+    charts: Record<string, Record<string, unknown>>;
+    patterns?: string[];
+    definitions?: Record<string, unknown>;
+  };
   snippets: Record<string, unknown>;
 }
 interface StartupParts {

@@ -170,6 +170,10 @@ export class BrowserState {
   private catalogHash: string | null = null;
   private view: BrowserViewPort | undefined;
 
+  cancelRestoration(): void {
+    this.view?.position.cancel();
+  }
+
   disclosure(id: string): { expanded: boolean } {
     let value = this.disclosures.get(id);
     if (!value) {

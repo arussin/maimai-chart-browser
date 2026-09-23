@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "build": "node build.mjs",
-    "check": "npm run format:check && tsc --noEmit && node check-architecture.mjs && node build.mjs --check",
+    "check": "npm run format:check && tsc --noEmit && node check-architecture.mjs && node check-decisions.mjs && node build.mjs --check",
     "test": "node --test tests/*.test.mjs",
     "format": "prettier --write src tests *.mjs *.json",
     "format:check": "prettier --check src tests *.mjs *.json"

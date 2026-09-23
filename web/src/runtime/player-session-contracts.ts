@@ -1,28 +1,6 @@
 import type { PlayerSource, PlayerStorage, StoreToken } from '../views/player-storage';
-export interface PlayerIdentity {
-  key: string;
-  provider: string;
-  game: string;
-  username: string;
-  displayName: string;
-}
-export interface PlayerDataset {
-  format: string;
-  schemaVersion: number;
-  revision: string;
-  player: PlayerIdentity;
-  charts: Record<string, unknown>;
-  records: Record<string, unknown>;
-  plays: Record<string, string>;
-  snapshots: Record<
-    string,
-    {
-      capturedAt: number;
-      pbs: Record<string, string>;
-    }
-  >;
-  captures: Record<string, unknown>;
-}
+import type { PlayerIdentity, PlayerDataset, PlayerRecord } from '../domain/player-data';
+export type { PlayerIdentity, PlayerDataset } from '../domain/player-data';
 export interface PlayerOffer {
   format: string;
   schemaVersion: number;
@@ -71,7 +49,7 @@ export interface PlayerCore {
   reconcile(data: PlayerDataset): Promise<PlayerDataset>;
   merge(previous: PlayerDataset, next: PlayerDataset): Promise<PlayerDataset>;
   current(data: PlayerDataset): {
-    pbs: Map<string, unknown>;
+    pbs: Map<string, PlayerRecord>;
   };
   offer(data: PlayerDataset): PlayerOffer;
   validateOffer(value: unknown): PlayerOffer;

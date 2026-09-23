@@ -19,22 +19,21 @@ async function ledger(request){return (await request.get('/registry/permalinks.j
 async function ready(page){await expect.poll(()=>page.evaluate(()=>!!window.maimaiBrowserState)).toBe(true);}
 const songPath=(locale,slug)=>'/'+locale+'/songs/'+encodeURIComponent(slug)+'/';
 
-test('static song pages have four explicit languages, canonical identity and no catalog startup',async({page,request})=>{
-  const map=await ledger(request),slug=Object.values(map.songs).find(value=>/[^\x00-\x7f]/.test(value));
-  expect(slug).toBeTruthy();
-  for(const [locale,htmlLanguage]of [['en','en'],['ja','ja'],['ko','ko'],['zh-hans','zh-Hans']]){
-    const requests=[];page.on('request',request=>requests.push(request.url()));
-    await page.goto(songPath(locale,slug));
-    await expect(page.locator('main[data-seo-page="song"]')).toBeVisible();
-    await expect(page.locator('html')).toHaveAttribute('lang',htmlLanguage);
-    await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href','https://maimai.party'+songPath(locale,slug));
-    await expect(page.locator('link[rel="alternate"]')).toHaveCount(5);
-    await page.locator('[data-seo-international]').check();
-    expect(await page.evaluate(()=>[...document.querySelectorAll('[data-seo-jp]')].every(node=>node.textContent===node.dataset.seoIntl))).toBe(true);
-    expect(requests.some(url=>/catalog-index|chart-details|lab-loader/.test(url))).toBe(false);
-    expect(await page.evaluate(()=>window.navigationEvents)).toEqual([{page:'song'}]);
-    expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
-  }
+test('JavaScript-disabled public song pages retain four languages, canonical identity and crawlable charts',async({browser,request,baseURL})=>{
+ const map=await ledger(request),slug=Object.values(map.songs).find(value=>/[^\x00-\x7f]/.test(value));
+ const context=await browser.newContext({javaScriptEnabled:false});const document=await context.newPage(),requests=[];
+ document.on('request',request=>requests.push(request.url()));
+ await context.route('**/*',async route=>{const url=new URL(route.request().url());if(url.origin!==baseURL)return route.abort();const response=await route.fetch({url:baseURL+'/registry'+url.pathname+url.search});return route.fulfill({response});});
+ try{for(const [locale,htmlLanguage]of [['en','en'],['ja','ja'],['ko','ko'],['zh-hans','zh-Hans']]){
+  await document.goto(baseURL+songPath(locale,slug));
+  await expect(document.locator('main[data-seo-page="song"]')).toBeVisible();
+  await expect(document.locator('html')).toHaveAttribute('lang',htmlLanguage);
+  await expect(document.locator('link[rel="canonical"]')).toHaveAttribute('href','https://maimai.party'+songPath(locale,slug));
+  await expect(document.locator('link[rel="alternate"]')).toHaveCount(5);
+  await expect(document.locator('.seo-table a').first()).toHaveAttribute('href',/chart=/);
+ }
+ expect(requests.some(url=>/catalog-index|chart-details|lab-loader/.test(url))).toBe(false);
+ }finally{await context.close();}
 });
 
 test('song navigation keeps browser mounted and restores controls, expansions, focus and scroll',async({page})=>{
@@ -67,9 +66,9 @@ test('full reload of a song route restores only local browser controls through r
   const row=page.locator('#songs .song-row').first();await row.locator('.chart-row').click();
   const link=row.locator('a[data-song-page]');await expect(link).toBeVisible();await link.click();
   await expect(page.locator('#seo-route-view')).toBeVisible();await page.reload();
-  await expect(page.locator('main[data-seo-page="song"]')).toBeVisible();
-  expect(await page.evaluate(()=>!!window.maimaiBrowserState)).toBe(false);
-  await page.locator('[data-back-results]').click();await ready(page);
+  await expect(page.locator('#seo-route-view main[data-seo-page="song"]')).toBeVisible();
+  await ready(page);
+  await page.locator('#seo-route-view [data-back-results]').click();await ready(page);
   await expect(page.locator('#search')).toHaveValue('ソテリア');
   expect(await page.evaluate(()=>Object.keys(history.state.maimaiBrowserState))).not.toContain('scores');
 });
@@ -108,7 +107,7 @@ test('failed history-route fetch falls back to the matching full static document
   await page.goBack();await expect(page.locator('#songs')).toBeVisible();
   await page.route('**/en/songs/**',route=>route.request().resourceType()==='fetch'?route.fulfill({status:503,body:'Unavailable'}):route.fallback());
   await page.goForward();await expect(page.locator('main[data-seo-page=song]')).toBeVisible();
-  await expect(page).toHaveURL(songURL);expect(await page.evaluate(()=>!!window.maimaiBrowserState)).toBe(false);
+  await expect(page).toHaveURL(songURL);await ready(page);await expect(page.locator('body>main[data-seo-page=song]')).toBeVisible();
 });
 
 
@@ -208,11 +207,11 @@ for(const reload of [false,true])test(`song language navigation preserves the or
   const before=await page.evaluate(()=>maimaiBrowserState.capture());expect(before.personal.grade).toEqual(['SSS']);
   await link.click();await expect(page.locator('#seo-route-view')).toBeVisible();
   await page.locator('#seo-route-view [data-seo-international]').uncheck();
-  if(reload){await page.reload();await expect(page.locator('main[data-seo-page=song]')).toBeVisible();await page.locator('header a[hreflang=ja]').click();}
-  else await page.locator('.site-header [data-language=ja]').click();
+  if(reload){await page.reload();await expect(page.locator('#seo-route-view main[data-seo-page=song]')).toBeVisible();}
+  await page.locator('.site-header [data-language=ja]').click();
   await expect(page).toHaveURL(/\/ja\/songs\//);await expect(page.locator('html')).toHaveAttribute('lang','ja');
   await expect(page.locator('link[rel=canonical]')).toHaveAttribute('href','https://maimai.party'+new URL(page.url()).pathname);
-  const main=page.locator('main[data-seo-page=song]');await expect(main.locator('.seo-primary')).toHaveText('譜面ブラウザーで開く');
+  const main=page.locator('#seo-route-view main[data-seo-page=song]');await expect(main.locator('.seo-primary')).toHaveText('譜面ブラウザーで開く');
   await expect(main.locator('[data-seo-international]')).not.toBeChecked();
   if(!reload){expect(await page.evaluate(()=>maimaiI18n.locale)).toBe('ja');expect(await page.evaluate(()=>window.navigationEvents)).toEqual([{page:'charts'},{page:'song'},{page:'song'}]);}
   await main.locator('[data-back-results]').click();await ready(page);await expect(page.locator('#songs')).toBeVisible();
@@ -289,12 +288,12 @@ for(const sourceReload of [false,true])test(`Open in browser commits its explici
 
 test('direct static language changes preserve the explicit international-data choice',async({page,request})=>{
   const map=await ledger(request),slug=Object.values(map.songs)[0];
-  await page.goto(songPath('en',slug));await page.locator('[data-seo-international]').check();
-  await page.locator('header a[hreflang=ja]').click();
+  await page.goto(songPath('en',slug));await expect(page.locator('#seo-route-view')).toBeVisible();await page.locator('#seo-route-view [data-seo-international]').check();
+  await page.locator('.site-header [data-language=ja]').click();
   await expect(page).toHaveURL(songPath('ja',slug));await expect(page.locator('html')).toHaveAttribute('lang','ja');
-  await expect(page.locator('[data-seo-international]')).toBeChecked();
-  expect(await page.evaluate(()=>history.state.maimaiReturn)).toBeUndefined();
-  expect(await page.evaluate(()=>!!window.maimaiBrowserState)).toBe(false);
+  await expect(page.locator('#seo-route-view [data-seo-international]')).toBeChecked();
+  expect(await page.evaluate(()=>history.state.maimaiReturn)).toBeNull();
+  await ready(page);
 });
 
 

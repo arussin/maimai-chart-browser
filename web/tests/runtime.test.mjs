@@ -384,3 +384,30 @@ test('restoration projects owned state without reading current DOM position befo
   assert.equal(captured.focus, 'search');
   assert.equal(captured.locale, 'ja');
 });
+
+test('local operational diagnostics retain only bounded codes without usage or persistence', async () => {
+  const local = await loadModule('runtime/diagnostics');
+  for (let i = 0; i < 40; i++) local.diagnose('route_unavailable');
+  assert.equal(local.diagnostics().length, 20);
+  assert.equal(new Set(local.diagnostics()).size, 1);
+  assert.throws(() => local.diagnostics().push('private sentinel'));
+});
+
+test('one public route contract keeps Japanese ja and game regions out of canonical language paths', async () => {
+  const routes = await loadModule('runtime/public-routes');
+  for (const locale of ['en', 'ja', 'ko', 'zh-hans'])
+    for (const kind of ['songs', 'versions']) {
+      const path = routes.publicPath(locale, kind, 'ソテリア-123');
+      assert.equal(routes.routePattern.test(path), true);
+    }
+  for (const locale of ['jp', 'JP', 'intl', 'en-US', ''])
+    assert.throws(() => routes.publicPath(locale, 'songs', 'test'));
+  for (const slug of ['', '../private', 'a?b', 'a#b', 'a\\b'])
+    assert.throws(() => routes.publicPath('ja', 'songs', slug));
+  assert.equal(routes.routePattern.test('/ja/songs/a/b/'), false);
+});
+
+test('public route escaping agrees with the static generator for retained punctuation', async () => {
+  const routes = await loadModule('runtime/public-routes');
+  assert.equal(routes.publicPath('en', 'songs', "name!'()*"), '/en/songs/name%21%27%28%29%2A/');
+});

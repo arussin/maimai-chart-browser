@@ -1,4 +1,9 @@
-import { createLocalization } from './views/localization.js';
+import { createAnalysisModel } from './domain/analysis-model';
+import { createPassagePreview } from './components/passage-preview';
+import { createChartSections } from './components/chart-sections';
+import { sectionPreferences } from './runtime/section-preferences';
+import { createLocalization, type LocalizationConfiguration } from './views/localization.js';
+import type { SearchConfiguration } from './views/song-search';
 import { createSongSearch } from './views/song-search.js';
 import { createSettingsMenu } from './views/settings-menu.js';
 import { createPlayerRanges } from './views/player-ranges.js';
@@ -10,14 +15,14 @@ import { createPlayerData } from './views/player-data.js';
 import { createFeatureAnnouncements } from './views/feature-announcements.js';
 import { createSupportClient } from './views/support-client.js';
 import { createSupportStripe } from './views/support-stripe.js';
-import { createChartVisuals } from './views/chart-visuals.js';
+import { createChartVisuals, type ChartTheme } from './views/chart-visuals.js';
 import { createPatternLibrary } from './views/pattern-library.js';
-import { createChallengeMatching } from './views/challenge-matching.js';
+import * as matching from './domain/challenge-matching';
 import { createChartLinks } from './views/chart-links.js';
 import { createChartArtwork } from './views/chart-artwork.js';
 import { createChartFilters } from './views/chart-filters.js';
 import { createChartOverview } from './views/chart-overview.js';
-import { createPatternFilter } from './views/pattern-filter.js';
+import { createPatternFilter, type PatternDefinition } from './views/pattern-filter.js';
 import { createRegistryBrowser } from './views/registry-browser.js';
 import { createChartComparison } from './views/chart-comparison.js';
 import { createChallengeReview } from './views/challenge-review.js';
@@ -39,20 +44,16 @@ import type {
   PageMetadata,
 } from './runtime/contracts';
 export interface BrowserConfiguration {
-  messages: Record<string, unknown>;
+  messages: LocalizationConfiguration['messages'];
   flags: Record<string, string>;
-  search: unknown;
-  theme: unknown;
-  lessons: unknown;
+  search: SearchConfiguration;
+  theme: ChartTheme;
+  lessons: import('./domain/patterns').LessonBook;
   features: { maishift: boolean };
   pilot: boolean;
   support: typeof supportConfig;
 }
-export interface Application {
-  browser: BrowserPort;
-  localization: LocalizationPort;
-  services: Record<string, unknown>;
-}
+export type Application = Awaited<ReturnType<typeof createApplication>>;
 export interface ApplicationOptions {
   configuration?: BrowserConfiguration;
   data?: PublicCatalog;
@@ -103,7 +104,7 @@ async function mountShell(reader: PublicReader): Promise<PageMetadata | undefine
   };
 }
 /** The same dependency graph builds the hosted and self-contained offline applications. */
-export async function createApplication(options: ApplicationOptions): Promise<Application> {
+export async function createApplication(options: ApplicationOptions) {
   const { usage, navigation } = options,
     reader = new PublicReader(
       new URL(
@@ -125,11 +126,9 @@ export async function createApplication(options: ApplicationOptions): Promise<Ap
         version: '',
       })
     : loadCatalog(reader, new URLSearchParams(location.search).get('version'));
-  const localization = createLocalization({ configuration }) as LocalizationPort & {
-    text: (node: Node, value: string) => void;
-  };
+  const localization = createLocalization({ root: document.body, configuration });
   options.onLocalization(localization);
-  const settings = createSettingsMenu({ localization, usage });
+  const settings = createSettingsMenu({ root: document.body, localization, usage });
   const views = createTabs(navigation, localization);
   const playerContext = configuration.pilot
     ? Object.freeze({ pilot: true, key: (name: string) => 'maimai-pilot-maishift-v1:' + name })
@@ -156,16 +155,26 @@ export async function createApplication(options: ApplicationOptions): Promise<Ap
   const playerStorage = createPlayerStorage({ playerContext });
   const playerRanges = createPlayerRanges({ usage, localization, maishift });
   const { filterDisclosure, catalogFilters } = createChartFilters({
+    root: document.body,
     browserState,
     localization,
     playerContext,
     usage,
   });
   // Private imports and settings remain usable even while public catalog data is unavailable.
-  let overview: ReturnType<typeof createChartOverview>;
+  const sections = createChartSections(
+    document.body,
+    browserState.sections,
+    localization,
+    sectionPreferences(
+      playerContext?.key('maimai-chart-sections-v1') ?? 'maimai-chart-sections-v1',
+    ),
+    usage,
+  );
   const personal = createPlayerData({
+    root: document.body,
     browserState,
-    overview: { section: (...args: unknown[]) => overview.section(...args) },
+    sections,
     filterDisclosure,
     localization,
     playerContext,
@@ -181,46 +190,64 @@ export async function createApplication(options: ApplicationOptions): Promise<Ap
     historyPort,
   });
   if (!configuration.pilot) {
-    createFeatureAnnouncements({ localization, playerSources, settings });
+    createFeatureAnnouncements({ root: document.body, localization, playerSources, settings });
     const supportClient = createSupportClient({ supportConfig: configuration.support });
-    createSupportStripe({ localization, supportClient, historyPort });
-    createAnalytics({ localization, settings, historyPort });
+    createSupportStripe({ root: document.body, localization, supportClient, historyPort });
+    createAnalytics({ root: document.body, localization, settings, historyPort });
   }
   const loaded = await catalogJob,
     publicData = loaded.data,
     catalogDetails = loaded.details;
   const songSearch = createSongSearch({ configuration }),
-    visuals = createChartVisuals({ configuration }),
-    matching = createChallengeMatching({});
+    visuals = createChartVisuals({ configuration });
   const chartLinks = createChartLinks({ localization, usage });
   const artwork = createChartArtwork({
-    catalogQuery,
     localization,
     publicData,
-    songPages: navigation,
+    title: (chart) => catalogQuery.titleLabel(chart, localization.locale) || chart.title,
+    asset: (path) => navigation.asset(path),
   });
-  let patternLibrary: ReturnType<typeof createPatternLibrary>,
-    previewField: ReturnType<typeof createChallengeReview>['previewField'];
-  overview = createChartOverview({
-    browserState,
-    catalogDetails,
-    catalogQuery,
+  const previewField = createPassagePreview(localization);
+  const analysis = createAnalysisModel(publicData.analysis, publicData.catalog);
+  const definitions = JSON.parse(
+    document.getElementById('pattern-data')!.textContent!,
+  ) as PatternDefinition[];
+  const patternLibrary = createPatternLibrary({
+    root: document.body,
+    definitions,
+    analysis,
     localization,
-    patternLibrary: { show: (...args: unknown[]) => patternLibrary.show(...args) },
-    playerContext,
-    publicData,
-    usage,
-  });
-  patternLibrary = createPatternLibrary({
-    overview,
-    localization,
-    previewField: (...args: unknown[]) => previewField!(...args),
+    previewField,
     usage,
     configuration,
   });
-  const patternFilter = createPatternFilter({ browserState, localization, usage }),
-    registry = createRegistryBrowser({ browserState, catalogQuery, localization, usage });
+  const overview = createChartOverview({
+    root: document.body,
+    definitions,
+    sections,
+    analysis,
+    catalogDetails,
+    catalogQuery,
+    localization,
+    patternLibrary,
+    publicData,
+  });
+  const patternFilter = createPatternFilter({
+      root: document.body,
+      definitions,
+      browserState,
+      localization,
+      usage,
+    }),
+    registry = createRegistryBrowser({
+      root: document.body,
+      browserState,
+      catalogQuery,
+      localization,
+      usage,
+    });
   const comparison = createChartComparison({
+    root: document.body,
     browserState,
     catalogQuery,
     matching,
@@ -236,6 +263,7 @@ export async function createApplication(options: ApplicationOptions): Promise<Ap
   });
   const controller = navigation.silent(() =>
     createChallengeReview({
+      root: document.body,
       browserState,
       catalogFilters,
       catalogQuery,
@@ -255,28 +283,28 @@ export async function createApplication(options: ApplicationOptions): Promise<Ap
       usage,
       views,
       historyPort,
-      onPreviewField: (value: typeof previewField) => {
-        previewField = value;
-      },
     }),
   );
-  previewField = controller.previewField;
-  if (!controller.browserState) throw Error('The research browser could not start.');
+  if (!controller.browserState || !controller.mountSong)
+    throw Error('The research browser could not start.');
   const browser: BrowserPort = Object.freeze({
+    cancelRestoration: () => browserState.cancelRestoration(),
     capture: () => browserState.capture(),
     restore: (value: BrowserSnapshot) => browserState.restore(value),
     version: (value: string) => browserState.version(value),
     open: () => browserState.open(),
     ready: personal.ready,
+    song: controller.mountSong,
   });
   navigation.attach(browser, metadata);
+  const directSong = !!document.querySelector('body>main[data-seo-page="song"]');
   document
     .querySelectorAll<HTMLElement>('main[data-seo-page],body>.site-header')
     .forEach((node) => {
-      if (metadata) node.hidden = true;
+      if (metadata && !directSong) node.hidden = true;
     });
   const wrapper = document.querySelector<HTMLElement>('[data-version-browser]');
-  if (wrapper) {
+  if (wrapper && !directSong) {
     wrapper.hidden = false;
     document.documentElement.classList.remove('seo-static');
   }

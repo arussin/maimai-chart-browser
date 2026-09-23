@@ -1,3 +1,4 @@
+import { catalogFailure } from './runtime/diagnostics';
 import { createUsage } from './usage';
 import { NavigationCoordinator } from './runtime/navigation';
 import type { Application } from './application';
@@ -21,8 +22,12 @@ const navigation = new NavigationCoordinator({
   loadBrowser: () => loadApplication().then((value) => value.browser),
 });
 navigation.start();
-if (!document.querySelector('main[data-seo-page="song"]'))
-  void loadApplication().catch((error) => {
-    const status = document.getElementById('lab-status');
-    if (status && !status.dataset.catalogError) status.textContent = error.message;
+void loadApplication()
+  .then(() => {
+    if (document.querySelector('body>main[data-seo-page="song"]'))
+      return navigation.route(new URL(location.href));
+  })
+  .catch(() => {
+    const root = document.querySelector<HTMLElement>('body>main[data-seo-page]') ?? document.body;
+    catalogFailure(root, document.documentElement.lang);
   });

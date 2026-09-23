@@ -50,12 +50,18 @@ export interface BrowserSnapshot {
   locale?: Locale;
   auxiliary?: { sortKeep: boolean; patternSearch: string; menus: [string, boolean][] };
 }
+export interface SongWorkspacePort {
+  region(international: boolean): void;
+  dispose(): void;
+}
 export interface BrowserPort {
+  cancelRestoration(): void;
   capture(): BrowserSnapshot;
   restore(value: BrowserSnapshot): boolean | Promise<boolean>;
   version(value: string): boolean;
   open(): void;
   ready: Promise<void>;
+  song(root: HTMLElement, international: boolean): SongWorkspacePort;
 }
 export interface LocalizationPort {
   readonly locale: Locale;

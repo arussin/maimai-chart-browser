@@ -7,20 +7,20 @@
   },
   "assets": {
     "browser/browser-entry.js": {
-      "sha256": "e680f7ef713accc874c9d83512f59d9470fb73751d8ffef5b4f7079c57eae7d3",
-      "bytes": 13586
+      "sha256": "87191c643c6c7d0960e8cc26473414af97226954c5620ae2289f2c8d0e2daa62",
+      "bytes": 16004
     },
-    "browser/application-BBYW4IGI.js": {
-      "sha256": "cf1ee81c78f9f389476303c2340ce751ad9154268c585e9aa7b533a27b3f8067",
-      "bytes": 216220
+    "browser/application-FKH3MDUR.js": {
+      "sha256": "b6f7a83299336d23c28e9449367f4ecc7156e67a19b28f2e39ed636b50ec73c2",
+      "bytes": 218315
     },
     "browser/chunk-PQOHL5MV.js": {
       "sha256": "c25d9c5050a2d5c3134eefe35d0504e5a3bb13809038eccb822eee8f37879f44",
       "bytes": 2611
     },
     "browser/browser-offline.js": {
-      "sha256": "da9250b6cf873ca6fb275fcb1cf7cd845bcdfe945a845946949c6a6199b8e3ae",
-      "bytes": 229099
+      "sha256": "a24c9085392b36737958af61dee085586afea4072fb77904fb4c7e2e2e9dbc1c",
+      "bytes": 232544
     }
   },
   "replaces": [

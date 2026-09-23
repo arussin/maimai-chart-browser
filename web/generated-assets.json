@@ -3,52 +3,52 @@
   "tool": "esbuild-0.28.2",
   "assets": {
     "localization.js": {
-      "sha256": "293fb298fe144775138670c2567de21eb5e4753d5d3e0ecae30226d582562e42",
-      "bytes": 5673
+      "sha256": "dd035d732d5f06055f588e9eaa5345a31a290a555b81b2ae0bdc783b6d412bd8",
+      "bytes": 5619
     },
     "song-search.js": {
-      "sha256": "b69d2ff222c6d0868e0ff4a8f395a3d49c983b7c0d2fb4c50f503ee9d1080234",
-      "bytes": 1384
+      "sha256": "150b81ce64d292679570d3878dd2c7d49c8530b2081184d55aef72fb42a4bba5",
+      "bytes": 1367
     },
     "support-config.js": {
       "sha256": "fa84866da34daff44fd98f6ba978f8cda7e19d95cd2881fb2099015989c568ff",
       "bytes": 502
     },
     "support-client.js": {
-      "sha256": "95acf4c71824fb1d3869d2ec1f78819d105813fe3dec2670e9234bebcd41444c",
-      "bytes": 1621
+      "sha256": "92c0c829f41bbbe65cf7801e9a8dc4950bf6bfb142774d1742d3abbf17b8b91a",
+      "bytes": 1601
     },
     "support-stripe.js": {
-      "sha256": "bbe7b99e4f141efa8ca0c0ab67d607f1f501a1f82e72a194f61b3f261a49b74c",
-      "bytes": 6392
+      "sha256": "9ed95bfaec54206f7c97d62537ed9178f8252751eb64d16e5f4784378c684cda",
+      "bytes": 6364
     },
     "settings-menu.js": {
-      "sha256": "02db09b11f0257aa7c805a3af1a190c4bc8cd38aca67230d91771890d6c0dbf9",
-      "bytes": 18363
+      "sha256": "b7e130f89ccffd86bf1fe0ebfaf4c2fdc0cca7efcdf35bd906b882b4299886ee",
+      "bytes": 18290
     },
     "player-data-core.js": {
-      "sha256": "a14c6fe8555e0133ccf572ae7d573ff2f31f21d47946874fc24b3569a6f4c137",
-      "bytes": 10601
+      "sha256": "4fe825e98a38754af2e20a8c6afce74e36189c86960c4881b2c9da2470e7afa4",
+      "bytes": 10645
     },
     "player-maishift.js": {
-      "sha256": "4e05f6b40e90859c6438cbad507f523211447d8844355725791fdff6c0d427d0",
-      "bytes": 6701
+      "sha256": "a16819d2a948ed568cfcc8352629512a3c26fc560b9fd9dfa1397a831ca2f386",
+      "bytes": 6694
     },
     "chart-visuals.js": {
-      "sha256": "f25692e731976e0ebdfb73256d24435752c0d11cbaf137681fd7b081fa632934",
-      "bytes": 4281
+      "sha256": "e3ec39ee33156cc2b1620ad5cf189f06f9fabaef2f6177d10105d5a05b86dec0",
+      "bytes": 4249
     },
     "challenge-matching.js": {
-      "sha256": "6a77f80677433550ef92391bad297c8d3050db94565b2cbb7b054b8f0bd2bc6d",
-      "bytes": 2527
+      "sha256": "52f1ba4032a57d53ed62c103598da8e17d2e4970904ae98ce8dd3234853d32c0",
+      "bytes": 2578
     },
     "chart-overview.js": {
-      "sha256": "60eaa5e1f3551c6ac8f24ac0ca8f78c5664b3d94ed95d6ad861e5667f1ba721e",
-      "bytes": 13283
+      "sha256": "b96e5dc2e2c8e19d18af58d7b496623bff3c8b84b5fdf585faaf474594110beb",
+      "bytes": 14228
     },
     "analytics.js": {
-      "sha256": "91deb65188a8bbed735ca6345f7ed0d968b85e1be0541f11d4d954542a575756",
-      "bytes": 4868
+      "sha256": "9046e64f095d69de34f025f944a1547eeb9fd92b26f37111e38061df4c5f7178",
+      "bytes": 4606
     }
   }
 }

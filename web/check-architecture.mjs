@@ -32,11 +32,14 @@ function visit(path, trail = []) {
 }
 for (const path of graph.keys()) visit(path);
 const pureDomains = new Set([
+  'src/domain/analysis-model.ts',
+  'src/domain/artwork.ts',
+  'src/domain/catalog-genres.ts',
   'src/catalog-query.ts',
   'src/player-session.ts',
-  'src/views/player-data-core.js',
-  'src/views/player-maishift.js',
-  'src/views/challenge-matching.js',
+  'src/views/player-data-core.ts',
+  'src/views/player-maishift.ts',
+  'src/domain/challenge-matching.ts',
 ]);
 for (const path of pureDomains)
   for (const dependency of graph.get(path) || []) {
@@ -57,7 +60,18 @@ let moduleCount = 0,
   sessionOwnerInstances = 0;
 for (const path of graph.keys()) {
   if (!/\.[jt]s$/.test(path) || path.includes('node_modules')) continue;
+  if (path.endsWith('.js')) throw Error('Unchecked active JavaScript module: ' + path);
   moduleCount++;
+  // A restored migration file must not shadow its maintained replacement.
+  const sibling = path.replace(/\.(?:js|ts)$/, path.endsWith('.ts') ? '.js' : '.ts');
+  let hasSibling = true;
+  try {
+    await readFile(resolve(base, sibling));
+  } catch (error) {
+    if (error.code !== 'ENOENT') throw error;
+    hasSibling = false;
+  }
+  if (hasSibling) throw Error('Ambiguous maintained module sources: ' + path + ' and ' + sibling);
   const source = await readFile(resolve(base, path), 'utf8');
   const js = path.endsWith('.ts')
     ? (await transform(source, { loader: 'ts', target: 'esnext' })).code
@@ -71,7 +85,7 @@ for (const path of graph.keys()) {
     )
       throw Error('Native route event outside HistoryPort: ' + path);
     if (node.type === 'NewExpression' && node.callee.name === 'ImportCoordinator') {
-      if (path !== 'src/views/player-data.js')
+      if (path !== 'src/views/player-data.ts')
         throw Error('Session state allocated outside player composition: ' + path);
       sessionOwnerInstances++;
     }
@@ -88,7 +102,7 @@ for (const path of graph.keys()) {
     )
       throw Error('Side-effect capability in pure domain: ' + path + ': ' + node.name);
     if (
-      path === 'src/views/challenge-review.js' &&
+      path === 'src/views/challenge-review.ts' &&
       node.type === 'VariableDeclarator' &&
       [
         'visible',

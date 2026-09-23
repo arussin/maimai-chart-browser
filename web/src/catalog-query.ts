@@ -1,9 +1,9 @@
 /** Public identity is stable. Regional preferences produce disposable view projections. */
-type Values = Record<string, unknown>;
-interface Regional extends Values {
+export type Values = Record<string, unknown>;
+export interface Regional extends Values {
   metadata?: Values;
 }
-interface Chart extends Values {
+export interface Chart extends Values {
   chart_id: string;
   title: string;
   artist: string;
@@ -11,11 +11,22 @@ interface Chart extends Values {
   title_state?: string;
   regional?: Record<string, Regional>;
 }
-interface Navigation extends Values {
-  charts: Record<string, Values>;
-  genres?: Values[];
+export interface ChartNavigation extends Values {
+  chart_id?: string;
+  source_hash?: string;
+  source_path?: string;
+  chart_constant?: number;
+  bpm?: number | null;
+  genre?: string;
+  version?: string;
+  metric_sources?: Record<string, { provider: string; region: string; release?: string }>;
 }
-interface Catalog extends Values {
+export interface Navigation extends Values {
+  charts: Record<string, ChartNavigation>;
+  genres?: { id: string; label: string }[];
+  versions?: string[];
+}
+export interface Catalog extends Values {
   catalog: Chart[];
   navigation?: Navigation;
 }

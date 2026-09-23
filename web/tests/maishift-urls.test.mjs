@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
 import { parse } from 'acorn';
-import { createPlayerMaishift } from '../src/views/player-maishift.js';
+import { createPlayerMaishift } from '../src/views/player-maishift.ts';
 const assets = new URL('../../src/maimai_intelligence/assets/', import.meta.url);
 function bundledFactory(name) {
   const source = readFileSync(new URL(name, assets), 'utf8');

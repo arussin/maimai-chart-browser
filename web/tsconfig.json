@@ -7,8 +7,7 @@
     "noEmit": true,
     "lib": ["ES2023", "DOM", "DOM.Iterable"],
     "skipLibCheck": true,
-    "allowJs": true,
-    "checkJs": false,
+    "allowJs": false,
     "resolveJsonModule": true
   },
   "include": ["src/**/*.ts", "tests/type-contracts.ts"]

@@ -25,7 +25,10 @@ export interface CatalogIdentity {
   provider_mapping?: ProviderMapping;
   maishift_mapping?: ProviderMapping;
 }
-export function providerIndex(data: CatalogIdentity, provided?: ProviderMapping | null) {
+export function providerIndex<C extends ChartIdentity>(
+  data: Omit<CatalogIdentity, 'catalog'> & { catalog: C[] },
+  provided?: ProviderMapping | null,
+) {
   const mapping = provided ?? data.provider_mapping,
     byId = new Map(data.catalog.map((c) => [c.chart_id, c]));
   const kamaitachi = new Map<string, string[]>(),

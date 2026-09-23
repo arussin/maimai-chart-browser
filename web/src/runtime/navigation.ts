@@ -1,9 +1,17 @@
+import { routePattern, publicPath } from './public-routes';
+import { diagnose } from './diagnostics';
 import { IntentScope } from './intent';
 import { historyPort } from './history';
 import { PublicReader, decodeJSON } from './verified-data';
-import type { BrowserPort, BrowserSnapshot, NavigationPorts, ReturnTarget, Tab } from './contracts';
+import type {
+  BrowserPort,
+  BrowserSnapshot,
+  NavigationPorts,
+  ReturnTarget,
+  Tab,
+  SongWorkspacePort,
+} from './contracts';
 import type { Page } from '../usage-contract';
-const routePattern = /^\/(en|ja|ko|zh-hans)\/(songs|versions)\/[^/]+\/$/;
 const metadataSelector =
   'link[rel=canonical],link[rel=alternate][hreflang],meta[name=description],meta[property^="og:"],meta[name^="twitter:"]';
 const labels: Record<string, readonly string[]> = {
@@ -35,6 +43,7 @@ export class NavigationCoordinator {
   private browser: BrowserPort | undefined;
   private browserMain: HTMLElement | null = null;
   private routeView: HTMLElement | null = null;
+  private songWorkspace: SongWorkspacePort | undefined;
   private browserTitle = document.title;
   private browserLanguage = document.documentElement.lang;
   private browserMetadata = copyMetadata(document.head);
@@ -118,7 +127,7 @@ export class NavigationCoordinator {
         }
         const slug = map.songs?.[id];
         if (typeof slug !== 'string' || !slug || /[/?#\\]/.test(slug)) return;
-        node.href = '/' + this.locale() + '/songs/' + encodeURIComponent(slug) + '/';
+        node.href = publicPath(this.locale(), 'songs', slug);
         node.hidden = false;
       })
       .catch(() => {});
@@ -149,6 +158,7 @@ export class NavigationCoordinator {
       });
       const check = root.querySelector<HTMLInputElement>('[data-seo-international]');
       if (check) check.checked = enabled;
+      this.songWorkspace?.region(enabled);
     };
     const check = root.querySelector<HTMLInputElement>('[data-seo-international]');
     if (check)
@@ -159,7 +169,20 @@ export class NavigationCoordinator {
       };
     update(historyPort.state.maimaiInternational === true);
   }
+  private revealShell() {
+    const wrapper = document.querySelector<HTMLElement>('[data-version-browser]');
+    if (wrapper) {
+      document
+        .querySelectorAll('body>main[data-seo-page],body>.site-header,body>.skip-link')
+        .forEach((node) => node.remove());
+      wrapper.hidden = false;
+    }
+    document.documentElement.classList.remove('seo-static');
+  }
   private showBrowser(snapshot?: BrowserSnapshot | null) {
+    this.revealShell();
+    this.songWorkspace?.dispose();
+    this.songWorkspace = undefined;
     if (this.routeView) this.routeView.hidden = true;
     if (this.browserMain) this.browserMain.hidden = false;
     document.title = this.browserTitle;
@@ -198,6 +221,7 @@ export class NavigationCoordinator {
         style.href = '/seo-pages.css';
         document.head.append(style);
       }
+      browser.cancelRestoration();
       this.bfcacheKey = null;
       if (push) {
         const international =
@@ -213,13 +237,24 @@ export class NavigationCoordinator {
           url.pathname,
         );
       }
+      this.songWorkspace?.dispose();
+      this.songWorkspace = undefined;
       this.routeView.replaceChildren(document.importNode(content, true));
       this.routeView.hidden = false;
       this.browserMain.hidden = true;
       document.title = parsed.title;
       document.documentElement.lang = parsed.documentElement.lang;
       replaceMetadata(copyMetadata(parsed.head));
+      const localization = this.ports.localization();
+      if (localization && localization.locale !== parsed.documentElement.lang)
+        this.silent(() => localization.setLocale(parsed.documentElement.lang, { persist: false }));
+      if (content.dataset.seoPage === 'song')
+        this.songWorkspace = browser.song(
+          this.routeView,
+          historyPort.state.maimaiInternational === true,
+        );
       this.regional(this.routeView);
+      this.revealShell();
       const saved = historyPort.state.maimaiBrowserState;
       if (content.dataset.seoPage === 'version') {
         this.routeView.hidden = true;
@@ -233,7 +268,7 @@ export class NavigationCoordinator {
         });
         if (!saved) document.getElementById('catalog-tab')?.focus({ preventScroll: true });
       } else this.routeView.focus({ preventScroll: true });
-      const localization = this.ports.localization();
+      // Snapshot restoration can set its saved locale; the committed route owns metadata.
       if (localization && localization.locale !== parsed.documentElement.lang)
         this.silent(() => localization.setLocale(parsed.documentElement.lang, { persist: false }));
       document.documentElement.lang = parsed.documentElement.lang;
@@ -243,6 +278,9 @@ export class NavigationCoordinator {
     } catch (error) {
       if (!operation.current()) return false;
       if (!(error instanceof DOMException && error.name === 'AbortError')) {
+        diagnose('route_unavailable');
+        const staticPage = document.querySelector<HTMLElement>('body>main[data-seo-page]');
+        if (!push && staticPage && !staticPage.hidden && url.href === location.href) return false;
         if (push) location.assign(url.href);
         else location.replace(url.href);
       }
@@ -411,7 +449,8 @@ export class NavigationCoordinator {
         url.pathname = url.pathname.replace('/' + match[1] + '/', '/' + this.locale() + '/');
         void this.route(url, {
           push: true,
-          returnTo: historyPort.state.maimaiReturn || this.saveBrowser(),
+          returnTo:
+            historyPort.state.maimaiReturn || (match[2] === 'versions' ? this.saveBrowser() : null),
           browserState: match[2] === 'versions' ? this.browser.capture() : null,
         });
       }
