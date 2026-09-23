@@ -709,6 +709,8 @@ async function selectPatterns(page,ids){
 
 test('searchable pattern multi-select searches aliases, unions results and preserves links',async({page})=>{
   await page.goto('/lab/');await expect(page.locator('.song-row')).toHaveCount(6);
+  // Finish initial lazy artwork before measuring requests caused by pattern controls.
+  await page.evaluate(()=>Promise.all([...document.images].map(image=>{image.loading='eager';return image.decode();})));
   const requests=[];page.on('request',r=>requests.push(r.url()));
   const a='pattern.two_position_alternation',b='trait.steady_density',ids=()=>page.locator('.song-row').evaluateAll(rows=>rows.map(r=>r.dataset.chartId).sort());
   await selectPatterns(page,[a]);const first=await ids();await selectPatterns(page,[b]);const second=await ids();expect(first.length).toBeGreaterThan(0);expect(second.length).toBeGreaterThan(0);
