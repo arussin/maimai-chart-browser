@@ -1,5 +1,7 @@
 # Integrated implementation validation
 
+> Historical initial candidate. See [the production revision](REVISION.md) for the current architecture and acceptance results.
+
 Validation date: 2026-09-22. This record covers the architecture refactor, sustainable coverage, multilingual SEO, first-party counts and owner reporting as one implementation. It distinguishes source review, deterministic tests, bounded real-source preparation and production verification. A passing local test is not a claim that its scenario was exercised against a production account or a private player report.
 
 **Current disposition:** implemented local review candidate; combined launch blocked. The complete immutable public corpus needs **29,049 files**, exceeding the enforced 20,000-file limit by **9,049**. No deployable release manifest or `ready.json` was produced for this over-capacity candidate. Production activation, account configuration and final deployed verification remain owner-controlled gates.

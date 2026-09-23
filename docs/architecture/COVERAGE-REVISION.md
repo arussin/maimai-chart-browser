@@ -56,7 +56,7 @@ The comparison starts from the accepted 1,443-jacket registry in `20260922T10280
 | Kamaitachi chart mapping gaps | 455 | 455 |
 | Current-policy jobs assessed | 0 | 1,694 |
 
-The 118 additions comprise 92 pinned OTOGE jackets, 19 identity-bearing Wiki jackets, and seven official International jackets. LXNS metadata was assessed but supplied no accepted additions in this corpus. This exceeds the 1,525-song/90% target without relaxing identity checks. No jacket, canonical identity, or accepted mapping was removed. All 1,690 existing default/JP/INTL selections and their image bytes are unchanged. Accepted analysis is identical; all 292 metadata-only charts still lack analysis rather than receiving synthetic profiles.
+The 118 additions comprise 92 pinned OTOGE jackets, 19 identity-bearing Wiki jackets, and seven official International jackets. LXNS metadata was assessed but supplied no accepted additions in this corpus. All 97 planned exact OTOGE candidates were resolved: 92 selected OTOGE and five selected higher-priority verified official International artwork (Operation☆DOTABATA!, Usagi Flap, Break The Speakers, RE Aoharu, and ソテリア). The original 97 identities and all five selection decisions are bound to captured assertions in `C:/Dev/maimai/architecture-revision-20260922/otoge-opportunity-delta.json`. This exceeds the 1,525-song/90% target without relaxing identity checks. No jacket, canonical identity, or accepted mapping was removed. All 1,690 existing default/JP/INTL selections and their image bytes are unchanged. Accepted analysis is identical; all 292 metadata-only charts still lack analysis rather than receiving synthetic profiles.
 
 `C:/DevCache/maimai-coverage-v2/gap-dispositions.json` records every original gap: 118 resolved, 14 unresolved duplicate canonical identities, and 119 without a verified complete match. The 16-case `focused-artwork-review.json` separately records the fourteen duplicate identities, the intentional blank title, and the missing-credit POPIPO record. Existing official regional evidence supplies the latter two jackets while their canonical metadata stays unchanged. No manual exception or score-mapping authority was invented. Title-only discoveries remain discovery evidence.
 
@@ -77,3 +77,89 @@ The unchanged repeat selected zero jobs and preserved the registry (5.438 second
 The 73-case focused suite and separately added per-table-bound regression passed before the LF-only source-byte normalization. The final LF source then passed the real continuous, repeat, exact-replay, offline and package proofs above; the root validation matrix owns the complete frozen-source suite. The original failing-before tests, intermediate runs and logs were not overwritten.
 
 Remaining limitations are explicit: 133 songs still lack verified jackets; 455 charts still lack accepted Kamaitachi mappings; the JP verified-TLS path remains blocked by the observed issuer verification failure. Coverage completion does not certify that unavailable artwork exists, resolve ambiguous identities, or authorize publication. Paid-capacity entitlement and the retained-history publication plan remain separate release gates.
+
+## Typed-failure checkpoint and retained evidence
+
+Independent review added a failing-before regression for a `TypeError` raised by
+an acquisition adapter. Such a programming defect must abort; it must not become
+an ordinary malformed-provider response. Commit `c465f0db1b3be28517fcf76d2d4b9bf527487943`
+limits schema handling to invalid JSON/encoding and explicit response shape checks.
+The 33 policy, persistence and acquisition boundary tests passed after this change.
+
+All 1,694 jobs were then reassessed continuously from the original captures under
+the new source identity, with networking denied. The six batches produced the
+same complete registry and the same 118 new jackets. That replay's coverage producer:
+`e64c13ae9de5438de62496c2ace468fcdcd545534df9384be8d70633dcb65de7`;
+that replay's checkpoint:
+`23ccb09c0211e00ecdcf2a07814b037e7fa5fc942888ab85f8544a32e3ce0ef5`.
+The continuous assessment took 213.015 seconds under concurrent local validation.
+The zero-job repeat, byte-identical five-file replay and fresh-cache offline proof
+also passed (11.109, 4.891 and 7.875 seconds respectively). These are observations,
+not a comparison with earlier timings. Receipts live in
+`C:/DevCache/maimai-coverage-v2/final-policy-assessment-typed-failures`.
+Earlier producer receipts above remain intact and are not relabeled.
+
+Every mapping gap is now exported with canonical chart identity, source revision,
+source assertion and its exact disposition: 427 lack a complete matching provider
+song identity, 20 lack the exact chart slot, and eight have incomplete canonical
+identity. This classification did not modify any mapping. The retained report is
+`C:/Dev/maimai/architecture-revision-20260922/mapping-gap-dispositions.json`.
+
+The human artwork sheet at
+`C:/Dev/maimai/architecture-revision-20260922/coverage-review.html` contains all 251
+original gaps, all 118 verified new jacket images, the sixteen focused cases and
+bound evidence. It embeds hash-verified images and makes no network requests;
+251 rows and 320px layout were checked in an isolated browser. The original
+captures, six LF checkpoint ancestors and original receipts are retained in
+`retained-coverage-evidence.zip` beside it, with a complete hashed inventory and
+verified archive contents. The later typed-failure checkpoint is retained in a
+separate addendum, preserving both policy identities.
+
+
+## Malformed-encoding checkpoint
+
+The final acquisition boundary also handles invalid UTF-8 from optional artwork
+providers as a schema failure while allowing programming errors to abort. Its
+retained offline reassessment used source `6b00cf4fa9a5028e285a502b3d599c25ee515582`
+and producer `14ff767bb8718834423ea0e88260bd075e7ea666556e3ba834fcdcaa08bfe54b`.
+All 18 policy input files are byte-identical in product candidate `2ef92b7` and
+Python-validation candidate `7eaf285`; the exact inventories are retained in
+`C:/Dev/maimai/architecture-revision-20260922/registry-evidence/final-source-metrics/validation-and-policy-binding.json`.
+
+All six batches completed with zero socket attempts. Unchanged repeat, exact
+five-receipt replay, fresh-cache offline reuse and reconstruction of all 1,602
+package files passed. The complete registry hash and all coverage/integrity
+counts above remain unchanged. This run supersedes earlier final-policy claims
+without rewriting the original receipts.
+
+The retained `coverage-encoding-addendum.zip` contains only new evidence blobs;
+`coverage-encoding-receipt.json` maps every required path to its hash-verified
+archive member, including reused content in `coverage-typed-failure-addendum.zip`.
+Keep these with `retained-coverage-evidence.zip` and all three receipts. The
+retained `ENCODING-REASSESSMENT.md` documents the proof and its Windows-only limit.
+
+
+## Final actual capture-store correction
+
+A later review exercised the real `CaptureStore` rather than a substituted
+provider adapter and reproduced programming/persistence exceptions being
+converted into provider failures. Commit `137b539e256695fdc08f4808c52477d10c1c3811`
+restricts retryable transport handling to the fetch operation; unexpected code,
+cache-integrity and persistence failures abort. Six focused checks passed after
+the retained failing-before cases. The complete combined source at `6f386b3`
+then passed 644 Python tests with seven Windows symlink capability skips.
+
+The corrected policy was replayed across all six batches with sockets denied.
+Producer `d1de56e51b80bfb58b87f93aa9b3aaa4fa50e2eade97461505cc2258605bd279`
+assessed all 1,694 jobs and produced the same registry digest and coverage totals.
+Unchanged repeat, exact five-file receipt replay, fresh-cache offline reuse,
+two identical 1,602-file package reconstructions, six checkpoint validations,
+and all retained archive/member checks passed. Every one of the eighteen policy
+inputs matches final product `6f386b301aea22334805d699c98168f31cc6c819` byte for byte.
+
+The final retained `CAPTURE-BOUNDARY-REASSESSMENT.md` and
+`registry-evidence/capture-boundary-policy/policy-binding.json` distinguish the
+actual replay source from the final browser revision. The complete new receipt
+is `coverage-capture-boundary-receipt.json`; its delta is
+`coverage-capture-boundary-addendum.zip`. Retain all four original/addendum
+archives and receipts. Earlier producer identities are not relabeled.

@@ -1,5 +1,7 @@
 # Integrated architecture implementation
 
+> Historical initial candidate. See [the production revision](REVISION.md) for the current architecture and acceptance results.
+
 The implementation starts at registry `67e377dc2a5a095e2fe05b331235fb679895a4bd` (merged Maishift PR #42) and report `c4992ce14e3b5a0821e96a801c8cf925f60f41cf` (PR #21). The canonical working copies are preserved. The linked implementation checkouts are `C:\Dev\worktrees\maimai-architecture-registry` and `C:\Dev\worktrees\maimai-architecture-report`.
 
 This is an implemented local review candidate. It is not a production release: retaining all historical URLs and adding the complete multilingual corpus requires 29,049 files, above the existing 20,000-file guard. Account configuration, capacity, privacy review and combined activation remain explicit release gates.

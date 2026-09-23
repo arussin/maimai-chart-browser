@@ -1,5 +1,7 @@
 # Architecture performance evidence
 
+> Historical initial candidate. See [the production revision](REVISION.md) for the current architecture and acceptance results.
+
 Measured on 2026-09-22 against the final 12:28 source snapshot, after the navigation, locale, history and focus corrections. The final batch contains 130 root-page runs and 20 deep-route groups: five cold and five warm samples per configuration. Each deep group independently measures a song arrival, a version arrival, and browser-to-song-to-Back navigation.
 
 On identical retained public data, median cold readiness was 330.9 ms baseline, 336.4 ms with SEO, and 329.5 ms with SEO plus usage. Warm readiness was 284.7 / 295.7 / 292.3 ms. Usage adds 12,373 cold transfer bytes, about 0.19%; the warm cache behavior is unchanged. These local desktop measurements support a small runtime cost, not a universal zero-cost or production latency claim.

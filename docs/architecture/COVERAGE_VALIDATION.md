@@ -1,5 +1,7 @@
 # Bounded real coverage validation — 2026-09-22
 
+> Historical initial candidate. See [the production revision](REVISION.md) for the current architecture and acceptance results.
+
 This is a local review candidate from the merged Maishift baseline `67e377dc2a5a095e2fe05b331235fb679895a4bd`, using the retained public v4 package. No source registry, retained publication, personal record or hosted service state was changed. No publication or deployment was performed.
 
 ## Measured coverage
