@@ -43,7 +43,7 @@ class ReviewedCapacity:
     review_sha256: str
     evidence: tuple[tuple[str, str], ...]
 
-    def require_current(self, now=None):
+    def require_current(self, now: datetime | None = None) -> None:
         now = now or datetime.now(UTC)
         checked = datetime.fromisoformat(self.verified_at)
         if checked.tzinfo is None or not timedelta(0) <= now - checked <= MAX_REVIEW_AGE:

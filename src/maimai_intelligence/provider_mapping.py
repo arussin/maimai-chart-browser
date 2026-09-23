@@ -41,7 +41,7 @@ def default_mapping(catalog: list[dict[str, Any]]) -> dict[str, Any]:
     return build_mapping(usable, source["charts"], source["songs"], overrides=overrides)
 
 
-def integration_catalog(data, version):
+def integration_catalog(data: dict[str, Any], version: str) -> dict[str, Any]:
     from copy import deepcopy
 
     from .catalog_schema import PROFILE_FIELDS
@@ -163,7 +163,7 @@ def build_mapping(catalog, charts, songs, *, overrides=None):
     }
 
 
-def validate_mapping(mapping, catalog):
+def validate_mapping(mapping: dict[str, Any], catalog: list[dict[str, Any]]) -> dict[str, Any]:
     if (
         mapping.get("schema_version") not in {"provider-mapping-1", "provider-mapping-2"}
         or mapping.get("provider") != "kamaitachi"

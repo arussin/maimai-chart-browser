@@ -201,7 +201,7 @@ def prepare_links(
     return result, {"counts": dict(counts), "charts": audit}
 
 
-def validate_links(data, charts):
+def validate_links(data: dict[str, Any], charts: list[dict[str, Any]]) -> dict[str, Any]:
     if (
         set(data) != {"version", "source", "source_sha256", "generated_at", "captured_at", "charts"}
         or data["version"] not in {VERSION, "mai-notes-links-2"}

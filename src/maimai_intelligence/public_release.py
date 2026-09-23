@@ -14,7 +14,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
 from types import MappingProxyType
-from typing import Any
+from typing import Any, cast
 
 from .artwork import MEDIA_PATH
 from .catalog_loading import (
@@ -79,7 +79,7 @@ PUBLIC_FILES = (
 )
 
 
-def _browser_assets(source):
+def _browser_assets(source: Path) -> dict[str, bytes]:
     """Copy only the generated application graph and reviewed static entry points."""
     if not (source / "browser-assets.json").is_file():
         assets = {name: _read(source, name, 2 * 1024 * 1024) for name in PUBLIC_FILES}
@@ -107,7 +107,7 @@ def _browser_assets(source):
     return assets
 
 
-def _search_metadata(raw):
+def _search_metadata(raw: bytes) -> bytes:
     """Describe the public app without adding or changing any page-body content."""
     from html import escape
 
@@ -132,25 +132,28 @@ def _search_metadata(raw):
     return html.replace("</head>", metadata + "</head>").encode("utf-8")
 
 
-def _browser_csp(raw):
+def _browser_csp(raw: bytes) -> str | None:
     from html.parser import HTMLParser
 
     class PolicyParser(HTMLParser):
-        policy = None
+        policy: str | None = None
 
-        def handle_starttag(self, tag, attrs):
-            attrs = dict(attrs)
-            if tag == "meta" and attrs.get("http-equiv", "").lower() == "content-security-policy":
+        def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+            values = dict(attrs)
+            if (
+                tag == "meta"
+                and (values.get("http-equiv") or "").lower() == "content-security-policy"
+            ):
                 if self.policy is not None:
                     raise ValueError("Expected one browser content security policy")
-                self.policy = attrs.get("content")
+                self.policy = values.get("content")
 
     parser = PolicyParser()
     parser.feed(raw.decode("utf-8"))
     return parser.policy
 
 
-def _read(source: Path | str, name: str, limit: int) -> bytes:
+def _read(source: Path, name: str, limit: int) -> bytes:
     path = (source / name).resolve()
     if not path.is_relative_to(source):
         raise ValueError("Public asset leaves the accepted browser directory")
@@ -161,7 +164,7 @@ def _read(source: Path | str, name: str, limit: int) -> bytes:
     return raw
 
 
-def _freeze(value):
+def _freeze(value: Any) -> Any:
     if isinstance(value, dict):
         return MappingProxyType({key: _freeze(item) for key, item in value.items()})
     if isinstance(value, list):
@@ -169,7 +172,7 @@ def _freeze(value):
     return value
 
 
-def _plain(value):
+def _plain(value: Any) -> Any:
     if isinstance(value, Mapping):
         return {key: _plain(item) for key, item in value.items()}
     if isinstance(value, tuple):
@@ -181,14 +184,14 @@ def _plain(value):
 class ReleasePlan:
     """Validated immutable public bytes, with publication capacity checked at write."""
 
-    assets: Mapping
-    manifest: Mapping
-    summary: Mapping
+    assets: Mapping[str, bytes]
+    manifest: Mapping[str, Any]
+    summary: Mapping[str, Any]
     source: Path
     previous_public: Path | None = None
     capacity: ReviewedCapacity | None = None
 
-    def _destination(self, output):
+    def _destination(self, output: Path | str) -> Path:
         output = Path(output).resolve()
         for source in (self.source, self.previous_public):
             if source and (
@@ -199,7 +202,7 @@ class ReleasePlan:
             raise ValueError("Use a fresh release directory; completed releases are immutable")
         return output
 
-    def write_to(self, output):
+    def write_to(self, output: Path | str) -> dict[str, Any]:
         output = self._destination(output)
         if not self.summary["deployable"]:
             raise ValueError(self.summary["capacity_error"])
@@ -212,9 +215,9 @@ class ReleasePlan:
                 stream.write(raw)
         # Never expose a final manifest before its complete verified asset closure.
         atomic_json(output / "manifest.json", _plain(self.manifest))
-        return _plain(self.summary)
+        return cast(dict[str, Any], _plain(self.summary))
 
-    def write_review_to(self, output):
+    def write_review_to(self, output: Path | str) -> dict[str, Any]:
         """Write a deliberately nondeployable review bundle, even over capacity."""
         output = self._destination(output)
         for name, raw in self.assets.items():
@@ -224,10 +227,12 @@ class ReleasePlan:
                 stream.write(raw)
         atomic_json(output / "planned-manifest.json", _plain(self.manifest))
         atomic_json(output / "release-plan.json", _plain(self.summary))
-        return _plain(self.summary)
+        return cast(dict[str, Any], _plain(self.summary))
 
 
-def _retained_reference(source, reference, prefix, limit, pending):
+def _retained_reference(
+    source: Path, reference: dict[str, Any], prefix: str, limit: int, pending: dict[str, bytes]
+) -> bytes:
     digest = reference.get("sha256", "") if isinstance(reference, dict) else ""
     if (
         not re.fullmatch(r"[a-f0-9]{64}", digest)
@@ -241,7 +246,9 @@ def _retained_reference(source, reference, prefix, limit, pending):
     return raw
 
 
-def _retain_index_details(source, index, catalog_sha, pending):
+def _retain_index_details(
+    source: Path, index: dict[str, Any], catalog_sha: str, pending: dict[str, bytes]
+) -> None:
     if index.get("source_catalog_sha256") != catalog_sha or not isinstance(
         index.get("detail_buckets"), dict
     ):
@@ -258,12 +265,14 @@ def _retain_index_details(source, index, catalog_sha, pending):
             raise ValueError("Retained chart detail belongs to another catalog")
 
 
-def _retain_startup(source, reference, catalog_sha, pending):
+def _retain_startup(
+    source: Path, reference: dict[str, Any], catalog_sha: str, pending: dict[str, bytes]
+) -> None:
     raw = _retained_reference(source, reference, "catalog-index", MAX_BYTES, pending)
     _retain_index_details(source, json.loads(raw), catalog_sha, pending)
 
 
-def _multipart_startup(raw, catalog_sha, pending):
+def _multipart_startup(raw: bytes, catalog_sha: str, pending: dict[str, bytes]) -> dict[str, Any]:
     parts = []
     for start in range(0, len(raw), INDEX_PART_BYTES):
         part = raw[start : start + INDEX_PART_BYTES]
@@ -280,7 +289,9 @@ def _multipart_startup(raw, catalog_sha, pending):
     }
 
 
-def _retain_startup_parts(source, reference, catalog_sha, pending):
+def _retain_startup_parts(
+    source: Path, reference: dict[str, Any], catalog_sha: str, pending: dict[str, bytes]
+) -> None:
     if (
         not isinstance(reference, dict)
         or set(reference) != {"schema_version", "source_catalog_sha256", "sha256", "bytes", "parts"}
@@ -305,20 +316,36 @@ def _retain_startup_parts(source, reference, catalog_sha, pending):
     _retain_index_details(source, index, catalog_sha, pending)
 
 
-def plan_public_release(
-    source, *, permalinks=None, song_redirects=None, previous_public=None, capacity=None
-):
-    """Validate and plan without writing; an over-capacity plan is reviewable only."""
-    source = Path(source).resolve()
-    if capacity is not None:
-        if not isinstance(capacity, ReviewedCapacity):
-            raise ValueError("Paid capacity requires a reviewed capacity object")
-        capacity.require_current()
-    file_limit = PAID_FILES if capacity is not None else MAX_PUBLIC_FILES
-    previous_public = Path(previous_public).resolve() if previous_public is not None else None
+@dataclass(frozen=True)
+class RetainedPublication:
+    source: Path | None
+    entries: Mapping[str, dict[str, Any]]
+    default: str | None
+    ledger: dict[str, Any] | None
+    advertised_seo: bool
+
+
+@dataclass(frozen=True)
+class PreparedPublicCatalog:
+    version: str
+    data: dict[str, Any]
+    release: dict[str, Any]
+    assets: Mapping[str, bytes]
+    legacy_assets: frozenset[str]
+    had_song_pages: bool
+
+
+@dataclass(frozen=True)
+class PreparedPublicPages:
+    assets: Mapping[str, bytes]
+    summary: dict[str, int]
+
+
+def _load_retained_publication(previous_public: Path | None) -> RetainedPublication:
     previous_entries = {}
     previous_ledger_ref = None
-    previous_had_song_pages = False
+    previous_advertised_seo = False
+    preceding = {}
     if previous_public is not None:
         preceding = read_json(previous_public / "manifest.json")
         if preceding.get("schema_version") not in {"1.2.0", "1.3.0"} or not preceding.get(
@@ -333,13 +360,17 @@ def plan_public_release(
             if entry.get("version") in previous_entries:
                 raise ValueError("Duplicate preceding public catalog")
             previous_entries[entry.get("version")] = entry
-    manifest = read_json(source / "manifest.json")
-    if manifest.get("schema_version") != "1.0.0" or not manifest.get("releases"):
-        raise ValueError("Expected an accepted research browser manifest")
-    pending, releases, versions = {}, [], set()
-    default_catalog = None
-    legacy_assets = set()
-    pending.update(_browser_assets(source))
+    return RetainedPublication(
+        previous_public,
+        previous_entries,
+        preceding.get("default"),
+        previous_ledger_ref,
+        previous_advertised_seo,
+    )
+
+
+def _prepare_browser_shell(source: Path) -> dict[str, bytes]:
+    pending = _browser_assets(source)
     pending["index.html"] = _search_metadata(pending["index.html"])
     if "browser-shell.html" in pending:
         pending["browser-shell.html"] = _search_metadata(pending["browser-shell.html"])
@@ -354,198 +385,6 @@ def plan_public_release(
         f"  <url><loc>{CANONICAL_URL}</loc></url>\n"
         "</urlset>\n"
     ).encode()
-    for entry in manifest["releases"]:
-        sha, version = entry.get("sha256"), entry.get("version")
-        if (
-            not isinstance(sha, str)
-            or not re.fullmatch(r"[a-f0-9]{64}", sha)
-            or entry.get("path") != f"catalogs/{sha}.json"
-            or not isinstance(version, str)
-            or not version
-            or version in versions
-        ):
-            raise ValueError("Invalid or duplicate research release identity")
-        versions.add(version)
-        raw = _read(source, entry["path"], MAX_CATALOG_BYTES)
-        if hashlib.sha256(raw).hexdigest() != sha:
-            raise ValueError("Accepted catalog integrity mismatch")
-        data = json.loads(raw)
-        if version == manifest["default"]:
-            default_catalog = data
-        if data.get("package", {}).get("status") != "research_preview":
-            raise ValueError("Only nonpersonal research catalogs belong in this release")
-        if set(data) - {
-            "package",
-            "catalog",
-            "review",
-            "snippets",
-            "benchmark_hash",
-            "navigation",
-            "analysis",
-            "artwork",
-            "mai_notes",
-            "provider_mapping",
-            "maishift_mapping",
-            "schema_version",
-            "registry",
-            "legacy_ids",
-            "sources",
-            "coverage",
-        }:
-            raise ValueError("Unexpected fields in public research catalog")
-        if "schema_version" in data:
-            from .registry_catalog import validate_catalog
-
-            validate_catalog(data)
-        elif "navigation" in data:
-            from .registry_catalog import validate_genres
-
-            validate_genres(data)
-        if "mai_notes" in data:
-            validate_links(data["mai_notes"], data["catalog"])
-        if "provider_mapping" in data:
-            validate_mapping(data["provider_mapping"], data["catalog"])
-        if "maishift_mapping" in data:
-            from .maishift_mapping import validate_mapping as validate_maishift
-
-            validate_maishift(data["maishift_mapping"], data["catalog"])
-        if "integration" in entry:
-            ref = entry["integration"]
-            if ref.get("path") != f"integration/{ref.get('sha256')}.json" or not re.fullmatch(
-                r"[a-f0-9]{64}", ref.get("sha256", "")
-            ):
-                raise ValueError("Invalid integration catalog reference")
-            integration = _read(source, ref["path"], MAX_BYTES)
-            if (
-                len(integration) != ref.get("bytes")
-                or hashlib.sha256(integration).hexdigest() != ref["sha256"]
-            ):
-                raise ValueError("Integration catalog integrity mismatch")
-            from .provider_mapping import integration_catalog
-
-            if integration != canonical(integration_catalog(data, version)):
-                raise ValueError("Integration data differs from public chart catalog")
-            pending[ref["path"]] = integration
-        parts = []
-        for start in range(0, len(raw), PART_BYTES):
-            part = raw[start : start + PART_BYTES]
-            digest = hashlib.sha256(part).hexdigest()
-            path = f"catalog-parts/{digest}.json"
-            pending[path] = part
-            parts.append({"path": path, "sha256": digest, "bytes": len(part)})
-        projection = prepare_catalog_projection(data, sha)
-        generated_startup, derived = encode_catalog_projection(projection)
-        shared, shared_assets = encode_catalog_projection(projection, shared=True)
-        # A historical reader can always fall back to the full catalog parts.
-        # Do not emit an oversized legacy index even when the shared index fits.
-        if generated_startup and generated_startup["bytes"] > MAX_PUBLIC_FILE_BYTES:
-            derived.pop(generated_startup["path"])
-            generated_startup = None
-        startup_parts = None
-        startup_part_assets = {}
-        if shared and shared["bytes"] > STARTUP_PART_THRESHOLD:
-            startup_parts = _multipart_startup(
-                shared_assets.pop(shared["path"]), sha, startup_part_assets
-            )
-            # Old readers ignore the additive reference and use the full catalog parts.
-            if generated_startup:
-                derived.pop(generated_startup["path"])
-            generated_startup = shared = None
-        startup = generated_startup
-        old = previous_entries.get(version)
-        if old is not None:
-            if version == preceding["default"] and previous_advertised_seo:
-                previous_had_song_pages = any(
-                    isinstance(chart, dict) and chart.get("song_id")
-                    for chart in data.get("catalog", [])
-                )
-            if old.get("sha256") != sha or old.get("path") != entry["path"]:
-                raise ValueError("Previously published catalog identity changed")
-            old_parts = old.get("parts", [])
-            retained_raw = b"".join(
-                _retained_reference(previous_public, ref, "catalog-parts", PART_BYTES, pending)
-                for ref in old_parts
-            )
-            if retained_raw != raw:
-                raise ValueError("Previously published catalog bytes changed")
-            parts = old_parts
-            startup = old.get("startup")
-            before = set(pending)
-            for key in ("startup", "startup_shared"):
-                if old.get(key):
-                    _retain_startup(previous_public, old[key], sha, pending)
-            if old.get("startup_parts"):
-                _retain_startup_parts(previous_public, old["startup_parts"], sha, pending)
-                startup_parts = old["startup_parts"]
-                startup_part_assets.clear()
-            if shared is None and old.get("startup_shared"):
-                shared = old["startup_shared"]
-            legacy_assets.update(set(pending) - before)
-        else:
-            pending.update(derived)
-            legacy_assets.update(derived)
-        pending.update(shared_assets)
-        pending.update(startup_part_assets)
-        releases.append(
-            {
-                **entry,
-                "parts": parts,
-                **({"startup": startup} if startup else {}),
-                **({"startup_shared": shared} if shared else {}),
-                **({"startup_parts": startup_parts} if startup_parts else {}),
-            }
-        )
-        for path, record in data.get("artwork", {}).get("assets", {}).items():
-            if not MEDIA_PATH.fullmatch(path) or path != f"media/{record['sha256']}.webp":
-                raise ValueError("Invalid public artwork path")
-            art = _read(source, path, 256 * 1024)
-            if len(art) != record["bytes"] or hashlib.sha256(art).hexdigest() != record["sha256"]:
-                raise ValueError("Public artwork integrity mismatch")
-            pending[path] = art
-    if set(previous_entries) - versions:
-        raise ValueError("Previously published catalogs cannot be omitted")
-    if manifest.get("default") not in versions:
-        raise ValueError("Missing default catalog version")
-    seo_summary = {"songs": 0, "versions": 0, "localized_documents": 0}
-    if default_catalog and any(
-        isinstance(c, dict) and c.get("song_id") for c in default_catalog.get("catalog", [])
-    ):
-        from importlib.resources import files
-
-        from .seo import build_seo
-
-        seed = (
-            Path(permalinks)
-            if permalinks is not None
-            else (previous_public or source) / "permalinks.json"
-        )
-        previous = read_json(seed) if seed.is_file() else None
-        if (
-            permalinks is not None or previous_had_song_pages or previous_ledger_ref
-        ) and previous is None:
-            raise ValueError("The preceding permalink ledger is missing")
-        if previous_ledger_ref is not None:
-            raw_ledger = _read(seed.parent, seed.name, 2 * 1024 * 1024)
-            if (
-                not isinstance(previous_ledger_ref, dict)
-                or set(previous_ledger_ref) != {"path", "sha256", "bytes"}
-                or previous_ledger_ref["path"] != "permalinks.json"
-                or previous_ledger_ref["sha256"] != hashlib.sha256(raw_ledger).hexdigest()
-                or previous_ledger_ref["bytes"] != len(raw_ledger)
-            ):
-                raise ValueError("The preceding permalink ledger integrity differs")
-        redirects = (
-            read_json(song_redirects) if isinstance(song_redirects, (str, Path)) else song_redirects
-        )
-        seo_assets, _, seo_summary = build_seo(
-            default_catalog,
-            previous=previous,
-            song_redirects=redirects,
-            browser_csp=_browser_csp(pending["index.html"]),
-        )
-        pending.update(seo_assets)
-        for name in ("seo-pages.css",):
-            pending[name] = files("maimai_intelligence.assets").joinpath(name).read_bytes()
     # A fixed local redirect preserves every query/fragment in plain static hosts.
     pending["lab/index.html"] = (
         b'<!doctype html><html lang="en"><meta charset="utf-8">'
@@ -587,6 +426,229 @@ def plan_public_release(
         b"  Permissions-Policy: payment=(self "
         b'"https://checkout.stripe.com" "https://js.stripe.com" "https://hooks.stripe.com")\n'
     )
+    return pending
+
+
+def _prepare_public_catalog(
+    source: Path, entry: dict[str, Any], retained: RetainedPublication
+) -> PreparedPublicCatalog:
+    pending: dict[str, bytes] = {}
+    legacy_assets: set[str] = set()
+    previous_had_song_pages = False
+    previous_public = retained.source
+    sha, version = entry.get("sha256"), entry.get("version")
+    if (
+        not isinstance(sha, str)
+        or not re.fullmatch(r"[a-f0-9]{64}", sha)
+        or entry.get("path") != f"catalogs/{sha}.json"
+        or not isinstance(version, str)
+        or not version
+    ):
+        raise ValueError("Invalid or duplicate research release identity")
+    raw = _read(source, entry["path"], MAX_CATALOG_BYTES)
+    if hashlib.sha256(raw).hexdigest() != sha:
+        raise ValueError("Accepted catalog integrity mismatch")
+    data = json.loads(raw)
+    if data.get("package", {}).get("status") != "research_preview":
+        raise ValueError("Only nonpersonal research catalogs belong in this release")
+    if set(data) - {
+        "package",
+        "catalog",
+        "review",
+        "snippets",
+        "benchmark_hash",
+        "navigation",
+        "analysis",
+        "artwork",
+        "mai_notes",
+        "provider_mapping",
+        "maishift_mapping",
+        "schema_version",
+        "registry",
+        "legacy_ids",
+        "sources",
+        "coverage",
+    }:
+        raise ValueError("Unexpected fields in public research catalog")
+    if "schema_version" in data:
+        from .registry_catalog import validate_catalog
+
+        validate_catalog(data)
+    elif "navigation" in data:
+        from .registry_catalog import validate_genres
+
+        validate_genres(data)
+    if "mai_notes" in data:
+        validate_links(data["mai_notes"], data["catalog"])
+    if "provider_mapping" in data:
+        validate_mapping(data["provider_mapping"], data["catalog"])
+    if "maishift_mapping" in data:
+        from .maishift_mapping import validate_mapping as validate_maishift
+
+        validate_maishift(data["maishift_mapping"], data["catalog"])
+    if "integration" in entry:
+        ref = entry["integration"]
+        if ref.get("path") != f"integration/{ref.get('sha256')}.json" or not re.fullmatch(
+            r"[a-f0-9]{64}", ref.get("sha256", "")
+        ):
+            raise ValueError("Invalid integration catalog reference")
+        integration = _read(source, ref["path"], MAX_BYTES)
+        if (
+            len(integration) != ref.get("bytes")
+            or hashlib.sha256(integration).hexdigest() != ref["sha256"]
+        ):
+            raise ValueError("Integration catalog integrity mismatch")
+        from .provider_mapping import integration_catalog
+
+        if integration != canonical(integration_catalog(data, version)):
+            raise ValueError("Integration data differs from public chart catalog")
+        pending[ref["path"]] = integration
+    parts = []
+    for start in range(0, len(raw), PART_BYTES):
+        part = raw[start : start + PART_BYTES]
+        digest = hashlib.sha256(part).hexdigest()
+        path = f"catalog-parts/{digest}.json"
+        pending[path] = part
+        parts.append({"path": path, "sha256": digest, "bytes": len(part)})
+    projection = prepare_catalog_projection(data, sha)
+    generated_startup, derived = encode_catalog_projection(projection)
+    shared, shared_assets = encode_catalog_projection(projection, shared=True)
+    # A historical reader can always fall back to the full catalog parts.
+    # Do not emit an oversized legacy index even when the shared index fits.
+    if generated_startup and generated_startup["bytes"] > MAX_PUBLIC_FILE_BYTES:
+        derived.pop(generated_startup["path"])
+        generated_startup = None
+    startup_parts = None
+    startup_part_assets: dict[str, bytes] = {}
+    if shared and shared["bytes"] > STARTUP_PART_THRESHOLD:
+        startup_parts = _multipart_startup(
+            shared_assets.pop(shared["path"]), sha, startup_part_assets
+        )
+        # Old readers ignore the additive reference and use the full catalog parts.
+        if generated_startup:
+            derived.pop(generated_startup["path"])
+        generated_startup = shared = None
+    startup = generated_startup
+    old = retained.entries.get(version)
+    if old is not None:
+        if previous_public is None:
+            raise ValueError("Retained publication requires its verified source")
+        if version == retained.default and retained.advertised_seo:
+            previous_had_song_pages = any(
+                isinstance(chart, dict) and chart.get("song_id")
+                for chart in data.get("catalog", [])
+            )
+        if old.get("sha256") != sha or old.get("path") != entry["path"]:
+            raise ValueError("Previously published catalog identity changed")
+        old_parts = old.get("parts", [])
+        retained_raw = b"".join(
+            _retained_reference(previous_public, ref, "catalog-parts", PART_BYTES, pending)
+            for ref in old_parts
+        )
+        if retained_raw != raw:
+            raise ValueError("Previously published catalog bytes changed")
+        parts = old_parts
+        startup = old.get("startup")
+        before = set(pending)
+        for key in ("startup", "startup_shared"):
+            if old.get(key):
+                _retain_startup(previous_public, old[key], sha, pending)
+        if old.get("startup_parts"):
+            _retain_startup_parts(previous_public, old["startup_parts"], sha, pending)
+            startup_parts = old["startup_parts"]
+            startup_part_assets.clear()
+        if shared is None and old.get("startup_shared"):
+            shared = old["startup_shared"]
+        legacy_assets.update(set(pending) - before)
+    else:
+        pending.update(derived)
+        legacy_assets.update(derived)
+    pending.update(shared_assets)
+    pending.update(startup_part_assets)
+    release = {
+        **entry,
+        "parts": parts,
+        **({"startup": startup} if startup else {}),
+        **({"startup_shared": shared} if shared else {}),
+        **({"startup_parts": startup_parts} if startup_parts else {}),
+    }
+    for path, record in data.get("artwork", {}).get("assets", {}).items():
+        if not MEDIA_PATH.fullmatch(path) or path != f"media/{record['sha256']}.webp":
+            raise ValueError("Invalid public artwork path")
+        art = _read(source, path, 256 * 1024)
+        if len(art) != record["bytes"] or hashlib.sha256(art).hexdigest() != record["sha256"]:
+            raise ValueError("Public artwork integrity mismatch")
+        pending[path] = art
+    return PreparedPublicCatalog(
+        version, data, release, pending, frozenset(legacy_assets), previous_had_song_pages
+    )
+
+
+def _prepare_public_pages(
+    source: Path,
+    default_catalog: dict[str, Any] | None,
+    retained: RetainedPublication,
+    previous_had_song_pages: bool,
+    permalinks: Path | str | None,
+    song_redirects: Path | str | dict[str, str] | None,
+    browser_csp: str | None,
+) -> PreparedPublicPages:
+    pending: dict[str, bytes] = {}
+    previous_public, previous_ledger_ref = retained.source, retained.ledger
+    seo_summary = {"songs": 0, "versions": 0, "localized_documents": 0}
+    if default_catalog and any(
+        isinstance(c, dict) and c.get("song_id") for c in default_catalog.get("catalog", [])
+    ):
+        from importlib.resources import files
+
+        from .seo import build_seo
+
+        seed = (
+            Path(permalinks)
+            if permalinks is not None
+            else (previous_public or source) / "permalinks.json"
+        )
+        previous = read_json(seed) if seed.is_file() else None
+        if (
+            permalinks is not None or previous_had_song_pages or previous_ledger_ref
+        ) and previous is None:
+            raise ValueError("The preceding permalink ledger is missing")
+        if previous_ledger_ref is not None:
+            raw_ledger = _read(seed.parent, seed.name, 2 * 1024 * 1024)
+            if (
+                not isinstance(previous_ledger_ref, dict)
+                or set(previous_ledger_ref) != {"path", "sha256", "bytes"}
+                or previous_ledger_ref["path"] != "permalinks.json"
+                or previous_ledger_ref["sha256"] != hashlib.sha256(raw_ledger).hexdigest()
+                or previous_ledger_ref["bytes"] != len(raw_ledger)
+            ):
+                raise ValueError("The preceding permalink ledger integrity differs")
+        redirects = (
+            read_json(song_redirects) if isinstance(song_redirects, (str, Path)) else song_redirects
+        )
+        seo_assets, _, seo_summary = build_seo(
+            default_catalog,
+            previous=previous,
+            song_redirects=redirects,
+            browser_csp=browser_csp,
+        )
+        pending.update(seo_assets)
+        for name in ("seo-pages.css",):
+            pending[name] = files("maimai_intelligence.assets").joinpath(name).read_bytes()
+    return PreparedPublicPages(pending, seo_summary)
+
+
+def _finalize_release_plan(
+    source: Path,
+    previous_public: Path | None,
+    manifest: dict[str, Any],
+    pending: dict[str, bytes],
+    releases: list[dict[str, Any]],
+    legacy_assets: set[str],
+    seo_summary: dict[str, int],
+    capacity: ReviewedCapacity | None,
+    file_limit: int,
+) -> ReleasePlan:
     public_manifest = {
         **manifest,
         "schema_version": "1.3.0" if any(r.get("inventory_schema") for r in releases) else "1.2.0",
@@ -634,6 +696,70 @@ def plan_public_release(
         source,
         previous_public,
         capacity,
+    )
+
+
+def plan_public_release(
+    source: Path | str,
+    *,
+    permalinks: Path | str | None = None,
+    song_redirects: Path | str | dict[str, str] | None = None,
+    previous_public: Path | str | None = None,
+    capacity: ReviewedCapacity | None = None,
+) -> ReleasePlan:
+    """Prepare shell, verified catalogs, public routes, then the complete release inventory."""
+    source = Path(source).resolve()
+    if capacity is not None:
+        if not isinstance(capacity, ReviewedCapacity):
+            raise ValueError("Paid capacity requires a reviewed capacity object")
+        capacity.require_current()
+    file_limit = PAID_FILES if capacity is not None else MAX_PUBLIC_FILES
+    previous = Path(previous_public).resolve() if previous_public is not None else None
+    retained = _load_retained_publication(previous)
+    manifest = read_json(source / "manifest.json")
+    if manifest.get("schema_version") != "1.0.0" or not manifest.get("releases"):
+        raise ValueError("Expected an accepted research browser manifest")
+    pending = _prepare_browser_shell(source)
+    releases: list[dict[str, Any]] = []
+    versions: set[str] = set()
+    legacy_assets: set[str] = set()
+    default_catalog = None
+    previous_had_song_pages = False
+    for entry in manifest["releases"]:
+        if entry.get("version") in versions:
+            raise ValueError("Invalid or duplicate research release identity")
+        catalog = _prepare_public_catalog(source, entry, retained)
+        versions.add(catalog.version)
+        pending.update(catalog.assets)
+        releases.append(catalog.release)
+        legacy_assets.update(catalog.legacy_assets)
+        previous_had_song_pages |= catalog.had_song_pages
+        if catalog.version == manifest["default"]:
+            default_catalog = catalog.data
+    if set(retained.entries) - versions:
+        raise ValueError("Previously published catalogs cannot be omitted")
+    if manifest.get("default") not in versions:
+        raise ValueError("Missing default catalog version")
+    pages = _prepare_public_pages(
+        source,
+        default_catalog,
+        retained,
+        previous_had_song_pages,
+        permalinks,
+        song_redirects,
+        _browser_csp(pending["index.html"]),
+    )
+    pending.update(pages.assets)
+    return _finalize_release_plan(
+        source,
+        previous,
+        manifest,
+        pending,
+        releases,
+        legacy_assets,
+        pages.summary,
+        capacity,
+        file_limit,
     )
 
 

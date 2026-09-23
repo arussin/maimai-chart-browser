@@ -13,3 +13,8 @@ html.seo-static[lang="zh-Hans"] body{font-family:Arial,"Noto Sans CJK SC","Micro
 /* Only new public song/version documents use these styles. Existing browser styles are unchanged. */
 .seo-document{max-width:960px;margin:0 auto;padding:24px 16px}.seo-actions{display:flex;flex-wrap:wrap;gap:16px;align-items:center}.seo-actions a{min-height:44px;display:inline-flex;align-items:center}.seo-facts{display:grid;grid-template-columns:minmax(90px,auto) minmax(0,1fr);gap:8px 18px}.seo-facts dd{margin:0;overflow-wrap:anywhere}.seo-table{overflow-x:auto}.seo-table table{width:100%;border-collapse:collapse}.seo-table th,.seo-table td{text-align:left;padding:12px 8px;border-bottom:1px solid #ded6ec}.seo-table td a{display:inline-block;min-height:44px}.seo-song-list{padding-left:24px}.seo-song-list li{padding:5px 0}.seo-song-list a{overflow-wrap:anywhere}.seo-document h1{overflow-wrap:anywhere}.seo-document .international-data-option{margin:16px 0}#seo-route-view[hidden]{display:none!important}
 .seo-artwork{display:block;object-fit:cover;border-radius:8px;margin:16px 0}.seo-document [hidden]{display:none!important}
+
+/* Enhanced public documents reuse the maintained browser cards and spacing. */
+#seo-route-view{max-width:1168px;margin:auto;padding:0 32px}#seo-route-view .seo-document{max-width:none;padding:24px 0}#seo-route-view .song-workspace{display:grid;gap:12px;margin:16px 0}#seo-route-view .seo-facts{margin:16px 0}#seo-route-view .seo-artwork{float:left;margin:0 24px 16px 0}#seo-route-view .seo-actions{margin:16px 0}#seo-route-view .song-workspace{clear:both}@media(max-width:600px){#seo-route-view{padding:0 18px}#seo-route-view .seo-artwork{width:100px;height:100px;margin-right:16px}}
+
+#seo-route-view:focus{outline:none}

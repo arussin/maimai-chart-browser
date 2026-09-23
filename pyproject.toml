@@ -42,6 +42,7 @@ files = [
   "src/maimai_intelligence/corpus_cli.py",
   "src/maimai_intelligence/corpus_workbench.py",
   "src/maimai_intelligence/catalog_preparation.py",
+  "src/maimai_intelligence/public_release.py",
   "src/maimai_intelligence/store_lock.py",
   "src/maimai_intelligence/serialization.py",
 ]

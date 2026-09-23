@@ -140,7 +140,18 @@ class SEOTests(unittest.TestCase):
         self.assertIn("sitemapindex", assets["sitemap.xml"].decode())
         self.assertIn("noindex", assets["404.html"].decode())
 
-    def test_version_enhancement_reuses_exact_browser_policy_and_song_page_stays_static(self):
+    def test_shared_route_model_rejects_region_paths_and_preserves_escaping(self):
+        self.assertEqual(route("en", "songs", "name!'()*"), "/en/songs/name%21%27%28%29%2A/")
+        for locale, kind, slug in (
+            ("jp", "songs", "name"),
+            ("en", "unknown", "name"),
+            ("en", "songs", ""),
+            ("ja", "songs", "a/b"),
+        ):
+            with self.assertRaises(ValueError):
+                route(locale, kind, slug)
+
+    def test_all_interactive_routes_reuse_the_supplied_browser_policy(self):
         policy = (
             "default-src 'none'; script-src 'self'; connect-src 'self' "
             "https://approved.example; base-uri 'none'"
@@ -154,7 +165,7 @@ class SEOTests(unittest.TestCase):
             unquote(route("en", "songs", next(iter(ledger["songs"].values())))[1:]) + "index.html"
         ].decode()
         self.assertIn("https://approved.example", version)
-        self.assertNotIn("https://approved.example", song)
+        self.assertIn("https://approved.example", song)
 
     def test_explicit_title_states_and_regional_version_membership_remain_distinct(self):
         data = catalog()

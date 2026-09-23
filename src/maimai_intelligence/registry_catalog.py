@@ -68,7 +68,7 @@ def genre_label(value):
     return GENRES[genre_id(value)][0]
 
 
-def validate_genres(data):
+def validate_genres(data: dict[str, Any]) -> None:
     """Reject unreviewed categories without rewriting immutable historical catalogs."""
     navigation = data.get("navigation", {})
     charts = navigation.get("charts", {})

@@ -13,12 +13,13 @@ import re
 import unicodedata
 from collections import defaultdict
 from html import escape
+from typing import Any
 from urllib.parse import quote, unquote, urlencode
 
+from .public_routes import LOCALES, route
 from .snapshots import canonical
 
 ORIGIN = "https://maimai.party"
-LOCALES = {"en": "en", "ja": "ja", "ko": "ko", "zh-hans": "zh-Hans"}
 WORDS = {
     "en": [
         "Song",
@@ -210,10 +211,6 @@ def validate_permalinks(value):
     return value
 
 
-def route(locale, kind, slug):
-    return f"/{locale}/{kind}/{quote(slug, safe='-')}/"
-
-
 def _projection(chart, navigation, international=False):
     nav = navigation.get(chart["chart_id"], {})
     entry = chart.get("regional", {}).get("INTL", {}) if international else {}
@@ -270,7 +267,7 @@ def _document(locale, kind, slug, title, description, body, words, browser_csp=N
         "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; "
         "connect-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'"
     )
-    if kind == "versions" and browser_csp:
+    if browser_csp:
         policy = browser_csp
     return (
         f'<!doctype html><html lang="{LOCALES[locale]}" class="seo-static"><head>'
@@ -282,7 +279,7 @@ def _document(locale, kind, slug, title, description, body, words, browser_csp=N
         f'content="{escape(description, quote=True)}">'
         f'<link rel="canonical" href="{ORIGIN}{path}">{alternates}'
         '<link rel="stylesheet" '
-        'href="/seo-pages.css">'
+        'href="/seo-pages.css"><link rel="stylesheet" href="/challenge-review.css">'
         '<meta name="maimai-browser-base" content="/">'
         '<script type="module" src="/browser/browser-entry.js"></script></head><body>'
         f'<a class="skip-link" href="#seo-content">{escape(words["details"])}</a>'
@@ -293,7 +290,13 @@ def _document(locale, kind, slug, title, description, body, words, browser_csp=N
     ).encode()
 
 
-def build_seo(catalog, *, previous=None, song_redirects=None, browser_csp=None):
+def build_seo(
+    catalog: dict[str, Any],
+    *,
+    previous: dict[str, Any] | None = None,
+    song_redirects: dict[str, str] | None = None,
+    browser_csp: str | None = None,
+) -> tuple[dict[str, bytes], dict[str, Any], dict[str, int]]:
     """Return public assets, updated route ledger and a reviewable capacity summary."""
     ledger = json.loads(json.dumps(previous if previous is not None else empty_permalinks()))
     validate_permalinks(ledger)
@@ -350,8 +353,9 @@ def build_seo(catalog, *, previous=None, song_redirects=None, browser_csp=None):
             browser = "/?" + urlencode(
                 {"view": "catalog", "chart": first["chart_id"], "lang": LOCALES[locale]}
             )
-            body = '<section class="seo-document">' + _regional(
-                "h1", title, _title(first, intl, locale, words["unknown"])
+            body = (
+                f'<section class="seo-document" data-song-id="{escape(sid, quote=True)}">'
+                + _regional("h1", title, _title(first, intl, locale, words["unknown"]))
             )
             artwork = catalog.get("artwork", {})
             art = artwork.get("songs", {}).get(sid, {})

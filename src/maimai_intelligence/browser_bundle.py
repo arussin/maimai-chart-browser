@@ -5,8 +5,10 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+from collections.abc import Callable
 from importlib.resources import files
 from pathlib import Path, PurePosixPath
+from typing import Any
 
 from .localization import localization_data
 from .snapshots import canonical
@@ -26,7 +28,9 @@ def browser_configuration(*, player_pilot=False, player_maishift=False):
     }
 
 
-def read_browser_assets(read):
+def read_browser_assets(
+    read: Callable[[str, int], bytes],
+) -> tuple[dict[str, Any], dict[str, bytes]]:
     """Validate one generated dependency graph using a bounded byte reader."""
     raw = read("browser-assets.json", 256 * 1024)
     manifest = json.loads(raw)
