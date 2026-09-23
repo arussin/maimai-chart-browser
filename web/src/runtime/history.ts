@@ -1,4 +1,4 @@
-import type {NavigationEntry} from './contracts';
+import type { NavigationEntry } from './contracts';
 
 /** The only adapter allowed to write history or listen to native route events. */
 export class HistoryPort {

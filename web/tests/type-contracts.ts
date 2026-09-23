@@ -1,6 +1,6 @@
 /** Compile-only negative cases: invalid semantic payloads must never type-check. */
-import type {UsageAPI} from '../src/usage';
-import type {UsageRow} from '../src/usage-contract';
+import type { UsageAPI } from '../src/usage';
+import type { UsageRow } from '../src/usage-contract';
 
 export function verifyFiniteUsage(emit: UsageAPI['emit']): void {
   emit('page_view');
@@ -21,8 +21,20 @@ export function verifyFiniteUsage(emit: UsageAPI['emit']): void {
 }
 
 // @ts-expect-error Row discriminants must preserve the same semantic correlation.
-const wrongDetail: UsageRow = {event:'search_used', page:'charts', detail:'file', failure:'', count:1};
+const wrongDetail: UsageRow = {
+  event: 'search_used',
+  page: 'charts',
+  detail: 'file',
+  failure: '',
+  count: 1,
+};
 // @ts-expect-error Non-failure rows cannot carry a failure reason.
-const wrongFailure: UsageRow = {event:'page_view', page:'charts', detail:'', failure:'invalid', count:1};
+const wrongFailure: UsageRow = {
+  event: 'page_view',
+  page: 'charts',
+  detail: '',
+  failure: 'invalid',
+  count: 1,
+};
 void wrongDetail;
 void wrongFailure;
