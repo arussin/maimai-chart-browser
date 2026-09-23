@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections import defaultdict
 from collections.abc import Mapping
 from typing import Any
 
@@ -20,16 +21,20 @@ def source_references(value: object) -> set[str]:
     return found
 
 
-def explain_record(registry: Mapping[str, Any], identifier: str) -> dict[str, Any]:
+def _explain_record(
+    registry: Mapping[str, Any],
+    identifier: str,
+    observations: list[dict[str, Any]],
+    mappings: list[dict[str, Any]],
+    charts: list[str],
+    *,
+    compact: bool = False,
+) -> dict[str, Any]:
     table = "songs" if identifier in registry["songs"] else "charts"
     if identifier not in registry[table]:
         raise ValueError("Unknown canonical identity")
     record = registry[table][identifier]
     song_id = identifier if table == "songs" else record["song_id"]
-    observations = [
-        row for row in registry["observations"].values() if row["subject_id"] == identifier
-    ]
-    mappings = [row for row in registry["mappings"].values() if row.get("subject_id") == identifier]
     references = source_references([record, observations, mappings])
     evidence = []
     for source_id in sorted(references):
@@ -37,7 +42,11 @@ def explain_record(registry: Mapping[str, Any], identifier: str) -> dict[str, An
         if source is None:
             raise ValueError("Accepted record refers to missing source evidence")
         evidence.append(
-            {"source_id": source_id, "assertion": source, "retained_bytes": "not_checked"}
+            {
+                "source_id": source_id,
+                **({} if compact else {"assertion": source}),
+                "retained_bytes": "not_checked",
+            }
         )
     origin = {"kind": "source_assertions", "references": evidence}
     if not references:
@@ -52,16 +61,46 @@ def explain_record(registry: Mapping[str, Any], identifier: str) -> dict[str, An
         "mappings": mappings,
         "origin": origin,
         "artwork": registry["songs"][song_id].get("enrichment", {}).get("artwork", {}),
-        "charts": [
-            row["chart_id"] for row in registry["charts"].values() if row["song_id"] == song_id
-        ],
+        "charts": charts,
         "outstanding": [row for row in mappings if row.get("state") != "accepted"],
     }
 
 
-def explain_registry(registry: Mapping[str, Any]) -> list[dict[str, Any]]:
+def explain_record(registry: Mapping[str, Any], identifier: str) -> dict[str, Any]:
+    song_id = (
+        identifier
+        if identifier in registry["songs"]
+        else registry["charts"].get(identifier, {}).get("song_id")
+    )
+    return _explain_record(
+        registry,
+        identifier,
+        [row for row in registry["observations"].values() if row["subject_id"] == identifier],
+        [row for row in registry["mappings"].values() if row.get("subject_id") == identifier],
+        [row["chart_id"] for row in registry["charts"].values() if row["song_id"] == song_id],
+    )
+
+
+def explain_registry(registry: Mapping[str, Any], *, compact: bool = False) -> list[dict[str, Any]]:
+    """Index each table once; explaining a corpus must not rescan it for every chart."""
+    observations: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    mappings: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    charts: dict[str, list[str]] = defaultdict(list)
+    for row in registry["observations"].values():
+        observations[row["subject_id"]].append(row)
+    for row in registry["mappings"].values():
+        mappings[row.get("subject_id", "")].append(row)
+    for row in registry["charts"].values():
+        charts[row["song_id"]].append(row["chart_id"])
     return [
-        explain_record(registry, identity)
+        _explain_record(
+            registry,
+            identity,
+            observations[identity],
+            mappings[identity],
+            charts[identity if table == "songs" else registry[table][identity]["song_id"]],
+            compact=compact,
+        )
         for table in ("songs", "charts")
         for identity in sorted(registry[table])
     ]

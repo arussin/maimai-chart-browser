@@ -63,6 +63,23 @@ class CorpusPolicyTests(unittest.TestCase):
             },
         }
         records = explain_registry(value)
+        self.assertEqual(records[0], explain_record(value, "song:a"))
+        self.assertEqual(records[1], explain_record(value, "chart:a"))
+        compact = explain_registry(value, compact=True)
+        self.assertNotIn("assertion", compact[1]["origin"]["references"][0])
+        self.assertEqual(explain_registry({key: {} for key in value}), [])
+
+        class Counted(dict):
+            scans = 0
+
+            def values(self):
+                self.scans += 1
+                return super().values()
+
+        indexed = {key: Counted(table) for key, table in value.items()}
+        self.assertEqual(explain_registry(indexed), records)
+        for key in ("observations", "mappings", "charts"):
+            self.assertEqual(indexed[key].scans, 1, key)
         self.assertEqual(records[0]["origin"]["kind"], "legacy_origin")
         self.assertEqual(records[1]["origin"]["references"][0]["retained_bytes"], "not_checked")
         self.assertEqual(len(records[1]["outstanding"]), 1)

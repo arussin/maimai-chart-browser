@@ -11,6 +11,7 @@ maimai-chart corpus prepare --store CACHE/updates --previous-browser RETAINED/br
 maimai-chart corpus resume --from CACHE/updates/runs/ATTEMPT
 maimai-chart corpus replay --from CACHE/updates/runs/ATTEMPT
 maimai-chart corpus inspect --run CACHE/updates/runs/ATTEMPT
+maimai-chart corpus inspect --registry RETAINED/registry --workbench CACHE/review/registry.html
 maimai-chart corpus inspect --run CACHE/updates/runs/ATTEMPT --identity song:CANONICAL-ID
 maimai-chart corpus inspect --run CACHE/updates/runs/ATTEMPT --workbench CACHE/review/workbench.html
 maimai-chart corpus diff CACHE/updates/runs/BEFORE CACHE/updates/runs/AFTER
@@ -26,6 +27,8 @@ Each attempt records exact input inventories and a predecessor reference. Resume
 An interrupted writer leaves its existing lease semantics intact. Inspect the process and `writer.lock` before owner recovery; no command silently breaks another writer's lock. Inspect `state.json`, `diagnostics.jsonl`, and the referenced evidence to locate the failed stage. Expected provider failures remain bounded outcomes in the capture and coverage receipts; integrity and programming failures stop the attempt.
 
 ## Evidence and the workbench
+
+Retained registries can also be inspected directly with `--registry`; these views explicitly say `retained_registry_only` and never masquerade as preparation or publication receipts. Each evidence table is indexed once, and common source assertions are stored once in the derived view.
 
 The workbench is generated outside immutable runs and has no save, promote, fetch, or publish operations. It uses accepted registry records, observations, mappings, artwork decisions, coverage conflicts, source audits, change reports, and stage diagnostics. Record explanations distinguish source assertions from explicitly retained legacy admission evidence. A source assertion is not proof that its capture bytes were verified during inspection: the view labels that distinction and integrity verification remains a separate operation.
 

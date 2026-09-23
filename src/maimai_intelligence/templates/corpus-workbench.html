@@ -15,7 +15,7 @@ const data=JSON.parse(document.getElementById('data').textContent),records=data.
 const text=(id,value)=>document.getElementById(id).textContent=value;
 text('state','State: '+data.operations.state.status+' · Integrity: inspection only; run corpus verify before reuse.');
 text('stages',JSON.stringify(data.operations.stages,null,2));
-const {records:_,...remaining}=data.canonical;text('unresolved',JSON.stringify(remaining,null,2));
+const {records:_,sources:__,...remaining}=data.canonical;text('unresolved',JSON.stringify(remaining,null,2));
 const searches=records.map(record=>JSON.stringify(record).toLocaleLowerCase());
 function render(){
  const query=document.getElementById('search').value.trim().toLocaleLowerCase(),matches=records.filter((_,i)=>searches[i].includes(query));
@@ -24,7 +24,7 @@ function render(){
  for(const record of matches.slice(0,100)){
   const li=document.createElement('li'),details=document.createElement('details'),summary=document.createElement('summary'),pre=document.createElement('pre');
   summary.textContent=record.id+' · '+(record.record.metadata?.title||record.record.format||'')+' · '+record.origin.kind;
-  details.addEventListener('toggle',()=>{if(details.open&&!pre.textContent)pre.textContent=JSON.stringify(record,null,2);});
+  details.addEventListener('toggle',()=>{if(details.open&&!pre.textContent)pre.textContent=JSON.stringify({...record,origin:{...record.origin,references:record.origin.references?.map(ref=>({...ref,assertion:data.canonical.sources[ref.source_id]}))}},null,2);});
   details.append(summary,pre);li.append(details);list.append(li);
  }
 }

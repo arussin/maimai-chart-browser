@@ -34,10 +34,29 @@ def read_diagnostics(run: Path) -> list[dict[str, Any]]:
     return result
 
 
+def inspect_registry(path: Path) -> dict[str, Any]:
+    """Explain retained admissions without pretending they are a new completed attempt."""
+    registry = read_registry(path)
+    canonical = {
+        "records": explain_registry(registry, compact=True),
+        "sources": registry["sources"],
+    }
+    return {
+        "version": "corpus-workbench-1",
+        "canonical_sha256": digest(canonical),
+        "canonical": canonical,
+        "operations": {"state": {"status": "retained_registry_only"}, "stages": []},
+        "integrity": "inspection_only_not_a_preparation_or_publication_receipt",
+    }
+
+
 def inspect_run(run: Path) -> dict[str, Any]:
     registry_path = run / "registry"
     registry = read_registry(registry_path) if registry_path.exists() else None
-    canonical: dict[str, Any] = {"records": explain_registry(registry) if registry else []}
+    canonical: dict[str, Any] = {
+        "records": explain_registry(registry, compact=True) if registry else [],
+        "sources": registry["sources"] if registry else {},
+    }
     for name in ("coverage-audit", "coverage-conflicts", "source-audit", "changes"):
         path = run / (name + ".json")
         if path.is_file():
@@ -69,10 +88,15 @@ def diff_runs(before: Path, after: Path) -> dict[str, Any]:
 def write_workbench(run: Path, output: Path) -> Path:
     if output.resolve().is_relative_to(run.resolve()):
         raise ValueError("Write derived workbench outside the immutable run")
-    data = json.dumps(inspect_run(run), ensure_ascii=False).replace("<", "\\u003c")
-    title = html.escape(run.name)
+    return write_inspection(inspect_run(run), run.name, output)
+
+
+def write_inspection(view: dict[str, Any], title: str, output: Path) -> Path:
+    data = json.dumps(view, ensure_ascii=False).replace("<", "\\u003c")
     document = (
         files("maimai_intelligence").joinpath("templates/corpus-workbench.html").read_text("utf-8")
     )
-    atomic_write_text(output, document.replace("RUN_TITLE", title).replace("DATA_JSON", data))
+    atomic_write_text(
+        output, document.replace("RUN_TITLE", html.escape(title)).replace("DATA_JSON", data)
+    )
     return output

@@ -10,7 +10,13 @@ from typing import Any
 
 from .corpus_attempts import resume_options, verify_attempt
 from .corpus_update import implementation_hash, prepare_update, verify_candidate
-from .corpus_workbench import diff_runs, inspect_run, write_workbench
+from .corpus_workbench import (
+    diff_runs,
+    inspect_registry,
+    inspect_run,
+    write_inspection,
+    write_workbench,
+)
 from .snapshots import read_json
 from .source_identity import source_implementation_hash
 
@@ -48,7 +54,11 @@ def add_commands(commands: argparse._SubParsersAction[argparse.ArgumentParser]) 
         if action == "resume":
             command.add_argument("--online", action="store_true")
     inspect = actions.add_parser("inspect", help="Explain a local run without changing it")
-    inspect.add_argument("--run", type=Path, required=True)
+    subject = inspect.add_mutually_exclusive_group(required=True)
+    subject.add_argument("--run", type=Path)
+    subject.add_argument(
+        "--registry", type=Path, help="Inspect a retained registry without claiming a completed run"
+    )
     inspect.add_argument("--identity")
     inspect.add_argument(
         "--workbench", type=Path, help="Write a read-only HTML view outside the run"
@@ -124,17 +134,25 @@ def execute(args: argparse.Namespace) -> None:
                 "published": False,
             }
     else:
-        result = inspect_run(args.run)
+        result = inspect_run(args.run) if args.run else inspect_registry(args.registry)
         if args.identity:
             matches = [
                 record for record in result["canonical"]["records"] if record["id"] == args.identity
             ]
             if not matches:
                 raise ValueError("Unknown canonical identity in this run")
+            sources = result["canonical"]["sources"]
             result = matches[0]
+            for reference in result["origin"].get("references", []):
+                reference["assertion"] = sources[reference["source_id"]]
         if args.workbench:
-            result = {
-                "workbench": str(write_workbench(args.run, args.workbench)),
-                "read_only": True,
-            }
+            if args.run:
+                output = write_workbench(args.run, args.workbench)
+            else:
+                if args.workbench.resolve().is_relative_to(args.registry.resolve()):
+                    raise ValueError("Write derived workbench outside the retained registry")
+                output = write_inspection(
+                    inspect_registry(args.registry), args.registry.name, args.workbench
+                )
+            result = {"workbench": str(output), "read_only": True}
     print(json.dumps(result, ensure_ascii=False, indent=2))
