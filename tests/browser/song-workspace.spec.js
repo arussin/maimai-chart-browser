@@ -43,3 +43,27 @@ test('song choices cannot overwrite browser filters and personal sort intent',as
  for(const key of ['search','genre','format','versions','sortRules','region','personal'])expect(restored[key],key).toEqual(original[key]);
  await expect(page.locator('#search')).toHaveValue('ソテリア');
 });
+
+for(const selector of ['.chart-row','.row-difficulty','.chart-detail-actions button:first-child','#settings-toggle']){
+ test('delayed player readiness preserves song keyboard focus '+selector,async({page,request})=>{
+  await page.addInitScript(()=>{
+   const open=IDBFactory.prototype.open;
+   IDBFactory.prototype.open=function(...args){
+    const request=open.apply(this,args),descriptor=Object.getOwnPropertyDescriptor(IDBRequest.prototype,'onsuccess');
+    Object.defineProperty(request,'onsuccess',{configurable:true,set(handler){descriptor.set.call(request,async event=>{
+     window.fixtureStorageHeld=true;await new Promise(resolve=>window.fixtureReleaseStorage=resolve);handler?.call(request,event);
+    });}});
+    return request;
+   };
+  });
+  const map=await(await request.get('/registry/permalinks.json')).json();
+  const slug=Object.values(map.songs).find(value=>value.includes('ソテリア'));
+  await page.goto('/en/songs/'+encodeURIComponent(slug)+'/');
+  const row=page.locator('#seo-route-view .song-row').first(),control=selector==='#settings-toggle'?page.locator(selector):row.locator(selector);
+  await expect(control).toBeVisible();await expect.poll(()=>page.evaluate(()=>window.fixtureStorageHeld)).toBe(true);
+  await control.focus();await expect(control).toBeFocused();
+  await page.evaluate(async()=>{fixtureReleaseStorage();await maimaiPersonal.ready;});
+  await expect(control).toBeFocused();
+  await expect(row.locator('.chart-measurements')).toBeVisible();
+ });
+}

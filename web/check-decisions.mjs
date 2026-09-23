@@ -1,7 +1,13 @@
 /** Each extracted pure decision module must meet its own branch-coverage threshold. */
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-for (const name of ['analysis-model', 'artwork', 'catalog-genres', 'challenge-matching']) {
+for (const name of [
+  'analysis-model',
+  'artwork',
+  'song-model',
+  'catalog-genres',
+  'challenge-matching',
+]) {
   const result = spawnSync(
     process.execPath,
     [

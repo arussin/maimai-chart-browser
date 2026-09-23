@@ -123,6 +123,7 @@ export function createChartCard<C extends ChartSummary>(
       identity = make('span', undefined, 'song-identity'),
       title = make('span', i18n.verbatim(displayTitle(c)), 'song-title');
     summary.type = 'button';
+    summary.dataset.chartAction = 'expand';
     const titleLine = make('span', undefined, 'song-title-line'),
       reading = presentation.romaji(c);
     titleLine.append(title);
@@ -167,6 +168,7 @@ export function createChartCard<C extends ChartSummary>(
     if (videoLink) heading.append(videoLink);
     const picker = make('select', undefined, 'row-difficulty');
     picker.id = 'row-difficulty-' + domKey;
+    picker.dataset.chartAction = 'difficulty';
     i18n.attribute(picker, 'aria-label', 'Difficulty for ' + displayTitle(c) + ' ' + c.format);
     for (const choice of [...choices].sort(
       (a, b) =>
@@ -244,6 +246,8 @@ export function createChartCard<C extends ChartSummary>(
       compareButton = make('button', 'Compare this chart'),
       similarButton = make('button', 'Find similar');
     compareButton.type = similarButton.type = 'button';
+    compareButton.dataset.chartAction = 'compare';
+    similarButton.dataset.chartAction = 'similar';
     compareButton.onclick = () => {
       actions.compare(c.chart_id);
     };

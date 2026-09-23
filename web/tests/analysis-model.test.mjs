@@ -147,3 +147,35 @@ test('dense ordering handles equal prevalences, counts and names without changin
   );
   assert.equal(createAnalysisModel('invalid', []).get(chart), null);
 });
+
+test('startup counts do not decode detail payloads and preserve sparse override semantics', () => {
+  const input = pack(
+    'sparse-tags-3',
+    [
+      [0, 1, 2, 0.5, [], [0]],
+      [0, 5, 3, 0.6, [], [0]],
+    ],
+    { absent: [0, 1] },
+  );
+  let decoded = 0;
+  input.evidence_pool = new Proxy([{ kind: 'retained' }], {
+    get(target, key) {
+      if (key === '0') decoded++;
+      return target[key];
+    },
+  });
+  const model = createAnalysisModel(input, [chart, { ...chart, source_hash: 'stale' }]);
+  assert.equal(decoded, 0);
+  assert.deepEqual([...model.frequency], [['pattern.one', 1]]);
+  assert.deepEqual(
+    [...model.coverage],
+    [
+      ['pattern.one', 1],
+      ['trait.two', 1],
+    ],
+  );
+  assert.equal(model.tags(chart)[0].count, 3);
+  assert.equal(decoded, 1);
+  assert.equal(model.tags(chart)[0].status, 'detected');
+  assert.equal(model.tags(chart)[1].status, 'not-detected-with-supported-coverage');
+});

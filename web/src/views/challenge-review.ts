@@ -3,7 +3,7 @@ import { createChartCard } from '../components/chart-card';
 import { PositionRestorer } from '../runtime/position';
 import { effectiveSortRules } from '../runtime/browser-state';
 import type { CatalogChart, PublicCatalog } from '../runtime/catalog';
-import type { ChartNavigation } from '../catalog-query';
+import { createSongModel } from '../domain/song-model';
 import type * as CatalogQuery from '../catalog-query';
 import type { BrowserState } from '../runtime/browser-state';
 import type { Tab, SortKey, SortRule, LocalizationPort } from '../runtime/contracts';
@@ -705,60 +705,19 @@ export function createChallengeReview(ports: ReviewPorts) {
   const mountSong = (root: HTMLElement, international: boolean) => {
     const songID = root.querySelector<HTMLElement>('[data-song-id]')?.dataset.songId;
     if (!songID) throw Error('Missing public song identity');
-    const songCharts = ports.publicData.catalog.filter((c) => c.song_id === songID);
-    const songCatalog = {
-      ...ports.publicData,
-      catalog: songCharts,
-      navigation: {
-        ...ports.publicData.navigation,
-        charts: Object.fromEntries(
-          songCharts.map((c) => [
-            c.chart_id,
-            ports.publicData.navigation?.charts?.[c.chart_id] || {},
-          ]),
-        ),
-      },
-    };
-    const canonical = ports.registry.normalize(ports.catalogQuery.createView(songCatalog));
-    const base = canonical.catalog;
+    const song = createSongModel(ports.publicData, songID);
     const model = (international: boolean): SongWorkspaceModel<CatalogChart> => {
-      const records: Record<string, ChartNavigation> = {};
-      const charts = base.map((chart) => {
-        const projected = ports.catalogQuery.regionalValues(
-          chart,
-          canonical.navigation?.charts?.[chart.chart_id] || {},
-          international,
-        );
-        records[chart.chart_id] = projected.navigation;
-        return { ...chart, ...projected.fields };
-      });
-      const constant = (c: CatalogChart) => {
-        const n = records[c.chart_id],
-          v = n?.chart_constant;
-        return (c.variant_id ? n?.chart_id === c.chart_id : n?.source_hash === c.source_hash) &&
-          typeof v === 'number' &&
-          Number.isFinite(v) &&
-          v > 0 &&
-          v <= 15
-          ? v
-          : null;
-      };
+      const projection = song(international);
       return {
-        charts,
-        choices: (c: CatalogChart) =>
-          charts.filter(
-            (other) =>
-              other.format === c.format &&
-              (other.variant_id || 'ordinary') === (c.variant_id || 'ordinary'),
-          ),
+        charts: projection.charts,
+        choices: projection.choices,
         presentation: {
           ...cardPresentation,
           patterns: () => [],
-          folder: (c: CatalogChart, key: 'genre' | 'version') =>
-            records[c.chart_id]?.[key] || 'unknown',
-          constant,
-          constantSource: (c: CatalogChart) => records[c.chart_id]?.metric_sources?.chart_constant,
-          bpm: (c: CatalogChart) => records[c.chart_id]?.bpm ?? null,
+          folder: projection.folder,
+          constant: projection.constant,
+          constantSource: projection.constantSource,
+          bpm: projection.bpm,
         },
         components: { ...cardComponents, songLink: undefined },
       };

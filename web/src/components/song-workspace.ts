@@ -33,7 +33,7 @@ export class SongWorkspace<C extends ChartSummary> {
     international: boolean,
   ) {
     this.international = international;
-    this.rows = document.createElement('div');
+    this.rows = root.ownerDocument.createElement('div');
     this.rows.className = 'songs song-workspace';
     const fallback = root.querySelector<HTMLElement>('.seo-table');
     if (!fallback) throw Error('Missing public chart fallback');
@@ -52,6 +52,14 @@ export class SongWorkspace<C extends ChartSummary> {
   private render() {
     if (this.disposed) return;
     const { charts, choices, presentation, components } = this.model(this.international);
+    const document = this.root.ownerDocument;
+    const focused =
+      document.activeElement instanceof HTMLElement && this.rows.contains(document.activeElement)
+        ? document.activeElement
+        : null;
+    const focusRow = focused?.closest<HTMLElement>('[data-row-key]')?.dataset.rowKey;
+    const focusAction = focused?.dataset.chartAction;
+    const focusId = focused?.id;
     this.rows.replaceChildren();
     if (!charts.length) {
       const empty = document.createElement('p');
@@ -85,6 +93,21 @@ export class SongWorkspace<C extends ChartSummary> {
           },
         ),
       );
+    }
+    // Storage completion can redraw personal results while someone is using a chart.
+    // Restore only focus that belonged to this workspace; dialogs and newer actions keep theirs.
+    if (focusRow) {
+      const row = this.rows.querySelector<HTMLElement>(
+        '[data-row-key="' + CSS.escape(focusRow) + '"]',
+      );
+      const target =
+        (focusAction &&
+          row?.querySelector<HTMLElement>(
+            '[data-chart-action="' + CSS.escape(focusAction) + '"]',
+          )) ||
+        (focusId && row?.querySelector<HTMLElement>('#' + CSS.escape(focusId))) ||
+        row?.querySelector<HTMLElement>('.chart-row');
+      target?.focus({ preventScroll: true });
     }
   }
   dispose() {

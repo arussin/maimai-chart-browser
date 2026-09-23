@@ -34,6 +34,7 @@ for (const path of graph.keys()) visit(path);
 const pureDomains = new Set([
   'src/domain/analysis-model.ts',
   'src/domain/artwork.ts',
+  'src/domain/song-model.ts',
   'src/domain/catalog-genres.ts',
   'src/catalog-query.ts',
   'src/player-session.ts',

@@ -61,43 +61,71 @@ export function createAnalysisModel(input: unknown, catalog: readonly AnalysisId
     const record = pack?.charts[chart.chart_id];
     return record?.source_hash === chart.source_hash ? record : null;
   };
-  function tags(chart: AnalysisIdentity): AnalysisTag[] {
+  const compact = ['sparse-tags-2', 'sparse-tags-3'].includes(pack?.representation ?? '');
+  type Row = DenseTag | SparseTag;
+  function status(row: Row | undefined, absent: boolean): AnalysisStatus {
+    if (!row) return absent ? 'not-detected-with-supported-coverage' : 'unknown';
+    if (!compact) return row[1] as AnalysisStatus;
+    return (['unknown', 'detected', 'not-detected-with-supported-coverage'] as const)[
+      (row[1] as number) & 3
+    ];
+  }
+  // Visit canonical observation states without manufacturing display details for every chart.
+  // Sparse duplicates retain the last row, exactly as historical decoding did.
+  function visitRows(
+    chart: AnalysisIdentity,
+    visit: (index: number, row: Row | undefined, absent: boolean) => void,
+  ) {
     const record = get(chart);
-    if (!record || !pack) return [];
-    let rows: DenseTag[];
-    if (['sparse-tags-2', 'sparse-tags-3'].includes(pack.representation ?? '')) {
-      rows = (record.tags as SparseTag[]).map((tag) => [
-        tag[0],
-        (['unknown', 'detected', 'not-detected-with-supported-coverage'] as const)[tag[1] & 3],
-        tag[2],
-        tag[3],
-        tag[1] & 4 ? 'complete' : 'partial',
-        !!(tag[1] & 8),
-        tag[4],
-        pack.evidence_pool ? tag[5].map((index) => pack.evidence_pool![index as number]) : tag[5],
-      ]);
-    } else rows = record.tags as DenseTag[];
+    if (!record || !pack) return;
     if (pack.representation?.startsWith('sparse-tags-')) {
-      const present = new Map(rows.map((tag) => [tag[0], tag])),
+      const present = new Map(record.tags.map((row) => [row[0], row])),
         absent = new Set(record.absent ?? []);
-      rows = pack.patterns.map(
-        (_, index) =>
-          present.get(index) ??
-          (absent.has(index)
-            ? [index, 'not-detected-with-supported-coverage', 0, 0, 'complete', false, []]
-            : [index, 'unknown', null, null, 'partial', false, []]),
-      );
+      for (let index = 0; index < pack.patterns.length; index++)
+        visit(index, present.get(index), absent.has(index));
+    } else for (const row of record.tags) visit(row[0], row, false);
+  }
+  function decode(index: number, row: Row | undefined, absent: boolean): AnalysisTag {
+    const id = pack!.patterns[index],
+      observed = status(row, absent);
+    if (!row)
+      return {
+        id,
+        status: observed,
+        count: absent ? 0 : null,
+        prevalence: absent ? 0 : null,
+        coverage: absent ? 'complete' : 'partial',
+        truncated: false,
+        spans: [],
+        evidence: [],
+      };
+    const common = { id, status: observed, count: row[2], prevalence: row[3] };
+    if (compact) {
+      const sparse = row as SparseTag;
+      const evidence = pack!.evidence_pool
+        ? sparse[5].map((index) => pack!.evidence_pool![index as number])
+        : sparse[5];
+      return {
+        ...common,
+        coverage: sparse[1] & 4 ? 'complete' : 'partial',
+        truncated: !!(sparse[1] & 8),
+        spans: sparse[4],
+        evidence,
+      };
     }
-    return rows.map((tag) => ({
-      id: pack.patterns[tag[0]],
-      status: tag[1],
-      count: tag[2],
-      prevalence: tag[3],
-      coverage: tag[4],
-      truncated: tag[5],
-      spans: tag[6],
-      evidence: tag[7] ?? [],
-    }));
+    const dense = row as DenseTag;
+    return {
+      ...common,
+      coverage: dense[4],
+      truncated: dense[5],
+      spans: dense[6],
+      evidence: dense[7] ?? [],
+    };
+  }
+  function tags(chart: AnalysisIdentity): AnalysisTag[] {
+    const result: AnalysisTag[] = [];
+    visitRows(chart, (index, row, absent) => result.push(decode(index, row, absent)));
+    return result;
   }
   const detected = (chart: AnalysisIdentity) =>
     tags(chart)
@@ -118,10 +146,12 @@ export function createAnalysisModel(input: unknown, catalog: readonly AnalysisId
   const frequency = new Map<string, number>(),
     coverage = new Map<string, number>();
   for (const chart of catalog)
-    for (const tag of tags(chart)) {
-      if (tag.status !== 'unknown') coverage.set(tag.id, (coverage.get(tag.id) ?? 0) + 1);
-      if (tag.status === 'detected') frequency.set(tag.id, (frequency.get(tag.id) ?? 0) + 1);
-    }
+    visitRows(chart, (index, row, absent) => {
+      const id = pack!.patterns[index],
+        state = status(row, absent);
+      if (state !== 'unknown') coverage.set(id, (coverage.get(id) ?? 0) + 1);
+      if (state === 'detected') frequency.set(id, (frequency.get(id) ?? 0) + 1);
+    });
   function compare(left: AnalysisIdentity, right: AnalysisIdentity) {
     const a = new Map(tags(left).map((tag) => [tag.id, tag])),
       b = new Map(tags(right).map((tag) => [tag.id, tag]));
