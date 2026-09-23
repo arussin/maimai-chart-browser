@@ -75,13 +75,13 @@ function mountedState() {
  const state=new sorting.BrowserState(),calls=[];
  state.configure({catalog:[{chart_id:'a'},{chart_id:'b'}],source_catalog_sha256:'catalog',navigation:{versions:['v1','v2']}});
  state.configureLevels(['BASIC','MASTER'],[12,12.5,13]);state.configurePatterns(['slide']);
- let locale='en';
- state.bind({readTransient:()=>({locale,scroll:[0,320],focus:'search',auxiliary:{sortKeep:true,patternSearch:'s',menus:[['pattern-filter',false]]}}),
+ let locale='en',transientReads=0;
+ state.bind({readTransient:()=>{transientReads++;return {locale,scroll:[0,320],focus:'search',auxiliary:{sortKeep:true,patternSearch:'s',menus:[['pattern-filter',false]]}};},
   writeControls:value=>calls.push(['controls',value]),render:()=>calls.push(['render']),writeDisclosures:value=>calls.push(['disclosures',value]),
   position:{cancel:()=>calls.push(['cancel']),restore:value=>calls.push(['position',value])},
   openRoute:()=>calls.push(['open']),versionChanged:()=>calls.push(['version']),
   localization:{get locale(){return locale;},setLocale:value=>{locale=value;calls.push(['locale',value]);}},usage:{suspend:fn=>{calls.push(['silent']);return fn();}}});
- return {state,calls};
+ return {state,calls,transientReads:()=>transientReads};
 }
 
 test('one public state owner restores allowlisted controls and validates catalog identity',()=>{
@@ -112,4 +112,17 @@ test('state snapshots exclude private records and preserve requested personal so
  assert.equal(JSON.stringify(snapshot).includes('achievement'),false);assert.equal(JSON.stringify(snapshot).includes('secret'),false);
  state.open();assert.deepEqual(calls.slice(-2).map(row=>row[0]),['cancel','open']);
  assert.equal(state.version('unknown'),false);assert.equal(state.version('v2'),true);assert.equal([...state.selectedVersions].join(','),'v2');
+});
+
+
+test('restoration projects owned state without reading current DOM position before rendering',()=>{
+ const {state,calls,transientReads}=mountedState(),before=state.capture();
+ assert.equal(transientReads(),1);
+ assert.equal(state.restore({...before,scroll:[0,900],focus:'saved-row',locale:'ja',search:'restored'}),true);
+ assert.equal(transientReads(),1,'restoring saved state must not sample the partially restored DOM');
+ const committed=calls.findLast(row=>row[0]==='position')[1];
+ assert.equal(committed.scroll[1],900);assert.equal(committed.focus,'saved-row');assert.equal(committed.locale,'ja');assert.equal(committed.search,'restored');
+ const captured=state.capture();
+ assert.equal(transientReads(),2,'new navigation must still capture the actual current DOM position');
+ assert.equal(captured.scroll[1],320);assert.equal(captured.focus,'search');assert.equal(captured.locale,'ja');
 });

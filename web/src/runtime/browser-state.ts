@@ -229,7 +229,10 @@ export class BrowserState {
 
   capture(): BrowserSnapshot {
     if (!this.view) throw Error('Browser state is not mounted');
-    const transient = this.view.readTransient();
+    return this.snapshot(this.view.readTransient());
+  }
+
+  private snapshot(transient: TransientView): BrowserSnapshot {
     return {
       schemaVersion: 1,
       catalogHash: this.catalogHash,
@@ -301,9 +304,10 @@ export class BrowserState {
     const scroll: [number, number] = Array.isArray(value.scroll) && value.scroll.length === 2 &&
       value.scroll.every(n => typeof n === 'number' && Number.isFinite(n)) ?
       [value.scroll[0], value.scroll[1]] : [0, 0];
-    // Forward only documented public controls, never arbitrary history input.
-    return {...this.capture(), disclosures, history, auxiliary, scroll,
-      focus: typeof value.focus === 'string' ? value.focus : null};
+    // Restore from owned state and validated saved presentation. Reading the current
+    // DOM here would force layout before the restored controls have been rendered.
+    return {...this.snapshot({auxiliary, scroll, locale: this.view!.localization.locale,
+      focus: typeof value.focus === 'string' ? value.focus : null}), disclosures, history};
   }
 
   restore(value: unknown): boolean {
