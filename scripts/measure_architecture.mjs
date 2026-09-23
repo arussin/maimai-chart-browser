@@ -18,6 +18,13 @@ export function distribution(values){
  return {n:v.length,min:v[0],median:v.length%2?v[middle]:(v[middle-1]+v[middle])/2,p95:v[Math.ceil(v.length*.95)-1],max:v.at(-1),values:v};
 }
 
+/** A route absent from an older release is unavailable evidence, never a zero. */
+export function optionalDistribution(values){
+ if(values.every(value=>value===null))return {status:'unsupported',n:0};
+ if(values.some(value=>value===null))throw Error('Inconsistent capability across repetitions');
+ return {status:'measured',...distribution(values)};
+}
+
 export async function bindArtifact(config){
  if(!/^[a-f0-9]{40}$/.test(config.commit||''))throw Error('Exact product source commits are required');
  const bytes=await readFile(config.provenance),receipt=JSON.parse(bytes);
@@ -146,11 +153,15 @@ export async function main(argv=process.argv.slice(2)){
   const startupRequests=requests.slice(),search_ms=await timing(page,()=>search(page,query));
   if(await page.locator('#songs .song-row').count()===0)throw Error('Search failed');
   await search(page,'');await frames(page);
-  await page.locator('#songs .chart-row').first().click();const link=page.locator('#songs .song-row').first().locator('a[data-song-page]');await link.waitFor({state:'visible'});await link.focus();
-  const beforeCatalog=requests.filter(r=>r.path.includes('catalog-index')).length;
-  const song_ms=await timing(page,async()=>{await link.click();await page.locator('#seo-route-view').waitFor({state:'visible'});});
-  const back_ms=await timing(page,async()=>{await page.goBack();await page.locator('#songs').waitFor({state:'visible'});await page.waitForFunction(()=>{const s=history.state?.maimaiBrowserState;return s&&(!s.focus||document.activeElement?.id===s.focus)&&(!s.scroll||Math.abs(scrollY-s.scroll[1])<2&&Math.abs(scrollX-s.scroll[0])<2);});});
-  const return_catalog_refetches=requests.filter(r=>r.path.includes('catalog-index')).length-beforeCatalog;
+  await page.locator('#songs .chart-row').first().click();
+  let song_ms=null,back_ms=null,return_catalog_refetches=null;
+  if(await page.locator('meta[name="maimai-song-pages"][content="1"]').count()){
+   const link=page.locator('#songs .song-row').first().locator('a[data-song-page]');await link.waitFor({state:'visible'});await link.focus();
+   const beforeCatalog=requests.filter(r=>r.path.includes('catalog-index')).length;
+   song_ms=await timing(page,async()=>{await link.click();await page.locator('#seo-route-view').waitFor({state:'visible'});});
+   back_ms=await timing(page,async()=>{await page.goBack();await page.locator('#songs').waitFor({state:'visible'});await page.waitForFunction(()=>{const s=history.state?.maimaiBrowserState;return s&&(!s.focus||document.activeElement?.id===s.focus)&&(!s.scroll||Math.abs(scrollY-s.scroll[1])<2&&Math.abs(scrollX-s.scroll[0])<2);});});
+   return_catalog_refetches=requests.filter(r=>r.path.includes('catalog-index')).length-beforeCatalog;
+  }
   const comparison_ms=await timing(page,async()=>{
    // Include activation and any deferred module initialization in the user-visible cost.
    await page.locator('#compare-tab').click();
@@ -182,7 +193,7 @@ export async function main(argv=process.argv.slice(2)){
   for(const config of configs)for(const temperature of ['cold','warm']){
    const selected=rows.filter(r=>r.config===config.id&&r.temperature===temperature),entry={config:config.id,temperature};
    for(const key of ['ready_ms','transfer_bytes','encoded_bytes','cached_resources','ScriptDuration_ms','TaskDuration_ms','long_task_ms','cls'])entry[key]=distribution(selected.map(r=>r.startup[key]));
-   for(const key of ['search_ms','song_ms','back_ms','comparison_ms'])entry[key]=distribution(selected.map(r=>r[key]));summaries.push(entry);
+   for(const key of ['search_ms','song_ms','back_ms','comparison_ms'])entry[key]=optionalDistribution(selected.map(r=>r[key]));summaries.push(entry);
   }
   const browserVersion=browser.version();await browser.close();browser=null;await proxy.close();
   const receipt={schema:'architecture-performance-3',experiment,passed:errors.length===0&&applicationOutbound.length===0,created_at:new Date().toISOString(),harness_sha256:sha(await readFile(new URL(import.meta.url))),configs:configs.map(({binding,...config})=>({...config,binding:{receipt_sha256:binding.receipt_sha256,source_inventory_sha256:binding.source_inventory_sha256,verifier_commit:binding.verifier_commit,build_options:binding.build_options}})),verified_served_files:[...content.values()].map(f=>({config:f.config,path:f.name,bytes:f.raw.length,sha256:sha(f.raw)})),catalogs:catalogs.map(c=>({sha256:c.release.sha256,manifest_sha256:c.manifest_sha256,charts:c.data.catalog.length})),query,iterations,browser:browserVersion,runtime:runtimeBinding,platform:{os:os.platform(),release:os.release(),cpu:os.cpus()[0]?.model,threads:os.cpus().length},method:{routing:false,outbound:'Exact loopback proxy only; all other origins denied. Observation-only request/WebSocket audit fails application attempts; unattributed browser transports are retained separately',cache:'Production-like immutable data; other assets revalidated. A new page in the same context gives the immediate warm repeat; a fresh context gives cold readiness. Full measured journey filesystem/gzip primed in discarded browser contexts. No artificial network or CPU throttle.',readiness:'First populated catalog DOM observed (ready_ms is not a paint metric); action completion includes two animation frames. Search dispatches the synchronous input event. Comparison includes tab activation and deferred initialization.',usage:'Collector remains suppressed by the unchanged nonproduction origin predicate.',execution:'CDP TaskDuration includes renderer task work through two animation frames after catalog and font readiness. ScriptDuration is retained diagnostically, not compared as total JS execution because async-module work is excluded by this engine metric',limitations:'Explicit full Chromium executable on this Windows/font platform only. Web font bytes are verified served assets; operating-system fallback font files are not individually hashed; local-server latency, not internet Core Web Vitals. Concurrent host load is uncontrolled; paired order alternates.'},rows,summaries,errors,applicationOutbound,blockedTransports:proxy.blockedTransports};

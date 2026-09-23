@@ -110,6 +110,40 @@ def plan_public_release(*args, **kwargs): return Plan()
                 )
             self.assertIn("attempted network", (root / "caught-network/build.log").read_text())
 
+    def test_historical_baseline_uses_its_own_writer_and_preserves_immutable_assets(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source, inputs = root / "source", root / "inputs"
+            inputs.mkdir()
+            modules = {
+                "src/maimai_intelligence/__init__.py": "",
+                "src/maimai_intelligence/lab.py": "def build_lab(*args, **kwargs): pass\n",
+                "scripts/__init__.py": "",
+                "scripts/update_catalog.py": "def retain_history(*args): pass\n",
+                "src/maimai_intelligence/public_release.py": """
+def build_public_release(source, output):
+    output.mkdir(parents=True)
+    (output/'manifest.json').write_bytes(b'{}')
+    (output/'index.html').write_bytes(b'historical')
+    return {'files':2}
+""",
+            }
+            for name, content in modules.items():
+                path = source / name
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text(content)
+            result = run_build(source, inputs, inputs, inputs, root / "first", "fixture")
+            self.assertEqual(result["publication_interface"], "historical-public-writer")
+            self.assertEqual(result["summary"], {"files": 2})
+            review = root / "first/review"
+            self.assertEqual((review / "planned-assets/index.html").read_bytes(), b"historical")
+            self.assertEqual((review / "planned-manifest.json").read_bytes(), b"{}")
+            (inputs / "media").mkdir()
+            (inputs / "media/accepted.webp").write_bytes(b"retained")
+            with self.assertRaisesRegex(ValueError, "build failed"):
+                run_build(source, inputs, inputs, inputs, root / "second", "fixture")
+            self.assertIn("Historical immutable URL", (root / "second/build.log").read_text())
+
     def test_mutating_input_after_first_build_never_writes_acceptance_receipt(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

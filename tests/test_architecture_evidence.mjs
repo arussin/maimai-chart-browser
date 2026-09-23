@@ -5,7 +5,7 @@ import {mkdtemp,mkdir,writeFile,rm} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join,resolve} from 'node:path';
 import {createHash} from 'node:crypto';
-import {bindArtifact,distribution,verifyBytes,validateExperiment,observeApplicationNetwork} from '../scripts/measure_architecture.mjs';
+import {bindArtifact,distribution,optionalDistribution,verifyBytes,validateExperiment,observeApplicationNetwork} from '../scripts/measure_architecture.mjs';
 const record=raw=>({bytes:Buffer.byteLength(raw),sha256:createHash('sha256').update(raw).digest('hex')});
 
 test('distribution uses both central samples and rejects incomplete data',()=>{
@@ -68,4 +68,12 @@ test('performance network audit records app attempts without installing routes',
  const popup=new EventEmitter();context.emit('page',popup);
  popup.emit('websocket',{url:()=> 'wss://popup.example.invalid/'});
  assert.deepEqual(attempts.map(item=>item.target),['https://accounts.google.com','https://redirect.example.invalid','https://clients2.google.com','https://popup.example.invalid']);
+});
+
+test('unsupported historical journeys are explicit and never mixed with measurements',()=>{
+ assert.deepEqual(optionalDistribution([null,null]),{status:'unsupported',n:0});
+ assert.equal(optionalDistribution([12,20]).status,'measured');
+ assert.equal(optionalDistribution([12,20]).median,16);
+ assert.throws(()=>optionalDistribution([null,12]),/Inconsistent/);
+ assert.throws(()=>optionalDistribution([12,NaN]),/Finite/);
 });

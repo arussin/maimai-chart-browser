@@ -139,22 +139,33 @@ def build_child(source, package, retained, previous, output, version, *, player_
     socket.socket.connect = socket.socket.connect_ex = deny
     sys.path[:0] = [str(source / "src"), str(source)]
     # Imports occur only after the child network guard; the parent verifies all source first.
+    from maimai_intelligence import public_release
     from maimai_intelligence.lab import build_lab
-    from maimai_intelligence.public_release import plan_public_release
     from scripts.update_catalog import retain_history
 
     start = time.monotonic()
     retain_history(retained, output / "browser")
     build_lab(package, output / "browser", catalog_version=version, player_maishift=player_maishift)
-    plan = plan_public_release(output / "browser", previous_public=previous)
-    plan.write_review_to(output / "review")
+    if hasattr(public_release, "plan_public_release"):
+        plan = public_release.plan_public_release(output / "browser", previous_public=previous)
+        plan.write_review_to(output / "review")
+        assets, summary = plan.assets, plain(plan.summary)
+        interface = "prepared-release-plan"
+    else:
+        # The reviewed production baseline predates the release-plan API. Use its
+        # own public writer without injecting current product code or lifting limits.
+        destination = output / "review/planned-assets"
+        summary = public_release.build_public_release(output / "browser", destination)
+        assets = {name: (destination / name).read_bytes() for name in inventory(destination)}
+        (output / "review/planned-manifest.json").write_bytes(assets["manifest.json"])
+        interface = "historical-public-writer"
     preserved = {}
     for directory in IMMUTABLE:
         for path in sorted((previous / directory).rglob("*")):
             if path.is_file():
                 name = path.relative_to(previous).as_posix()
                 expected = path.read_bytes()
-                if name not in plan.assets or plan.assets[name] != expected:
+                if name not in assets or assets[name] != expected:
                     raise ValueError("Historical immutable URL changed or disappeared: " + name)
                 preserved[name] = sha(expected)
     if attempts:
@@ -165,7 +176,8 @@ def build_child(source, package, retained, previous, output, version, *, player_
         "build_options": {"player_maishift": player_maishift},
         "runtime": runtime_identity(),
         "elapsed_seconds": round(time.monotonic() - start, 3),
-        "summary": plain(plan.summary),
+        "summary": summary,
+        "publication_interface": interface,
         "files": inventory(output / "review"),
         "network_attempts": attempts,
         "historical_immutable_files": len(preserved),
