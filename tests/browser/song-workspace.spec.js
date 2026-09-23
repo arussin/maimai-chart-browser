@@ -6,6 +6,8 @@ import {gzipSync} from 'node:zlib';
 test.beforeEach(async({page,baseURL})=>{
  await page.route('**/*',async route=>{const url=new URL(route.request().url());if(url.origin!==baseURL){await route.abort();return;}const response=await route.fetch({url:baseURL+'/registry'+url.pathname+url.search});await route.fulfill({response});});
 });
+// Complete fixture responses before Playwright disposes their request context.
+test.afterEach(async({page})=>{await page.unrouteAll({behavior:'wait'});});
 for(const locale of ['en','ja','ko','zh-hans'])for(const width of [320,768,1280]){
  test('direct song workspace '+locale+' '+width,async({page,request},testInfo)=>{
   const errors=[];page.on('pageerror',error=>errors.push(error.message));
