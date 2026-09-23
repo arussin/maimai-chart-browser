@@ -188,5 +188,6 @@ for(const target of ['.seo-primary[data-open-browser]','[data-back-results]'])te
  await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
  try {await expect(link).toBeVisible();} finally {await page.mouse.up();}
  await expect(page.locator('#songs')).toBeVisible();
+ await expect(page.locator('#catalog-count')).toHaveText('26 charts');
  expect(new URL(page.url()).pathname).toBe('/');
 });

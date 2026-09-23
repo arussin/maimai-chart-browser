@@ -441,6 +441,12 @@ export class NavigationCoordinator {
     );
     document.addEventListener('keyup', (event) => release('key:' + event.code), true);
     window.addEventListener('blur', () => release());
+    window.addEventListener('pagehide', () => {
+      this.intent.cancel();
+      this.interactions.clear();
+      this.finishInteraction?.();
+      this.finishInteraction = undefined;
+    });
     document.addEventListener('click', (event) => {
       const anchor = (event.target as Element)?.closest<HTMLAnchorElement>('a');
       if (

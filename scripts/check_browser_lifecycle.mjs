@@ -39,10 +39,18 @@ try{
  page.on('pageerror',e=>errors.push({phase:'bfcache',error:e.message}));
  const cdp=await context.newCDPSession(page),notRestored=[];await cdp.send('Page.enable');cdp.on('Page.backForwardCacheNotUsed',e=>notRestored.push(e));
  await page.goto(origin);await page.locator('#songs .song-row').first().waitFor();await page.waitForTimeout(100);
- const before=await page.evaluate(()=>window.__lifecycle);await page.goto(origin+'/__away');await page.evaluate(()=>history.back());await page.waitForFunction(()=>location.pathname==='/'&&window.__lifecycle?.shows.length>0);await page.locator('#songs .song-row').first().waitFor();await page.waitForTimeout(100);
+ const before=await page.evaluate(()=>window.__lifecycle);
+ await page.evaluate(()=>{const link=document.createElement('a');link.id='keyboard-away';link.href='/__away';link.textContent='Local keyboard navigation';document.body.append(link);});
+ await page.locator('#keyboard-away').focus();await page.keyboard.down('Enter');await page.waitForURL(origin+'/__away');await page.keyboard.up('Enter');await page.evaluate(()=>history.back());await page.waitForFunction(()=>location.pathname==='/'&&window.__lifecycle?.shows.length>0);await page.locator('#songs .song-row').first().waitFor();await page.waitForTimeout(100);
  const after=await page.evaluate(()=>window.__lifecycle),restored=before.id===after.id&&after.shows.includes(true);
  receipt.bfcache={status:restored?'passed':'not-exercised',same_document:before.id===after.id,before,after,notRestored};
  if(restored&&after.activations.length!==before.activations.length+1)throw Error('BFCache restoration did not activate exactly once');
+ // Keyup belongs to the away document. Cached navigation must discard the old held-key state.
+ await page.locator('#songs .song-row').first().locator('.chart-row').click();
+ const link=page.locator('#songs a[data-song-page]').first();await link.waitFor();await link.click();
+ await page.locator('#seo-route-view .song-workspace').waitFor({timeout:5000});
+ receipt.bfcache.navigation_after_held_key=true;
+
  await context.close();
  // No DevTools connection: attached automation itself disables prerender in this engine.
  const eventStart=events.length,profile=resolve(output,'prerender-profile');await mkdir(profile);
