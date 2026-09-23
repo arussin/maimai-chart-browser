@@ -8,7 +8,7 @@ import unittest
 import urllib.error
 from copy import deepcopy
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 from maimai_intelligence.catalog_capture import CaptureStore, classify_failure
 from maimai_intelligence.coverage import prepare_coverage
@@ -40,6 +40,60 @@ class CoverageBoundaryTests(unittest.TestCase):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name)
+
+    def test_capture_store_does_not_hide_fetcher_programming_errors(self):
+        url = "https://maimai.lxns.net/api/v0/maimai/song/list"
+        for error in (
+            TypeError("adapter defect"),
+            KeyError("adapter defect"),
+            ValueError("adapter defect"),
+        ):
+            with self.subTest(error=type(error).__name__):
+                store = CaptureStore(self.root, fetcher=Mock(side_effect=error))
+                with self.assertRaises(type(error)) as caught:
+                    store.get(url)
+                self.assertIs(caught.exception, error)
+                self.assertEqual(store.failures, {})
+
+    def test_capture_store_does_not_classify_persistence_errors_as_provider_outages(self):
+        url = "https://maimai.lxns.net/api/v0/maimai/song/list"
+        store = CaptureStore(self.root, fetcher=lambda *_: (200, b"[]", {}))
+        error = OSError("authored disk failure")
+        with patch("maimai_intelligence.catalog_capture.atomic_json", side_effect=error):
+            with self.assertRaises(OSError) as caught:
+                store.get(url)
+        self.assertIs(caught.exception, error)
+        self.assertEqual(store.failures, {})
+        self.assertEqual(store.captures, {})
+
+    def test_capture_store_rejects_invalid_response_status_or_size_as_schema_failure(self):
+        url = "https://maimai.lxns.net/api/v0/maimai/song/list"
+        for response in ((200, b"", {}), (304, b"", {}), (201, b"[]", {})):
+            with self.subTest(status=response[0]):
+                store = CaptureStore(self.root, fetcher=Mock(return_value=response))
+                with self.assertRaises(CaptureError) as caught:
+                    store.get(url)
+                self.assertEqual(caught.exception.failure.kind, FailureKind.SCHEMA)
+                self.assertEqual(store.captures, {})
+
+    def test_cached_capture_reader_programming_errors_abort(self):
+        url = "https://maimai.lxns.net/api/v0/maimai/song/list"
+        CaptureStore(self.root, fetcher=lambda *_: (200, b"[]", {})).get(url)
+        store = CaptureStore(self.root, fetcher=Mock(side_effect=AssertionError("no request")))
+        for error in (TypeError("reader defect"), KeyError("reader defect")):
+            with self.subTest(error=type(error).__name__):
+                with patch.object(store, "_read", side_effect=error):
+                    with self.assertRaises(type(error)) as caught:
+                        store.get(url)
+                self.assertIs(caught.exception, error)
+                self.assertEqual(store.failures, {})
+
+    def test_public_redirect_is_a_typed_response_failure(self):
+        from maimai_intelligence.catalog_capture import NoRedirect
+
+        with self.assertRaises(CaptureError) as caught:
+            NoRedirect().redirect_request(None, None, 302, "Found", {}, "https://example.com/")
+        self.assertEqual(caught.exception.failure.kind, FailureKind.SCHEMA)
 
     def test_provider_snapshot_does_not_hide_programming_errors(self):
         class BrokenCapture:

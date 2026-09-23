@@ -13,7 +13,6 @@ from pathlib import Path
 from urllib.parse import urlsplit
 
 from .coverage_types import CaptureError, Failure, FailureKind, IntegrityError
-from .mai_notes import NoRedirect
 from .snapshots import atomic_json, read_json
 
 ALLOWED = re.compile(
@@ -31,6 +30,11 @@ ALLOWED = re.compile(
     r"|cdn\.gamerch\.com/[A-Za-z0-9_./-]+\.(?:png|jpg|jpeg|webp))"
 )
 MAX_CAPTURE_BYTES = 16 * 1024 * 1024
+
+
+class NoRedirect(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        raise CaptureError(Failure(FailureKind.SCHEMA, "Public source redirects are not accepted"))
 
 
 def fetch_public(url, headers):
@@ -141,7 +145,7 @@ class CaptureStore:
             if self.offline:
                 record = self.replay.get(url) if self.replay is not None else previous
                 if not record or record.get("url") != url:
-                    raise ValueError("No retained capture for offline source")
+                    raise IntegrityError("No retained capture for offline source")
                 raw = self._read(record)
             else:
                 headers = {}
@@ -170,10 +174,19 @@ class CaptureStore:
                     if delay > 0:
                         time.sleep(delay)
                     self.last_requests[host] = time.monotonic()
-                status, raw, response_headers = self.fetcher(url, headers)
+                # Only errors raised by transport are recoverable source failures.
+                # Cache/persistence failures and programming defects abort the batch.
+                try:
+                    status, raw, response_headers = self.fetcher(url, headers)
+                except OSError as error:
+                    raise CaptureError(classify_failure(error)) from error
                 if status == 304:
                     if not previous:
-                        raise ValueError("Source returned 304 without a retained capture")
+                        raise CaptureError(
+                            Failure(
+                                FailureKind.SCHEMA, "Source returned 304 without a retained capture"
+                            )
+                        )
                     record, raw = previous, self._read(previous)
                 elif status == 200 and 0 < len(raw) <= MAX_CAPTURE_BYTES:
                     digest = hashlib.sha256(raw).hexdigest()
@@ -197,18 +210,21 @@ class CaptureStore:
                         self._read(record)
                     atomic_json(pointer, record)
                 else:
-                    raise ValueError(f"Public source returned invalid status/size: {status}")
+                    raise CaptureError(
+                        Failure(
+                            FailureKind.SCHEMA,
+                            f"Public source returned invalid status/size: {status}",
+                        )
+                    )
             self.captures[url] = record
             self.memo[url] = raw, record
             return raw, record
-        except IntegrityError:
-            raise
-        except (OSError, ValueError, KeyError, TypeError) as error:
-            failure = classify_failure(error)
+        except CaptureError as error:
+            failure = error.failure
             self.failures[url] = failure.message
             self.failure_details[url] = failure.record()
             self._cooldown(url, failure)
-            raise CaptureError(failure) from error
+            raise
 
     def _cooldown(self, url, failure):
         if failure.kind in {FailureKind.TLS, FailureKind.RATE_LIMIT}:
