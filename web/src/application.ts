@@ -33,7 +33,9 @@ import * as playerDomain from './player-session';
 import { createTabs } from './runtime/tabs';
 import { BrowserState } from './runtime/browser-state';
 import { historyPort } from './runtime/history';
-import { loadCatalog, type PublicCatalog } from './runtime/catalog';
+import { loadCatalog, type PublicCatalog, type LoadedCatalog } from './runtime/catalog';
+import { loadSongCatalog } from './runtime/song-catalog';
+import { mountSongView } from './components/song-view';
 import { PublicReader, decodeJSON } from './runtime/verified-data';
 import type { NavigationCoordinator } from './runtime/navigation';
 import type { UsageAPI } from './usage';
@@ -117,19 +119,37 @@ export async function createApplication(options: ApplicationOptions) {
   const configuration =
     options.configuration ??
     decodeJSON<BrowserConfiguration>(await reader.read('browser-config.json', 4 * 1024 * 1024));
-  const catalogJob = options.data
-    ? Promise.resolve({
-        canonical: options.data,
-        data: options.data,
-        details: undefined,
-        latest: true,
-        version: '',
-      })
-    : loadCatalog(reader, new URLSearchParams(location.search).get('version'));
+  const directSong = !!document.querySelector('body>main[data-seo-page="song"]');
+  const readCatalog = () =>
+    options.data
+      ? Promise.resolve({
+          canonical: options.data,
+          data: options.data,
+          details: undefined,
+          latest: true,
+          version: '',
+          hash: '',
+        })
+      : loadCatalog(
+          reader,
+          new URLSearchParams(location.search).get('version'),
+          directSong
+            ? document.querySelector<HTMLElement>('[data-song-id]')?.dataset.catalogSha256
+            : undefined,
+        );
+  const initialCatalog = directSong ? undefined : readCatalog();
   const localization = createLocalization({ root: document.body, configuration });
   options.onLocalization(localization);
   const settings = createSettingsMenu({ root: document.body, localization, usage });
-  const views = createTabs(navigation, localization);
+  const views = createTabs(navigation, localization, (name) => {
+    if (!directSong || name === 'about') {
+      views.show(name);
+      return;
+    }
+    void navigation.browserAction(() => {
+      controller!.selectView!(name);
+    });
+  });
   const playerContext = configuration.pilot
     ? Object.freeze({ pilot: true, key: (name: string) => 'maimai-pilot-maishift-v1:' + name })
     : undefined;
@@ -195,109 +215,201 @@ export async function createApplication(options: ApplicationOptions) {
     createSupportStripe({ root: document.body, localization, supportClient, historyPort });
     createAnalytics({ root: document.body, localization, settings, historyPort });
   }
-  const loaded = await catalogJob,
-    publicData = loaded.data,
-    catalogDetails = loaded.details;
   const songSearch = createSongSearch({ configuration }),
     visuals = createChartVisuals({ configuration });
-  const chartLinks = createChartLinks({ localization, usage });
-  const artwork = createChartArtwork({
-    localization,
-    publicData,
-    title: (chart) => catalogQuery.titleLabel(chart, localization.locale) || chart.title,
-    asset: (path) => navigation.asset(path),
-  });
   const previewField = createPassagePreview(localization);
-  const analysis = createAnalysisModel(publicData.analysis, publicData.catalog);
   const definitions = JSON.parse(
     document.getElementById('pattern-data')!.textContent!,
   ) as PatternDefinition[];
-  const patternLibrary = createPatternLibrary({
-    root: document.body,
-    definitions,
-    analysis,
-    localization,
-    previewField,
-    usage,
-    configuration,
-  });
-  const overview = createChartOverview({
-    root: document.body,
-    definitions,
-    sections,
-    analysis,
-    catalogDetails,
-    catalogQuery,
-    localization,
-    patternLibrary,
-    publicData,
-  });
-  const patternFilter = createPatternFilter({
+  let loaded: LoadedCatalog | undefined;
+  let patternLibrary: ReturnType<typeof createPatternLibrary> | undefined;
+  let comparison: ReturnType<typeof createChartComparison> | undefined;
+  let controller: ReturnType<typeof createChallengeReview> | undefined;
+  let fullContext: ReturnType<typeof chartContext> | undefined;
+  let songData: PublicCatalog | undefined;
+  function chartContext(data: PublicCatalog, details?: LoadedCatalog['details']) {
+    const analysis = createAnalysisModel(data.analysis, data.catalog);
+    const chartLinks = createChartLinks({ localization, usage });
+    chartLinks.configure(data.mai_notes);
+    const artwork = createChartArtwork({
+      localization,
+      publicData: data,
+      title: (chart) => catalogQuery.titleLabel(chart, localization.locale) || chart.title,
+      asset: (path) => navigation.asset(path),
+    });
+    const overview = createChartOverview({
       root: document.body,
       definitions,
-      browserState,
-      localization,
-      usage,
-    }),
-    registry = createRegistryBrowser({
-      root: document.body,
-      browserState,
+      sections,
+      analysis,
+      catalogDetails: details,
       catalogQuery,
       localization,
-      usage,
+      patternLibrary: {
+        show: (id, button) => {
+          if (patternLibrary) return patternLibrary.show(id, button);
+          void navigation.browserAction(() => {
+            patternLibrary!.show(id, button);
+          });
+          return true;
+        },
+      },
+      publicData: data,
     });
-  const comparison = createChartComparison({
+    return { analysis, chartLinks, artwork, overview };
+  }
+  const patternFilter = createPatternFilter({
+    root: document.body,
+    definitions,
+    browserState,
+    localization,
+    usage,
+  });
+  const registry = createRegistryBrowser({
     root: document.body,
     browserState,
     catalogQuery,
-    matching,
-    artwork,
-    chartLinks,
-    overview,
     localization,
-    personal,
-    registry,
-    songSearch,
     usage,
-    historyPort,
   });
-  const controller = navigation.silent(() =>
-    createChallengeReview({
+  let browserJob: Promise<void> | undefined;
+  async function initializeBrowser() {
+    loaded = await (initialCatalog ?? readCatalog());
+    const publicData = loaded.data;
+    fullContext = chartContext(publicData, loaded.details);
+    const { analysis, chartLinks, artwork, overview } = fullContext;
+    patternLibrary = createPatternLibrary({
+      root: document.body,
+      definitions,
+      analysis,
+      localization,
+      previewField,
+      usage,
+      configuration,
+    });
+    comparison = createChartComparison({
       root: document.body,
       browserState,
-      catalogFilters,
       catalogQuery,
+      matching,
       artwork,
-      comparison,
       chartLinks,
       overview,
-      filterDisclosure,
       localization,
-      patternFilter,
-      patternLibrary,
       personal,
       registry,
-      publicData,
-      songPages: navigation,
       songSearch,
       usage,
-      views,
       historyPort,
-    }),
-  );
-  if (!controller.browserState || !controller.mountSong)
-    throw Error('The research browser could not start.');
+    });
+    controller = navigation.silent(() =>
+      createChallengeReview({
+        root: document.body,
+        browserState,
+        catalogFilters,
+        catalogQuery,
+        artwork,
+        comparison: comparison!,
+        chartLinks,
+        overview,
+        filterDisclosure,
+        localization,
+        patternFilter,
+        patternLibrary: patternLibrary!,
+        personal,
+        registry,
+        publicData,
+        songPages: navigation,
+        songSearch,
+        usage,
+        views,
+        historyPort,
+      }),
+    );
+    if (!controller.browserState) throw Error('The research browser could not start.');
+    const status = document.getElementById('lab-status');
+    if (status && !status.dataset.catalogError) {
+      localization.text(status, '');
+      if (!loaded.latest) {
+        localization.text(status, 'You are viewing an older catalog. ');
+        const link = document.createElement('a'),
+          latest = new URL(location.href);
+        latest.searchParams.delete('version');
+        link.href = latest.href;
+        localization.text(link, 'Open the latest catalog');
+        status.append(link);
+      }
+    }
+    if (directSong) window.dispatchEvent(new Event('maimai:browser-ready'));
+  }
+  const loadBrowser = () => (browserJob ??= initializeBrowser());
   const browser: BrowserPort = Object.freeze({
+    load: loadBrowser,
     cancelRestoration: () => browserState.cancelRestoration(),
     capture: () => browserState.capture(),
     restore: (value: BrowserSnapshot) => browserState.restore(value),
     version: (value: string) => browserState.version(value),
     open: () => browserState.open(),
     ready: personal.ready,
-    song: controller.mountSong,
+    song: async (content: HTMLElement) => {
+      const node = content.querySelector<HTMLElement>('[data-song-id]');
+      if (!node?.dataset.songId) throw Error('Missing public song identity');
+      let data: PublicCatalog;
+      let context: ReturnType<typeof chartContext> | undefined;
+      if (fullContext && loaded) {
+        if (
+          node.dataset.catalogSha256 &&
+          node.dataset.catalogSha256 !== loaded.hash &&
+          !new URLSearchParams(location.search).has('version')
+        )
+          throw Error('Song page belongs to another catalog revision');
+        data = loaded.data;
+        context = fullContext;
+      } else if (!node.dataset.songCatalog || new URLSearchParams(location.search).has('version')) {
+        await loadBrowser();
+        data = loaded!.data;
+        context = fullContext!;
+      } else {
+        data = await loadSongCatalog(reader, {
+          song: node.dataset.songId,
+          catalog: node.dataset.catalogSha256 ?? '',
+          asset: {
+            path: node.dataset.songCatalog,
+            sha256: node.dataset.songSha256,
+            bytes: Number(node.dataset.songBytes),
+          },
+        });
+      }
+      // Construction and session configuration happen only after navigation commits this intent.
+      return (root: HTMLElement, international: boolean) => {
+        context ??= chartContext(data);
+        songData = data;
+        if (!loaded) {
+          personal.configure(data, data.provider_mapping);
+          const status = document.getElementById('lab-status');
+          if (status && !status.dataset.catalogError) localization.text(status, '');
+        }
+        return mountSongView(root, international, {
+          data,
+          components: {
+            localization,
+            artwork: context.artwork,
+            links: context.chartLinks.group,
+            overview: context.overview,
+            personal,
+          },
+          romaji: songSearch.romaji,
+          compare: (id, similar) => {
+            void navigation.browserAction(() => controller!.compareChart!(id, similar));
+          },
+          changed: personal.subscribe,
+          usage,
+        });
+      };
+    },
   });
+  if (!directSong) await loadBrowser();
   navigation.attach(browser, metadata);
-  const directSong = !!document.querySelector('body>main[data-seo-page="song"]');
   document
     .querySelectorAll<HTMLElement>('main[data-seo-page],body>.site-header')
     .forEach((node) => {
@@ -307,19 +419,6 @@ export async function createApplication(options: ApplicationOptions) {
   if (wrapper && !directSong) {
     wrapper.hidden = false;
     document.documentElement.classList.remove('seo-static');
-  }
-  const status = document.getElementById('lab-status');
-  if (status && !status.dataset.catalogError) {
-    localization.text(status, '');
-    if (!loaded.latest) {
-      localization.text(status, 'You are viewing an older catalog. ');
-      const link = document.createElement('a'),
-        latest = new URL(location.href);
-      latest.searchParams.delete('version');
-      link.href = latest.href;
-      localization.text(link, 'Open the latest catalog');
-      status.append(link);
-    }
   }
   window.dispatchEvent(new Event('maimai:browser-ready'));
   return {
@@ -337,20 +436,34 @@ export async function createApplication(options: ApplicationOptions) {
       playerDomain,
       personal,
       visuals,
-      patternLibrary,
+      get patternLibrary() {
+        return patternLibrary;
+      },
       matching,
-      chartLinks,
-      artwork,
+      get chartLinks() {
+        return fullContext?.chartLinks;
+      },
+      get artwork() {
+        return fullContext?.artwork;
+      },
       filterDisclosure,
       catalogFilters,
-      overview,
+      get overview() {
+        return fullContext?.overview;
+      },
       patternFilter,
       registry,
-      comparison,
+      get comparison() {
+        return comparison;
+      },
       browserState: browser,
       previewField,
-      publicData: loaded.canonical,
-      catalogDetails,
+      get publicData() {
+        return loaded?.canonical ?? songData;
+      },
+      get catalogDetails() {
+        return loaded?.details;
+      },
       catalogQuery,
       songPages: navigation,
       songSearch,

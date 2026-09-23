@@ -14,6 +14,7 @@ PURE = {
         "maimai_intelligence." + name
         for name in (
             "catalog_loading",
+            "song_catalog",
             "corpus_policy",
             "corpus_explain",
             "catalog_schema",

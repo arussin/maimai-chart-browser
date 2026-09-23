@@ -30,6 +30,8 @@ export function createSongModel(data: PublicCatalog, songID: string) {
     });
     return {
       charts,
+      genre: (value: string) =>
+        canonical.navigation.genres?.find((row) => row.id === value)?.label || 'Uncategorized',
       choices: (chart: CatalogChart) =>
         charts.filter(
           (other) =>

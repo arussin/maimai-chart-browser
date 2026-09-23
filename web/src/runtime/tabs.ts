@@ -10,6 +10,7 @@ const labels = {
 export function createTabs(
   navigation: NavigationCoordinator,
   localization: { text: (node: Node, value: string) => void },
+  activate?: (name: Tab) => void,
 ) {
   function show(name: Tab, preservePattern = false) {
     if (!names.includes(name)) return;
@@ -22,7 +23,9 @@ export function createTabs(
     localization.text(skip, 'Skip to ' + labels[name]);
     navigation.tabCommitted(name, preservePattern);
   }
-  for (const name of names) document.getElementById(name + '-tab')!.onclick = () => show(name);
+  for (const name of names)
+    document.getElementById(name + '-tab')!.onclick = () =>
+      activate ? activate(name) : show(name);
   const requested = new URLSearchParams(location.search).get('view') as Tab;
   navigation.silent(() =>
     show(

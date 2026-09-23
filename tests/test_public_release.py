@@ -100,6 +100,60 @@ class PublicReleaseTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "Retained public asset integrity mismatch"):
             plan_public_release(self.source, previous_public=self.output)
 
+    def test_song_assets_survive_projection_revisions_and_tampering_blocks_reuse(self):
+        from maimai_intelligence.song_catalog import prepare_song_catalog
+
+        data = {
+            "package": {"status": "research_preview"},
+            "catalog": [
+                {
+                    "chart_id": "chart",
+                    "song_id": "song",
+                    "title": "Public",
+                    "artist": "Artist",
+                    "format": "DX",
+                    "difficulty": "MASTER",
+                    "source_hash": "a" * 64,
+                }
+            ],
+            "snippets": {},
+        }
+        raw = canonical(data)
+        digest = hashlib.sha256(raw).hexdigest()
+        path = f"catalogs/{digest}.json"
+        (self.source / path).write_bytes(raw)
+        self.manifest["releases"][0].update(path=path, sha256=digest)
+        atomic_json(self.source / "manifest.json", self.manifest)
+        first = build_public_release(self.source, self.output)
+        first_inventory = read_json(self.output / "manifest.json")["releases"][0][
+            "song_catalog_indexes"
+        ]
+        self.assertEqual(len(first_inventory), 1)
+        first_assets = read_json(self.output / first_inventory[0]["path"])["assets"]
+
+        def revised(*args):
+            value = prepare_song_catalog(*args)
+            value["projection_revision"] = 2
+            return value
+
+        second = self.root / "second"
+        with patch("maimai_intelligence.song_catalog.prepare_song_catalog", side_effect=revised):
+            build_public_release(self.source, second, previous_public=self.output)
+        second_inventory = read_json(second / "manifest.json")["releases"][0][
+            "song_catalog_indexes"
+        ]
+        self.assertEqual(len(second_inventory), 2)
+        for ref in [*first_inventory, *first_assets]:
+            self.assertEqual(
+                (self.output / ref["path"]).read_bytes(), (second / ref["path"]).read_bytes()
+            )
+        third = plan_public_release(self.source, previous_public=second)
+        self.assertEqual(len(third.manifest["releases"][0]["song_catalog_indexes"]), 2)
+        self.assertGreater(first["files"], 0)
+        (second / first_assets[0]["path"]).write_bytes(b"tampered")
+        with self.assertRaisesRegex(ValueError, "integrity mismatch"):
+            plan_public_release(self.source, previous_public=second)
+
     def test_previous_historical_startup_bytes_are_preserved_when_projection_changes(self):
         data = {
             "package": {"status": "research_preview"},

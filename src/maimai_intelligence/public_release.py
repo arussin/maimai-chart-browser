@@ -246,6 +246,32 @@ def _retained_reference(
     return raw
 
 
+def _retain_song_index(
+    source: Path, reference: dict[str, Any], catalog_sha: str, pending: dict[str, bytes]
+) -> None:
+    index = json.loads(
+        _retained_reference(source, reference, "song-catalog-index", MAX_PUBLIC_FILE_BYTES, pending)
+    )
+    if (
+        index.get("schema_version") != "maimai-song-catalog-index-1"
+        or index.get("source_catalog_sha256") != catalog_sha
+        or not isinstance(index.get("assets"), list)
+    ):
+        raise ValueError("Retained song index belongs to another catalog")
+    seen = set()
+    for asset in index["assets"]:
+        raw = _retained_reference(source, asset, "song-catalog", PART_BYTES, pending)
+        if asset["path"] in seen:
+            raise ValueError("Duplicate retained song asset")
+        seen.add(asset["path"])
+        envelope = json.loads(raw)
+        if (
+            envelope.get("schema_version") != "maimai-song-catalog-1"
+            or envelope.get("data", {}).get("source_catalog_sha256") != catalog_sha
+        ):
+            raise ValueError("Retained song asset belongs to another catalog")
+
+
 def _retain_index_details(
     source: Path, index: dict[str, Any], catalog_sha: str, pending: dict[str, bytes]
 ) -> None:
@@ -339,6 +365,7 @@ class PreparedPublicCatalog:
 class PreparedPublicPages:
     assets: Mapping[str, bytes]
     summary: dict[str, int]
+    song_index: dict[str, Any] | None = None
 
 
 def _load_retained_publication(previous_public: Path | None) -> RetainedPublication:
@@ -401,6 +428,8 @@ def _prepare_browser_shell(source: Path) -> dict[str, bytes]:
         b"/catalog-index-parts/*\n  Cache-Control: public, max-age=31536000, immutable\n"
         b"/catalog-index/*\n  Cache-Control: public, max-age=31536000, immutable\n"
         b"/chart-details/*\n  Cache-Control: public, max-age=31536000, immutable\n"
+        b"/song-catalog/*\n  Cache-Control: public, max-age=31536000, immutable\n"
+        b"/song-catalog-index/*\n  Cache-Control: public, max-age=31536000, immutable\n"
         b"/media/*\n  Cache-Control: public, max-age=31536000, immutable\n"
         b"/browser/*\n  Cache-Control: no-cache\n"
         b"/browser-assets.json\n  Cache-Control: no-cache\n"
@@ -530,6 +559,7 @@ def _prepare_public_catalog(
         generated_startup = shared = None
     startup = generated_startup
     old = retained.entries.get(version)
+    song_indexes: list[dict[str, Any]] = []
     if old is not None:
         if previous_public is None:
             raise ValueError("Retained publication requires its verified source")
@@ -559,6 +589,11 @@ def _prepare_public_catalog(
             startup_part_assets.clear()
         if shared is None and old.get("startup_shared"):
             shared = old["startup_shared"]
+        song_indexes = old.get("song_catalog_indexes", [])
+        if not isinstance(song_indexes, list):
+            raise ValueError("Invalid retained song catalog indexes")
+        for reference in song_indexes:
+            _retain_song_index(previous_public, reference, sha, pending)
         legacy_assets.update(set(pending) - before)
     else:
         pending.update(derived)
@@ -571,6 +606,7 @@ def _prepare_public_catalog(
         **({"startup": startup} if startup else {}),
         **({"startup_shared": shared} if shared else {}),
         **({"startup_parts": startup_parts} if startup_parts else {}),
+        **({"song_catalog_indexes": song_indexes} if song_indexes else {}),
     }
     for path, record in data.get("artwork", {}).get("assets", {}).items():
         if not MEDIA_PATH.fullmatch(path) or path != f"media/{record['sha256']}.webp":
@@ -592,6 +628,7 @@ def _prepare_public_pages(
     permalinks: Path | str | None,
     song_redirects: Path | str | dict[str, str] | None,
     browser_csp: str | None,
+    catalog_sha: str,
 ) -> PreparedPublicPages:
     pending: dict[str, bytes] = {}
     previous_public, previous_ledger_ref = retained.source, retained.ledger
@@ -631,11 +668,30 @@ def _prepare_public_pages(
             previous=previous,
             song_redirects=redirects,
             browser_csp=browser_csp,
+            catalog_sha=catalog_sha,
         )
         pending.update(seo_assets)
         for name in ("seo-pages.css",):
             pending[name] = files("maimai_intelligence.assets").joinpath(name).read_bytes()
-    return PreparedPublicPages(pending, seo_summary)
+    song_assets = [
+        {"path": name, "sha256": hashlib.sha256(raw).hexdigest(), "bytes": len(raw)}
+        for name, raw in sorted(pending.items())
+        if name.startswith("song-catalog/")
+    ]
+    song_index = None
+    if song_assets:
+        raw = canonical(
+            {
+                "schema_version": "maimai-song-catalog-index-1",
+                "source_catalog_sha256": catalog_sha,
+                "assets": song_assets,
+            }
+        )
+        digest = hashlib.sha256(raw).hexdigest()
+        path = f"song-catalog-index/{digest}.json"
+        pending[path] = raw
+        song_index = {"path": path, "sha256": digest, "bytes": len(raw)}
+    return PreparedPublicPages(pending, seo_summary, song_index)
 
 
 def _finalize_release_plan(
@@ -748,8 +804,14 @@ def plan_public_release(
         permalinks,
         song_redirects,
         _browser_csp(pending["index.html"]),
+        next(entry["sha256"] for entry in releases if entry["version"] == manifest["default"]),
     )
     pending.update(pages.assets)
+    if pages.song_index:
+        current = next(entry for entry in releases if entry["version"] == manifest["default"])
+        indexes = current.setdefault("song_catalog_indexes", [])
+        if pages.song_index not in indexes:
+            current["song_catalog_indexes"] = [*indexes, pages.song_index]
     return _finalize_release_plan(
         source,
         previous,

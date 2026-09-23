@@ -78,11 +78,19 @@ export interface LoadedCatalog {
 export async function loadCatalog(
   reader: PublicReader,
   requested: string | null,
+  pinnedHash?: string,
 ): Promise<LoadedCatalog> {
   const manifest = decodeJSON<Manifest>(await reader.read('manifest.json', MiB));
-  const version = requested || manifest.default,
-    entry =
-      Array.isArray(manifest.releases) && manifest.releases.find((row) => row.version === version);
+  const entry =
+    Array.isArray(manifest.releases) &&
+    manifest.releases.find((row) =>
+      requested
+        ? row.version === requested
+        : pinnedHash
+          ? row.sha256 === pinnedHash
+          : row.version === manifest.default,
+    );
+  const version = entry ? entry.version : requested || manifest.default;
   if (
     !['1.0.0', '1.1.0', '1.2.0', '1.3.0'].includes(manifest.schema_version) ||
     !entry ||

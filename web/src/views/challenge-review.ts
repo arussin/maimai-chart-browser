@@ -1,9 +1,7 @@
-import { SongWorkspace } from '../components/song-workspace';
 import { createChartCard } from '../components/chart-card';
 import { PositionRestorer } from '../runtime/position';
 import { effectiveSortRules } from '../runtime/browser-state';
 import type { CatalogChart, PublicCatalog } from '../runtime/catalog';
-import { createSongModel } from '../domain/song-model';
 import type * as CatalogQuery from '../catalog-query';
 import type { BrowserState } from '../runtime/browser-state';
 import type { Tab, SortKey, SortRule, LocalizationPort } from '../runtime/contracts';
@@ -16,7 +14,6 @@ import type {
   ChartCardPresentation,
   ChartCardComponents,
 } from '../components/chart-card';
-import type { SongWorkspaceModel } from '../components/song-workspace';
 import type { createChartArtwork } from './chart-artwork';
 import type { createChartLinks } from './chart-links';
 import type { createChartOverview } from './chart-overview';
@@ -702,44 +699,11 @@ export function createChallengeReview(ports: ReviewPorts) {
         })
         .map((c) => c.chart_id),
   });
-  const mountSong = (root: HTMLElement, international: boolean) => {
-    const songID = root.querySelector<HTMLElement>('[data-song-id]')?.dataset.songId;
-    if (!songID) throw Error('Missing public song identity');
-    const song = createSongModel(ports.publicData, songID);
-    const model = (international: boolean): SongWorkspaceModel<CatalogChart> => {
-      const projection = song(international);
-      return {
-        charts: projection.charts,
-        choices: projection.choices,
-        presentation: {
-          ...cardPresentation,
-          patterns: () => [],
-          folder: projection.folder,
-          constant: projection.constant,
-          constantSource: projection.constantSource,
-          bpm: projection.bpm,
-        },
-        components: { ...cardComponents, songLink: undefined },
-      };
-    };
-    return new SongWorkspace(
-      root,
-      model,
-      {
-        compare: (id) => {
-          selectView('compare');
-          if (comparisonUI!.first() && comparisonUI!.first() !== id) comparisonUI!.useAsSecond(id);
-          else comparisonUI!.useAsFirst(id);
-        },
-        similar: (id) => {
-          selectView('compare');
-          comparisonUI!.useAsFirst(id, true);
-        },
-        changed: personal.subscribe,
-        usage: ports.usage,
-      },
-      international,
-    );
+  const compareChart = (id: string, similar = false) => {
+    selectView('compare');
+    if (!similar && comparisonUI!.first() && comparisonUI!.first() !== id)
+      comparisonUI!.useAsSecond(id);
+    else comparisonUI!.useAsFirst(id, similar);
   };
   const params = new URLSearchParams(location.search),
     initialView = params.get('view'),
@@ -863,5 +827,5 @@ export function createChallengeReview(ports: ReviewPorts) {
   if (initialPattern && ports.patternLibrary.has(initialPattern)) {
     ports.patternLibrary.show(initialPattern);
   }
-  return { browserState, mountSong };
+  return { browserState, selectView, compareChart };
 }

@@ -70,6 +70,9 @@ test('regional song projection is independent, exact, and never mutates accepted
   assert.equal(intl.folder(intl.charts[0], 'version'), 'Intl');
   assert.equal(intl.folder(intl.charts[0], 'genre'), '東方Project');
   assert.equal(jp.bpm(jp.charts[0]), 180);
+  assert.equal(jp.genre('maimai'), 'maimai');
+  assert.equal(intl.genre('東方Project'), '東方Project');
+  assert.equal(jp.genre('not-reviewed'), 'Uncategorized');
   assert.deepEqual(jp.constantSource(jp.charts[0]), { provider: 'verified', region: 'JP' });
   assert.deepEqual(
     jp.choices(jp.charts[0]).map((c) => c.chart_id),
@@ -114,6 +117,7 @@ test('historical missing metadata stays unknown without inventing chart identity
     const data = { schema_version: 'historical', catalog: [chart()], navigation, snippets: {} };
     const view = createSongModel(data, 'song')(false),
       c = view.charts[0];
+    assert.equal(view.genre('unknown'), 'Uncategorized');
     assert.equal(view.constant(c), null);
     assert.equal(view.bpm(c), null);
     assert.equal(view.folder(c, 'genre'), 'unknown');

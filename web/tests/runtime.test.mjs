@@ -411,3 +411,23 @@ test('public route escaping agrees with the static generator for retained punctu
   const routes = await loadModule('runtime/public-routes');
   assert.equal(routes.publicPath('en', 'songs', "name!'()*"), '/en/songs/name%21%27%28%29%2A/');
 });
+
+test('a direct-song catalog pin survives a later manifest default and never silently falls forward', async () => {
+  const encode = (value) => new TextEncoder().encode(JSON.stringify(value));
+  const files = new Map(),
+    releases = [];
+  for (const version of ['old', 'new']) {
+    const raw = encode({ catalog: [], snippets: {}, fixture: version }),
+      sha = await data.sha256(raw);
+    const path = 'catalogs/' + sha + '.json';
+    files.set(path, raw);
+    releases.push({ version, sha256: sha, path });
+  }
+  files.set('manifest.json', encode({ schema_version: '1.3.0', default: 'new', releases }));
+  const reader = new data.PublicReader(new URL('http://127.0.0.1/'));
+  reader.read = async (path) => files.get(path);
+  assert.equal((await loadCatalog(reader, null, releases[0].sha256)).version, 'old');
+  assert.equal((await loadCatalog(reader, 'new', releases[0].sha256)).version, 'new');
+  assert.equal((await loadCatalog(reader, null)).version, 'new');
+  await assert.rejects(loadCatalog(reader, null, 'f'.repeat(64)), /unavailable/);
+});

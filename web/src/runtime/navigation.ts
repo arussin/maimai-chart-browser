@@ -1,5 +1,5 @@
 import { routePattern, publicPath } from './public-routes';
-import { diagnose } from './diagnostics';
+import { diagnose, catalogFailure, catalogPending } from './diagnostics';
 import { IntentScope } from './intent';
 import { historyPort } from './history';
 import { PublicReader, decodeJSON } from './verified-data';
@@ -208,6 +208,10 @@ export class NavigationCoordinator {
       if (!content) throw Error('Public page unavailable');
       const browser = await this.ports.loadBrowser();
       if (!operation.current()) return false;
+      const mountSong =
+        content.dataset.seoPage === 'song' ? await browser.song(content) : undefined;
+      if (!mountSong) await browser.load();
+      if (!operation.current()) return false;
       this.browser = browser;
       this.browserMain ??= document.querySelector<HTMLElement>('main:not([data-seo-page])');
       if (!this.browserMain) return false;
@@ -248,8 +252,8 @@ export class NavigationCoordinator {
       const localization = this.ports.localization();
       if (localization && localization.locale !== parsed.documentElement.lang)
         this.silent(() => localization.setLocale(parsed.documentElement.lang, { persist: false }));
-      if (content.dataset.seoPage === 'song')
-        this.songWorkspace = browser.song(
+      if (mountSong)
+        this.songWorkspace = mountSong(
           this.routeView,
           historyPort.state.maimaiInternational === true,
         );
@@ -280,7 +284,10 @@ export class NavigationCoordinator {
       if (!(error instanceof DOMException && error.name === 'AbortError')) {
         diagnose('route_unavailable');
         const staticPage = document.querySelector<HTMLElement>('body>main[data-seo-page]');
-        if (!push && staticPage && !staticPage.hidden && url.href === location.href) return false;
+        if (!push && staticPage && !staticPage.hidden && url.href === location.href) {
+          catalogFailure(staticPage, document.documentElement.lang);
+          return false;
+        }
         if (push) location.assign(url.href);
         else location.replace(url.href);
       }
@@ -311,25 +318,50 @@ export class NavigationCoordinator {
       }
       return false;
     }
-    this.intent.cancel();
-    this.bfcacheKey = null;
-    const destination = target || state?.url || '/';
-    historyPort.push(
-      { maimaiBrowserState: state?.snapshot || null, maimaiOpenBrowser: !!target },
-      destination,
-    );
-    if (
-      !target &&
-      routePattern.exec(new URL(destination, location.href).pathname)?.[2] === 'versions'
-    ) {
-      void this.route(new URL(destination, location.href));
-      return true;
-    }
-    this.showBrowser(state?.snapshot);
-    if (target) this.silent(() => this.openTarget());
-    this.activate();
+    void this.browserAction(() => {
+      this.bfcacheKey = null;
+      const destination = target || state?.url || '/';
+      historyPort.push(
+        { maimaiBrowserState: state?.snapshot || null, maimaiOpenBrowser: !!target },
+        destination,
+      );
+      if (
+        !target &&
+        routePattern.exec(new URL(destination, location.href).pathname)?.[2] === 'versions'
+      ) {
+        void this.route(new URL(destination, location.href));
+        return;
+      }
+      this.showBrowser(state?.snapshot);
+      if (target) this.silent(() => this.openTarget());
+      this.activate();
+    });
     return true;
   }
+  /** Loading does not activate a page; only the still-current user action may commit. */
+  async browserAction(action: () => void): Promise<boolean> {
+    const operation = this.intent.start();
+    this.browser?.cancelRestoration();
+    const root = this.routeView && !this.routeView.hidden ? this.routeView : document.body;
+    const pending = catalogPending(
+      root,
+      this.ports.localization()?.locale || document.documentElement.lang,
+    );
+    try {
+      const browser = this.browser ?? (await this.ports.loadBrowser());
+      await browser.load();
+      if (!operation.current()) return false;
+      action();
+      return true;
+    } catch {
+      if (operation.current())
+        catalogFailure(root, this.ports.localization()?.locale || document.documentElement.lang);
+      return false;
+    } finally {
+      pending.remove();
+    }
+  }
+
   /** A newer tab intention invalidates a pending route before changing any URL. */
   tabCommitted(name: Tab, preservePattern = false) {
     if (!this.restoring) this.intent.cancel();
@@ -359,6 +391,10 @@ export class NavigationCoordinator {
       this.browserTitle = document.title;
       this.browserLanguage = document.documentElement.lang;
       this.browserMetadata = copyMetadata(document.head);
+    }
+    if (routePattern.exec(location.pathname)?.[2] === 'songs') {
+      this.activate();
+      return;
     }
     const restore =
       historyPort.state.maimaiBrowserState || historyPort.state.maimaiReturn?.snapshot;
@@ -398,7 +434,7 @@ export class NavigationCoordinator {
         if (this.browser) {
           event.preventDefault();
           const source =
-            this.routeView && !this.routeView.hidden
+            routePattern.exec(location.pathname)?.[2] === 'songs'
               ? historyPort.state.maimaiReturn
               : this.saveBrowser(anchor.id);
           void this.route(url, { push: true, returnTo: source });
@@ -421,9 +457,11 @@ export class NavigationCoordinator {
       if (routePattern.test(location.pathname) && this.browser)
         void this.route(new URL(location.href));
       else if (this.browser) {
-        this.showBrowser(historyPort.state.maimaiBrowserState);
-        if (!historyPort.state.maimaiBrowserState) this.silent(() => this.browser!.open());
-        this.activate(true);
+        void this.browserAction(() => {
+          this.showBrowser(historyPort.state.maimaiBrowserState);
+          if (!historyPort.state.maimaiBrowserState) this.silent(() => this.browser!.open());
+          this.activate(true);
+        });
       }
     });
     document.addEventListener('prerenderingchange', () => this.activate(true), { once: true });

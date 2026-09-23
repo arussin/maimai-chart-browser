@@ -11,7 +11,13 @@ def main():
     output = Path(os.environ.get("MAIMAI_REGISTRY_OUTPUT", "output")) / "corpus-checks"
     output.mkdir(parents=True, exist_ok=True)
     environment = {**os.environ, "COVERAGE_FILE": str(output / ".coverage")}
-    modules = ("corpus_policy", "corpus_explain", "metadata_selection", "metadata_policy")
+    modules = (
+        "corpus_policy",
+        "corpus_explain",
+        "metadata_selection",
+        "metadata_policy",
+        "song_catalog",
+    )
     commands = [
         ["mypy", "--cache-dir", str(output / "mypy")],
         [
@@ -22,6 +28,8 @@ def main():
             "-m",
             "unittest",
             "tests.test_corpus_policy",
+            "tests.test_song_catalog",
+            "tests.test_seo",
         ],
         ["coverage", "json", "-o", str(output / "branches.json")],
     ]

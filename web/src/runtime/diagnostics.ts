@@ -41,3 +41,21 @@ export function catalogFailure(root: HTMLElement, locale: string): void {
     update(document.documentElement.lang),
   );
 }
+
+/** Transient local status; neither a page activation nor a usage event. */
+export function catalogPending(root: HTMLElement, locale: string): HTMLElement {
+  const status = root.ownerDocument.createElement('p');
+  status.dataset.catalogProgress = '';
+  status.setAttribute('role', 'status');
+  status.textContent =
+    (
+      {
+        en: 'Loading catalog…',
+        ja: 'カタログを読み込み中…',
+        ko: '카탈로그를 불러오는 중…',
+        'zh-Hans': '正在加载曲目库…',
+      } as Record<string, string>
+    )[locale] || 'Loading catalog…';
+  root.prepend(status);
+  return status;
+}

@@ -28,6 +28,8 @@ IMMUTABLE = (
     "catalog-index",
     "catalog-index-parts",
     "chart-details",
+    "song-catalog",
+    "song-catalog-index",
     "integration",
     "media",
 )

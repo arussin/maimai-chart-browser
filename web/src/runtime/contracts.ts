@@ -55,13 +55,16 @@ export interface SongWorkspacePort {
   dispose(): void;
 }
 export interface BrowserPort {
+  load(): Promise<void>;
   cancelRestoration(): void;
   capture(): BrowserSnapshot;
   restore(value: BrowserSnapshot): boolean | Promise<boolean>;
   version(value: string): boolean;
   open(): void;
   ready: Promise<void>;
-  song(root: HTMLElement, international: boolean): SongWorkspacePort;
+  song(
+    content: HTMLElement,
+  ): Promise<(root: HTMLElement, international: boolean) => SongWorkspacePort>;
 }
 export interface LocalizationPort {
   readonly locale: Locale;

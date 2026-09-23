@@ -53,11 +53,17 @@ class CatalogProjection:
     inventory: bool
 
 
-def _select(value, fields):
+def _select(value: dict[str, Any], fields: set[str]) -> dict[str, Any]:
     return {key: deepcopy(item) for key, item in value.items() if key in fields}
 
 
-def _chart_row(chart, fields, inventory):
+def project_chart(chart: dict[str, Any], inventory: bool) -> dict[str, Any]:
+    """One maintained field policy for full-browser and song projections."""
+    fields = (
+        CHART_FIELDS - {"legacy_identity", "transcription", "capabilities", "input_id"}
+        if inventory
+        else PROFILE_FIELDS
+    )
     row = _select(chart, fields - {"regional"})
     if inventory:
         row["regional"] = {
@@ -86,7 +92,7 @@ def _analysis_summary(record, representation):
     return summary
 
 
-def _provider_join(mapping):
+def project_provider_join(mapping: dict[str, Any]) -> dict[str, Any]:
     return {
         **{
             key: deepcopy(value)
@@ -99,7 +105,7 @@ def _provider_join(mapping):
     }
 
 
-def _maishift_join(mapping):
+def project_maishift_join(mapping: dict[str, Any]) -> dict[str, Any]:
     return {
         **{key: deepcopy(value) for key, value in mapping.items() if key != "charts"},
         "charts": {
@@ -114,16 +120,13 @@ def prepare_catalog_projection(data, catalog_sha) -> CatalogProjection | None:
     if not data.get("catalog") or not all(isinstance(chart, dict) for chart in data["catalog"]):
         return None
     inventory = data.get("schema_version") == "maimai-browser-catalog-2"
-    fields = PROFILE_FIELDS
-    if inventory:
-        fields = CHART_FIELDS - {"legacy_identity", "transcription", "capabilities", "input_id"}
     index = _select(data, INDEX_FIELDS)
     if inventory:
         index["index_schema_version"] = "catalog-index-2"
     if "maishift_mapping" in data:
-        index["maishift_mapping"] = _maishift_join(data["maishift_mapping"])
+        index["maishift_mapping"] = project_maishift_join(data["maishift_mapping"])
     if "provider_mapping" in data:
-        index["provider_mapping"] = _provider_join(data["provider_mapping"])
+        index["provider_mapping"] = project_provider_join(data["provider_mapping"])
     index.update(catalog=[], snippets={}, detail_buckets={}, source_catalog_sha256=catalog_sha)
     original_analysis = data.get("analysis", {})
     representation = original_analysis.get("representation", "")
@@ -142,7 +145,7 @@ def prepare_catalog_projection(data, catalog_sha) -> CatalogProjection | None:
     for chart in data["catalog"]:
         cid = chart["chart_id"]
         record = original_analysis.get("charts", {}).get(cid)
-        row = _chart_row(chart, fields, inventory)
+        row = project_chart(chart, inventory)
         if inventory and record is None and cid not in data.get("snippets", {}):
             index["catalog"].append(row)
             continue
