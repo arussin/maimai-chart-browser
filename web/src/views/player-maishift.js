@@ -5,17 +5,24 @@ let maishift;
 (()=>{'use strict';
 const core=ports.playerCore;
 const fail=()=>{throw new Error('Maishift returned an unsupported response. Your saved data was kept.');};
+// Korean's default links omit the locale. Keep all supported profile tabs and
+// encoded region separators in one parser so location and region hints agree.
+function profileURL(value){
+  const url=new URL(value),path=url.pathname.replace(/%40/gi,'@');
+  const match=/^\/(?:(?:en|ko|ja|zh-TW)(?:@(na|intl|jp))?\/)?profile\/([A-Za-z0-9_-]{1,64})(?:\/(?:home|records|export|grinding|playlists|s_rating|stamp))?\/?$/.exec(path);
+  if(url.origin!=='https://maimai.shiftpsh.com'||url.username||url.password||url.port||url.search||url.hash||!match)throw new Error('Enter a Maishift handle or a public profile URL.');
+  return {handle:match[2],region:match[1]?(match[1]==='jp'?'jp':'intl'):null};
+}
 function location(value,region){
-  if(region===undefined)region=regionFromURL(value)||'auto';
-  if(!['intl','jp','auto'].includes(region))throw new Error('Choose the game region for this profile.');
-  let handle=value.trim(),url;
+  if(typeof value!=='string')throw new Error('Enter a Maishift handle or a public profile URL.');
+  let handle=value.trim(),parsed=null;
   if(handle.includes('://')){
-    try{url=new URL(handle);}catch{throw new Error('Enter a Maishift handle or a public profile URL.');}
-    const match=/^\/(?:en|ko|ja|zh-TW)(?:@(na|intl|jp))?\/profile\/([A-Za-z0-9_-]{1,64})(?:\/(?:home|records|export))?\/?$/.exec(url.pathname);
-    if(url.origin!=='https://maimai.shiftpsh.com'||url.username||url.password||url.port||url.search||url.hash||!match)throw new Error('Enter a Maishift handle or a public profile URL.');
-    if(match[1]&&(match[1]==='jp'?'jp':'intl')!==region)throw new Error('The profile URL and selected game region do not match.');
-    handle=match[2];
+    try{parsed=profileURL(handle);}catch{throw new Error('Enter a Maishift handle or a public profile URL.');}
+    handle=parsed.handle;
   }
+  if(region===undefined)region=parsed?.region||'auto';
+  if(!['intl','jp','auto'].includes(region))throw new Error('Choose the game region for this profile.');
+  if(parsed?.region&&parsed.region!==region)throw new Error('The profile URL and selected game region do not match.');
   if(!/^[A-Za-z0-9_-]{1,64}$/.test(handle))throw new Error('Enter a Maishift handle or a public profile URL.');
   return {handle,region,url:'https://maimai.shiftpsh.com/en'+(region==='auto'?'':'@'+region)+'/profile/'+handle+'/home'};
 }
@@ -27,9 +34,7 @@ const gradeThresholds=[[1005000,'SSS+'],[1000000,'SSS'],[995000,'SS+'],[990000,'
 function grade(achievement){return integer(achievement,1010000)?gradeThresholds.find(([minimum])=>achievement>=minimum)[1]:'';}
 const text=(v,max=512)=>typeof v==='string'&&v.length<=max&&!/[\x00-\x1f\uD800-\uDFFF]/u.test(v);
 function regionFromURL(value){
-  try{const url=new URL(value.trim()),hint=/^\/(?:en|ko|ja|zh-TW)@(na|intl|jp)\//.exec(url.pathname)?.[1];
-    if(!hint)return null;const region=hint==='jp'?'jp':'intl';location(value,region);return region;
-  }catch{return null;}
+  try{return profileURL(value.trim()).region;}catch{return null;}
 }
 async function normalize(envelope,selected){
   if(!object(envelope)||envelope.schemaVersion!==1||![1,2].includes(envelope.adapterVersion)||envelope.provider!=='maishift')fail();
