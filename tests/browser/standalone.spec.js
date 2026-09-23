@@ -559,7 +559,8 @@ test('pattern comparison distinguishes frequency even when chart tags are identi
 });
 
 test('BPM sorting keeps missing values last and completed lessons are visible',async({page})=>{
-  await page.goto('/lab/');await page.locator('[data-sort-key=title]').focus();
+  await page.goto('/lab/');await expect(page.locator('#catalog-count strong')).toHaveText('6');
+  await page.locator('[data-sort-key=title]').focus();
   await page.locator('[data-sort-key=bpm]').click();
   const tempos=()=>page.locator('#songs .chart-bpm').allTextContents();
   expect(await tempos()).toEqual(['120','120','160','160','180','—']);

@@ -423,6 +423,7 @@ for(const width of [280,320,1280])for(const locale of ['en','zh-Hans','ko','ja']
 test('availability segments support radio keyboard navigation and place metadata on the right',async({page})=>{
   await page.setViewportSize({width:1280,height:900});await page.goto('/registry/');
   const radios=page.locator('#filter-region [role=radio]');
+  await expect(radios.nth(0)).toBeVisible();
   await radios.nth(0).focus();await radios.nth(0).press('ArrowRight');
   await expect(radios.nth(1)).toBeFocused();await expect(radios.nth(1)).toHaveAttribute('aria-checked','true');
   await radios.nth(1).press('End');await expect(radios.nth(2)).toBeFocused();await expect(page.locator('#use-international-data')).toBeChecked();
