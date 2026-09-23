@@ -8,7 +8,7 @@ from functools import partial
 from pathlib import Path
 from typing import Any
 
-from .corpus_attempts import resume_options, verify_attempt
+from .corpus_attempts import PATH_OPTIONS, resume_options, verify_attempt
 from .corpus_update import implementation_hash, prepare_update, verify_candidate
 from .corpus_workbench import (
     diff_runs,
@@ -51,6 +51,13 @@ def add_commands(commands: argparse._SubParsersAction[argparse.ArgumentParser]) 
         command.add_argument(
             "--source-root", type=Path, help="Exact producer checkout for an owner-created attempt"
         )
+        command.add_argument(
+            "--input",
+            action="append",
+            default=[],
+            metavar="NAME=PATH",
+            help="Use a relocated retained input only when its complete inventory is unchanged",
+        )
         if action == "resume":
             command.add_argument("--online", action="store_true")
     inspect = actions.add_parser("inspect", help="Explain a local run without changing it")
@@ -76,11 +83,33 @@ def add_commands(commands: argparse._SubParsersAction[argparse.ArgumentParser]) 
         "--source-root", type=Path, help="Exact producer checkout for an owner-created attempt"
     )
 
+    verify.add_argument(
+        "--input",
+        action="append",
+        default=[],
+        metavar="NAME=PATH",
+        help="Verify a relocated retained input against the original receipt",
+    )
+
+
+def input_locations(values: list[str]) -> dict[str, Path | str]:
+    result: dict[str, Path | str] = {}
+    for value in values:
+        name, separator, path = value.partition("=")
+        name = name.replace("-", "_")
+        if name not in PATH_OPTIONS or not separator or not path.strip():
+            raise ValueError("Expected a known attempt input NAME=PATH")
+        if name in result:
+            raise ValueError("Duplicate attempt input location")
+        result[name] = Path(path)
+    return result
+
 
 def execute(args: argparse.Namespace) -> None:
     result: dict[str, Any]
     action = args.corpus_command
     source_root = getattr(args, "source_root", None)
+    locations = input_locations(getattr(args, "input", []))
     identity = (
         partial(source_implementation_hash, source_root) if source_root else implementation_hash
     )
@@ -108,6 +137,7 @@ def execute(args: argparse.Namespace) -> None:
             identity(),
             replay=action == "replay",
             online=getattr(args, "online", False),
+            input_locations=locations,
         )
         run = prepare_update(previous.parent.parent, implementation=identity, **options)
         result = {
@@ -119,9 +149,9 @@ def execute(args: argparse.Namespace) -> None:
     elif action == "diff":
         result = diff_runs(args.before, args.after)
     elif action == "verify":
-        verify_attempt(args.run, identity())
+        verify_attempt(args.run, identity(), input_locations=locations)
         if (args.run / "ready.json").exists():
-            receipt = verify_candidate(args.run, implementation=identity)
+            receipt = verify_candidate(args.run, implementation=identity, input_locations=locations)
             result = {
                 "status": "verified_candidate",
                 "files": len(receipt["files"]),

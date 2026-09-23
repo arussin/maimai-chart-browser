@@ -24,6 +24,16 @@ Owner-script attempts also bind the compiler, configuration, registry seed and p
 
 Each attempt records exact input inventories and a predecessor reference. Resume creates a new attempt; it never edits its predecessor. Changed inputs, changed producer policy, stale review assertions, or tampered receipts block reuse. A policy change requires a new preparation or the existing explicitly reviewed capture-reassessment workflow. A completed coverage checkpoint remains usable even when packaging or the 20,000-file publication guard subsequently fails. Neither a checkpoint nor `corpus verify` advances publication pointers.
 
+After restoring inputs on another machine, `resume`, `replay`, and `verify` accept repeated `--input NAME=PATH` arguments. For example:
+
+```
+maimai-chart corpus resume --from CACHE/updates/runs/ATTEMPT --input previous-browser=RESTORED/browser --input package=RESTORED/package --input mai-notes-snapshot=RESTORED/links.json
+```
+
+Names refer to the original receipt's bound inputs; hyphens and underscores are equivalent. Every relative filename, byte count and hash must still match. Unknown, duplicate, missing, modified or additional inputs are rejected. This does not rewrite the predecessor or search for replacement data automatically. The new attempt records the restored locations and retains its predecessor hash. Store layout, source identity, review binding and publication checks still apply. Retained artwork/cache paths are not automatically relocated by this option.
+
+New attempts also bind the legacy mai-notes snapshot timestamp once. Its provenance is explicitly labeled `legacy_file_mtime`, not a verified provider capture time. A restored file's different filesystem timestamp cannot alter replay output. Historical attempts without that observation cannot resume through this path and require a new preparation; their receipts are retained. The historical public link format is unchanged. This closes predecessor replay drift, not the broader migration of legacy capture timestamps out of canonical public data.
+
 An interrupted writer leaves its existing lease semantics intact. Inspect the process and `writer.lock` before owner recovery; no command silently breaks another writer's lock. Inspect `state.json`, `diagnostics.jsonl`, and the referenced evidence to locate the failed stage. Expected provider failures remain bounded outcomes in the capture and coverage receipts; integrity and programming failures stop the attempt.
 
 ## Evidence and the workbench

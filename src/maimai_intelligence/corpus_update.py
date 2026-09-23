@@ -416,7 +416,16 @@ def prepare_update(
                     )
                 else:
                     assert package is not None
-                    corpus = _prepare_legacy(package, run, mai_notes_snapshot, fetcher, overrides)
+                    corpus = _prepare_legacy(
+                        package,
+                        run,
+                        mai_notes_snapshot,
+                        fetcher,
+                        overrides,
+                        captured_at=attempt["body"]["observations"]
+                        .get("mai_notes_snapshot", {})
+                        .get("captured_at"),
+                    )
                 counts.records = len(corpus.charts)
                 counts.evidence = (
                     ["coverage-audit.json", "registry-provenance.json"]
@@ -630,22 +639,22 @@ def _prepare_legacy(
     mai_notes_snapshot: Path | str | None,
     fetcher: Callable[[], bytes],
     overrides: Path | str | None,
+    *,
+    captured_at: str | None = None,
 ) -> PreparedCorpus:
     from .source_preparation.prepare_chart_constants import prepare as constants
 
     constants(package, run / "constants")
     descriptor, retained = read_package(run / "constants")
     charts = json.loads(retained["catalog.json"])
-    captured_at = datetime.now(UTC).isoformat()
     if mai_notes_snapshot is None:
         raw = fetcher()
+        captured_at = datetime.now(UTC).isoformat()
     else:
         with Path(mai_notes_snapshot).open("rb") as stream:
             raw = stream.read(MAX_INDEX_BYTES + 1)
-        # A retained file is a replay, not a fresh network verification.
-        captured_at = datetime.fromtimestamp(
-            Path(mai_notes_snapshot).stat().st_mtime, UTC
-        ).isoformat()
+        if captured_at is None:
+            raise ValueError("Retained mai-notes input requires bound capture metadata")
     links, audit = prepare_links(
         charts,
         raw,
@@ -838,7 +847,10 @@ def _ready_receipt(
 
 
 def verify_candidate(
-    run: Path | str, *, implementation: Callable[[], str] | None = None
+    run: Path | str,
+    *,
+    implementation: Callable[[], str] | None = None,
+    input_locations: dict[str, Path | str] | None = None,
 ) -> dict[str, Any]:
     implementation = implementation or implementation_hash
     run = Path(run).resolve()
@@ -858,7 +870,7 @@ def verify_candidate(
     if "attempt_sha256" in receipt:
         from .corpus_attempts import verify_attempt
 
-        verify_attempt(run, implementation())
+        verify_attempt(run, implementation(), input_locations=input_locations)
     preceding_public = published_public(run.parent.parent)
     if preceding_public is not None and preceding_public.parent != run:
         if receipt.get("previous_public", {}).get("inputs") != previous_public_identity(

@@ -3,6 +3,8 @@
 import contextlib
 import io
 import json
+import os
+import shutil
 import tempfile
 import unittest
 from pathlib import Path
@@ -176,6 +178,82 @@ class CorpusPipelineTests(unittest.TestCase):
             )
         with self.assertRaisesRegex(ValueError, "policy changed"):
             verify_attempt(run, implementation_hash())
+
+    def test_relocated_verified_inputs_resume_without_rewriting_predecessor(self):
+        first = self.prepare()
+        before = (first / "attempt.json").read_bytes()
+        relocated = self.root / "restored-inputs"
+        relocated.mkdir()
+        shutil.copytree(self.package, relocated / "package")
+        shutil.copytree(self.browser, relocated / "browser")
+        shutil.copyfile(self.snapshot, relocated / "links.json")
+        restored_time = self.snapshot.stat().st_mtime + 60
+        os.utime(relocated / "links.json", (restored_time, restored_time))
+        locations = {
+            "package": relocated / "package",
+            "previous_browser": relocated / "browser",
+            "mai_notes_snapshot": relocated / "links.json",
+        }
+        from maimai_intelligence.corpus_attempts import input_inventory
+
+        old_paths = {self.package.resolve(), self.browser.resolve(), self.snapshot.resolve()}
+
+        def restored_only(path):
+            if path.resolve() in old_paths:
+                raise FileNotFoundError("Original machine is unavailable")
+            return input_inventory(path)
+
+        with (
+            patch("maimai_intelligence.corpus_attempts.input_inventory", restored_only),
+            patch("socket.socket", side_effect=AssertionError("Network forbidden")),
+        ):
+            options = resume_options(first, implementation_hash(), input_locations=locations)
+            second = prepare_update(self.store, **options)
+            self.assertEqual(
+                verify_candidate(first, input_locations=locations)["files"],
+                verify_candidate(second)["files"],
+            )
+        self.assertEqual((first / "attempt.json").read_bytes(), before)
+        self.assertEqual(
+            read_json(first / "attempt.json")["body"]["observations"],
+            read_json(second / "attempt.json")["body"]["observations"],
+        )
+        self.assertEqual(
+            read_json(second / "attempt.json")["body"]["observations"]["mai_notes_snapshot"][
+                "basis"
+            ],
+            "legacy_file_mtime",
+        )
+        self.assertNotEqual(first, second)
+        self.assertEqual(
+            read_json(second / "attempt.json")["body"]["predecessor"]["run"], first.name
+        )
+        self.assertFalse((self.store / "latest.json").exists())
+        self.assertFalse((self.store / "published.json").exists())
+        with self.assertRaisesRegex(ValueError, "Unknown.*input"):
+            resume_options(first, implementation_hash(), input_locations={"unbound": relocated})
+        (relocated / "links.json").write_bytes(b"changed")
+        with self.assertRaisesRegex(ValueError, "inputs changed"):
+            resume_options(first, implementation_hash(), input_locations=locations)
+
+    def test_installed_cli_verifies_explicit_input_relocation_and_rejects_duplicates(self):
+        first = self.prepare()
+        destination = self.root / "restored" / "package"
+        shutil.copytree(self.package, destination)
+        arguments = [
+            "corpus",
+            "verify",
+            "--run",
+            str(first),
+            "--input",
+            "package=" + str(destination),
+        ]
+        with contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(main(arguments), 0)
+        error = io.StringIO()
+        with contextlib.redirect_stderr(error):
+            self.assertEqual(main(arguments + ["--input", "package=" + str(destination)]), 1)
+        self.assertIn("Duplicate attempt input", error.getvalue())
 
     def test_failure_categories_abort_and_never_log_exception_messages(self):
         cases = [

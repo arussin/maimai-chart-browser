@@ -4,8 +4,10 @@ from __future__ import annotations
 
 import hashlib
 import re
+from collections.abc import Mapping
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, TypedDict
 
 from .corpus_policy import ReuseIdentity
 from .serialization import digest
@@ -28,6 +30,11 @@ VALUE_OPTIONS = (
     "capacity_sha256",
     "player_maishift",
 )
+
+
+class InputBinding(TypedDict):
+    path: str
+    files: dict[str, dict[str, str | int]]
 
 
 def input_inventory(path: Path) -> dict[str, dict[str, str | int]]:
@@ -58,29 +65,50 @@ def bind_attempt(
     predecessor: dict[str, str] | None = None,
 ) -> dict[str, Any]:
     values = {name: options.get(name) for name in VALUE_OPTIONS}
-    bindings = {}
+    bindings: dict[str, InputBinding] = {}
     for name in PATH_OPTIONS:
         path = options.get(name)
         if path is not None:
             path = Path(path).resolve()
             bindings[name] = {"path": str(path), "files": input_inventory(path)}
+    observations: dict[str, Any] = {}
     if predecessor is not None:
         name = predecessor.get("run", "")
         if not re.fullmatch(r"[0-9]{8}T[0-9]{6}Z-[a-f0-9]{8}", name):
             raise ValueError("Invalid predecessor attempt identity")
-        verified = verify_attempt(run.parent / name, implementation)
+        verified = verify_attempt(
+            run.parent / name,
+            implementation,
+            input_locations={key: row["path"] for key, row in bindings.items()},
+        )
         if verified["sha256"] != predecessor.get("attempt_sha256"):
             raise ValueError("Predecessor attempt changed")
         previous = verified["body"]
+        observations = previous.get("observations", {})
+        if "mai_notes_snapshot" in bindings and "mai_notes_snapshot" not in observations:
+            raise ValueError("Legacy attempt lacks bound capture metadata; prepare a new attempt")
         ReuseIdentity(
-            digest(previous["bindings"]),
+            digest({key: row["files"] for key, row in previous["bindings"].items()}),
             previous["implementation"],
             digest(previous["values"].get("coverage_reviews")),
         ).require_equal(
-            ReuseIdentity(digest(bindings), implementation, digest(values.get("coverage_reviews")))
+            ReuseIdentity(
+                digest({key: row["files"] for key, row in bindings.items()}),
+                implementation,
+                digest(values.get("coverage_reviews")),
+            )
         )
+    elif "mai_notes_snapshot" in bindings:
+        # Keep the historical public timestamp, but identify its weaker origin honestly.
+        # A restored file's new mtime must never change a predecessor's canonical output.
+        snapshot = Path(bindings["mai_notes_snapshot"]["path"])
+        observations["mai_notes_snapshot"] = {
+            "captured_at": datetime.fromtimestamp(snapshot.stat().st_mtime, UTC).isoformat(),
+            "basis": "legacy_file_mtime",
+        }
     body = {
         "version": "corpus-attempt-1",
+        "observations": observations,
         "values": values,
         "bindings": bindings,
         "implementation": implementation,
@@ -94,13 +122,32 @@ def bind_attempt(
     return record
 
 
-def verify_attempt(run: Path, implementation: str) -> dict[str, Any]:
+def _input_paths(
+    body: dict[str, Any], input_locations: Mapping[str, Path | str] | None
+) -> dict[str, Path]:
+    replacements = input_locations or {}
+    if set(replacements) - set(body["bindings"]):
+        raise ValueError("Unknown or unbound attempt input location")
+    return {
+        name: Path(replacements.get(name, row["path"])).resolve()
+        for name, row in body["bindings"].items()
+    }
+
+
+def verify_attempt(
+    run: Path,
+    implementation: str,
+    *,
+    input_locations: Mapping[str, Path | str] | None = None,
+) -> dict[str, Any]:
     record = read_json(run / "attempt.json")
     body = record["body"]
     if body.get("version") != "corpus-attempt-1" or digest(body) != record.get("sha256"):
         raise ValueError("Attempt receipt integrity mismatch")
     previous = {name: row["files"] for name, row in body["bindings"].items()}
-    current = {name: input_inventory(Path(row["path"])) for name, row in body["bindings"].items()}
+    current = {
+        name: input_inventory(path) for name, path in _input_paths(body, input_locations).items()
+    }
     reviews = digest(body["values"].get("coverage_reviews"))
     ReuseIdentity(digest(previous), body["implementation"], reviews).require_equal(
         ReuseIdentity(digest(current), implementation, reviews)
@@ -112,15 +159,20 @@ def verify_attempt(run: Path, implementation: str) -> dict[str, Any]:
 
 
 def resume_options(
-    run: Path, implementation: str, *, replay: bool = False, online: bool = False
+    run: Path,
+    implementation: str,
+    *,
+    replay: bool = False,
+    online: bool = False,
+    input_locations: Mapping[str, Path | str] | None = None,
 ) -> dict[str, Any]:
     if replay and online:
         raise ValueError("Replay is always offline")
-    record = verify_attempt(run, implementation)
+    record = verify_attempt(run, implementation, input_locations=input_locations)
     body = record["body"]
     options = {
         **body["values"],
-        **{name: Path(row["path"]) for name, row in body["bindings"].items()},
+        **_input_paths(body, input_locations),
     }
     options["artwork_cache"] = body["artwork_cache"]
     options["offline"] = not online
