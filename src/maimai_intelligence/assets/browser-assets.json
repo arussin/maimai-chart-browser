@@ -2,13 +2,13 @@
   "version": 1,
   "tool": "esbuild-0.28.2",
   "entries": {
-    "hosted": "browser/browser-entry-VNDB7EFQ.js",
+    "hosted": "browser/browser-entry-4Z5YIAO5.js",
     "offline": "browser/browser-offline-IB6HAEWR.js"
   },
   "assets": {
-    "browser/browser-entry-VNDB7EFQ.js": {
-      "sha256": "1576935b26e03740e89b4c516659f4971e72f0725fe451c653e810d7a672ca08",
-      "bytes": 21126
+    "browser/browser-entry-4Z5YIAO5.js": {
+      "sha256": "6f01887c70c13b3e38baf1f8af2695cdac6f1fdf824417c45ec6979c4732faac",
+      "bytes": 21132
     },
     "browser/application-GLRIKWD5.js": {
       "sha256": "9acb0f01f52227c9d30960b463b0ffe8f3134c1e4c2a7174b19a0359787cbb3b",

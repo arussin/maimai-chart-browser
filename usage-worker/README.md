@@ -32,6 +32,32 @@ separate explicit test collector adapter. Never relax production eligibility to
 make staging tests send events. Verify signed-out denial and intended-owner access
 before enabling a staging collector or exposing a hosted preview.
 
+### Browser staging artifact
+
+From the disposable prepared `web` workspace, run:
+
+    node build.mjs --staging-output NEW_EXTERNAL_DIRECTORY
+
+The destination parent must exist; the destination itself must be new and outside
+source. This emits the same hosted/offline entry graph, replacing only the usage
+adapter at build time. `staging-build.json` binds its manifest to the packaged
+production manifest and records the fixed staging origin. Production assets,
+compatibility assets and manifests are untouched. This is a browser runtime
+artifact for the separately prepared complete staging site, not a deployment or
+a complete site upload by itself. Keep the receipt outside public site assets.
+
+Production imports `usage.ts`; the staging build substitutes `usage-staging.ts`.
+Both use the same finite collector implementation. No URL, query, global or
+runtime origin setting can switch either profile. Both obey GPC/DNT and the
+existing kill switch. Offline reports remain silent. Usage requires the exact
+HTTPS origin, including its default port, as the server already requires.
+
+`npm test` in `usage-worker` also verifies the actual local owner-report command
+against collector-written persisted D1 data, including a missing-table failure.
+It uses fictional dates/data, a child-process loopback transport guard and the
+same pinned Wrangler CLI as the owner command. Failed fixtures remain in the
+approved temporary directory for diagnosis; successful ones are removed.
+
 ## Coordinated activation
 
 No account, database, route, schedule or credential is provisioned here. The all-zero database ID is a local placeholder and MUST NOT be deployed. The release checklist must record the actual D1 binding, quota/cost review, exact route, migrated schema, USAGE_ENABLED=true, client enabled state, disabled account-level beacon injection, and absence of request/payload logging in inherited invocation logs, traces, tail consumers and export sinks. Keep unrelated security logging unchanged.

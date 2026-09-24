@@ -4,8 +4,10 @@ import vm from 'node:vm';
 import { moduleSource, evaluateModule } from './module.mjs';
 import { gzipSync } from 'node:zlib';
 const source = await moduleSource('usage');
+const stagingSource = await moduleSource('usage-staging');
 function fixture({
   host = 'maimai.party',
+  module = source,
   gpc = false,
   dnt = '0',
   enabled = true,
@@ -20,7 +22,7 @@ function fixture({
   };
   const context = vm.createContext({
     window: win,
-    location: { protocol: 'https:', hostname: host },
+    location: { protocol: 'https:', hostname: host, origin: 'https://' + host },
     navigator: { globalPrivacyControl: gpc, doNotTrack: dnt },
     document: { prerendering: false, addEventListener: (key, fn) => (listeners[key] = fn) },
     TextEncoder,
@@ -32,7 +34,7 @@ function fixture({
       return { ok: true };
     },
   });
-  const api = evaluateModule(source, context).createUsage();
+  const api = evaluateModule(module, context).createUsage();
   return { api, requests, listeners, context };
 }
 test('first-party counts are bounded finite data, with no application or persistent access', async () => {
@@ -95,3 +97,48 @@ test('same broad page category counts each committed navigation but no automatic
   await api.flush();
   assert.equal(JSON.parse(requests[0].options.body).events[0].count, 2);
 });
+
+for (const [name, module, host, forbidden] of [
+  ['production', source, 'maimai.party', 'maimai-party-staging.pages.dev'],
+  ['staging', stagingSource, 'maimai-party-staging.pages.dev', 'maimai.party'],
+]) {
+  test(
+    name + ' usage has an exclusive build-selected origin and unchanged privacy controls',
+    async () => {
+      for (const settings of [
+        { host: forbidden },
+        { host: 'unrelated.invalid' },
+        { host: host + ':8443' },
+        { host, gpc: true },
+        { host, dnt: '1' },
+        { host, enabled: false },
+      ]) {
+        const { api, requests, context } = fixture({ module, ...settings });
+        // An untrusted page cannot redirect this bundle's eligibility through settings.
+        context.window.maimaiUsageOrigin = 'https://' + settings.host;
+        api.activate('song');
+        api.emit('settings_opened');
+        await api.flush();
+        assert.equal(requests.length, 0, JSON.stringify(settings));
+      }
+      const { api, requests, listeners } = fixture({ module, host });
+      assert.deepEqual(Object.keys(listeners).sort(), ['pagehide', 'visibilitychange']);
+      api.activate('song');
+      api.emit('search_used', 'charts', 'PRIVATE-SENTINEL');
+      api.emit('import_failed', 'song', 'file', 'storage');
+      await api.flush();
+      assert.equal(requests.length, 1);
+      assert.ok(!requests[0].options.body.includes('PRIVATE-SENTINEL'));
+      assert.deepEqual(
+        JSON.parse(requests[0].options.body).events.map((row) => row.event),
+        ['page_view', 'import_failed'],
+      );
+      assert.equal(requests[0].options.credentials, 'omit');
+      assert.equal(requests[0].options.referrerPolicy, 'no-referrer');
+      api.emit('settings_opened');
+      api.disable();
+      await api.flush();
+      assert.equal(requests.length, 1);
+    },
+  );
+}

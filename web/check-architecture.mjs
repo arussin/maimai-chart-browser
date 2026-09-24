@@ -61,7 +61,8 @@ const forbiddenDomainGlobals = new Set([
 ]);
 let moduleCount = 0,
   browserStateInstances = 0,
-  sessionOwnerInstances = 0;
+  sessionOwnerInstances = 0,
+  usageInstances = 0;
 for (const path of graph.keys()) {
   if (!/\.[jt]s$/.test(path) || path.includes('node_modules')) continue;
   if (path.endsWith('.js')) throw Error('Unchecked active JavaScript module: ' + path);
@@ -88,6 +89,17 @@ for (const path of graph.keys()) {
       !path.endsWith('/runtime/history.ts')
     )
       throw Error('Native route event outside HistoryPort: ' + path);
+    if (node.type === 'CallExpression' && node.callee.name === 'createUsage') {
+      if (path !== 'src/browser-entry.ts')
+        throw Error('Collector initialized outside hosted composition: ' + path);
+      usageInstances++;
+    }
+    if (
+      node.type === 'CallExpression' &&
+      node.callee.name === 'createUsageForOrigin' &&
+      (path !== 'src/usage.ts' || node.arguments[0]?.value !== 'https://maimai.party')
+    )
+      throw Error('Production graph contains a non-production usage adapter: ' + path);
     if (node.type === 'NewExpression' && node.callee.name === 'ImportCoordinator') {
       if (path !== 'src/views/player-data.ts')
         throw Error('Session state allocated outside player composition: ' + path);
@@ -156,12 +168,15 @@ for (const match of application.matchAll(/(?<![.\w])(create[A-Z]\w*)\(/g))
   if (match[1] !== 'createApplication') counts.set(match[1], (counts.get(match[1]) || 0) + 1);
 for (const [name, count] of counts)
   if (count !== 1) throw Error('Duplicate application initialization: ' + name);
+if (usageInstances !== 1) throw Error('Expected one authoritative hosted usage collector');
+if (graph.has('src/usage-staging.ts')) throw Error('Staging adapter entered production graph');
 if (browserStateInstances !== 1) throw Error('Expected one authoritative BrowserState instance');
 if (sessionOwnerInstances !== 1) throw Error('Expected one authoritative player session instance');
 const report = {
   version: 1,
   browserStateInstances,
   sessionOwnerInstances,
+  usageInstances,
   pureDomainModules: pureDomains.size,
   nativeRouteEventOwners: 1,
   modules: moduleCount,
