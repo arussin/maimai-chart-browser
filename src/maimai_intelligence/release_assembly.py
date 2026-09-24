@@ -15,6 +15,7 @@ from collections.abc import Mapping
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
+from .public_routes import ROUTE_MODEL
 from .release_composition import (
     MAX_FILE_BYTES,
     ArtifactInventory,
@@ -180,7 +181,11 @@ def _recovery_input(
         }
     )
     return detached, RecoveryOverlay(
-        evidence_sha256, inventory, candidate_inventory_sha256, baseline_inventory_sha256
+        evidence_sha256,
+        inventory,
+        candidate_inventory_sha256,
+        baseline_inventory_sha256,
+        ROUTE_MODEL,
     )
 
 

@@ -13,6 +13,7 @@ from unittest.mock import patch
 
 from maimai_intelligence import release_assembly as assembly
 from maimai_intelligence import release_composition as composition
+from maimai_intelligence.public_routes import ROUTE_MODEL
 from maimai_intelligence.release_composition import (
     MAX_FILE_BYTES,
     PathOwnership,
@@ -553,6 +554,7 @@ class ReleaseAssemblyTests(unittest.TestCase):
             ),
             composition.artifact_inventory_sha256(self.new_inventory),
             composition.artifact_inventory_sha256(self.old_inventory),
+            ROUTE_MODEL,
         )
         ownership = tuple(
             replace(file, owner="baseline", expected=self.old_inventory.files[0].fingerprint)

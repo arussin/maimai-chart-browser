@@ -5,6 +5,7 @@ import unittest
 from dataclasses import FrozenInstanceError, asdict, replace
 
 from maimai_intelligence import release_composition as composition
+from maimai_intelligence.public_routes import ROUTE_MODEL
 from maimai_intelligence.release_composition import (
     MAX_FILE_BYTES,
     MAX_FILES,
@@ -16,6 +17,7 @@ from maimai_intelligence.release_composition import (
     plan_release_composition,
 )
 from maimai_intelligence.release_transition import Fingerprint
+from maimai_intelligence.route_model import PublicRouteModel
 
 
 def record(digest="a", size=5):
@@ -385,11 +387,11 @@ class ReleaseCompositionTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "per-file capacity"):
                     self.plan(baseline=old, ownership=self.choices(old=old))
 
-    def recovery_fixture(self):
+    def recovery_fixture(self, model=ROUTE_MODEL):
         routes = {
             f"{locale}/{kind}/fictional/index.html": record("3")
-            for locale in ("en", "ja", "ko", "zh-hans")
-            for kind in ("songs", "versions")
+            for locale in model.locales
+            for kind in model.kinds
         }
         candidate = ArtifactInventory(self.new.files + inventory_from_records(routes).files)
         overlay = composition.RecoveryOverlay(
@@ -397,6 +399,7 @@ class ReleaseCompositionTests(unittest.TestCase):
             inventory_from_records({path: record("5", 7) for path in routes}),
             composition.artifact_inventory_sha256(candidate),
             composition.artifact_inventory_sha256(self.old),
+            model,
         )
         replacement = {file.path: file.fingerprint for file in overlay.inventory.files}
         choices = tuple(
@@ -406,6 +409,28 @@ class ReleaseCompositionTests(unittest.TestCase):
             for choice in self.choices("recovery", new=candidate)
         )
         return candidate, overlay, choices
+
+    def test_recovery_recognizes_extensions_from_the_supplied_route_authority(self):
+        model = PublicRouteModel((*ROUTE_MODEL.locales, "fr"), (*ROUTE_MODEL.kinds, "collections"))
+        candidate, overlay, choices = self.recovery_fixture(model)
+        result = self.plan(
+            candidate=candidate, target="recovery", ownership=choices, recovery=overlay
+        )
+        self.assertEqual(
+            {file.path for file in result.files if file.owner == "recovery"},
+            {
+                model.parse_path(model.path(locale, kind, "fictional")).filename
+                for locale in model.locales
+                for kind in model.kinds
+            },
+        )
+        with self.assertRaisesRegex(ValueError, "candidate public route"):
+            self.plan(
+                candidate=candidate,
+                target="recovery",
+                ownership=choices,
+                recovery=replace(overlay, route_model=ROUTE_MODEL),
+            )
 
     def test_recovery_overlay_binds_all_candidate_public_route_documents(self):
         candidate, overlay, choices = self.recovery_fixture()
@@ -480,6 +505,8 @@ class ReleaseCompositionTests(unittest.TestCase):
             replace(overlay, baseline_inventory_sha256="bad"),
             replace(overlay, baseline_inventory_sha256="0" * 64),
             replace(overlay, inventory=None),
+            replace(overlay, route_model=None),
+            replace(overlay, route_model={"locales": ROUTE_MODEL.locales}),
             replace(overlay, inventory=ArtifactInventory(())),
             replace(overlay, inventory=ArtifactInventory(overlay.inventory.files[:-1])),
         )

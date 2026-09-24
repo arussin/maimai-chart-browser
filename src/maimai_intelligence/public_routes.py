@@ -2,20 +2,19 @@
 
 import json
 from importlib.resources import files
-from urllib.parse import quote
+
+from .route_model import PublicRoute, PublicRouteModel
 
 MODEL = json.loads(
     files("maimai_intelligence.assets").joinpath("public-routes.json").read_text("utf-8")
 )
 LOCALES = MODEL["locales"]
+ROUTE_MODEL = PublicRouteModel(tuple(LOCALES), tuple(MODEL["kinds"]))
 
 
 def route(locale: str, kind: str, slug: str) -> str:
-    if (
-        locale not in LOCALES
-        or kind not in MODEL["kinds"]
-        or not slug
-        or any(c in slug for c in "/\\?#")
-    ):
-        raise ValueError("Invalid canonical public route")
-    return f"/{locale}/{kind}/{quote(slug, safe='-')}/"
+    return ROUTE_MODEL.path(locale, kind, slug)
+
+
+def parse_route(path: object) -> PublicRoute | None:
+    return ROUTE_MODEL.parse_path(path)

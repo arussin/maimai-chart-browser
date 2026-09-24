@@ -133,6 +133,35 @@ class RouteRecoveryTests(unittest.TestCase):
             set(self.prepare(prepared).assets), {r.filename for r in prepared.emitted_routes}
         )
 
+    def test_maintenance_preserves_exact_ordinary_and_static_fixture_bytes(self):
+        # Captured from ce62a851 before extracting the route authority/handlers.
+        # These are complete path-to-content inventories, not selected HTML text.
+        def inventory_digest(assets):
+            return digest(canonical({name: digest(raw) for name, raw in sorted(assets.items())}))
+
+        self.assertEqual(
+            inventory_digest(self.prepared.assets),
+            "e6e80348e44760d65f8e38460d02ba6fa30d6ddaab7481b979dcf7812b73f6fd",
+        )
+        self.assertEqual(
+            inventory_digest(self.prepare().assets),
+            "ab8763297acf0ec5826884d26f5f08c30b8aaa06f4860f1fd69a7b7a95800e69",
+        )
+        data = json.loads(self.baseline)
+        data["catalog"] = data["catalog"][1:]
+        raw = canonical(data)
+        reference = {
+            **self.reference,
+            "sha256": digest(raw),
+            "path": f"catalogs/{digest(raw)}.json",
+        }
+        self.assertEqual(
+            inventory_digest(
+                self.prepare(baseline_catalog=raw, baseline_reference=reference).assets
+            ),
+            "17ba679ab4a64abba44d44c06cc13783aaeeb86b1221ab3e04926809979a932c",
+        )
+
     def test_all_locales_are_finite_static_and_keep_public_presentation(self):
         result = self.prepare()
         self.assertEqual(result, self.prepare())
@@ -322,6 +351,25 @@ class RouteRecoveryTests(unittest.TestCase):
         ):
             changed = self.mutate_document(old, new)
             self.assertTrue(changed.assets != self.prepared.assets, new)
+            with self.subTest(new=new), self.assertRaises(ValueError):
+                self.prepare(changed)
+
+    def test_extracted_tag_boundaries_keep_rejecting_unreviewed_markup(self):
+        for old, new in (
+            (b'<main id="seo-content"', b'<main id="seo-content" id="duplicate"'),
+            (b'<main id="seo-content"', b'<main style="color:red" id="seo-content"'),
+            (b'class="check international-data-option"', b'class="unexpected-control"'),
+            (b"</main>", b'<input type="checkbox" data-seo-international></main>'),
+            (b"</head>", b'<link rel="stylesheet" href="/seo-pages.css"></head>'),
+            (b"</head>", b'<link rel="preload" href="/"></head>'),
+            (b"</main>", b'<a href="https://unexpected.invalid/">Unexpected</a></main>'),
+            (b"</main>", b'<img src="https://unexpected.invalid/image.webp"></main>'),
+            (b'data-seo-page="song"', b'data-seo-page="version"'),
+            (b'data-locale="en"', b'data-locale="fr"'),
+            (b"</main>", b"<template>hidden markup</template></main>"),
+        ):
+            changed = self.mutate_document(old, new)
+            self.assertNotEqual(changed.assets, self.prepared.assets, new)
             with self.subTest(new=new), self.assertRaises(ValueError):
                 self.prepare(changed)
 

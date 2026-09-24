@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import hashlib
 import re
-import unicodedata
 from base64 import b64encode
 from collections.abc import Mapping
 from dataclasses import asdict, dataclass
@@ -17,15 +16,16 @@ from html import escape
 from html.parser import HTMLParser
 from types import MappingProxyType
 from typing import Any
-from urllib.parse import unquote, urlencode
+from urllib.parse import urlencode
 
 from .browser_bundle import BrowserResourceReference, BrowserResources, validate_browser_resources
 from .catalog_document import decode_catalog_document
-from .public_routes import LOCALES, route
+from .public_routes import LOCALES, parse_route
 from .recovery_policy import ChartRecoveryDecision, decide_chart_recovery
 from .seo import ORIGIN, EmittedPublicRoute, PreparedSEO
 from .serialization import canonical
 
+Attributes = dict[str, str | None]
 MAX_DOCUMENT_BYTES = 2 * 1024 * 1024
 POLICY = (
     "default-src 'none'; script-src 'none'; connect-src 'none'; style-src 'self'; "
@@ -83,17 +83,12 @@ def _verify_routes(prepared: PreparedSEO) -> tuple[EmittedPublicRoute, ...]:
     for record in records:
         if not isinstance(record, EmittedPublicRoute):
             raise ValueError("Expected an emitted public route")
-        parts = record.path.split("/")
+        parsed = parse_route(record.path)
         if (
-            len(parts) != 5
-            or parts[0]
-            or parts[-1]
-            or not 0 < len(unquote(parts[3])) <= 100
-            or any(unicodedata.category(c)[0] not in "LN" and c != "-" for c in unquote(parts[3]))
-            or record.locale not in LOCALES
-            or record.kind not in {"song", "version"}
-            or record.path != route(record.locale, record.kind + "s", unquote(parts[3]))
-            or record.filename != unquote(record.path[1:]) + "index.html"
+            parsed is None
+            or parsed.locale != record.locale
+            or parsed.kind != record.kind + "s"
+            or record.filename != parsed.filename
             or not isinstance(record.chart_ids, tuple)
             or (record.kind == "song" and not record.chart_ids)
             or (record.kind == "version" and record.chart_ids)
@@ -236,7 +231,7 @@ class _StaticDocument(HTMLParser):
             raise ValueError("Unknown public document declaration")
         self.output.append("<!doctype html>")
 
-    def handle_starttag(self, tag: str, items: list[tuple[str, str | None]]) -> None:
+    def _checked_attributes(self, tag: str, items: list[tuple[str, str | None]]) -> Attributes:
         attrs = dict(items)
         if tag not in self._tags or len(attrs) != len(items) or set(attrs) - self._attributes:
             raise ValueError("Unknown or duplicate public markup needs review")
@@ -249,80 +244,85 @@ class _StaticDocument(HTMLParser):
             if identifier in self.ids:
                 raise ValueError("Duplicate public element identity")
             self.ids.add(identifier)
-        suppressed = bool(self.stack and self.stack[-1][2])
-        output_tag = tag
+        return attrs
+
+    def _control(self, tag: str, attrs: Attributes) -> bool:
+        """Validate the maintained control shape and return whether to suppress it."""
         if tag == "script":
-            suppressed = True
-        elif tag == "label":
+            return True
+        if tag == "label":
             if attrs != {"class": "check international-data-option"}:
                 raise ValueError("Unknown public control needs review")
             self.labels += 1
-            suppressed = True
-        elif tag == "input":
-            if attrs != {"type": "checkbox", "data-seo-international": None} or not (
-                self.stack and self.stack[-1][0] == "label"
-            ):
-                raise ValueError("Unknown public control needs review")
-            self.controls += 1
-        elif tag == "meta":
-            if (attrs.get("http-equiv") or "").lower() == "content-security-policy":
-                attrs["content"] = POLICY
-                self.csp += 1
-            elif "http-equiv" in attrs:
-                raise ValueError("Unknown public redirect/control metadata")
-            if attrs.get("name") in {"maimai-browser-base", "robots"}:
-                suppressed = True
-        elif tag == "link" and attrs.get("rel") == "stylesheet":
-            href = attrs.get("href", "") or ""
+            return True
+        if attrs != {"type": "checkbox", "data-seo-international": None} or not (
+            self.stack and self.stack[-1][0] == "label"
+        ):
+            raise ValueError("Unknown public control needs review")
+        self.controls += 1
+        return False
+
+    def _metadata(self, attrs: Attributes) -> bool:
+        if (attrs.get("http-equiv") or "").lower() == "content-security-policy":
+            attrs["content"] = POLICY
+            self.csp += 1
+        elif "http-equiv" in attrs:
+            raise ValueError("Unknown public redirect/control metadata")
+        return attrs.get("name") in {"maimai-browser-base", "robots"}
+
+    def _link(self, attrs: Attributes) -> Attributes:
+        href = attrs.get("href", "") or ""
+        if attrs.get("rel") == "stylesheet":
             reference = self.styles.get(href)
             if reference is None or href in self.used_styles:
                 raise ValueError("Unknown or duplicate public stylesheet")
             self.used_styles.add(href)
-            attrs = {
+            return {
                 "rel": "stylesheet",
                 "href": "/" + reference.path,
                 "integrity": "sha256-" + b64encode(bytes.fromhex(reference.sha256)).decode(),
             }
-        elif tag == "link":
-            href = attrs.get("href", "") or ""
-            if attrs.get("rel") not in {"canonical", "alternate"} or not (
-                href.startswith(ORIGIN) and href[len(ORIGIN) :] in self.routes
-            ):
-                raise ValueError("Unknown public link target")
-            if attrs.get("rel") == "canonical":
-                if href != ORIGIN + self.record.path:
-                    raise ValueError("Public canonical route changed")
-                self.canonical += 1
-        elif tag == "a":
-            if "data-open-browser" in attrs:
-                if self.record.kind == "song":
-                    if self.links >= len(self.decisions):
-                        raise ValueError("Unexpected public chart link")
-                    decision = self.decisions[self.links]
-                    expected = "/?" + urlencode(
-                        {
-                            "view": "catalog",
-                            "chart": decision.chart_id,
-                            "lang": LOCALES[self.record.locale],
-                        }
-                    )
-                    if attrs.get("href") != expected:
-                        raise ValueError("Public chart link differs from emitted identity")
-                    if decision.target is None:
-                        output_tag = "span"
-                        attrs = {"class": "muted", "data-recovery-reason": decision.reason}
-                        self.replaced_label = UNAVAILABLE[self.record.locale]
-                    else:
-                        attrs["href"] = decision.target
-                else:
-                    attrs["href"] = "/"
-                self.links += 1
-            elif (
-                attrs.get("href") not in {"/", "#seo-content"}
-                and attrs.get("href") not in self.routes
-            ):
-                raise ValueError("Unknown public navigation target")
-        elif tag == "main":
+        if attrs.get("rel") not in {"canonical", "alternate"} or not (
+            href.startswith(ORIGIN) and href[len(ORIGIN) :] in self.routes
+        ):
+            raise ValueError("Unknown public link target")
+        if attrs.get("rel") == "canonical":
+            if href != ORIGIN + self.record.path:
+                raise ValueError("Public canonical route changed")
+            self.canonical += 1
+        return attrs
+
+    def _chart_link(self, attrs: Attributes) -> tuple[str, Attributes]:
+        if self.links >= len(self.decisions):
+            raise ValueError("Unexpected public chart link")
+        decision = self.decisions[self.links]
+        expected = "/?" + urlencode(
+            {"view": "catalog", "chart": decision.chart_id, "lang": LOCALES[self.record.locale]}
+        )
+        if attrs.get("href") != expected:
+            raise ValueError("Public chart link differs from emitted identity")
+        if decision.target is None:
+            self.replaced_label = UNAVAILABLE[self.record.locale]
+            return "span", {"class": "muted", "data-recovery-reason": decision.reason}
+        attrs["href"] = decision.target
+        return "a", attrs
+
+    def _anchor(self, attrs: Attributes) -> tuple[str, Attributes]:
+        tag = "a"
+        if "data-open-browser" in attrs:
+            if self.record.kind == "song":
+                tag, attrs = self._chart_link(attrs)
+            else:
+                attrs["href"] = "/"
+            self.links += 1
+        elif (
+            attrs.get("href") not in {"/", "#seo-content"} and attrs.get("href") not in self.routes
+        ):
+            raise ValueError("Unknown public navigation target")
+        return tag, attrs
+
+    def _content(self, tag: str, attrs: Attributes) -> None:
+        if tag == "main":
             if attrs.get("data-seo-page") != self.record.kind or (
                 attrs.get("data-locale") != self.record.locale
             ):
@@ -334,40 +334,54 @@ class _StaticDocument(HTMLParser):
             source = attrs.get("src", "") or ""
             if not source.startswith("/") or source.startswith("//"):
                 raise ValueError("Unknown public image source")
-        if tag == "li" and self.record.kind == "version":
+        elif tag == "li" and self.record.kind == "version":
             if attrs.get("data-seo-jp-visible") not in {"true", "false"} or (
                 attrs.get("data-seo-intl-visible") not in {"true", "false"}
                 or attrs.get("data-seo-jp-visible") == attrs.get("data-seo-intl-visible") == "false"
             ):
                 raise ValueError("Unknown public version membership")
             attrs.pop("hidden", None)
-        attrs = {
-            name: value
-            for name, value in attrs.items()
-            if not name.startswith("data-")
-            or name in {"data-seo-page", "data-locale", "data-recovery-reason"}
-        }
-        if not suppressed:
-            self.output.append(
-                "<"
-                + output_tag
-                + "".join(
-                    " " + name + ("" if value is None else '="' + escape(value, quote=True) + '"')
-                    for name, value in attrs.items()
-                )
-                + ">"
+
+    def _append_start(self, tag: str, output_tag: str, attrs: Attributes) -> None:
+        self.output.append(
+            "<"
+            + output_tag
+            + "".join(
+                " " + name + ("" if value is None else '="' + escape(value, quote=True) + '"')
+                for name, value in attrs.items()
+                if not name.startswith("data-")
+                or name in {"data-seo-page", "data-locale", "data-recovery-reason"}
             )
-            if tag == "head":
-                self.output.append(
-                    '<meta name="robots" content="noindex">'
-                    '<meta name="maimai-route-recovery" content="static-v1" data-path="'
-                    + escape(self.record.path, quote=True)
-                    + '">'
-                )
-            if tag == "main":
-                self.output.append(
-                    '<p class="muted" role="status">' + escape(NOTICES[self.record.locale]) + "</p>"
-                )
+            + ">"
+        )
+        if tag == "head":
+            self.output.append(
+                '<meta name="robots" content="noindex">'
+                '<meta name="maimai-route-recovery" content="static-v1" data-path="'
+                + escape(self.record.path, quote=True)
+                + '">'
+            )
+        if tag == "main":
+            self.output.append(
+                '<p class="muted" role="status">' + escape(NOTICES[self.record.locale]) + "</p>"
+            )
+
+    def handle_starttag(self, tag: str, items: list[tuple[str, str | None]]) -> None:
+        attrs = self._checked_attributes(tag, items)
+        suppressed = bool(self.stack and self.stack[-1][2])
+        output_tag = tag
+        if tag in {"script", "label", "input"}:
+            suppressed = self._control(tag, attrs) or suppressed
+        elif tag == "meta":
+            suppressed = self._metadata(attrs) or suppressed
+        elif tag == "link":
+            attrs = self._link(attrs)
+        elif tag == "a":
+            output_tag, attrs = self._anchor(attrs)
+        else:
+            self._content(tag, attrs)
+        if not suppressed:
+            self._append_start(tag, output_tag, attrs)
         if tag not in self._void:
             self.stack.append((tag, output_tag, suppressed))
 

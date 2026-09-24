@@ -30,6 +30,7 @@ PURE = {
             "release_transition",
             "release_composition",
             "recovery_policy",
+            "route_model",
             "official_contract",
             "serialization",
         )

@@ -15,6 +15,7 @@ from dataclasses import dataclass
 from typing import Literal
 
 from .release_transition import Fingerprint
+from .route_model import PublicRouteModel
 
 Owner = Literal["baseline", "candidate", "recovery"]
 Target = Literal["candidate", "recovery"]
@@ -41,6 +42,7 @@ class RecoveryOverlay:
     inventory: ArtifactInventory
     candidate_inventory_sha256: str
     baseline_inventory_sha256: str
+    route_model: PublicRouteModel | None = None
 
 
 @dataclass(frozen=True)
@@ -217,12 +219,10 @@ def _recovery_documents(
         raise ValueError("Recovery documents do not match their candidate inventory")
     if _digest(recovery.baseline_inventory_sha256) != _inventory_id(baseline):
         raise ValueError("Recovery documents do not match their baseline inventory")
+    if not isinstance(recovery.route_model, PublicRouteModel):
+        raise ValueError("Recovery requires its validated public route model")
     records = _index(recovery.inventory.files)
-    routes = {
-        path
-        for path in candidate
-        if re.fullmatch(r"(en|ja|ko|zh-hans)/(songs|versions)/[^/]+/index\.html", path)
-    }
+    routes = {path for path in candidate if recovery.route_model.parse_filename(path) is not None}
     if not records or records.keys() != routes:
         raise ValueError("Recovery documents must replace exactly every candidate public route")
     return records

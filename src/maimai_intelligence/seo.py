@@ -18,6 +18,7 @@ from typing import Any
 from urllib.parse import quote, unquote, urlencode
 
 from .public_routes import LOCALES, route
+from .route_model import valid_permalink_slug
 from .snapshots import canonical
 
 ORIGIN = "https://maimai.party"
@@ -190,10 +191,7 @@ def validate_permalinks(value):
                 not isinstance(identity, str)
                 or not identity
                 or len(identity) > 512
-                or not isinstance(slug, str)
-                or not slug
-                or len(slug) > 100
-                or any(unicodedata.category(c)[0] not in "LN" and c != "-" for c in slug)
+                or not valid_permalink_slug(slug)
             ):
                 raise ValueError("Invalid permalink identity or slug")
         if len(set(rows.values())) != len(rows):

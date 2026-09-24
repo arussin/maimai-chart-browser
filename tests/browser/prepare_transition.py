@@ -19,6 +19,7 @@ from maimai_intelligence.public_release import (
     plan_release_composition,
     read_public_catalog_inputs,
 )
+from maimai_intelligence.public_routes import ROUTE_MODEL
 from maimai_intelligence.release_composition import (
     PathOwnership,
     RecoveryOverlay,
@@ -139,6 +140,7 @@ def prepare(accepted, accepted_inventory, output):
         ),
         recovered.candidate_inventory_sha256,
         recovered.baseline_inventory_sha256,
+        ROUTE_MODEL,
     )
     recovery_map = {file.path: file.fingerprint for file in recovery.inventory.files}
     source_maps = {"baseline": old_map, "candidate": new_map, "recovery": recovery_map}
