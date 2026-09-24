@@ -9,7 +9,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, TypedDict
 
-from .corpus_policy import ReuseIdentity
+from .corpus_policy import ReuseIdentity, ReuseOperation, reuse_operation
 from .serialization import digest
 from .snapshots import atomic_json, read_json
 
@@ -76,9 +76,9 @@ def bind_attempt(
         name = predecessor.get("run", "")
         if not re.fullmatch(r"[0-9]{8}T[0-9]{6}Z-[a-f0-9]{8}", name):
             raise ValueError("Invalid predecessor attempt identity")
-        verified = verify_attempt(
+        operation = reuse_operation(predecessor.get("operation", "resume"))
+        verified = verify_retained_inputs(
             run.parent / name,
-            implementation,
             input_locations={key: row["path"] for key, row in bindings.items()},
         )
         if verified["sha256"] != predecessor.get("attempt_sha256"):
@@ -87,17 +87,37 @@ def bind_attempt(
         observations = previous.get("observations", {})
         if "mai_notes_snapshot" in bindings and "mai_notes_snapshot" not in observations:
             raise ValueError("Legacy attempt lacks bound capture metadata; prepare a new attempt")
-        ReuseIdentity(
+        original = ReuseIdentity(
             digest({key: row["files"] for key, row in previous["bindings"].items()}),
             previous["implementation"],
             digest(previous["values"].get("coverage_reviews")),
-        ).require_equal(
-            ReuseIdentity(
-                digest({key: row["files"] for key, row in bindings.items()}),
-                implementation,
-                digest(values.get("coverage_reviews")),
-            )
         )
+        current = ReuseIdentity(
+            digest({key: row["files"] for key, row in bindings.items()}),
+            implementation,
+            digest(values.get("coverage_reviews")),
+        )
+        if operation == "reassess":
+            original.require_evidence(current)
+            if not values.get("offline"):
+                raise ValueError("Reassessment is always offline")
+        else:
+            original.require_equal(current)
+        captured_continuation = (
+            operation == "replay"
+            or (operation == "reassess" and "registry" in bindings)
+            or previous["values"].get("reassess_captured_policy")
+        )
+        if captured_continuation:
+            from .corpus_evidence import verify_replay_evidence
+
+            receipt = verify_replay_evidence(run.parent / name)
+            if (
+                not values.get("offline")
+                or bool(values.get("reassess_captured_policy")) != (operation == "reassess")
+                or Path(options.get("replay_sources") or "").resolve() != receipt.resolve()
+            ):
+                raise ValueError("Captured continuation must use its verified predecessor offline")
     elif "mai_notes_snapshot" in bindings:
         # Keep the historical public timestamp, but identify its weaker origin honestly.
         # A restored file's new mtime must never change a predecessor's canonical output.
@@ -134,9 +154,8 @@ def _input_paths(
     }
 
 
-def verify_attempt(
+def verify_retained_inputs(
     run: Path,
-    implementation: str,
     *,
     input_locations: Mapping[str, Path | str] | None = None,
 ) -> dict[str, Any]:
@@ -149,13 +168,38 @@ def verify_attempt(
         name: input_inventory(path) for name, path in _input_paths(body, input_locations).items()
     }
     reviews = digest(body["values"].get("coverage_reviews"))
-    ReuseIdentity(digest(previous), body["implementation"], reviews).require_equal(
-        ReuseIdentity(digest(current), implementation, reviews)
+    ReuseIdentity(digest(previous), body["implementation"], reviews).require_evidence(
+        ReuseIdentity(digest(current), body["implementation"], reviews)
     )
     ready = run / "ready.json"
     if ready.exists() and read_json(ready).get("attempt_sha256") != record["sha256"]:
         raise ValueError("Completed candidate does not bind this attempt")
     return record
+
+
+def verify_attempt(
+    run: Path,
+    implementation: str,
+    *,
+    input_locations: Mapping[str, Path | str] | None = None,
+) -> dict[str, Any]:
+    record = verify_retained_inputs(run, input_locations=input_locations)
+    body = record["body"]
+    inputs = digest({name: row["files"] for name, row in body["bindings"].items()})
+    reviews = digest(body["values"].get("coverage_reviews"))
+    ReuseIdentity(inputs, body["implementation"], reviews).require_equal(
+        ReuseIdentity(inputs, implementation, reviews)
+    )
+    return record
+
+
+def reassess_options(
+    run: Path,
+    *,
+    input_locations: Mapping[str, Path | str] | None = None,
+) -> dict[str, Any]:
+    record = verify_retained_inputs(run, input_locations=input_locations)
+    return _continuation_options(run, record, "reassess", False, input_locations)
 
 
 def resume_options(
@@ -169,36 +213,40 @@ def resume_options(
     if replay and online:
         raise ValueError("Replay is always offline")
     record = verify_attempt(run, implementation, input_locations=input_locations)
+    return _continuation_options(
+        run, record, "replay" if replay else "resume", online, input_locations
+    )
+
+
+def _continuation_options(
+    run: Path,
+    record: dict[str, Any],
+    operation: ReuseOperation,
+    online: bool,
+    input_locations: Mapping[str, Path | str] | None,
+) -> dict[str, Any]:
     body = record["body"]
-    options = {
-        **body["values"],
-        **_input_paths(body, input_locations),
-    }
+    options = {**body["values"], **_input_paths(body, input_locations)}
     options["artwork_cache"] = body["artwork_cache"]
     options["offline"] = not online
-    options["predecessor"] = {"run": run.name, "attempt_sha256": record["sha256"]}
-    if replay:
-        captures = run / "source-captures.json"
-        if not captures.is_file():
-            raise ValueError("This attempt has no complete source capture receipt to replay")
-        # Bind every replay input to the candidate or its completed independent checkpoint.
-        if (run / "ready.json").exists():
-            expected = read_json(run / "ready.json")["coverage_files"]
-            for name, ref in expected.items():
-                if input_inventory(run / name)[name] != ref:
-                    raise ValueError("Replay evidence changed")
-        else:
-            from .coverage_store import verify_checkpoint
+    options["predecessor"] = {
+        "run": run.name,
+        "attempt_sha256": record["sha256"],
+        "operation": operation,
+    }
+    captured_reassessment = bool(body["values"].get("reassess_captured_policy"))
+    if captured_reassessment and online:
+        raise ValueError(
+            "Continue a captured reassessment offline; prepare separately for acquisition"
+        )
+    if (
+        operation == "replay"
+        or operation == "reassess"
+        and "registry" in body["bindings"]
+        or captured_reassessment
+    ):
+        from .corpus_evidence import verify_replay_evidence
 
-            receipt = read_json(run / "coverage-checkpoint.json")
-            _, manifest = verify_checkpoint(
-                run.parent.parent / "cache/coverage", receipt["checkpoint"]
-            )
-            for name, ref in manifest["files"].items():
-                if (
-                    name not in {"base.json", "result.json"}
-                    and input_inventory(run / name)[name] != ref
-                ):
-                    raise ValueError("Replay checkpoint evidence changed")
-        options["replay_sources"] = captures
+        options["replay_sources"] = verify_replay_evidence(run)
+    options["reassess_captured_policy"] = operation == "reassess" and "registry" in body["bindings"]
     return options

@@ -4,7 +4,12 @@ import unittest
 from itertools import product
 
 from maimai_intelligence.corpus_explain import explain_record, explain_registry, source_references
-from maimai_intelligence.corpus_policy import ReuseIdentity, SourceSelection, compare_records
+from maimai_intelligence.corpus_policy import (
+    ReuseIdentity,
+    SourceSelection,
+    compare_records,
+    reuse_operation,
+)
 
 
 class CorpusPolicyTests(unittest.TestCase):
@@ -35,6 +40,20 @@ class CorpusPolicyTests(unittest.TestCase):
         ):
             with self.assertRaises(ValueError):
                 original.require_equal(changed)
+
+    def test_reassessment_only_relaxes_producer_identity(self):
+        original = ReuseIdentity("base", "old-code", "review")
+        original.require_evidence(ReuseIdentity("base", "new-code", "review"))
+        for changed in (
+            ReuseIdentity("changed", "new-code", "review"),
+            ReuseIdentity("base", "new-code", "changed"),
+        ):
+            with self.assertRaises(ValueError):
+                original.require_evidence(changed)
+        for operation in ("resume", "replay", "reassess"):
+            self.assertEqual(reuse_operation(operation), operation)
+        with self.assertRaises(ValueError):
+            reuse_operation("ignore-policy")
 
     def test_changes_do_not_hide_removed_records_or_unchanged_values(self):
         changes = compare_records(

@@ -8,7 +8,7 @@ from functools import partial
 from pathlib import Path
 from typing import Any
 
-from .corpus_attempts import PATH_OPTIONS, resume_options, verify_attempt
+from .corpus_attempts import PATH_OPTIONS, reassess_options, resume_options, verify_attempt
 from .corpus_update import implementation_hash, prepare_update, verify_candidate
 from .corpus_workbench import (
     diff_runs,
@@ -43,7 +43,7 @@ def add_commands(commands: argparse._SubParsersAction[argparse.ArgumentParser]) 
         prepare.add_argument("--" + name, type=Path)
     prepare.add_argument("--revision")
     prepare.add_argument("--online", action="store_true")
-    for action in ("resume", "replay"):
+    for action in ("resume", "replay", "reassess"):
         command = actions.add_parser(
             action, help="Create a new attempt from verified predecessor inputs"
         )
@@ -128,16 +128,20 @@ def execute(args: argparse.Namespace) -> None:
             offline=not args.online,
         )
         result = {"status": "prepared", "run": str(run), "published": False}
-    elif action in {"resume", "replay"}:
+    elif action in {"resume", "replay", "reassess"}:
         previous = args.predecessor.resolve()
         if previous.parent.name != "runs":
             raise ValueError("Resume from the original store/runs attempt")
-        options = resume_options(
-            previous,
-            identity(),
-            replay=action == "replay",
-            online=getattr(args, "online", False),
-            input_locations=locations,
+        options = (
+            reassess_options(previous, input_locations=locations)
+            if action == "reassess"
+            else resume_options(
+                previous,
+                identity(),
+                replay=action == "replay",
+                online=getattr(args, "online", False),
+                input_locations=locations,
+            )
         )
         run = prepare_update(previous.parent.parent, implementation=identity, **options)
         result = {

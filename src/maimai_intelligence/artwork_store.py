@@ -5,13 +5,14 @@ import io
 import warnings
 from copy import deepcopy
 from pathlib import Path
+from typing import Any
 
 from .coverage_types import CaptureError, Failure, FailureKind
 from .enrichment import select_artwork
 from .snapshots import atomic_json, digest, read_json
 
 
-def verify_asset(root, path, asset):
+def verify_asset(root: Path | str, path: str, asset: dict[str, Any]) -> bytes:
     if path != "media/" + asset.get("sha256", "") + ".webp":
         raise ValueError("Invalid persistent asset path")
     with (Path(root) / path).open("rb") as stream:
@@ -143,12 +144,19 @@ def thumbnail(raw, config):
     return converted, dimensions
 
 
-def put_asset(raw, metadata, root, evidence, *, policy, config, codec):
+def put_asset(raw, metadata, root, evidence, *, policy, config, codec, producer=None):
     if metadata["sha256"] in config["placeholder_sha256"]:
         raise CaptureError(
             Failure(FailureKind.UNSUPPORTED, "Recognized generic artwork placeholder")
         )
-    key = digest({"source": metadata["sha256"], "policy": policy, "conversion": config})
+    key = digest(
+        {
+            "source": metadata["sha256"],
+            "policy": policy,
+            "conversion": config,
+            **({"producer": producer} if producer is not None else {}),
+        }
+    )
     conversion = Path(root) / "conversions" / (key + ".json")
     if conversion.exists():
         selection = read_json(conversion)

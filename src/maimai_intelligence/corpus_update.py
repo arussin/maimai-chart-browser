@@ -388,6 +388,7 @@ def prepare_update(
                         "offline": offline,
                         "coverage_reviews": coverage_reviews,
                         "reassess_captured_policy": reassess_captured_policy,
+                        "replay_sources": replay_sources,
                         "capacity_review": capacity_review,
                         "capacity_sha256": capacity_sha256,
                         "player_maishift": player_maishift,
@@ -570,6 +571,9 @@ def _prepare_registry(
     coverage_work = None
     if replay_sources:
         accepted = replay_checkpoint_start(coverage_root, accepted, replay_sources)
+        if reassess_captured_policy:
+            # Verify the store's current checkpoint for ancestry, not as recomputed output.
+            _, coverage_parent = restore_checkpoint(coverage_root, coverage_base, coverage_policy)
     else:
         accepted, coverage_parent = restore_checkpoint(coverage_root, accepted, coverage_policy)
         if coverage_parent:
@@ -593,7 +597,7 @@ def _prepare_registry(
 
     write_registry(accepted, run / "registry")
     atomic_json(run / "source-captures.json", shared_capture.receipt())
-    if not offline and not replay_sources:
+    if (not offline and not replay_sources) or reassess_captured_policy:
         checkpoint = commit_checkpoint(
             coverage_root,
             coverage_base,

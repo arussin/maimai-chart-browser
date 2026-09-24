@@ -30,6 +30,7 @@ handoff; it does not claim every upstream corpus stage has finished its type mig
 maimai-chart corpus prepare --store CACHE/updates --previous-browser RETAINED/browser --previous-public RETAINED/public --registry ACCEPTED/registry --package RETAINED/package --reviews config/coverage-reviews.json
 maimai-chart corpus resume --from CACHE/updates/runs/ATTEMPT
 maimai-chart corpus replay --from CACHE/updates/runs/ATTEMPT
+maimai-chart corpus reassess --from CACHE/updates/runs/ATTEMPT
 maimai-chart corpus inspect --run CACHE/updates/runs/ATTEMPT
 maimai-chart corpus inspect --registry RETAINED/registry --workbench CACHE/review/registry.html
 maimai-chart corpus inspect --run CACHE/updates/runs/ATTEMPT --identity song:CANONICAL-ID
@@ -42,7 +43,7 @@ Use the approved per-project DevCache locations on Windows. `prepare` and `resum
 
 Owner-script attempts also bind the compiler, configuration, registry seed and policy files in their source checkout. Use `--source-root EXACT/producer/checkout` with `resume`, `replay` or `verify` for these attempts. The installed command and owner wrapper calculate that identity through the same packaged service. Omitting the checkout does not downgrade the check; a mismatching packaged identity is rejected. Attempts created by the installed command require no source checkout.
 
-Each attempt records exact input inventories and a predecessor reference. Resume creates a new attempt; it never edits its predecessor. Changed inputs, changed producer policy, stale review assertions, or tampered receipts block reuse. A policy change requires a new preparation or the existing explicitly reviewed capture-reassessment workflow. A completed coverage checkpoint remains usable even when packaging or the 20,000-file publication guard subsequently fails. Neither a checkpoint nor `corpus verify` advances publication pointers.
+Each attempt records exact input inventories and a predecessor reference. Resume creates a new attempt; it never edits its predecessor. Changed inputs, changed producer policy, stale review assertions, or tampered receipts block reuse. A policy change requires a new preparation or explicit `corpus reassess` of verified retained evidence. A completed coverage checkpoint remains usable even when packaging or the 20,000-file publication guard subsequently fails. Neither a checkpoint nor `corpus verify` advances publication pointers.
 
 After restoring inputs on another machine, `resume`, `replay`, and `verify` accept repeated `--input NAME=PATH` arguments. For example:
 
@@ -97,3 +98,48 @@ Canonical view identity excludes operational timestamps, durations and stage sta
 `python scripts/check_corpus_boundaries.py` runs strict mypy checks at the extracted corpus and preparation surfaces, then measures each extracted pure decision module independently and requires at least 95% branch coverage. Other legacy Python internals are not claimed to be fully type checked. Invariant tests enumerate every source-mode combination and reject changed base/policy/review reuse. Offline integration tests exercise interruption, resumption, tampering, immutable publication state, and safe workbench rendering.
 
 The gate uses pinned development-only mypy and coverage packages; the application still has no new runtime dependency. Existing whole-system, contract, browser, visual and reproducibility acceptance remains required before release.
+
+
+## Reassessment after code changes
+
+`corpus reassess --from STORE/runs/ATTEMPT` is a new offline attempt, not permission to
+resume old computed decisions under a new producer name. It verifies the predecessor
+receipt and unchanged complete input inventories, preserves the old implementation and
+review assertions in the old receipt, and records `operation: reassess` with its hash in
+the new predecessor reference. `resume` and `replay` still require the same implementation.
+Input locations may be restored with the same `--input NAME=PATH` options. For an owner
+attempt, `--source-root` must identify the current executing producer checkout, not an old
+checkout supplied merely to satisfy a historical hash. It does not choose or load code.
+
+Legacy package preparation recomputes from its bound package/snapshot and preserves its
+recorded capture timestamp. Registry preparation verifies the completed candidate or
+independent coverage checkpoint, all retained capture blobs, and accepted artwork before
+recomputation. Even captures the new code never requests must pass their recorded hashes.
+Capture URL bindings, coverage receipts, checkpoint files and policy references are checked.
+The input check grants no publication authority and does not verify an old site's output
+as a current candidate. `corpus verify` retains its strict producer/candidate checks.
+
+Registry reassessment uses the original captured work set, observation time, reviews and
+starting registry. It recomputes using the current policy and records `reassessment_of`
+in its coverage input receipt. Changed input inventories, changed reviews, missing/tampered
+evidence, an incompatible intermediate starting registry or requests for uncaptured URLs
+block it. This is deliberately not arbitrary changed-base migration or online acquisition.
+Changes requiring new evidence need a separate explicit preparation.
+
+Reassessed coverage receives its own checkpoint before rendering. A rendering/capacity
+failure preserves that completed coverage, and a later offline `resume` or `replay` under
+the same producer can recover it. No command advances publication pointers. Artwork
+conversion cache keys now include the coverage producer identity; old conversion receipts
+remain intact, and a changed producer cannot reuse them as new conversions. Verified
+accepted artwork keeps its existing selection/provenance and is not replaced automatically.
+
+For offline recovery, retain exact bound inputs and the attempt's receipt files, immutable
+capture blobs under `cache/waterfall/sources/blobs`, checkpoint directories under
+`cache/coverage/checkpoints`, and their verified `cache/coverage/media` assets. These are
+evidence despite the historical `cache` directory name. Mutable URL/conversion indexes
+and derived browser/package/public output are not prerequisites for replay. Recovery
+tests restore these records into a different temporary store, remove the original tree,
+block sockets and compare complete generated public inventories. They also verify warm
+conversion invalidation, tampering, checkpoint survival and resumption after render failure.
+This proves a controlled fictional registry/package path on Windows, not a full-corpus
+backup, revision-download recovery, canonical Linux reproduction or power-loss durability.

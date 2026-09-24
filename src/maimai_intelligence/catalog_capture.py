@@ -99,7 +99,7 @@ class CaptureStore:
         self.memo = {}
         self.last_requests = {}
 
-    def _read(self, record):
+    def verify_record(self, record: dict[str, Any]) -> bytes:
         digest, size = record["sha256"], record["bytes"]
         if not re.fullmatch(r"[a-f0-9]{64}", digest) or not 0 < size <= MAX_CAPTURE_BYTES:
             raise IntegrityError("Invalid cached source identity or size")
@@ -157,12 +157,12 @@ class CaptureStore:
                 record = self.replay.get(url) if self.replay is not None else previous
                 if not record or record.get("url") != url:
                     raise IntegrityError("No retained capture for offline source")
-                raw = self._read(record)
+                raw = self.verify_record(record)
             else:
                 headers = {}
                 if previous:
                     # Never trust a 304 until the retained bytes have been verified.
-                    self._read(previous)
+                    self.verify_record(previous)
                     for field, header in (
                         ("etag", "If-None-Match"),
                         ("last_modified", "If-Modified-Since"),
@@ -198,7 +198,7 @@ class CaptureStore:
                                 FailureKind.SCHEMA, "Source returned 304 without a retained capture"
                             )
                         )
-                    record, raw = previous, self._read(previous)
+                    record, raw = previous, self.verify_record(previous)
                 elif status == 200 and 0 < len(raw) <= MAX_CAPTURE_BYTES:
                     digest = hashlib.sha256(raw).hexdigest()
                     response_headers = {k.lower(): v for k, v in response_headers.items()}
@@ -218,7 +218,7 @@ class CaptureStore:
                         with blob.open("xb") as stream:
                             stream.write(raw)
                     else:
-                        self._read(record)
+                        self.verify_record(record)
                     atomic_json(pointer, record)
                 else:
                     raise CaptureError(

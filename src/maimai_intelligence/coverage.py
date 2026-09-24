@@ -85,10 +85,19 @@ def _state(path):
     return migrate_work(read_json(path)) if path.exists() else empty_work()
 
 
-def _put_asset(raw, metadata, root, evidence, *, policy=POLICY):
+def _put_asset(raw, metadata, root, evidence, *, policy=POLICY, producer=None):
     from .artwork_store import put_asset
 
-    return put_asset(raw, metadata, root, evidence, policy=policy, config=CONFIG, codec=thumbnail)
+    return put_asset(
+        raw,
+        metadata,
+        root,
+        evidence,
+        policy=policy,
+        config=CONFIG,
+        codec=thumbnail,
+        producer=producer,
+    )
 
 
 def _queue(value, state, now, official_index=None):
@@ -216,12 +225,12 @@ def coverage_changes(before, after):
     return result
 
 
-def _prepare_song(sid, song, job, official, capture, root, sources, wiki):
+def _prepare_song(sid, song, job, official, capture, root, sources, wiki, producer):
     old = deepcopy(song.get("enrichment", {}).get("artwork", {}).get("selected", {}))
     accepted, failures = [], []
 
     def put(raw, metadata, evidence):
-        return _put_asset(raw, metadata, root, evidence)
+        return _put_asset(raw, metadata, root, evidence, producer=producer)
 
     for region, candidate in official.items():
         evidence = {"song_id": sid, "region": region, **candidate}
@@ -402,7 +411,15 @@ def prepare_coverage(
     for sid in selected:
         song, job = result["songs"][sid], state["jobs"][sid]
         status, failures, performed = _prepare_song(
-            sid, song, job, official.get(sid, {}), capture, root, sources, wiki
+            sid,
+            song,
+            job,
+            official.get(sid, {}),
+            capture,
+            root,
+            sources,
+            wiki,
+            producer["policy_sha256"],
         )
         complete_job(state, sid, status=status, failures=failures, now=now, performed=performed)
         errors = [f.message for f in failures]

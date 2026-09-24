@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import Literal
+from typing import Literal, cast
 
 from .corpus_failures import CorpusInputError
 
@@ -40,17 +40,29 @@ class ReuseIdentity:
     implementation: str
     reviews: str
 
-    def require_equal(self, current: ReuseIdentity) -> None:
+    def require_evidence(self, current: ReuseIdentity) -> None:
         if self.inputs != current.inputs:
             raise CorpusInputError(
                 "Retained inputs changed; prepare a new base instead of reusing this attempt"
             )
+        if self.reviews != current.reviews:
+            raise CorpusInputError("Review assertions changed; prepare with freshly bound reviews")
+
+    def require_equal(self, current: ReuseIdentity) -> None:
+        self.require_evidence(current)
         if self.implementation != current.implementation:
             raise CorpusInputError(
                 "Preparation policy changed; explicitly prepare or reassess retained captures"
             )
-        if self.reviews != current.reviews:
-            raise CorpusInputError("Review assertions changed; prepare with freshly bound reviews")
+
+
+ReuseOperation = Literal["resume", "replay", "reassess"]
+
+
+def reuse_operation(value: str) -> ReuseOperation:
+    if value in ("resume", "replay", "reassess"):
+        return cast(ReuseOperation, value)
+    raise CorpusInputError("Unknown attempt continuation operation")
 
 
 @dataclass(frozen=True)

@@ -39,6 +39,7 @@ files = [
   "src/maimai_intelligence/corpus_explain.py",
   "src/maimai_intelligence/corpus_diagnostics.py",
   "src/maimai_intelligence/corpus_attempts.py",
+  "src/maimai_intelligence/corpus_evidence.py",
   "src/maimai_intelligence/corpus_update.py",
   "src/maimai_intelligence/corpus_cli.py",
   "src/maimai_intelligence/corpus_workbench.py",

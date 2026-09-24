@@ -82,7 +82,7 @@ class CoverageBoundaryTests(unittest.TestCase):
         store = CaptureStore(self.root, fetcher=Mock(side_effect=AssertionError("no request")))
         for error in (TypeError("reader defect"), KeyError("reader defect")):
             with self.subTest(error=type(error).__name__):
-                with patch.object(store, "_read", side_effect=error):
+                with patch.object(store, "verify_record", side_effect=error):
                     with self.assertRaises(type(error)) as caught:
                         store.get(url)
                 self.assertIs(caught.exception, error)
