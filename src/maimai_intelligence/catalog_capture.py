@@ -150,9 +150,12 @@ class CaptureStore:
             self.wiki_requests.add(url)
         pointer = self.root / "urls" / (hashlib.sha256(url.encode()).hexdigest() + ".json")
         try:
-            previous = read_json(pointer) if pointer.exists() else None
-            if previous and previous.get("url") != url:
-                raise IntegrityError("Cached source URL mismatch")
+            previous = None
+            # Exact replay owns its capture selection; mutable indexes are disposable.
+            if not self.offline or self.replay is None:
+                previous = read_json(pointer) if pointer.exists() else None
+                if previous and previous.get("url") != url:
+                    raise IntegrityError("Cached source URL mismatch")
             if self.offline:
                 record = self.replay.get(url) if self.replay is not None else previous
                 if not record or record.get("url") != url:

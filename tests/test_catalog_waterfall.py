@@ -79,6 +79,67 @@ class CaptureTests(unittest.TestCase):
                 first.get("https://example.com/arbitrary")
 
 
+class ReplayCaptureTests(unittest.TestCase):
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.root = Path(self.temp.name)
+        self.url = METADATA_URLS["mai-notes"]
+        store = CaptureStore(self.root, fetcher=lambda *_: (200, b"fixture", {}))
+        self.expected = store.get(self.url)
+        self.receipt = self.root / "receipt.json"
+        atomic_json(self.receipt, store.receipt())
+        self.pointer = (
+            self.root / "urls" / (hashlib.sha256(self.url.encode()).hexdigest() + ".json")
+        )
+
+    def test_exact_replay_ignores_damaged_mutable_index(self):
+        for contents in ("{", '{"url":"https://example.invalid/"}'):
+            with self.subTest(contents=contents):
+                self.pointer.write_text(contents)
+                store = CaptureStore(self.root, offline=True, replay=self.receipt)
+                with patch("socket.socket", side_effect=AssertionError("Network forbidden")):
+                    self.assertEqual(store.get(self.url), self.expected)
+                self.assertEqual(self.pointer.read_text(), contents)
+
+    def test_exact_replay_reads_no_mutable_index(self):
+        store = CaptureStore(self.root, offline=True, replay=self.receipt)
+        with patch(
+            "maimai_intelligence.catalog_capture.read_json",
+            side_effect=AssertionError("Mutable index must not be read"),
+        ):
+            self.assertEqual(store.get(self.url), self.expected)
+
+    def test_exact_replay_does_not_fall_back_to_cache(self):
+        for captures in ({}, {self.url: {**self.expected[1], "url": "https://example.invalid/"}}):
+            with self.subTest(captures=captures):
+                atomic_json(self.receipt, {"captures": captures})
+                store = CaptureStore(self.root, offline=True, replay=self.receipt)
+                with self.assertRaisesRegex(IntegrityError, "No retained capture"):
+                    store.get(self.url)
+
+    def test_exact_replay_still_verifies_blob_integrity(self):
+        blob = self.root / "blobs" / self.expected[1]["sha256"]
+        for contents in (b"altered", b""):
+            with self.subTest(contents=contents):
+                blob.write_bytes(contents)
+                store = CaptureStore(self.root, offline=True, replay=self.receipt)
+                with self.assertRaisesRegex(IntegrityError, "integrity"):
+                    store.get(self.url)
+
+    def test_cached_reads_still_validate_mutable_index(self):
+        for offline in (True, False):
+            for contents in ("{", '{"url":"https://example.invalid/"}'):
+                with self.subTest(offline=offline, contents=contents):
+                    self.pointer.write_text(contents)
+                    store = CaptureStore(self.root, offline=offline)
+                    with (
+                        patch("socket.socket", side_effect=AssertionError("Network forbidden")),
+                        self.assertRaises((json.JSONDecodeError, IntegrityError)),
+                    ):
+                        store.get(self.url)
+
+
 class WaterfallTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
