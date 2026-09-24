@@ -3,12 +3,15 @@ import { createUsage } from './usage';
 import { NavigationCoordinator } from './runtime/navigation';
 import type { Application } from './application';
 import type { LocalizationPort } from './runtime/contracts';
+import { documentResources } from './runtime/browser-resources';
 export const usage = createUsage();
+const resources = documentResources(document);
 let localization: LocalizationPort | undefined, application: Promise<Application> | undefined;
 export function loadApplication(): Promise<Application> {
   return (application ??= import('./application').then(({ createApplication }) =>
     createApplication({
       usage,
+      resources,
       navigation,
       onLocalization: (value) => {
         localization = value;
@@ -18,6 +21,7 @@ export function loadApplication(): Promise<Application> {
 }
 const navigation = new NavigationCoordinator({
   usage,
+  resources,
   localization: () => localization,
   loadBrowser: () => loadApplication().then((value) => value.browser),
 });

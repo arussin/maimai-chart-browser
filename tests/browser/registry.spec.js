@@ -1,3 +1,4 @@
+import {mockBrowserJSONResource} from './browser-configuration-fixture.mjs';
 import {test,expect} from './fixtures.js';
 
 // Existing control tests exercise the remembered-open state. Disclosure tests
@@ -329,7 +330,7 @@ for(const inventory of ['shared','legacy'])test('an unreviewed '+inventory+' cat
   data.navigation.genres.push({id:'sega:Future category',label:'Future category'});
   const bytes=Buffer.from(JSON.stringify(data)),sha=createHash('sha256').update(bytes).digest('hex');
   entry[reference]={path:'catalog-index/'+sha+'.json',sha256:sha,bytes:bytes.length};
-  await page.route('**/registry/manifest.json',route=>route.fulfill({json:manifest}));
+  await mockBrowserJSONResource(page,'catalog',()=>manifest);
   await page.route('**/registry/'+entry[reference].path,route=>route.fulfill({body:bytes,contentType:'application/json'}));
   await page.goto('/registry/?version=duplicate-genres-fixture');
   const messages={en:'This catalog contains an unrecognized genre and needs review.','zh-Hans':'此曲目目录包含未识别的曲风分类，需要审核。',ko:'이 곡 목록에 알 수 없는 장르가 포함되어 있어 검토가 필요합니다.',ja:'この楽曲カタログには未対応のジャンルが含まれているため、確認が必要です。'};
@@ -348,10 +349,7 @@ test('clean catalog URLs follow a changed manifest default on reload without acq
   await expect(page.locator('#catalog-count')).toHaveText('26 charts');
   expect(new URL(page.url()).searchParams.has('version')).toBe(false);
   await expect(page.locator('#filter-genre option[value="東方Project"]')).toHaveCount(0);
-  await page.route('**/registry/manifest.json',async route=>{
-    const response=await route.fetch(),manifest=await response.json();manifest.default='duplicate-genres-fixture';
-    await route.fulfill({response,json:manifest});
-  });
+  await mockBrowserJSONResource(page,'catalog',manifest=>({...manifest,default:'duplicate-genres-fixture'}));
   await page.reload();await expect(page.locator('#filter-genre option[value="東方Project"]')).toHaveCount(1);
   expect(new URL(page.url()).searchParams.has('version')).toBe(false);
 });

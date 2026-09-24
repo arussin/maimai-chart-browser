@@ -1,3 +1,4 @@
+import {mockBrowserConfiguration} from './browser-configuration-fixture.mjs';
 import {test,expect} from './fixtures.js';
 import {readFile} from 'node:fs/promises';
 import {gzipSync} from 'node:zlib';
@@ -8,7 +9,7 @@ async function boot(page){await page.goto('/lab/');await expect.poll(()=>page.ev
 async function prepare(context,{locale='en'}={}){
   await context.addInitScript(locale=>{localStorage.setItem('maimai-language-v1',locale);sessionStorage.setItem('maimai-announcement:player-import-sources-v1','seen');},locale);
   // The public asset is disabled. Only this synthetic harness enables it.
-  await context.route('**/browser-config.json*',async route=>{const response=await route.fetch();await route.fulfill({response,body:JSON.stringify({...await response.json(),features:{maishift:true}})});});
+  await mockBrowserConfiguration(context,configuration=>({...configuration,features:{...configuration.features,maishift:true}}));
   const state={calls:0,delay:null,profile:publicProfile(),tracks:tracks(),status:200,html:false};
   await context.route('**'+PATH,async route=>{
     state.calls++;if(state.delay)await state.delay();

@@ -1,3 +1,4 @@
+import {mockBrowserConfiguration} from './browser-configuration-fixture.mjs';
 import {test,expect} from './fixtures.js';
 test.beforeEach(async({fixtureOrigins})=>{for(const origin of ["https://public-report.example"])fixtureOrigins.synthetic(origin);});
 import {readFile} from 'node:fs/promises';
@@ -130,7 +131,7 @@ test('upstream throttling records backoff without replacing scores',async({page,
 
 test('announcement waits for a modal, shows once, replays, and survives Forget',async({page,context})=>{
   // Enable only the capability fixture. No production/debug switch is shipped.
-  await context.route('**/browser-config.json*',async route=>{const response=await route.fetch();await route.fulfill({response,body:JSON.stringify({...await response.json(),features:{maishift:true}})});});
+  await mockBrowserConfiguration(context,configuration=>({...configuration,features:{...configuration.features,maishift:true}}));
   await page.addInitScript(()=>document.addEventListener('DOMContentLoaded',()=>{const d=document.createElement('dialog');d.id='blocking-fixture';d.textContent='Fixture';document.body.append(d);d.showModal();},{once:true}));
   await boot(page);await expect(page.locator('.feature-announcement')).toBeHidden();expect(await page.evaluate(()=>localStorage.getItem('maimai-announcement:player-import-sources-v1'))).toBeNull();
   await page.evaluate(()=>document.getElementById('blocking-fixture').close());await expect(page.locator('.feature-announcement')).toBeVisible();expect(await page.evaluate(()=>document.activeElement.closest('.feature-announcement')===null)).toBe(true);
@@ -168,7 +169,7 @@ test('cancelled reads cannot clear the busy state of a newer import',async({page
 });
 
 test('announcement suppression falls back to the tab session when device preferences fail',async({page,context})=>{
-  await context.route('**/browser-config.json*',async route=>{const response=await route.fetch();await route.fulfill({response,body:JSON.stringify({...await response.json(),features:{maishift:true}})});});
+  await mockBrowserConfiguration(context,configuration=>({...configuration,features:{...configuration.features,maishift:true}}));
   await page.addInitScript(()=>{const set=Storage.prototype.setItem;Storage.prototype.setItem=function(key,value){if(this===localStorage&&key.startsWith('maimai-announcement:'))throw new DOMException('Storage unavailable','QuotaExceededError');return set.call(this,key,value);};});
   await boot(page);await expect(page.locator('.feature-announcement')).toBeVisible();await expect.poll(()=>page.evaluate(()=>sessionStorage.getItem('maimai-announcement:player-import-sources-v1'))).toBe('seen');await page.reload();await expect.poll(()=>page.evaluate(()=>!!window.maimaiPersonal)).toBe(true);await page.evaluate(()=>maimaiPersonal.ready);await expect(page.locator('.feature-announcement')).toBeHidden();
 });

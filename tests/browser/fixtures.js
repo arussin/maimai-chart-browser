@@ -6,11 +6,11 @@ export const test = isolated.extend({
  context: async ({context}, use) => {
   await context.addInitScript(mapping=>{
    addEventListener('DOMContentLoaded',async()=>{
-    const entry=document.querySelector('script[type=module][src*="browser-entry.js"]');if(!entry)return;
+    const entry=document.querySelector('script[data-maimai-browser]');if(!entry)return;
     const {usage}=await import(entry.src);Object.defineProperty(window,'maimaiUsage',{configurable:true,writable:true,value:usage});
    });
    addEventListener('maimai:browser-ready',async()=>{
-    const entry=document.querySelector('script[type=module][src*="browser-entry.js"]');if(!entry)return;
+    const entry=document.querySelector('script[data-maimai-browser]');if(!entry)return;
     const {loadApplication}=await import(entry.src),application=await loadApplication();
     for(const [name,key]of Object.entries(mapping))Object.defineProperty(window,name,{configurable:true,writable:true,value:application.services[key]});
    });

@@ -106,6 +106,8 @@ def _browser_assets(source: Path) -> dict[str, bytes]:
     )
     for name in ("browser-config.json", "browser-shell.html"):
         assets[name] = _read(source, name, 2 * 1024 * 1024)
+    if (source / "browser-resources.json").is_file():
+        assets["browser-resources.json"] = _read(source, "browser-resources.json", 16 * 1024)
     return assets
 
 
@@ -441,6 +443,7 @@ def _prepare_browser_shell(source: Path) -> dict[str, bytes]:
         b"/song-catalog/*\n  Cache-Control: public, max-age=31536000, immutable\n"
         b"/song-catalog-index/*\n  Cache-Control: public, max-age=31536000, immutable\n"
         b"/media/*\n  Cache-Control: public, max-age=31536000, immutable\n"
+        b"/browser-resources/*\n  Cache-Control: public, max-age=31536000, immutable\n"
         b"/browser/*\n  Cache-Control: no-cache\n"
         b"/browser-assets.json\n  Cache-Control: no-cache\n"
         b"/browser-config.json\n  Cache-Control: no-cache\n"
@@ -675,6 +678,9 @@ def _finalize_release_plan(
             "sha256": hashlib.sha256(ledger).hexdigest(),
             "bytes": len(ledger),
         }
+    from .browser_bundle import seal_browser_resources
+
+    pending = seal_browser_resources(pending, public_manifest)
     sizes = {name: len(raw) for name, raw in pending.items()}
     sizes["manifest.json"] = len(canonical(public_manifest)) + 1
     capacity_error = None

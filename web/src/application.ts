@@ -39,6 +39,7 @@ import { mountSongView } from './components/song-view';
 import { PublicReader, decodeJSON } from './runtime/verified-data';
 import type { NavigationCoordinator } from './runtime/navigation';
 import type { UsageAPI } from './usage';
+import type { BrowserResources } from './runtime/browser-resources';
 import type {
   BrowserPort,
   BrowserSnapshot,
@@ -57,15 +58,20 @@ export interface BrowserConfiguration {
 }
 export type Application = Awaited<ReturnType<typeof createApplication>>;
 export interface ApplicationOptions {
+  resources?: BrowserResources;
   configuration?: BrowserConfiguration;
   data?: PublicCatalog;
   usage: UsageAPI;
   navigation: NavigationCoordinator;
   onLocalization: (value: LocalizationPort) => void;
 }
-async function mountShell(reader: PublicReader): Promise<PageMetadata | undefined> {
+async function mountShell(
+  reader: PublicReader,
+  resources?: BrowserResources,
+): Promise<PageMetadata | undefined> {
   if (document.querySelector('main:not([data-seo-page])')) return;
-  const bytes = await reader.read('browser-shell.html', 2 * 1024 * 1024);
+  if (!resources) throw Error('Missing browser resources');
+  const bytes = await reader.verified(resources.shell);
   const parsed = new DOMParser().parseFromString(
     new TextDecoder('utf-8', { fatal: true }).decode(bytes),
     'text/html',
@@ -114,11 +120,15 @@ export async function createApplication(options: ApplicationOptions) {
         location.href,
       ),
     );
-  const metadata = await mountShell(reader),
+  const metadata = await mountShell(reader, options.resources),
     browserState = new BrowserState();
   const configuration =
     options.configuration ??
-    decodeJSON<BrowserConfiguration>(await reader.read('browser-config.json', 4 * 1024 * 1024));
+    decodeJSON<BrowserConfiguration>(await reader.verified(requiredResources().configuration));
+  function requiredResources(): BrowserResources {
+    if (!options.resources) throw Error('Missing browser resources');
+    return options.resources;
+  }
   const directSong = !!document.querySelector('body>main[data-seo-page="song"]');
   const readCatalog = () =>
     options.data
@@ -136,6 +146,7 @@ export async function createApplication(options: ApplicationOptions) {
           directSong
             ? document.querySelector<HTMLElement>('[data-song-id]')?.dataset.catalogSha256
             : undefined,
+          requiredResources().catalog,
         );
   const initialCatalog = directSong ? undefined : readCatalog();
   const localization = createLocalization({ root: document.body, configuration });

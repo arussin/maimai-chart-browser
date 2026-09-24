@@ -1,3 +1,4 @@
+import {mockBrowserJSONResource} from './browser-configuration-fixture.mjs';
 import {test,expect} from './fixtures.js';
 import {readFile} from 'node:fs/promises';
 import {gzipSync} from 'node:zlib';
@@ -140,7 +141,7 @@ test('stored PB gains a policy-exact catalog mapping without reimport or rewriti
     releases.push({...entry,version,sha256:part.sha256,path:'catalogs/'+part.sha256+'.json',parts:[part],startup_shared:reference(index,'catalog-index')});
   }
   let current='coverage-n';
-  await page.route('**/registry/manifest.json',route=>route.fulfill({contentType:'application/json',body:JSON.stringify({...manifest,default:current,releases})}));
+  await mockBrowserJSONResource(page,'catalog',()=>({...manifest,default:current,releases}));
   await page.route('**/registry/catalog-index/**',route=>{const path=new URL(route.request().url()).pathname.split('/registry/')[1];return assets.has(path)?route.fulfill({contentType:'application/json',body:assets.get(path)}):route.continue();});
   await page.goto('/registry/?search=ソテリア');await expect(page.locator('#catalog-count')).toHaveText('4 charts');
   const data=await readFile(new URL('../../output/reconciliation-fixture.json',import.meta.url));

@@ -227,7 +227,10 @@ class MaishiftPilotArtifactTests(unittest.TestCase):
             self.assertTrue(configuration["features"]["maishift"])
             for script in re.findall(r'<script[^>]+src="([^"?]+)', browser_html):
                 self.assertTrue((browser / script).is_file(), script)
-            self.assertIn('type="module" src="browser/browser-entry.js', browser_html)
+            graph = json.loads((browser / "browser-assets.json").read_text("utf-8"))
+            self.assertIn(
+                'type="module" data-maimai-browser src="' + graph["entries"]["hosted"], browser_html
+            )
             self.assertNotIn('src="usage.js', browser_html)
             self.assertNotIn('src="analytics.js', browser_html)
             self.assertNotIn('src="feature-announcements.js', browser_html)

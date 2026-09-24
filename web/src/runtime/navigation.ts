@@ -39,7 +39,12 @@ function replaceMetadata(values: Element[]) {
 /** Sole owner of browser history, route intent and committed page activation. */
 export class NavigationCoordinator {
   private readonly intent = new IntentScope();
-  private readonly reader = new PublicReader(new URL('/', location.href));
+  private readonly reader = new PublicReader(
+    new URL(
+      document.querySelector<HTMLMetaElement>('meta[name=maimai-browser-base]')?.content || '/',
+      location.href,
+    ),
+  );
   private browser: BrowserPort | undefined;
   private browserMain: HTMLElement | null = null;
   private routeView: HTMLElement | null = null;
@@ -103,8 +108,10 @@ export class NavigationCoordinator {
     window.dispatchEvent(new CustomEvent('maimai:navigation', { detail: { page } }));
   }
   private async ledger(): Promise<Ledger> {
+    const reference = this.ports.resources?.permalinks;
+    if (!reference) throw Error('Song routes are unavailable in this document');
     return (this.ledgerPromise ??= this.reader
-      .read('permalinks.json', 2 * 1024 * 1024)
+      .verified(reference)
       .then((bytes) => decodeJSON<Ledger>(bytes))
       .catch((error) => {
         this.ledgerPromise = undefined;
@@ -217,6 +224,12 @@ export class NavigationCoordinator {
       // Preserve the pressed target until pointer/key activation has dispatched its click.
       await this.interactionIdle;
       if (!operation.current()) return false;
+      const stylesheet = this.ports.resources?.seoStyle;
+      if (!this.routeView) {
+        if (!stylesheet) throw Error('Song styles are unavailable in this document');
+        await this.reader.verified(stylesheet, operation.signal);
+        if (!operation.current()) return false;
+      }
       this.browser = browser;
       this.browserMain ??= document.querySelector<HTMLElement>('main:not([data-seo-page])');
       if (!this.browserMain) return false;
@@ -227,7 +240,7 @@ export class NavigationCoordinator {
         this.browserMain.after(this.routeView);
         const style = document.createElement('link');
         style.rel = 'stylesheet';
-        style.href = '/seo-pages.css';
+        style.href = new URL(stylesheet!.path, this.reader.base).href;
         document.head.append(style);
       }
       browser.cancelRestoration();

@@ -1,3 +1,4 @@
+import {browserResourceURL} from './browser-configuration-fixture.mjs';
 import {readFile} from 'node:fs/promises';
 import {resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
@@ -45,7 +46,7 @@ test('About exposes credits and hides unconfigured support while preserving char
 });
 
 test('About links work even when the catalog cannot load',async({page})=>{
-  await page.route('**/manifest.json',route=>route.fulfill({status:503,body:'Unavailable'}));
+  await page.route(await browserResourceURL('catalog',{fixture:'progressive',mount:'/progressive/'}),route=>route.fulfill({status:503,body:'Unavailable'}));
   await page.goto('/progressive/?view=about');
   await expect(page.locator('#about')).toBeVisible();
   await expect(page.locator('#about h1')).toHaveText('About maimai.party');

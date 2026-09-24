@@ -1,4 +1,5 @@
 import type { UsageAPI } from '../usage';
+import type { BrowserResources } from './browser-resources';
 export type Locale = 'en' | 'ja' | 'ko' | 'zh-Hans';
 export type Tab = 'catalog' | 'patterns' | 'compare' | 'about';
 export type SortKey =
@@ -87,6 +88,7 @@ export interface PageMetadata {
   nodes: Element[];
 }
 export interface NavigationPorts {
+  resources?: BrowserResources;
   usage: UsageAPI;
   loadBrowser: () => Promise<BrowserPort>;
   localization: () => LocalizationPort | undefined;

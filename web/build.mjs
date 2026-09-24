@@ -60,7 +60,7 @@ await output(resolve(base, 'generated-assets.json'), JSON.stringify(compatibilit
 const manifest = {
   version: 1,
   tool: 'esbuild-0.28.2',
-  entries: { hosted: 'browser/browser-entry.js', offline: 'browser/browser-offline.js' },
+  entries: {},
   assets: {},
   replaces: [
     'settings-menu.js',
@@ -89,14 +89,28 @@ const hosted = await build({
   splitting: true,
   outdir: resolve(assets, 'browser'),
   chunkNames: '[name]-[hash]',
+  entryNames: '[name]-[hash]',
   metafile: true,
 });
 const offline = await build({
   ...common,
   entryPoints: [resolve(base, 'src/browser-offline.ts')],
   format: 'iife',
-  outfile: resolve(assets, 'browser/browser-offline.js'),
+  outdir: resolve(assets, 'browser'),
+  entryNames: '[name]-[hash]',
+  metafile: true,
 });
+for (const [kind, result, source] of [
+  ['hosted', hosted, 'browser-entry.ts'],
+  ['offline', offline, 'browser-offline.ts'],
+]) {
+  const expected = resolve(base, 'src', source);
+  const entries = Object.entries(result.metafile.outputs).filter(
+    ([, value]) => value.entryPoint && resolve(value.entryPoint) === expected,
+  );
+  if (entries.length !== 1) throw Error('Expected exactly one generated browser entry');
+  manifest.entries[kind] = relative(assets, resolve(entries[0][0])).replaceAll('\\', '/');
+}
 for (const file of [...hosted.outputFiles, ...offline.outputFiles]) {
   const path = relative(assets, file.path).replaceAll('\\', '/');
   manifest.assets[path] = digest(file.contents);

@@ -22,7 +22,10 @@ class LabTests(unittest.TestCase):
                 self.assertEqual(config["features"]["maishift"], enabled)
                 self.assertFalse(config["pilot"])
                 self.assertNotIn('src="maishift-browser-pilot.js', html)
-                self.assertIn('type="module" src="browser/browser-entry.js', html)
+                graph = json.loads((site / "browser-assets.json").read_text("utf-8"))
+                self.assertIn(
+                    'type="module" data-maimai-browser src="' + graph["entries"]["hosted"], html
+                )
                 self.assertNotIn('id="loaded-count"', html)
                 self.assertIn('class="catalog-heading-actions"', html)
 
@@ -44,7 +47,9 @@ class LabTests(unittest.TestCase):
             self.assertFalse(config["features"]["maishift"])
             self.assertFalse(config["pilot"])
             graph = json.loads((root / "site/browser-assets.json").read_text("utf-8"))
-            self.assertIn('type="module" src="' + graph["entries"]["hosted"], html)
+            self.assertIn(
+                'type="module" data-maimai-browser src="' + graph["entries"]["hosted"], html
+            )
             for path, reference in graph["assets"].items():
                 body = (root / "site" / path).read_bytes()
                 self.assertEqual(hashlib.sha256(body).hexdigest(), reference["sha256"])

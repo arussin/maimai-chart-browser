@@ -6,7 +6,7 @@ import json
 import shutil
 from pathlib import Path
 
-from maimai_intelligence.browser_bundle import read_browser_assets
+from maimai_intelligence.browser_bundle import read_browser_assets, seal_browser_resources
 from maimai_intelligence.overview_codec import compact_overview
 from maimai_intelligence.public_release import PUBLIC_FILES
 
@@ -59,14 +59,19 @@ def build_capacity_fixture(root: Path, count: int = 7000):
     (target / "catalogs").mkdir(exist_ok=True)
     path = f"catalogs/{digest}.json"
     (target / path).write_bytes(raw)
+    manifest = {
+        "schema_version": "1.0.0",
+        "default": "capacity-v1",
+        "releases": [{"version": "capacity-v1", "sha256": digest, "path": path}],
+    }
     (target / "manifest.json").write_text(
-        json.dumps(
-            {
-                "schema_version": "1.0.0",
-                "default": "capacity-v1",
-                "releases": [{"version": "capacity-v1", "sha256": digest, "path": path}],
-            }
-        ),
+        json.dumps(manifest),
         "utf-8",
     )
+    for name, body in seal_browser_resources(
+        {name: (target / name).read_bytes() for name in names}, manifest
+    ).items():
+        destination = target / name
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        destination.write_bytes(body)
     return {"charts": count, "bytes": len(raw)}

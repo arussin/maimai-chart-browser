@@ -30,7 +30,7 @@ export async function inspectArtifact(directory, expectedRuntime) {
   const root = await realpath(directory);
   const html = (await artifactFile(root, '/index.html')).bytes;
   const scripts = [...html.toString('utf8').matchAll(/<script\b[^>]*\bsrc=["']([^"']+)["']/g)].map(match => match[1]);
-  const modular = scripts.find(value => /(?:^|\/)browser-entry\.js(?:\?|$)/.test(value));
+  const modular = scripts.find(value => /(?:^|\/)browser-entry(?:-[A-Za-z0-9]+)?\.js(?:\?|$)/.test(value));
   const kind = modular ? 'modular' : 'legacy';
   if (kind !== expectedRuntime) throw Error(`Expected ${expectedRuntime} runtime at ${root}; found ${kind}`);
   const runtimeReference = modular || scripts.find(value => /(?:^|\/)lab-loader\.js(?:\?|$)/.test(value));
@@ -46,9 +46,27 @@ export async function inspectArtifact(directory, expectedRuntime) {
     lateURL = late.pathname + late.search;
   }
   const lateBytes = (await artifactFile(root, new URL(lateURL, reference).pathname)).bytes;
+  const boundResources = {};
+  const descriptor = html.toString('utf8').match(/<script\b(?=[^>]*\bid=["']browser-resources["'])[^>]*>([\s\S]*?)<\/script>/);
+  if (descriptor) {
+    const resources = JSON.parse(descriptor[1]);
+    if (resources.version !== 1) throw Error('Unknown browser resource descriptor');
+    for (const role of ['configuration', 'catalog', 'permalinks', 'styles', 'shell', 'seoStyle']) {
+      const item = resources[role];
+      if (!item) continue;
+      const url = new URL(item.path, 'http://artifact.invalid/');
+      if (url.origin !== 'http://artifact.invalid' || url.search || url.hash)
+        throw Error('Bound resource must be a local artifact path');
+      const bytes = (await artifactFile(root, url.pathname)).bytes;
+      if (sha256(bytes) !== item.sha256 || bytes.length !== item.bytes)
+        throw Error('Resource descriptor does not match actual artifact bytes: ' + role);
+      boundResources[role] = {lateURL: url.pathname, lateSha256: item.sha256};
+    }
+  }
   return {
     root, kind, htmlSha256: sha256(html), runtimeSha256: sha256(runtime.bytes),
     runtimeURL: reference.pathname + reference.search, lateURL, lateSha256: sha256(lateBytes),
+    boundResources,
   };
 }
 

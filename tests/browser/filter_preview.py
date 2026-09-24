@@ -16,7 +16,7 @@ previewStatus.style.cssText='margin:12px auto;max-width:1104px;padding:8px 16px;
   'background:#eaf5f5;color:#183b43';
 document.body.prepend(previewStatus);
 window.addEventListener('maimai:browser-ready',async()=>{
-  const entry=document.querySelector('script[type=module][src*="browser-entry.js"]');
+  const entry=document.querySelector('script[data-maimai-browser]');
   const {loadApplication}=await import(entry.src);
   const {services:{personal}}=await loadApplication();
   await personal.ready;

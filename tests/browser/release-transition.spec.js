@@ -67,7 +67,7 @@ async function boot(page, transition, kind) {
   await expect.poll(() => page.evaluate(() => !!globalThis.maimaiPersonal)).toBe(true);
   await page.evaluate(() => globalThis.maimaiPersonal.ready);
   await expect(page.locator('#songs .song-row').first()).toBeVisible({timeout: 45000});
-  await expect(page.locator('script[type=module][src*="browser-entry.js"]')).toHaveCount(kind === 'modular' ? 1 : 0);
+  await expect(page.locator('script[type=module][src*="/browser-entry"]')).toHaveCount(kind === 'modular' ? 1 : 0);
 }
 
 // Authored here, not read from any local player's exports. One retained play and
@@ -190,7 +190,7 @@ test('remembered fictional scores survive old/new/old with two live tabs and one
   expect(await stored(other)).toEqual(saved);
   await expect.poll(() => other.evaluate(() => globalThis.maimaiPersonal.enabled())).toBe(true);
   // The first tab still executes the old release while the second executes new.
-  await expect(page.locator('script[type=module][src*="browser-entry.js"]')).toHaveCount(0);
+  await expect(page.locator('script[type=module][src*="/browser-entry"]')).toHaveCount(0);
   expect(await stored(page)).toEqual(saved);
 
   transition.switchTo('rollback');
@@ -294,49 +294,91 @@ async function pauseAssetBeforeDispatch(page, url) {
   return {arrived, release};
 }
 
+async function retainDelayedRequest(page, transition, from, to, label, source) {
+  transition.switchTo(from);
+  const hold = await pauseAssetBeforeDispatch(page, transition.origin + source.lateURL);
+  const fetchResource = ['configuration', 'catalog', 'permalinks'].includes(label);
+  if (fetchResource) await page.addInitScript(expected => {
+    const original = window.fetch.bind(window);
+    window.fetch = (...args) => original(...args).then(response => {
+      if (response.url === expected) {
+        // Observe a clone of the actual application response. Chromium can lose
+        // its protocol response body when an early fetch straddles document
+        // initialization; do not replace that assertion with a second request.
+        void response.clone().arrayBuffer().then(async bytes => {
+          const hash = await crypto.subtle.digest('SHA-256', bytes);
+          window.releaseObservedFetch = {
+            status: response.status,
+            sha256: [...new Uint8Array(hash)].map(x => x.toString(16).padStart(2, '0')).join(''),
+          };
+        }).catch(error => { window.releaseObservedFetch = {error: error.message}; });
+      }
+      return response;
+    });
+  }, transition.origin + source.lateURL);
+  const document = page.goto(transition.origin + '/?view=catalog', {waitUntil: 'domcontentloaded'});
+  // Attach the rejection handler immediately; a broken transition must report
+  // its assertion rather than an unhandled navigation-promise rejection.
+  const navigation = document.then(() => null, error => error);
+  try {
+    await expect.poll(() => transition.requests.some(row => row.url === '/?view=catalog')).toBe(true);
+    if (label === 'permalinks') {
+      // Permalinks are intentionally lazy: chart expansion is the real action
+      // that requests this resource, rather than an artificial fixture fetch.
+      await expect(page.locator('#songs .song-row').first()).toBeVisible();
+      await page.locator('#songs .song-row').first().locator('.chart-row').first().click();
+    }
+    const arrival = await Promise.race([
+      hold.arrived,
+      new Promise((_, reject) => {
+        const timer = setTimeout(() => reject(Error('Actual late runtime request was never observed')), 15000);
+        timer.unref();
+      }),
+    ]);
+    expect(arrival.url).toBe(transition.origin + source.lateURL);
+    expect(transition.requests.some(row => row.url === source.lateURL)).toBe(false);
+    const lateResponse = page.waitForResponse(response =>
+      new URL(response.url()).pathname === new URL(source.lateURL, transition.origin).pathname,
+    );
+    transition.switchTo(to);
+    hold.release();
+    const response = await lateResponse;
+    expect(response.status(), `${label} lost ${source.lateURL}; the destination artifact lacks the open document's asset closure`).toBe(200);
+    expect(await navigation).toBeNull();
+    if (fetchResource) {
+      await expect.poll(() => page.evaluate(() => window.releaseObservedFetch), {
+        message: `${label} must deliver the original bytes to the actual application fetch`,
+      }).toEqual({status: 200, sha256: source.lateSha256});
+    } else {
+      expect(sha256(await response.body()), `${label} changed bytes behind an existing runtime URL`).toBe(source.lateSha256);
+    }
+    await expect.poll(() => page.evaluate(() => !!globalThis.maimaiPersonal)).toBe(true);
+    await page.evaluate(() => globalThis.maimaiPersonal.ready);
+    await expect(page.locator('#songs .song-row').first()).toBeVisible({timeout: 45000});
+    expect(transition.errors).toEqual([]);
+    expect(transition.requests.some(row => row.url === source.lateURL && row.startedAt === to && row.servedBy === to && row.status === 200)).toBe(true);
+  } finally {
+    hold.release();
+    // Let goto bind its document response before fixture teardown closes the
+    // context. Closing this page first races Playwright's response disposal
+    // and can replace the real missing-asset assertion with a protocol error.
+    await navigation;
+  }
+}
+
 for (const [from, to, label] of [
   ['baseline', 'candidate', 'promotion'],
   ['candidate', 'rollback', 'rollback'],
 ]) {
   test(`${label} retains exact late runtime bytes for a document already open before the switch`, async ({page, transition}) => {
-    const source = transition.artifacts[from];
-    transition.switchTo(from);
-    const hold = await pauseAssetBeforeDispatch(page, transition.origin + source.lateURL);
-    const document = page.goto(transition.origin + '/?view=catalog', {waitUntil: 'domcontentloaded'});
-    // Attach the rejection handler immediately; a broken transition must report
-    // its assertion rather than an unhandled navigation-promise rejection.
-    const navigation = document.then(() => null, error => error);
-    try {
-      await expect.poll(() => transition.requests.some(row => row.url === '/?view=catalog')).toBe(true);
-      const arrival = await Promise.race([
-        hold.arrived,
-        new Promise((_, reject) => {
-          const timer = setTimeout(() => reject(Error('Actual late runtime request was never observed')), 15000);
-          timer.unref();
-        }),
-      ]);
-      expect(arrival.url).toBe(transition.origin + source.lateURL);
-      expect(transition.requests.some(row => row.url === source.lateURL)).toBe(false);
-      const lateResponse = page.waitForResponse(response =>
-        new URL(response.url()).pathname === new URL(source.lateURL, transition.origin).pathname,
-      );
-      transition.switchTo(to);
-      hold.release();
-      const response = await lateResponse;
-      expect(response.status(), `${label} lost ${source.lateURL}; the destination artifact lacks the open document's asset closure`).toBe(200);
-      expect(sha256(await response.body()), `${label} changed bytes behind an existing runtime URL`).toBe(source.lateSha256);
-      expect(await navigation).toBeNull();
-      await expect.poll(() => page.evaluate(() => !!globalThis.maimaiPersonal)).toBe(true);
-      await page.evaluate(() => globalThis.maimaiPersonal.ready);
-      await expect(page.locator('#songs .song-row').first()).toBeVisible({timeout: 45000});
-      expect(transition.errors).toEqual([]);
-      expect(transition.requests.some(row => row.url === source.lateURL && row.startedAt === to && row.servedBy === to && row.status === 200)).toBe(true);
-    } finally {
-      hold.release();
-      // Let goto bind its document response before fixture teardown closes the
-      // context. Closing this page first races Playwright's response disposal
-      // and can replace the real missing-asset assertion with a protocol error.
-      await navigation;
-    }
+    await retainDelayedRequest(page, transition, from, to, label, transition.artifacts[from]);
+  });
+}
+
+for (const role of ['configuration', 'catalog', 'permalinks', 'styles']) {
+  test(`rollback retains the document-bound ${role} requested after switching`, async ({page, transition}) => {
+    const resource = transition.artifacts.candidate.boundResources[role];
+    expect(resource, 'The candidate must declare its complete immutable resource descriptor').toBeTruthy();
+    await retainDelayedRequest(page, transition, 'candidate', 'rollback', role, resource);
   });
 }

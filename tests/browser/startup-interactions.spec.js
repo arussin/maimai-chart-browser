@@ -1,3 +1,4 @@
+import {browserResourceURL} from './browser-configuration-fixture.mjs';
 import {test,expect} from './fixtures.js';
 
 test('settings and private import remain usable while the public catalog is delayed',async({page})=>{
@@ -26,7 +27,7 @@ test('a public catalog failure does not disable private imports or settings',asy
 
 
 test('catalog failure replaces loading and follows all four language choices',async({page})=>{
-  await page.route('**/manifest.json',route=>route.fulfill({status:503,body:'Fixture unavailable'}));
+  await page.route(await browserResourceURL('catalog',{fixture:'lab',mount:'/lab/'}),route=>route.fulfill({status:503,body:'Fixture unavailable'}));
   await page.goto('/lab/');
   const status=page.locator('#lab-status');
   await expect(status).toHaveAttribute('data-diagnostic','catalog_unavailable');

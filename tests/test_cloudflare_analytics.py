@@ -109,10 +109,18 @@ class CloudflareAnalyticsTests(unittest.TestCase):
             checkout_return = PagePolicy((published / "support-return.html").read_text("utf-8"))
             self.assertEqual(checkout_return.policies[0]["script-src"], ["'self'"])
             self.assertEqual(checkout_return.policies[0]["connect-src"], ["'self'"])
-            self.assertEqual(
-                checkout_return.scripts,
-                ["localization.js", "support-config.js", "support-client.js", "support-return.js"],
-            )
+            expected_scripts = []
+            for logical in (
+                "localization.js",
+                "support-config.js",
+                "support-client.js",
+                "support-return.js",
+            ):
+                original = (published / logical).read_bytes()
+                immutable = f"browser-resources/{hashlib.sha256(original).hexdigest()}.js"
+                self.assertEqual((published / immutable).read_bytes(), original)
+                expected_scripts.append(immutable)
+            self.assertEqual(checkout_return.scripts, expected_scripts)
             self.assertNotIn("support-worker", str(list(published.rglob("*"))))
             self.assertIn(
                 "Referrer-Policy: no-referrer", (published / "_headers").read_text("utf-8")

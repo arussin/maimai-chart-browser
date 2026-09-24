@@ -1,3 +1,4 @@
+import {browserResourceURL} from './browser-configuration-fixture.mjs';
 import os from 'node:os';
 import {readFile} from 'node:fs/promises';
 import {gzipSync} from 'node:zlib';
@@ -22,9 +23,10 @@ for(const locale of ['en','ja','ko','zh-Hans'])for(const width of [320,768,1280]
  test('existing detailed interactions '+locale+' '+width,async({page,baseURL,browser},testInfo)=>{
   await page.setViewportSize({width,height:900});await page.clock.setFixedTime(new Date('2026-09-22T12:00:00Z'));
   await page.addInitScript(()=>{localStorage.setItem('maimai-catalog-filters-collapsed','0');localStorage.setItem('maimai-personal-filters-collapsed','0');});
+  const routeResources=await Promise.all(['permalinks','seoStyle'].map(role=>browserResourceURL(role,{origin:baseURL})));
   await page.route('**/*',async route=>{
    const url=new URL(route.request().url());
-   if(url.origin===baseURL&&(/^\/(en|ja|ko|zh-hans)\//.test(url.pathname)||['/permalinks.json','/seo-pages.css'].includes(url.pathname))){const response=await route.fetch({url:baseURL+'/registry'+url.pathname+url.search});await route.fulfill({response});}
+   if(url.origin===baseURL&&(/^\/(en|ja|ko|zh-hans)\//.test(url.pathname)||routeResources.includes(url.href))){const response=await route.fetch({url:baseURL+'/registry'+url.pathname+url.search});await route.fulfill({response});}
    else await route.continue();
   });
   await page.goto('/registry/?search=ソテリア');await expect(page.locator('#songs .song-row')).toHaveCount(4);

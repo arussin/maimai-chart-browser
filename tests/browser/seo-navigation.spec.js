@@ -1,3 +1,4 @@
+import {browserResourceURL} from './browser-configuration-fixture.mjs';
 import {test,expect} from './fixtures.js';
 
 // Mount the synthetic release at the production root without external requests.
@@ -248,7 +249,7 @@ test('a delayed route ledger never steals focus after the user resumes typing',a
   const link=row.locator('a[data-song-page]');await expect(link).toBeVisible();await link.focus();await link.click();
   await expect(page.locator('#seo-route-view')).toBeVisible();await page.reload();
   let release;const gate=new Promise(resolve=>{release=resolve;});let waiting=false;
-  await page.route('**/permalinks.json',async route=>{waiting=true;await gate;await route.fallback();});
+  await page.route(await browserResourceURL('permalinks'),async route=>{waiting=true;await gate;await route.fallback();});
   await page.locator('[data-back-results]').click();await ready(page);await expect.poll(()=>waiting).toBe(true);
   await page.locator('#search').fill('ソテリア ');const scroll=await page.evaluate(()=>scrollY);
   release();await expect(page.locator('#songs a[data-song-page]').first()).toBeVisible();

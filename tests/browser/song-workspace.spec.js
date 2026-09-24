@@ -1,3 +1,4 @@
+import {browserResourceURL} from './browser-configuration-fixture.mjs';
 import {test,expect} from './fixtures.js';
 import {readFile} from 'node:fs/promises';
 import {gzipSync} from 'node:zlib';
@@ -80,7 +81,7 @@ test('song is usable before the comparison catalog is requested',async({page,req
  const catalogs=[];
  let release;
  const held=new Promise(resolve=>{release=resolve;});
- await page.route('**/manifest.json',async route=>{
+ await page.route(await browserResourceURL('catalog'),async route=>{
   catalogs.push(route.request().url());await held;await route.fallback();
  });
  await page.goto('/en/songs/'+encodeURIComponent(slug)+'/');
@@ -100,7 +101,7 @@ for (const failure of [false,true]) test('lazy comparison '+(failure?'failure pr
  const slug=Object.values(map.songs).find(value=>value.includes('ソテリア'));
  let release;
  const held=new Promise(resolve=>{release=resolve;});
- await page.route('**/manifest.json',async route=>{await held;if(failure)await route.fulfill({status:503,body:'unavailable'});else await route.fallback();});
+ await page.route(await browserResourceURL('catalog'),async route=>{await held;if(failure)await route.fulfill({status:503,body:'unavailable'});else await route.fallback();});
  await page.goto('/en/songs/'+encodeURIComponent(slug)+'/');
  await expect(page.locator('#seo-route-view .song-workspace')).toBeVisible();
  await page.locator('#seo-route-view .chart-detail-actions button').first().click();
@@ -121,7 +122,7 @@ for (const locale of ['en','ja','ko','zh-hans']) test('comparison recovers after
  const map=await(await request.get('/registry/permalinks.json')).json();
  const slug=Object.values(map.songs).find(value=>value.includes('ソテリア'));
  let requests=0;
- await page.route('**/manifest.json',async route=>{
+ await page.route(await browserResourceURL('catalog'),async route=>{
   requests++;
   if(requests===1) await route.fulfill({status:503,body:'unavailable'});
   else await route.fallback();
@@ -153,7 +154,7 @@ test('concurrent recovery shares acquisition and commits only the latest action'
  const slug=Object.values(map.songs).find(value=>value.includes('ソテリア'));
  let requests=0,release;
  const held=new Promise(resolve=>{release=resolve;});
- await page.route('**/manifest.json',async route=>{
+ await page.route(await browserResourceURL('catalog'),async route=>{
   requests++;
   if(requests===1) await route.fulfill({status:503,body:'unavailable'});
   else {await held;await route.fallback();}
@@ -210,7 +211,7 @@ test('About stays available and supersedes a pending comparison catalog',async({
  let release;
  const held=new Promise(resolve=>{release=resolve;});
  let requests=0;
- await page.route('**/manifest.json',async route=>{requests++;await held;await route.fallback();});
+ await page.route(await browserResourceURL('catalog'),async route=>{requests++;await held;await route.fallback();});
  await page.goto('/en/songs/'+encodeURIComponent(slug)+'/');
  await expect(page.locator('#seo-route-view .song-workspace')).toBeVisible();
  expect(requests).toBe(0);

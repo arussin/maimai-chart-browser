@@ -12,7 +12,7 @@ from pathlib import Path
 from maimai_analyzer.dataset import SOURCE_LOCK
 
 from .artwork import prepare_artwork
-from .browser_bundle import write_browser_assets
+from .browser_bundle import STATIC_RESOURCES, seal_browser_resources, write_browser_assets
 from .catalog_document import CatalogDocument, prepare_catalog_document
 from .catalog_preparation import prepare_catalog
 from .challenge_review import render_prepared_review
@@ -222,10 +222,28 @@ def build_browser(
     html = html.replace(
         "</head>",
         '<meta name="maimai-browser-base" content="./">'
-        + f'<script type="module" src="{bundle["entries"]["hosted"]}"></script></head>',
+        + '<script type="module" data-maimai-browser '
+        + f'src="{bundle["entries"]["hosted"]}"></script></head>',
     )
     atomic_write_text(root / "index.html", html)
     atomic_json(manifest_path, manifest)
+    names = {
+        *bundle["assets"],
+        "browser-assets.json",
+        "browser-config.json",
+        "browser-shell.html",
+        "index.html",
+        *(name for name in STATIC_RESOURCES if name != "seo-pages.css"),
+        "support.html",
+        "support-return.html",
+        *(f"player-import-help.{locale}.html" for locale in ("en", "zh-Hans", "ko", "ja")),
+    }
+    for name, raw in seal_browser_resources(
+        {name: (root / name).read_bytes() for name in names}, manifest
+    ).items():
+        destination = root / name
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        destination.write_bytes(raw)
     return BrowserBuild(root / "index.html", document)
 
 

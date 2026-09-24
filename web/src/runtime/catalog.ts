@@ -79,8 +79,13 @@ export async function loadCatalog(
   reader: PublicReader,
   requested: string | null,
   pinnedHash?: string,
+  manifestReference?: SingleVerifiedRef,
 ): Promise<LoadedCatalog> {
-  const manifest = decodeJSON<Manifest>(await reader.read('manifest.json', MiB));
+  const manifest = decodeJSON<Manifest>(
+    manifestReference
+      ? await reader.verified(manifestReference)
+      : await reader.read('manifest.json', MiB),
+  );
   const entry =
     Array.isArray(manifest.releases) &&
     manifest.releases.find((row) =>
