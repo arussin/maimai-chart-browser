@@ -1,4 +1,4 @@
-import model from '../../../src/maimai_intelligence/assets/public-routes.json';
+import model from '../../../src/maimai_intelligence/assets/public-routes.json' with { type: 'json' };
 const escaped = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 export const routePattern = new RegExp(
   '^/(' +

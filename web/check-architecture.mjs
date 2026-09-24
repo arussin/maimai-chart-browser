@@ -41,6 +41,9 @@ const pureDomains = new Set([
   'src/views/player-data-core.ts',
   'src/views/player-maishift.ts',
   'src/domain/challenge-matching.ts',
+  'src/runtime/recovery.ts',
+  'src/runtime/public-routes.ts',
+  '../src/maimai_intelligence/assets/public-routes.json',
 ]);
 for (const path of pureDomains)
   for (const dependency of graph.get(path) || []) {

@@ -1,4 +1,5 @@
 import { routePattern, publicPath } from './public-routes';
+import { recoveryTarget } from './recovery';
 import { diagnose, catalogFailure, catalogPending } from './diagnostics';
 import { IntentScope } from './intent';
 import { historyPort } from './history';
@@ -215,6 +216,36 @@ export class NavigationCoordinator {
         'text/html',
       );
       const content = parsed.querySelector<HTMLElement>('main[data-seo-page]');
+      const recovery = recoveryTarget(
+        {
+          markers: [
+            ...parsed.querySelectorAll<HTMLMetaElement>('meta[name=maimai-route-recovery]'),
+          ].map((marker) => ({
+            version: marker.content,
+            path: marker.dataset.path,
+            inHead: parsed.head.contains(marker),
+          })),
+          mainCount: parsed.querySelectorAll('main[data-seo-page]').length,
+          scriptCount: parsed.querySelectorAll('script').length,
+          // Inert template contents are outside document querySelectorAll. A
+          // recovery page is static and must not hide application markup there.
+          templateCount: parsed.querySelectorAll('template').length,
+          browserEntryCount: parsed.querySelectorAll('[data-maimai-browser]').length,
+          resourceDescriptorCount: parsed.querySelectorAll('#browser-resources').length,
+        },
+        url.pathname,
+        content?.dataset.seoPage,
+      );
+      if (recovery) {
+        // A delayed recovery response cannot replace a newer interaction. Static
+        // recovery preserves same-page fragments, but never carries query state.
+        await this.interactionIdle;
+        if (!operation.current()) return false;
+        const target = recovery + url.hash;
+        if (push) location.assign(target);
+        else location.replace(target);
+        return true;
+      }
       if (!content) throw Error('Public page unavailable');
       const browser = await this.ports.loadBrowser();
       if (!operation.current()) return false;

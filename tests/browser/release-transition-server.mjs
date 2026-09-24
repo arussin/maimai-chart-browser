@@ -46,7 +46,7 @@ export async function inspectArtifact(directory, expectedRuntime) {
     lateURL = late.pathname + late.search;
   }
   const lateBytes = (await artifactFile(root, new URL(lateURL, reference).pathname)).bytes;
-  const boundResources = {};
+  const boundResources = {}, publicRoutes = [];
   const descriptor = html.toString('utf8').match(/<script\b(?=[^>]*\bid=["']browser-resources["'])[^>]*>([\s\S]*?)<\/script>/);
   if (descriptor) {
     const resources = JSON.parse(descriptor[1]);
@@ -61,12 +61,25 @@ export async function inspectArtifact(directory, expectedRuntime) {
       if (sha256(bytes) !== item.sha256 || bytes.length !== item.bytes)
         throw Error('Resource descriptor does not match actual artifact bytes: ' + role);
       boundResources[role] = {lateURL: url.pathname, lateSha256: item.sha256};
+      if (role === 'permalinks') {
+        const ledger = JSON.parse(bytes);
+        for (const locale of ['en', 'ja', 'ko', 'zh-hans']) {
+          for (const kind of ['songs', 'versions']) {
+            for (const slug of Object.values(ledger[kind] || {})) {
+              const route = `/${locale}/${kind}/${encodeURIComponent(slug)}/`;
+              // This is explicit authored fixture discovery, not production closure inference.
+              await artifactFile(root, route);
+              publicRoutes.push(route);
+            }
+          }
+        }
+      }
     }
   }
   return {
     root, kind, htmlSha256: sha256(html), runtimeSha256: sha256(runtime.bytes),
     runtimeURL: reference.pathname + reference.search, lateURL, lateSha256: sha256(lateBytes),
-    boundResources,
+    boundResources, publicRoutes,
   };
 }
 

@@ -1,19 +1,20 @@
 /** Each extracted pure decision module must meet its own branch-coverage threshold. */
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-for (const name of [
-  'analysis-model',
-  'artwork',
-  'song-model',
-  'catalog-genres',
-  'challenge-matching',
+for (const [folder, name] of [
+  ['domain', 'analysis-model'],
+  ['domain', 'artwork'],
+  ['domain', 'song-model'],
+  ['domain', 'catalog-genres'],
+  ['domain', 'challenge-matching'],
+  ['runtime', 'recovery'],
 ]) {
   const result = spawnSync(
     process.execPath,
     [
       '--test',
       '--experimental-test-coverage',
-      `--test-coverage-include=**/domain/${name}.ts`,
+      `--test-coverage-include=**/${folder}/${name}.ts`,
       '--test-coverage-branches=95',
       `tests/${name}.test.mjs`,
     ],

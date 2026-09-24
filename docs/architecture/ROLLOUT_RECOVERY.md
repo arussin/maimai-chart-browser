@@ -59,53 +59,57 @@ the observation-receipt hash. Its inventory_match means only those expectations
 match. Callers must verify the observations and inventory. It does not establish
 headers, redirects, cache behavior, storage, Worker configuration or rollback safety.
 
-## Remaining finite route recovery
+## Finite route recovery and its limits
 
-The current miniature recovery package retains candidate song/version documents.
-Those still activate candidate code, so it demonstrates homepage composition,
-not recovery from a defect in the candidate application. Implement the following
-policy before calling the package a route-compatible recovery target:
+PreparedSEO records the exact emitted song/version routes, canonical chart IDs
+and source-document hashes during the maintained render pass. ReleasePlan keeps
+that private preparation result for recovery; no second catalog/SEO preparation
+is needed, and the public artifact does not contain the private result.
 
-1. Derive a finite recovery record for each actually emitted song/version route
-   from PreparedSEO and its validated ledger. Do not infer routes from arbitrary
-   filenames or assume every historical ledger entry has a current document.
-   Keep unknown paths as genuine 404s.
-2. Generate localized static recovery documents at those exact routes. Preserve
-   public song/chart facts, version song lists, artwork, canonical URLs and
-   reciprocal language links. Omit candidate application activation and remove
-   or disable controls that would otherwise be inert. This is an explicit
-   temporary reduction in interactivity during recovery.
-3. Bind browser links to the accepted baseline's real URL contract. The hotfix
-   loader consumes ?version= for a retained catalog; its browser resolves
-   ?view=catalog&chart= through canonical/legacy chart identities. Verify the
-   selected catalog contains each target before emitting that link. Candidate-only
-   or ambiguous identities remain static; never invent a fallback chart.
-4. Do not rely on ?release= or ?lang= to reproduce a version filter or locale in
-   the hotfix. Its version filter starts empty, and its locale comes from saved
-   preference or browser negotiation. Keep version recovery lists and localized
-   public information in the static documents rather than promising unsupported
-   old-browser behavior. Existing ordinary links can still open the baseline.
-5. Add a narrowly validated recovery marker that the navigation coordinator
-   recognizes before loading or constructing browser/song components. It should
-   perform one full navigation to the same known canonical recovery route, where
-   no candidate application activates. Validate route identity and marker shape;
-   preserve generation cancellation and same-origin/redirect restrictions.
-   Arbitrary missing or malformed pages must not become recovery instructions.
+The recovery adapter transforms those verified pages into localized static
+public documents. Facts, artwork, chart tables, version lists, canonical URLs
+and language alternatives remain. Scripts, application bindings and interactive
+controls are removed. Recovery documents prohibit scripts and connections and
+are noindex. Removing interactivity is an explicit temporary recovery behavior,
+not a change to the ordinary candidate experience.
 
-The marker must cover a direct-arrival song page paused before re-fetching itself.
-Currently ordinary pushed/restored route failures fall back to full navigation,
-whereas this self-fetch exception shows catalogFailure. Do not generalize all
-fetch failures into recovery or promise seamless transient-state restoration.
-An already-running tab may keep executing until a navigation or reload; retaining
-its resources and stopping new activation are separate requirements.
+The baseline catalog is decoded through the existing compatibility reader.
+Only exact canonical chart IDs present in its selected catalog receive links
+using the retained browser's actual `view`, `chart` and `version` parameters.
+Unmatched charts remain public information with a reason. The old browser does
+not implement `lang` or `release` parameters; no locale/filter equivalence is
+promised. Version pages retain their static song list rather than inventing an
+unsupported old-browser version filter.
 
-Test exact emitted/recovery route-set equality, all four languages, song and
-version direct arrivals with/without JavaScript, valid baseline chart/catalog
-links, candidate-only identities and unknown 404s. Assert no candidate activation
-on fresh recovery documents. Exercise paused self-fetch, song-to-song navigation,
-comparison loading, Back restoration, newer-intent cancellation, malformed markers
-and bounded navigation without loops. Validate _headers, _redirects, robots and
-sitemap ownership explicitly; preserving root bytes alone is insufficient.
+Private evidence binds the complete baseline and candidate inventory hashes,
+selected baseline catalog, verified styles, source-document hashes, decisions
+and resulting bytes. Explicit recovery ownership must replace exactly the
+candidate's emitted route documents. The planner rejects stale input inventories,
+missing or extra replacements and attempts to replace configuration or runtime
+files through this overlay. Assembly verifies detached bytes and writes its
+completion receipt last. Neither accepted artifact is patched in place.
+
+The navigation coordinator recognizes one narrowly validated static marker
+before loading browser/song components. It verifies the same canonical route
+and page kind and rejects application scripts, resources and hidden templates.
+A still-current intent performs a full same-origin navigation, including direct
+arrivals paused before their self-fetch. Query state is dropped; the same-page
+fragment is preserved. A newer interaction cancels the old intent. Ordinary
+missing or malformed documents retain their normal failure behavior; they are
+not generalized into recovery instructions. Unknown paths remain real 404s.
+
+Already-running tabs may execute until navigation or reload. Both immutable
+runtime closures remain available for their delayed requests; stopping fresh
+activation does not terminate code already in memory. The local three-engine
+rehearsal checks this separation with fictional data. Final results and failures
+belong in the source-bound acceptance receipt, not in an implied hosting claim.
+
+Before full release acceptance, verify exact emitted/recovery route equality,
+all four languages, both route kinds with and without JavaScript, exact retained
+chart links, candidate-only identities, unknown 404s, delayed self-fetch,
+comparison, Back restoration and newer-intent cancellation. Hosted `_headers`,
+`_redirects`, robots/sitemap ownership, caching and propagation remain separate
+gates; preserving root bytes or passing the local static server is insufficient.
 
 ## Same-origin rehearsal and operational sequence
 

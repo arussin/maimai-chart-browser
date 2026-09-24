@@ -382,3 +382,171 @@ for (const role of ['configuration', 'catalog', 'permalinks', 'styles']) {
     await retainDelayedRequest(page, transition, 'candidate', 'rollback', role, resource);
   });
 }
+
+function publicRoute(transition, locale = 'en', kind = 'songs') {
+  const path = transition.artifacts.candidate.publicRoutes.find(value => value.startsWith(`/${locale}/${kind}/`));
+  expect(path, 'The generated fictional corpus must contain this actual public route').toBeTruthy();
+  return path;
+}
+
+async function staticRecovery(page, path, kind = 'song') {
+  await expect(page.locator('meta[name="maimai-route-recovery"]')).toHaveAttribute('content', 'static-v1');
+  await expect(page.locator('meta[name="maimai-route-recovery"]')).toHaveAttribute('data-path', path);
+  await expect(page.locator(`main[data-seo-page="${kind}"]`)).toBeVisible();
+  await expect(page.locator('script')).toHaveCount(0);
+  await expect(page.locator('input,select,textarea,button,iframe')).toHaveCount(0);
+  await expect(page.locator('link[rel="alternate"]')).toHaveCount(5);
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', 'https://maimai.party' + path);
+}
+
+for (const javaScriptEnabled of [true, false]) {
+  test.describe('static recovery JavaScript ' + javaScriptEnabled, () => {
+    test.use({javaScriptEnabled});
+    for (const locale of ['en', 'ja', 'ko', 'zh-hans']) for (const kind of ['songs', 'versions']) {
+      test(`direct ${locale} ${kind} arrival never starts the rolled-back application`, async ({page, transition}) => {
+        const path = publicRoute(transition, locale, kind);
+        transition.switchTo('rollback');
+        const response = await page.goto(transition.origin + path);
+        expect(response.status()).toBe(200);
+        await staticRecovery(page, path, kind === 'songs' ? 'song' : 'version');
+        await expect(page.locator('html')).toHaveAttribute('lang', locale === 'zh-hans' ? 'zh-Hans' : locale);
+        const scripts = transition.requests.filter(row => /\.m?js(?:\?|$)/.test(row.url));
+        expect(scripts, 'Recovery arrivals must execute neither candidate nor baseline scripts').toEqual([]);
+        expect(transition.requests.filter(row => row.url === path)).toHaveLength(1);
+        expect(transition.errors).toEqual([]);
+      });
+    }
+  });
+}
+
+test('recovery preserves genuine unknown-route 404s', async ({page, transition}) => {
+  transition.switchTo('rollback');
+  const response = await page.goto(transition.origin + '/en/songs/never-published-fixture/');
+  expect(response.status()).toBe(404);
+  await expect(page.locator('meta[name="maimai-route-recovery"]')).toHaveCount(0);
+});
+
+async function holdRouteFetch(page, origin, path) {
+  let arrived, resume, finished;
+  const arrival = new Promise(resolve => { arrived = resolve; });
+  const release = new Promise(resolve => { resume = resolve; });
+  const settled = new Promise(resolve => { finished = resolve; });
+  page.on('requestfinished', request => { if (request.url() === origin + path && request.resourceType() === 'fetch') finished(); });
+  page.on('requestfailed', request => { if (request.url() === origin + path && request.resourceType() === 'fetch') finished(); });
+  await page.route(origin + path, async route => {
+    if (route.request().resourceType() !== 'fetch') return route.continue();
+    arrived();
+    await release;
+    await route.continue();
+  });
+  return {arrival, resume, settled};
+}
+
+test('recovery during a direct song self-fetch performs one full static navigation', async ({page, transition}) => {
+  const path = publicRoute(transition), hold = await holdRouteFetch(page, transition.origin, path);
+  transition.switchTo('candidate');
+  try {
+    await page.goto(transition.origin + path + '?ignored=fixture#chart-fixture', {waitUntil: 'domcontentloaded'});
+    await hold.arrival;
+    transition.switchTo('rollback');
+    hold.resume();
+    await staticRecovery(page, path);
+    expect(new URL(page.url()).search).toBe('');
+    expect(new URL(page.url()).hash).toBe('#chart-fixture');
+    const requests = transition.requests.filter(row => new URL(row.url, transition.origin).pathname === path);
+    expect(requests.map(row => row.servedBy)).toEqual(['candidate', 'rollback', 'rollback']);
+    expect(transition.errors).toEqual([]);
+  } finally { hold.resume(); }
+});
+
+async function songLink(page) {
+  const row = page.locator('#songs .song-row').first();
+  await row.locator('.chart-row').first().click();
+  const link = row.locator('a[data-song-page]');
+  await expect(link).toBeVisible();
+  return link;
+}
+
+for (const cancel of [false, true]) {
+  test(`late recovery ${cancel ? 'cannot override a newer tab choice' : 'replaces song soft navigation with a static arrival'}`, async ({page, transition}) => {
+    transition.switchTo('candidate');
+    await boot(page, transition, 'modular');
+    const link = await songLink(page), path = new URL(await link.getAttribute('href'), transition.origin).pathname;
+    const hold = await holdRouteFetch(page, transition.origin, path);
+    try {
+      await link.click();
+      await hold.arrival;
+      transition.switchTo('rollback');
+      if (cancel) {
+        await page.locator('#compare-tab').click();
+        await expect(page.locator('#compare')).toBeVisible();
+      }
+      hold.resume();
+      await hold.settled;
+      if (cancel) {
+        await expect(page.locator('#compare')).toBeVisible();
+        expect(new URL(page.url()).pathname).toBe('/');
+        await expect(page.locator('meta[name="maimai-route-recovery"]')).toHaveCount(0);
+      } else await staticRecovery(page, path);
+      expect(transition.errors).toEqual([]);
+    } finally { hold.resume(); }
+  });
+}
+
+test('Back restoration into recovery reloads the matching static song once', async ({page, transition}) => {
+  transition.switchTo('candidate');
+  await boot(page, transition, 'modular');
+  const link = await songLink(page), path = new URL(await link.getAttribute('href'), transition.origin).pathname;
+  await link.click();
+  await expect(page.locator('#seo-route-view .song-workspace')).toBeVisible();
+  // Tab choices replace their entry. A deliberate language change pushes a
+  // second song route, so Back actually restores the first song's entry.
+  await page.locator('.language-controls [data-language="ja"]:visible').first().click();
+  await expect(page).toHaveURL(transition.origin + path.replace('/en/', '/ja/'));
+  const hold = await holdRouteFetch(page, transition.origin, path);
+  try {
+    await page.goBack();
+    await hold.arrival;
+    transition.switchTo('rollback');
+    hold.resume();
+    await staticRecovery(page, path);
+    expect(transition.requests.filter(row => row.url === path && row.servedBy === 'rollback')).toHaveLength(2);
+    expect(transition.errors).toEqual([]);
+  } finally { hold.resume(); }
+});
+
+test('an already-open song can finish comparison after recovery using its immutable catalog', async ({page, transition}) => {
+  const path = publicRoute(transition), resource = transition.artifacts.candidate.boundResources.catalog;
+  const hold = await pauseAssetBeforeDispatch(page, transition.origin + resource.lateURL);
+  transition.switchTo('candidate');
+  try {
+    await page.goto(transition.origin + path);
+    await expect(page.locator('#seo-route-view .song-workspace')).toBeVisible();
+    await page.locator('#seo-route-view .chart-detail-actions button').first().click();
+    await hold.arrived;
+    transition.switchTo('rollback');
+    hold.release();
+    await expect(page.locator('#compare')).toBeVisible();
+    await expect(page.locator('#compare-left-search')).not.toHaveValue('');
+    expect(transition.requests.some(row => row.url === resource.lateURL && row.servedBy === 'rollback' && row.sha256 === resource.lateSha256)).toBe(true);
+    expect(transition.errors).toEqual([]);
+  } finally { hold.release(); }
+});
+
+test('static chart links enter the exact old chart and pinned retained catalog', async ({page, transition}) => {
+  const path = publicRoute(transition);
+  transition.switchTo('rollback');
+  await page.goto(transition.origin + path);
+  await staticRecovery(page, path);
+  const link = page.locator('.seo-table a[href*="chart="]').first();
+  const target = new URL(await link.getAttribute('href'), transition.origin);
+  expect([...target.searchParams.keys()].sort()).toEqual(['chart', 'version', 'view']);
+  expect(target.searchParams.get('version')).toBe('transition-fictional');
+  const chart = target.searchParams.get('chart');
+  await link.click();
+  await expect(page.locator('#songs .chart-pattern-detail').first()).toBeVisible();
+  expect(new URL(page.url()).searchParams.get('chart')).toBe(chart);
+  await expect(page.locator('script[type=module][data-maimai-browser]')).toHaveCount(0);
+  expect(transition.errors).toEqual([]);
+});
+
