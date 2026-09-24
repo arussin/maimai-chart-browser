@@ -21,6 +21,7 @@ from .artwork import MEDIA_PATH
 from .catalog_loading import MAX_CATALOG_BYTES
 from .corpus_attempts import bind_attempt
 from .corpus_diagnostics import Diagnostics
+from .corpus_failures import CorpusInputError
 from .corpus_policy import SourceSelection
 from .lab import build_browser
 from .mai_notes import MAX_INDEX_BYTES, download_index, prepare_links
@@ -310,9 +311,11 @@ def prepare_update(
 ) -> Path:
     implementation = implementation or implementation_hash
     if player_maishift is not None and type(player_maishift) is not bool:
-        raise ValueError("Maishift capability must be an explicit boolean")
+        raise CorpusInputError("Maishift capability must be an explicit boolean")
     if (capacity_review is None) != (capacity_sha256 is None):
-        raise ValueError("Capacity review and its explicitly reviewed SHA256 are required together")
+        raise CorpusInputError(
+            "Capacity review and its explicitly reviewed SHA256 are required together"
+        )
     store, previous_browser = Path(store).resolve(), Path(previous_browser).resolve()
     previous_public = Path(previous_public).resolve() if previous_public is not None else None
     SourceSelection(
@@ -336,19 +339,19 @@ def prepare_update(
         if value is not None and (
             Path(value).resolve() == store or store.is_relative_to(Path(value).resolve())
         ):
-            raise ValueError("Update store must not replace or sit inside an input directory")
+            raise CorpusInputError("Update store must not replace or sit inside an input directory")
     with writer_lock(store):
         run = store / "runs" / (datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ-") + uuid4().hex[:8])
         run.mkdir(parents=True)
         atomic_json(run / "state.json", {"status": "preparing"})
         diagnostics = Diagnostics(run)
         try:
-            capacity = (
-                stage_capacity_review(capacity_review, capacity_sha256, run / "capacity")
-                if capacity_review is not None
-                else None
-            )
             with diagnostics.stage("inputs") as counts:
+                capacity = (
+                    stage_capacity_review(capacity_review, capacity_sha256, run / "capacity")
+                    if capacity_review is not None
+                    else None
+                )
                 retained = _retain_public_inputs(
                     store, previous_browser, previous_public, replay_sources, player_maishift, run
                 )
@@ -371,27 +374,27 @@ def prepare_update(
                             "bound to its identities"
                         )
                     registry = seed
-            attempt = bind_attempt(
-                run,
-                {
-                    "previous_browser": previous_browser,
-                    "previous_public": retained.previous_public,
-                    "package": package,
-                    "revision": revision,
-                    "registry": registry,
-                    "artwork_cache": artwork_cache,
-                    "mai_notes_snapshot": mai_notes_snapshot,
-                    "overrides": overrides,
-                    "offline": offline,
-                    "coverage_reviews": coverage_reviews,
-                    "reassess_captured_policy": reassess_captured_policy,
-                    "capacity_review": capacity_review,
-                    "capacity_sha256": capacity_sha256,
-                    "player_maishift": player_maishift,
-                },
-                implementation(),
-                predecessor,
-            )
+                attempt = bind_attempt(
+                    run,
+                    {
+                        "previous_browser": previous_browser,
+                        "previous_public": retained.previous_public,
+                        "package": package,
+                        "revision": revision,
+                        "registry": registry,
+                        "artwork_cache": artwork_cache,
+                        "mai_notes_snapshot": mai_notes_snapshot,
+                        "overrides": overrides,
+                        "offline": offline,
+                        "coverage_reviews": coverage_reviews,
+                        "reassess_captured_policy": reassess_captured_policy,
+                        "capacity_review": capacity_review,
+                        "capacity_sha256": capacity_sha256,
+                        "player_maishift": player_maishift,
+                    },
+                    implementation(),
+                    predecessor,
+                )
             with diagnostics.stage("source_capture") as counts:
                 if package is None and revision is not None:
                     assert artwork_cache is not None
@@ -450,12 +453,15 @@ def prepare_update(
                     implementation,
                 )
                 receipt["attempt_sha256"] = attempt["sha256"]
-                atomic_json(run / "state.json", {"status": "ready"})
-                # Last write is the sole marker that a complete candidate can be published.
-                atomic_json(run / "ready.json", receipt)
+            atomic_json(run / "state.json", {"status": "ready"})
+            # Commit only after every required stage and diagnostic write has succeeded.
+            atomic_json(run / "ready.json", receipt)
             return run
-        except (Exception, KeyboardInterrupt, SystemExit):
-            atomic_json(run / "state.json", {"status": "failed"})
+        except BaseException as primary:
+            try:
+                atomic_json(run / "state.json", {"status": "failed"})
+            except BaseException:
+                BaseException.add_note(primary, "corpus.failure_state_record_failed")
             raise
 
 

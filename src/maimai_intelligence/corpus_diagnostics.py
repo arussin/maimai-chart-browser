@@ -9,8 +9,8 @@ from contextlib import contextmanager
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from .corpus_failures import diagnose_failure
 from .corpus_policy import Stage
-from .coverage_types import IntegrityError, ReviewError
 
 
 @dataclass
@@ -39,43 +39,42 @@ class Diagnostics:
         start = self.clock()
         counts = StageCounts()
         self._write({"stage": name, "outcome": "started"})
-        outcome, code, recovery = "complete", "ok", "none"
         try:
             yield counts
-        except (IntegrityError, ReviewError, ValueError):
-            outcome, code, recovery = (
-                "blocked",
-                "input_or_integrity",
-                "inspect_evidence_then_prepare",
-            )
+        except BaseException as primary:
+            diagnosis = diagnose_failure(primary)
+            try:
+                self._finish(
+                    name, counts, start, diagnosis.outcome, diagnosis.code, diagnosis.recovery
+                )
+            except BaseException:
+                BaseException.add_note(primary, "corpus.diagnostic_record_failed")
             raise
-        except OSError:
-            outcome, code, recovery = "failed", "local_io", "repair_storage_then_resume"
-            raise
-        except (KeyboardInterrupt, SystemExit):
-            outcome, code, recovery = "interrupted", "interrupted", "inspect_lock_then_resume"
-            raise
-        except Exception:
-            outcome, code, recovery = (
-                "failed",
-                "programming_error",
-                "repair_implementation_then_prepare",
-            )
-            raise
-        finally:
-            self._write(
-                {
-                    "stage": name,
-                    "source": "retained_corpus",
-                    "outcome": outcome,
-                    "code": code,
-                    "duration_ms": round(max(0, self.clock() - start) * 1000, 3),
-                    "counts": {
-                        "records": counts.records,
-                        "accepted": counts.accepted,
-                        "unresolved": counts.unresolved,
-                    },
-                    "evidence": counts.evidence,
-                    "retry": recovery,
-                }
-            )
+        else:
+            self._finish(name, counts, start, "complete", "ok", "none")
+
+    def _finish(
+        self,
+        name: Stage,
+        counts: StageCounts,
+        start: float,
+        outcome: str,
+        code: str,
+        recovery: str,
+    ) -> None:
+        self._write(
+            {
+                "stage": name,
+                "source": "retained_corpus",
+                "outcome": outcome,
+                "code": code,
+                "duration_ms": round(max(0, self.clock() - start) * 1000, 3),
+                "counts": {
+                    "records": counts.records,
+                    "accepted": counts.accepted,
+                    "unresolved": counts.unresolved,
+                },
+                "evidence": counts.evidence,
+                "retry": recovery,
+            }
+        )

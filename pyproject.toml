@@ -33,6 +33,7 @@ strict = true
 follow_imports = "silent"
 files = [
   "src/maimai_intelligence/corpus_policy.py",
+  "src/maimai_intelligence/corpus_failures.py",
   "src/maimai_intelligence/metadata_selection.py",
   "src/maimai_intelligence/metadata_policy.py",
   "src/maimai_intelligence/corpus_explain.py",

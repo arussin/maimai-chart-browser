@@ -65,9 +65,21 @@ def inspect_run(run: Path) -> dict[str, Any]:
         "version": "corpus-workbench-1",
         "canonical_sha256": digest(canonical),
         "canonical": canonical,
-        "operations": {"state": read_json(run / "state.json"), "stages": read_diagnostics(run)},
+        "operations": {"state": inspect_run_state(run), "stages": read_diagnostics(run)},
         "integrity": "inspection_only_use_corpus_verify",
     }
+
+
+def inspect_run_state(run: Path) -> dict[str, Any]:
+    """Reconcile advisory state with completion presence; verification is separate."""
+    state = read_json(run / "state.json")
+    present = (run / "ready.json").is_file()
+    recorded = state.get("status")
+    if recorded == "ready" and not present:
+        state = {**state, "status": "incomplete", "recorded_status": recorded}
+    elif recorded != "ready" and present:
+        state = {**state, "status": "inconsistent", "recorded_status": recorded}
+    return {**state, "candidate_receipt": "present_unverified" if present else "absent"}
 
 
 def diff_runs(before: Path, after: Path) -> dict[str, Any]:

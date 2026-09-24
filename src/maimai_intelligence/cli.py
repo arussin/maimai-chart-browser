@@ -161,6 +161,11 @@ def main(argv=None):
         return 0
     except (ValueError, OSError, KeyError, TypeError) as exc:
         print(f"Could not complete: {exc}", file=sys.stderr)
+        if args.command == "corpus":
+            from .corpus_failures import secondary_failure_codes
+
+            for code in secondary_failure_codes(exc):
+                print(f"Additional failure: {code}", file=sys.stderr)
         return 1
 
 

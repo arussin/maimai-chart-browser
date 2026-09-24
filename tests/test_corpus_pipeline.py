@@ -194,6 +194,10 @@ class CorpusPipelineTests(unittest.TestCase):
             "previous_browser": relocated / "browser",
             "mai_notes_snapshot": relocated / "links.json",
         }
+        # Remove the original fictional inputs: downstream consumers cannot fall back.
+        shutil.rmtree(self.package)
+        shutil.rmtree(self.browser)
+        self.snapshot.unlink()
         from maimai_intelligence.corpus_attempts import input_inventory
 
         old_paths = {self.package.resolve(), self.browser.resolve(), self.snapshot.resolve()}
@@ -257,7 +261,7 @@ class CorpusPipelineTests(unittest.TestCase):
 
     def test_failure_categories_abort_and_never_log_exception_messages(self):
         cases = [
-            (ValueError("secret"), "blocked"),
+            (ValueError("secret"), "failed"),
             (OSError("secret"), "failed"),
             (TypeError("secret"), "failed"),
             (KeyboardInterrupt("secret"), "interrupted"),

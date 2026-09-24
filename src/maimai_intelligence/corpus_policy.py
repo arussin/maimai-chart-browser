@@ -6,6 +6,8 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Literal
 
+from .corpus_failures import CorpusInputError
+
 
 @dataclass(frozen=True)
 class SourceSelection:
@@ -19,13 +21,17 @@ class SourceSelection:
 
     def validate(self) -> None:
         if (self.package and self.revision) or not (self.package or self.revision or self.registry):
-            raise ValueError("Choose an accepted package or an explicit reviewed source revision")
+            raise CorpusInputError(
+                "Choose an accepted package or an explicit reviewed source revision"
+            )
         if self.replay and (not self.offline or not self.registry):
-            raise ValueError("Source replay requires --offline and a registry")
+            raise CorpusInputError("Source replay requires --offline and a registry")
         if self.revision and not self.artwork_cache:
-            raise ValueError("Source updates require an artwork cache")
+            raise CorpusInputError("Source updates require an artwork cache")
         if self.offline and not self.retained_links and not self.registry:
-            raise ValueError("Offline preparation needs an explicit retained mai-notes snapshot")
+            raise CorpusInputError(
+                "Offline preparation needs an explicit retained mai-notes snapshot"
+            )
 
 
 @dataclass(frozen=True)
@@ -36,15 +42,15 @@ class ReuseIdentity:
 
     def require_equal(self, current: ReuseIdentity) -> None:
         if self.inputs != current.inputs:
-            raise ValueError(
+            raise CorpusInputError(
                 "Retained inputs changed; prepare a new base instead of reusing this attempt"
             )
         if self.implementation != current.implementation:
-            raise ValueError(
+            raise CorpusInputError(
                 "Preparation policy changed; explicitly prepare or reassess retained captures"
             )
         if self.reviews != current.reviews:
-            raise ValueError("Review assertions changed; prepare with freshly bound reviews")
+            raise CorpusInputError("Review assertions changed; prepare with freshly bound reviews")
 
 
 @dataclass(frozen=True)

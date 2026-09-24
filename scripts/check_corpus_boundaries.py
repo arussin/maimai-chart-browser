@@ -13,6 +13,7 @@ def main():
     environment = {**os.environ, "COVERAGE_FILE": str(output / ".coverage")}
     modules = (
         "corpus_policy",
+        "corpus_failures",
         "corpus_explain",
         "metadata_selection",
         "metadata_policy",
@@ -29,6 +30,7 @@ def main():
             "-m",
             "unittest",
             "tests.test_corpus_policy",
+            "tests.test_corpus_failures",
             "tests.test_song_catalog",
             "tests.test_song_content",
             "tests.test_song_bindings",

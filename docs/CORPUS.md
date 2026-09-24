@@ -56,6 +56,34 @@ New attempts also bind the legacy mai-notes snapshot timestamp once. Its provena
 
 An interrupted writer leaves its existing lease semantics intact. Inspect the process and `writer.lock` before owner recovery; no command silently breaks another writer's lock. Inspect `state.json`, `diagnostics.jsonl`, and the referenced evidence to locate the failed stage. Expected provider failures remain bounded outcomes in the capture and coverage receipts; integrity and programming failures stop the attempt.
 
+## Failure and completion semantics
+
+`ready.json` is written only after receipt preparation and required terminal diagnostics
+have succeeded. `state.json` remains an advisory operational record. A workbench view
+reports `incomplete` when advisory state says ready but the receipt is absent, and
+`inconsistent` when an existing receipt contradicts the recorded state. Receipt presence
+is explicitly unverified until `corpus verify` checks it; inspection never publishes.
+
+Explicit request/policy rejections use a ValueError-compatible `CorpusInputError`.
+Known integrity, review and snapshot errors remain blocked outcomes. Plain ValueError
+and other untyped exceptions stop preparation as `unclassified_error`, with investigation
+guidance. They may be programming failures or legacy validators; the diagnostic does not
+guess ownership from their class/message. Migrating all legacy validators is separate work.
+
+A primary exception remains primary when diagnostics, failed-state persistence or lock
+cleanup also fails. Finite `corpus.*_failed` exception notes identify secondary failures;
+raw secondary messages are not copied to diagnostics. The installed corpus CLI reports
+only the recognized finite secondary codes, omitting arbitrary exception notes. An initial or successful terminal
+diagnostic write failure still aborts preparation. Input diagnostics include capacity,
+retained inputs and attempt binding.
+
+If the protected operation completed but removing `writer.lock` fails, `LockCleanupError`
+(an OSError subclass) explicitly reports completed work with unfinished cleanup. A ready
+candidate remains verifiable. Do not retry automatically: verify its output, establish
+that no writer owns the lease using the existing owner recovery procedure, and inspect
+the retained lock. No code checks PID liveness to break locks, changes lock permissions,
+or removes a pre-existing lock. Interruption tests do not establish power-loss durability.
+
 ## Evidence and the workbench
 
 Retained registries can also be inspected directly with `--registry`; these views explicitly say `retained_registry_only` and never masquerade as preparation or publication receipts. Each evidence table is indexed once, and common source assertions are stored once in the derived view.
