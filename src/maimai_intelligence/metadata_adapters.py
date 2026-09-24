@@ -5,10 +5,18 @@ from __future__ import annotations
 import json
 from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, cast
 
+from .catalog_identity import key
 from .coverage_types import SnapshotError
-from .metadata_policy import FIELDS, PRIORITY, number
+from .metadata_claims import (
+    MetadataSourceEvidence,
+    Metric,
+    NormalizedMetadataRow,
+    NormalizedMetadataSource,
+    Region,
+)
+from .metadata_policy import FIELDS, PRIORITY, MetadataSourcePolicy, number
 
 MAX_BYTES = 16 * 1024 * 1024
 
@@ -20,7 +28,86 @@ class MetadataAdapter:
     normalize: Callable[[bytes, dict[str, Any]], list[dict[str, Any]]]
 
 
-def parse_metadata(raw, provider):
+def _optional_text(row: dict[str, Any], field: str) -> str | None:
+    value = row.get(field)
+    if value is not None and not isinstance(value, str):
+        raise SnapshotError("Malformed metadata " + field)
+    return value
+
+
+def _metric(value: object, field: str) -> Metric | None:
+    numeric = number(value, field)
+    # Public observation IDs bind to the historic JSON representation. Validate
+    # the value without re-encoding valid custom integers or numeric strings.
+    return (
+        cast(Metric, value) if numeric is not None and type(value) in (int, float, str) else numeric
+    )
+
+
+def _validate_identity(row: dict[str, Any]) -> None:
+    if (
+        not all(isinstance(row.get(k), str) and len(row[k]) <= 2000 for k in ("title", "artist"))
+        or row.get("format") not in ("STD", "DX")
+        or row.get("difficulty") not in ("BASIC", "ADVANCED", "EXPERT", "MASTER", "RE:MASTER")
+        or row.get("region") not in (None, "JP", "INTL")
+    ):
+        raise SnapshotError("Malformed metadata identity")
+
+
+def normalize_rows(rows: object) -> tuple[NormalizedMetadataRow, ...]:
+    """Validate adapter outputs before a pure policy sees identities or metrics.
+
+    Empty supplemental captures are valid no-op inputs. Historical built-in
+    readers retain their stricter minimum row count. Unknown fields never gain
+    identity, regional-membership, analysis or mapping authority.
+    """
+    if not isinstance(rows, list) or len(rows) > 20000:
+        raise SnapshotError("Invalid metadata source row count")
+    normalized = []
+    for row in rows:
+        if not isinstance(row, dict):
+            raise SnapshotError("Malformed metadata row")
+        _validate_identity(row)
+        source_url = _optional_text(row, "source_url")
+        _optional_text(row, "wiki_url")
+        normalized.append(
+            NormalizedMetadataRow(
+                identity=key(row),
+                bpm=_metric(row.get("bpm"), "bpm"),
+                chart_constant=_metric(row.get("chart_constant"), "chart_constant"),
+                region=cast(Region, row.get("region")),
+                release=_optional_text(row, "release"),
+                source_url=source_url,
+                evidence=_optional_text(row, "evidence"),
+                source_url_present="source_url" in row,
+            )
+        )
+    return tuple(normalized)
+
+
+def normalize_source(
+    captured: dict[str, Any], policy: MetadataSourcePolicy, rows: object
+) -> NormalizedMetadataSource:
+    """Freeze verified capture provenance with validated supplemental claims."""
+    revision = _optional_text(captured, "revision")
+    return NormalizedMetadataSource(
+        evidence=MetadataSourceEvidence(
+            provider=captured["provider"],
+            label=captured["label"],
+            sha256=captured["sha256"],
+            bytes=captured["bytes"],
+            url=captured["url"],
+            captured_at=captured["captured_at"],
+            parser=captured["parser"],
+            revision=revision,
+            acquisition=captured["acquisition"],
+        ),
+        policy=policy,
+        rows=normalize_rows(rows),
+    )
+
+
+def parse_metadata(raw: bytes, provider: str) -> list[dict[str, Any]]:
     if len(raw) > MAX_BYTES or provider not in PRIORITY:
         raise ValueError("Unsupported metadata source or size")
     data = json.loads(raw)
@@ -101,15 +188,7 @@ def parse_metadata(raw, provider):
     if not rows or len(rows) > 20000:
         raise ValueError("Invalid metadata source row count")
     for row in rows:
-        if (
-            not all(
-                isinstance(row.get(k), str) and len(row[k]) <= 2000 for k in ("title", "artist")
-            )
-            or row["format"] not in {"STD", "DX"}
-            or row["difficulty"] not in {"BASIC", "ADVANCED", "EXPERT", "MASTER", "RE:MASTER"}
-            or row.get("region") not in {None, "JP", "INTL"}
-        ):
-            raise ValueError("Malformed metadata identity")
+        _validate_identity(row)
         for field in FIELDS:
             row[field] = number(row.get(field), field)
     return rows

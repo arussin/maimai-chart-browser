@@ -1,29 +1,48 @@
 """Source-bound, field-by-field metadata proposals; never chart analysis or inventory."""
 
+from __future__ import annotations
+
 import hashlib
-from collections import defaultdict
+from collections.abc import Iterable, Mapping
 from copy import deepcopy
 from datetime import datetime
+from typing import TYPE_CHECKING, Any
 
 from .catalog_identity import key
 from .coverage_types import IntegrityError, SnapshotError
-from .metadata_policy import BUILTIN_CONTEXT, FIELDS, SOURCE_POLICIES, PolicyContext
+from .metadata_claims import VERSION as VERSION
+from .metadata_claims import CanonicalChartIdentity, decide_metadata_claims
+from .metadata_policy import (
+    BUILTIN_CONTEXT,
+    FIELDS,
+    SOURCE_POLICIES,
+    MetadataSourcePolicy,
+    PolicyContext,
+)
 from .metadata_policy import number as number
 from .registry import digest, validate
 
-VERSION = "metadata-waterfall-1"
+if TYPE_CHECKING:
+    from .metadata_adapters import MetadataAdapter
+
 LABELS = {name: policy.label for name, policy in SOURCE_POLICIES.items()}
 MAX_BYTES = 16 * 1024 * 1024
 
 
-def parse(raw, provider):
+def parse(raw: bytes, provider: str) -> list[dict[str, Any]]:
     """Historical public parser entry point uses the maintained source adapter."""
     from .metadata_adapters import parse_metadata
 
     return parse_metadata(raw, provider)
 
 
-def source(raw, provider, metadata, *, policy=None):
+def source(
+    raw: bytes,
+    provider: str,
+    metadata: dict[str, Any],
+    *,
+    policy: MetadataSourcePolicy | None = None,
+) -> dict[str, Any]:
     sha = hashlib.sha256(raw).hexdigest()
     if metadata.get("sha256") != sha or metadata.get("bytes") != len(raw):
         raise IntegrityError("Metadata capture integrity mismatch")
@@ -47,24 +66,24 @@ def source(raw, provider, metadata, *, policy=None):
 
 
 def propose(
-    value,
-    captures,
+    value: dict[str, Any],
+    captures: Iterable[tuple[str, bytes, dict[str, Any]]],
     *,
-    adapters=None,
-    policies=None,
+    adapters: Mapping[str, MetadataAdapter] | None = None,
+    policies: Mapping[str, MetadataSourcePolicy] | None = None,
     policy_context: PolicyContext = BUILTIN_CONTEXT,
-):
+) -> dict[str, Any]:
     """Exact unique matches only. A failure of an optional provider is retained in the report."""
-    from .metadata_adapters import normalize_builtin
+    from .metadata_adapters import normalize_builtin, normalize_source
 
     policies = policy_context.policies if policies is None else policies
     adapters = adapters or {}
     validate(value, policy_context=policy_context)
-    own, claims, sources, failures, ambiguous = defaultdict(list), [], {}, [], []
+    charts, normalized, failures = [], [], []
     for chart in value["charts"].values():
         if not chart.get("redirect"):
             song = value["songs"][chart["song_id"]]["metadata"]
-            own[key({**song, **chart})].append(chart["chart_id"])
+            charts.append(CanonicalChartIdentity(chart["chart_id"], key({**song, **chart})))
     for provider, raw, metadata in captures:
         if provider not in policies:
             raise ValueError("Metadata source has no explicit policy entry")
@@ -79,56 +98,28 @@ def propose(
                 if adapter
                 else normalize_builtin(provider, raw, metadata)
             )
+            normalized.append(normalize_source(captured, policy, rows))
         except SnapshotError as error:
             failures.append({"provider": provider, "reason": str(error)})
             continue
-        sid = provider + ":" + captured["sha256"]
-        sources[sid] = captured
-        index = defaultdict(list)
-        for row in rows:
-            index[key(row)].append(row)
-        for identity, chart_ids in own.items():
-            candidates = index.get(identity, [])
-            if len(candidates) > 1 or len(chart_ids) > 1:
-                if candidates:
-                    ambiguous.append({"provider": provider, "chart_ids": chart_ids})
-                continue
-            if not candidates:
-                continue
-            row, cid = candidates[0], chart_ids[0]
-            for field in FIELDS:
-                if row[field] is None:
-                    continue
-                claim = {
-                    "subject_id": cid,
-                    "snapshot_id": sid,
-                    "field": field,
-                    "value": row[field],
-                    "region": row.get("region") if field == "chart_constant" else None,
-                    "release": row.get("release") if field == "chart_constant" else None,
-                    "observed_at": captured["captured_at"],
-                    "priority": policy.priority,
-                    "source_url": row.get("source_url", captured["url"]),
-                    "evidence": row.get("evidence")
-                    or (
-                        "Unique normalized title, artist, format and difficulty; "
-                        "explicit numeric field"
-                    ),
-                    "policy": VERSION,
-                }
-                claim["observation_id"] = "metadata:" + digest(claim)
-                claims.append(claim)
+    decision = decide_metadata_claims(tuple(charts), tuple(normalized))
     return {
         "schema_version": VERSION,
         "registry_sha256": digest(value),
-        "sources": sources,
-        "claims": claims,
+        "sources": {item.evidence.snapshot_id: item.evidence.record() for item in normalized},
+        "claims": [claim.record() for claim in decision.claims],
         "failures": failures,
-        "ambiguous": ambiguous,
+        "ambiguous": [match.record() for match in decision.ambiguous],
     }
 
 
-def accept(value, proposal, review, *, policy_context: PolicyContext = BUILTIN_CONTEXT):
+def accept(
+    value: dict[str, Any],
+    proposal: dict[str, Any],
+    review: dict[str, Any],
+    *,
+    policy_context: PolicyContext = BUILTIN_CONTEXT,
+) -> dict[str, Any]:
     if (
         proposal["registry_sha256"] != digest(value)
         or review.get("proposal_sha256") != digest(proposal)
@@ -157,10 +148,12 @@ def accept(value, proposal, review, *, policy_context: PolicyContext = BUILTIN_C
     return validate(result, policy_context=policy_context)
 
 
-def project(nav, claims, sources):
+def project(
+    nav: dict[str, Any], claims: list[dict[str, Any]], sources: dict[str, Any]
+) -> dict[str, Any]:
     """Retain accepted primary metrics; choose supplemental fields independently."""
 
-    def provenance(claim):
+    def provenance(claim: dict[str, Any]) -> dict[str, Any]:
         src = sources[claim["snapshot_id"]]
         return {
             "provider": src.get("label", LABELS.get(src["provider"], src["provider"])),

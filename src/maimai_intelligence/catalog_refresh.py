@@ -4,27 +4,36 @@ from __future__ import annotations
 
 from collections import Counter, defaultdict
 from collections.abc import Callable, Mapping, Sequence
-from copy import deepcopy
 from pathlib import Path
 from typing import Any
 
-from .catalog_capture import CaptureStore
+from .catalog_capture import CaptureStore, fetch_public
+from .catalog_identity import key
 from .catalog_refresh_stages import MAX_WIKI_PAGES as MAX_WIKI_PAGES
 from .catalog_refresh_stages import POLICY as POLICY
 from .catalog_refresh_stages import (
+    capture_transcriptions,
     discover_wiki,
-    ingest_metadata,
-    prepare_transcriptions,
-    reconcile_links,
 )
 from .catalog_sources import mai_catalog
 from .coverage_types import CaptureError, IntegrityError, SnapshotError
 from .mai_notes import SOURCE_URL
 from .metadata_adapters import MetadataAdapter, builtin_adapter
-from .metadata_policy import BUILTIN_CONTEXT, MetadataSourcePolicy, PolicyContext
-from .metadata_waterfall import FIELDS, key, number
-from .registry import write_registry
+from .metadata_policy import BUILTIN_CONTEXT, FIELDS, MetadataSourcePolicy, PolicyContext, number
+from .refresh_candidates import (
+    Capture,
+    MetadataDecision,
+    Record,
+    RefreshPlan,
+    apply_refresh,
+    discovery_projection,
+    metadata_view,
+    plan_links,
+    plan_metadata,
+)
+from .registry import validate, write_registry
 from .registry_catalog import _legacy_enrichment, project_registry
+from .serialization import digest
 from .snapshots import atomic_json
 from .source_registration import SourceRegistration, source_context
 
@@ -54,22 +63,23 @@ def refresh(
     """Prepare a new registry and validated additions; never mutate accepted inputs."""
     if sources:
         policy_context.require_manifest(source_context(sources).manifest())
-    value = deepcopy(value)
+    validate(value, policy_context=policy_context)
+    base_sha256 = digest(value)
     output = Path(output)
     output.mkdir(parents=True, exist_ok=True)
     capture = capture_store or CaptureStore(
         Path(cache) / "sources",
         offline=offline,
         replay=replay,
-        **({"fetcher": fetcher} if fetcher else {}),
+        fetcher=fetcher or fetch_public,
     )
     legacy = _legacy_enrichment(published) if published.get("schema_version") else published
     projected = project_registry(value, legacy, policy_context=policy_context)
     own = {c["chart_id"]: c for c in projected["catalog"]}
-    own_keys = defaultdict(list)
+    own_keys: dict[tuple[str, str, str, str], list[str]] = defaultdict(list)
     for cid, chart in own.items():
         own_keys[key(chart)].append(cid)
-    audit = {
+    audit: Record = {
         "version": POLICY,
         "metadata": {},
         "links": [],
@@ -77,9 +87,12 @@ def refresh(
         "failures": [],
         "identity_mismatches": [],
     }
-    additions = {"profiles": [], "records": {}, "inventory": [], "sources": {}}
+    additions: Record = {"profiles": [], "records": {}, "inventory": [], "sources": {}}
 
-    inputs, targets, mai_meta, mai_generated = [], {}, None, None
+    inputs: list[Capture] = []
+    targets: Record = {}
+    mai_meta: Record | None = None
+    mai_generated: str | None = None
     adapters = {
         entry.provider: entry
         for entry in (
@@ -111,38 +124,63 @@ def refresh(
             raise
         except (CaptureError, SnapshotError) as error:
             audit["failures"].append({"provider": provider, "reason": str(error)})
-    ingest_metadata(
+    primary = plan_metadata(
         value,
-        legacy,
+        projected,
         inputs,
-        audit,
         adapters=adapters,
         policies=metadata_policies,
         policy_context=policy_context,
     )
-    matches = reconcile_links(value, own, own_keys, targets, mai_meta, mai_generated, audit)
+    metadata_decisions: tuple[MetadataDecision, ...] = (primary,)
+
+    def record_metadata(decision: MetadataDecision) -> None:
+        audit["failures"].extend(decision.failures)
+        audit["metadata"].setdefault("ambiguous", []).extend(decision.ambiguous)
+        audit["metadata"]["observations_added"] = audit["metadata"].get(
+            "observations_added", 0
+        ) + len(decision.claims)
+
+    record_metadata(primary)
+    links = plan_links(value, own, targets, mai_meta, mai_generated)
+    audit["links"].extend(
+        {"chart_id": row.chart_id, "status": row.status} for row in links.decisions.outcomes
+    )
+    matches = links.matches
+    discovery = discovery_projection(projected, value, metadata_decisions)
+    metadata_sources, metadata_observations = metadata_view(value, metadata_decisions)
     wiki = discover_wiki(
         value,
-        legacy,
         own,
         own_keys,
         matches,
         capture,
         audit,
         capture_store is not None,
-        policy_context=policy_context,
+        projection=discovery,
+        metadata_sources=metadata_sources,
+        metadata_observations=metadata_observations,
     )
     if wiki.inputs:
-        ingest_metadata(
+        secondary = plan_metadata(
             value,
-            legacy,
+            discovery,
             wiki.inputs,
-            audit,
+            prior=metadata_decisions,
             adapters=adapters,
             policies=metadata_policies,
             policy_context=policy_context,
         )
-    prepare_transcriptions(value, own, targets, matches, wiki, capture, cache, additions, audit)
+        metadata_decisions += (secondary,)
+        record_metadata(secondary)
+    transcriptions = capture_transcriptions(
+        value, own, targets, matches, wiki, capture, cache, additions, audit
+    )
+    value = apply_refresh(
+        value,
+        RefreshPlan(base_sha256, metadata_decisions, links, transcriptions),
+        policy_context=policy_context,
+    )
     projection = project_registry(value, legacy, policy_context=policy_context)
     audit["metadata"]["remaining"] = [
         {

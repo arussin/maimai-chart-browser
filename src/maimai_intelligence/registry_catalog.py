@@ -568,7 +568,7 @@ def validate_catalog(data: dict[str, Any]) -> dict[str, Any]:
     return data
 
 
-def _legacy_enrichment(data):
+def _legacy_enrichment(data: dict[str, Any]) -> dict[str, Any]:
     """Recover retained profile identities when a v2 package is reused as enrichment."""
     rows = {c["chart_id"]: c for c in data["catalog"] if c.get("legacy_identity")}
     result = deepcopy(data)

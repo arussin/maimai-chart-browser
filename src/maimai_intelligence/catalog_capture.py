@@ -41,7 +41,7 @@ class NoRedirect(urllib.request.HTTPRedirectHandler):
         raise CaptureError(Failure(FailureKind.SCHEMA, "Public source redirects are not accepted"))
 
 
-def fetch_public(url, headers):
+def fetch_public(url: str, headers: dict[str, str]) -> tuple[int, bytes, dict[str, str]]:
     if not ALLOWED.fullmatch(url):
         raise ValueError("Source URL is outside the catalog provider allowlist")
     parsed = urlsplit(url)
@@ -113,7 +113,7 @@ class CaptureStore:
             raise IntegrityError("Cached source integrity mismatch")
         return raw
 
-    def get(self, url):
+    def get(self, url: str) -> tuple[bytes, dict[str, Any]]:
         if not ALLOWED.fullmatch(url):
             raise ValueError("Source URL is outside the catalog provider allowlist")
         if url in self.recorded_failures:

@@ -42,11 +42,12 @@ deployment hostname is not an automatic substitute: current readers and CSP
 enforce same-origin constraints. No release handshake is introduced by this plan.
 
 New song pages already include old-browser links with canonical chart identity
-and locale. A top-level redirect can use that mapping, but the current candidate
-fetches route HTML with redirect:error; a soft navigation to such a redirect
-fails. Rehearse either retained readable static documents or a controlled full
-navigation before selecting recovery behavior. Preserve genuine 404s for unknown
-routes. Do not promise seamless switching.
+and locale. Route fetches use redirect:error. For ordinary pushed/restored
+navigation, the coordinator catches a rejected fetch and falls back to full
+navigation; a direct-arrival song page re-fetching itself instead shows a catalog
+failure. Neither behavior is a tested recovery contract yet. Rehearse finite
+mapped redirects and direct arrivals before selecting recovery behavior. Preserve
+genuine 404s for unknown routes. Do not promise seamless switching.
 
 The pure release_transition.compare_request_inventory helper accepts explicitly
 supplied observed request expectations and a complete target inventory, using

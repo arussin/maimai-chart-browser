@@ -5,6 +5,7 @@ import re
 from copy import deepcopy
 from importlib.resources import files
 from pathlib import Path
+from typing import Any
 
 from maimai_analyzer.challenge import VERSION, profile_chart
 from maimai_analyzer.contracts import content_hash
@@ -22,7 +23,7 @@ from .transcription_identity import input_identity
 POLICY = "catalog-transcription-1"
 
 
-def implementation():
+def implementation() -> dict[str, str]:
     roots = (files("maimai_analyzer"), files("maimai_intelligence"))
     return {
         f"{i}/{p.name}": hashlib.sha256(p.read_bytes()).hexdigest()
@@ -36,7 +37,7 @@ def implementation():
     }
 
 
-def prepare_body(body, reference):
+def prepare_body(body: bytes, reference: dict[str, Any]) -> tuple[bytes, dict[str, Any] | None]:
     """Supply a missing initial tempo from the same identity-checked reference row.
 
     Keep the original source hash and reference capture in the transformation audit.
@@ -60,7 +61,14 @@ def prepare_body(body, reference):
     return prepared, transform
 
 
-def qualify(body, row, expected_counts, cache, *, fingerprints=None):
+def qualify(
+    body: bytes,
+    row: dict[str, Any],
+    expected_counts: dict[str, Any],
+    cache: Path | str,
+    *,
+    fingerprints: dict[str, str] | None = None,
+) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any]]:
     if not isinstance(expected_counts, dict) or set(expected_counts) != {
         "tap",
         "hold",

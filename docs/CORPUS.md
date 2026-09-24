@@ -222,3 +222,28 @@ store is not a workaround for its bound checkpoint. Dual-context reassessment mu
 verify prior authority while recomputing a potentially changed pre-coverage base.
 Earlier receipts remain intact and no base-integrity check is bypassed here. Existing
 builtin changed-code reassessment is unchanged.
+
+### Refresh decisions and candidate ownership
+
+The refresh coordinator acquires captures, normalizes supplemental metadata, prepares
+metadata/link/transcription decisions, and calls `apply_refresh` once. The application
+checks the accepted base digest, makes one detached candidate, applies the prepared
+changes through the existing canonical acceptance rules, and validates the result.
+Acquisition and analysis cannot mutate the accepted registry. A failed application
+returns no candidate and leaves the accepted input unchanged.
+
+`metadata_claims` and `refresh_policy` own pure matching decisions over immutable typed
+inputs. `metadata_adapters` validates external rows before they enter those decisions.
+`refresh_candidates` adapts historical dictionary records and applies decisions; it is
+an application boundary, not a second registry model. Historic observation encodings,
+identity redirects, source precedence, credited artist pairs, availability rules and
+transcription provenance are retained. Malformed adapter records become explicit source
+failures; unexpected adapter exceptions propagate.
+
+The refresh performs the complete registry projection at the beginning and end only.
+Wiki discovery receives a supplemental navigation view of staged metadata rather than
+an intermediate candidate registry. It still uses the existing bounded acquisition,
+cooldown, capture and transcription-analysis services. This does not move operational
+timestamps out of every historical public record or promise full recursive typing of
+legacy JSON. Extracted decisions have their own branch and invariant tests; whole-output
+parity and installed lifecycle tests remain required.

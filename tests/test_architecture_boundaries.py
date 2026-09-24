@@ -25,6 +25,9 @@ PURE = {
             "identity_policy",
             "metadata_policy",
             "metadata_selection",
+            "metadata_claims",
+            "refresh_policy",
+            "release_transition",
             "official_contract",
             "serialization",
         )

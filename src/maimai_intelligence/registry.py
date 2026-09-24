@@ -25,7 +25,7 @@ DIFFICULTIES = {"BASIC", "ADVANCED", "EXPERT", "MASTER", "RE:MASTER"}
 STATES = {"available", "missing", "unreviewed", "ambiguous", "unsupported", "not_prepared"}
 
 
-def digest(value):
+def digest(value: object) -> str:
     return hashlib.sha256(canonical(value)).hexdigest()
 
 
@@ -47,7 +47,9 @@ def _id(value, kind):
         return False
 
 
-def validate(value, *, policy_context: PolicyContext = BUILTIN_CONTEXT):
+def validate(
+    value: dict[str, Any], *, policy_context: PolicyContext = BUILTIN_CONTEXT
+) -> dict[str, Any]:
     if value.get("schema_version") != VERSION or set(value) != {"schema_version", *TABLES}:
         raise ValueError("Unsupported registry schema")
     if any(not isinstance(value[key], dict) for key in TABLES):
@@ -239,7 +241,7 @@ def write_registry(
     return root
 
 
-def resolve(value, subject):
+def resolve(value: dict[str, Any], subject: str) -> str:
     table = value["charts"] if subject.startswith("chart:") else value["songs"]
     while table[subject].get("redirect"):
         subject = table[subject]["redirect"]
@@ -247,17 +249,17 @@ def resolve(value, subject):
 
 
 def accept_mapping(
-    value,
+    value: dict[str, Any],
     *,
-    provider,
-    provider_id,
-    subject_id,
-    snapshot_id,
-    evidence,
-    acceptance_basis="reviewed",
-    game="maimaidx",
-    **metadata,
-):
+    provider: str,
+    provider_id: str,
+    subject_id: str,
+    snapshot_id: str,
+    evidence: Any,
+    acceptance_basis: str = "reviewed",
+    game: str = "maimaidx",
+    **metadata: Any,
+) -> None:
     if not evidence or snapshot_id not in value["sources"]:
         raise ValueError("Mapping acceptance requires captured evidence")
     key = digest([provider, game, provider_id])
@@ -370,17 +372,17 @@ def analysis_fingerprint(row, implementation, *, parser, analyzer):
 
 
 def select_transcription(
-    value,
-    chart_id,
-    row,
+    value: dict[str, Any],
+    chart_id: str,
+    row: dict[str, Any],
     *,
-    snapshot_id,
-    evidence,
-    legacy_chart_id,
-    analysis_state="not_prepared",
-    provider="neskol-input",
-    acceptance_basis="reviewed",
-):
+    snapshot_id: str,
+    evidence: Any,
+    legacy_chart_id: str,
+    analysis_state: str = "not_prepared",
+    provider: str = "neskol-input",
+    acceptance_basis: str = "reviewed",
+) -> str:
     """Select a reviewed source revision while keeping the persistent chart identity."""
     chart_id = resolve(value, chart_id)
     chart = value["charts"][chart_id]

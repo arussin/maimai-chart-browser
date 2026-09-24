@@ -31,7 +31,7 @@ class Failure:
 
 
 class CaptureError(ValueError):
-    def __init__(self, failure):
+    def __init__(self, failure: Failure) -> None:
         self.failure = failure
         super().__init__(failure.message)
 

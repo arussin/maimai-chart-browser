@@ -10,19 +10,16 @@ from typing import Any
 
 from maimai_analyzer.contracts import ChartInputError
 
-from .catalog_identity import discovery_labels
+from .catalog_capture import CaptureStore
+from .catalog_identity import discovery_labels, key
 from .catalog_sources import WIKI, discovery_pages, page_links, wiki_catalog
 from .catalog_transcriptions import implementation, prepare_body, qualify
 from .coverage_types import CaptureError, Failure, FailureKind, IntegrityError, SnapshotError
-from .mai_notes import SOURCE_URL
-from .metadata_policy import BUILTIN_CONTEXT, PolicyContext
-from .metadata_selection import eligible_claims
-from .metadata_waterfall import FIELDS, accept, key, number, propose
-from .registry import accept_mapping, digest, resolve, select_transcription
-from .registry_catalog import project_registry
+from .metadata_policy import FIELDS, number
+from .refresh_candidates import POLICY as POLICY
+from .refresh_candidates import Record, TranscriptionDecision
 from .transcription_html import extract_chart
 
-POLICY = "catalog-waterfall-2"
 MAX_WIKI_PAGES = 300
 
 
@@ -34,135 +31,26 @@ class WikiEvidence:
     song_pages: set[tuple[str, str]]
 
 
-def ingest_metadata(
-    value,
-    legacy,
-    inputs,
-    audit,
-    *,
-    adapters=None,
-    policies=None,
-    policy_context: PolicyContext = BUILTIN_CONTEXT,
-):
-    projection = project_registry(value, legacy, policy_context=policy_context)
-    proposal = propose(
-        value, inputs, adapters=adapters, policies=policies, policy_context=policy_context
-    )
-    claims = eligible_claims(projection, proposal, value["observations"], value["sources"])
-    used = {c["snapshot_id"] for c in claims}
-    proposal["claims"] = claims
-    proposal["sources"] = {k: v for k, v in proposal["sources"].items() if k in used}
-    reviewed = accept(
-        value,
-        proposal,
-        {
-            "proposal_sha256": digest(proposal),
-            "evidence": POLICY
-            + ": exact unique variant, finite numeric field; retain primary metrics",
-            "accept": [c["observation_id"] for c in claims],
-        },
-        policy_context=policy_context,
-    )
-    value.clear()
-    value.update(reviewed)
-    audit["failures"].extend(proposal["failures"])
-    audit["metadata"].setdefault("ambiguous", []).extend(proposal["ambiguous"])
-    audit["metadata"]["observations_added"] = audit["metadata"].get("observations_added", 0) + len(
-        claims
-    )
-
-
-def reconcile_links(value, own, own_keys, targets, mai_meta, mai_generated, audit):
-    source_id = None
-    if mai_meta:
-        source_id = "mai-notes-index:" + mai_meta["sha256"]
-        value["sources"].setdefault(
-            source_id,
-            {"provider": "mai-notes", **mai_meta, "acquisition": "public_metadata_capture"},
-        )
-    target_keys = defaultdict(list)
-    for target in targets.values():
-        target_keys[key(target)].append(target)
-    accepted_links = {
-        resolve(value, m["subject_id"]): m
-        for m in value["mappings"].values()
-        if m["provider"] == "mai-notes" and m["state"] == "accepted"
-    }
-    matches = {}
-    for cid, chart in own.items():
-        prior = accepted_links.get(cid)
-        candidate = targets.get(prior["provider_id"]) if prior else None
-        if prior and mai_meta and candidate is None:
-            prior["available"] = False
-            audit["links"].append({"chart_id": cid, "status": "provider_entry_missing"})
-            continue
-        if candidate:
-            evidence = prior.get("evidence")
-            credit = evidence if isinstance(evidence, dict) else {}
-            artist_matches = key(candidate)[1] == key(chart)[1]
-            artist_matches |= (
-                credit.get("provider_artist") == candidate["artist"]
-                and credit.get("official_artist") == chart["artist"]
-            )
-            if (candidate["format"], candidate["difficulty"], key(candidate)[0]) != (
-                chart["format"],
-                chart["difficulty"],
-                key(chart)[0],
-            ) or not artist_matches:
-                prior["available"] = False
-                audit["links"].append({"chart_id": cid, "status": "changed_identity_review"})
-                continue
-        if candidate is None:
-            rows = target_keys[key(chart)]
-            if len(rows) == 1 and len(own_keys[key(chart)]) == 1:
-                candidate = rows[0]
-            elif rows:
-                audit["links"].append({"chart_id": cid, "status": "ambiguous"})
-        if candidate:
-            matches[cid] = candidate
-            if prior and bool(prior.get("available")) != candidate["available"]:
-                prior["available"] = candidate["available"]
-                prior["availability_snapshot_id"] = source_id
-                audit["links"].append({"chart_id": cid, "status": "availability_changed"})
-            if candidate["available"] and prior is None:
-                accept_mapping(
-                    value,
-                    provider="mai-notes",
-                    provider_id=candidate["id"],
-                    subject_id=cid,
-                    snapshot_id=source_id,
-                    evidence=POLICY + ": exact unique title, artist, format and difficulty",
-                    acceptance_basis="policy_exact",
-                    available=True,
-                    metadata={
-                        "source": SOURCE_URL,
-                        "source_sha256": mai_meta["sha256"],
-                        "captured_at": mai_meta["captured_at"],
-                        "generated_at": mai_generated,
-                    },
-                )
-                audit["links"].append({"chart_id": cid, "status": "added"})
-
-    return matches
-
-
 def discover_wiki(
-    value,
-    legacy,
-    own,
-    own_keys,
-    matches,
-    capture,
-    audit,
-    shared_capture,
+    value: Record,
+    own: Record,
+    own_keys: dict[tuple[str, str, str, str], list[str]],
+    matches: Record,
+    capture: CaptureStore,
+    audit: Record,
+    shared_capture: bool,
     *,
-    policy_context: PolicyContext = BUILTIN_CONTEXT,
-):
-    wiki_inputs, wiki_rows, wiki_simai = [], {}, {}
-    checked_urls = set()
-    wiki_song_pages = set()
+    projection: Record,
+    metadata_sources: Record,
+    metadata_observations: Record,
+) -> WikiEvidence:
+    wiki_inputs: list[tuple[str, bytes, Record]] = []
+    wiki_rows: Record = {}
+    wiki_simai: dict[str, str] = {}
+    checked_urls: set[str] = set()
+    wiki_song_pages: set[tuple[str, str]] = set()
 
-    def read_wiki(url):
+    def read_wiki(url: str) -> None:
         if url in checked_urls:
             return
         if len(checked_urls) >= (200 if shared_capture else MAX_WIKI_PAGES):
@@ -197,7 +85,6 @@ def discover_wiki(
                 if simai:
                     wiki_simai[ids[0]] = simai
 
-    projection = project_registry(value, legacy, policy_context=policy_context)
     missing = {
         c["chart_id"]
         for c in projection["catalog"]
@@ -220,9 +107,9 @@ def discover_wiki(
                 )
     # Refresh previously used Wiki pages even after they filled all missing fields.
     used_wiki = {
-        value["sources"][o["snapshot_id"]]["url"]
-        for o in value["observations"].values()
-        if value["sources"].get(o.get("snapshot_id"), {}).get("provider") == "gamerch-wiki"
+        metadata_sources[o["snapshot_id"]]["url"]
+        for o in metadata_observations.values()
+        if metadata_sources.get(o.get("snapshot_id"), {}).get("provider") == "gamerch-wiki"
     }
     for url in sorted(used_wiki):
         try:
@@ -242,7 +129,7 @@ def discover_wiki(
         try:
             root_page = capture.get(WIKI)[0]
             links = page_links(root_page)
-            discovered = defaultdict(set)
+            discovered: dict[str, set[str]] = defaultdict(set)
             for name, found in links.items():
                 if name in undiscovered:
                     discovered[name].update(found)
@@ -280,11 +167,21 @@ def discover_wiki(
     return WikiEvidence(wiki_inputs, wiki_rows, wiki_simai, wiki_song_pages)
 
 
-def prepare_transcriptions(
-    value, own, targets, matches, wiki: WikiEvidence, capture, cache, additions, audit
-):
+def capture_transcriptions(
+    value: Record,
+    own: Record,
+    targets: Record,
+    matches: Record,
+    wiki: WikiEvidence,
+    capture: CaptureStore,
+    cache: Path | str,
+    additions: Record,
+    audit: Record,
+) -> tuple[TranscriptionDecision, ...]:
     wiki_rows, wiki_simai, wiki_song_pages = wiki.rows, wiki.simai, wiki.song_pages
     fingerprints = implementation()
+    decisions: list[TranscriptionDecision] = []
+    prepared_sources = dict(value["sources"])
     for cid, chart in own.items():
         selected = value["charts"][cid].get("transcription")
         prior_provider = (
@@ -310,7 +207,7 @@ def prepare_transcriptions(
         simai_url = wiki_simai.get(cid) or target.get("simai_url")
         if simai_url:
             candidates.append(("simai-wiki-transcription", simai_url))
-        outcome = {
+        outcome: Record = {
             "chart_id": cid,
             "title": chart["title"],
             "difficulty": chart["difficulty"],
@@ -396,7 +293,7 @@ def prepare_transcriptions(
                     body, row, reference, Path(cache) / "analysis", fingerprints=fingerprints
                 )
                 snapshot = provider + ":" + metadata["sha256"]
-                value["sources"].setdefault(
+                source = prepared_sources.setdefault(
                     snapshot,
                     {
                         "provider": provider,
@@ -405,30 +302,25 @@ def prepare_transcriptions(
                         "acquisition": "public_transcription_capture",
                     },
                 )
-                select_transcription(
-                    value,
-                    cid,
-                    row,
-                    snapshot_id=snapshot,
-                    evidence={
-                        "policy": POLICY,
-                        "source_url": url,
-                        "note_counts": reference,
-                        "reference_source": reference_row["reference_source"],
-                        "count_match": True,
-                        "transformation": transformation,
-                        "source_identity": "accepted mapping or unique Wiki identity",
-                        "game_fidelity": "unverified",
-                    },
-                    legacy_chart_id=profile["chart_id"],
-                    analysis_state="available",
-                    provider=provider + "-input",
-                    acceptance_basis="policy_validated",
+                evidence = {
+                    "policy": POLICY,
+                    "source_url": url,
+                    "note_counts": reference,
+                    "reference_source": reference_row["reference_source"],
+                    "count_match": True,
+                    "transformation": transformation,
+                    "source_identity": "accepted mapping or unique Wiki identity",
+                    "game_fidelity": "unverified",
+                }
+                decisions.append(
+                    TranscriptionDecision(
+                        cid, row, snapshot, source, evidence, profile["chart_id"], provider
+                    )
                 )
                 additions["profiles"].append(profile)
                 additions["records"][profile["chart_id"]] = record
                 additions["inventory"].append(row)
-                additions["sources"][snapshot] = value["sources"][snapshot]
+                additions["sources"][snapshot] = source
                 outcome.update(
                     status="analyzed",
                     provider=provider,
@@ -443,3 +335,4 @@ def prepare_transcriptions(
                 outcome["attempts"].append({"provider": provider, "url": url, "reason": str(error)})
                 outcome["status"] = "unavailable_or_unsupported"
         audit["transcriptions"].append(outcome)
+    return tuple(decisions)

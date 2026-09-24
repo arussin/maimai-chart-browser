@@ -2,6 +2,7 @@
 
 import json
 import re
+from typing import Any
 from urllib.parse import parse_qs, urljoin, urlsplit
 
 from .catalog_identity import label as identity_label
@@ -16,7 +17,7 @@ DIFFICULTIES = ("BASIC", "ADVANCED", "EXPERT", "MASTER", "RE:MASTER")
 COUNT_FIELDS = ("tap", "hold", "slide", "touch", "break")
 
 
-def mai_catalog(raw):
+def mai_catalog(raw: bytes) -> tuple[dict[str, Any], str | None]:
     """Drop scores, player names and tags before any matching or public projection."""
     try:
         targets, generated = parse_index(raw)
@@ -59,7 +60,7 @@ def wiki_url(href):
     return url if re.fullmatch(r"https://gamerch\.com/maimai/[1-9][0-9]{0,8}", url) else None
 
 
-def page_links(raw):
+def page_links(raw: bytes) -> dict[str, set[str]]:
     root = _Document(raw.decode("utf-8")).root
     result = {}
     for node in _walk(root):
@@ -71,7 +72,7 @@ def page_links(raw):
     return result
 
 
-def discovery_pages(raw):
+def discovery_pages(raw: bytes) -> set[str]:
     """Discover genre and release indexes from their semantic link labels/titles."""
     labels = {
         identity_label(s)
@@ -115,7 +116,7 @@ def wiki_label(node):
     return " ".join(text(node).split())
 
 
-def wiki_catalog(raw, url):
+def wiki_catalog(raw: bytes, url: str) -> tuple[list[dict[str, Any]], str | None]:
     """Read explicit constant and note-count columns, never derive decimals from Lv."""
     if not re.fullmatch(r"https://gamerch\.com/maimai/[1-9][0-9]{0,8}", url):
         raise SnapshotError("Invalid Wiki song URL")
