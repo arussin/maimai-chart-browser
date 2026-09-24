@@ -11,10 +11,10 @@ import hashlib
 import json
 import re
 from collections.abc import Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from types import MappingProxyType
-from typing import Any, cast
+from typing import TYPE_CHECKING, Any, cast
 
 from .artwork import MEDIA_PATH
 from .catalog_document import CatalogDocument, decode_catalog_document, validate_catalog_reference
@@ -28,6 +28,9 @@ from .release_assembly import assemble_release as assemble_release
 from .release_composition import plan_release_composition as plan_release_composition
 from .snapshots import MAX_BYTES, atomic_json, canonical, read_json
 from .song_catalog import validate_song_binding, validate_song_membership
+
+if TYPE_CHECKING:
+    from .seo import PreparedSEO
 
 PART_BYTES = 8 * 1024 * 1024
 INDEX_PART_BYTES = 8 * 1024 * 1024
@@ -194,6 +197,9 @@ class ReleasePlan:
     source: Path
     previous_public: Path | None = None
     capacity: ReviewedCapacity | None = None
+    # Private preparation result for derived recovery artifacts. It never enters
+    # public assets/summary and does not require another SEO preparation pass.
+    prepared_seo: PreparedSEO | None = field(default=None, repr=False, compare=False)
 
     def _destination(self, output: Path | str) -> Path:
         output = Path(output).resolve()
@@ -248,6 +254,39 @@ def _retained_reference(
         raise ValueError("Retained public asset integrity mismatch")
     pending[reference["path"]] = raw
     return raw
+
+
+def _read_retained_catalog(source: Path, entry: dict[str, Any], pending: dict[str, bytes]) -> bytes:
+    """Read exact published bytes through the maintained reference verifier."""
+    validate_catalog_reference(entry)
+    if "parts" in entry:
+        parts = entry["parts"]
+        if not isinstance(parts, list) or not 1 <= len(parts) <= 8:
+            raise ValueError("Invalid retained catalog parts")
+        raw = b"".join(
+            _retained_reference(source, ref, "catalog-parts", PART_BYTES, pending) for ref in parts
+        )
+    else:
+        raw = _read(source, entry["path"], MAX_CATALOG_BYTES)
+        pending[entry["path"]] = raw
+    if len(raw) > MAX_CATALOG_BYTES or hashlib.sha256(raw).hexdigest() != entry["sha256"]:
+        raise ValueError("Retained catalog integrity mismatch")
+    return raw
+
+
+def read_public_catalog_inputs(
+    source: Path | str, entry: dict[str, Any]
+) -> tuple[bytes, bytes | None]:
+    """Verify published multipart/full catalog and integration bytes without preparing again."""
+    source = Path(source).resolve()
+    pending: dict[str, bytes] = {}
+    raw = _read_retained_catalog(source, entry, pending)
+    integration = (
+        _retained_reference(source, entry["integration"], "integration", MAX_BYTES, pending)
+        if "integration" in entry
+        else None
+    )
+    return raw, integration
 
 
 def _retain_song_index(
@@ -378,6 +417,7 @@ class PreparedPublicPages:
     assets: Mapping[str, bytes]
     summary: dict[str, int]
     song_index: dict[str, Any] | None = None
+    seo: PreparedSEO | None = None
 
 
 def _load_retained_publication(previous_public: Path | None) -> RetainedPublication:
@@ -534,11 +574,8 @@ def _prepare_public_catalog(
             )
         if old.get("sha256") != sha or old.get("path") != entry["path"]:
             raise ValueError("Previously published catalog identity changed")
-        old_parts = old.get("parts", [])
-        retained_raw = b"".join(
-            _retained_reference(previous_public, ref, "catalog-parts", PART_BYTES, pending)
-            for ref in old_parts
-        )
+        old_parts = old.get("parts", parts)
+        retained_raw = _read_retained_catalog(previous_public, old, pending)
         if retained_raw != raw:
             raise ValueError("Previously published catalog bytes changed")
         parts = old_parts
@@ -598,6 +635,7 @@ def _prepare_public_pages(
     previous_public, previous_ledger_ref = retained.source, retained.ledger
     seo_summary = {"songs": 0, "versions": 0, "localized_documents": 0}
     song_assets: list[dict[str, Any]] = []
+    seo = None
     if default_catalog and any(
         isinstance(c, dict) and c.get("song_id") for c in default_catalog.get("catalog", [])
     ):
@@ -652,7 +690,7 @@ def _prepare_public_pages(
         path = f"song-catalog-index/{digest}.json"
         pending[path] = raw
         song_index = {"path": path, "sha256": digest, "bytes": len(raw)}
-    return PreparedPublicPages(pending, seo_summary, song_index)
+    return PreparedPublicPages(pending, seo_summary, song_index, seo)
 
 
 def _finalize_release_plan(
@@ -665,6 +703,7 @@ def _finalize_release_plan(
     seo_summary: dict[str, int],
     capacity: ReviewedCapacity | None,
     file_limit: int,
+    prepared_seo: PreparedSEO | None = None,
 ) -> ReleasePlan:
     public_manifest = {
         **manifest,
@@ -716,6 +755,7 @@ def _finalize_release_plan(
         source,
         previous_public,
         capacity,
+        prepared_seo,
     )
 
 
@@ -792,6 +832,7 @@ def plan_public_release(
         pages.summary,
         capacity,
         file_limit,
+        pages.seo,
     )
 
 

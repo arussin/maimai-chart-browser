@@ -16,7 +16,7 @@ from typing import Literal
 
 from .release_transition import Fingerprint
 
-Owner = Literal["baseline", "candidate"]
+Owner = Literal["baseline", "candidate", "recovery"]
 Target = Literal["candidate", "recovery"]
 MAX_FILES = 20_000
 MAX_FILE_BYTES = 25 * 1024 * 1024
@@ -31,6 +31,16 @@ class InventoryFile:
 @dataclass(frozen=True)
 class ArtifactInventory:
     files: tuple[InventoryFile, ...]
+
+
+@dataclass(frozen=True)
+class RecoveryOverlay:
+    """Prepared finite route documents bound to their generation evidence."""
+
+    evidence_sha256: str
+    inventory: ArtifactInventory
+    candidate_inventory_sha256: str
+    baseline_inventory_sha256: str
 
 
 @dataclass(frozen=True)
@@ -74,6 +84,8 @@ class CompositionPlan:
     max_file_bytes: int
     total_bytes: int
     scope: Literal["declared_file_composition_only"] = "declared_file_composition_only"
+    recovery_inventory_sha256: str | None = None
+    recovery_evidence_sha256: str | None = None
 
     @property
     def file_count(self) -> int:
@@ -166,6 +178,13 @@ def _inventory_id(records: Mapping[str, Fingerprint]) -> str:
     return hashlib.sha256(raw).hexdigest()
 
 
+def artifact_inventory_sha256(inventory: ArtifactInventory) -> str:
+    """Validate and bind every artifact path, byte count and content hash."""
+    if not isinstance(inventory, ArtifactInventory):
+        raise ValueError("Expected an immutable artifact inventory")
+    return _inventory_id(_index(inventory.files))
+
+
 def _closure(closure: RuntimeClosure, source: Mapping[str, Fingerprint]) -> dict[str, Fingerprint]:
     if not isinstance(closure, RuntimeClosure):
         raise ValueError("Expected an evidence-bound runtime closure")
@@ -179,6 +198,36 @@ def _closure(closure: RuntimeClosure, source: Mapping[str, Fingerprint]) -> dict
     return records
 
 
+def _recovery_documents(
+    recovery: RecoveryOverlay | None,
+    target: Target,
+    baseline: Mapping[str, Fingerprint],
+    candidate: Mapping[str, Fingerprint],
+) -> dict[str, Fingerprint]:
+    if recovery is None:
+        return {}
+    if target != "recovery":
+        raise ValueError("Recovery documents require the recovery target")
+    if not isinstance(recovery, RecoveryOverlay) or not isinstance(
+        recovery.inventory, ArtifactInventory
+    ):
+        raise ValueError("Expected an immutable recovery overlay")
+    _digest(recovery.evidence_sha256)
+    if _digest(recovery.candidate_inventory_sha256) != _inventory_id(candidate):
+        raise ValueError("Recovery documents do not match their candidate inventory")
+    if _digest(recovery.baseline_inventory_sha256) != _inventory_id(baseline):
+        raise ValueError("Recovery documents do not match their baseline inventory")
+    records = _index(recovery.inventory.files)
+    routes = {
+        path
+        for path in candidate
+        if re.fullmatch(r"(en|ja|ko|zh-hans)/(songs|versions)/[^/]+/index\.html", path)
+    }
+    if not records or records.keys() != routes:
+        raise ValueError("Recovery documents must replace exactly every candidate public route")
+    return records
+
+
 def plan_release_composition(
     baseline: ArtifactInventory,
     candidate: ArtifactInventory,
@@ -187,13 +236,15 @@ def plan_release_composition(
     ownership: tuple[PathOwnership, ...],
     baseline_runtime: RuntimeClosure,
     candidate_runtime: RuntimeClosure,
+    recovery: RecoveryOverlay | None = None,
     max_files: int = MAX_FILES,
     max_file_bytes: int = MAX_FILE_BYTES,
 ) -> CompositionPlan:
     """Require a reviewed owner for every path; never infer a conflict winner.
 
-    Both inputs' path sets are retained. Byte changes, generated manifest merges
-    and new resource names belong to preparation before this selection step.
+    Both inputs' path sets are retained. A recovery overlay may replace the exact
+    finite candidate song/version document set, never scripts or configuration.
+    Other byte changes and generated manifests belong to earlier preparation.
     Every declared runtime file must survive with exact bytes in either target.
     Capacity can be tightened for testing, never raised without a separate paid
     profile implementation and entitlement gate.
@@ -209,6 +260,8 @@ def plan_release_composition(
     # Validate cross-artifact aliases too, without selecting bytes implicitly.
     _index(tuple(InventoryFile(path, Fingerprint(0, "0" * 64)) for path in all_paths))
     closures = (_closure(baseline_runtime, old), _closure(candidate_runtime, new))
+    recovery_files = _recovery_documents(recovery, target, old, new)
+    sources = {"baseline": old, "candidate": new, "recovery": recovery_files}
     if not isinstance(ownership, tuple):
         raise ValueError("Ownership decisions must be an immutable tuple")
     selections: dict[str, PathOwnership] = {}
@@ -218,17 +271,21 @@ def plan_release_composition(
         path = _path(choice.path)
         if path in selections:
             raise ValueError(f"Duplicate ownership decision: {path}")
-        if choice.owner not in ("baseline", "candidate"):
-            raise ValueError("Expected baseline or candidate ownership")
+        if choice.owner not in ("baseline", "candidate", "recovery"):
+            raise ValueError("Expected baseline, candidate or recovery ownership")
         if not isinstance(choice.reason, str) or not choice.reason.strip():
             raise ValueError("Each ownership decision requires a reason")
         expected = _fingerprint(choice.expected)
-        source = old if choice.owner == "baseline" else new
+        source = sources[choice.owner]
         if source.get(path) != expected:
             raise ValueError(f"Selected file does not match its source artifact: {path}")
         selections[path] = PathOwnership(path, choice.owner, expected, choice.reason)
     if selections.keys() != all_paths:
         raise ValueError("Every input path requires exactly one explicit ownership decision")
+    if {
+        path for path, choice in selections.items() if choice.owner == "recovery"
+    } != recovery_files.keys():
+        raise ValueError("Every recovery document requires explicit recovery ownership")
     document_owner = "candidate" if target == "candidate" else "baseline"
     if selections["index.html"].owner != document_owner:
         raise ValueError("The document owner must match the composition target")
@@ -259,4 +316,6 @@ def plan_release_composition(
         max_files,
         max_file_bytes,
         sum(choice.expected.bytes for choice in selections.values()),
+        recovery_inventory_sha256=_inventory_id(recovery_files) if recovery is not None else None,
+        recovery_evidence_sha256=recovery.evidence_sha256 if recovery is not None else None,
     )

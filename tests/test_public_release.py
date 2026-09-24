@@ -13,6 +13,7 @@ from maimai_intelligence.public_release import (
     PUBLIC_FILES,
     build_public_release,
     plan_public_release,
+    read_public_catalog_inputs,
 )
 from maimai_intelligence.registry import empty
 from maimai_intelligence.registry_catalog import project_registry
@@ -54,7 +55,51 @@ class PublicReleaseTests(unittest.TestCase):
         with self.assertRaises(TypeError):
             plan.manifest["releases"][0]["sha256"] = "0" * 64
         self.assertTrue(plan.summary["deployable"])
+        self.assertIsNone(plan.prepared_seo)
         self.assertEqual(plan.write_to(self.output)["files"], len(plan.assets) + 1)
+
+    def test_prepared_catalog_and_seo_are_reused_without_a_second_preparation(self):
+        from maimai_intelligence.catalog_document import prepare_catalog_document
+        from maimai_intelligence.lab import build_browser
+        from maimai_intelligence.seo import prepare_seo
+        from tests.lab_fixture import write_package
+
+        prepared = []
+
+        def observe_seo(*args, **kwargs):
+            result = prepare_seo(*args, **kwargs)
+            prepared.append(result)
+            return result
+
+        with (
+            patch(
+                "maimai_intelligence.lab.prepare_catalog_document", wraps=prepare_catalog_document
+            ) as catalog,
+            patch(
+                "maimai_intelligence.public_release.decode_catalog_document",
+                side_effect=AssertionError("Prepared catalog must not be decoded again"),
+            ),
+            patch("maimai_intelligence.seo.prepare_seo", side_effect=observe_seo) as seo,
+        ):
+            browser = build_browser(
+                write_package(self.root / "package", grouped=True),
+                self.root / "browser",
+                catalog_version="prepared-once",
+            )
+            plan = plan_public_release(
+                browser.index.parent, prepared_catalogs={"prepared-once": browser.catalog}
+            )
+            self.assertIs(plan.prepared_seo, prepared[0])
+            self.assertEqual(len(prepared), 1)
+            self.assertNotIn("prepared_seo", plan.summary)
+            self.assertNotIn("prepared_seo", plan.manifest)
+            self.assertNotIn("prepared_seo", repr(plan))
+            summary = plan.write_to(self.output)
+            self.assertNotIn("prepared_seo", summary)
+            self.assertNotIn("prepared_seo", read_json(self.output / "manifest.json"))
+            catalog.assert_called_once()
+            seo.assert_called_once()
+        self.assertEqual(plan.prepared_seo.summary["songs"], plan.summary["seo"]["songs"])
 
     def test_capacity_failure_is_reviewable_but_cannot_write_deployable_manifest(self):
         with patch("maimai_intelligence.public_release.MAX_PUBLIC_FILES", 1):
@@ -297,6 +342,56 @@ class PublicReleaseTests(unittest.TestCase):
         self.assertIn(
             "location.search+location.hash", (self.output / "lab-redirect.js").read_text("utf-8")
         )
+
+    def test_published_catalog_reader_reuses_verified_multipart_and_legacy_inputs(self):
+        from maimai_intelligence import public_release
+
+        with patch("maimai_intelligence.public_release.PART_BYTES", 31):
+            build_public_release(self.source, self.output)
+        reference = read_json(self.output / "manifest.json")["releases"][0]
+        self.assertFalse((self.output / reference["path"]).exists())
+        with patch.object(
+            public_release, "_retained_reference", wraps=public_release._retained_reference
+        ) as verified:
+            self.assertEqual(read_public_catalog_inputs(self.output, reference), (self.raw, None))
+            self.assertEqual(verified.call_count, len(reference["parts"]))
+        self.assertEqual(
+            read_public_catalog_inputs(self.source, self.manifest["releases"][0]), (self.raw, None)
+        )
+        for parts in (None, [], reference["parts"] * 9, list(reversed(reference["parts"]))):
+            with self.subTest(parts=parts), self.assertRaises(ValueError):
+                read_public_catalog_inputs(self.output, {**reference, "parts": parts})
+        path = self.output / reference["parts"][0]["path"]
+        original = path.read_bytes()
+        path.write_bytes(b"tampered")
+        with self.assertRaisesRegex(ValueError, "integrity mismatch"):
+            read_public_catalog_inputs(self.output, reference)
+        path.unlink()
+        with self.assertRaises(FileNotFoundError):
+            read_public_catalog_inputs(self.output, reference)
+        path.write_bytes(original)
+
+    def test_published_catalog_reader_verifies_integration_bytes_without_repreparation(self):
+        from maimai_intelligence.lab import build_browser
+        from tests.lab_fixture import write_package
+
+        browser = build_browser(
+            write_package(self.root / "package", grouped=True),
+            self.root / "browser",
+            catalog_version="reader",
+        )
+        plan = plan_public_release(
+            browser.index.parent, prepared_catalogs={"reader": browser.catalog}
+        )
+        plan.write_to(self.output)
+        reference = read_json(self.output / "manifest.json")["releases"][0]
+        self.assertEqual(
+            read_public_catalog_inputs(self.output, reference),
+            (browser.catalog.raw, browser.catalog.integration),
+        )
+        (self.output / reference["integration"]["path"]).write_bytes(b"wrong integration")
+        with self.assertRaisesRegex(ValueError, "integrity mismatch"):
+            read_public_catalog_inputs(self.output, reference)
 
     def test_large_startup_uses_verified_parts_and_retains_old_reader_fallback(self):
         data = {

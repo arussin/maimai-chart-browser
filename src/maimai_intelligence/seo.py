@@ -293,11 +293,24 @@ def _document(locale, kind, slug, title, description, body, words, browser_csp=N
 
 
 @dataclass(frozen=True)
+class EmittedPublicRoute:
+    """Identity recorded while rendering, never reconstructed from HTML or a ledger."""
+
+    path: str
+    filename: str
+    locale: str
+    kind: str
+    chart_ids: tuple[str, ...]
+    html_sha256: str
+
+
+@dataclass(frozen=True)
 class PreparedSEO:
     assets: dict[str, bytes]
     ledger: dict[str, Any]
     summary: dict[str, int]
     song_bindings: list[dict[str, Any]]
+    emitted_routes: tuple[EmittedPublicRoute, ...]
 
 
 def prepare_seo(
@@ -349,6 +362,7 @@ def prepare_seo(
     from .song_catalog import prepare_song_catalog, validate_song_binding
 
     assets, sitemap_paths = {}, defaultdict(list)
+    emitted_routes: list[EmittedPublicRoute] = []
     catalog_sha = catalog_sha or hashlib.sha256(canonical(catalog)).hexdigest()
     song_references = {}
     for sid, charts in sorted(songs.items()):
@@ -479,6 +493,17 @@ def prepare_seo(
                 words,
                 browser_csp,
             )
+            filename = unquote(path[1:]) + "index.html"
+            emitted_routes.append(
+                EmittedPublicRoute(
+                    path,
+                    filename,
+                    locale,
+                    "song",
+                    tuple(chart["chart_id"] for chart in charts),
+                    hashlib.sha256(assets[filename]).hexdigest(),
+                )
+            )
             sitemap_paths[locale].append(path)
         for version, members in sorted(versions.items()):
             browser = "/?" + urlencode(
@@ -536,6 +561,17 @@ def prepare_seo(
                 words,
                 browser_csp,
             )
+            filename = unquote(path[1:]) + "index.html"
+            emitted_routes.append(
+                EmittedPublicRoute(
+                    path,
+                    filename,
+                    locale,
+                    "version",
+                    (),
+                    hashlib.sha256(assets[filename]).hexdigest(),
+                )
+            )
             sitemap_paths[locale].append(path)
     redirect_lines = [
         "/songs/* /en/songs/:splat 301",
@@ -585,6 +621,7 @@ def prepare_seo(
             "permalink_seeded": previous is not None,
         },
         list(song_references.values()),
+        tuple(emitted_routes),
     )
 
 

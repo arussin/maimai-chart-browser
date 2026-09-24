@@ -12,6 +12,7 @@ from types import SimpleNamespace
 from unittest.mock import patch
 
 from maimai_intelligence import release_assembly as assembly
+from maimai_intelligence import release_composition as composition
 from maimai_intelligence.release_composition import (
     MAX_FILE_BYTES,
     PathOwnership,
@@ -529,6 +530,239 @@ class ReleaseAssemblyTests(unittest.TestCase):
             assembly._copy_file(source, destination, expected)
         self.assertEqual(destination.read_bytes(), b"retain this")
         self.assert_inputs_unchanged()
+
+    def recovery_fixture(self):
+        documents = {
+            f"{locale}/{kind}/fictional/index.html": b"verified recovery document"
+            for locale in ("en", "ja", "ko", "zh-hans")
+            for kind in ("songs", "versions")
+        }
+        for path in documents:
+            target = self.new / path
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(b"candidate document")
+        self.new_records = records(self.new)
+        self.new_inventory = inventory_from_records(self.new_records)
+        overlay = composition.RecoveryOverlay(
+            "c" * 64,
+            inventory_from_records(
+                {
+                    path: {"bytes": len(raw), "sha256": hashlib.sha256(raw).hexdigest()}
+                    for path, raw in documents.items()
+                }
+            ),
+            composition.artifact_inventory_sha256(self.new_inventory),
+            composition.artifact_inventory_sha256(self.old_inventory),
+        )
+        ownership = tuple(
+            replace(file, owner="baseline", expected=self.old_inventory.files[0].fingerprint)
+            if file.path == "index.html"
+            else file
+            for file in self.plan.files
+        ) + tuple(
+            PathOwnership(file.path, "recovery", file.fingerprint, "Verified route fallback")
+            for file in overlay.inventory.files
+        )
+        plan = plan_release_composition(
+            self.old_inventory,
+            self.new_inventory,
+            target="recovery",
+            ownership=ownership,
+            baseline_runtime=self.old_runtime,
+            candidate_runtime=self.new_runtime,
+            recovery=overlay,
+        )
+        return documents, overlay, plan
+
+    def test_recovery_documents_are_assembled_verified_and_receipted_without_input_edits(self):
+        documents, overlay, plan = self.recovery_fixture()
+        result = self.run_assembly(
+            plan=plan,
+            recovery_documents=documents,
+            recovery_evidence_sha256=overlay.evidence_sha256,
+            recovery_candidate_inventory_sha256=overlay.candidate_inventory_sha256,
+            recovery_baseline_inventory_sha256=overlay.baseline_inventory_sha256,
+        )
+        for path, raw in documents.items():
+            self.assertEqual((self.output / path).read_bytes(), raw)
+        self.assertEqual((self.output / "index.html").read_bytes(), b"old document")
+        receipt = json.loads(self.receipt.read_text())
+        self.assertEqual(receipt["plan"]["recovery_evidence_sha256"], overlay.evidence_sha256)
+        self.assertEqual(
+            receipt["plan"]["recovery_inventory_sha256"], plan.recovery_inventory_sha256
+        )
+        self.assertEqual(result.plan_sha256, digest(asdict(plan)))
+        self.assertEqual(receipt["files"], records(self.output))
+        self.assert_inputs_unchanged()
+
+    def test_recovery_document_inputs_and_binding_must_match_before_writes(self):
+        documents, overlay, plan = self.recovery_fixture()
+        path = next(iter(documents))
+        bad_values = (
+            {},
+            {path: documents[path]},
+            {**documents, path: b"changed"},
+            {**documents, "extra.html": b"extra"},
+            {**documents, path: bytearray(b"mutable")},
+            {**documents, path: "not bytes"},
+            [],
+            None,
+        )
+        for value in bad_values:
+            with self.subTest(value=value), self.assertRaises(ValueError):
+                self.run_assembly(
+                    plan=plan,
+                    recovery_documents=value,
+                    recovery_evidence_sha256=overlay.evidence_sha256,
+                    recovery_candidate_inventory_sha256=overlay.candidate_inventory_sha256,
+                    recovery_baseline_inventory_sha256=overlay.baseline_inventory_sha256,
+                )
+            self.assertFalse(self.output.exists())
+            self.assertFalse(self.receipt.exists())
+        for evidence in (None, "bad", "d" * 64):
+            with self.subTest(evidence=evidence), self.assertRaises(ValueError):
+                self.run_assembly(
+                    plan=plan,
+                    recovery_documents=documents,
+                    recovery_evidence_sha256=evidence,
+                    recovery_candidate_inventory_sha256=overlay.candidate_inventory_sha256,
+                    recovery_baseline_inventory_sha256=overlay.baseline_inventory_sha256,
+                )
+            self.assertFalse(self.output.exists())
+        for changed in (
+            replace(plan, recovery_inventory_sha256="0" * 64),
+            replace(plan, recovery_evidence_sha256=None),
+        ):
+            with (
+                self.subTest(plan=changed),
+                self.assertRaisesRegex(ValueError, "plan does not match"),
+            ):
+                self.run_assembly(
+                    plan=changed,
+                    recovery_documents=documents,
+                    recovery_evidence_sha256=overlay.evidence_sha256,
+                    recovery_candidate_inventory_sha256=overlay.candidate_inventory_sha256,
+                    recovery_baseline_inventory_sha256=overlay.baseline_inventory_sha256,
+                )
+            self.assertFalse(self.output.exists())
+        self.assert_inputs_unchanged()
+
+    def test_recovery_base_binding_is_required_and_never_inferred_from_plan(self):
+        documents, overlay, plan = self.recovery_fixture()
+        for candidate_id in (None, "bad", "0" * 64):
+            with self.subTest(candidate_id=candidate_id), self.assertRaises(ValueError):
+                self.run_assembly(
+                    plan=plan,
+                    recovery_documents=documents,
+                    recovery_evidence_sha256=overlay.evidence_sha256,
+                    recovery_candidate_inventory_sha256=candidate_id,
+                    recovery_baseline_inventory_sha256=overlay.baseline_inventory_sha256,
+                )
+            self.assertFalse(self.output.exists())
+            self.assertFalse(self.receipt.exists())
+        for baseline_id in (None, "bad", "0" * 64):
+            with self.subTest(baseline_id=baseline_id), self.assertRaises(ValueError):
+                self.run_assembly(
+                    plan=plan,
+                    recovery_documents=documents,
+                    recovery_evidence_sha256=overlay.evidence_sha256,
+                    recovery_candidate_inventory_sha256=overlay.candidate_inventory_sha256,
+                    recovery_baseline_inventory_sha256=baseline_id,
+                )
+            self.assertFalse(self.output.exists())
+            self.assertFalse(self.receipt.exists())
+        self.assert_inputs_unchanged()
+
+    def test_stale_baseline_overlay_is_rejected_after_receiving_new_composition_plan(self):
+        documents, overlay, plan = self.recovery_fixture()
+        (self.old / "manifest.json").write_bytes(b"new baseline catalog default")
+        current = inventory_from_records(records(self.old))
+        current_overlay = replace(
+            overlay, baseline_inventory_sha256=composition.artifact_inventory_sha256(current)
+        )
+        current_plan = plan_release_composition(
+            current,
+            self.new_inventory,
+            target="recovery",
+            ownership=plan.files,
+            baseline_runtime=self.old_runtime,
+            candidate_runtime=self.new_runtime,
+            recovery=current_overlay,
+        )
+        with self.assertRaisesRegex(ValueError, "baseline inventory"):
+            self.run_assembly(
+                plan=current_plan,
+                recovery_documents=documents,
+                recovery_evidence_sha256=overlay.evidence_sha256,
+                recovery_candidate_inventory_sha256=overlay.candidate_inventory_sha256,
+                recovery_baseline_inventory_sha256=overlay.baseline_inventory_sha256,
+            )
+        self.assertFalse(self.output.exists())
+        self.assertFalse(self.receipt.exists())
+
+    def test_overlay_bytes_are_detached_from_a_mutated_caller_mapping(self):
+        documents, overlay, plan = self.recovery_fixture()
+        original = dict(documents)
+        real = assembly._copy_file
+
+        def mutate(source, destination, expected):
+            documents.clear()
+            documents["unexpected.html"] = b"later caller mutation"
+            real(source, destination, expected)
+
+        with patch.object(assembly, "_copy_file", side_effect=mutate):
+            self.run_assembly(
+                plan=plan,
+                recovery_documents=documents,
+                recovery_evidence_sha256=overlay.evidence_sha256,
+                recovery_candidate_inventory_sha256=overlay.candidate_inventory_sha256,
+                recovery_baseline_inventory_sha256=overlay.baseline_inventory_sha256,
+            )
+        for path, raw in original.items():
+            self.assertEqual((self.output / path).read_bytes(), raw)
+        self.assertFalse((self.output / "unexpected.html").exists())
+        self.assert_inputs_unchanged()
+
+    def test_recovery_write_interruption_and_corruption_never_complete(self):
+        documents, overlay, plan = self.recovery_fixture()
+        real = assembly._write_file
+        for mode in ("interrupt", "corrupt"):
+            output = self.root / mode
+
+            def fail(raw, destination, expected, *, output=output, mode=mode):
+                if destination.relative_to(output).as_posix() in documents:
+                    if mode == "interrupt":
+                        raise OSError("recovery write interrupted")
+                    real(raw, destination, expected)
+                    destination.write_bytes(b"corrupted recovery document")
+                    return
+                real(raw, destination, expected)
+
+            with self.subTest(mode=mode), patch.object(assembly, "_write_file", side_effect=fail):
+                with self.assertRaises(OSError if mode == "interrupt" else ValueError):
+                    self.run_assembly(
+                        plan=plan,
+                        output=output,
+                        recovery_documents=documents,
+                        recovery_evidence_sha256=overlay.evidence_sha256,
+                        recovery_candidate_inventory_sha256=overlay.candidate_inventory_sha256,
+                        recovery_baseline_inventory_sha256=overlay.baseline_inventory_sha256,
+                    )
+            self.assertFalse(self.receipt.exists())
+        self.assert_inputs_unchanged()
+
+    def test_recovery_writer_checks_bound_and_expected_bytes(self):
+        target = self.root / "new.txt"
+        raw = b"recovery bytes"
+        expected = Fingerprint(len(raw), hashlib.sha256(raw).hexdigest())
+        with (
+            patch.object(assembly, "MAX_FILE_BYTES", 2),
+            self.assertRaisesRegex(ValueError, "limit"),
+        ):
+            assembly._write_file(raw, target, expected)
+        with self.assertRaisesRegex(ValueError, "changed during"):
+            assembly._write_file(b"changed", target, expected)
+        self.assertFalse(target.exists())
 
 
 if __name__ == "__main__":

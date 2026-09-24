@@ -21,6 +21,7 @@ def main():
         "metadata_policy",
         "release_transition",
         "release_composition",
+        "recovery_policy",
         "song_catalog",
         "catalog_document",
     )
@@ -43,6 +44,7 @@ def main():
             "tests.test_release_transition",
             "tests.test_release_composition",
             "tests.test_release_assembly",
+            "tests.test_route_recovery",
             "tests.test_corpus_diagnostics",
             "tests.test_song_catalog",
             "tests.test_song_content",

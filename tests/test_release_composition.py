@@ -4,6 +4,7 @@ import itertools
 import unittest
 from dataclasses import FrozenInstanceError, asdict, replace
 
+from maimai_intelligence import release_composition as composition
 from maimai_intelligence.release_composition import (
     MAX_FILE_BYTES,
     MAX_FILES,
@@ -333,6 +334,7 @@ class ReleaseCompositionTests(unittest.TestCase):
         first, *rest = self.choices()
         for bad in (
             replace(first, owner="newest"),
+            replace(first, owner=[]),
             replace(first, expected=None),
             replace(first, reason=" "),
             replace(first, reason=None),
@@ -382,6 +384,213 @@ class ReleaseCompositionTests(unittest.TestCase):
             else:
                 with self.assertRaisesRegex(ValueError, "per-file capacity"):
                     self.plan(baseline=old, ownership=self.choices(old=old))
+
+    def recovery_fixture(self):
+        routes = {
+            f"{locale}/{kind}/fictional/index.html": record("3")
+            for locale in ("en", "ja", "ko", "zh-hans")
+            for kind in ("songs", "versions")
+        }
+        candidate = ArtifactInventory(self.new.files + inventory_from_records(routes).files)
+        overlay = composition.RecoveryOverlay(
+            "4" * 64,
+            inventory_from_records({path: record("5", 7) for path in routes}),
+            composition.artifact_inventory_sha256(candidate),
+            composition.artifact_inventory_sha256(self.old),
+        )
+        replacement = {file.path: file.fingerprint for file in overlay.inventory.files}
+        choices = tuple(
+            replace(choice, owner="recovery", expected=replacement[choice.path])
+            if choice.path in replacement
+            else choice
+            for choice in self.choices("recovery", new=candidate)
+        )
+        return candidate, overlay, choices
+
+    def test_recovery_overlay_binds_all_candidate_public_route_documents(self):
+        candidate, overlay, choices = self.recovery_fixture()
+        result = self.plan(
+            candidate=candidate, target="recovery", ownership=choices, recovery=overlay
+        )
+        self.assertEqual(result.recovery_evidence_sha256, overlay.evidence_sha256)
+        self.assertEqual(len(result.recovery_inventory_sha256), 64)
+        self.assertEqual(result.total_bytes, 25 + 8 * 7)
+        self.assertEqual(result.file_count, 13)
+        self.assertEqual(
+            {file.path for file in result.files if file.owner == "recovery"},
+            {file.path for file in overlay.inventory.files},
+        )
+        self.assertEqual(
+            self.plan(
+                candidate=candidate,
+                target="recovery",
+                ownership=tuple(reversed(choices)),
+                recovery=replace(
+                    overlay, inventory=ArtifactInventory(tuple(reversed(overlay.inventory.files)))
+                ),
+            ),
+            result,
+        )
+        changed_evidence = self.plan(
+            candidate=candidate,
+            target="recovery",
+            ownership=choices,
+            recovery=replace(overlay, evidence_sha256="6" * 64),
+        )
+        self.assertNotEqual(asdict(result), asdict(changed_evidence))
+        self.assertEqual(
+            result.recovery_inventory_sha256, changed_evidence.recovery_inventory_sha256
+        )
+        changed_overlay = replace(
+            overlay,
+            inventory=ArtifactInventory(
+                tuple(
+                    replace(file, fingerprint=Fingerprint(8, "7" * 64))
+                    for file in overlay.inventory.files
+                )
+            ),
+        )
+        changed_bytes = self.plan(
+            candidate=candidate,
+            target="recovery",
+            ownership=tuple(
+                replace(choice, expected=Fingerprint(8, "7" * 64))
+                if choice.owner == "recovery"
+                else choice
+                for choice in choices
+            ),
+            recovery=changed_overlay,
+        )
+        self.assertNotEqual(
+            result.recovery_inventory_sha256, changed_bytes.recovery_inventory_sha256
+        )
+        with self.assertRaises(FrozenInstanceError):
+            overlay.evidence_sha256 = "6" * 64
+        self.assertIsNone(self.plan().recovery_inventory_sha256)
+        self.assertIsNone(self.plan().recovery_evidence_sha256)
+
+    def test_overlay_is_recovery_only_and_requires_every_route_without_extra_paths(self):
+        candidate, overlay, choices = self.recovery_fixture()
+        bad_overlays = (
+            None,
+            "invalid",
+            replace(overlay, evidence_sha256="bad"),
+            replace(overlay, candidate_inventory_sha256="bad"),
+            replace(overlay, candidate_inventory_sha256="0" * 64),
+            replace(overlay, baseline_inventory_sha256="bad"),
+            replace(overlay, baseline_inventory_sha256="0" * 64),
+            replace(overlay, inventory=None),
+            replace(overlay, inventory=ArtifactInventory(())),
+            replace(overlay, inventory=ArtifactInventory(overlay.inventory.files[:-1])),
+        )
+        for value in bad_overlays:
+            with self.subTest(value=value), self.assertRaises(ValueError):
+                self.plan(candidate=candidate, target="recovery", ownership=choices, recovery=value)
+        with self.assertRaisesRegex(ValueError, "recovery target"):
+            self.plan(candidate=candidate, ownership=choices, recovery=overlay)
+        invalid_paths = (
+            "index.html",
+            "browser-config.json",
+            "browser/app.js",
+            "manifest.json",
+            "en/songs/absent/index.html",
+            "fr/songs/fictional/index.html",
+            "en/songs/fictional/nested/index.html",
+            "en/songs/fictional.html",
+        )
+        for path in invalid_paths:
+            replacement = replace(
+                overlay,
+                inventory=ArtifactInventory(
+                    overlay.inventory.files + (InventoryFile(path, Fingerprint(1, "7" * 64)),)
+                ),
+            )
+            with (
+                self.subTest(path=path),
+                self.assertRaisesRegex(ValueError, "candidate public route"),
+            ):
+                self.plan(
+                    candidate=candidate, target="recovery", ownership=choices, recovery=replacement
+                )
+
+    def test_overlay_cannot_be_silently_unused_or_override_runtime_or_capacity(self):
+        candidate, overlay, choices = self.recovery_fixture()
+        original = next(file for file in candidate.files if file.path == choices[0].path)
+        ignored = (
+            replace(choices[0], owner="candidate", expected=original.fingerprint),
+            *choices[1:],
+        )
+        with self.assertRaisesRegex(ValueError, "Every recovery document"):
+            self.plan(candidate=candidate, target="recovery", ownership=ignored, recovery=overlay)
+        route = overlay.inventory.files[0]
+        wrong = tuple(
+            replace(choice, expected=Fingerprint(99, "0" * 64))
+            if choice.path == route.path
+            else choice
+            for choice in choices
+        )
+        with self.assertRaisesRegex(ValueError, "source artifact"):
+            self.plan(candidate=candidate, target="recovery", ownership=wrong, recovery=overlay)
+        runtime = replace(
+            self.new_runtime,
+            files=self.new_runtime.files
+            + tuple(file for file in candidate.files if file.path == route.path),
+        )
+        with self.assertRaisesRegex(ValueError, "immutable runtime"):
+            self.plan(
+                candidate=candidate,
+                target="recovery",
+                ownership=choices,
+                recovery=overlay,
+                candidate_runtime=runtime,
+            )
+        for capacity in ({"max_files": 12}, {"max_file_bytes": 6}):
+            with self.subTest(capacity=capacity), self.assertRaisesRegex(ValueError, "capacity"):
+                self.plan(
+                    candidate=candidate,
+                    target="recovery",
+                    ownership=choices,
+                    recovery=overlay,
+                    **capacity,
+                )
+
+    def test_overlay_reuse_rejects_changed_candidate_with_identical_route_names(self):
+        candidate, overlay, choices = self.recovery_fixture()
+        changed = ArtifactInventory(
+            tuple(
+                replace(file, fingerprint=Fingerprint(1, "9" * 64))
+                if file.path == "index.html"
+                else file
+                for file in candidate.files
+            )
+        )
+        with self.assertRaisesRegex(ValueError, "candidate inventory"):
+            self.plan(candidate=changed, target="recovery", ownership=choices, recovery=overlay)
+        self.assertNotEqual(
+            composition.artifact_inventory_sha256(candidate),
+            composition.artifact_inventory_sha256(changed),
+        )
+        with self.assertRaises(ValueError):
+            composition.artifact_inventory_sha256(None)
+
+    def test_overlay_reuse_rejects_changed_baseline_manifest_with_same_route_names(self):
+        candidate, overlay, choices = self.recovery_fixture()
+        changed = ArtifactInventory(
+            tuple(
+                replace(file, fingerprint=Fingerprint(5, "9" * 64))
+                if file.path == "manifest.json"
+                else file
+                for file in self.old.files
+            )
+        )
+        with self.assertRaisesRegex(ValueError, "baseline inventory"):
+            self.plan(
+                baseline=changed,
+                candidate=candidate,
+                target="recovery",
+                ownership=choices,
+                recovery=overlay,
+            )
 
 
 if __name__ == "__main__":

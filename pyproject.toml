@@ -47,6 +47,8 @@ files = [
   "src/maimai_intelligence/release_transition.py",
   "src/maimai_intelligence/release_composition.py",
   "src/maimai_intelligence/release_assembly.py",
+  "src/maimai_intelligence/recovery_policy.py",
+  "src/maimai_intelligence/route_recovery.py",
   "src/maimai_intelligence/corpus_explain.py",
   "src/maimai_intelligence/corpus_diagnostics.py",
   "src/maimai_intelligence/corpus_attempts.py",

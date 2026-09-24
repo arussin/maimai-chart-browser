@@ -11,6 +11,7 @@ import hashlib
 import os
 import stat
 import tempfile
+from collections.abc import Mapping
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
@@ -19,6 +20,7 @@ from .release_composition import (
     ArtifactInventory,
     CompositionPlan,
     InventoryFile,
+    RecoveryOverlay,
     RuntimeClosure,
     inventory_from_records,
     plan_release_composition,
@@ -125,8 +127,9 @@ def _overlap(first: Path, second: Path) -> bool:
     return first.is_relative_to(second) or second.is_relative_to(first)
 
 
-def _copy_file(source: Path, destination: Path, expected: Fingerprint) -> None:
-    raw = _read_file(source)
+def _write_file(raw: bytes, destination: Path, expected: Fingerprint) -> None:
+    if len(raw) > MAX_FILE_BYTES:
+        raise ValueError("Release asset exceeds the Pages per-file limit")
     if _fingerprint(raw) != expected:
         raise ValueError("Selected source bytes changed during assembly")
     _checked_path(destination)
@@ -137,6 +140,48 @@ def _copy_file(source: Path, destination: Path, expected: Fingerprint) -> None:
         stream.flush()
         os.fsync(stream.fileno())
     _checked_path(destination)
+
+
+def _copy_file(source: Path, destination: Path, expected: Fingerprint) -> None:
+    _write_file(_read_file(source), destination, expected)
+
+
+def _recovery_input(
+    documents: Mapping[str, bytes] | None,
+    evidence_sha256: str | None,
+    candidate_inventory_sha256: str | None,
+    baseline_inventory_sha256: str | None,
+) -> tuple[dict[str, bytes], RecoveryOverlay | None]:
+    if (
+        documents is None
+        and evidence_sha256 is None
+        and candidate_inventory_sha256 is None
+        and baseline_inventory_sha256 is None
+    ):
+        return {}, None
+    if (
+        not isinstance(documents, Mapping)
+        or evidence_sha256 is None
+        or candidate_inventory_sha256 is None
+        or baseline_inventory_sha256 is None
+    ):
+        raise ValueError(
+            "Recovery documents, evidence and both inventory bindings must be supplied together"
+        )
+    # Detach once before any writes; caller mapping changes cannot substitute
+    # bytes between validation and writing. Values themselves must be immutable.
+    detached = dict(documents)
+    if any(type(raw) is not bytes for raw in detached.values()):
+        raise ValueError("Recovery documents must contain immutable bytes")
+    inventory = inventory_from_records(
+        {
+            path: {"bytes": len(raw), "sha256": hashlib.sha256(raw).hexdigest()}
+            for path, raw in detached.items()
+        }
+    )
+    return detached, RecoveryOverlay(
+        evidence_sha256, inventory, candidate_inventory_sha256, baseline_inventory_sha256
+    )
 
 
 def _complete(path: Path, payload: dict[str, object]) -> None:
@@ -169,6 +214,10 @@ def assemble_release(
     baseline_runtime: RuntimeClosure,
     candidate_runtime: RuntimeClosure,
     receipt_path: Path,
+    recovery_documents: Mapping[str, bytes] | None = None,
+    recovery_evidence_sha256: str | None = None,
+    recovery_candidate_inventory_sha256: str | None = None,
+    recovery_baseline_inventory_sha256: str | None = None,
 ) -> AssemblyReceipt:
     """Verify the complete plan and inputs, copy bounded files, then complete.
 
@@ -176,9 +225,17 @@ def assemble_release(
     is never removed or reused. This detects filesystem redirects and mutations
     at each boundary; callers must use ordinary exclusively controlled workspace
     directories, not paths being concurrently rearranged by another process.
+    Optional recovery documents are detached before writing and must match their
+    explicit candidate inventory and evidence bindings; no input is rewritten.
     """
     if not isinstance(plan, CompositionPlan):
         raise ValueError("Expected a validated composition plan")
+    documents, recovery = _recovery_input(
+        recovery_documents,
+        recovery_evidence_sha256,
+        recovery_candidate_inventory_sha256,
+        recovery_baseline_inventory_sha256,
+    )
     baseline, candidate, output, receipt_path = (
         _checked_path(path) for path in (baseline, candidate, output, receipt_path)
     )
@@ -201,6 +258,7 @@ def assemble_release(
         ownership=plan.files,
         baseline_runtime=baseline_runtime,
         candidate_runtime=candidate_runtime,
+        recovery=recovery,
         max_files=plan.max_files,
         max_file_bytes=plan.max_file_bytes,
     )
@@ -216,7 +274,10 @@ def assemble_release(
     output.mkdir()
     sources = {"baseline": baseline, "candidate": candidate}
     for item in plan.files:
-        _copy_file(sources[item.owner] / item.path, output / item.path, item.expected)
+        if item.owner == "recovery":
+            _write_file(documents[item.path], output / item.path, item.expected)
+        else:
+            _copy_file(sources[item.owner] / item.path, output / item.path, item.expected)
     if _inventory(output) != expected:
         raise ValueError("Assembled output differs from its exact planned inventory")
     # Include files that were not selected from their source: a complete input

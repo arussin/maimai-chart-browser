@@ -29,6 +29,7 @@ PURE = {
             "refresh_policy",
             "release_transition",
             "release_composition",
+            "recovery_policy",
             "official_contract",
             "serialization",
         )
@@ -81,7 +82,9 @@ class ArchitectureBoundaryTests(unittest.TestCase):
                 else:
                     imports = []
                 for name in imports:
-                    self.assertNotIn(name.split(".")[0], FORBIDDEN, (module, name))
+                    # URL encoding/parsing is pure; urllib.request remains forbidden.
+                    if name != "urllib.parse":
+                        self.assertNotIn(name.split(".")[0], FORBIDDEN, (module, name))
                     self.assertNotEqual(name, "importlib.resources", module)
                 if isinstance(node, ast.Call):
                     if isinstance(node.func, ast.Name):
