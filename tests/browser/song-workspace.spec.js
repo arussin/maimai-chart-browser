@@ -117,6 +117,62 @@ for (const failure of [false,true]) test('lazy comparison '+(failure?'failure pr
  else await expect(page).toHaveURL(/\/ja\/songs\//);
 });
 
+for (const locale of ['en','ja','ko','zh-hans']) test('comparison recovers after one failed catalog request '+locale,async({page,request})=>{
+ const map=await(await request.get('/registry/permalinks.json')).json();
+ const slug=Object.values(map.songs).find(value=>value.includes('ソテリア'));
+ let requests=0;
+ await page.route('**/manifest.json',async route=>{
+  requests++;
+  if(requests===1) await route.fulfill({status:503,body:'unavailable'});
+  else await route.fallback();
+ });
+ await page.goto('/'+locale+'/songs/'+encodeURIComponent(slug)+'/');
+ await expect(page.locator('#seo-route-view .song-workspace')).toBeVisible();
+ await expect.poll(()=>page.evaluate(()=>!!window.maimaiPersonal)).toBe(true);
+ await page.evaluate(()=>{
+  window.fixtureOriginalSession=maimaiPersonal;
+  window.fixtureBrowserInitializations=0;
+  addEventListener('maimai:browser-ready',()=>fixtureBrowserInitializations++);
+ });
+ const compare=page.locator('#seo-route-view .chart-detail-actions button').first();
+ await compare.click();
+ await expect(page.locator('[data-diagnostic="catalog_unavailable"]')).toBeVisible();
+ expect(requests).toBe(1);
+ await compare.click();
+ await expect(page.locator('#compare')).toBeVisible();
+ await expect(page.locator('#compare-left-search')).not.toHaveValue('');
+ await page.locator('#catalog-tab').click();
+ await expect(page.locator('#songs .song-row').first()).toBeVisible();
+ expect(requests).toBe(2);
+ expect(await page.evaluate(()=>fixtureOriginalSession===maimaiPersonal)).toBe(true);
+ expect(await page.evaluate(()=>fixtureBrowserInitializations)).toBe(1);
+});
+
+test('concurrent recovery shares acquisition and commits only the latest action',async({page,request})=>{
+ const map=await(await request.get('/registry/permalinks.json')).json();
+ const slug=Object.values(map.songs).find(value=>value.includes('ソテリア'));
+ let requests=0,release;
+ const held=new Promise(resolve=>{release=resolve;});
+ await page.route('**/manifest.json',async route=>{
+  requests++;
+  if(requests===1) await route.fulfill({status:503,body:'unavailable'});
+  else {await held;await route.fallback();}
+ });
+ await page.goto('/en/songs/'+encodeURIComponent(slug)+'/');
+ await expect(page.locator('#seo-route-view .song-workspace')).toBeVisible();
+ const compare=page.locator('#seo-route-view .chart-detail-actions button').first();
+ await compare.click();
+ await expect(page.locator('[data-diagnostic="catalog_unavailable"]')).toBeVisible();
+ await compare.click();
+ await expect.poll(()=>requests).toBe(2);
+ await page.locator('#patterns-tab').click();
+ release();
+ await expect(page.locator('#patterns')).toBeVisible();
+ await expect(page.locator('#compare')).toBeHidden();
+ await expect(page.locator('[data-catalog-progress]')).toHaveCount(0);
+ expect(requests).toBe(2);
+});
+
 test('song import, lazy comparison and Forget share one player session',async({page,request})=>{
  const map=await(await request.get('/registry/permalinks.json')).json();
  const slug=Object.values(map.songs).find(value=>value.includes('ソテリア'));

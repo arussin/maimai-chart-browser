@@ -273,8 +273,8 @@ export async function createApplication(options: ApplicationOptions) {
     usage,
   });
   let browserJob: Promise<void> | undefined;
-  async function initializeBrowser() {
-    loaded = await (initialCatalog ?? readCatalog());
+  function initializeBrowser(catalog: LoadedCatalog) {
+    loaded = catalog;
     const publicData = loaded.data;
     fullContext = chartContext(publicData, loaded.details);
     const { analysis, chartLinks, artwork, overview } = fullContext;
@@ -342,7 +342,13 @@ export async function createApplication(options: ApplicationOptions) {
     }
     if (directSong) window.dispatchEvent(new Event('maimai:browser-ready'));
   }
-  const loadBrowser = () => (browserJob ??= initializeBrowser());
+  const loadBrowser = () =>
+    (browserJob ??= (initialCatalog ?? readCatalog()).then(initializeBrowser, (error: unknown) => {
+      // Acquisition has not constructed catalog views. A later intent may retry it.
+      // Activation failures stay cached: retrying partially mounted views duplicates owners.
+      browserJob = undefined;
+      throw error;
+    }));
   const browser: BrowserPort = Object.freeze({
     load: loadBrowser,
     cancelRestoration: () => browserState.cancelRestoration(),
