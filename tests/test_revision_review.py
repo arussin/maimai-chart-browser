@@ -144,6 +144,72 @@ def build_public_release(source, output):
                 run_build(source, inputs, inputs, inputs, root / "second", "fixture")
             self.assertIn("Historical immutable URL", (root / "second/build.log").read_text())
 
+    def test_current_source_passes_its_document_and_never_falls_back_after_failure(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source, inputs = root / "source", root / "inputs"
+            inputs.mkdir()
+            modules = {
+                "src/maimai_intelligence/__init__.py": "",
+                "src/maimai_intelligence/lab.py": """
+from types import SimpleNamespace
+DOCUMENT = object()
+def build_lab(*args, **kwargs):
+    raise AssertionError('Current acceptance must retain the prepared document')
+def build_browser(*args, **kwargs):
+    assert kwargs['catalog_version'] == 'fixture'
+    assert kwargs['player_maishift'] is True
+    return SimpleNamespace(catalog=DOCUMENT)
+""",
+                "scripts/__init__.py": "",
+                "scripts/update_catalog.py": "def retain_history(*args): pass\n",
+                "src/maimai_intelligence/public_release.py": """
+from .lab import DOCUMENT
+class Plan:
+    assets = {}
+    summary = {'fixture': True}
+    def write_review_to(self, output):
+        output.mkdir(parents=True)
+        (output/'prepared.json').write_bytes(b'{}')
+def plan_public_release(source, *, previous_public, prepared_catalogs):
+    assert prepared_catalogs == {'fixture': DOCUMENT}
+    return Plan()
+""",
+            }
+            for name, content in modules.items():
+                path = source / name
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text(content)
+            result = run_build(
+                source, inputs, inputs, inputs, root / "first", "fixture", player_maishift=True
+            )
+            self.assertEqual(result["publication_interface"], "prepared-catalog-release-plan")
+            module = source / "src/maimai_intelligence/lab.py"
+            module.write_text(
+                module.read_text().replace(
+                    "return SimpleNamespace(catalog=DOCUMENT)",
+                    "raise RuntimeError('prepared build failed')",
+                )
+            )
+            with self.assertRaisesRegex(ValueError, "build failed"):
+                run_build(
+                    source, inputs, inputs, inputs, root / "failed", "fixture", player_maishift=True
+                )
+            log = (root / "failed/build.log").read_text()
+            self.assertIn("prepared build failed", log)
+            self.assertNotIn("must retain the prepared document", log)
+            public_module = source / "src/maimai_intelligence/public_release.py"
+            public_module.write_text(
+                "def build_public_release(*args, **kwargs):\n"
+                "    raise AssertionError('Unmatched APIs cannot use historical fallback')\n"
+            )
+            with self.assertRaisesRegex(ValueError, "build failed"):
+                run_build(source, inputs, inputs, inputs, root / "unmatched", "fixture")
+            self.assertIn(
+                "Prepared browser requires the matching release-plan API",
+                (root / "unmatched/build.log").read_text(),
+            )
+
     def test_mutating_input_after_first_build_never_writes_acceptance_receipt(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

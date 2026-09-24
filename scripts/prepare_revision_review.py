@@ -141,18 +141,33 @@ def build_child(source, package, retained, previous, output, version, *, player_
     socket.socket.connect = socket.socket.connect_ex = deny
     sys.path[:0] = [str(source / "src"), str(source)]
     # Imports occur only after the child network guard; the parent verifies all source first.
-    from maimai_intelligence import public_release
-    from maimai_intelligence.lab import build_lab
+    from maimai_intelligence import lab, public_release
     from scripts.update_catalog import retain_history
 
     start = time.monotonic()
     retain_history(retained, output / "browser")
-    build_lab(package, output / "browser", catalog_version=version, player_maishift=player_maishift)
+    prepared = None
+    if hasattr(lab, "build_browser"):
+        if not hasattr(public_release, "plan_public_release"):
+            raise ValueError("Prepared browser requires the matching release-plan API")
+        browser = lab.build_browser(
+            package, output / "browser", catalog_version=version, player_maishift=player_maishift
+        )
+        prepared = {version: browser.catalog}
+    else:
+        lab.build_lab(
+            package, output / "browser", catalog_version=version, player_maishift=player_maishift
+        )
     if hasattr(public_release, "plan_public_release"):
-        plan = public_release.plan_public_release(output / "browser", previous_public=previous)
+        options = {"prepared_catalogs": prepared} if prepared is not None else {}
+        plan = public_release.plan_public_release(
+            output / "browser", previous_public=previous, **options
+        )
         plan.write_review_to(output / "review")
         assets, summary = plan.assets, plain(plan.summary)
-        interface = "prepared-release-plan"
+        interface = (
+            "prepared-catalog-release-plan" if prepared is not None else "prepared-release-plan"
+        )
     else:
         # The reviewed production baseline predates the release-plan API. Use its
         # own public writer without injecting current product code or lifting limits.
