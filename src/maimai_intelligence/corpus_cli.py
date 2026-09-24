@@ -69,6 +69,12 @@ def add_commands(commands: argparse._SubParsersAction[argparse.ArgumentParser]) 
     )
     inspect.add_argument("--identity")
     inspect.add_argument(
+        "--package", type=Path, help="Retained prepared package bound to this registry"
+    )
+    inspect.add_argument(
+        "--package-sha256", help="SHA256 of package.json from its retained receipt"
+    )
+    inspect.add_argument(
         "--workbench", type=Path, help="Write a read-only HTML view outside the run"
     )
     compare = actions.add_parser(
@@ -173,7 +179,12 @@ def execute(args: argparse.Namespace) -> None:
                 "published": False,
             }
     else:
-        result = inspect_run(args.run) if args.run else inspect_registry(args.registry)
+        inspection = {"package": args.package, "package_sha256": args.package_sha256}
+        result = (
+            inspect_run(args.run, **inspection)
+            if args.run
+            else inspect_registry(args.registry, **inspection)
+        )
         if args.identity:
             matches = [
                 record for record in result["canonical"]["records"] if record["id"] == args.identity
@@ -181,17 +192,42 @@ def execute(args: argparse.Namespace) -> None:
             if not matches:
                 raise ValueError("Unknown canonical identity in this run")
             sources = result["canonical"]["sources"]
-            result = matches[0]
+            analysis = result["canonical"]["analysis"]
+            result = {
+                **matches[0],
+                "analysis": {
+                    **{
+                        key: analysis[key]
+                        for key in ("status", "reason", "catalog", "package")
+                        if key in analysis
+                    },
+                    "verification": analysis.get("verification", "unavailable"),
+                    "metadata": analysis.get("metadata", {}),
+                    "preparation": analysis.get("preparation", {}),
+                    "charts": {
+                        identity: analysis["charts"][identity]
+                        for identity in matches[0]["charts"]
+                        if identity in analysis["charts"]
+                        and (matches[0]["kind"] == "songs" or identity == args.identity)
+                    },
+                },
+            }
             for reference in result["origin"].get("references", []):
                 reference["assertion"] = sources[reference["source_id"]]
         if args.workbench:
             if args.run:
-                output = write_workbench(args.run, args.workbench)
+                output = write_workbench(args.run, args.workbench, **inspection)
             else:
                 if args.workbench.resolve().is_relative_to(args.registry.resolve()):
                     raise ValueError("Write derived workbench outside the retained registry")
+                if args.package is not None and args.workbench.resolve().is_relative_to(
+                    args.package.resolve()
+                ):
+                    raise ValueError("Write derived workbench outside the retained package")
                 output = write_inspection(
-                    inspect_registry(args.registry), args.registry.name, args.workbench
+                    inspect_registry(args.registry, **inspection),
+                    args.registry.name,
+                    args.workbench,
                 )
             result = {"workbench": str(output), "read_only": True}
     print(json.dumps(result, ensure_ascii=False, indent=2))

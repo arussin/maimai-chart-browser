@@ -33,6 +33,7 @@ maimai-chart corpus replay --from CACHE/updates/runs/ATTEMPT
 maimai-chart corpus reassess --from CACHE/updates/runs/ATTEMPT
 maimai-chart corpus inspect --run CACHE/updates/runs/ATTEMPT
 maimai-chart corpus inspect --registry RETAINED/registry --workbench CACHE/review/registry.html
+maimai-chart corpus inspect --registry RETAINED/registry --package RETAINED/package --package-sha256 DESCRIPTOR_SHA256 --workbench CACHE/review/preparation.html
 maimai-chart corpus inspect --run CACHE/updates/runs/ATTEMPT --identity song:CANONICAL-ID
 maimai-chart corpus inspect --run CACHE/updates/runs/ATTEMPT --workbench CACHE/review/workbench.html
 maimai-chart corpus diff CACHE/updates/runs/BEFORE CACHE/updates/runs/AFTER
@@ -90,6 +91,25 @@ or removes a pre-existing lock. Interruption tests do not establish power-loss d
 Retained registries can also be inspected directly with `--registry`; these views explicitly say `retained_registry_only` and never masquerade as preparation or publication receipts. Each evidence table is indexed once, and common source assertions are stored once in the derived view.
 
 The workbench is generated outside immutable runs and has no save, promote, fetch, or publish operations. It uses accepted registry records, observations, mappings, artwork decisions, coverage conflicts, source audits, change reports, and stage diagnostics. Record explanations distinguish source assertions from explicitly retained legacy admission evidence. A source assertion is not proof that its capture bytes were verified during inspection: the view labels that distinction and integrity verification remains a separate operation.
+
+Completed-run inspection also reads the prepared public catalog through the shared
+multipart/full-catalog verifier. The completion receipt binds its manifest and the
+accepted registry inventory; chart identities and selected source hashes must agree.
+The workbench and `inspect --identity` expose the retained profile, Flow/pattern
+observations, shared definitions/evidence, selected transcription, and recorded
+preparation recipe. No analysis or recommendations are recalculated. Metadata-only
+charts remain explicitly unavailable; older recipes and capture-byte verification
+are explicitly marked absent or unchecked. Interrupted output is never promoted to
+prepared analysis unless the run has a complete verified prepared package bound to
+its exact registry. Failed rendering or capacity checks therefore do not hide
+completed preparation. A separately supplied `--package` requires
+`--package-sha256`, the hash of `package.json` from its retained receipt. The shared
+package reader verifies all declared JSON files; both the descriptor and browser
+metadata must bind the exact accepted registry. These views explicitly report
+preparation-only verification and unverified publication readiness. They never
+relabel an old producer or revalidate capture bytes. Changed inspected assets stop inspection. This verifies the
+inspected catalog and registry binding only; `corpus verify` remains required for
+whole-candidate, producer, inputs, coverage and publication checks.
 
 Canonical view identity excludes operational timestamps, durations and stage status. Diagnostics contain finite local stage/outcome codes, counts, evidence filenames, and recovery instructions; raw provider messages, credentials and private inputs are excluded. The workbench embeds escaped data, blocks network connections and forms, and never loads remote artwork. Its derived indexes are not an additional registry.
 

@@ -9,6 +9,11 @@ from importlib.resources import files
 from pathlib import Path
 from typing import Any
 
+from .corpus_analysis import (
+    inspect_package_analysis,
+    inspect_prepared_analysis,
+    unavailable_analysis,
+)
 from .corpus_diagnostics import read_diagnostics as read_diagnostics
 from .corpus_explain import explain_registry
 from .corpus_policy import compare_records
@@ -20,13 +25,22 @@ from .snapshots import read_json
 
 
 def inspect_registry(
-    path: Path, *, policy_context: PolicyContext = BUILTIN_CONTEXT
+    path: Path,
+    *,
+    policy_context: PolicyContext = BUILTIN_CONTEXT,
+    package: Path | None = None,
+    package_sha256: str | None = None,
 ) -> dict[str, Any]:
     """Explain retained admissions without pretending they are a new completed attempt."""
+    if package is None and package_sha256 is not None:
+        raise ValueError("A package descriptor hash requires an explicit package")
     registry = read_registry(path, policy_context=policy_context)
     canonical = {
         "records": explain_registry(registry, compact=True),
         "sources": registry["sources"],
+        "analysis": inspect_package_analysis(package, registry, descriptor_sha256=package_sha256)
+        if package is not None
+        else unavailable_analysis("retained_registry_only"),
     }
     return {
         "version": "corpus-workbench-1",
@@ -37,7 +51,13 @@ def inspect_registry(
     }
 
 
-def inspect_run(run: Path, *, policy_context: PolicyContext = BUILTIN_CONTEXT) -> dict[str, Any]:
+def inspect_run(
+    run: Path,
+    *,
+    policy_context: PolicyContext = BUILTIN_CONTEXT,
+    package: Path | None = None,
+    package_sha256: str | None = None,
+) -> dict[str, Any]:
     registry_path = run / "registry"
     registry = (
         read_registry(registry_path, policy_context=policy_context)
@@ -47,6 +67,9 @@ def inspect_run(run: Path, *, policy_context: PolicyContext = BUILTIN_CONTEXT) -
     canonical: dict[str, Any] = {
         "records": explain_registry(registry, compact=True) if registry else [],
         "sources": registry["sources"] if registry else {},
+        "analysis": inspect_prepared_analysis(
+            run, registry, package=package, package_sha256=package_sha256
+        ),
     }
     for name in ("coverage-audit", "coverage-conflicts", "source-audit", "changes"):
         path = run / (name + ".json")
@@ -94,11 +117,24 @@ def diff_runs(
 
 
 def write_workbench(
-    run: Path, output: Path, *, policy_context: PolicyContext = BUILTIN_CONTEXT
+    run: Path,
+    output: Path,
+    *,
+    policy_context: PolicyContext = BUILTIN_CONTEXT,
+    package: Path | None = None,
+    package_sha256: str | None = None,
 ) -> Path:
     if output.resolve().is_relative_to(run.resolve()):
         raise ValueError("Write derived workbench outside the immutable run")
-    return write_inspection(inspect_run(run, policy_context=policy_context), run.name, output)
+    if package is not None and output.resolve().is_relative_to(package.resolve()):
+        raise ValueError("Write derived workbench outside the retained package")
+    return write_inspection(
+        inspect_run(
+            run, policy_context=policy_context, package=package, package_sha256=package_sha256
+        ),
+        run.name,
+        output,
+    )
 
 
 def write_inspection(view: dict[str, Any], title: str, output: Path) -> Path:

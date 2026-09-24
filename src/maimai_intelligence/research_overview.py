@@ -1,5 +1,7 @@
 """Compact public research Flow and pattern observations, joined by exact identity."""
 
+from typing import Any
+
 from maimai_analyzer.contracts import content_hash
 from maimai_analyzer.core import analyze_overview
 from maimai_analyzer.patterns import (
@@ -118,7 +120,7 @@ def overview_package(charts):
     }
 
 
-def validate_overview(value, catalog):
+def validate_overview(value: dict[str, Any], catalog: list[dict[str, Any]]) -> dict[str, Any]:
     expected = {"research-overview-1": LEGACY_PATTERNS, VERSION: PATTERNS}.get(value.get("version"))
     if expected is None or value.get("patterns") != expected:
         raise ValueError("Incompatible research overview")
