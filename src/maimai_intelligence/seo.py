@@ -12,6 +12,7 @@ import json
 import re
 import unicodedata
 from collections import defaultdict
+from dataclasses import dataclass
 from html import escape
 from typing import Any
 from urllib.parse import quote, unquote, urlencode
@@ -290,14 +291,22 @@ def _document(locale, kind, slug, title, description, body, words, browser_csp=N
     ).encode()
 
 
-def build_seo(
+@dataclass(frozen=True)
+class PreparedSEO:
+    assets: dict[str, bytes]
+    ledger: dict[str, Any]
+    summary: dict[str, int]
+    song_bindings: list[dict[str, Any]]
+
+
+def prepare_seo(
     catalog: dict[str, Any],
     *,
     previous: dict[str, Any] | None = None,
     song_redirects: dict[str, str] | None = None,
     browser_csp: str | None = None,
     catalog_sha: str | None = None,
-) -> tuple[dict[str, bytes], dict[str, Any], dict[str, int]]:
+) -> PreparedSEO:
     """Return public assets, updated route ledger and a reviewable capacity summary."""
     ledger = json.loads(json.dumps(previous if previous is not None else empty_permalinks()))
     validate_permalinks(ledger)
@@ -336,19 +345,30 @@ def build_seo(
     for version in sorted(versions):
         ledger["versions"].setdefault(version, _slug(version, version))
     validate_permalinks(ledger)
-    from .song_catalog import prepare_song_catalog
+    from .song_catalog import prepare_song_catalog, validate_song_binding
 
     assets, sitemap_paths = {}, defaultdict(list)
     catalog_sha = catalog_sha or hashlib.sha256(canonical(catalog)).hexdigest()
     song_references = {}
     for sid, charts in sorted(songs.items()):
-        raw = canonical(prepare_song_catalog(catalog, sid, charts, catalog_sha))
+        content = prepare_song_catalog(catalog, sid, charts)
+        raw = canonical(content)
         if len(raw) > 8 * 1024 * 1024:
             raise ValueError("Song catalog exceeds 8 MiB")
         digest = hashlib.sha256(raw).hexdigest()
         path = f"song-catalog/{digest}.json"
         assets[path] = raw
-        song_references[sid] = (path, digest, len(raw))
+        binding = {
+            "schema_version": "maimai-song-binding-1",
+            "source_catalog_sha256": catalog_sha,
+            "song_id": sid,
+            "source_song_ids": content["source_song_ids"],
+            "path": path,
+            "sha256": digest,
+            "bytes": len(raw),
+        }
+        validate_song_binding(binding, catalog_sha, content)
+        song_references[sid] = binding
     for locale in LOCALES:
         words = dict(zip(KEYS, WORDS[locale], strict=True))
         for sid, charts in sorted(songs.items()):
@@ -366,11 +386,10 @@ def build_seo(
             browser = "/?" + urlencode(
                 {"view": "catalog", "chart": first["chart_id"], "lang": LOCALES[locale]}
             )
-            song_path, song_sha, song_bytes = song_references[sid]
+            binding_json = escape(canonical(song_references[sid]).decode(), quote=True)
             body = (
                 f'<section class="seo-document" data-song-id="{escape(sid, quote=True)}" '
-                f'data-song-catalog="{song_path}" data-song-sha256="{song_sha}" '
-                f'data-song-bytes="{song_bytes}" data-catalog-sha256="{catalog_sha}">'
+                f'data-song-binding="{binding_json}" data-catalog-sha256="{catalog_sha}">'
                 + _regional("h1", title, _title(first, intl, locale, words["unknown"]))
             )
             artwork = catalog.get("artwork", {})
@@ -555,7 +574,7 @@ def build_seo(
         b'content="noindex"><title>Page not found | maimai.party</title><h1>Page not found</h1>'
         b'<a href="/">Open maimai.party</a></html>'
     )
-    return (
+    return PreparedSEO(
         assets,
         ledger,
         {
@@ -564,4 +583,24 @@ def build_seo(
             "localized_documents": 4 * (len(songs) + len(versions)),
             "permalink_seeded": previous is not None,
         },
+        list(song_references.values()),
     )
+
+
+def build_seo(
+    catalog: dict[str, Any],
+    *,
+    previous: dict[str, Any] | None = None,
+    song_redirects: dict[str, str] | None = None,
+    browser_csp: str | None = None,
+    catalog_sha: str | None = None,
+) -> tuple[dict[str, bytes], dict[str, Any], dict[str, int]]:
+    """Historical tuple API around the one maintained structured preparation."""
+    prepared = prepare_seo(
+        catalog,
+        previous=previous,
+        song_redirects=song_redirects,
+        browser_csp=browser_csp,
+        catalog_sha=catalog_sha,
+    )
+    return prepared.assets, prepared.ledger, prepared.summary

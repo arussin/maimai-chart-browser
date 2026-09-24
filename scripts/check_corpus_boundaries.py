@@ -30,6 +30,8 @@ def main():
             "unittest",
             "tests.test_corpus_policy",
             "tests.test_song_catalog",
+            "tests.test_song_content",
+            "tests.test_song_bindings",
             "tests.test_seo",
             "tests.test_catalog_document",
             "tests.test_catalog_handoff",

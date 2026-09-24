@@ -5,6 +5,7 @@ import hashlib
 import json
 import re
 import unittest
+from html import unescape
 
 from maimai_intelligence.overview_codec import expand_tags
 from maimai_intelligence.seo import build_seo
@@ -56,7 +57,7 @@ class SongCatalogTests(unittest.TestCase):
                 chosen["song_id"]: {"path": "jacket", "regions": {"INTL": {"path": "intl"}}},
                 other["song_id"]: {"path": "unrelated"},
             },
-            "versions": {"v": "version"},
+            "versions": {"Japan release": "version"},
             "assets": {k: {} for k in ("jacket", "intl", "version", "unrelated")},
         }
         return data, chosen
@@ -64,7 +65,7 @@ class SongCatalogTests(unittest.TestCase):
     def test_scoped_records_are_detached_and_analysis_is_lossless(self):
         data, chart = self.fixture()
         before = canonical(data)
-        envelope = prepare_song_catalog(data, chart["song_id"], [chart], "a" * 64)
+        envelope = prepare_song_catalog(data, chart["song_id"], [chart])
         value = envelope["data"]
         self.assertEqual(canonical(data), before)
         self.assertEqual(len(value["catalog"]), 1)
@@ -100,7 +101,7 @@ class SongCatalogTests(unittest.TestCase):
             },
         }
         before = canonical(data)
-        result = prepare_song_catalog(data, chart["song_id"], [chart], "a" * 64)
+        result = prepare_song_catalog(data, chart["song_id"], [chart])
         self.assertEqual(result["data"]["analysis"], data["analysis"])
         self.assertEqual(canonical(data), before)
 
@@ -108,12 +109,12 @@ class SongCatalogTests(unittest.TestCase):
         data, chart = self.fixture()
         for charts in ([], [chart, chart]):
             with self.assertRaisesRegex(ValueError, "unique accepted"):
-                prepare_song_catalog(data, chart["song_id"], charts, "a" * 64)
+                prepare_song_catalog(data, chart["song_id"], charts)
         for invalid in (-1, 2, True, "1"):
             changed = copy.deepcopy(data)
             changed["analysis"]["charts"][chart["chart_id"]]["tags"][0][5] = [invalid]
             with self.assertRaisesRegex(ValueError, "evidence index"):
-                prepare_song_catalog(changed, chart["song_id"], [chart], "a" * 64)
+                prepare_song_catalog(changed, chart["song_id"], [chart])
 
     def test_locales_share_one_content_addressed_song_asset(self):
         data = catalog()
@@ -125,11 +126,15 @@ class SongCatalogTests(unittest.TestCase):
         for name, raw in song_assets.items():
             self.assertEqual(name, "song-catalog/" + hashlib.sha256(raw).hexdigest() + ".json")
             value = json.loads(raw)
-            self.assertEqual(value["data"]["source_catalog_sha256"], "b" * 64)
+            self.assertNotIn("source_catalog_sha256", value["data"])
             pages = [
                 raw.decode()
                 for path, raw in assets.items()
-                if path.endswith("index.html") and f'data-song-catalog="{name}"' in raw.decode()
+                if path.endswith("index.html") and name in raw.decode()
             ]
             self.assertEqual(len(pages), 4)
-            self.assertTrue(all(re.search(f'data-song-bytes="{len(raw)}"', page) for page in pages))
+            for page in pages:
+                binding = json.loads(unescape(re.search(r'data-song-binding="([^"]+)"', page)[1]))
+                self.assertEqual(binding["bytes"], len(raw))
+                self.assertEqual(binding["source_catalog_sha256"], "b" * 64)
+                self.assertEqual(binding["song_id"], value["song_id"])

@@ -249,3 +249,34 @@ for(const target of ['.seo-primary[data-open-browser]','[data-back-results]'])te
  await expect(page.locator('#catalog-count')).toHaveText('26 charts');
  expect(new URL(page.url()).pathname).toBe('/');
 });
+
+for(const mode of ['legacy','stale','forged'])test('song release binding '+mode,async({page,request,baseURL})=>{
+ const map=await(await request.get('/registry/permalinks.json')).json();
+ const slug=Object.values(map.songs).find(value=>value.includes('ソテリア'));
+ const path='/en/songs/'+encodeURIComponent(slug)+'/';
+ let html=await(await request.get('/registry'+path)).text();
+ const attribute=html.match(/data-song-binding="([^"]+)"/)[0];
+ const binding=JSON.parse(attribute.slice(19,-1).replaceAll('&quot;','"').replaceAll('&#x27;',"'").replaceAll('&amp;','&'));
+ if(mode==='legacy'){
+  const content=await(await request.get('/registry/'+binding.path)).json();
+  content.schema_version='maimai-song-catalog-1';content.data.source_catalog_sha256=binding.source_catalog_sha256;
+  const body=Buffer.from(JSON.stringify(content));
+  const {createHash}=await import('node:crypto');const digest=createHash('sha256').update(body).digest('hex');
+  html=html.replace(attribute,`data-song-catalog="song-catalog/${digest}.json" data-song-sha256="${digest}" data-song-bytes="${body.length}"`);
+  await page.route('**/song-catalog/'+digest+'.json',route=>route.fulfill({contentType:'application/json',body}));
+ }else{
+  if(mode==='stale')binding.source_catalog_sha256='0'.repeat(64);
+  else binding.song_id='unrelated-canonical-song';
+  html=html.replace(attribute,'data-song-binding="'+JSON.stringify(binding).replaceAll('&','&amp;').replaceAll('"','&quot;')+'"');
+ }
+ await page.route(baseURL+path,route=>route.fulfill({contentType:'text/html',body:html}));
+ await page.goto(path);
+ if(mode==='legacy'){
+  await expect(page.locator('#seo-route-view .song-workspace .chart-measurements').first()).toBeVisible();
+  await expect(page.locator('#lab-status')).toBeEmpty();
+ }else{
+  await expect(page.locator('main[data-seo-page="song"] .seo-table')).toBeVisible();
+  await expect(page.locator('[data-diagnostic="catalog_unavailable"]')).toBeVisible();
+  await expect(page.locator('.song-workspace')).toHaveCount(0);
+ }
+});

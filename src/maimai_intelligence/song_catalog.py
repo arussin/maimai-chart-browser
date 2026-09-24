@@ -9,7 +9,7 @@ from .catalog_loading import project_chart, project_maishift_join, project_provi
 
 
 def prepare_song_catalog(
-    data: dict[str, Any], song_id: str, charts: list[dict[str, Any]], catalog_sha: str
+    data: dict[str, Any], song_id: str, charts: list[dict[str, Any]]
 ) -> dict[str, Any]:
     """Project accepted public records; acquisition and recommendation work is never repeated."""
     ids = {chart["chart_id"] for chart in charts}
@@ -17,18 +17,24 @@ def prepare_song_catalog(
         raise ValueError("Song projection requires unique accepted chart identities")
     inventory = data.get("schema_version") == "maimai-browser-catalog-2"
     navigation = data.get("navigation", {})
+    selected_navigation = {
+        cid: deepcopy(row) for cid, row in navigation.get("charts", {}).items() if cid in ids
+    }
+    scopes = [
+        *selected_navigation.values(),
+        *(row for chart in charts for row in chart.get("regional", {}).values()),
+    ]
+    genres = {row.get("genre") for row in scopes}
+    versions = {row.get("version") for row in scopes}
     result: dict[str, Any] = {
         "schema_version": data.get("schema_version", "maimai-browser-catalog-1"),
-        "source_catalog_sha256": catalog_sha,
         "catalog": [project_chart(chart, inventory) for chart in charts],
         "navigation": {
-            "charts": {
-                cid: deepcopy(row)
-                for cid, row in navigation.get("charts", {}).items()
-                if cid in ids
-            },
-            "genres": deepcopy(navigation.get("genres", [])),
-            "versions": deepcopy(navigation.get("versions", [])),
+            "charts": selected_navigation,
+            "genres": [
+                deepcopy(row) for row in navigation.get("genres", []) if row["id"] in genres
+            ],
+            "versions": [value for value in navigation.get("versions", []) if value in versions],
         },
         "snippets": {
             cid: deepcopy(row) for cid, row in data.get("snippets", {}).items() if cid in ids
@@ -95,21 +101,70 @@ def prepare_song_catalog(
         songs = {
             sid: deepcopy(row) for sid, row in art.get("songs", {}).items() if sid in source_songs
         }
-        paths = set(art.get("versions", {}).values())
+        version_art = {
+            key: value for key, value in art.get("versions", {}).items() if key in versions
+        }
+        paths = set(version_art.values())
         for row in songs.values():
             paths.add(row.get("path"))
             paths.update(value.get("path") for value in row.get("regions", {}).values())
         result["artwork"] = {
             "version": art["version"],
             "songs": songs,
-            "versions": deepcopy(art.get("versions", {})),
+            "versions": version_art,
             "assets": {
                 path: deepcopy(row) for path, row in art.get("assets", {}).items() if path in paths
             },
         }
     return {
-        "schema_version": "maimai-song-catalog-1",
+        "schema_version": "maimai-song-catalog-2",
         "song_id": song_id,
         "source_song_ids": sorted(source_songs),
         "data": result,
     }
+
+
+def validate_song_binding(
+    binding: dict[str, Any], catalog_sha: str, envelope: dict[str, Any]
+) -> None:
+    """Verify external membership independently of reusable song-content identity."""
+    scope = binding.get("source_song_ids")
+    if (
+        binding.get("schema_version") != "maimai-song-binding-1"
+        or binding.get("source_catalog_sha256") != catalog_sha
+        or not isinstance(scope, list)
+        or not 1 <= len(scope) <= 256
+        or any(not isinstance(sid, str) or not sid for sid in scope)
+        or len(scope) != len(set(scope))
+        or binding.get("song_id") not in scope
+        or envelope.get("schema_version") != "maimai-song-catalog-2"
+        or envelope.get("song_id") != binding.get("song_id")
+        or envelope.get("source_song_ids") != scope
+        or not isinstance(envelope.get("data"), dict)
+        or "source_catalog_sha256" in envelope["data"]
+    ):
+        raise ValueError("Invalid song catalog membership binding")
+
+
+def validate_song_membership(envelope: dict[str, Any], catalog: dict[str, Any]) -> None:
+    """Retained bindings cannot authorize foreign, partial or altered canonical charts."""
+    scope = set(envelope["source_song_ids"])
+    inventory = catalog.get("schema_version") == "maimai-browser-catalog-2"
+    expected = {
+        chart["chart_id"]: project_chart(chart, inventory)
+        for chart in catalog["catalog"]
+        if chart["song_id"] in scope
+    }
+    charts = envelope["data"].get("catalog", [])
+    if (
+        not isinstance(charts, list)
+        or not charts
+        or any(
+            not isinstance(chart, dict) or not isinstance(chart.get("chart_id"), str)
+            for chart in charts
+        )
+        or len(charts) != len(expected)
+        or {chart["chart_id"]: chart for chart in charts} != expected
+        or {chart["song_id"] for chart in charts} != scope
+    ):
+        raise ValueError("Song content differs from its canonical catalog membership")

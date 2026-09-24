@@ -36,14 +36,29 @@ Historical song documents without a scoped reference use the full-catalog reader
 
 ## Song data contract
 
-The static generator prepares `maimai-song-catalog-1` from the accepted canonical
+The static generator prepares `maimai-song-catalog-2` from the accepted canonical
 catalog. All languages reference one content-addressed `song-catalog/<sha256>.json`
 per song. No player data enters this projection. It contains:
 
 - The canonical song and chart identities, regional metadata and display inputs.
 - Only relevant provider joins, chart links, artwork, snippets and analysis records.
 - A locally remapped analysis evidence pool with the original observations intact.
-- The exact source catalog hash. The HTML also pins the asset hash and byte length.
+- Only genre/release labels and version artwork referenced by those charts.
+- Shared analysis vocabulary/definitions, whose changes legitimately affect interpretation.
+
+The reusable content does not contain a parent catalog hash. A
+`maimai-song-binding-1` record in the HTML binds the expected catalog hash, page
+song, original source-song scope, content hash/path and byte length. `prepare_seo`
+returns the generated assets and those same structured bindings; release planning
+does not parse generated JSON to reconstruct them. `build_seo` remains a thin
+tuple-returning public compatibility wrapper.
+
+The HTTPS page is the existing trusted root for references; the binding does not
+authenticate a malicious replacement of that root. The reader requires this
+binding for v2 content, validates its page/catalog scope and asset integrity, and
+only then adds the catalog hash to the runtime context. There is no new request
+or additional asset family. Historical v1 page attributes and content still use
+the original embedded-parent check. New content cannot use that legacy fallback.
 
 Official inventory identity does not require a transcription hash. When an actual
 transcription exists, the existing identity checks continue to govern its analysis
@@ -57,7 +72,10 @@ retry reloads the page. Operational codes stay local and bounded.
 
 A release lists content-addressed song inventories in each catalog's
 `song_catalog_indexes`. Each inventory binds its canonical catalog and enumerates
-its song assets. Publication verifies and retains previous inventories and assets,
+its song assets. The v2 inventory contains the prepared binding records; retention
+checks their chart content against the verified canonical catalog as well as their
+hashes, byte counts and scope. The v1 inventory reader stays available. Publication
+verifies and retains previous inventories and assets,
 including when a later projection policy changes their bytes. Repeated identical
 preparation adds no duplicate inventory. Missing, tampered or incorrectly bound
 retained data stops publication preparation.
@@ -71,6 +89,8 @@ production release.
 - `web/tests/song-catalog.test.mjs`: scope, format, bounds, tampering and official identity.
 - `web/tests/runtime.test.mjs`: immutable catalog pins, cancellation and shared state.
 - `tests/test_song_catalog.py`: lossless evidence, detached projections and language sharing.
+- `tests/test_song_content.py`: unrelated title, genre, release and artwork edits leave other song bytes unchanged.
+- `tests/test_song_bindings.py`: canonical membership, redirects, stale/forged bindings and historical retention.
 - `tests/test_public_release.py`: retained song URLs across projection changes and corruption.
 - `tests/browser/song-workspace.spec.js`: four languages, three widths, delayed storage,
   lazy/failed catalog loading, superseding navigation, shared imports and Forget.

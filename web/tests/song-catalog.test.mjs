@@ -120,3 +120,96 @@ test('official inventory charts do not require an unavailable transcription hash
   value.data.schema_version = 'maimai-browser-catalog-1';
   await assert.rejects(loadSongCatalog(prepare(value).reader, ref));
 });
+
+function shared(value = fixture()) {
+  value.schema_version = 'maimai-song-catalog-2';
+  delete value.data.source_catalog_sha256;
+  const prepared = prepare(value);
+  prepared.ref.binding = {
+    ...prepared.ref.asset,
+    schema_version: 'maimai-song-binding-1',
+    source_catalog_sha256: hash,
+    song_id: 'song',
+    source_song_ids: ['song'],
+  };
+  delete prepared.ref.asset;
+  return prepared;
+}
+test('one content asset can have independently verified bindings in two releases', async () => {
+  const { reader, ref } = shared();
+  const first = await loadSongCatalog(reader, ref);
+  const secondHash = 'b'.repeat(64);
+  const second = await loadSongCatalog(reader, {
+    ...ref,
+    catalog: secondHash,
+    binding: { ...ref.binding, source_catalog_sha256: secondHash },
+  });
+  assert.equal(first.source_catalog_sha256, hash);
+  assert.equal(second.source_catalog_sha256, secondHash);
+  assert.deepEqual(first.catalog, second.catalog);
+  const raw = JSON.parse(new TextDecoder().decode(await reader.verified(ref.binding)));
+  assert.equal(Object.hasOwn(raw.data, 'source_catalog_sha256'), false);
+});
+test('stale, missing, malformed and forged membership cannot authorize v2 content', async () => {
+  for (const change of [
+    (ref) => {
+      ref.catalog = 'b'.repeat(64);
+    },
+    (ref) => {
+      ref.song = 'other';
+    },
+    (ref) => {
+      ref.asset = ref.binding;
+      delete ref.binding;
+    },
+    (ref) => {
+      ref.binding = null;
+    },
+    (ref) => {
+      ref.binding.schema_version = 'future';
+    },
+    (ref) => {
+      ref.binding.source_song_ids = [];
+    },
+    (ref) => {
+      ref.binding.source_song_ids = ['song', 'song'];
+    },
+    (ref) => {
+      ref.binding.source_song_ids = ['song', 1];
+    },
+    (ref) => {
+      ref.binding.source_song_ids = ['song', 'forged'];
+    },
+    (ref) => {
+      ref.binding.song_id = 'other';
+    },
+  ]) {
+    const { reader, ref } = shared();
+    change(ref);
+    await assert.rejects(loadSongCatalog(reader, ref));
+  }
+  const value = fixture();
+  const { ref } = shared();
+  await assert.rejects(loadSongCatalog(prepare(value).reader, ref));
+  value.schema_version = 'maimai-song-catalog-2';
+  await assert.rejects(loadSongCatalog(prepare(value).reader, ref));
+  await assert.rejects(
+    loadSongCatalog(new PublicReader(new URL('https://example.org/')), ref),
+    /integrity/,
+  );
+});
+test('redirect scope keeps original canonical chart and private join identities', async () => {
+  const value = fixture();
+  value.source_song_ids = ['old', 'song'];
+  value.data.catalog.push({ ...value.data.catalog[0], chart_id: 'original-chart', song_id: 'old' });
+  value.data.provider_mapping = {
+    charts: { provider: { chart_id: 'original-chart', source_hash: hash } },
+  };
+  const { reader, ref } = shared(value);
+  ref.binding.source_song_ids = ['old', 'song'];
+  const loaded = await loadSongCatalog(reader, ref);
+  assert.equal(loaded.catalog[1].song_id, 'old');
+  assert.equal(loaded.provider_mapping.charts.provider.chart_id, 'original-chart');
+  value.data.catalog.pop();
+  await assert.rejects(loadSongCatalog(prepare(value).reader, ref), /Incomplete song scope/);
+});

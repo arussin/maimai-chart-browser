@@ -25,6 +25,7 @@ from .catalog_loading import (
 )
 from .publication_capacity import PAID_FILES, ReviewedCapacity
 from .snapshots import MAX_BYTES, atomic_json, canonical, read_json
+from .song_catalog import validate_song_binding, validate_song_membership
 
 PART_BYTES = 8 * 1024 * 1024
 INDEX_PART_BYTES = 8 * 1024 * 1024
@@ -246,13 +247,18 @@ def _retained_reference(
 
 
 def _retain_song_index(
-    source: Path, reference: dict[str, Any], catalog_sha: str, pending: dict[str, bytes]
+    source: Path,
+    reference: dict[str, Any],
+    catalog_sha: str,
+    pending: dict[str, bytes],
+    catalog: dict[str, Any],
 ) -> None:
     index = json.loads(
         _retained_reference(source, reference, "song-catalog-index", MAX_PUBLIC_FILE_BYTES, pending)
     )
     if (
-        index.get("schema_version") != "maimai-song-catalog-index-1"
+        index.get("schema_version")
+        not in {"maimai-song-catalog-index-1", "maimai-song-catalog-index-2"}
         or index.get("source_catalog_sha256") != catalog_sha
         or not isinstance(index.get("assets"), list)
     ):
@@ -264,7 +270,10 @@ def _retain_song_index(
             raise ValueError("Duplicate retained song asset")
         seen.add(asset["path"])
         envelope = json.loads(raw)
-        if (
+        if index["schema_version"] == "maimai-song-catalog-index-2":
+            validate_song_binding(asset, catalog_sha, envelope)
+            validate_song_membership(envelope, catalog)
+        elif (
             envelope.get("schema_version") != "maimai-song-catalog-1"
             or envelope.get("data", {}).get("source_catalog_sha256") != catalog_sha
         ):
@@ -543,7 +552,7 @@ def _prepare_public_catalog(
         if not isinstance(song_indexes, list):
             raise ValueError("Invalid retained song catalog indexes")
         for reference in song_indexes:
-            _retain_song_index(previous_public, reference, sha, pending)
+            _retain_song_index(previous_public, reference, sha, pending, data)
         legacy_assets.update(set(pending) - before)
     else:
         pending.update(derived)
@@ -583,12 +592,13 @@ def _prepare_public_pages(
     pending: dict[str, bytes] = {}
     previous_public, previous_ledger_ref = retained.source, retained.ledger
     seo_summary = {"songs": 0, "versions": 0, "localized_documents": 0}
+    song_assets: list[dict[str, Any]] = []
     if default_catalog and any(
         isinstance(c, dict) and c.get("song_id") for c in default_catalog.get("catalog", [])
     ):
         from importlib.resources import files
 
-        from .seo import build_seo
+        from .seo import prepare_seo
 
         seed = (
             Path(permalinks)
@@ -613,26 +623,22 @@ def _prepare_public_pages(
         redirects = (
             read_json(song_redirects) if isinstance(song_redirects, (str, Path)) else song_redirects
         )
-        seo_assets, _, seo_summary = build_seo(
+        seo = prepare_seo(
             default_catalog,
             previous=previous,
             song_redirects=redirects,
             browser_csp=browser_csp,
             catalog_sha=catalog_sha,
         )
-        pending.update(seo_assets)
+        pending.update(seo.assets)
+        seo_summary, song_assets = seo.summary, seo.song_bindings
         for name in ("seo-pages.css",):
             pending[name] = files("maimai_intelligence.assets").joinpath(name).read_bytes()
-    song_assets = [
-        {"path": name, "sha256": hashlib.sha256(raw).hexdigest(), "bytes": len(raw)}
-        for name, raw in sorted(pending.items())
-        if name.startswith("song-catalog/")
-    ]
     song_index = None
     if song_assets:
         raw = canonical(
             {
-                "schema_version": "maimai-song-catalog-index-1",
+                "schema_version": "maimai-song-catalog-index-2",
                 "source_catalog_sha256": catalog_sha,
                 "assets": song_assets,
             }

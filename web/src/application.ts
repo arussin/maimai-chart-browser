@@ -371,7 +371,10 @@ export async function createApplication(options: ApplicationOptions) {
           throw Error('Song page belongs to another catalog revision');
         data = loaded.data;
         context = fullContext;
-      } else if (!node.dataset.songCatalog || new URLSearchParams(location.search).has('version')) {
+      } else if (
+        !(node.dataset.songCatalog || node.dataset.songBinding) ||
+        new URLSearchParams(location.search).has('version')
+      ) {
         await loadBrowser();
         data = loaded!.data;
         context = fullContext!;
@@ -379,6 +382,7 @@ export async function createApplication(options: ApplicationOptions) {
         data = await loadSongCatalog(reader, {
           song: node.dataset.songId,
           catalog: node.dataset.catalogSha256 ?? '',
+          binding: node.dataset.songBinding ? JSON.parse(node.dataset.songBinding) : undefined,
           asset: {
             path: node.dataset.songCatalog,
             sha256: node.dataset.songSha256,
