@@ -39,7 +39,10 @@ from maimai_intelligence.corpus_update import (
 )
 from maimai_intelligence.public_release import build_public_release as build_public_release
 from maimai_intelligence.snapshots import atomic_json, read_json
-from maimai_intelligence.source_identity import source_implementation_hash
+from maimai_intelligence.source_identity import (
+    source_implementation_hash,
+    verified_source_implementation_hash,
+)
 from maimai_intelligence.store_lock import writer_lock as writer_lock
 
 REPOSITORY = "arussin/maimai-chart-browser"
@@ -59,12 +62,17 @@ def prepare_update(store, previous_browser, **options):
     if options.get("coverage_reviews") is None:
         options["coverage_reviews"] = read_json(REPO_ROOT / "config/coverage-reviews.json")
     return corpus_update.prepare_update(
-        store, previous_browser, implementation=implementation_hash, **options
+        store,
+        previous_browser,
+        implementation=lambda: verified_source_implementation_hash(REPO_ROOT),
+        **options,
     )
 
 
 def verify_candidate(run):
-    return corpus_update.verify_candidate(run, implementation=implementation_hash)
+    return corpus_update.verify_candidate(
+        run, implementation=lambda: verified_source_implementation_hash(REPO_ROOT)
+    )
 
 
 def command(args, *, cwd=REPO_ROOT, env=None):

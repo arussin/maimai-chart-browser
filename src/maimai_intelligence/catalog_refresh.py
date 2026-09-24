@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 from collections import Counter, defaultdict
 from collections.abc import Callable, Mapping, Sequence
 from copy import deepcopy
@@ -110,15 +109,6 @@ def refresh(
         ingest_metadata(
             value, legacy, wiki.inputs, audit, adapters=adapters, policies=metadata_policies
         )
-    print(
-        json.dumps(
-            {
-                "metadata_captures": len(capture.captures),
-                "metadata_failures": len(audit["failures"]),
-            }
-        ),
-        flush=True,
-    )
     prepare_transcriptions(value, own, targets, matches, wiki, capture, cache, additions, audit)
     projection = project_registry(value, legacy)
     audit["metadata"]["remaining"] = [

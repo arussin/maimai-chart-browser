@@ -227,7 +227,9 @@ class CatalogUpdateTests(unittest.TestCase):
             path.write_text("accepted input")
         original_hash = update.implementation_hash
         with patch.object(
-            update, "implementation_hash", lambda: original_hash(implementation_root)
+            update,
+            "verified_source_implementation_hash",
+            lambda _: original_hash(implementation_root),
         ):
             run = self.prepare()
             update.verify_candidate(run)

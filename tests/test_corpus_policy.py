@@ -5,6 +5,7 @@ from itertools import product
 
 from maimai_intelligence.corpus_explain import explain_record, explain_registry, source_references
 from maimai_intelligence.corpus_policy import (
+    CaptureRequest,
     ReuseIdentity,
     SourceSelection,
     compare_records,
@@ -29,6 +30,21 @@ class CorpusPolicyTests(unittest.TestCase):
                 else:
                     with self.assertRaises(ValueError):
                         choice.validate()
+
+    def test_capture_modes_require_receipts_and_never_imply_network(self):
+        for mode, receipt in product(
+            ("retained", "online", "replay", "reassess", "unknown"), (None, "receipt.json")
+        ):
+            with self.subTest(mode=mode, receipt=receipt):
+                valid = mode != "unknown" and (
+                    (mode in ("replay", "reassess")) == (receipt is not None)
+                )
+                if valid:
+                    request = CaptureRequest(mode, receipt)
+                    self.assertEqual(request.offline, mode != "online")
+                else:
+                    with self.assertRaises(ValueError):
+                        CaptureRequest(mode, receipt)
 
     def test_reuse_requires_exact_base_policy_and_review_binding(self):
         original = ReuseIdentity("base", "policy", "review")

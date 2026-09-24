@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import hashlib
-import json
 from collections import defaultdict
 from dataclasses import dataclass
 from pathlib import Path
@@ -420,13 +419,3 @@ def prepare_transcriptions(
                 outcome["attempts"].append({"provider": provider, "url": url, "reason": str(error)})
                 outcome["status"] = "unavailable_or_unsupported"
         audit["transcriptions"].append(outcome)
-        if len(audit["transcriptions"]) % 10 == 0:
-            print(
-                json.dumps(
-                    {
-                        "transcriptions_checked": len(audit["transcriptions"]),
-                        "analysis_added": len(additions["profiles"]),
-                    }
-                ),
-                flush=True,
-            )

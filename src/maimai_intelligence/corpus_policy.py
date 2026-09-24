@@ -80,5 +80,31 @@ def compare_records(before: Mapping[str, object], after: Mapping[str, object]) -
     )
 
 
-Stage = Literal["inputs", "source_capture", "corpus", "render", "review", "receipt"]
+Stage = Literal[
+    "inputs",
+    "source_capture",
+    "claims",
+    "enrichment",
+    "projection",
+    "corpus",
+    "render",
+    "review",
+    "receipt",
+]
 Outcome = Literal["started", "complete", "blocked", "failed", "interrupted"]
+
+
+@dataclass(frozen=True)
+class CaptureRequest:
+    mode: Literal["retained", "online", "replay", "reassess"]
+    receipt: str | None = None
+
+    def __post_init__(self) -> None:
+        if self.mode not in ("retained", "online", "replay", "reassess"):
+            raise CorpusInputError("Unknown capture mode")
+        if (self.mode in ("replay", "reassess")) != (self.receipt is not None):
+            raise CorpusInputError("Captured replay and reassessment require a receipt exclusively")
+
+    @property
+    def offline(self) -> bool:
+        return self.mode != "online"

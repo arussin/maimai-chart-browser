@@ -143,3 +143,53 @@ block sockets and compare complete generated public inventories. They also verif
 conversion invalidation, tampering, checkpoint survival and resumption after render failure.
 This proves a controlled fictional registry/package path on Windows, not a full-corpus
 backup, revision-download recovery, canonical Linux reproduction or power-loss durability.
+
+
+## Typed preparation and installed acceptance
+
+The maintained application entry is `prepare_corpus(PreparationRequest)`. The
+installed CLI normalizes arguments once through `preparation_request`; that
+factory defaults to retained/offline inputs. Existing `prepare_update` Python
+signatures remain compatibility adapters with their historical defaults.
+
+`RegistrySource` and `LegacySource` select distinct input paths. Retained packages
+and reviewed source revisions are separate types. Registry acquisition is an
+explicit retained, online, replay or reassessment mode; only the latter two carry
+a capture receipt. Receipt fields are derived from the executable request, with
+redundant historical input bindings isolated for format compatibility.
+
+Registry preparation has three explicit handoffs:
+
+1. `capture_claims` returns captured claims and a single shared capture store.
+2. `reconcile_evidence` returns the accepted/enriched registry after validated
+   checkpoint persistence.
+3. `project_corpus` returns `PreparedRegistry`, including its prepared package,
+   coverage audit and optional complete refresh result.
+
+Legacy preparation returns `PreparedLegacy`. Both supply the common package and
+catalog fields to rendering and readiness. Registry-only fields are mandatory on
+the registry result rather than independent optional fields. Existing JSON corpus
+schemas retain their validators; typed stage ownership is not a claim that every
+nested historical JSON record has been converted to a Python class.
+
+Diagnostics identify claims, enrichment and projection separately. Library
+refresh functions no longer print progress into the installed command's JSON
+response; bounded counts and evidence references are in run diagnostics and
+source audits. Ready receipts remain the final commit, after terminal diagnostics.
+
+The owner source-root option must byte-match the executing Python packages before
+it can identify a candidate. It cannot label a different installed package as the
+requested checkout. Ordinary installed-only attempts keep their runtime identity.
+
+Ordinary distribution tests compare a direct wheel with its sdist rebuild, then
+execute fictional legacy and registry lifecycles from the wheel in an isolated
+process. Checkout/report imports, network and product subprocesses are blocked.
+The checks cover prepare, verify, resume, captured-source replay, failed rendering,
+recovery, workbench output, tampering and mismatched producer roots. A retained-only
+candidate without required source captures must reject captured replay; it cannot
+invent missing evidence. Platform metadata is discovered before isolation because
+Windows CPython may use its native version command during host identification.
+
+These Windows fixture gates do not replace canonical Linux reproduction, complete
+corpus verification, browser/performance acceptance or restricted hosted staging.
+No preparation or acceptance command grants publication authority.

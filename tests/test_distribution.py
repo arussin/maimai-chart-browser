@@ -1,4 +1,7 @@
+import contextlib
+import hashlib
 import importlib.util
+import io
 import json
 import os
 import subprocess
@@ -8,6 +11,16 @@ import tempfile
 import unittest
 import zipfile
 from pathlib import Path
+
+from maimai_intelligence.catalog_refresh import METADATA_URLS
+from maimai_intelligence.corpus_requests import preparation_request
+from maimai_intelligence.corpus_update import prepare_corpus
+from maimai_intelligence.lab import build_lab
+from maimai_intelligence.registry import write_registry
+from tests.lab_fixture import write_package
+from tests.mai_notes_fixture import encoded
+from tests.mai_notes_fixture import manifest as source_manifest
+from tests.registry_fixture import fixture
 
 
 class DistributionTests(unittest.TestCase):
@@ -81,3 +94,54 @@ assert pathlib.Path(sys.argv[2],"index.html").is_file()
             self.assertEqual(result.returncode, 0, result.stderr)
             manifest = json.loads((destination / "site/manifest.json").read_text())
             self.assertEqual(manifest["schema_version"], "1.0.0")
+
+            # Exercise the installed corpus application, not just demo rendering.
+            inputs = destination / "corpus"
+            legacy = inputs / "legacy"
+            retained = write_package(legacy / "package", grouped=True, constants=True)
+            charts = json.loads((retained / "catalog.json").read_bytes())
+            (legacy / "links.json").write_bytes(encoded(charts))
+            build_lab(retained, legacy / "browser", catalog_version="fictional-baseline")
+            registry = inputs / "registry"
+            accepted, legacy_catalog, retained = fixture(registry)
+            retained.rename(registry / "package")
+            write_registry(accepted, registry / "registry")
+            build_lab(
+                registry / "package", registry / "browser", catalog_version="fictional-baseline"
+            )
+
+            def fixture_source(url, headers):
+                if url == METADATA_URLS["mai-notes"]:
+                    return 200, json.dumps(source_manifest(legacy_catalog["catalog"])).encode(), {}
+                raise OSError("Fictional provider unavailable")
+
+            request = preparation_request(
+                registry / "captured-store",
+                registry / "browser",
+                package=registry / "package",
+                registry=registry / "registry",
+                offline=False,
+            )
+            with contextlib.redirect_stdout(io.StringIO()):
+                captured = prepare_corpus(request, source_fetcher=fixture_source)
+            (registry / "captured-run.json").write_text(json.dumps({"run": str(captured)}))
+            source = (root / "tests/corpus_wheel_acceptance.py").read_text()
+            result = subprocess.run(  # noqa: S603 -- isolated local wheel and authored fixture.
+                [sys.executable, "-I", "-c", source, str(installed), str(inputs)],
+                cwd=directory,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            acceptance = json.loads(result.stdout)
+            self.assertEqual(len(acceptance["cases"]), 2)
+            self.assertEqual(acceptance["forbidden_attempts"], [])
+            acceptance["wheel_sha256"] = hashlib.sha256(
+                (destination / wheel).read_bytes()
+            ).hexdigest()
+            acceptance["sdist_wheel_contents_equal"] = True
+            if output := os.environ.get("MAIMAI_REGISTRY_OUTPUT"):
+                evidence = Path(output) / "corpus-wheel-acceptance.json"
+                evidence.parent.mkdir(parents=True, exist_ok=True)
+                evidence.write_text(json.dumps(acceptance, indent=2) + "\n")

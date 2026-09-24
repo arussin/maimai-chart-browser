@@ -9,7 +9,8 @@ from pathlib import Path
 from typing import Any
 
 from .corpus_attempts import PATH_OPTIONS, reassess_options, resume_options, verify_attempt
-from .corpus_update import implementation_hash, prepare_update, verify_candidate
+from .corpus_requests import preparation_request
+from .corpus_update import implementation_hash, prepare_corpus, verify_candidate
 from .corpus_workbench import (
     diff_runs,
     inspect_registry,
@@ -18,7 +19,7 @@ from .corpus_workbench import (
     write_workbench,
 )
 from .snapshots import read_json
-from .source_identity import source_implementation_hash
+from .source_identity import verified_source_implementation_hash
 
 
 def add_commands(commands: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
@@ -111,10 +112,12 @@ def execute(args: argparse.Namespace) -> None:
     source_root = getattr(args, "source_root", None)
     locations = input_locations(getattr(args, "input", []))
     identity = (
-        partial(source_implementation_hash, source_root) if source_root else implementation_hash
+        partial(verified_source_implementation_hash, source_root)
+        if source_root
+        else implementation_hash
     )
     if action == "prepare":
-        run = prepare_update(
+        request = preparation_request(
             args.store,
             args.previous_browser,
             previous_public=args.previous_public,
@@ -127,6 +130,7 @@ def execute(args: argparse.Namespace) -> None:
             coverage_reviews=read_json(args.reviews) if args.reviews else {},
             offline=not args.online,
         )
+        run = prepare_corpus(request)
         result = {"status": "prepared", "run": str(run), "published": False}
     elif action in {"resume", "replay", "reassess"}:
         previous = args.predecessor.resolve()
@@ -143,7 +147,8 @@ def execute(args: argparse.Namespace) -> None:
                 input_locations=locations,
             )
         )
-        run = prepare_update(previous.parent.parent, implementation=identity, **options)
+        request = preparation_request(previous.parent.parent, **options)
+        run = prepare_corpus(request, implementation=identity)
         result = {
             "status": "prepared",
             "run": str(run),

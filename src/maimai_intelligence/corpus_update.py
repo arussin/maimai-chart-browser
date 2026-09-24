@@ -8,51 +8,39 @@ import re
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 from datetime import UTC, datetime
-from importlib.resources import files
-from importlib.resources.abc import Traversable
 from pathlib import Path
-from typing import Any, Literal, TypedDict
+from typing import Any, TypedDict
 from uuid import uuid4
 
-from maimai_analyzer.contracts import content_hash
 from maimai_analyzer.dataset import SOURCE_LOCK
 
 from .artwork import MEDIA_PATH
 from .catalog_loading import MAX_CATALOG_BYTES
 from .corpus_attempts import bind_attempt
 from .corpus_diagnostics import Diagnostics
-from .corpus_failures import CorpusInputError
-from .corpus_policy import SourceSelection
+from .corpus_models import PreparedLegacy, PreparedRegistry, PreparedResult, RegistryContext
+from .corpus_registry import capture_claims, project_corpus, reconcile_evidence
+from .corpus_requests import (
+    LegacySource,
+    PreparationRequest,
+    RegistrySource,
+    RetainedPackage,
+    ReviewedRevision,
+    preparation_request,
+)
 from .lab import build_browser
 from .mai_notes import MAX_INDEX_BYTES, download_index, prepare_links
 from .public_release import _read, build_public_release
 from .publication_capacity import ReviewedCapacity, read_capacity_review, stage_capacity_review
 from .research_package import extend_package, read_package
 from .snapshots import MAX_BYTES, atomic_json, read_json
+from .source_identity import implementation_hash as implementation_hash
 from .store_lock import writer_lock
 
 
 class FileRecord(TypedDict):
     bytes: int
     sha256: str
-
-
-def implementation_hash() -> str:
-    """Bind installed implementation and assets without requiring a source checkout."""
-
-    def inventory(node: Traversable, prefix: str) -> dict[str, str]:
-        result = {}
-        for child in sorted(node.iterdir(), key=lambda p: p.name):
-            name = prefix + child.name
-            if child.is_dir() and child.name != "__pycache__":
-                result.update(inventory(child, name + "/"))
-            elif child.is_file() and not child.name.endswith((".pyc", ".pyo")):
-                result[name] = hashlib.sha256(child.read_bytes()).hexdigest()
-        return result
-
-    return content_hash(
-        {name: inventory(files(name), "") for name in ("maimai_analyzer", "maimai_intelligence")}
-    )
 
 
 def file_inventory(root: Path | str) -> dict[str, FileRecord]:
@@ -263,22 +251,6 @@ class RetainedPublic:
 
 
 @dataclass(frozen=True)
-class PreparedCorpus:
-    descriptor: dict[str, Any]
-    charts: list[dict[str, Any]]
-    links: dict[str, Any]
-    audit: dict[str, Any]
-    accepted: dict[str, Any] | None = None
-    prepared: dict[str, Any] | None = None
-    coverage_audit: dict[str, Any] | None = None
-    source_audit: dict[str, Any] | None = None
-    additions: dict[str, Any] | None = None
-    source_mode: Literal["accepted_registry", "retained_snapshot", "downloaded"] = (
-        "accepted_registry"
-    )
-
-
-@dataclass(frozen=True)
 class RenderedCandidate:
     version: str
     release: dict[str, Any]
@@ -309,153 +281,118 @@ def prepare_update(
     registry_seed: Path | str | None = None,
     predecessor: dict[str, str] | None = None,
 ) -> Path:
-    implementation = implementation or implementation_hash
-    if player_maishift is not None and type(player_maishift) is not bool:
-        raise CorpusInputError("Maishift capability must be an explicit boolean")
-    if (capacity_review is None) != (capacity_sha256 is None):
-        raise CorpusInputError(
-            "Capacity review and its explicitly reviewed SHA256 are required together"
-        )
-    store, previous_browser = Path(store).resolve(), Path(previous_browser).resolve()
-    previous_public = Path(previous_public).resolve() if previous_public is not None else None
-    SourceSelection(
-        package is not None,
-        revision is not None,
-        registry is not None,
-        offline,
-        replay_sources is not None,
-        artwork_cache is not None,
-        mai_notes_snapshot is not None,
-    ).validate()
-    for value in (
+    """Compatibility entry point; production stages consume PreparationRequest."""
+    request = preparation_request(
+        store,
         previous_browser,
-        previous_public,
-        package,
-        mai_notes_snapshot,
-        registry,
-        overrides,
-        artwork_cache,
-    ):
-        if value is not None and (
-            Path(value).resolve() == store or store.is_relative_to(Path(value).resolve())
-        ):
-            raise CorpusInputError("Update store must not replace or sit inside an input directory")
+        package=package,
+        revision=revision,
+        artwork_cache=artwork_cache,
+        mai_notes_snapshot=mai_notes_snapshot,
+        registry=registry,
+        overrides=overrides,
+        offline=offline,
+        replay_sources=replay_sources,
+        coverage_reviews=coverage_reviews,
+        reassess_captured_policy=reassess_captured_policy,
+        previous_public=previous_public,
+        capacity_review=capacity_review,
+        capacity_sha256=capacity_sha256,
+        player_maishift=player_maishift,
+        registry_seed=registry_seed,
+        predecessor=predecessor,
+    )
+    return prepare_corpus(request, implementation=implementation, source_fetcher=source_fetcher)
+
+
+def prepare_corpus(
+    request: PreparationRequest,
+    *,
+    implementation: Callable[[], str] | None = None,
+    source_fetcher: Callable[[str, dict[str, str]], tuple[int, bytes, dict[str, str]]]
+    | None = None,
+) -> Path:
+    """Sequence typed stages; commit readiness only after diagnostics and validation."""
+    implementation = implementation or implementation_hash
+    store, previous_browser, source = request.store, request.previous_browser, request.source
+    replay = source.captures.receipt if isinstance(source, RegistrySource) else None
     with writer_lock(store):
         run = store / "runs" / (datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ-") + uuid4().hex[:8])
         run.mkdir(parents=True)
         atomic_json(run / "state.json", {"status": "preparing"})
         diagnostics = Diagnostics(run)
         try:
-            with diagnostics.stage("inputs") as counts:
+            with diagnostics.stage("inputs"):
                 capacity = (
-                    stage_capacity_review(capacity_review, capacity_sha256, run / "capacity")
-                    if capacity_review is not None
+                    stage_capacity_review(
+                        request.capacity.review, request.capacity.sha256, run / "capacity"
+                    )
+                    if request.capacity
                     else None
                 )
                 retained = _retain_public_inputs(
-                    store, previous_browser, previous_public, replay_sources, player_maishift, run
+                    store,
+                    previous_browser,
+                    request.previous_public,
+                    replay,
+                    request.player_maishift,
+                    run,
                 )
-                if registry is None and not offline:
-                    from maimai_intelligence.registry import read_registry
-
-                    seed = registry_seed
-                    if seed is None:
-                        raise ValueError(
-                            "Online preparation requires an explicit accepted registry"
-                        )
-                    accepted_seed = read_registry(seed)
-                    known = set(accepted_seed["charts"])
-                    known.update(
-                        old for entries in accepted_seed["legacy-ids"].values() for old in entries
-                    )
-                    if not all(chart["chart_id"] in known for chart in retained.before["catalog"]):
-                        raise ValueError(
-                            "Online legacy preparation requires an explicit registry "
-                            "bound to its identities"
-                        )
-                    registry = seed
+                if isinstance(source, RegistrySource) and source.verify_legacy_identity:
+                    _validate_legacy_seed(source.path, retained.before)
                 attempt = bind_attempt(
                     run,
-                    {
-                        "previous_browser": previous_browser,
-                        "previous_public": retained.previous_public,
-                        "package": package,
-                        "revision": revision,
-                        "registry": registry,
-                        "artwork_cache": artwork_cache,
-                        "mai_notes_snapshot": mai_notes_snapshot,
-                        "overrides": overrides,
-                        "offline": offline,
-                        "coverage_reviews": coverage_reviews,
-                        "reassess_captured_policy": reassess_captured_policy,
-                        "replay_sources": replay_sources,
-                        "capacity_review": capacity_review,
-                        "capacity_sha256": capacity_sha256,
-                        "player_maishift": player_maishift,
-                    },
+                    {**request.attempt_fields(), "previous_public": retained.previous_public},
                     implementation(),
-                    predecessor,
+                    request.predecessor,
                 )
-            with diagnostics.stage("source_capture") as counts:
-                if package is None and revision is not None:
-                    assert artwork_cache is not None
-                    package = source_package(
-                        run, store, revision, Path(artwork_cache), offline=offline
-                    )
-            with diagnostics.stage("corpus") as counts:
-                if registry is not None:
-                    corpus = _prepare_registry(
-                        registry,
-                        retained.before,
-                        store,
-                        run,
-                        package,
-                        previous_browser,
-                        revision,
-                        offline,
-                        replay_sources,
-                        source_fetcher,
-                        coverage_reviews,
-                        reassess_captured_policy,
-                    )
-                else:
-                    assert package is not None
-                    corpus = _prepare_legacy(
-                        package,
-                        run,
-                        mai_notes_snapshot,
-                        fetcher,
-                        overrides,
-                        captured_at=attempt["body"]["observations"]
+            with diagnostics.stage("source_capture"):
+                package_path = _prepare_package(request, run)
+            corpus: PreparedResult
+            if isinstance(source, RegistrySource):
+                context = RegistryContext(
+                    store,
+                    run,
+                    retained.before,
+                    previous_browser,
+                    package_path,
+                    not isinstance(request.package, ReviewedRevision),
+                )
+                with diagnostics.stage("claims") as counts:
+                    claims = capture_claims(source, context, source_fetcher)
+                    counts.records = len(claims.accepted["charts"])
+                    if claims.refresh is not None:
+                        counts.accepted = len(claims.refresh.additions["profiles"])
+                        counts.unresolved = len(claims.refresh.audit["failures"])
+                        counts.evidence = ["source-captures.json", "source-audit.json"]
+                with diagnostics.stage("enrichment") as counts:
+                    enriched = reconcile_evidence(source, context, claims)
+                    counts.records = len(enriched.accepted["charts"])
+                    counts.evidence = ["coverage-audit.json", "coverage-state.json"]
+                with diagnostics.stage("projection") as counts:
+                    corpus = project_corpus(context, enriched)
+                    counts.records = len(corpus.charts)
+                    counts.evidence = ["registry-provenance.json"]
+            else:
+                with diagnostics.stage("corpus") as counts:
+                    assert package_path is not None
+                    captured_at = (
+                        attempt["body"]["observations"]
                         .get("mai_notes_snapshot", {})
-                        .get("captured_at"),
+                        .get("captured_at")
                     )
-                counts.records = len(corpus.charts)
-                counts.evidence = (
-                    ["coverage-audit.json", "registry-provenance.json"]
-                    if registry
-                    else ["mai-notes-audit.json"]
-                )
-            with diagnostics.stage("render") as counts:
-                rendered = _render_artifacts(run, retained, capacity)
+                    corpus = _prepare_legacy(package_path, run, source, captured_at=captured_at)
+                    counts.records = len(corpus.charts)
+                    counts.evidence = ["mai-notes-audit.json"]
+            with diagnostics.stage("render"):
+                rendered = _render_artifacts(run, retained, capacity, corpus)
             with diagnostics.stage("review") as counts:
                 _describe_changes(run, retained.before, corpus, rendered.version)
                 counts.evidence = ["changes.json", "report.md"]
-            with diagnostics.stage("receipt") as counts:
-                receipt = _ready_receipt(
-                    run,
-                    corpus.descriptor,
-                    rendered.version,
-                    previous_browser,
-                    retained.features,
-                    rendered.release,
-                    retained.previous_identity,
-                    registry,
-                    implementation,
-                )
+            with diagnostics.stage("receipt"):
+                receipt = _ready_receipt(run, request, retained, corpus, rendered, implementation)
                 receipt["attempt_sha256"] = attempt["sha256"]
             atomic_json(run / "state.json", {"status": "ready"})
-            # Commit only after every required stage and diagnostic write has succeeded.
             atomic_json(run / "ready.json", receipt)
             return run
         except BaseException as primary:
@@ -464,6 +401,32 @@ def prepare_update(
             except BaseException:
                 BaseException.add_note(primary, "corpus.failure_state_record_failed")
             raise
+
+
+def _validate_legacy_seed(seed: Path, before: dict[str, Any]) -> None:
+    from .registry import read_registry
+
+    accepted = read_registry(seed)
+    known = set(accepted["charts"])
+    known.update(old for entries in accepted["legacy-ids"].values() for old in entries)
+    if not all(chart["chart_id"] in known for chart in before["catalog"]):
+        raise ValueError(
+            "Online legacy preparation requires an explicit registry bound to its identities"
+        )
+
+
+def _prepare_package(request: PreparationRequest, run: Path) -> Path | None:
+    source = request.package
+    if isinstance(source, RetainedPackage):
+        return source.path
+    if isinstance(source, ReviewedRevision):
+        offline = (
+            request.source.captures.offline if isinstance(request.source, RegistrySource) else True
+        )
+        return source_package(
+            run, request.store, source.revision, source.artwork_cache, offline=offline
+        )
+    return None
 
 
 def _retain_public_inputs(
@@ -502,190 +465,37 @@ def _retain_public_inputs(
     return RetainedPublic(previous_public, previous_identity, features, before)
 
 
-def _prepare_registry(
-    registry: Path | str,
-    before: dict[str, Any],
-    store: Path,
-    run: Path,
-    package: Path | str | None,
-    previous_browser: Path | str,
-    revision: str | None,
-    offline: bool,
-    replay_sources: Path | str | None,
-    source_fetcher: Callable[[str, dict[str, str]], tuple[int, bytes, dict[str, str]]] | None,
-    coverage_reviews: dict[str, Any] | None,
-    reassess_captured_policy: bool,
-) -> PreparedCorpus:
-    source_audit = None
-    from maimai_intelligence.registry import read_registry
-    from maimai_intelligence.registry_catalog import build_registry_package
-
-    accepted = read_registry(registry)
-    regions = {
-        s.get("region")
-        for s in accepted["sources"].values()
-        if s.get("acquisition") == "complete_validated_capture"
-    }
-    if not {"JP", "INTL"} <= regions:
-        raise ValueError(
-            "Registry preparation requires complete accepted captures for JP and International"
-        )
-    additions = None
-    from maimai_intelligence.catalog_capture import CaptureStore, fetch_public
-    from maimai_intelligence.coverage import prepare_coverage
-
-    shared_capture = CaptureStore(
-        store / "cache" / "waterfall" / "sources",
-        offline=offline,
-        replay=replay_sources,
-        fetcher=source_fetcher if source_fetcher is not None else fetch_public,
-    )
-    if not offline or replay_sources:
-        from maimai_intelligence.catalog_refresh import refresh
-
-        accepted, additions, source_audit = refresh(
-            accepted,
-            before,
-            store / "cache" / "waterfall",
-            run,
-            offline=offline,
-            replay=replay_sources,
-            fetcher=source_fetcher,
-            capture_store=shared_capture,
-            write_candidate=False,
-        )
-    reviews = coverage_reviews if coverage_reviews is not None else {}
-    from maimai_intelligence.coverage import CONFIG as COVERAGE_CONFIG
-    from maimai_intelligence.coverage_store import (
-        checkpoint_work,
-        commit_checkpoint,
-        policy_identity,
-        replay_checkpoint_start,
-        restore_checkpoint,
-    )
-
-    coverage_root = store / "cache" / "coverage"
-    coverage_base = accepted
-    coverage_policy = policy_identity(COVERAGE_CONFIG, reviews)
-    coverage_parent = None
-    coverage_work = None
-    if replay_sources:
-        accepted = replay_checkpoint_start(coverage_root, accepted, replay_sources)
-        if reassess_captured_policy:
-            # Verify the store's current checkpoint for ancestry, not as recomputed output.
-            _, coverage_parent = restore_checkpoint(coverage_root, coverage_base, coverage_policy)
-    else:
-        accepted, coverage_parent = restore_checkpoint(coverage_root, accepted, coverage_policy)
-        if coverage_parent:
-            coverage_work = checkpoint_work(coverage_root, coverage_parent)
-    accepted, coverage_audit = prepare_coverage(
-        accepted,
-        before,
-        shared_capture,
-        store / "cache" / "coverage",
-        run,
-        roots=(previous_browser, package),
-        offline=offline,
-        replay=replay_sources,
-        title_reviews=reviews.get("titles", ()),
-        provider_reviews=reviews.get("providers", ()),
-        artwork_reviews=reviews.get("artwork", ()),
-        work=coverage_work,
-        reassess_policy=reassess_captured_policy,
-    )
-    from maimai_intelligence.registry import write_registry
-
-    write_registry(accepted, run / "registry")
-    atomic_json(run / "source-captures.json", shared_capture.receipt())
-    if (not offline and not replay_sources) or reassess_captured_policy:
-        checkpoint = commit_checkpoint(
-            coverage_root,
-            coverage_base,
-            accepted,
-            run,
-            coverage_policy,
-            predecessor=coverage_parent,
-        )
-        atomic_json(run / "coverage-checkpoint.json", checkpoint)
-    from maimai_intelligence.multilingual_search import enrich_registry
-
-    # Search aids belong to the projection and its retained report;
-    # the accepted identity registry remains exactly as reconciled.
-    accepted, search_aliases = enrich_registry(accepted)
-    atomic_json(run / "multilingual-search.json", search_aliases)
-    prepared = build_registry_package(
-        accepted,
-        package,
-        run / "package",
-        published=before if revision is None else None,
-        additions=additions,
-        artwork_source=store / "cache" / "coverage",
-    )
-    descriptor, _ = read_package(run / "package")
-    charts = prepared["catalog"]
-    links = prepared.get("mai_notes", {"charts": {}})
-    audit = {"counts": {"retained_accepted_links": len(links["charts"])}}
-    atomic_json(
-        run / "registry-provenance.json",
-        {"registry": prepared["registry"], "sources": prepared["sources"]},
-    )
-    atomic_json(run / "mai-notes-audit.json", audit)
-    return PreparedCorpus(
-        descriptor,
-        charts,
-        links,
-        audit,
-        accepted,
-        prepared,
-        coverage_audit,
-        source_audit,
-        additions,
-    )
-
-
 def _prepare_legacy(
     package: Path | str,
     run: Path,
-    mai_notes_snapshot: Path | str | None,
-    fetcher: Callable[[], bytes],
-    overrides: Path | str | None,
+    source: LegacySource,
     *,
     captured_at: str | None = None,
-) -> PreparedCorpus:
+) -> PreparedLegacy:
     from .source_preparation.prepare_chart_constants import prepare as constants
 
     constants(package, run / "constants")
     descriptor, retained = read_package(run / "constants")
     charts = json.loads(retained["catalog.json"])
-    if mai_notes_snapshot is None:
-        raw = fetcher()
-        captured_at = datetime.now(UTC).isoformat()
-    else:
-        with Path(mai_notes_snapshot).open("rb") as stream:
-            raw = stream.read(MAX_INDEX_BYTES + 1)
-        if captured_at is None:
-            raise ValueError("Retained mai-notes input requires bound capture metadata")
+    with source.snapshot.open("rb") as stream:
+        raw = stream.read(MAX_INDEX_BYTES + 1)
+    if captured_at is None:
+        raise ValueError("Retained mai-notes input requires bound capture metadata")
     links, audit = prepare_links(
         charts,
         raw,
         captured_at=captured_at,
-        overrides=json.loads(Path(overrides).read_bytes()) if overrides else (),
+        overrides=json.loads(source.overrides.read_bytes()) if source.overrides else (),
     )
     (run / "inputs").mkdir()
     (run / "inputs" / "mai-notes.json").write_bytes(raw)
     atomic_json(run / "mai-notes-audit.json", audit)
     extend_package(run / "constants", run / "package", {"mai-notes.json": links})
-    return PreparedCorpus(
-        descriptor,
-        charts,
-        links,
-        audit,
-        source_mode="retained_snapshot" if mai_notes_snapshot else "downloaded",
-    )
+    return PreparedLegacy(descriptor, charts, links, audit, run / "package")
 
 
 def _render_artifacts(
-    run: Path, retained: RetainedPublic, capacity: ReviewedCapacity | None
+    run: Path, retained: RetainedPublic, capacity: ReviewedCapacity | None, corpus: PreparedResult
 ) -> RenderedCandidate:
     features, previous_public, previous_identity = (
         retained.features,
@@ -694,10 +504,10 @@ def _render_artifacts(
     )
     version = (
         "research-"
-        + hashlib.sha256((run / "package" / "package.json").read_bytes()).hexdigest()[:12]
+        + hashlib.sha256((corpus.package / "package.json").read_bytes()).hexdigest()[:12]
     )
     browser = build_browser(
-        run / "package",
+        corpus.package,
         run / "browser",
         catalog_version=version,
         player_maishift=features["maishift"],
@@ -715,31 +525,21 @@ def _render_artifacts(
 
 
 def _describe_changes(
-    run: Path, before: dict[str, Any], corpus: PreparedCorpus, version: str
+    run: Path, before: dict[str, Any], corpus: PreparedResult, version: str
 ) -> dict[str, Any]:
     charts, links, audit = corpus.charts, corpus.links, corpus.audit
-    accepted, prepared, coverage_audit, source_audit, additions = (
-        corpus.accepted,
-        corpus.prepared,
-        corpus.coverage_audit,
-        corpus.source_audit,
-        corpus.additions,
-    )
-    registry = accepted is not None
     changes = chart_changes(before["catalog"], charts)
     old_links = before.get("mai_notes", {}).get("charts", {})
-    if registry:
-        assert accepted is not None and prepared is not None and coverage_audit is not None
-        aliases = prepared.get("legacy_ids", {})
+    if isinstance(corpus, PreparedRegistry):
+        aliases = corpus.prepared.get("legacy_ids", {})
         old_links = {aliases.get(cid, cid): row for cid, row in old_links.items()}
-        from maimai_intelligence.official_inventory import coverage
-        from maimai_intelligence.registry_catalog import coverage_report
+        from .official_inventory import coverage
+        from .registry_catalog import coverage_report
 
-        changes["registry"] = coverage(accepted) | coverage_report(prepared)
-        changes["coverage"] = coverage_audit
-        if additions is not None:
-            assert source_audit is not None
-            changes["sources"] = source_audit["counts"]
+        changes["registry"] = coverage(corpus.accepted) | coverage_report(corpus.prepared)
+        changes["coverage"] = corpus.coverage_audit
+        if corpus.refresh is not None:
+            changes["sources"] = corpus.refresh.audit["counts"]
     changes["mai_notes"] = {
         **audit["counts"],
         "added": sorted(links["charts"].keys() - old_links.keys()),
@@ -770,7 +570,7 @@ def _describe_changes(
         "Preview browser/ before publishing public/. Captures and audits stay private.",
         "",
     ]
-    if registry:
+    if isinstance(corpus, PreparedRegistry):
         report += [
             "## Persistent inventory",
             "",
@@ -782,8 +582,8 @@ def _describe_changes(
             "Metadata-only charts do not receive fabricated measurements or hashes.",
             "",
         ]
-    if registry and additions is not None:
-        assert source_audit is not None
+    if isinstance(corpus, PreparedRegistry) and corpus.refresh is not None:
+        source_audit = corpus.refresh.audit
         report += [
             "## Automatic source refresh",
             "",
@@ -802,33 +602,30 @@ def _describe_changes(
 
 def _ready_receipt(
     run: Path,
-    descriptor: dict[str, Any],
-    version: str,
-    previous_browser: Path,
-    features: dict[str, bool],
-    release: dict[str, Any],
-    previous_identity: dict[str, Any] | None,
-    registry: Path | str | None,
+    request: PreparationRequest,
+    retained: RetainedPublic,
+    corpus: PreparedResult,
+    rendered: RenderedCandidate,
     implementation: Callable[[], str],
 ) -> dict[str, Any]:
     receipt = {
         "version": "catalog-update-1",
         "status": "ready",
-        "catalog_version": version,
-        "source": descriptor["source"],
-        "base_catalog_version": read_json(previous_browser / "manifest.json")["default"],
+        "catalog_version": rendered.version,
+        "source": corpus.descriptor["source"],
+        "base_catalog_version": read_json(request.previous_browser / "manifest.json")["default"],
         "implementation_hash": implementation(),
-        "browser_features": features,
-        "release": release,
+        "browser_features": retained.features,
+        "release": rendered.release,
         "files": file_inventory(run / "public"),
         **(
             {
                 "previous_public": {
-                    "inputs": previous_identity,
+                    "inputs": retained.previous_identity,
                     "historical_references_verified": True,
                 }
             }
-            if previous_identity is not None
+            if retained.previous_identity is not None
             else {}
         ),
         **(
@@ -853,7 +650,7 @@ def _ready_receipt(
                     )
                 },
             }
-            if registry
+            if isinstance(corpus, PreparedRegistry)
             else {}
         ),
     }
