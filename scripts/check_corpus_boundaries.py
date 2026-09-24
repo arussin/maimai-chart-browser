@@ -17,6 +17,7 @@ def main():
         "corpus_explain",
         "metadata_selection",
         "metadata_policy",
+        "release_transition",
         "song_catalog",
         "catalog_document",
     )
@@ -32,6 +33,7 @@ def main():
             "tests.test_corpus_policy",
             "tests.test_corpus_failures",
             "tests.test_source_registration",
+            "tests.test_release_transition",
             "tests.test_corpus_diagnostics",
             "tests.test_song_catalog",
             "tests.test_song_content",

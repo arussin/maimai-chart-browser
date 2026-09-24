@@ -37,6 +37,7 @@ files = [
   "src/maimai_intelligence/metadata_selection.py",
   "src/maimai_intelligence/metadata_policy.py",
   "src/maimai_intelligence/source_registration.py",
+  "src/maimai_intelligence/release_transition.py",
   "src/maimai_intelligence/corpus_explain.py",
   "src/maimai_intelligence/corpus_diagnostics.py",
   "src/maimai_intelligence/corpus_attempts.py",
