@@ -9,30 +9,14 @@ from importlib.resources import files
 from pathlib import Path
 from typing import Any
 
+from .corpus_diagnostics import read_diagnostics as read_diagnostics
 from .corpus_explain import explain_registry
 from .corpus_policy import compare_records
 from .io import atomic_write_text
 from .metadata_policy import BUILTIN_CONTEXT, PolicyContext
 from .registry import TABLES, read_registry
 from .serialization import digest
-from .snapshots import MAX_BYTES, read_json
-
-
-def read_diagnostics(run: Path) -> list[dict[str, Any]]:
-    path = run / "diagnostics.jsonl"
-    if not path.exists():
-        return []
-    with path.open("rb") as stream:
-        raw = stream.read(MAX_BYTES + 1)
-    if len(raw) > MAX_BYTES:
-        raise ValueError("Local diagnostics exceed their bounded review size")
-    result = []
-    for line in raw.splitlines():
-        event = json.loads(line)
-        if event.get("version") != "corpus-diagnostics-1":
-            raise ValueError("Unknown local diagnostic schema")
-        result.append(event)
-    return result
+from .snapshots import read_json
 
 
 def inspect_registry(

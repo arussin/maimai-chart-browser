@@ -16,6 +16,7 @@ from maimai_intelligence.corpus_attempts import (
     verify_attempt,
     verify_retained_inputs,
 )
+from maimai_intelligence.corpus_diagnostics import read_diagnostics
 from maimai_intelligence.corpus_update import implementation_hash, prepare_update, verify_candidate
 from maimai_intelligence.snapshots import read_json
 from tests import test_corpus_pipeline as fixtures
@@ -50,6 +51,11 @@ class ReassessmentTests(unittest.TestCase):
             self.assertEqual(main(["corpus", "reassess", "--from", str(first)]), 0)
         second = Path(json.loads(output.getvalue())["run"])
         self.assertNotEqual(first, second)
+        for run, mode in ((first, "retained"), (second, "reassess")):
+            events = read_diagnostics(run)
+            self.assertTrue(events)
+            self.assertTrue(all(event["mode"] == mode for event in events))
+            self.assertTrue(all(event["source"] == "legacy_package" for event in events))
         current = verify_attempt(second, implementation_hash())
         self.assertEqual(
             current["body"]["predecessor"],

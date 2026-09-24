@@ -325,7 +325,17 @@ def prepare_corpus(
         run = store / "runs" / (datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ-") + uuid4().hex[:8])
         run.mkdir(parents=True)
         atomic_json(run / "state.json", {"status": "preparing"})
-        diagnostics = Diagnostics(run)
+        diagnostics = Diagnostics(
+            run,
+            mode=(
+                source.captures.mode
+                if isinstance(source, RegistrySource)
+                else "reassess"
+                if request.predecessor and request.predecessor.get("operation") == "reassess"
+                else "retained"
+            ),
+            source="registry" if isinstance(source, RegistrySource) else "legacy_package",
+        )
         try:
             with diagnostics.stage("inputs"):
                 capacity = (
