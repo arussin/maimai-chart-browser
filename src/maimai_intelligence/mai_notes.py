@@ -7,7 +7,6 @@ Matching does not qualify research charts for personal recommendations.
 from __future__ import annotations
 
 import hashlib
-import json
 import re
 import unicodedata
 import urllib.request
@@ -15,6 +14,9 @@ from collections import Counter, defaultdict
 from collections.abc import Sequence
 from datetime import UTC, datetime
 from typing import Any
+
+from .coverage_types import SnapshotError
+from .source_json import decode_source_json
 
 SOURCE_URL = "https://mai-notes.com/data/manifest.json"
 VERSION = "mai-notes-links-1"
@@ -46,23 +48,28 @@ def normalize(text):
 
 def _text(value):
     if not isinstance(value, str) or len(value) > 2000:
-        raise ValueError("Invalid mai-notes text field")
+        raise SnapshotError("Invalid mai-notes text field")
     return value
 
 
 def _timestamp(value):
     if not isinstance(value, str) or len(value) > 40:
-        raise ValueError("Missing index capture timestamp")
-    parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+        raise SnapshotError("Missing index capture timestamp")
+    try:
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError as error:
+        raise SnapshotError("Invalid index capture timestamp") from error
     if parsed.tzinfo is None:
-        raise ValueError("Index capture timestamp needs a timezone")
+        raise SnapshotError("Index capture timestamp needs a timezone")
     return value
 
 
 def parse_index(raw):
     if not isinstance(raw, bytes) or len(raw) > MAX_INDEX_BYTES:
-        raise ValueError("mai-notes index exceeds its size limit")
-    data = json.loads(raw)
+        raise SnapshotError("mai-notes index exceeds its size limit")
+    data = decode_source_json(raw)
+    if not isinstance(data, dict):
+        raise SnapshotError("Invalid mai-notes index schema")
     songs, charts = data.get("songs"), data.get("charts")
     if (
         not isinstance(songs, dict)
@@ -71,29 +78,33 @@ def parse_index(raw):
         or data.get("songs_count") != len(songs)
         or data.get("charts_count") != len(charts)
     ):
-        raise ValueError("Invalid mai-notes index counts or schema")
+        raise SnapshotError("Invalid mai-notes index counts or schema")
     _timestamp(data.get("generated_at"))
     visible, result, seen = {}, {}, set()
     for sid, song in songs.items():
-        if not UUID.fullmatch(sid) or song.get("id") != sid:
-            raise ValueError("Invalid mai-notes song identity")
-        if song.get("type") not in {"standard", "deluxe"}:
-            raise ValueError("Unknown mai-notes chart format")
+        if not UUID.fullmatch(sid) or not isinstance(song, dict) or song.get("id") != sid:
+            raise SnapshotError("Invalid mai-notes song identity")
+        if song.get("type") not in ("standard", "deluxe"):
+            raise SnapshotError("Unknown mai-notes chart format")
         _text(song.get("title"))
         _text(song.get("artist"))
         if song.get("kana_index") is not None:
             visible[sid] = song
     for chart in charts:
+        if not isinstance(chart, dict):
+            raise SnapshotError("Invalid mai-notes chart object")
         cid = chart.get("id", "")
         difficulty = _text(chart.get("difficulty")).upper()
         if (
-            not UUID.fullmatch(cid)
+            not isinstance(cid, str)
+            or not UUID.fullmatch(cid)
             or cid in seen
-            or chart.get("song_id") not in songs
+            or not isinstance(chart.get("song_id"), str)
+            or chart["song_id"] not in songs
             or difficulty not in DIFFICULTIES
             or type(chart.get("has_chart_data")) is not bool
         ):
-            raise ValueError("Invalid, duplicate or unsupported mai-notes chart")
+            raise SnapshotError("Invalid, duplicate or unsupported mai-notes chart")
         seen.add(cid)
         song = visible.get(chart["song_id"])
         if song is not None:

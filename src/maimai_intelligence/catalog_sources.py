@@ -9,7 +9,7 @@ from .catalog_identity import label as identity_label
 from .coverage_types import SnapshotError
 from .mai_notes import parse_index
 from .metadata_policy import number
-from .transcription_html import _Document, _label, _Node, _walk
+from .transcription_html import CollectionInputError, _Document, _label, _Node, _walk
 
 WIKI = "https://gamerch.com/maimai/"
 SIMAI = "https://w.atwiki.jp/simai/pages/"
@@ -21,7 +21,7 @@ def mai_catalog(raw: bytes) -> tuple[dict[str, Any], str | None]:
     """Drop scores, player names and tags before any matching or public projection."""
     try:
         targets, generated = parse_index(raw)
-    except (ValueError, TypeError, KeyError, AttributeError) as error:
+    except SnapshotError as error:
         raise SnapshotError("Malformed mai-notes metadata: " + str(error)) from error
     data = json.loads(raw)
     for chart in data["charts"]:
@@ -120,7 +120,14 @@ def wiki_catalog(raw: bytes, url: str) -> tuple[list[dict[str, Any]], str | None
     """Read explicit constant and note-count columns, never derive decimals from Lv."""
     if not re.fullmatch(r"https://gamerch\.com/maimai/[1-9][0-9]{0,8}", url):
         raise SnapshotError("Invalid Wiki song URL")
-    root = _Document(raw.decode("utf-8")).root
+    try:
+        text = raw.decode("utf-8")
+    except UnicodeDecodeError as error:
+        raise SnapshotError("Invalid Wiki metadata encoding") from error
+    try:
+        root = _Document(text).root
+    except CollectionInputError as error:
+        raise SnapshotError("Malformed Wiki metadata: " + str(error)) from error
     nodes = list(_walk(root))
     metadata = {}
     for node in nodes:
@@ -235,8 +242,11 @@ def wiki_catalog(raw: bytes, url: str) -> tuple[list[dict[str, Any]], str | None
     for node in nodes:
         if node.tag != "a" or "simai" not in _label(node).lower():
             continue
-        target = urljoin(WIKI, node.attrs.get("href", ""))
-        parsed = urlsplit(target)
+        try:
+            target = urljoin(WIKI, node.attrs.get("href", ""))
+            parsed = urlsplit(target)
+        except ValueError as error:
+            raise SnapshotError("Malformed Wiki source link") from error
         if parsed.netloc == "gamerch.com" and parsed.path == "/maimai/jump":
             target = parse_qs(parsed.query).get("url", [""])[0]
         if re.fullmatch(r"https://w\.atwiki\.jp/simai/pages/[1-9][0-9]{0,5}\.html", target):

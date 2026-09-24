@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any, cast
@@ -17,6 +16,7 @@ from .metadata_claims import (
     Region,
 )
 from .metadata_policy import FIELDS, PRIORITY, MetadataSourcePolicy, number
+from .source_json import decode_source_json
 
 MAX_BYTES = 16 * 1024 * 1024
 
@@ -107,86 +107,135 @@ def normalize_source(
     )
 
 
+def _object(value: object) -> dict[str, Any]:
+    if not isinstance(value, dict):
+        raise SnapshotError("Expected metadata object")
+    return value
+
+
+def _rows(value: object) -> list[Any]:
+    if not isinstance(value, list):
+        raise SnapshotError("Expected metadata rows")
+    return value
+
+
+def _text_field(row: dict[str, Any], field: str) -> str:
+    value = _optional_text(row, field)
+    if value is None:
+        raise SnapshotError("Missing metadata " + field)
+    return value
+
+
+def _reviewed_rows(data: object) -> list[dict[str, Any]]:
+    document = _object(data)
+    if document.get("schema_version") != "reviewed-public-metadata-1":
+        raise SnapshotError("Expected reviewed public metadata extraction")
+    rows = []
+    for value in _rows(document.get("charts")):
+        row = _object(value)
+        if not _optional_text(row, "evidence") or not _text_field(row, "source_url").startswith(
+            "https://"
+        ):
+            raise SnapshotError("Public page extraction requires evidence and its exact URL")
+        rows.append(
+            {
+                k: row.get(k)
+                for k in (
+                    "title",
+                    "artist",
+                    "format",
+                    "difficulty",
+                    "bpm",
+                    "chart_constant",
+                    "region",
+                    "release",
+                    "source_url",
+                    "evidence",
+                )
+            }
+        )
+    return rows
+
+
+def _arcade_rows(data: object) -> list[dict[str, Any]]:
+    rows = []
+    for value in _rows(_object(data).get("songs")):
+        song = _object(value)
+        for value in _rows(song.get("sheets")):
+            sheet = _object(value)
+            kind = _text_field(sheet, "type")
+            if kind not in ("std", "dx") or sheet.get("isSpecial"):
+                continue
+            rows.append(
+                {
+                    "title": song.get("title"),
+                    "artist": song.get("artist"),
+                    "format": kind.upper(),
+                    "difficulty": _text_field(sheet, "difficulty")
+                    .upper()
+                    .replace("REMASTER", "RE:MASTER"),
+                    "bpm": song.get("bpm"),
+                    # internalLevelValue is a computed printed-level fallback. Never admit it.
+                    "chart_constant": sheet.get("internalLevel"),
+                    "region": "JP",
+                    "release": None,
+                }
+            )
+    return rows
+
+
+def _otoge_rows(data: object) -> list[dict[str, Any]]:
+    rows = []
+    for value in _rows(data):
+        song = _object(value)
+        if song.get("lev_utage"):
+            continue
+        for fmt, prefix in (("STD", "lev_"), ("DX", "dx_lev_")):
+            for suffix, difficulty in (
+                ("bas", "BASIC"),
+                ("adv", "ADVANCED"),
+                ("exp", "EXPERT"),
+                ("mas", "MASTER"),
+                ("remas", "RE:MASTER"),
+            ):
+                if not song.get(prefix + suffix):
+                    continue
+                rows.append(
+                    {
+                        "title": song.get("title"),
+                        "artist": song.get("artist"),
+                        "format": fmt,
+                        "difficulty": difficulty,
+                        "bpm": song.get("bpm"),
+                        "chart_constant": song.get(prefix + suffix + "_i"),
+                        "region": "JP",
+                        "release": None,
+                    }
+                )
+    return rows
+
+
 def parse_metadata(raw: bytes, provider: str) -> list[dict[str, Any]]:
     if len(raw) > MAX_BYTES or provider not in PRIORITY:
-        raise ValueError("Unsupported metadata source or size")
-    data = json.loads(raw)
-    rows = []
+        raise SnapshotError("Unsupported metadata source or size")
     if provider == "mai-notes":
         from .catalog_sources import mai_catalog
 
         rows = list(mai_catalog(raw)[0].values())
     elif provider == "gamerch-wiki":
-        raise ValueError("Wiki HTML requires its exact page URL; use propose with a captured page")
-    elif provider == "reviewed-page":
-        if data.get("schema_version") != "reviewed-public-metadata-1":
-            raise ValueError("Expected reviewed public metadata extraction")
-        for row in data["charts"]:
-            if not row.get("evidence") or not row.get("source_url", "").startswith("https://"):
-                raise ValueError("Public page extraction requires evidence and its exact URL")
-            rows.append(
-                {
-                    k: row.get(k)
-                    for k in (
-                        "title",
-                        "artist",
-                        "format",
-                        "difficulty",
-                        "bpm",
-                        "chart_constant",
-                        "region",
-                        "release",
-                        "source_url",
-                        "evidence",
-                    )
-                }
-            )
-    elif provider == "arcade-songs":
-        for song in data["songs"]:
-            for sheet in song["sheets"]:
-                if sheet["type"] not in {"std", "dx"} or sheet.get("isSpecial"):
-                    continue
-                rows.append(
-                    {
-                        "title": song["title"],
-                        "artist": song["artist"],
-                        "format": sheet["type"].upper(),
-                        "difficulty": sheet["difficulty"].upper().replace("REMASTER", "RE:MASTER"),
-                        "bpm": song.get("bpm"),
-                        # internalLevelValue is a computed printed-level fallback. Never admit it.
-                        "chart_constant": sheet.get("internalLevel"),
-                        "region": "JP",
-                        "release": None,
-                    }
-                )
+        raise SnapshotError(
+            "Wiki HTML requires its exact page URL; use propose with a captured page"
+        )
     else:
-        for song in data:
-            if song.get("lev_utage"):
-                continue
-            for fmt, prefix in (("STD", "lev_"), ("DX", "dx_lev_")):
-                for suffix, difficulty in (
-                    ("bas", "BASIC"),
-                    ("adv", "ADVANCED"),
-                    ("exp", "EXPERT"),
-                    ("mas", "MASTER"),
-                    ("remas", "RE:MASTER"),
-                ):
-                    if not song.get(prefix + suffix):
-                        continue
-                    rows.append(
-                        {
-                            "title": song["title"],
-                            "artist": song["artist"],
-                            "format": fmt,
-                            "difficulty": difficulty,
-                            "bpm": song.get("bpm"),
-                            "chart_constant": song.get(prefix + suffix + "_i"),
-                            "region": "JP",
-                            "release": None,
-                        }
-                    )
+        data = decode_source_json(raw)
+        if provider == "reviewed-page":
+            rows = _reviewed_rows(data)
+        elif provider == "arcade-songs":
+            rows = _arcade_rows(data)
+        else:
+            rows = _otoge_rows(data)
     if not rows or len(rows) > 20000:
-        raise ValueError("Invalid metadata source row count")
+        raise SnapshotError("Invalid metadata source row count")
     for row in rows:
         _validate_identity(row)
         for field in FIELDS:
@@ -195,17 +244,13 @@ def parse_metadata(raw: bytes, provider: str) -> list[dict[str, Any]]:
 
 
 def normalize_builtin(provider: str, raw: bytes, metadata: dict[str, Any]) -> list[dict[str, Any]]:
-    # This compatibility reader confines historical provider schema failures.
-    # Additional adapters must raise SnapshotError explicitly for rejected input;
-    # their programming errors are never converted into provider outages.
-    try:
-        if provider == "gamerch-wiki":
-            from .catalog_sources import wiki_catalog
+    # Readers reject external data explicitly at its decoding/shape boundary.
+    # Authored parser defects must abort, just as supplemental adapter defects do.
+    if provider == "gamerch-wiki":
+        from .catalog_sources import wiki_catalog
 
-            return wiki_catalog(raw, metadata["url"])[0]
-        return parse_metadata(raw, provider)
-    except (ValueError, TypeError, KeyError, AttributeError) as error:
-        raise SnapshotError("Malformed " + provider + " metadata") from error
+        return wiki_catalog(raw, metadata["url"])[0]
+    return parse_metadata(raw, provider)
 
 
 def builtin_adapter(provider: str, url: str) -> MetadataAdapter:
