@@ -11,9 +11,10 @@ from unittest.mock import patch
 from maimai_intelligence.catalog_refresh import refresh
 from maimai_intelligence.coverage_types import IntegrityError, SnapshotError
 from maimai_intelligence.metadata_adapters import MetadataAdapter
-from maimai_intelligence.metadata_policy import SOURCE_POLICIES, MetadataSourcePolicy
+from maimai_intelligence.metadata_policy import MetadataSourcePolicy
 from maimai_intelligence.metadata_waterfall import propose
 from maimai_intelligence.registry import empty
+from maimai_intelligence.source_registration import SourceRegistration, source_context
 from tests.registry_fixture import admit, official_row
 
 
@@ -48,7 +49,6 @@ class MetadataExtensionTests(unittest.TestCase):
         with (
             tempfile.TemporaryDirectory() as temporary,
             patch("socket.socket", side_effect=AssertionError("Network forbidden")),
-            patch.dict(SOURCE_POLICIES, policy),
         ):
             result, additions, audit = refresh(
                 value,
@@ -57,6 +57,9 @@ class MetadataExtensionTests(unittest.TestCase):
                 Path(temporary) / "run",
                 metadata_adapters=[adapter],
                 metadata_policies=policy,
+                policy_context=source_context(
+                    (SourceRegistration(adapter, policy["fictional-source"], "fixture-v1"),)
+                ),
                 fetcher=fetch,
             )
         self.assertEqual(set(result["songs"]), set(value["songs"]))

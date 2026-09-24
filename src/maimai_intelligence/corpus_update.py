@@ -30,11 +30,13 @@ from .corpus_requests import (
 )
 from .lab import build_browser
 from .mai_notes import MAX_INDEX_BYTES, download_index, prepare_links
+from .metadata_policy import BUILTIN_CONTEXT, PolicyContext
 from .public_release import _read, build_public_release
 from .publication_capacity import ReviewedCapacity, read_capacity_review, stage_capacity_review
 from .research_package import extend_package, read_package
 from .snapshots import MAX_BYTES, atomic_json, read_json
 from .source_identity import implementation_hash as implementation_hash
+from .source_registration import SourceRegistration, source_context
 from .store_lock import writer_lock
 
 
@@ -308,11 +310,14 @@ def prepare_update(
 def prepare_corpus(
     request: PreparationRequest,
     *,
+    sources: tuple[SourceRegistration, ...] = (),
     implementation: Callable[[], str] | None = None,
     source_fetcher: Callable[[str, dict[str, str]], tuple[int, bytes, dict[str, str]]]
     | None = None,
 ) -> Path:
     """Sequence typed stages; commit readiness only after diagnostics and validation."""
+    policy_context = source_context(sources)
+    sources = tuple(sorted(sources, key=lambda entry: entry.adapter.provider))
     implementation = implementation or implementation_hash
     store, previous_browser, source = request.store, request.previous_browser, request.source
     replay = source.captures.receipt if isinstance(source, RegistrySource) else None
@@ -345,6 +350,7 @@ def prepare_corpus(
                     {**request.attempt_fields(), "previous_public": retained.previous_public},
                     implementation(),
                     request.predecessor,
+                    policy_context=policy_context,
                 )
             with diagnostics.stage("source_capture"):
                 package_path = _prepare_package(request, run)
@@ -357,9 +363,10 @@ def prepare_corpus(
                     previous_browser,
                     package_path,
                     not isinstance(request.package, ReviewedRevision),
+                    policy_context,
                 )
                 with diagnostics.stage("claims") as counts:
-                    claims = capture_claims(source, context, source_fetcher)
+                    claims = capture_claims(source, context, source_fetcher, sources)
                     counts.records = len(claims.accepted["charts"])
                     if claims.refresh is not None:
                         counts.accepted = len(claims.refresh.additions["profiles"])
@@ -392,6 +399,7 @@ def prepare_corpus(
             with diagnostics.stage("receipt"):
                 receipt = _ready_receipt(run, request, retained, corpus, rendered, implementation)
                 receipt["attempt_sha256"] = attempt["sha256"]
+                receipt["source_registrations"] = policy_context.manifest()
             atomic_json(run / "state.json", {"status": "ready"})
             atomic_json(run / "ready.json", receipt)
             return run
@@ -662,10 +670,12 @@ def verify_candidate(
     *,
     implementation: Callable[[], str] | None = None,
     input_locations: dict[str, Path | str] | None = None,
+    policy_context: PolicyContext = BUILTIN_CONTEXT,
 ) -> dict[str, Any]:
     implementation = implementation or implementation_hash
     run = Path(run).resolve()
     receipt = read_json(run / "ready.json")
+    policy_context.require_manifest(receipt.get("source_registrations", []))
     if (
         receipt.get("version") != "catalog-update-1"
         or receipt.get("status") != "ready"
@@ -681,7 +691,9 @@ def verify_candidate(
     if "attempt_sha256" in receipt:
         from .corpus_attempts import verify_attempt
 
-        verify_attempt(run, implementation(), input_locations=input_locations)
+        verify_attempt(
+            run, implementation(), input_locations=input_locations, policy_context=policy_context
+        )
     preceding_public = published_public(run.parent.parent)
     if preceding_public is not None and preceding_public.parent != run:
         if receipt.get("previous_public", {}).get("inputs") != previous_public_identity(

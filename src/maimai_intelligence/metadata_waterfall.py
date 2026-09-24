@@ -7,7 +7,7 @@ from datetime import datetime
 
 from .catalog_identity import key
 from .coverage_types import IntegrityError, SnapshotError
-from .metadata_policy import FIELDS, SOURCE_POLICIES
+from .metadata_policy import BUILTIN_CONTEXT, FIELDS, SOURCE_POLICIES, PolicyContext
 from .metadata_policy import number as number
 from .registry import digest, validate
 
@@ -46,13 +46,20 @@ def source(raw, provider, metadata, *, policy=None):
     }
 
 
-def propose(value, captures, *, adapters=None, policies=None):
+def propose(
+    value,
+    captures,
+    *,
+    adapters=None,
+    policies=None,
+    policy_context: PolicyContext = BUILTIN_CONTEXT,
+):
     """Exact unique matches only. A failure of an optional provider is retained in the report."""
     from .metadata_adapters import normalize_builtin
 
-    policies = SOURCE_POLICIES if policies is None else policies
+    policies = policy_context.policies if policies is None else policies
     adapters = adapters or {}
-    validate(value)
+    validate(value, policy_context=policy_context)
     own, claims, sources, failures, ambiguous = defaultdict(list), [], {}, [], []
     for chart in value["charts"].values():
         if not chart.get("redirect"):
@@ -63,6 +70,8 @@ def propose(value, captures, *, adapters=None, policies=None):
             raise ValueError("Metadata source has no explicit policy entry")
         policy = policies[provider]
         captured = source(raw, provider, metadata, policy=policy)
+        if binding := policy_context.binding(provider):
+            captured["parser"] = binding.parser_revision
         try:
             adapter = adapters.get(provider)
             rows = (
@@ -119,7 +128,7 @@ def propose(value, captures, *, adapters=None, policies=None):
     }
 
 
-def accept(value, proposal, review):
+def accept(value, proposal, review, *, policy_context: PolicyContext = BUILTIN_CONTEXT):
     if (
         proposal["registry_sha256"] != digest(value)
         or review.get("proposal_sha256") != digest(proposal)
@@ -145,7 +154,7 @@ def accept(value, proposal, review):
             raise ValueError("Invalid reviewed song aliases")
         meta = result["songs"][sid]["metadata"]
         meta["aliases"] = sorted(set(meta.get("aliases", [])) | set(entry["aliases"]))
-    return validate(result)
+    return validate(result, policy_context=policy_context)
 
 
 def project(nav, claims, sources):

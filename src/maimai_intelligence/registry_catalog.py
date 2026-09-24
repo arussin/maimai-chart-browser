@@ -17,6 +17,7 @@ from .catalog_schema import CHART_FIELDS as CHART_FIELDS
 from .catalog_schema import PROFILE_FIELDS
 from .maishift_mapping import SCHEMA as MAISHIFT_SCHEMA
 from .maishift_mapping import validate_mapping as validate_maishift
+from .metadata_policy import BUILTIN_CONTEXT, PolicyContext
 from .metadata_waterfall import project as project_metadata
 from .registry import STATES, digest, resolve, validate
 from .research_overview import validate_overview
@@ -167,8 +168,8 @@ def version_label(code):
     return VERSIONS.get(number // 100 * 100, "SEGA version " + code)
 
 
-def project_registry(value, legacy):
-    validate(value)
+def project_registry(value, legacy, *, policy_context: PolicyContext = BUILTIN_CONTEXT):
+    validate(value, policy_context=policy_context)
     profiles = {c["chart_id"]: c for c in legacy.get("catalog", [])}
     observations = defaultdict(dict)
     metrics = defaultdict(list)
@@ -609,6 +610,7 @@ def build_registry_package(
     published: dict[str, Any] | None = None,
     additions: dict[str, Any] | None = None,
     artwork_source: Path | str | None = None,
+    policy_context: PolicyContext = BUILTIN_CONTEXT,
 ) -> dict[str, Any]:
     """Adapter retains accepted artifacts; inventory never depends on profile count."""
     if source is None:
@@ -694,7 +696,7 @@ def build_registry_package(
         ):
             invalid.add(selected["legacy_chart_id"])
     legacy["catalog"] = [c for c in legacy["catalog"] if c["chart_id"] not in invalid]
-    data = project_registry(value, legacy)
+    data = project_registry(value, legacy, policy_context=policy_context)
     if "artwork" in data:
         copy_artwork(data["artwork"], (artwork_source, source), output)
     values = {

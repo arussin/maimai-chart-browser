@@ -10,6 +10,7 @@ from .artwork_store import verify_asset
 from .catalog_capture import ALLOWED, CaptureStore
 from .coverage_store import RECEIPTS, verify_checkpoint
 from .coverage_types import IntegrityError
+from .metadata_policy import BUILTIN_CONTEXT, PolicyContext
 from .snapshots import read_json
 
 
@@ -22,8 +23,16 @@ def _verify_files(run: Path, expected: dict[str, Any]) -> None:
             raise IntegrityError("Replay evidence changed")
 
 
-def verify_replay_evidence(run: Path) -> Path:
+def verify_replay_evidence(run: Path, *, policy_context: PolicyContext = BUILTIN_CONTEXT) -> Path:
     """Check all bound captures/assets, even those current code would not request."""
+    if (run / "attempt.json").is_file():
+        policy_context.require_manifest(
+            read_json(run / "attempt.json")["body"].get("source_registrations", [])
+        )
+    if (run / "ready.json").is_file():
+        policy_context.require_manifest(
+            read_json(run / "ready.json").get("source_registrations", [])
+        )
     receipt = run / "source-captures.json"
     if not receipt.is_file():
         raise IntegrityError("This attempt has no complete source capture receipt to replay")
@@ -32,7 +41,9 @@ def verify_replay_evidence(run: Path) -> Path:
     expected = None
     if checkpoint.exists():
         reference = read_json(checkpoint)
-        _, manifest = verify_checkpoint(root / "coverage", reference["checkpoint"])
+        _, manifest = verify_checkpoint(
+            root / "coverage", reference["checkpoint"], policy_context=policy_context
+        )
         if reference.get("policy") != manifest["policy"]:
             raise IntegrityError("Replay checkpoint policy binding changed")
         expected = {name: ref for name, ref in manifest["files"].items() if name in RECEIPTS}

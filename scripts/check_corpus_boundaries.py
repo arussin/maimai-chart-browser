@@ -31,6 +31,7 @@ def main():
             "unittest",
             "tests.test_corpus_policy",
             "tests.test_corpus_failures",
+            "tests.test_source_registration",
             "tests.test_song_catalog",
             "tests.test_song_content",
             "tests.test_song_bindings",

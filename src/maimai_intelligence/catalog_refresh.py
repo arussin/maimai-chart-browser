@@ -21,11 +21,12 @@ from .catalog_sources import mai_catalog
 from .coverage_types import CaptureError, IntegrityError, SnapshotError
 from .mai_notes import SOURCE_URL
 from .metadata_adapters import MetadataAdapter, builtin_adapter
-from .metadata_policy import MetadataSourcePolicy
+from .metadata_policy import BUILTIN_CONTEXT, MetadataSourcePolicy, PolicyContext
 from .metadata_waterfall import FIELDS, key, number
 from .registry import write_registry
 from .registry_catalog import _legacy_enrichment, project_registry
 from .snapshots import atomic_json
+from .source_registration import SourceRegistration, source_context
 
 METADATA_URLS = {
     "arcade-songs": "https://dp4p6x0xfi5o9.cloudfront.net/maimai/data.json",
@@ -46,9 +47,13 @@ def refresh(
     capture_store: CaptureStore | None = None,
     write_candidate: bool = True,
     metadata_adapters: Sequence[MetadataAdapter] | None = None,
+    sources: tuple[SourceRegistration, ...] = (),
     metadata_policies: Mapping[str, MetadataSourcePolicy] | None = None,
+    policy_context: PolicyContext = BUILTIN_CONTEXT,
 ) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any]]:
     """Prepare a new registry and validated additions; never mutate accepted inputs."""
+    if sources:
+        policy_context.require_manifest(source_context(sources).manifest())
     value = deepcopy(value)
     output = Path(output)
     output.mkdir(parents=True, exist_ok=True)
@@ -59,7 +64,7 @@ def refresh(
         **({"fetcher": fetcher} if fetcher else {}),
     )
     legacy = _legacy_enrichment(published) if published.get("schema_version") else published
-    projected = project_registry(value, legacy)
+    projected = project_registry(value, legacy, policy_context=policy_context)
     own = {c["chart_id"]: c for c in projected["catalog"]}
     own_keys = defaultdict(list)
     for cid, chart in own.items():
@@ -83,6 +88,12 @@ def refresh(
             else [builtin_adapter(name, url) for name, url in METADATA_URLS.items()]
         )
     }
+    adapters.update(
+        {
+            entry.adapter.provider: entry.adapter
+            for entry in sorted(sources, key=lambda entry: entry.adapter.provider)
+        }
+    )
     for provider, adapter in adapters.items():
         url = adapter.url
         try:
@@ -100,17 +111,39 @@ def refresh(
             raise
         except (CaptureError, SnapshotError) as error:
             audit["failures"].append({"provider": provider, "reason": str(error)})
-    ingest_metadata(value, legacy, inputs, audit, adapters=adapters, policies=metadata_policies)
+    ingest_metadata(
+        value,
+        legacy,
+        inputs,
+        audit,
+        adapters=adapters,
+        policies=metadata_policies,
+        policy_context=policy_context,
+    )
     matches = reconcile_links(value, own, own_keys, targets, mai_meta, mai_generated, audit)
     wiki = discover_wiki(
-        value, legacy, own, own_keys, matches, capture, audit, capture_store is not None
+        value,
+        legacy,
+        own,
+        own_keys,
+        matches,
+        capture,
+        audit,
+        capture_store is not None,
+        policy_context=policy_context,
     )
     if wiki.inputs:
         ingest_metadata(
-            value, legacy, wiki.inputs, audit, adapters=adapters, policies=metadata_policies
+            value,
+            legacy,
+            wiki.inputs,
+            audit,
+            adapters=adapters,
+            policies=metadata_policies,
+            policy_context=policy_context,
         )
     prepare_transcriptions(value, own, targets, matches, wiki, capture, cache, additions, audit)
-    projection = project_registry(value, legacy)
+    projection = project_registry(value, legacy, policy_context=policy_context)
     audit["metadata"]["remaining"] = [
         {
             "chart_id": c["chart_id"],
@@ -140,5 +173,5 @@ def refresh(
     atomic_json(output / "source-captures.json", capture.receipt())
     atomic_json(output / "source-audit.json", audit)
     if write_candidate:
-        write_registry(value, output / "registry")
+        write_registry(value, output / "registry", policy_context=policy_context)
     return value, additions, audit

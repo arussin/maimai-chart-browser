@@ -18,6 +18,7 @@ from .coverage_sources import ArtworkSources, WikiArtwork, capture_snapshot
 from .coverage_sources import wiki_jacket as wiki_jacket
 from .coverage_types import CaptureError, Failure, FailureKind, SnapshotError
 from .enrichment import classify_titles, select_artwork
+from .metadata_policy import BUILTIN_CONTEXT, PolicyContext
 from .provider_reconciliation import decide_reconciliation, failed_refresh
 from .registry import digest, resolve
 from .snapshots import atomic_json, read_json
@@ -325,6 +326,7 @@ def prepare_coverage(
     artwork_reviews: Sequence[dict[str, Any]] = (),
     work: dict[str, Any] | None = None,
     reassess_policy: bool = False,
+    policy_context: PolicyContext = BUILTIN_CONTEXT,
 ) -> tuple[dict[str, Any], dict[str, Any]]:
     """Prepare a validated batch; the caller can checkpoint it before publication."""
     now = int(time.time()) if now is None else now
@@ -336,6 +338,7 @@ def prepare_coverage(
     state = migrate_work(work) if work is not None else _state(root / "work.json")
     prior = read_json(Path(replay).parent / "coverage-inputs.json") if replay else None
     if prior:
+        policy_context.require_manifest(prior.get("source_registrations", []))
         if prior["starting_registry_sha256"] != digest(value):
             raise ValueError("Coverage replay starting state differs")
         if not reassess_policy and (prior["config"] != CONFIG or prior.get("producer") != producer):
@@ -345,6 +348,11 @@ def prepare_coverage(
         state, now = migrate_work(prior["work"]), prior["checked_at"]
     inputs = {
         "version": POLICY,
+        **(
+            {"source_registrations": policy_context.manifest()}
+            if policy_context.supplemental
+            else {}
+        ),
         "starting_registry_sha256": digest(value),
         "config": CONFIG,
         "producer": producer,

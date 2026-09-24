@@ -449,9 +449,9 @@ class CoverageBoundaryTests(unittest.TestCase):
 
         original = coverage_store._validate_staged
 
-        def corrupt(root, path, manifest):
+        def corrupt(root, path, manifest, *, policy_context):
             (path / "result.json").write_bytes(b"corrupt staged bytes")
-            return original(root, path, manifest)
+            return original(root, path, manifest, policy_context=policy_context)
 
         with (
             patch.object(coverage_store, "_validate_staged", side_effect=corrupt),

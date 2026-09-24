@@ -6,6 +6,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Literal
 
+from .metadata_policy import BUILTIN_CONTEXT, PolicyContext
+
 
 @dataclass(frozen=True)
 class SourceRefresh:
@@ -47,3 +49,4 @@ class RegistryContext:
     previous_browser: Path
     package: Path | None
     use_retained_analysis: bool
+    policy_context: PolicyContext = BUILTIN_CONTEXT

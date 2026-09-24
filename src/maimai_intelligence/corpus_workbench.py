@@ -12,6 +12,7 @@ from typing import Any
 from .corpus_explain import explain_registry
 from .corpus_policy import compare_records
 from .io import atomic_write_text
+from .metadata_policy import BUILTIN_CONTEXT, PolicyContext
 from .registry import TABLES, read_registry
 from .serialization import digest
 from .snapshots import MAX_BYTES, read_json
@@ -34,9 +35,11 @@ def read_diagnostics(run: Path) -> list[dict[str, Any]]:
     return result
 
 
-def inspect_registry(path: Path) -> dict[str, Any]:
+def inspect_registry(
+    path: Path, *, policy_context: PolicyContext = BUILTIN_CONTEXT
+) -> dict[str, Any]:
     """Explain retained admissions without pretending they are a new completed attempt."""
-    registry = read_registry(path)
+    registry = read_registry(path, policy_context=policy_context)
     canonical = {
         "records": explain_registry(registry, compact=True),
         "sources": registry["sources"],
@@ -50,9 +53,13 @@ def inspect_registry(path: Path) -> dict[str, Any]:
     }
 
 
-def inspect_run(run: Path) -> dict[str, Any]:
+def inspect_run(run: Path, *, policy_context: PolicyContext = BUILTIN_CONTEXT) -> dict[str, Any]:
     registry_path = run / "registry"
-    registry = read_registry(registry_path) if registry_path.exists() else None
+    registry = (
+        read_registry(registry_path, policy_context=policy_context)
+        if registry_path.exists()
+        else None
+    )
     canonical: dict[str, Any] = {
         "records": explain_registry(registry, compact=True) if registry else [],
         "sources": registry["sources"] if registry else {},
@@ -82,10 +89,15 @@ def inspect_run_state(run: Path) -> dict[str, Any]:
     return {**state, "candidate_receipt": "present_unverified" if present else "absent"}
 
 
-def diff_runs(before: Path, after: Path) -> dict[str, Any]:
+def diff_runs(
+    before: Path, after: Path, *, policy_context: PolicyContext = BUILTIN_CONTEXT
+) -> dict[str, Any]:
     changes: dict[str, Any] = {}
     if (before / "registry").is_dir() and (after / "registry").is_dir():
-        left, right = read_registry(before / "registry"), read_registry(after / "registry")
+        left, right = (
+            read_registry(before / "registry", policy_context=policy_context),
+            read_registry(after / "registry", policy_context=policy_context),
+        )
         changes["registry"] = {
             table: asdict(compare_records(left[table], right[table])) for table in TABLES
         }
@@ -97,10 +109,12 @@ def diff_runs(before: Path, after: Path) -> dict[str, Any]:
     return {"version": "corpus-diff-1", **changes}
 
 
-def write_workbench(run: Path, output: Path) -> Path:
+def write_workbench(
+    run: Path, output: Path, *, policy_context: PolicyContext = BUILTIN_CONTEXT
+) -> Path:
     if output.resolve().is_relative_to(run.resolve()):
         raise ValueError("Write derived workbench outside the immutable run")
-    return write_inspection(inspect_run(run), run.name, output)
+    return write_inspection(inspect_run(run, policy_context=policy_context), run.name, output)
 
 
 def write_inspection(view: dict[str, Any], title: str, output: Path) -> Path:

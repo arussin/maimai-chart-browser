@@ -134,7 +134,30 @@ assert pathlib.Path(sys.argv[2],"index.html").is_file()
                 check=False,
             )
             self.assertEqual(result.returncode, 0, result.stderr)
+            registration_source = (root / "tests/corpus_source_acceptance.py").read_text(
+                encoding="utf-8"
+            )
+            registration_results = []
+            for operation in ("prepare", "replay"):
+                extension = subprocess.run(  # noqa: S603 -- isolated authored fixture and wheel.
+                    [
+                        sys.executable,
+                        "-I",
+                        "-c",
+                        registration_source,
+                        str(installed),
+                        str(inputs),
+                        operation,
+                    ],
+                    cwd=directory,
+                    capture_output=True,
+                    text=True,
+                    check=False,
+                )
+                self.assertEqual(extension.returncode, 0, extension.stderr)
+                registration_results.append(json.loads(extension.stdout))
             acceptance = json.loads(result.stdout)
+            acceptance["source_registration"] = registration_results
             self.assertEqual(len(acceptance["cases"]), 2)
             self.assertEqual(acceptance["forbidden_attempts"], [])
             acceptance["wheel_sha256"] = hashlib.sha256(

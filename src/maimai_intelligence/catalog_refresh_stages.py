@@ -15,6 +15,7 @@ from .catalog_sources import WIKI, discovery_pages, page_links, wiki_catalog
 from .catalog_transcriptions import implementation, prepare_body, qualify
 from .coverage_types import CaptureError, Failure, FailureKind, IntegrityError, SnapshotError
 from .mai_notes import SOURCE_URL
+from .metadata_policy import BUILTIN_CONTEXT, PolicyContext
 from .metadata_selection import eligible_claims
 from .metadata_waterfall import FIELDS, accept, key, number, propose
 from .registry import accept_mapping, digest, resolve, select_transcription
@@ -33,9 +34,20 @@ class WikiEvidence:
     song_pages: set[tuple[str, str]]
 
 
-def ingest_metadata(value, legacy, inputs, audit, *, adapters=None, policies=None):
-    projection = project_registry(value, legacy)
-    proposal = propose(value, inputs, adapters=adapters, policies=policies)
+def ingest_metadata(
+    value,
+    legacy,
+    inputs,
+    audit,
+    *,
+    adapters=None,
+    policies=None,
+    policy_context: PolicyContext = BUILTIN_CONTEXT,
+):
+    projection = project_registry(value, legacy, policy_context=policy_context)
+    proposal = propose(
+        value, inputs, adapters=adapters, policies=policies, policy_context=policy_context
+    )
     claims = eligible_claims(projection, proposal, value["observations"], value["sources"])
     used = {c["snapshot_id"] for c in claims}
     proposal["claims"] = claims
@@ -49,6 +61,7 @@ def ingest_metadata(value, legacy, inputs, audit, *, adapters=None, policies=Non
             + ": exact unique variant, finite numeric field; retain primary metrics",
             "accept": [c["observation_id"] for c in claims],
         },
+        policy_context=policy_context,
     )
     value.clear()
     value.update(reviewed)
@@ -133,7 +146,18 @@ def reconcile_links(value, own, own_keys, targets, mai_meta, mai_generated, audi
     return matches
 
 
-def discover_wiki(value, legacy, own, own_keys, matches, capture, audit, shared_capture):
+def discover_wiki(
+    value,
+    legacy,
+    own,
+    own_keys,
+    matches,
+    capture,
+    audit,
+    shared_capture,
+    *,
+    policy_context: PolicyContext = BUILTIN_CONTEXT,
+):
     wiki_inputs, wiki_rows, wiki_simai = [], {}, {}
     checked_urls = set()
     wiki_song_pages = set()
@@ -173,7 +197,7 @@ def discover_wiki(value, legacy, own, own_keys, matches, capture, audit, shared_
                 if simai:
                     wiki_simai[ids[0]] = simai
 
-    projection = project_registry(value, legacy)
+    projection = project_registry(value, legacy, policy_context=policy_context)
     missing = {
         c["chart_id"]
         for c in projection["catalog"]

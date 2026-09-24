@@ -193,3 +193,32 @@ Windows CPython may use its native version command during host identification.
 These Windows fixture gates do not replace canonical Linux reproduction, complete
 corpus verification, browser/performance acceptance or restricted hosted staging.
 No preparation or acceptance command grants publication authority.
+
+
+### Explicit supplemental metadata sources
+
+The installed `prepare_corpus(request, sources=(registration, ...))` interface accepts
+immutable `SourceRegistration(adapter, policy, parser_revision)` values. These add BPM
+and chart-constant claims only; they cannot grant identity, mapping or regional-membership
+authority. Builtin registrations cannot be overridden. Source URLs remain subject to
+the existing capture allowlist. No executable adapter is loaded from a receipt.
+
+Use `source_context(sources)` as the explicit `policy_context` when reading, inspecting,
+verifying or continuing the resulting registry and attempt. The sorted source URL,
+parser revision, allowed fields and policy binding are retained in attempt/checkpoint
+receipts. A fresh process must supply the same registration and context. Existing public
+callers retain builtin defaults.
+
+`parser_revision` is declared by the caller; it is not an independently verified
+hash of an external normalizer's executable bytes. The caller must retain that
+adapter implementation and change its revision when its behavior changes.
+Receipts compare the declared binding and packaged producer identity; they do
+not automatically detect arbitrary changes to external adapter code.
+
+Changed supplemental registrations are rejected for resume, replay **and reassessment**.
+A new independently prepared base and coverage lineage is required; the migration
+procedure for doing that from retained evidence is not yet accepted. Reusing the same
+store is not a workaround for its bound checkpoint. Dual-context reassessment must
+verify prior authority while recomputing a potentially changed pre-coverage base.
+Earlier receipts remain intact and no base-integrity check is bypassed here. Existing
+builtin changed-code reassessment is unchanged.

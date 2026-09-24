@@ -10,6 +10,7 @@ from .catalog_capture import CaptureStore
 from .corpus_models import PreparedRegistry, RegistryContext, SourceRefresh
 from .corpus_requests import RegistrySource
 from .snapshots import atomic_json
+from .source_registration import SourceRegistration
 
 SourceFetcher = Callable[[str, dict[str, str]], tuple[int, bytes, dict[str, str]]]
 
@@ -29,11 +30,14 @@ class EnrichedRegistry:
 
 
 def capture_claims(
-    source: RegistrySource, context: RegistryContext, source_fetcher: SourceFetcher | None
+    source: RegistrySource,
+    context: RegistryContext,
+    source_fetcher: SourceFetcher | None,
+    sources: tuple[SourceRegistration, ...] = (),
 ) -> CapturedClaims:
     from maimai_intelligence.registry import read_registry
 
-    accepted = read_registry(source.path)
+    accepted = read_registry(source.path, policy_context=context.policy_context)
     regions = {
         s.get("region")
         for s in accepted["sources"].values()
@@ -65,6 +69,8 @@ def capture_claims(
             fetcher=source_fetcher,
             capture_store=shared_capture,
             write_candidate=False,
+            sources=sources,
+            policy_context=context.policy_context,
         )
         refreshed = SourceRefresh(additions, source_audit)
     return CapturedClaims(accepted, shared_capture, refreshed)
@@ -92,18 +98,28 @@ def reconcile_evidence(
 
     coverage_root = store / "cache" / "coverage"
     coverage_base = accepted
-    coverage_policy = policy_identity(COVERAGE_CONFIG, reviews)
+    coverage_policy = policy_identity(
+        COVERAGE_CONFIG, reviews, policy_context=context.policy_context
+    )
     coverage_parent = None
     coverage_work = None
     if replay_sources:
-        accepted = replay_checkpoint_start(coverage_root, accepted, replay_sources)
+        accepted = replay_checkpoint_start(
+            coverage_root, accepted, replay_sources, policy_context=context.policy_context
+        )
         if reassess_captured_policy:
             # Verify the store's current checkpoint for ancestry, not as recomputed output.
-            _, coverage_parent = restore_checkpoint(coverage_root, coverage_base, coverage_policy)
+            _, coverage_parent = restore_checkpoint(
+                coverage_root, coverage_base, coverage_policy, policy_context=context.policy_context
+            )
     else:
-        accepted, coverage_parent = restore_checkpoint(coverage_root, accepted, coverage_policy)
+        accepted, coverage_parent = restore_checkpoint(
+            coverage_root, accepted, coverage_policy, policy_context=context.policy_context
+        )
         if coverage_parent:
-            coverage_work = checkpoint_work(coverage_root, coverage_parent)
+            coverage_work = checkpoint_work(
+                coverage_root, coverage_parent, policy_context=context.policy_context
+            )
     accepted, coverage_audit = prepare_coverage(
         accepted,
         before,
@@ -118,10 +134,11 @@ def reconcile_evidence(
         artwork_reviews=reviews.get("artwork", ()),
         work=coverage_work,
         reassess_policy=reassess_captured_policy,
+        policy_context=context.policy_context,
     )
     from maimai_intelligence.registry import write_registry
 
-    write_registry(accepted, run / "registry")
+    write_registry(accepted, run / "registry", policy_context=context.policy_context)
     atomic_json(run / "source-captures.json", claims.captures.receipt())
     if (not offline and not replay_sources) or reassess_captured_policy:
         checkpoint = commit_checkpoint(
@@ -131,6 +148,7 @@ def reconcile_evidence(
             run,
             coverage_policy,
             predecessor=coverage_parent,
+            policy_context=context.policy_context,
         )
         atomic_json(run / "coverage-checkpoint.json", checkpoint)
     return EnrichedRegistry(accepted, coverage_audit, claims.refresh)
@@ -155,6 +173,7 @@ def project_corpus(context: RegistryContext, enriched: EnrichedRegistry) -> Prep
         published=context.before if context.use_retained_analysis else None,
         additions=enriched.refresh.additions if enriched.refresh else None,
         artwork_source=context.store / "cache" / "coverage",
+        policy_context=context.policy_context,
     )
     descriptor, _ = read_package(run / "package")
     charts = prepared["catalog"]

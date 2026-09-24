@@ -16,6 +16,7 @@ from typing import Any
 from uuid import UUID, uuid4
 
 from .identity_policy import normalized
+from .metadata_policy import BUILTIN_CONTEXT, PolicyContext
 from .snapshots import MAX_BYTES, atomic_json, canonical, read_json
 
 VERSION = "maimai-registry-1"
@@ -46,7 +47,7 @@ def _id(value, kind):
         return False
 
 
-def validate(value):
+def validate(value, *, policy_context: PolicyContext = BUILTIN_CONTEXT):
     if value.get("schema_version") != VERSION or set(value) != {"schema_version", *TABLES}:
         raise ValueError("Unsupported registry schema")
     if any(not isinstance(value[key], dict) for key in TABLES):
@@ -90,6 +91,7 @@ def validate(value):
                 key = value[kind][key]["redirect"]
     subjects = value["songs"].keys() | value["charts"].keys()
     source_counts = {}
+    policies = policy_context.policies
     for oid, observation in value["observations"].items():
         if (
             observation.get("subject_id") not in subjects
@@ -101,13 +103,13 @@ def validate(value):
         counts = source_counts.setdefault(observation["snapshot_id"], {})
         counts[observation["field"]] = counts.get(observation["field"], 0) + 1
         if observation.get("policy") == "metadata-waterfall-1":
-            from .metadata_policy import FIELDS, SOURCE_POLICIES, number
+            from .metadata_policy import FIELDS, number
 
             provider = value["sources"][observation["snapshot_id"]].get("provider")
             if (
-                provider not in SOURCE_POLICIES
+                provider not in policies
                 or observation["field"] not in FIELDS
-                or observation.get("priority") != SOURCE_POLICIES[provider].priority
+                or observation.get("priority") != policies[provider].priority
                 or number(observation["value"], observation["field"]) is None
                 or observation["subject_id"] not in value["charts"]
                 or not observation.get("evidence")
@@ -133,6 +135,11 @@ def validate(value):
     from .official_contract import PARSER, URLS
 
     for source_id, source in value["sources"].items():
+        binding = policy_context.binding(source.get("provider", ""))
+        if binding is not None and (
+            source.get("parser") != binding.parser_revision or source.get("url") != binding.url
+        ):
+            raise ValueError("Supplemental source parser revision or URL differs")
         if source.get("provider") not in {"sega-jp", "sega-intl"}:
             continue
         region = source.get("region")
@@ -182,7 +189,9 @@ def validate(value):
     return validate_enrichment(value)
 
 
-def read_registry(directory: Path | str) -> dict[str, Any]:
+def read_registry(
+    directory: Path | str, *, policy_context: PolicyContext = BUILTIN_CONTEXT
+) -> dict[str, Any]:
     root = Path(directory).resolve()
     manifest = read_json(root / "manifest.json")
     if manifest.get("schema_version") != VERSION or set(manifest.get("files", {})) != set(TABLES):
@@ -203,12 +212,14 @@ def read_registry(directory: Path | str) -> dict[str, Any]:
         if len(raw) != ref["bytes"] or hashlib.sha256(raw).hexdigest() != ref.get("sha256"):
             raise ValueError("Registry integrity mismatch")
         result[table] = json.loads(raw)
-    return validate(result)
+    return validate(result, policy_context=policy_context)
 
 
-def write_registry(value: dict[str, Any], directory: Path | str) -> None:
+def write_registry(
+    value: dict[str, Any], directory: Path | str, *, policy_context: PolicyContext = BUILTIN_CONTEXT
+) -> None:
     """Write a fresh candidate. Existing registries are never partially overwritten."""
-    validate(value)
+    validate(value, policy_context=policy_context)
     root = Path(directory)
     if root.exists() and any(root.iterdir()):
         raise ValueError("Use a fresh registry destination")

@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any, TypedDict
 
 from .corpus_policy import ReuseIdentity, ReuseOperation, reuse_operation
+from .metadata_policy import BUILTIN_CONTEXT, PolicyContext
 from .serialization import digest
 from .snapshots import atomic_json, read_json
 
@@ -63,6 +64,8 @@ def bind_attempt(
     options: dict[str, Any],
     implementation: str,
     predecessor: dict[str, str] | None = None,
+    *,
+    policy_context: PolicyContext = BUILTIN_CONTEXT,
 ) -> dict[str, Any]:
     values = {name: options.get(name) for name in VALUE_OPTIONS}
     bindings: dict[str, InputBinding] = {}
@@ -80,6 +83,7 @@ def bind_attempt(
         verified = verify_retained_inputs(
             run.parent / name,
             input_locations={key: row["path"] for key, row in bindings.items()},
+            policy_context=policy_context,
         )
         if verified["sha256"] != predecessor.get("attempt_sha256"):
             raise ValueError("Predecessor attempt changed")
@@ -111,7 +115,7 @@ def bind_attempt(
         if captured_continuation:
             from .corpus_evidence import verify_replay_evidence
 
-            receipt = verify_replay_evidence(run.parent / name)
+            receipt = verify_replay_evidence(run.parent / name, policy_context=policy_context)
             if (
                 not values.get("offline")
                 or bool(values.get("reassess_captured_policy")) != (operation == "reassess")
@@ -128,6 +132,7 @@ def bind_attempt(
         }
     body = {
         "version": "corpus-attempt-1",
+        "source_registrations": policy_context.manifest(),
         "observations": observations,
         "values": values,
         "bindings": bindings,
@@ -158,9 +163,11 @@ def verify_retained_inputs(
     run: Path,
     *,
     input_locations: Mapping[str, Path | str] | None = None,
+    policy_context: PolicyContext = BUILTIN_CONTEXT,
 ) -> dict[str, Any]:
     record = read_json(run / "attempt.json")
     body = record["body"]
+    policy_context.require_manifest(body.get("source_registrations", []))
     if body.get("version") != "corpus-attempt-1" or digest(body) != record.get("sha256"):
         raise ValueError("Attempt receipt integrity mismatch")
     previous = {name: row["files"] for name, row in body["bindings"].items()}
@@ -182,8 +189,11 @@ def verify_attempt(
     implementation: str,
     *,
     input_locations: Mapping[str, Path | str] | None = None,
+    policy_context: PolicyContext = BUILTIN_CONTEXT,
 ) -> dict[str, Any]:
-    record = verify_retained_inputs(run, input_locations=input_locations)
+    record = verify_retained_inputs(
+        run, input_locations=input_locations, policy_context=policy_context
+    )
     body = record["body"]
     inputs = digest({name: row["files"] for name, row in body["bindings"].items()})
     reviews = digest(body["values"].get("coverage_reviews"))
@@ -197,9 +207,14 @@ def reassess_options(
     run: Path,
     *,
     input_locations: Mapping[str, Path | str] | None = None,
+    policy_context: PolicyContext = BUILTIN_CONTEXT,
 ) -> dict[str, Any]:
-    record = verify_retained_inputs(run, input_locations=input_locations)
-    return _continuation_options(run, record, "reassess", False, input_locations)
+    record = verify_retained_inputs(
+        run, input_locations=input_locations, policy_context=policy_context
+    )
+    return _continuation_options(
+        run, record, "reassess", False, input_locations, policy_context=policy_context
+    )
 
 
 def resume_options(
@@ -209,12 +224,20 @@ def resume_options(
     replay: bool = False,
     online: bool = False,
     input_locations: Mapping[str, Path | str] | None = None,
+    policy_context: PolicyContext = BUILTIN_CONTEXT,
 ) -> dict[str, Any]:
     if replay and online:
         raise ValueError("Replay is always offline")
-    record = verify_attempt(run, implementation, input_locations=input_locations)
+    record = verify_attempt(
+        run, implementation, input_locations=input_locations, policy_context=policy_context
+    )
     return _continuation_options(
-        run, record, "replay" if replay else "resume", online, input_locations
+        run,
+        record,
+        "replay" if replay else "resume",
+        online,
+        input_locations,
+        policy_context=policy_context,
     )
 
 
@@ -224,6 +247,8 @@ def _continuation_options(
     operation: ReuseOperation,
     online: bool,
     input_locations: Mapping[str, Path | str] | None,
+    *,
+    policy_context: PolicyContext = BUILTIN_CONTEXT,
 ) -> dict[str, Any]:
     body = record["body"]
     options = {**body["values"], **_input_paths(body, input_locations)}
@@ -247,6 +272,6 @@ def _continuation_options(
     ):
         from .corpus_evidence import verify_replay_evidence
 
-        options["replay_sources"] = verify_replay_evidence(run)
+        options["replay_sources"] = verify_replay_evidence(run, policy_context=policy_context)
     options["reassess_captured_policy"] = operation == "reassess" and "registry" in body["bindings"]
     return options
