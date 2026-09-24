@@ -22,6 +22,7 @@ def main():
         "release_transition",
         "release_composition",
         "recovery_policy",
+        "route_model",
         "song_catalog",
         "catalog_document",
     )
@@ -45,6 +46,9 @@ def main():
             "tests.test_release_composition",
             "tests.test_release_assembly",
             "tests.test_route_recovery",
+            "tests.test_route_model",
+            "tests.test_corpus_workbench",
+            "tests.test_metadata_failures",
             "tests.test_corpus_diagnostics",
             "tests.test_song_catalog",
             "tests.test_song_content",
