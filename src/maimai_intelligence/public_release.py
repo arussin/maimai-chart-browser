@@ -24,6 +24,8 @@ from .catalog_loading import (
     prepare_catalog_projection,
 )
 from .publication_capacity import PAID_FILES, ReviewedCapacity
+from .release_assembly import assemble_release as assemble_release
+from .release_composition import plan_release_composition as plan_release_composition
 from .snapshots import MAX_BYTES, atomic_json, canonical, read_json
 from .song_catalog import validate_song_binding, validate_song_membership
 

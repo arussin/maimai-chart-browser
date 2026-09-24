@@ -28,6 +28,7 @@ PURE = {
             "metadata_claims",
             "refresh_policy",
             "release_transition",
+            "release_composition",
             "official_contract",
             "serialization",
         )

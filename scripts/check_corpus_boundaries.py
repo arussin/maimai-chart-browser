@@ -20,6 +20,7 @@ def main():
         "refresh_policy",
         "metadata_policy",
         "release_transition",
+        "release_composition",
         "song_catalog",
         "catalog_document",
     )
@@ -40,6 +41,8 @@ def main():
             "tests.test_refresh_decisions",
             "tests.test_architecture_boundaries",
             "tests.test_release_transition",
+            "tests.test_release_composition",
+            "tests.test_release_assembly",
             "tests.test_corpus_diagnostics",
             "tests.test_song_catalog",
             "tests.test_song_content",
