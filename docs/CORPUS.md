@@ -4,6 +4,26 @@ Production remains on the separately accepted Maishift hotfix. These commands pr
 
 The installed application follows retained inputs → verified source captures → canonical decisions and independent coverage checkpoint → prepared catalog → browser/SEO assets → release receipt. Owner `scripts/update_catalog.py` and the historical analysis commands delegate to installed preparation services. Python installation and offline preparation require no Node runtime.
 
+## Catalog handoff
+
+`build_browser` returns the browser preview location and its prepared `CatalogDocument`.
+The document owns one detached catalog model, its encoded bytes, and the integration
+projection prepared once. `prepare_update` passes it to the existing public-release
+planner. The planner verifies that its reference matches the browser manifest and
+consumes the structured model without rereading the current catalog or integration
+files. Browser shell/assets and retained historical catalogs are still verified.
+
+`build_lab` keeps its historical Path-returning API as a thin wrapper. Directory-only
+release callers validate/decode retained bytes into the same document and use the
+same projection/rendering implementation. Validation and encoding live in the installed
+package; no owner-script or Node runtime dependency is introduced.
+
+The Python model is read-only by ownership contract, not recursively frozen. Renderers
+must not mutate it. Tests compare the complete outputs of both input paths, check that
+rendering leaves the model unchanged, reject forged references and invalid external
+bytes, and prohibit the current-run serialization round trip. This completes this
+handoff; it does not claim every upstream corpus stage has finished its type migration.
+
 ## Command family
 
 ```

@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+from dataclasses import dataclass
 from importlib.resources import files
 from pathlib import Path
 
@@ -12,26 +13,31 @@ from maimai_analyzer.dataset import SOURCE_LOCK
 
 from .artwork import prepare_artwork
 from .browser_bundle import write_browser_assets
-from .catalog_loading import MAX_CATALOG_BYTES
+from .catalog_document import CatalogDocument, prepare_catalog_document
 from .catalog_preparation import prepare_catalog
 from .challenge_review import render_prepared_review
 from .io import atomic_write_text
 from .localization import localization_script
 from .mai_notes import validate_links
 from .player_help import build_player_help
-from .provider_mapping import integration_catalog
 from .research_overview import validate_overview
-from .snapshots import MAX_BYTES, atomic_json, canonical, read_json
+from .snapshots import MAX_BYTES, atomic_json, read_json
 
 
-def build_lab(
+@dataclass(frozen=True)
+class BrowserBuild:
+    index: Path
+    catalog: CatalogDocument
+
+
+def build_browser(
     package_directory: Path | str,
     output: Path | str,
     *,
     catalog_version: str,
     player_pilot: bool = False,
     player_maishift: bool = False,
-) -> Path:
+) -> BrowserBuild:
     source, root = Path(package_directory), Path(output)
     package = read_json(source / "package.json")
     if package.get("status") != "research_preview" or package.get("source") != SOURCE_LOCK:
@@ -93,11 +99,9 @@ def build_lab(
         loaded.get("browser-metadata.json"),
         loaded.get("maishift-mapping.json"),
     )
+    document = prepare_catalog_document(prepared.data, catalog_version)
     html = render_prepared_review(prepared, hosted=True)
-    data = canonical(prepared.data)
-    if len(data) > MAX_CATALOG_BYTES:
-        raise ValueError("Full research catalog exceeds 64 MiB")
-    sha = hashlib.sha256(data).hexdigest()
+    data, sha = document.raw, document.entry["sha256"]
     root.mkdir(parents=True, exist_ok=True)
     (root / "catalogs").mkdir(exist_ok=True)
     destination = root / "catalogs" / f"{sha}.json"
@@ -112,18 +116,11 @@ def build_lab(
         if manifest_path.exists()
         else {"schema_version": "1.0.0", "releases": []}
     )
-    entry = {"version": catalog_version, "sha256": sha, "path": f"catalogs/{sha}.json"}
-    if loaded.get("browser-metadata.json"):
-        entry["inventory_schema"] = "maimai-browser-catalog-2"
-    integration = canonical(integration_catalog(prepared.data, catalog_version))
-    integration_sha = hashlib.sha256(integration).hexdigest()
+    entry = document.entry
+    integration = document.integration
+    assert integration is not None
     (root / "integration").mkdir(exist_ok=True)
-    (root / "integration" / f"{integration_sha}.json").write_bytes(integration)
-    entry["integration"] = {
-        "path": f"integration/{integration_sha}.json",
-        "sha256": integration_sha,
-        "bytes": len(integration),
-    }
+    (root / entry["integration"]["path"]).write_bytes(integration)
     prior = [r for r in manifest["releases"] if r["version"] == catalog_version]
     if prior and prior != [entry]:
         raise ValueError("Research release version already names different content")
@@ -229,4 +226,22 @@ def build_lab(
     )
     atomic_write_text(root / "index.html", html)
     atomic_json(manifest_path, manifest)
-    return root / "index.html"
+    return BrowserBuild(root / "index.html", document)
+
+
+def build_lab(
+    package_directory: Path | str,
+    output: Path | str,
+    *,
+    catalog_version: str,
+    player_pilot: bool = False,
+    player_maishift: bool = False,
+) -> Path:
+    """Compatibility entry point; current coordinators retain the prepared document."""
+    return build_browser(
+        package_directory,
+        output,
+        catalog_version=catalog_version,
+        player_pilot=player_pilot,
+        player_maishift=player_maishift,
+    ).index

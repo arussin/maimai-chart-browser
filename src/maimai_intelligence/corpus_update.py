@@ -22,7 +22,7 @@ from .catalog_loading import MAX_CATALOG_BYTES
 from .corpus_attempts import bind_attempt
 from .corpus_diagnostics import Diagnostics
 from .corpus_policy import SourceSelection
-from .lab import build_lab
+from .lab import build_browser
 from .mai_notes import MAX_INDEX_BYTES, download_index, prepare_links
 from .public_release import _read, build_public_release
 from .publication_capacity import ReviewedCapacity, read_capacity_review, stage_capacity_review
@@ -686,14 +686,18 @@ def _render_artifacts(
         "research-"
         + hashlib.sha256((run / "package" / "package.json").read_bytes()).hexdigest()[:12]
     )
-    build_lab(
+    browser = build_browser(
         run / "package",
         run / "browser",
         catalog_version=version,
         player_maishift=features["maishift"],
     )
     release = build_public_release(
-        run / "browser", run / "public", previous_public=previous_public, capacity=capacity
+        run / "browser",
+        run / "public",
+        previous_public=previous_public,
+        capacity=capacity,
+        prepared_catalogs={version: browser.catalog},
     )
     if previous_public_identity(previous_public) != previous_identity:
         raise ValueError("Preceding public inputs changed during preparation")

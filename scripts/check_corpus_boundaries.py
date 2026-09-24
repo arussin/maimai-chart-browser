@@ -17,6 +17,7 @@ def main():
         "metadata_selection",
         "metadata_policy",
         "song_catalog",
+        "catalog_document",
     )
     commands = [
         ["mypy", "--cache-dir", str(output / "mypy")],
@@ -30,6 +31,8 @@ def main():
             "tests.test_corpus_policy",
             "tests.test_song_catalog",
             "tests.test_seo",
+            "tests.test_catalog_document",
+            "tests.test_catalog_handoff",
         ],
         ["coverage", "json", "-o", str(output / "branches.json")],
     ]

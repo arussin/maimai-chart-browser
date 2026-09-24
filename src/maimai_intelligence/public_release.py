@@ -17,13 +17,12 @@ from types import MappingProxyType
 from typing import Any, cast
 
 from .artwork import MEDIA_PATH
+from .catalog_document import CatalogDocument, decode_catalog_document, validate_catalog_reference
 from .catalog_loading import (
     MAX_CATALOG_BYTES,
     encode_catalog_projection,
     prepare_catalog_projection,
 )
-from .mai_notes import validate_links
-from .provider_mapping import validate_mapping
 from .publication_capacity import PAID_FILES, ReviewedCapacity
 from .snapshots import MAX_BYTES, atomic_json, canonical, read_json
 
@@ -459,79 +458,30 @@ def _prepare_browser_shell(source: Path) -> dict[str, bytes]:
 
 
 def _prepare_public_catalog(
-    source: Path, entry: dict[str, Any], retained: RetainedPublication
+    source: Path,
+    entry: dict[str, Any],
+    retained: RetainedPublication,
+    document: CatalogDocument | None = None,
 ) -> PreparedPublicCatalog:
     pending: dict[str, bytes] = {}
     legacy_assets: set[str] = set()
     previous_had_song_pages = False
     previous_public = retained.source
-    sha, version = entry.get("sha256"), entry.get("version")
-    if (
-        not isinstance(sha, str)
-        or not re.fullmatch(r"[a-f0-9]{64}", sha)
-        or entry.get("path") != f"catalogs/{sha}.json"
-        or not isinstance(version, str)
-        or not version
-    ):
-        raise ValueError("Invalid or duplicate research release identity")
-    raw = _read(source, entry["path"], MAX_CATALOG_BYTES)
-    if hashlib.sha256(raw).hexdigest() != sha:
-        raise ValueError("Accepted catalog integrity mismatch")
-    data = json.loads(raw)
-    if data.get("package", {}).get("status") != "research_preview":
-        raise ValueError("Only nonpersonal research catalogs belong in this release")
-    if set(data) - {
-        "package",
-        "catalog",
-        "review",
-        "snippets",
-        "benchmark_hash",
-        "navigation",
-        "analysis",
-        "artwork",
-        "mai_notes",
-        "provider_mapping",
-        "maishift_mapping",
-        "schema_version",
-        "registry",
-        "legacy_ids",
-        "sources",
-        "coverage",
-    }:
-        raise ValueError("Unexpected fields in public research catalog")
-    if "schema_version" in data:
-        from .registry_catalog import validate_catalog
-
-        validate_catalog(data)
-    elif "navigation" in data:
-        from .registry_catalog import validate_genres
-
-        validate_genres(data)
-    if "mai_notes" in data:
-        validate_links(data["mai_notes"], data["catalog"])
-    if "provider_mapping" in data:
-        validate_mapping(data["provider_mapping"], data["catalog"])
-    if "maishift_mapping" in data:
-        from .maishift_mapping import validate_mapping as validate_maishift
-
-        validate_maishift(data["maishift_mapping"], data["catalog"])
-    if "integration" in entry:
-        ref = entry["integration"]
-        if ref.get("path") != f"integration/{ref.get('sha256')}.json" or not re.fullmatch(
-            r"[a-f0-9]{64}", ref.get("sha256", "")
-        ):
-            raise ValueError("Invalid integration catalog reference")
-        integration = _read(source, ref["path"], MAX_BYTES)
-        if (
-            len(integration) != ref.get("bytes")
-            or hashlib.sha256(integration).hexdigest() != ref["sha256"]
-        ):
-            raise ValueError("Integration catalog integrity mismatch")
-        from .provider_mapping import integration_catalog
-
-        if integration != canonical(integration_catalog(data, version)):
-            raise ValueError("Integration data differs from public chart catalog")
-        pending[ref["path"]] = integration
+    if document is None:
+        validate_catalog_reference(entry)
+        raw = _read(source, entry["path"], MAX_CATALOG_BYTES)
+        integration = (
+            _read(source, entry["integration"]["path"], MAX_BYTES)
+            if "integration" in entry
+            else None
+        )
+        document = decode_catalog_document(entry, raw, integration)
+    else:
+        document.require_binding(entry)
+    raw, data = document.raw, document.data
+    sha, version = entry["sha256"], entry["version"]
+    if document.integration is not None:
+        pending[entry["integration"]["path"]] = document.integration
     parts = []
     for start in range(0, len(raw), PART_BYTES):
         part = raw[start : start + PART_BYTES]
@@ -762,6 +712,7 @@ def plan_public_release(
     song_redirects: Path | str | dict[str, str] | None = None,
     previous_public: Path | str | None = None,
     capacity: ReviewedCapacity | None = None,
+    prepared_catalogs: Mapping[str, CatalogDocument] | None = None,
 ) -> ReleasePlan:
     """Prepare shell, verified catalogs, public routes, then the complete release inventory."""
     source = Path(source).resolve()
@@ -775,6 +726,7 @@ def plan_public_release(
     manifest = read_json(source / "manifest.json")
     if manifest.get("schema_version") != "1.0.0" or not manifest.get("releases"):
         raise ValueError("Expected an accepted research browser manifest")
+    documents = dict(prepared_catalogs or {})
     pending = _prepare_browser_shell(source)
     releases: list[dict[str, Any]] = []
     versions: set[str] = set()
@@ -784,7 +736,9 @@ def plan_public_release(
     for entry in manifest["releases"]:
         if entry.get("version") in versions:
             raise ValueError("Invalid or duplicate research release identity")
-        catalog = _prepare_public_catalog(source, entry, retained)
+        catalog = _prepare_public_catalog(
+            source, entry, retained, documents.pop(entry.get("version"), None)
+        )
         versions.add(catalog.version)
         pending.update(catalog.assets)
         releases.append(catalog.release)
@@ -792,6 +746,8 @@ def plan_public_release(
         previous_had_song_pages |= catalog.had_song_pages
         if catalog.version == manifest["default"]:
             default_catalog = catalog.data
+    if documents:
+        raise ValueError("Unused prepared catalog documents")
     if set(retained.entries) - versions:
         raise ValueError("Previously published catalogs cannot be omitted")
     if manifest.get("default") not in versions:
@@ -833,6 +789,7 @@ def build_public_release(
     song_redirects: Path | str | None = None,
     previous_public: Path | str | None = None,
     capacity: ReviewedCapacity | None = None,
+    prepared_catalogs: Mapping[str, CatalogDocument] | None = None,
 ) -> dict[str, Any]:
     source, output = Path(source).resolve(), Path(output).resolve()
     if source == output or output.is_relative_to(source) or source.is_relative_to(output):
@@ -845,4 +802,5 @@ def build_public_release(
         song_redirects=song_redirects,
         previous_public=previous_public,
         capacity=capacity,
+        prepared_catalogs=prepared_catalogs,
     ).write_to(output)
