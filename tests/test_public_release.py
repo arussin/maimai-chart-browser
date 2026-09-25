@@ -1,5 +1,6 @@
 import hashlib
 import json
+import os
 import shutil
 import subprocess
 import tempfile
@@ -11,6 +12,7 @@ from unittest.mock import patch
 
 from maimai_intelligence.public_release import (
     PUBLIC_FILES,
+    _read,
     build_public_release,
     plan_public_release,
     read_public_catalog_inputs,
@@ -19,6 +21,48 @@ from maimai_intelligence.registry import empty
 from maimai_intelligence.registry_catalog import project_registry
 from maimai_intelligence.snapshots import atomic_json, canonical, read_json
 from tests.registry_fixture import admit, official_row
+
+
+class PublicAssetReadTests(unittest.TestCase):
+    def setUp(self):
+        self.temporary = tempfile.TemporaryDirectory(prefix="public-asset-path-test-")
+        self.addCleanup(self.temporary.cleanup)
+        self.source = Path(self.temporary.name) / "accepted public assets"
+        self.source.mkdir()
+        (self.source / "asset.js").write_bytes(b"accepted bytes")
+
+    def test_unresolved_root_reads_the_same_accepted_asset(self):
+        alias = self.source / ".." / self.source.name
+        self.assertNotEqual(alias, self.source.resolve())
+        self.assertEqual(alias.resolve(), self.source.resolve())
+        self.assertEqual(_read(alias, "asset.js", 100), b"accepted bytes")
+
+    @unittest.skipUnless(os.name == "nt", "Windows short path aliases")
+    def test_windows_short_root_reads_the_same_accepted_asset(self):
+        import ctypes
+
+        buffer = ctypes.create_unicode_buffer(32768)
+        size = ctypes.windll.kernel32.GetShortPathNameW(str(self.source), buffer, len(buffer))
+        self.assertGreater(size, 0)
+        self.assertLess(size, len(buffer))
+        alias = Path(buffer.value)
+        if alias == alias.resolve():
+            self.skipTest("Filesystem did not expose a distinct short path alias")
+        self.assertEqual(alias.resolve(), self.source.resolve())
+        self.assertEqual(_read(alias, "asset.js", 100), b"accepted bytes")
+
+    def test_normalized_root_still_rejects_assets_outside_it(self):
+        outside = self.source.parent / "private.json"
+        outside.write_bytes(b"private bytes")
+        alias = self.source / ".." / self.source.name
+        for name in ("../private.json", str(outside.resolve())):
+            with self.subTest(name=name), self.assertRaisesRegex(ValueError, "leaves"):
+                _read(alias, name, 100)
+
+    def test_normalized_root_retains_the_byte_limit(self):
+        alias = self.source / ".." / self.source.name
+        with self.assertRaisesRegex(ValueError, "size limit"):
+            _read(alias, "asset.js", 4)
 
 
 class PublicReleaseTests(unittest.TestCase):

@@ -130,7 +130,7 @@ class ReleaseAssemblyTests(unittest.TestCase):
         self.assertEqual(receipt["files"], output)
         self.assertEqual(receipt["output_inventory_sha256"], digest(output))
         self.assertEqual(result.plan_sha256, digest(asdict(self.plan)))
-        self.assertEqual(result.completion_path, str(self.receipt))
+        self.assertEqual(result.completion_path, str(self.receipt.resolve()))
         self.assertEqual(tuple(self.receipt.parent.iterdir()), (self.receipt,))
         self.assertNotIn("completion.json", output)
         self.assert_inputs_unchanged()
@@ -732,7 +732,7 @@ class ReleaseAssemblyTests(unittest.TestCase):
             output = self.root / mode
 
             def fail(raw, destination, expected, *, output=output, mode=mode):
-                if destination.relative_to(output).as_posix() in documents:
+                if destination.relative_to(output.resolve()).as_posix() in documents:
                     if mode == "interrupt":
                         raise OSError("recovery write interrupted")
                     real(raw, destination, expected)

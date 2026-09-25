@@ -263,7 +263,7 @@ class CatalogUpdateTests(unittest.TestCase):
                 self.prepare()
         self.assertEqual(read_json(self.store / "latest.json"), publication)
         for run in (self.store / "runs").iterdir():
-            if run == retained:
+            if run.resolve() == retained.resolve():
                 continue
             self.assertFalse((run / "ready.json").exists())
             self.assertEqual(read_json(run / "state.json")["status"], "failed")

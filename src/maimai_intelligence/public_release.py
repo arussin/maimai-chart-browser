@@ -163,6 +163,7 @@ def _browser_csp(raw: bytes) -> str | None:
 
 
 def _read(source: Path, name: str, limit: int) -> bytes:
+    source = source.resolve()
     path = (source / name).resolve()
     if not path.is_relative_to(source):
         raise ValueError("Public asset leaves the accepted browser directory")

@@ -51,8 +51,8 @@ class CorpusRequestTests(unittest.TestCase):
             self.assertIsInstance(request.source, LegacySource)
             self.assertIsInstance(request.package, RetainedPackage)
             fields = request.attempt_fields()
-            self.assertEqual(fields["package"], root / "package")
-            self.assertEqual(fields["mai_notes_snapshot"], root / "links")
+            self.assertEqual(fields["package"], (root / "package").resolve())
+            self.assertEqual(fields["mai_notes_snapshot"], (root / "links").resolve())
             self.assertEqual(fields["coverage_reviews"], {"titles": []})
             with self.assertRaisesRegex(ValueError, "Legacy preparation requires"):
                 replace(request, package=None)
@@ -68,8 +68,10 @@ class CorpusRequestTests(unittest.TestCase):
             )
             self.assertIsInstance(revised.package, ReviewedRevision)
             self.assertEqual(revised.attempt_fields()["revision"], "reviewed")
-            self.assertEqual(revised.attempt_fields()["artwork_cache"], root / "media")
-            self.assertEqual(revised.attempt_fields()["capacity_review"], root / "capacity")
+            self.assertEqual(revised.attempt_fields()["artwork_cache"], (root / "media").resolve())
+            self.assertEqual(
+                revised.attempt_fields()["capacity_review"], (root / "capacity").resolve()
+            )
 
     def test_invalid_requests_are_rejected_before_creating_a_store(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -107,8 +109,11 @@ class CorpusRequestTests(unittest.TestCase):
             self.assertIsInstance(request.source, RegistrySource)
             self.assertTrue(request.source.verify_legacy_identity)
             self.assertEqual(request.source.captures.mode, "online")
-            self.assertEqual(request.attempt_fields()["registry"], root / "accepted")
-            self.assertEqual(request.attempt_fields()["overrides"], root / "legacy-overrides")
+            self.assertEqual(request.attempt_fields()["registry"], (root / "accepted").resolve())
             self.assertEqual(
-                request.attempt_fields()["mai_notes_snapshot"], root / "ignored-legacy-links"
+                request.attempt_fields()["overrides"], (root / "legacy-overrides").resolve()
+            )
+            self.assertEqual(
+                request.attempt_fields()["mai_notes_snapshot"],
+                (root / "ignored-legacy-links").resolve(),
             )
