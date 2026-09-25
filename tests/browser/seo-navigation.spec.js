@@ -361,3 +361,18 @@ test('remembered personal sorting survives return while player storage is still 
   await page.evaluate(()=>{sessionStorage.removeItem('fixture-delay-player');fixtureReleaseStorage();});await expect.poll(()=>page.evaluate(()=>!!window.maimaiPersonal)).toBe(true);await page.evaluate(()=>maimaiPersonal.ready);
   expect(await page.evaluate(()=>maimaiBrowserState.capture().sortRules)).toEqual([{key:'rating',direction:-1}]);
 });
+
+// Browsers may request image resources while imported nodes are still detached.
+test('direct nested routes resolve shell images before activating imported nodes',async({page,request})=>{
+ const map=await ledger(request),misresolved=[];
+ page.on('request',request=>{
+  const path=new URL(request.url()).pathname;
+  if(/^\/(en|ja|ko|zh-hans)\/(songs|versions)\/[^/]+\/browser-resources\//.test(path))misresolved.push(path);
+ });
+ for(const locale of ['en','ja','ko','zh-hans'])for(const [kind,slug]of [['songs',Object.values(map.songs)[0]],['versions',Object.values(map.versions)[0]]]){
+  await page.goto('/'+locale+'/'+kind+'/'+encodeURIComponent(slug)+'/');
+  await expect(page.locator('#settings-toggle')).toBeVisible();await ready(page);
+  await page.evaluate(async()=>{document.querySelectorAll('img').forEach(image=>image.loading='eager');await Promise.all([...document.images].map(image=>image.decode().catch(()=>{})));});
+  expect(misresolved,locale+'/'+kind+' must not issue nested asset requests').toEqual([]);
+ }
+});

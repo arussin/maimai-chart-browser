@@ -2,25 +2,25 @@
   "version": 1,
   "tool": "esbuild-0.28.2",
   "entries": {
-    "hosted": "browser/browser-entry-4Z5YIAO5.js",
-    "offline": "browser/browser-offline-IB6HAEWR.js"
+    "hosted": "browser/browser-entry-HIFXDM6I.js",
+    "offline": "browser/browser-offline-TW5E56BK.js"
   },
   "assets": {
-    "browser/browser-entry-4Z5YIAO5.js": {
-      "sha256": "6f01887c70c13b3e38baf1f8af2695cdac6f1fdf824417c45ec6979c4732faac",
+    "browser/browser-entry-HIFXDM6I.js": {
+      "sha256": "a5cc3348b936d626360caa36dd74e301cbb0d04c0a85e48a9ddc72aabcd4fa07",
       "bytes": 21132
     },
-    "browser/application-GLRIKWD5.js": {
-      "sha256": "9acb0f01f52227c9d30960b463b0ffe8f3134c1e4c2a7174b19a0359787cbb3b",
-      "bytes": 223739
+    "browser/application-FE6TKURI.js": {
+      "sha256": "62b530cd084cf54bb15261f106b7bf554f7bce66fc2861806133a71609644bd1",
+      "bytes": 223747
     },
     "browser/chunk-PQOHL5MV.js": {
       "sha256": "c25d9c5050a2d5c3134eefe35d0504e5a3bb13809038eccb822eee8f37879f44",
       "bytes": 2611
     },
-    "browser/browser-offline-IB6HAEWR.js": {
-      "sha256": "4daeee3c6f8a1b3ff96bb9af7e3b167369464cc5564b80e38aa9a59305d877c5",
-      "bytes": 242636
+    "browser/browser-offline-TW5E56BK.js": {
+      "sha256": "1648d45a817b920f1c003c2e7da2cd92cea19aaeadf838d788fcb49e85b4af23",
+      "bytes": 242644
     }
   },
   "replaces": [

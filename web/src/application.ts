@@ -78,15 +78,16 @@ async function mountShell(
   );
   const shell = parsed.querySelector<HTMLTemplateElement>('template[data-browser-shell]');
   if (!shell) throw Error('The research browser could not start.');
-  const wrapper = document.createElement('div');
-  wrapper.dataset.versionBrowser = '';
-  wrapper.hidden = true;
-  wrapper.append(document.importNode(shell.content, true));
-  for (const node of wrapper.querySelectorAll<HTMLElement>('[src],[href]'))
+  // Resolve resources while the template is inert: importNode can start image requests.
+  for (const node of shell.content.querySelectorAll<HTMLElement>('[src],[href]'))
     for (const key of ['src', 'href']) {
       const value = node.getAttribute(key);
       if (value && !value.startsWith('#')) node.setAttribute(key, new URL(value, reader.base).href);
     }
+  const wrapper = document.createElement('div');
+  wrapper.dataset.versionBrowser = '';
+  wrapper.hidden = true;
+  wrapper.append(document.importNode(shell.content, true));
   document.body.append(wrapper);
   for (const sheet of parsed.querySelectorAll<HTMLLinkElement>('link[rel=stylesheet]')) {
     const url = new URL(sheet.getAttribute('href')!, reader.base);
