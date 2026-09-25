@@ -23,6 +23,7 @@ from .catalog_loading import (
     encode_catalog_projection,
     prepare_catalog_projection,
 )
+from .corpus_failures import PublicationCapacityError
 from .publication_capacity import PAID_FILES, ReviewedCapacity
 from .release_assembly import assemble_release as assemble_release
 from .release_composition import plan_release_composition as plan_release_composition
@@ -215,7 +216,7 @@ class ReleasePlan:
     def write_to(self, output: Path | str) -> dict[str, Any]:
         output = self._destination(output)
         if not self.summary["deployable"]:
-            raise ValueError(self.summary["capacity_error"])
+            raise PublicationCapacityError(self.summary["capacity_error"])
         if self.capacity is not None:
             self.capacity.require_current()
         for name, raw in self.assets.items():

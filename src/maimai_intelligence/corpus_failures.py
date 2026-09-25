@@ -10,19 +10,32 @@ class CorpusInputError(ValueError):
     """An explicitly rejected corpus request or reuse policy, not an inferred bug."""
 
 
+class PublicationCapacityError(CorpusInputError):
+    """A validated release exceeds its approved hosting capacity profile."""
+
+
 @dataclass(frozen=True)
 class FailureDiagnosis:
     outcome: Literal["blocked", "failed", "interrupted"]
-    code: Literal["input_or_integrity", "local_io", "interrupted", "unclassified_error"]
+    code: Literal[
+        "input_or_integrity",
+        "publication_capacity",
+        "local_io",
+        "interrupted",
+        "unclassified_error",
+    ]
     recovery: Literal[
         "inspect_evidence_then_prepare",
         "repair_storage_then_resume",
         "inspect_lock_then_resume",
         "inspect_failure_then_prepare",
+        "review_capacity_then_prepare",
     ]
 
 
 def diagnose_failure(error: BaseException) -> FailureDiagnosis:
+    if isinstance(error, PublicationCapacityError):
+        return FailureDiagnosis("blocked", "publication_capacity", "review_capacity_then_prepare")
     if isinstance(error, (CorpusInputError, IntegrityError, ReviewError, SnapshotError)):
         return FailureDiagnosis("blocked", "input_or_integrity", "inspect_evidence_then_prepare")
     if isinstance(error, OSError):

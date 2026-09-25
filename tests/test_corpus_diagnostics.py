@@ -67,6 +67,38 @@ class CorpusDiagnosticsTests(unittest.TestCase):
         self.assertEqual(set(event["counts"].values()), {None})
         self.assertNotIn("private-credential-body", self.path.read_text())
 
+    def test_owned_publication_capacity_refusal_is_actionable_and_preserves_inputs(self):
+        from maimai_intelligence.public_release import ReleasePlan
+
+        source = self.run / "accepted-browser"
+        source.mkdir()
+        accepted = source / "index.html"
+        accepted.write_bytes(b"retained browser")
+        output = self.run / "public"
+        plan = ReleasePlan(
+            {"index.html": b"candidate"},
+            {"default": "candidate"},
+            {"deployable": False, "capacity_error": "private-capacity-detail"},
+            source,
+        )
+        with self.assertRaises(ValueError):
+            with Diagnostics(self.run).stage("render"):
+                plan.write_to(output)
+        event = read_diagnostics(self.run)[-1]
+        self.assertEqual(event["outcome"], "blocked")
+        self.assertEqual(event["code"], "publication_capacity")
+        self.assertEqual(event["retry"], "review_capacity_then_prepare")
+        self.assertNotIn("private-capacity-detail", self.path.read_text())
+        self.assertFalse(output.exists())
+        self.assertEqual(accepted.read_bytes(), b"retained browser")
+
+    def test_capacity_shaped_programming_error_is_not_reclassified(self):
+        with self.assertRaises(ValueError):
+            with Diagnostics(self.run).stage("render"):
+                raise ValueError("Public release exceeds the Cloudflare Pages file count limit")
+        event = read_diagnostics(self.run)[-1]
+        self.assertEqual((event["outcome"], event["code"]), ("failed", "unclassified_error"))
+
     def test_secondary_recording_failure_does_not_replace_primary(self):
         primary = KeyboardInterrupt()
         diagnostics = Diagnostics(self.run)
