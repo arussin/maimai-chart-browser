@@ -120,6 +120,7 @@ class PublicReleaseTests(unittest.TestCase):
 
         path, digest = capacity_fixture(self.root / "capacity")
         reviewed = read_capacity_review(path, digest)
+        default = plan_public_release(self.source)
         with patch("maimai_intelligence.public_release.MAX_PUBLIC_FILES", 1):
             self.assertFalse(plan_public_release(self.source).summary["deployable"])
             plan = plan_public_release(self.source, capacity=reviewed)
@@ -128,8 +129,15 @@ class PublicReleaseTests(unittest.TestCase):
             self.assertEqual(plan.summary["capacity"]["max_files"], 100000)
             with self.assertRaisesRegex(ValueError, "reviewed capacity"):
                 plan_public_release(self.source, capacity={"max_files": 100000})
+        self.assertEqual(plan.assets, default.assets)
+        self.assertEqual(plan.manifest, default.manifest)
         plan.write_to(self.output)
         self.assertFalse((self.output / "capacity").exists())
+        for asset in self.output.rglob("*"):
+            if asset.is_file():
+                raw = asset.read_bytes()
+                for private in (reviewed.account_id, reviewed.project, reviewed.review_sha256):
+                    self.assertNotIn(private.encode(), raw)
 
     def test_previous_release_is_bound_to_exact_catalog_bytes_and_allowlisted_closure(self):
         build_public_release(self.source, self.output)

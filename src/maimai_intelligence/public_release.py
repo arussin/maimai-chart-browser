@@ -17,6 +17,7 @@ from types import MappingProxyType
 from typing import TYPE_CHECKING, Any, cast
 
 from .artwork import MEDIA_PATH
+from .capacity_policy import DEFAULT_FILES
 from .catalog_document import CatalogDocument, decode_catalog_document, validate_catalog_reference
 from .catalog_loading import (
     MAX_CATALOG_BYTES,
@@ -38,7 +39,7 @@ INDEX_PART_BYTES = 8 * 1024 * 1024
 # Cloudflare Pages Direct Upload limits, including retained releases.
 MAX_PUBLIC_FILE_BYTES = 25 * 1024 * 1024
 STARTUP_PART_THRESHOLD = MAX_PUBLIC_FILE_BYTES
-MAX_PUBLIC_FILES = 20_000
+MAX_PUBLIC_FILES = DEFAULT_FILES
 SEARCH_TITLE = "maimai Chart Database & Patterns | maimai.party"
 SEARCH_DESCRIPTION = (
     "Explore maimai and maimai DX song data, chart constants, BPM, and chart patterns. "

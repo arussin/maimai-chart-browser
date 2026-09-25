@@ -13,9 +13,12 @@ import stat
 import tempfile
 from collections.abc import Mapping
 from dataclasses import asdict, dataclass
+from datetime import UTC, datetime
 from pathlib import Path
 
+from .capacity_policy import DEFAULT_FILES, CapacityAuthority
 from .public_routes import ROUTE_MODEL
+from .publication_capacity import ReviewedCapacity
 from .release_composition import (
     MAX_FILE_BYTES,
     ArtifactInventory,
@@ -223,6 +226,7 @@ def assemble_release(
     recovery_evidence_sha256: str | None = None,
     recovery_candidate_inventory_sha256: str | None = None,
     recovery_baseline_inventory_sha256: str | None = None,
+    capacity: ReviewedCapacity | None = None,
 ) -> AssemblyReceipt:
     """Verify the complete plan and inputs, copy bounded files, then complete.
 
@@ -235,6 +239,11 @@ def assemble_release(
     """
     if not isinstance(plan, CompositionPlan):
         raise ValueError("Expected a validated composition plan")
+    if capacity is not None and not isinstance(capacity, ReviewedCapacity):
+        raise ValueError("Assembly requires a file-verified capacity review")
+    authority = CapacityAuthority(**asdict(capacity)) if capacity is not None else None
+    if plan.capacity != authority:
+        raise ValueError("Capacity authority differs from the reviewed composition plan")
     documents, recovery = _recovery_input(
         recovery_documents,
         recovery_evidence_sha256,
@@ -266,12 +275,16 @@ def assemble_release(
         recovery=recovery,
         max_files=plan.max_files,
         max_file_bytes=plan.max_file_bytes,
+        capacity=authority,
+        capacity_checked_at=datetime.now(UTC) if authority is not None else None,
     )
     if validated != plan:
         raise ValueError("Composition plan does not match verified inputs and runtime evidence")
     expected = ArtifactInventory(
         tuple(InventoryFile(item.path, item.expected) for item in plan.files)
     )
+    if capacity is not None:
+        capacity.require_current()
     output.parent.mkdir(parents=True, exist_ok=True)
     receipt_path.parent.mkdir(parents=True, exist_ok=True)
     _checked_path(output)
@@ -292,12 +305,17 @@ def assemble_release(
     result = AssemblyReceipt(
         digest(asdict(plan)), digest(_records(expected.files)), expected.files, str(receipt_path)
     )
+    if capacity is not None:
+        capacity.require_current()
     _complete(
         receipt_path,
         {
             "schema_version": "maimai-release-assembly-1",
             "status": "complete",
             "scope": "local_file_assembly_only",
+            "capacity": authority.receipt()
+            if authority is not None
+            else {"profile": "pages-default", "max_files": DEFAULT_FILES},
             "plan": asdict(plan),
             "plan_sha256": result.plan_sha256,
             "output_inventory_sha256": result.output_inventory_sha256,

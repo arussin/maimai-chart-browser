@@ -29,6 +29,7 @@ PURE = {
             "refresh_policy",
             "release_transition",
             "release_composition",
+            "capacity_policy",
             "recovery_policy",
             "route_model",
             "official_contract",

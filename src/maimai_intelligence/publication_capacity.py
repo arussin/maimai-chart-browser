@@ -9,15 +9,13 @@ from __future__ import annotations
 
 import hashlib
 import json
-import math
 import re
-from dataclasses import dataclass
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
 
-PAID_FILES = 100_000
-MAX_REVIEW_AGE = timedelta(hours=24)
+from .capacity_policy import MAX_REVIEW_AGE as MAX_REVIEW_AGE
+from .capacity_policy import PAID_FILES as PAID_FILES
+from .capacity_policy import CapacityAuthority
 
 
 def _closed_object(pairs):
@@ -33,39 +31,11 @@ def _digest(value):
     return isinstance(value, str) and re.fullmatch(r"[a-f0-9]{64}", value) is not None
 
 
-@dataclass(frozen=True)
-class ReviewedCapacity:
-    account_id: str
-    project: str
-    plan: str
-    verified_at: str
-    billing: tuple[float, str, str]
-    review_sha256: str
-    evidence: tuple[tuple[str, str], ...]
+class ReviewedCapacity(CapacityAuthority):
+    """File-verified authority with the existing current-clock convenience API."""
 
     def require_current(self, now: datetime | None = None) -> None:
-        now = now or datetime.now(UTC)
-        checked = datetime.fromisoformat(self.verified_at)
-        if checked.tzinfo is None or not timedelta(0) <= now - checked <= MAX_REVIEW_AGE:
-            raise ValueError("Paid capacity review is stale or has a future verification time")
-
-    def receipt(self) -> dict[str, Any]:
-        return {
-            "profile": "pages-paid-100000",
-            "max_files": PAID_FILES,
-            "account_id": self.account_id,
-            "project": self.project,
-            "plan": self.plan,
-            "verified_at": self.verified_at,
-            "billing": {
-                "amount": self.billing[0],
-                "currency": self.billing[1],
-                "interval": self.billing[2],
-            },
-            "upload_method": "wrangler-direct-upload-v4",
-            "review_sha256": self.review_sha256,
-            "evidence": dict(self.evidence),
-        }
+        super().require_current(now or datetime.now(UTC))
 
 
 def read_capacity_review(path, reviewed_sha256, *, now=None) -> ReviewedCapacity:
@@ -94,28 +64,11 @@ def read_capacity_review(path, reviewed_sha256, *, now=None) -> ReviewedCapacity
         or set(value) != expected
         or value["schema_version"] != "pages-capacity-review-1"
         or value["profile"] != "pages-paid-100000"
-        or not isinstance(value["account_id"], str)
-        or not re.fullmatch(r"[a-f0-9]{32}", value["account_id"])
-        or not isinstance(value["project"], str)
-        or not re.fullmatch(r"[a-z0-9][a-z0-9-]{0,57}", value["project"])
-        or not isinstance(value["plan"], str)
-        or value["plan"] not in {"pro", "business", "enterprise"}
         or value["upload_method"] != "wrangler-direct-upload-v4"
-        or not isinstance(value["verified_at"], str)
     ):
         raise ValueError("Invalid paid capacity review")
     billing = value["billing"]
-    if (
-        not isinstance(billing, dict)
-        or set(billing) != {"amount", "currency", "interval"}
-        or type(billing["amount"]) not in {int, float}
-        or not math.isfinite(billing["amount"])
-        or billing["amount"] < 0
-        or not isinstance(billing["currency"], str)
-        or not re.fullmatch(r"[A-Z]{3}", billing["currency"])
-        or not isinstance(billing["interval"], str)
-        or billing["interval"] not in {"month", "year"}
-    ):
+    if not isinstance(billing, dict) or set(billing) != {"amount", "currency", "interval"}:
         raise ValueError("Paid capacity requires an explicit reviewed price")
     evidence = value["evidence"]
     if not isinstance(evidence, dict) or set(evidence) != {"entitlement", "cost", "upload_method"}:

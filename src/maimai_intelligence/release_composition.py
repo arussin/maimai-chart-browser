@@ -11,15 +11,17 @@ import hashlib
 import json
 import re
 from collections.abc import Mapping
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
+from datetime import datetime
 from typing import Literal
 
+from .capacity_policy import DEFAULT_FILES, PAID_FILES, CapacityAuthority
 from .release_transition import Fingerprint
 from .route_model import PublicRouteModel
 
 Owner = Literal["baseline", "candidate", "recovery"]
 Target = Literal["candidate", "recovery"]
-MAX_FILES = 20_000
+MAX_FILES = DEFAULT_FILES
 MAX_FILE_BYTES = 25 * 1024 * 1024
 
 
@@ -88,6 +90,7 @@ class CompositionPlan:
     scope: Literal["declared_file_composition_only"] = "declared_file_composition_only"
     recovery_inventory_sha256: str | None = None
     recovery_evidence_sha256: str | None = None
+    capacity: CapacityAuthority | None = None
 
     @property
     def file_count(self) -> int:
@@ -237,8 +240,10 @@ def plan_release_composition(
     baseline_runtime: RuntimeClosure,
     candidate_runtime: RuntimeClosure,
     recovery: RecoveryOverlay | None = None,
-    max_files: int = MAX_FILES,
+    max_files: int | None = None,
     max_file_bytes: int = MAX_FILE_BYTES,
+    capacity: CapacityAuthority | None = None,
+    capacity_checked_at: datetime | None = None,
 ) -> CompositionPlan:
     """Require a reviewed owner for every path; never infer a conflict winner.
 
@@ -246,8 +251,9 @@ def plan_release_composition(
     finite candidate song/version document set, never scripts or configuration.
     Other byte changes and generated manifests belong to earlier preparation.
     Every declared runtime file must survive with exact bytes in either target.
-    Capacity can be tightened for testing, never raised without a separate paid
-    profile implementation and entitlement gate.
+    The default profile stays at 20,000 files. A detached reviewed authority and
+    explicit current instant select the fixed paid profile; numeric limits can
+    only tighten that selection. Assembly rechecks the same authority and clock.
     """
     if target not in ("candidate", "recovery"):
         raise ValueError("Expected candidate or recovery target")
@@ -293,8 +299,20 @@ def plan_release_composition(
         for path, expected in closure.items():
             if selections[path].expected != expected:
                 raise ValueError(f"Selected bytes violate an immutable runtime closure: {path}")
-    if type(max_files) is not int or not 1 <= max_files <= MAX_FILES:
-        raise ValueError("File capacity must stay within the default Pages profile")
+    authority = None
+    if capacity is not None:
+        if not isinstance(capacity, CapacityAuthority):
+            raise ValueError("Paid capacity requires a reviewed capacity authority")
+        authority = CapacityAuthority(**asdict(capacity))
+        if capacity_checked_at is None:
+            raise ValueError("Paid capacity requires an explicit check time")
+        authority.require_current(capacity_checked_at)
+    elif capacity_checked_at is not None:
+        raise ValueError("A capacity check time requires its reviewed authority")
+    profile_limit = PAID_FILES if authority is not None else MAX_FILES
+    max_files = profile_limit if max_files is None else max_files
+    if type(max_files) is not int or not 1 <= max_files <= profile_limit:
+        raise ValueError("File capacity must stay within the reviewed Pages profile")
     if type(max_file_bytes) is not int or not 1 <= max_file_bytes <= MAX_FILE_BYTES:
         raise ValueError("Asset capacity must stay within the Pages per-file limit")
     if len(selections) > max_files:
@@ -318,4 +336,5 @@ def plan_release_composition(
         sum(choice.expected.bytes for choice in selections.values()),
         recovery_inventory_sha256=_inventory_id(recovery_files) if recovery is not None else None,
         recovery_evidence_sha256=recovery.evidence_sha256 if recovery is not None else None,
+        capacity=authority,
     )
