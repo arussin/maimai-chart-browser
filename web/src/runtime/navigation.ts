@@ -252,15 +252,15 @@ export class NavigationCoordinator {
       const mountSong =
         content.dataset.seoPage === 'song' ? await browser.song(content) : undefined;
       if (!mountSong) await browser.load();
-      // Preserve the pressed target until pointer/key activation has dispatched its click.
-      await this.interactionIdle;
-      if (!operation.current()) return false;
       const stylesheet = this.ports.resources?.seoStyle;
       if (!this.routeView) {
         if (!stylesheet) throw Error('Song styles are unavailable in this document');
         await this.reader.verified(stylesheet, operation.signal);
         if (!operation.current()) return false;
       }
+      // Preserve the pressed target through the final resource await and native click.
+      await this.interactionIdle;
+      if (!operation.current()) return false;
       this.browser = browser;
       this.browserMain ??= document.querySelector<HTMLElement>('main:not([data-seo-page])');
       if (!this.browserMain) return false;
