@@ -7,7 +7,9 @@ import {createHash} from 'node:crypto';
 import {gzipSync} from 'node:zlib';
 import {launchIsolated} from '../tests/browser/isolation.mjs';
 
-const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
+const sourceRoot=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
+// Reuse the prepared fixture/runtime without copying or editing its frozen source.
+const root=path.resolve(process.env.MAIMAI_NODE_MODULES_ROOT||sourceRoot);
 if(process.platform==='win32'&&!root.toLowerCase().startsWith('c:\\devcache\\'))throw new Error('Run from the prepared disposable DevCache workspace, not source.');
 const args=process.argv.slice(2);
 if(args.some(value=>value!=='--headed'))throw new Error('Usage: node scripts/preview_revision.mjs [--headed]');
@@ -56,15 +58,31 @@ await run.context.route('**/*',async route=>{
     return route.fulfill({contentType:mime[path.extname(target)]||'application/octet-stream',body});
   }catch{return route.fulfill({status:404,body:'Missing synthetic fixture'});}
 });
+async function applicationEntry(page){
+  const entry=page.locator('script[type=module][data-maimai-browser]');
+  await expect(entry).toHaveCount(1);
+  const src=await entry.getAttribute('src');
+  if(!src)throw new Error('Composed browser entry has no source');
+  const url=new URL(src,page.url());
+  if(url.origin!==site)throw new Error('Composed browser entry must use the synthetic site origin');
+  return url.href;
+}
 let receipt;
 try{
   const page=await run.context.newPage();await page.goto(site+'/');await expect(page.locator('#songs .song-row').first()).toBeVisible();
-  const prepared=await page.evaluate(async data=>{const entry=document.querySelector('script[type=module][src*="browser-entry.js"]');const {loadApplication}=await import(entry.src),app=await loadApplication();await app.services.personal.ready;const value=await app.services.playerCore.reconcile(data);return {data:value,offer:app.services.playerCore.offer(value)};},fixture);
+  const entry=await applicationEntry(page);
+  const prepared=await page.evaluate(async({entry,data})=>{
+    const {loadApplication}=await import(entry),app=await loadApplication();
+    if(app!==await loadApplication())throw new Error('Composed application initialized twice');
+    await app.services.personal.ready;
+    const value=await app.services.playerCore.reconcile(data);
+    return {data:value,offer:app.services.playerCore.offer(value)};
+  },{entry,data:fixture});
   offer=prepared.offer;bytes=gzipSync(Buffer.from(JSON.stringify(prepared.data)));const sha=createHash('sha256').update(bytes).digest('hex');object={path:'/fixture/party/data/'+sha+'.gz',bytes:bytes.length,sha256:sha};
   const panel=await run.context.newPage();await panel.goto(control+'/');
   if(headed){console.log('Fictional preview ready. All remote services and clipboard actions are simulations. Close this browser to finish.');await new Promise(resolve=>run.browser.on('disconnected',resolve));}
   else{
-    const sourceKey=await page.evaluate(async origin=>{const entry=document.querySelector('script[type=module][src*="browser-entry.js"]');const {loadApplication}=await import(entry.src);return (await (await loadApplication()).services.playerSources.readReport(origin+'/fixture/')).data.player.key;},report);
+    const sourceKey=await page.evaluate(async({entry,origin})=>{const {loadApplication}=await import(entry);return (await (await loadApplication()).services.playerSources.readReport(origin+'/fixture/')).data.player.key;},{entry,origin:report});
     expect(sourceKey).toBe('kamaitachi:maimaidx:fixture');
     await page.locator('input[type=file]').setInputFiles({name:'fictional-player.gz',mimeType:'application/gzip',buffer:bytes});
     await expect(page.locator('.player-dialog')).toContainText('Fixture');
@@ -73,7 +91,8 @@ try{
     const popup=run.context.waitForEvent('page');await panel.locator('#handoff').click();const recipient=await popup;
     await expect(recipient.locator('.player-dialog')).toContainText('Fixture');
     await recipient.locator('.player-dialog .player-actions button').first().click();
-    await expect.poll(()=>recipient.evaluate(async()=>{const entry=document.querySelector('script[type=module][src*="browser-entry.js"]');const {loadApplication}=await import(entry.src);return (await loadApplication()).services.personal.enabled();})).toBe(true);
+    const recipientEntry=await applicationEntry(recipient);
+    await expect.poll(()=>recipient.evaluate(async entry=>{const {loadApplication}=await import(entry);return (await loadApplication()).services.personal.enabled();},recipientEntry)).toBe(true);
     await expect(panel.locator('#status')).toHaveText('Synthetic transfer: imported');
     await page.evaluate(()=>navigator.clipboard.writeText('fictional only'));
     await page.evaluate(()=>navigator.share({title:'fictional only'}));
@@ -81,7 +100,7 @@ try{
     await page.getByRole('button',{name:'Simulate successful support (no payment)'}).click();
     await expect(page.locator('#support-checkout-dialog')).toHaveAttribute('data-stage','result');
   }
-  receipt={schema_version:'maimai-fictional-preview-1',mode:headed?'headed':'headless-smoke',fixture:'registry-fixture',simulations:state,served_file_sha256:Object.fromEntries(hashes),blocked_transports:run.blockedTransports,unexpected:run.unexpected,page_errors:pageErrors};
+  receipt={schema_version:'maimai-fictional-preview-1',mode:headed?'headed':'headless-smoke',fixture:'registry-fixture',application_entry:entry,application_singleton:true,simulations:state,served_file_sha256:Object.fromEntries(hashes),blocked_transports:run.blockedTransports,unexpected:run.unexpected,page_errors:pageErrors};
 }finally{await run.close();}
 const destination=path.join(root,'output','preview-revision-'+Date.now()+'.json');await fs.writeFile(destination,JSON.stringify(receipt,null,2)+'\n');
 if(pageErrors.length)throw new Error('Preview page errors: '+JSON.stringify(pageErrors));
