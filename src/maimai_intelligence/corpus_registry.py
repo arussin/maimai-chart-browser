@@ -160,11 +160,11 @@ def project_corpus(context: RegistryContext, enriched: EnrichedRegistry) -> Prep
 
     accepted = enriched.accepted
     run = context.run
-    from maimai_intelligence.multilingual_search import enrich_registry
+    from maimai_intelligence.multilingual_search import compile_aliases
 
     # Search aids belong to the projection and its retained report;
     # the accepted identity registry remains exactly as reconciled.
-    accepted, search_aliases = enrich_registry(accepted)
+    search_aliases = compile_aliases(accepted)
     atomic_json(run / "multilingual-search.json", search_aliases)
     prepared = build_registry_package(
         accepted,
@@ -172,6 +172,10 @@ def project_corpus(context: RegistryContext, enriched: EnrichedRegistry) -> Prep
         run / "package",
         published=context.before if context.use_retained_analysis else None,
         additions=enriched.refresh.additions if enriched.refresh else None,
+        search_aliases={
+            sid: tuple(alias["value"] for alias in record["aliases"])
+            for sid, record in search_aliases["songs"].items()
+        },
         artwork_source=context.store / "cache" / "coverage",
         policy_context=context.policy_context,
     )

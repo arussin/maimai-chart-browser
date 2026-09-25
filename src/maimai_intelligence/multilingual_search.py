@@ -320,7 +320,9 @@ def default_overrides():
     )
 
 
-def compile_aliases(registry, *, overrides=None):
+def compile_aliases(
+    registry: dict[str, Any], *, overrides: dict[str, Any] | None = None
+) -> dict[str, Any]:
     """Never reconcile identity here. Unknown override IDs/identities are errors."""
     bundled = overrides is None
     overrides = default_overrides() if bundled else overrides

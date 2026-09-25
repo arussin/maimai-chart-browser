@@ -48,6 +48,7 @@ def main():
             "tests.test_route_recovery",
             "tests.test_route_model",
             "tests.test_corpus_workbench",
+            "tests.test_corpus_projection",
             "tests.test_metadata_failures",
             "tests.test_corpus_diagnostics",
             "tests.test_song_catalog",

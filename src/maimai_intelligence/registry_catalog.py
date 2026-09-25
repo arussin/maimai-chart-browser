@@ -6,6 +6,7 @@ import hashlib
 import json
 import unicodedata
 from collections import Counter, defaultdict
+from collections.abc import Mapping, Sequence
 from copy import deepcopy
 from pathlib import Path
 from typing import Any
@@ -168,7 +169,13 @@ def version_label(code):
     return VERSIONS.get(number // 100 * 100, "SEGA version " + code)
 
 
-def project_registry(value, legacy, *, policy_context: PolicyContext = BUILTIN_CONTEXT):
+def project_registry(
+    value,
+    legacy,
+    *,
+    search_aliases: Mapping[str, Sequence[str]] | None = None,
+    policy_context: PolicyContext = BUILTIN_CONTEXT,
+):
     validate(value, policy_context=policy_context)
     profiles = {c["chart_id"]: c for c in legacy.get("catalog", [])}
     observations = defaultdict(dict)
@@ -249,7 +256,13 @@ def project_registry(value, legacy, *, policy_context: PolicyContext = BUILTIN_C
         if profile and profile.get("version") != "challenge-profile-1-experimental":
             raise ValueError("Selected analysis is not an accepted profile")
         regions, aliases = {}, set(song["metadata"].get("aliases", []))
-        aliases.update(entry["value"] for entry in song.get("search_aliases", []))
+        # Explicit search projections do not participate in accepted registry identity.
+        # Omitted projections retain compatibility with historical enriched registries.
+        aliases.update(
+            search_aliases.get(sid, ())
+            if search_aliases is not None
+            else (entry["value"] for entry in song.get("search_aliases", []))
+        )
         for region in ("JP", "INTL"):
             meta = observations[sid].get((region, "metadata"))
             level = observations[cid].get((region, "level"))
@@ -609,6 +622,7 @@ def build_registry_package(
     *,
     published: dict[str, Any] | None = None,
     additions: dict[str, Any] | None = None,
+    search_aliases: Mapping[str, Sequence[str]] | None = None,
     artwork_source: Path | str | None = None,
     policy_context: PolicyContext = BUILTIN_CONTEXT,
 ) -> dict[str, Any]:
@@ -696,7 +710,9 @@ def build_registry_package(
         ):
             invalid.add(selected["legacy_chart_id"])
     legacy["catalog"] = [c for c in legacy["catalog"] if c["chart_id"] not in invalid]
-    data = project_registry(value, legacy, policy_context=policy_context)
+    data = project_registry(
+        value, legacy, search_aliases=search_aliases, policy_context=policy_context
+    )
     if "artwork" in data:
         copy_artwork(data["artwork"], (artwork_source, source), output)
     values = {
