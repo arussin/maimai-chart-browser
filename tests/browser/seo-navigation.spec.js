@@ -31,6 +31,24 @@ test('hosted module preloads fetch each dependency once and never initialize a s
   expect(await page.evaluate(()=>window.navigationEvents)).toEqual([{page:'charts'}]);
 });
 
+test('direct song keeps the broad catalog lazy while configuration is pending',async({page,request})=>{
+  const map=await ledger(request),slug=Object.values(map.songs)[0];
+  const configuration=await browserResourceURL('configuration'),catalog=await browserResourceURL('catalog');
+  let releaseConfiguration,configurationRequested,requests=0;
+  const held=new Promise(resolve=>releaseConfiguration=resolve),requested=new Promise(resolve=>configurationRequested=resolve);
+  await page.route(configuration,async route=>{configurationRequested();await held;await route.fallback();});
+  await page.route(catalog,async route=>{requests++;await route.fallback();});
+  const response=page.waitForResponse(configuration);
+  try{
+    await page.goto(songPath('en',slug),{waitUntil:'domcontentloaded'});await requested;
+    await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+    expect(requests).toBe(0);
+  }finally{releaseConfiguration();await response;}
+  await expect(page.locator('#seo-route-view .song-workspace')).toBeVisible();expect(requests).toBe(0);
+  await page.locator('#seo-route-view .chart-detail-actions button').first().click();
+  await expect(page.locator('#compare')).toBeVisible();expect(requests).toBe(1);
+});
+
 test('JavaScript-disabled public song pages retain four languages, canonical identity and crawlable charts',async({browser,request,baseURL})=>{
  const map=await ledger(request),slug=Object.values(map.songs).find(value=>/[^\x00-\x7f]/.test(value));
  const context=await browser.newContext({javaScriptEnabled:false});const document=await context.newPage(),requests=[];

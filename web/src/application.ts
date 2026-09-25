@@ -123,9 +123,6 @@ export async function createApplication(options: ApplicationOptions) {
     );
   const metadata = await mountShell(reader, options.resources),
     browserState = new BrowserState();
-  const configuration =
-    options.configuration ??
-    decodeJSON<BrowserConfiguration>(await reader.verified(requiredResources().configuration));
   function requiredResources(): BrowserResources {
     if (!options.resources) throw Error('Missing browser resources');
     return options.resources;
@@ -149,7 +146,17 @@ export async function createApplication(options: ApplicationOptions) {
             : undefined,
           requiredResources().catalog,
         );
-  const initialCatalog = directSong ? undefined : readCatalog();
+  // Configuration and public data are independent. Observe acquisition failures
+  // now, then deliver them after private controls have their validated configuration.
+  const initialCatalog: Promise<PromiseSettledResult<LoadedCatalog>> | undefined = directSong
+    ? undefined
+    : readCatalog().then(
+        (value) => ({ status: 'fulfilled' as const, value }),
+        (reason: unknown) => ({ status: 'rejected' as const, reason }),
+      );
+  const configuration =
+    options.configuration ??
+    decodeJSON<BrowserConfiguration>(await reader.verified(requiredResources().configuration));
   const localization = createLocalization({ root: document.body, configuration });
   options.onLocalization(localization);
   const settings = createSettingsMenu({ root: document.body, localization, usage });
@@ -355,7 +362,14 @@ export async function createApplication(options: ApplicationOptions) {
     if (directSong) window.dispatchEvent(new Event('maimai:browser-ready'));
   }
   const loadBrowser = () =>
-    (browserJob ??= (initialCatalog ?? readCatalog()).then(initializeBrowser, (error: unknown) => {
+    (browserJob ??= (
+      initialCatalog
+        ? initialCatalog.then((result) => {
+            if (result.status === 'rejected') throw result.reason;
+            return result.value;
+          })
+        : readCatalog()
+    ).then(initializeBrowser, (error: unknown) => {
       // Acquisition has not constructed catalog views. A later intent may retry it.
       // Activation failures stay cached: retrying partially mounted views duplicates owners.
       browserJob = undefined;
