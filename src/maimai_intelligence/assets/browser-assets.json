@@ -41,5 +41,9 @@
     "view-navigation.js",
     "challenge-review.js",
     "lab-loader.js"
+  ],
+  "preloads": [
+    "browser/application-FE6TKURI.js",
+    "browser/chunk-PQOHL5MV.js"
   ]
 }

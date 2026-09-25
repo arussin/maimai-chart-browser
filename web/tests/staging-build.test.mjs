@@ -51,6 +51,12 @@ test(
       assert.equal(receipt.production_manifest_sha256, before.manifest);
       assert.equal(receipt.staging_manifest_sha256, hash(raw));
       assert.deepEqual(Object.keys(manifest.entries).sort(), ['hosted', 'offline']);
+      assert.ok(manifest.preloads.length > 0);
+      assert.equal(new Set(manifest.preloads).size, manifest.preloads.length);
+      for (const path of manifest.preloads) {
+        assert.ok(manifest.assets[path]);
+        assert.ok(!Object.values(manifest.entries).includes(path));
+      }
       for (const [path, expected] of Object.entries(manifest.assets)) {
         const bytes = await readFile(join(output, path));
         assert.equal(hash(bytes), expected.sha256);

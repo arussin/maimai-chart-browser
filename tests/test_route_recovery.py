@@ -162,6 +162,17 @@ class RouteRecoveryTests(unittest.TestCase):
             "17ba679ab4a64abba44d44c06cc13783aaeeb86b1221ab3e04926809979a932c",
         )
 
+    def test_static_recovery_removes_application_module_preloads(self):
+        prepared = self.mutate_document(
+            b"</head>",
+            b'<link rel="modulepreload" data-maimai-modulepreload '
+            b'href="/browser/application-FIXTURE.js">'
+            b'<link rel="modulepreload" href="/browser/shared-FIXTURE.js"></head>',
+        )
+        recovered = self.prepare(prepared)
+        self.assertEqual(dict(recovered.assets), dict(self.prepare().assets))
+        self.assertTrue(all(b"modulepreload" not in body for body in recovered.assets.values()))
+
     def test_all_locales_are_finite_static_and_keep_public_presentation(self):
         result = self.prepare()
         self.assertEqual(result, self.prepare())

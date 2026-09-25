@@ -6,7 +6,11 @@ import re
 import unittest
 from copy import deepcopy
 
-from maimai_intelligence.browser_bundle import seal_browser_resources, validate_browser_resources
+from maimai_intelligence.browser_bundle import (
+    read_browser_assets,
+    seal_browser_resources,
+    validate_browser_resources,
+)
 from maimai_intelligence.serialization import canonical
 
 
@@ -58,6 +62,94 @@ class BrowserResourceTests(unittest.TestCase):
     def setUp(self):
         self.assets = source_assets()
         self.manifest = {"schema_version": "1.3.0", "default": "fictional", "releases": []}
+
+    def preload_assets(self):
+        assets = dict(self.assets)
+        graph = json.loads(assets["browser-assets.json"])
+        graph["preloads"] = ["browser/application-FIXTURE.js", "browser/shared-FIXTURE.js"]
+        for name in graph["preloads"]:
+            body = b"export const dependency = true;"
+            assets[name] = body
+            graph["assets"][name] = {
+                "sha256": hashlib.sha256(body).hexdigest(),
+                "bytes": len(body),
+            }
+        assets["browser-assets.json"] = canonical(graph)
+        return assets
+
+    def test_manifest_preloads_are_verified_members_without_entry_or_offline_execution(self):
+        assets = self.preload_assets()
+        graph, _ = read_browser_assets(lambda name, _limit: assets[name])
+        self.assertEqual(len(graph["preloads"]), 2)
+        legacy, _ = read_browser_assets(lambda name, _limit: self.assets[name])
+        self.assertNotIn("preloads", legacy)
+        for invalid in (
+            None,
+            {},
+            [None],
+            ["browser/missing.js"],
+            ["../outside.js"],
+            [graph["entries"]["hosted"]],
+            [graph["entries"]["offline"]],
+            graph["preloads"] * 2,
+        ):
+            changed = {**assets, "browser-assets.json": canonical({**graph, "preloads": invalid})}
+            with self.subTest(invalid=invalid), self.assertRaises(ValueError):
+                read_browser_assets(lambda name, _limit, changed=changed: changed[name])
+        changed = {**assets, graph["preloads"][0]: b"tampered"}
+        with self.assertRaisesRegex(ValueError, "integrity"):
+            read_browser_assets(lambda name, _limit: changed[name])
+
+    def test_hosted_documents_preload_the_graph_once_and_leave_shell_and_body_unchanged(self):
+        assets = self.preload_assets()
+        for locale in ("en", "ja", "ko", "zh-hans"):
+            for kind in ("songs", "versions"):
+                assets[f"{locale}/{kind}/fixture/index.html"] = assets[
+                    "en/songs/fixture/index.html"
+                ]
+        sealed = seal_browser_resources(assets, self.manifest)
+        self.assertEqual(sealed, seal_browser_resources(sealed, self.manifest))
+        graph = json.loads(assets["browser-assets.json"])
+        historical = {key: value for key, value in graph.items() if key != "preloads"}
+        no_hints = seal_browser_resources(
+            {**assets, "browser-assets.json": canonical(historical)}, self.manifest
+        )
+        for name in (
+            "index.html",
+            *(
+                f"{locale}/{kind}/fixture/index.html"
+                for locale in ("en", "ja", "ko", "zh-hans")
+                for kind in ("songs", "versions")
+            ),
+        ):
+            html = sealed[name].decode()
+            prefix = "" if name == "index.html" else "/"
+            links = re.findall(
+                r'<link rel="modulepreload" data-maimai-modulepreload href="([^"]+)">', html
+            )
+            self.assertEqual(links, [prefix + path for path in graph["preloads"]])
+            self.assertEqual(html.count('type="module" data-maimai-browser'), 1)
+            self.assertLess(html.index('rel="modulepreload"'), html.index('type="module"'))
+            self.assertEqual(
+                html.split("<body>", 1)[1], no_hints[name].decode().split("<body>", 1)[1]
+            )
+        self.assertNotIn(b"modulepreload", sealed["browser-shell.html"])
+        self.assertNotIn(b"modulepreload", sealed["support.html"])
+        self.assertNotIn(
+            b"modulepreload", seal_browser_resources(self.assets, self.manifest)["index.html"]
+        )
+        replaced = seal_browser_resources(
+            {
+                **sealed,
+                "browser-assets.json": canonical({**graph, "preloads": graph["preloads"][:1]}),
+            },
+            self.manifest,
+        )
+        self.assertEqual(replaced["index.html"].count(b"data-maimai-modulepreload"), 1)
+        restored = seal_browser_resources(
+            {**sealed, "browser-assets.json": canonical(historical)}, self.manifest
+        )
+        self.assertEqual(restored["index.html"], no_hints["index.html"])
 
     def test_sealing_is_deterministic_and_preserves_logical_compatibility_inputs(self):
         original = deepcopy(self.assets)

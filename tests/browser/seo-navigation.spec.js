@@ -20,6 +20,17 @@ async function ledger(request){return (await request.get('/registry/permalinks.j
 async function ready(page){await expect.poll(()=>page.evaluate(()=>!!window.maimaiBrowserState)).toBe(true);}
 const songPath=(locale,slug)=>'/'+locale+'/songs/'+encodeURIComponent(slug)+'/';
 
+test('hosted module preloads fetch each dependency once and never initialize a second application',async({page,request})=>{
+  const graph=await (await request.get('/registry/browser-assets.json')).json(),requests=[];
+  page.on('request',request=>{if(new URL(request.url()).pathname.startsWith('/browser/'))requests.push(new URL(request.url()).pathname);});
+  await page.goto('/');await ready(page);
+  expect(await page.locator('link[rel=modulepreload][data-maimai-modulepreload]').evaluateAll(nodes=>nodes.map(node=>node.getAttribute('href')))).toEqual(graph.preloads);
+  for(const path of [graph.entries.hosted,...graph.preloads])expect(requests.filter(value=>value==='/'+path),path).toHaveLength(1);
+  await expect(page.locator('script[type=module][data-maimai-browser]')).toHaveCount(1);
+  await page.evaluate(async()=>{await import(document.querySelector('script[data-maimai-browser]').src);});
+  expect(await page.evaluate(()=>window.navigationEvents)).toEqual([{page:'charts'}]);
+});
+
 test('JavaScript-disabled public song pages retain four languages, canonical identity and crawlable charts',async({browser,request,baseURL})=>{
  const map=await ledger(request),slug=Object.values(map.songs).find(value=>/[^\x00-\x7f]/.test(value));
  const context=await browser.newContext({javaScriptEnabled:false});const document=await context.newPage(),requests=[];

@@ -115,10 +115,14 @@ def validate_browser_resources(value: Any) -> BrowserResources:
 
 
 def _bind_resource_document(
-    raw: bytes, references: dict[str, BrowserResourceReference], resources: BrowserResources | None
+    raw: bytes,
+    references: dict[str, BrowserResourceReference],
+    resources: BrowserResources | None,
+    preloads: tuple[str, ...] = (),
 ) -> bytes:
     """Bind only declared resource attributes in maintained generated documents."""
     html = raw.decode("utf-8")
+    html = re.sub(r'<link rel="modulepreload" data-maimai-modulepreload href="[^"<>]+">', "", html)
     for name, reference in references.items():
         pattern = r'((?<![\w-])(?:src|href)=")(/?)' + re.escape(name) + r'(?:\?v=[^"<>]*)?"'
         html = re.sub(
@@ -141,6 +145,7 @@ def _bind_resource_document(
     html = re.sub(r"<link\b[^<>]*>", stylesheet, html)
     entry = re.compile(r'<script type="module" data-maimai-browser src="(/?)[^"<>]+"></script>')
     if resources is not None and "data-maimai-browser" in html:
+        activation = entry.search(html)
         html = re.sub(
             r'<script type="application/json" id="browser-resources">[^<]*</script>', "", html
         )
@@ -160,6 +165,21 @@ def _bind_resource_document(
             raise ValueError("Expected one maintained browser entry")
         if html.count('id="browser-resources"') != 1:
             raise ValueError("Expected one browser resource descriptor")
+        if preloads:
+            if activation is None or html.count("</head>") != 1:
+                raise ValueError("Expected one browser document head")
+            hints = "".join(
+                '<link rel="modulepreload" data-maimai-modulepreload href="'
+                + activation[1]
+                + path
+                + '">'
+                for path in preloads
+            )
+            insertion = min(
+                html.index("</head>"),
+                html.index('<script type="application/json" id="browser-resources">'),
+            )
+            html = html[:insertion] + hints + html[insertion:]
     return html.encode("utf-8")
 
 
@@ -177,6 +197,7 @@ def seal_browser_resources(assets: dict[str, bytes], manifest: dict[str, Any]) -
     graph, _ = read_browser_assets(lambda name, _limit: result[name])
     entry_path = graph["entries"]["hosted"]
     entry = BrowserResourceReference(entry_path, **graph["assets"][entry_path])
+    preloads = tuple(graph.get("preloads", ()))
 
     def retain(raw: bytes, extension: str) -> BrowserResourceReference:
         sha = hashlib.sha256(raw).hexdigest()
@@ -214,7 +235,7 @@ def seal_browser_resources(assets: dict[str, bytes], manifest: dict[str, Any]) -
     validate_browser_resources(resources.record())
     for name, raw in list(result.items()):
         if name.endswith(".html") and not name.startswith("browser-resources/"):
-            result[name] = _bind_resource_document(raw, references, resources)
+            result[name] = _bind_resource_document(raw, references, resources, preloads)
     result[RESOURCE_FILE] = canonical(resources.record()) + b"\n"
     return result
 
@@ -240,7 +261,11 @@ def read_browser_assets(
     manifest = json.loads(raw)
     if (
         not isinstance(manifest, dict)
-        or set(manifest) != {"version", "tool", "entries", "assets", "replaces"}
+        or set(manifest)
+        not in (
+            {"version", "tool", "entries", "assets", "replaces"},
+            {"version", "tool", "entries", "assets", "replaces", "preloads"},
+        )
         or manifest["version"] != 1
         or not isinstance(manifest["tool"], str)
         or not isinstance(manifest["entries"], dict)
@@ -256,6 +281,18 @@ def read_browser_assets(
         )
     ):
         raise ValueError("Invalid generated browser dependency manifest")
+    preloads = manifest.get("preloads", [])
+    if (
+        not isinstance(preloads, list)
+        or not all(
+            isinstance(name, str)
+            and name in manifest["assets"]
+            and name not in manifest["entries"].values()
+            for name in preloads
+        )
+        or len(set(preloads)) != len(preloads)
+    ):
+        raise ValueError("Invalid generated browser module preloads")
     assets = {}
     for name, record in manifest["assets"].items():
         if (

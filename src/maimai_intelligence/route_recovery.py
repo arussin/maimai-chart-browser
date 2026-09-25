@@ -183,6 +183,7 @@ class _StaticDocument(HTMLParser):
         "type",
         "hidden",
         "data-maimai-browser",
+        "data-maimai-modulepreload",
         "data-seo-page",
         "data-locale",
         "data-song-page",
@@ -375,7 +376,10 @@ class _StaticDocument(HTMLParser):
         elif tag == "meta":
             suppressed = self._metadata(attrs) or suppressed
         elif tag == "link":
-            attrs = self._link(attrs)
+            if attrs.get("rel") == "modulepreload":
+                suppressed = True
+            else:
+                attrs = self._link(attrs)
         elif tag == "a":
             output_tag, attrs = self._anchor(attrs)
         else:

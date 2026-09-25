@@ -3,6 +3,7 @@ import { readFile, writeFile, mkdir, readdir, unlink, realpath } from 'node:fs/p
 import { resolve, dirname, relative, basename, isAbsolute } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
+import { hostedPreloads } from './build-graph.mjs';
 const base = dirname(fileURLToPath(import.meta.url)),
   root = resolve(base, '..'),
   productionAssets = resolve(root, 'src/maimai_intelligence/assets');
@@ -152,6 +153,11 @@ for (const [kind, result, source] of [
   if (entries.length !== 1) throw Error('Expected exactly one generated browser entry');
   manifest.entries[kind] = relative(assets, resolve(entries[0][0])).replaceAll('\\', '/');
 }
+manifest.preloads = hostedPreloads(
+  hosted.metafile,
+  resolve(assets, manifest.entries.hosted),
+  assets,
+);
 for (const file of [...hosted.outputFiles, ...offline.outputFiles]) {
   const path = relative(assets, file.path).replaceAll('\\', '/');
   manifest.assets[path] = digest(file.contents);
