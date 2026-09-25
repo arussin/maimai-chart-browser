@@ -64,3 +64,20 @@ test('scanner preserves missing-prose rejection in generated modules and UI slot
   fs.writeFileSync(path.join(fixture, 'chart-visuals.js'), `const drawing = ${JSON.stringify(caption.replace('one continuous path', 'Untranslated new caption') + movement)};`);
   assert.match(run().stderr, /Untranslated new caption/);
 });
+
+test('long malformed numeric path rejects without regex backtracking', () => {
+  const helper = new URL('./localization_literals.mjs', import.meta.url).href;
+  const source = `import { isSvgPath } from ${JSON.stringify(helper)};
+    const coordinates = '1'.repeat(4096);
+    console.log(JSON.stringify([
+      isSvgPath('M' + coordinates + ' invalid'),
+      isSvgPath('M' + coordinates + ' 2Z')
+    ]));`;
+  // Keep a regression in the recognizer from hanging the test runner itself.
+  const result = spawnSync(process.execPath, ['--input-type=module', '-e', source], {
+    encoding: 'utf8', timeout: 5000,
+  });
+  assert.equal(result.error, undefined, result.error?.message);
+  assert.equal(result.status, 0, result.stderr);
+  assert.deepEqual(JSON.parse(result.stdout), [false, true]);
+});

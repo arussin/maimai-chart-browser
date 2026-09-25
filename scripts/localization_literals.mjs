@@ -1,7 +1,17 @@
 // Minification can fold path templates and concatenate already classified markup.
 // Keep protocol recognition separate from the exact prose classification catalog.
+const pathToken = /[MmLlHhVvCcSsQqTtAaZz,\s]+|[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?/y;
 export function isSvgPath(value) {
-  return /^[Mm]\s*[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?(?:[MmLlHhVvCcSsQqTtAaZz,\s]|[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?)*$/.test(value);
+  if (!/^[Mm]\s*[+-]?(?:\d+(?:\.\d*)?|\.\d+)/.test(value)) return false;
+  // Advance one complete token at a time. A repeated numeric regex can explore
+  // exponentially many splits before rejecting a malformed trailing word.
+  let offset = 0;
+  while (offset < value.length) {
+    pathToken.lastIndex = offset;
+    if (!pathToken.test(value)) return false;
+    offset = pathToken.lastIndex;
+  }
+  return true;
 }
 
 export function createLiteralClassifier(known) {
