@@ -31,8 +31,12 @@ test('hosted module preloads fetch each dependency once and never initialize a s
   expect(await page.evaluate(()=>window.navigationEvents)).toEqual([{page:'charts'}]);
 });
 
-test('direct song keeps the broad catalog lazy while configuration is pending',async({page,request})=>{
-  const map=await ledger(request),slug=Object.values(map.songs)[0];
+for(const [title,slugPrefix,hasFlow]of [
+  ['Fictional study 4','fictional-study-4-',true],
+  ['International fixture song','international-fixture-song-',false],
+])test('direct song keeps the broad catalog lazy while configuration is pending ('+title+')',async({page,request})=>{
+  const map=await ledger(request),slugs=Object.values(map.songs).filter(value=>value.startsWith(slugPrefix));
+  expect(slugs).toHaveLength(1);const slug=slugs[0];
   const configuration=await browserResourceURL('configuration'),catalog=await browserResourceURL('catalog');
   let releaseConfiguration,configurationRequested,requests=0;
   const held=new Promise(resolve=>releaseConfiguration=resolve),requested=new Promise(resolve=>configurationRequested=resolve);
@@ -45,12 +49,16 @@ test('direct song keeps the broad catalog lazy while configuration is pending',a
     expect(requests).toBe(0);
   }finally{releaseConfiguration();await response;}
   await expect(page.locator('#seo-route-view .song-workspace')).toBeVisible();expect(requests).toBe(0);
-  await page.locator('#seo-route-view .song-row .chart-row').first().click();
-  await page.locator('#seo-route-view .chart-detail-actions button').first().click();
+  const row=page.locator('#seo-route-view .song-row').first(),chartId=await row.getAttribute('data-chart-id');
+  expect(chartId).toBeTruthy();await row.locator('.chart-row').click();
+  await row.locator('.chart-detail-actions button').first().click();
   await expect(page.locator('#compare')).toBeVisible();expect(requests).toBe(1);
-  await expect(page.locator('#compare-left-search')).not.toHaveValue('');
-  // Complete the selected chart's lazy detail rendering before fixture teardown.
-  await expect(page.locator('#compare .chosen-chart .chart-flow svg')).toBeVisible();
+  await expect(page.locator('#compare-left-search')).toHaveValue(title);
+  await expect.poll(()=>page.evaluate(()=>window.maimaiBrowserState?.capture().comparison.left)).toBe(chartId);
+  // Settle the exact selected chart, including a valid absence of prepared analysis.
+  const flow=page.locator('#comparison-pickers .chart-picker').first().locator('.chosen-chart .chart-flow');
+  if(hasFlow)await expect(flow.locator('svg')).toBeVisible();
+  else {await expect(flow.getByText('Flow unavailable',{exact:true})).toBeVisible();await expect(flow.locator('svg')).toHaveCount(0);}
 });
 
 test('JavaScript-disabled public song pages retain four languages, canonical identity and crawlable charts',async({browser,request,baseURL})=>{
