@@ -1,5 +1,6 @@
 import hashlib
 import json
+import os
 import re
 import unittest
 from pathlib import Path
@@ -19,6 +20,40 @@ from tests.lab_fixture import write_package
 
 
 class MaishiftPilotArtifactTests(unittest.TestCase):
+    def _assert_alias_output_builds(self, output):
+        def fictional_package(_registry, _retained, destination):
+            return write_package(destination)
+
+        with patch("scripts.build_maishift_pilot.build_registry_package", fictional_package):
+            build_browser(output, {})
+        browser = output.resolve() / "pilot/maishift/browser"
+        self.assertTrue((browser / "manifest.json").is_file())
+        self.assertFalse((browser / "integration").exists())
+
+    def test_browser_accepts_unresolved_output_root(self):
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            alias = root / ".." / root.name
+            self.assertNotEqual(alias, root.resolve())
+            self.assertEqual(alias.resolve(), root.resolve())
+            self._assert_alias_output_builds(alias)
+
+    @unittest.skipUnless(os.name == "nt", "Windows short path aliases")
+    def test_browser_accepts_native_windows_short_output_root(self):
+        import ctypes
+
+        with TemporaryDirectory(prefix="maishift-pilot-path-test-") as directory:
+            root = Path(directory)
+            buffer = ctypes.create_unicode_buffer(32768)
+            size = ctypes.windll.kernel32.GetShortPathNameW(str(root), buffer, len(buffer))
+            self.assertGreater(size, 0)
+            self.assertLess(size, len(buffer))
+            alias = Path(buffer.value)
+            if alias == alias.resolve():
+                self.skipTest("Filesystem did not expose a distinct short path alias")
+            self.assertEqual(alias.resolve(), root.resolve())
+            self._assert_alias_output_builds(alias)
+
     def test_browser_binds_final_pilot_catalog_after_originals_are_removed(self):
         # Exercise real pilot assembly with a small fictional research package.
         def fictional_package(_registry, _retained, destination):

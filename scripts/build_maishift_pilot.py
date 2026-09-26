@@ -123,6 +123,7 @@ def prepare_browser_catalogs(destination):
 
 def build_browser(output, registry, retained_package=None):
     """Compose the real browser with opt-in isolated storage, without telemetry."""
+    output = Path(output).resolve()
     assets = files("maimai_intelligence.assets")
     destination = output / PREFIX / "browser"
     with TemporaryDirectory(prefix="browser-package-", dir=output) as temporary:
