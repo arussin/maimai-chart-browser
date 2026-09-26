@@ -4,7 +4,7 @@ import {readFile,writeFile,mkdir} from 'node:fs/promises';
 import {resolve,extname,sep} from 'node:path';
 import {createHash} from 'node:crypto';
 import {createRequire} from 'node:module';
-import {spawn} from 'node:child_process';
+import {spawn,execFileSync} from 'node:child_process';
 import {startIsolationProxy} from '../tests/browser/isolation.mjs';
 const argv=process.argv.slice(2),arg=key=>argv[argv.indexOf('--'+key)+1];
 const root=resolve(arg('public')),runtime=resolve(arg('runtime')),output=resolve(arg('output'));
@@ -53,14 +53,43 @@ try{
 
  await context.close();
  // No DevTools connection: attached automation itself disables prerender in this engine.
- const eventStart=events.length,profile=resolve(output,'prerender-profile');await mkdir(profile);
- const native=spawn(chromium.executablePath(),['--headless=new','--no-first-run','--no-default-browser-check','--disable-background-networking','--disable-component-update','--disable-sync','--disable-default-apps','--proxy-server='+proxy.server,'--proxy-bypass-list=<-loopback>','--user-data-dir='+profile,origin+'/__seed_auto'],{stdio:'ignore',windowsHide:true});
- let nativeError;native.on('error',error=>{nativeError=error.message;});
+ // Ubuntu restricts namespaces for downloaded binaries. CI already installs system Chrome,
+ // whose existing sandbox profile permits native launch; never disable that sandbox here.
+ const nativeExecutable=process.platform==='linux'?'/opt/google/chrome/chrome':chromium.executablePath();
+ const nativeProcess={executable:nativeExecutable,stderr:'',stderr_truncated:false};
+ receipt.prerender={status:'not-exercised',method:'Fresh headless Chromium-engine process without DevTools; Linux uses already-installed system Chrome with its default sandbox, other platforms use bundled Chromium',native_process:nativeProcess};
+ nativeProcess.version=process.platform==='linux'
+  ?execFileSync(nativeExecutable,['--version'],{encoding:'utf8',timeout:5000,maxBuffer:16384}).trim()
+  :browser.version();
+ if(!nativeProcess.version)throw Error('Native prerender browser did not report a version');
+ const eventStart=events.length,requestStart=requests.length,profile=resolve(output,'prerender-profile');await mkdir(profile);
+ const nativeArgs=['--headless=new','--no-first-run','--no-default-browser-check','--disable-background-networking','--disable-component-update','--disable-sync','--disable-default-apps','--proxy-server='+proxy.server,'--proxy-bypass-list=<-loopback>','--user-data-dir='+profile,origin+'/__seed_auto'];
+ nativeProcess.arguments=nativeArgs;
+ const native=spawn(nativeExecutable,nativeArgs,{stdio:['ignore','ignore','pipe'],windowsHide:true});
+ let nativeError,nativeExit;
+ native.on('error',error=>{nativeError=error.message;nativeProcess.spawn_error=nativeError;});
+ native.stderr.on('data',chunk=>{const text=chunk.toString(),room=16384-nativeProcess.stderr.length;nativeProcess.stderr+=text.slice(0,room);if(text.length>room)nativeProcess.stderr_truncated=true;});
+ const closed=new Promise(resolve=>native.once('close',(code,signal)=>{nativeExit={code,signal};nativeProcess.exit=nativeExit;resolve();}));
+ const waitForClose=async milliseconds=>{let timer;try{return await Promise.race([closed.then(()=>true),new Promise(resolve=>{timer=setTimeout(()=>resolve(false),milliseconds);})]);}finally{clearTimeout(timer);}};
+ nativeProcess.pid=native.pid;
  let activated;
- try {for(let attempt=0;attempt<150;attempt++){activated=events.slice(eventStart).find(e=>e.kind==='activation'&&e.changes===1&&e.initialPrerendering);if(activated||nativeError)break;await new Promise(r=>setTimeout(r,100));}}
- finally {native.kill();}
+ try {for(let attempt=0;attempt<150;attempt++){activated=events.slice(eventStart).find(e=>e.kind==='activation'&&e.changes===1&&e.initialPrerendering);if(activated||nativeError||nativeExit)break;await new Promise(r=>setTimeout(r,100));}}
+ finally {
+  if(!nativeExit&&!nativeError){nativeProcess.termination=activated?'activation_observed':'observation_timeout';native.kill();}
+  if(!await waitForClose(3000)){
+   nativeProcess.termination_timeout=true;native.kill('SIGKILL');
+   if(!await waitForClose(3000)){
+    nativeProcess.cleanup='unconfirmed';native.stderr.destroy();native.unref();
+    throw Error('Native prerender browser termination is unconfirmed for PID '+native.pid);
+   }
+   nativeProcess.cleanup='forced_after_timeout';
+   throw Error('Native prerender browser required forced termination after the shutdown deadline');
+  }
+  nativeProcess.cleanup='closed';
+ }
  const prerendered=events.slice(eventStart).find(e=>e.kind==='init'&&e.initialPrerendering),real=!!prerendered&&activated?.id===prerendered.id&&activated.activationStart>0;
- receipt.prerender={status:real?'passed':'not-exercised',method:'Fresh full Chromium headless process without DevTools attached; native speculation rules and document signals only',nativeError,prerendered,activated,prerender_requests:requests.filter(r=>r.purpose?.includes('prerender'))};
+ Object.assign(receipt.prerender,{status:real?'passed':'not-exercised',nativeError,prerendered,activated,native_requests:requests.slice(requestStart),prerender_requests:requests.slice(requestStart).filter(r=>r.purpose?.includes('prerender'))});
+ if(!real)throw Error(nativeError?'Native prerender browser failed to launch: '+nativeError:nativeProcess.termination==='observation_timeout'?'Native browser did not produce a verified prerender activation before the deadline':'Native browser exited before verified prerender activation; inspect native_process exit and stderr');
  if(real&&activated.activations.length!==1)throw Error('Prerender activation did not activate exactly once');
  receipt.passed=restored&&real&&!errors.length&&!applicationOutbound.length;
 } catch(error){receipt.passed=false;receipt.failure=error.message;}

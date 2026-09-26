@@ -1,6 +1,8 @@
 import {mockBrowserJSONResource} from './browser-configuration-fixture.mjs';
 import {test,expect} from './fixtures.js';
 import {readFile} from 'node:fs/promises';
+import {resolve} from 'node:path';
+import {fileURLToPath,pathToFileURL} from 'node:url';
 import {gzipSync} from 'node:zlib';
 import {createHash} from 'node:crypto';
 
@@ -126,7 +128,7 @@ test('capacity startup fetches a smaller index and only requests visible chart e
 
 
 test('stored PB gains a policy-exact catalog mapping without reimport or rewriting private history',async({page})=>{
-  const fixture=new URL('../../output/browser-tests/registry/',import.meta.url);
+  const fixture=pathToFileURL(resolve(process.env.MAIMAI_BROWSER_OUTPUT||fileURLToPath(new URL('../../output/browser-tests/',import.meta.url)),'registry')+'/');
   const manifest=JSON.parse(await readFile(new URL('manifest.json',fixture),'utf8'));
   const entry=manifest.releases.find(item=>item.version===manifest.default);
   const accepted=JSON.parse(Buffer.concat(await Promise.all(entry.parts.map(ref=>readFile(new URL(ref.path,fixture))))));

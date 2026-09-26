@@ -6,12 +6,56 @@ from pathlib import Path
 from tempfile import TemporaryDirectory, gettempdir
 from unittest.mock import patch
 
+from maimai_intelligence.browser_bundle import validate_browser_resources
 from maimai_intelligence.localization import localization_script
 from maimai_intelligence.public_release import MAX_PUBLIC_FILE_BYTES, MAX_PUBLIC_FILES
-from scripts.build_maishift_pilot import build, pilot_headers, prepare_browser_catalogs
+from scripts.build_maishift_pilot import (
+    build,
+    build_browser,
+    pilot_headers,
+    prepare_browser_catalogs,
+)
+from tests.lab_fixture import write_package
 
 
 class MaishiftPilotArtifactTests(unittest.TestCase):
+    def test_browser_binds_final_pilot_catalog_after_originals_are_removed(self):
+        # Exercise real pilot assembly with a small fictional research package.
+        def fictional_package(_registry, _retained, destination):
+            return write_package(destination)
+
+        with TemporaryDirectory() as directory:
+            output = Path(directory)
+            with patch("scripts.build_maishift_pilot.build_registry_package", fictional_package):
+                build_browser(output, {})
+            browser = output / "pilot/maishift/browser"
+            html = (browser / "index.html").read_text("utf-8")
+            descriptor = re.search(
+                r'<script type="application/json" id="browser-resources">([^<]+)</script>',
+                html,
+            )
+            self.assertIsNotNone(descriptor)
+            resources = validate_browser_resources(json.loads(descriptor[1])).record()
+            for role, ref in resources.items():
+                if role == "version":
+                    continue
+                if ref is None:
+                    continue
+                raw = (browser / ref["path"]).read_bytes()
+                self.assertEqual(len(raw), ref["bytes"])
+                self.assertEqual(hashlib.sha256(raw).hexdigest(), ref["sha256"])
+            bound = json.loads((browser / resources["catalog"]["path"]).read_bytes())
+            manifest = json.loads((browser / "manifest.json").read_bytes())
+            self.assertEqual(bound, manifest)
+            self.assertEqual(
+                json.loads((browser / "browser-resources.json").read_bytes()), resources
+            )
+            for entry in bound["releases"]:
+                self.assertNotIn("integration", entry)
+                self.assertFalse((browser / entry["path"]).exists())
+                self.assertTrue((browser / entry["startup"]["path"]).is_file())
+                self.assertTrue(all((browser / ref["path"]).is_file() for ref in entry["parts"]))
+
     def test_rich_inventory_keeps_progressive_startup_within_hosting_budget(self):
         # Scaled production shape: audit fields must not force the loader back
         # to a full catalog download when the browsing projection fits.
