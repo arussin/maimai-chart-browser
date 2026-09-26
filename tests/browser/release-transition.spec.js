@@ -442,11 +442,11 @@ async function holdRouteFetch(page, origin, path) {
   return {arrival, resume, settled};
 }
 
-test('recovery during a direct song self-fetch performs one full static navigation', async ({page, transition}) => {
+for (const query of ['', '?ignored=fixture']) test('recovery during a direct song self-fetch performs one full static navigation '+query, async ({page, transition}) => {
   const path = publicRoute(transition), hold = await holdRouteFetch(page, transition.origin, path);
   transition.switchTo('candidate');
   try {
-    await page.goto(transition.origin + path + '?ignored=fixture#chart-fixture', {waitUntil: 'domcontentloaded'});
+    await page.goto(transition.origin + path + query + '#chart-fixture', {waitUntil: 'domcontentloaded'});
     await hold.arrival;
     transition.switchTo('rollback');
     hold.resume();
@@ -496,13 +496,13 @@ for (const cancel of [false, true]) {
 test('Back restoration into recovery reloads the matching static song once', async ({page, transition}) => {
   transition.switchTo('candidate');
   await boot(page, transition, 'modular');
-  const link = await songLink(page), path = new URL(await link.getAttribute('href'), transition.origin).pathname;
+  const link = await songLink(page), target = new URL(await link.getAttribute('href'), transition.origin), path = target.pathname;
   await link.click();
   await expect(page.locator('#seo-route-view .song-workspace')).toBeVisible();
   // Tab choices replace their entry. A deliberate language change pushes a
   // second song route, so Back actually restores the first song's entry.
   await page.locator('.language-controls [data-language="ja"]:visible').first().click();
-  await expect(page).toHaveURL(transition.origin + path.replace('/en/', '/ja/'));
+  await expect(page).toHaveURL(transition.origin + path.replace('/en/', '/ja/') + target.hash);
   const hold = await holdRouteFetch(page, transition.origin, path);
   try {
     await page.goBack();
@@ -510,6 +510,7 @@ test('Back restoration into recovery reloads the matching static song once', asy
     transition.switchTo('rollback');
     hold.resume();
     await staticRecovery(page, path);
+    expect(new URL(page.url()).hash).toBe(target.hash);
     expect(transition.requests.filter(row => row.url === path && row.servedBy === 'rollback')).toHaveLength(2);
     expect(transition.errors).toEqual([]);
   } finally { hold.resume(); }
@@ -522,6 +523,7 @@ test('an already-open song can finish comparison after recovery using its immuta
   try {
     await page.goto(transition.origin + path);
     await expect(page.locator('#seo-route-view .song-workspace')).toBeVisible();
+    await page.locator('#seo-route-view .song-row .chart-row').first().click();
     await page.locator('#seo-route-view .chart-detail-actions button').first().click();
     await hold.arrived;
     transition.switchTo('rollback');

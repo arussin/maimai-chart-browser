@@ -31,6 +31,7 @@ export class SongWorkspace<C extends ChartSummary> {
     private readonly model: (international: boolean) => SongWorkspaceModel<C>,
     private readonly actions: SongWorkspaceActions,
     international: boolean,
+    initialChart?: string,
   ) {
     this.international = international;
     this.rows = root.ownerDocument.createElement('div');
@@ -39,8 +40,12 @@ export class SongWorkspace<C extends ChartSummary> {
     if (!fallback) throw Error('Missing public chart fallback');
     fallback.after(this.rows);
     fallback.hidden = true;
-    const first = model(international).charts[0];
-    if (first) this.expanded.add(first.chart_id);
+    // Seed once: storage and region redraws must preserve later user choices.
+    if (
+      initialChart &&
+      model(international).charts.some((chart) => chart.chart_id === initialChart)
+    )
+      this.expanded.add(initialChart);
     this.render();
     this.unsubscribe = actions.changed(() => this.render());
   }

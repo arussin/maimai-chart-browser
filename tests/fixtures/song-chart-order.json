@@ -1,0 +1,91 @@
+{
+  "charts": [
+    {
+      "chart_id": "dx-master-z",
+      "format": "DX",
+      "difficulty": "MASTER"
+    },
+    {
+      "chart_id": "std-remaster",
+      "format": "STD",
+      "difficulty": "RE:MASTER"
+    },
+    {
+      "chart_id": "dx-basic",
+      "format": "DX",
+      "difficulty": "BASIC"
+    },
+    {
+      "chart_id": "dx-unknown-z",
+      "format": "DX",
+      "difficulty": "FUTURE-A"
+    },
+    {
+      "chart_id": "dx-advanced",
+      "format": "DX",
+      "difficulty": "ADVANCED"
+    },
+    {
+      "chart_id": "std-basic",
+      "format": "STD",
+      "difficulty": "BASIC"
+    },
+    {
+      "chart_id": "dx-expert",
+      "format": "DX",
+      "difficulty": "EXPERT"
+    },
+    {
+      "chart_id": "std-expert",
+      "format": "STD",
+      "difficulty": "EXPERT"
+    },
+    {
+      "chart_id": "dx-remaster",
+      "format": "DX",
+      "difficulty": "RE:MASTER"
+    },
+    {
+      "chart_id": "std-advanced",
+      "format": "STD",
+      "difficulty": "ADVANCED"
+    },
+    {
+      "chart_id": "dx-master-a",
+      "format": "DX",
+      "difficulty": "MASTER",
+      "variant_id": "special"
+    },
+    {
+      "chart_id": "dx-unknown-a",
+      "format": "DX",
+      "difficulty": "FUTURE-Z"
+    },
+    {
+      "chart_id": "std-master",
+      "format": "STD",
+      "difficulty": "MASTER"
+    },
+    {
+      "chart_id": "dx-master-m",
+      "format": "DX",
+      "difficulty": "master"
+    }
+  ],
+  "expected_ids": [
+    "dx-basic",
+    "dx-advanced",
+    "dx-expert",
+    "dx-master-a",
+    "dx-master-m",
+    "dx-master-z",
+    "dx-remaster",
+    "dx-unknown-a",
+    "dx-unknown-z",
+    "std-basic",
+    "std-advanced",
+    "std-expert",
+    "std-master",
+    "std-remaster"
+  ]
+}

@@ -45,8 +45,12 @@ test('direct song keeps the broad catalog lazy while configuration is pending',a
     expect(requests).toBe(0);
   }finally{releaseConfiguration();await response;}
   await expect(page.locator('#seo-route-view .song-workspace')).toBeVisible();expect(requests).toBe(0);
+  await page.locator('#seo-route-view .song-row .chart-row').first().click();
   await page.locator('#seo-route-view .chart-detail-actions button').first().click();
   await expect(page.locator('#compare')).toBeVisible();expect(requests).toBe(1);
+  await expect(page.locator('#compare-left-search')).not.toHaveValue('');
+  // Complete the selected chart's lazy detail rendering before fixture teardown.
+  await expect(page.locator('#compare .chosen-chart .chart-flow svg')).toBeVisible();
 });
 
 test('JavaScript-disabled public song pages retain four languages, canonical identity and crawlable charts',async({browser,request,baseURL})=>{
@@ -129,15 +133,29 @@ test('browser-origin version navigation enhances immediately and restores the pr
 });
 
 
-test('failed history-route fetch falls back to the matching full static document',async({page})=>{
+for(const recovery of [false,true])test('history-route '+(recovery?'verified recovery':'failed fetch')+' reloads the matching full static document once',async({page})=>{
   await page.goto('/');await ready(page);await page.locator('#search').fill('ソテリア');
   const row=page.locator('#songs .song-row').first();await row.locator('.chart-row').click();
   const link=row.locator('a[data-song-page]');await expect(link).toBeVisible();await link.click();
-  await expect(page.locator('#seo-route-view')).toBeVisible();const songURL=page.url();
+  await expect(page.locator('#seo-route-view')).toBeVisible();const songURL=page.url(),path=new URL(songURL).pathname;
+  expect(new URL(songURL).hash).toMatch(/^#chart-/);
   await page.goBack();await expect(page.locator('#songs')).toBeVisible();
-  await page.route('**/en/songs/**',route=>route.request().resourceType()==='fetch'?route.fulfill({status:503,body:'Unavailable'}):route.fallback());
-  await page.goForward();await expect(page.locator('main[data-seo-page=song]')).toBeVisible();
-  await expect(page).toHaveURL(songURL);await ready(page);await expect(page.locator('body>main[data-seo-page=song]')).toBeVisible();
+  const documents=[];
+  page.on('request',request=>{if(request.resourceType()==='document'&&new URL(request.url()).pathname===path)documents.push(request.url());});
+  await page.route('**/en/songs/**',route=>{
+    if(recovery)return route.fulfill({contentType:'text/html',body:`<!doctype html><html><head><meta name="maimai-route-recovery" content="static-v1" data-path="${path}"></head><body><main data-seo-page="song">Fictional static recovery</main></body></html>`});
+    return route.request().resourceType()==='fetch'?route.fulfill({status:503,body:'Unavailable'}):route.fallback();
+  });
+  await page.goForward();await expect(page.locator('body>main[data-seo-page=song]')).toBeVisible();
+  const expected=new URL(songURL);
+  if(recovery)await expect(page.locator('script')).toHaveCount(0);
+  else {
+    await ready(page);await expect(page.locator('[data-diagnostic="catalog_unavailable"]')).toBeVisible();
+    // The existing shell initializes its hidden catalog tab after a full document load.
+    expected.searchParams.set('view','catalog');
+  }
+  await expect(page).toHaveURL(expected.href);
+  expect(documents).toHaveLength(1);
 });
 
 

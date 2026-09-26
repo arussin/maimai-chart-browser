@@ -20,6 +20,8 @@ from urllib.parse import quote, unquote, urlencode
 from .public_routes import LOCALES, route
 from .route_model import valid_permalink_slug
 from .snapshots import canonical
+from .song_catalog import SONG_DIFFICULTIES as ORDER
+from .song_catalog import song_chart_order
 
 ORIGIN = "https://maimai.party"
 WORDS = {
@@ -145,7 +147,6 @@ DIFFICULTIES = {
     "ko": ("BASIC", "ADVANCED", "EXPERT", "MASTER", "Re:MASTER"),
     "zh-hans": ("初级", "高级", "专家", "大师", "宗师"),
 }
-ORDER = ("BASIC", "ADVANCED", "EXPERT", "MASTER", "RE:MASTER")
 
 TITLE_LABELS = {
     "en": ("Untitled (intentional)", "Title unavailable"),
@@ -385,14 +386,7 @@ def prepare_seo(
     for locale in LOCALES:
         words = dict(zip(KEYS, WORDS[locale], strict=True))
         for sid, charts in sorted(songs.items()):
-            charts = sorted(
-                charts,
-                key=lambda c: (
-                    c.get("format", ""),
-                    ORDER.index(c["difficulty"]) if c.get("difficulty") in ORDER else 99,
-                    c["chart_id"],
-                ),
-            )
+            charts = sorted(charts, key=song_chart_order)
             first = charts[0]
             jp, intl = _projection(first, navigation), _projection(first, navigation, True)
             title = _title(first, jp, locale, words["unknown"])

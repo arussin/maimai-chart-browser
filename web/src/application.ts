@@ -417,7 +417,7 @@ export async function createApplication(options: ApplicationOptions) {
         });
       }
       // Construction and session configuration happen only after navigation commits this intent.
-      return (root: HTMLElement, international: boolean) => {
+      return (root: HTMLElement, international: boolean, initialChart?: string) => {
         context ??= chartContext(data);
         songData = data;
         if (!loaded) {
@@ -425,22 +425,27 @@ export async function createApplication(options: ApplicationOptions) {
           const status = document.getElementById('lab-status');
           if (status && !status.dataset.catalogError) localization.text(status, '');
         }
-        return mountSongView(root, international, {
-          data,
-          components: {
-            localization,
-            artwork: context.artwork,
-            links: context.chartLinks.group,
-            overview: context.overview,
-            personal,
+        return mountSongView(
+          root,
+          international,
+          {
+            data,
+            components: {
+              localization,
+              artwork: context.artwork,
+              links: context.chartLinks.group,
+              overview: context.overview,
+              personal,
+            },
+            romaji: songSearch.romaji,
+            compare: (id, similar) => {
+              void navigation.browserAction(() => controller!.compareChart!(id, similar));
+            },
+            changed: personal.subscribe,
+            usage,
           },
-          romaji: songSearch.romaji,
-          compare: (id, similar) => {
-            void navigation.browserAction(() => controller!.compareChart!(id, similar));
-          },
-          changed: personal.subscribe,
-          usage,
-        });
+          initialChart,
+        );
       };
     },
   });

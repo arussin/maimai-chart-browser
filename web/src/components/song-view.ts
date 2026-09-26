@@ -1,5 +1,5 @@
 import { SongWorkspace } from './song-workspace';
-import { createSongModel } from '../domain/song-model';
+import { createSongModel, songDifficultyRank } from '../domain/song-model';
 import { titleLabel } from '../catalog-query';
 import type { PublicCatalog, CatalogChart } from '../runtime/catalog';
 import type { ChartCardComponents } from './chart-card';
@@ -14,12 +14,16 @@ export interface SongViewPorts {
   usage: UsageAPI;
 }
 /** A song uses the same cards and player session without constructing the whole browser. */
-export function mountSongView(root: HTMLElement, international: boolean, ports: SongViewPorts) {
+export function mountSongView(
+  root: HTMLElement,
+  international: boolean,
+  ports: SongViewPorts,
+  initialChart?: string,
+) {
   const songID = root.querySelector<HTMLElement>('[data-song-id]')?.dataset.songId;
   if (!songID) throw Error('Missing public song identity');
   const song = createSongModel(ports.data, songID);
   const i18n = ports.components.localization;
-  const difficulties = ['BASIC', 'ADVANCED', 'EXPERT', 'MASTER', 'RE:MASTER'];
   const model = (international: boolean): SongWorkspaceModel<CatalogChart> => {
     const projection = song(international);
     return {
@@ -35,10 +39,7 @@ export function mountSongView(root: HTMLElement, international: boolean, ports: 
         bpm: projection.bpm,
         speed: (chart) => chart.demand?.cadence?.mean_onsets_s ?? null,
         romaji: ports.romaji,
-        difficultyRank: (chart) => {
-          const rank = difficulties.indexOf(chart.difficulty.toUpperCase());
-          return rank < 0 ? null : rank;
-        },
+        difficultyRank: (chart) => songDifficultyRank(chart.difficulty),
         genre: projection.genre,
       },
       components: ports.components,
@@ -54,5 +55,6 @@ export function mountSongView(root: HTMLElement, international: boolean, ports: 
       usage: ports.usage,
     },
     international,
+    initialChart,
   );
 }

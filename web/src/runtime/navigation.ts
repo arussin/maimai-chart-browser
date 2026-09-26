@@ -1,4 +1,4 @@
-import { routePattern, publicPath } from './public-routes';
+import { routePattern, publicPath, chartFragment, chartFromFragment } from './public-routes';
 import { recoveryTarget } from './recovery';
 import { diagnose, catalogFailure, catalogPending } from './diagnostics';
 import { IntentScope } from './intent';
@@ -138,7 +138,7 @@ export class NavigationCoordinator {
         }
         const slug = map.songs?.[id];
         if (typeof slug !== 'string' || !slug || /[/?#\\]/.test(slug)) return;
-        node.href = publicPath(this.locale(), 'songs', slug);
+        node.href = publicPath(this.locale(), 'songs', slug) + chartFragment(chartID);
         node.hidden = false;
       })
       .catch(() => {});
@@ -202,11 +202,19 @@ export class NavigationCoordinator {
     replaceMetadata(this.browserMetadata);
     if (snapshot) this.silent(() => this.browser?.restore(snapshot));
   }
+  private loadDocument(target: string, push: boolean) {
+    const destination = new URL(target, location.href).href;
+    if (push) location.assign(destination);
+    // Replacing the current fragment URL is only a same-document jump.
+    else if (destination === location.href) location.reload();
+    else location.replace(destination);
+  }
   async route(
     url: URL,
     { push = false, returnTo = null, browserState = null }: RouteOptions = {},
   ): Promise<boolean> {
     if (!routePattern.test(url.pathname) || url.origin !== location.origin) return false;
+    const initialChart = chartFromFragment(url.hash);
     const operation = this.intent.start();
     try {
       const raw = await this.reader.read(url.pathname, 2 * 1024 * 1024, operation.signal);
@@ -241,9 +249,7 @@ export class NavigationCoordinator {
         // recovery preserves same-page fragments, but never carries query state.
         await this.interactionIdle;
         if (!operation.current()) return false;
-        const target = recovery + url.hash;
-        if (push) location.assign(target);
-        else location.replace(target);
+        this.loadDocument(recovery + url.hash, push);
         return true;
       }
       if (!content) throw Error('Public page unavailable');
@@ -287,7 +293,7 @@ export class NavigationCoordinator {
             maimaiInternational: international,
             ...(browserState ? { maimaiBrowserState: browserState } : {}),
           },
-          url.pathname,
+          url.pathname + url.hash,
         );
       }
       this.songWorkspace?.dispose();
@@ -305,6 +311,7 @@ export class NavigationCoordinator {
         this.songWorkspace = mountSong(
           this.routeView,
           historyPort.state.maimaiInternational === true,
+          initialChart,
         );
       this.regional(this.routeView);
       this.revealShell();
@@ -337,8 +344,7 @@ export class NavigationCoordinator {
           catalogFailure(staticPage, document.documentElement.lang);
           return false;
         }
-        if (push) location.assign(url.href);
-        else location.replace(url.href);
+        this.loadDocument(url.href, push);
       }
       return false;
     }
@@ -423,6 +429,7 @@ export class NavigationCoordinator {
         (routePattern.exec(url.pathname)?.[2] === 'versions' && name !== 'catalog'))
     ) {
       url.pathname = '/';
+      url.hash = '';
       this.showBrowser();
     }
     historyPort.replace(historyPort.state, url);
@@ -527,7 +534,7 @@ export class NavigationCoordinator {
           typeof historyPort.state.maimaiInternational === 'boolean'
         ) {
           event.preventDefault();
-          historyPort.push({ ...historyPort.state }, url.pathname);
+          historyPort.push({ ...historyPort.state }, url.pathname + url.hash);
           location.reload();
         }
       }

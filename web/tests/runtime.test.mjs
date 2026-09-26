@@ -431,3 +431,11 @@ test('a direct-song catalog pin survives a later manifest default and never sile
   assert.equal((await loadCatalog(reader, null)).version, 'new');
   await assert.rejects(loadCatalog(reader, null, 'f'.repeat(64)), /unavailable/);
 });
+
+test('chart fragments round-trip public identities and reject malformed or unrelated fragments', async () => {
+  const routes = await loadModule('runtime/public-routes');
+  for (const id of ['chart:fixture', "name!'()*", '楽曲/with space#%'])
+    assert.equal(routes.chartFromFragment(routes.chartFragment(id)), id);
+  for (const fragment of ['', '#privacy', '#chart-', '#chart-%E0%A4%A'])
+    assert.equal(routes.chartFromFragment(fragment), undefined);
+});

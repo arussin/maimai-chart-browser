@@ -22,6 +22,11 @@ for(const locale of ['en','ja','ko','zh-hans'])for(const width of [320,768,1280]
   await expect(page.locator('#seo-route-view .song-workspace .song-row').first()).toBeVisible();
   await expect(page.locator('#settings-toggle')).toBeVisible();
   await expect(page.locator('#lab-status')).toBeEmpty();
+  await expect(page.locator('#seo-route-view .song-row .chart-row[aria-expanded=true]')).toHaveCount(0);
+  const order=await page.locator('#seo-route-view .song-row').evaluateAll(rows=>rows.map(row=>({id:row.dataset.chartId,difficulty:row.dataset.difficulty})));
+  expect(order.map(row=>row.difficulty)).toEqual(['BASIC','ADVANCED','EXPERT','MASTER']);
+  expect(order.map(row=>row.id)).toEqual(await page.locator('#seo-route-view .seo-table tbody tr').evaluateAll(rows=>rows.map(row=>decodeURIComponent(row.id.slice(6)))));
+  await page.locator('#seo-route-view .song-row .chart-row').first().click();
   await expect(page.locator('#seo-route-view .song-row').first().locator('.chart-measurements')).toBeVisible();
   await expect(page.locator('html')).toHaveAttribute('lang',locale==='zh-hans'?'zh-Hans':locale);
   if(locale==='en'&&width===1280){await page.evaluate(()=>document.fonts.ready);await page.screenshot({path:testInfo.outputPath('song-workspace.png'),fullPage:true});}
@@ -65,7 +70,9 @@ for(const selector of ['.chart-row','.row-difficulty','.chart-detail-actions but
   const map=await(await request.get('/registry/permalinks.json')).json();
   const slug=Object.values(map.songs).find(value=>value.includes('ソテリア'));
   await page.goto('/en/songs/'+encodeURIComponent(slug)+'/');
-  const row=page.locator('#seo-route-view .song-row').first(),control=selector==='#settings-toggle'?page.locator(selector):row.locator(selector);
+  const row=page.locator('#seo-route-view .song-row').first();
+  await row.locator('.chart-row').click();
+  const control=selector==='#settings-toggle'?page.locator(selector):row.locator(selector);
   await expect(control).toBeVisible();await expect.poll(()=>page.evaluate(()=>window.fixtureStorageHeld)).toBe(true);
   await control.focus();await expect(control).toBeFocused();
   await page.evaluate(async()=>{fixtureReleaseStorage();await maimaiPersonal.ready;});
@@ -85,6 +92,7 @@ test('song is usable before the comparison catalog is requested',async({page,req
   catalogs.push(route.request().url());await held;await route.fallback();
  });
  await page.goto('/en/songs/'+encodeURIComponent(slug)+'/');
+ await page.locator('#seo-route-view .song-row .chart-row').first().click();
  await expect(page.locator('#seo-route-view .song-workspace .chart-measurements').first()).toBeVisible();
  expect(catalogs).toEqual([]);
  await page.locator('#seo-route-view .chart-detail-actions button').first().click();
@@ -104,6 +112,7 @@ for (const failure of [false,true]) test('lazy comparison '+(failure?'failure pr
  await page.route(await browserResourceURL('catalog'),async route=>{await held;if(failure)await route.fulfill({status:503,body:'unavailable'});else await route.fallback();});
  await page.goto('/en/songs/'+encodeURIComponent(slug)+'/');
  await expect(page.locator('#seo-route-view .song-workspace')).toBeVisible();
+ await page.locator('#seo-route-view .song-row .chart-row').first().click();
  await page.locator('#seo-route-view .chart-detail-actions button').first().click();
  await expect(page.locator('[data-catalog-progress]')).toBeVisible();
  if (!failure) {
@@ -129,6 +138,7 @@ for (const locale of ['en','ja','ko','zh-hans']) test('comparison recovers after
  });
  await page.goto('/'+locale+'/songs/'+encodeURIComponent(slug)+'/');
  await expect(page.locator('#seo-route-view .song-workspace')).toBeVisible();
+ await page.locator('#seo-route-view .song-row .chart-row').first().click();
  await expect.poll(()=>page.evaluate(()=>!!window.maimaiPersonal)).toBe(true);
  await page.evaluate(()=>{
   window.fixtureOriginalSession=maimaiPersonal;
@@ -161,6 +171,7 @@ test('concurrent recovery shares acquisition and commits only the latest action'
  });
  await page.goto('/en/songs/'+encodeURIComponent(slug)+'/');
  await expect(page.locator('#seo-route-view .song-workspace')).toBeVisible();
+ await page.locator('#seo-route-view .song-row .chart-row').first().click();
  const compare=page.locator('#seo-route-view .chart-detail-actions button').first();
  await compare.click();
  await expect(page.locator('[data-diagnostic="catalog_unavailable"]')).toBeVisible();
@@ -180,6 +191,7 @@ test('song import, lazy comparison and Forget share one player session',async({p
  const data=JSON.parse(await readFile(new URL('../../output/reconciliation-fixture.json',import.meta.url),'utf8'));
  await page.goto('/en/songs/'+encodeURIComponent(slug)+'/');
  await expect(page.locator('#seo-route-view .song-workspace')).toBeVisible();
+ await page.locator('#seo-route-view .song-row .chart-row').first().click();
  await page.evaluate(()=>{window.fixtureSongPlayer=maimaiPersonal;});
  await page.locator('input[type=file]').setInputFiles({name:'fictional.gz',mimeType:'application/gzip',buffer:gzipSync(Buffer.from(JSON.stringify(data)))});
  await page.getByLabel('Remember on this device',{exact:true}).check();
@@ -214,6 +226,7 @@ test('About stays available and supersedes a pending comparison catalog',async({
  await page.route(await browserResourceURL('catalog'),async route=>{requests++;await held;await route.fallback();});
  await page.goto('/en/songs/'+encodeURIComponent(slug)+'/');
  await expect(page.locator('#seo-route-view .song-workspace')).toBeVisible();
+ await page.locator('#seo-route-view .song-row .chart-row').first().click();
  expect(requests).toBe(0);
  await page.locator('#seo-route-view .chart-detail-actions button').first().click();
  await expect(page.locator('[data-catalog-progress]')).toBeVisible();
@@ -277,6 +290,7 @@ for(const mode of ['legacy','stale','forged'])test('song release binding '+mode,
  await page.route(baseURL+path,route=>route.fulfill({contentType:'text/html',body:html}));
  await page.goto(path);
  if(mode==='legacy'){
+  await page.locator('#seo-route-view .song-row .chart-row').first().click();
   await expect(page.locator('#seo-route-view .song-workspace .chart-measurements').first()).toBeVisible();
   await expect(page.locator('#lab-status')).toBeEmpty();
  }else{
@@ -284,4 +298,69 @@ for(const mode of ['legacy','stale','forged'])test('song release binding '+mode,
   await expect(page.locator('[data-diagnostic="catalog_unavailable"]')).toBeVisible();
   await expect(page.locator('.song-workspace')).toHaveCount(0);
  }
+});
+
+for(const locale of ['en','ja','ko','zh-hans'])for(const width of [320,768,1280]){
+ test('browser opens only the selected song difficulty '+locale+' '+width,async({page})=>{
+  await page.setViewportSize({width,height:900});
+  await page.goto('/?lang='+locale);await expect(page.locator('#catalog-count')).toHaveText(/26/);
+  await page.locator('#search').fill('ソテリア');
+  const row=page.locator('#songs .song-row').first();
+  // Explicitly choose a non-first difficulty before opening its song page.
+  const selected=await row.locator('.row-difficulty option').evaluateAll(options=>options[0].value);
+  await row.locator('.row-difficulty').selectOption(selected);
+  await expect(row).toHaveAttribute('data-difficulty','MASTER');await row.locator('.chart-row').click();
+  const link=row.locator('a[data-song-page]');await expect(link).toBeVisible();
+  expect(new URL(await link.getAttribute('href'),page.url()).hash).toBe('#chart-'+encodeURIComponent(selected));
+  await link.click();
+  const expanded=page.locator('#seo-route-view .song-row').filter({has:page.locator('.chart-row[aria-expanded=true]')});
+  await expect(expanded).toHaveCount(1);await expect(expanded).toHaveAttribute('data-chart-id',selected);
+  await page.locator('#seo-route-view [data-seo-international]').check();
+  await expect(expanded).toHaveCount(1);await expect(expanded).toHaveAttribute('data-chart-id',selected);
+  const target=page.url();
+  await expect(page.locator('link[rel=canonical]')).toHaveAttribute('href','https://maimai.party'+new URL(target).pathname);
+  await page.goBack();await expect(page.locator('#search')).toHaveValue('ソテリア');
+  await page.goForward();await expect(expanded).toHaveCount(1);await expect(expanded).toHaveAttribute('data-chart-id',selected);
+  await page.reload();await expect(expanded).toHaveCount(1);await expect(expanded).toHaveAttribute('data-chart-id',selected);
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
+  await expanded.locator('.chart-detail-actions button').first().click();
+  await expect(page.locator('#compare')).toBeVisible();expect(new URL(page.url()).hash).toBe('');
+ });
+}
+for(const fragment of ['', '#chart-not-in-this-song', '#chart-%E0%A4%A', '#privacy'])test('song arrival starts collapsed without a valid chart '+fragment,async({page,request})=>{
+ const map=await(await request.get('/registry/permalinks.json')).json();
+ const slug=Object.values(map.songs).find(value=>value.includes('ソテリア'));
+ await page.goto('/en/songs/'+encodeURIComponent(slug)+'/'+fragment);
+ await expect(page.locator('#seo-route-view .song-workspace .song-row').first()).toBeVisible();
+ await expect(page.locator('#seo-route-view .chart-row[aria-expanded=true]')).toHaveCount(0);
+ await page.locator('#seo-route-view [data-seo-international]').check();
+ await expect(page.locator('#seo-route-view .chart-row[aria-expanded=true]')).toHaveCount(0);
+});
+
+test('delayed player readiness cannot reopen a linked chart after the user collapses it',async({page,request})=>{
+ await page.addInitScript(()=>{
+  const open=IDBFactory.prototype.open;
+  IDBFactory.prototype.open=function(...args){
+   const request=open.apply(this,args),descriptor=Object.getOwnPropertyDescriptor(IDBRequest.prototype,'onsuccess');
+   Object.defineProperty(request,'onsuccess',{configurable:true,set(handler){descriptor.set.call(request,async event=>{
+    window.fixtureStorageHeld=true;await new Promise(resolve=>window.fixtureReleaseStorage=resolve);handler?.call(request,event);
+   });}});
+   return request;
+  };
+ });
+ const map=await(await request.get('/registry/permalinks.json')).json();
+ const slug=Object.values(map.songs).find(value=>value.includes('ソテリア'));
+ const path='/en/songs/'+encodeURIComponent(slug)+'/';
+ const html=await(await request.get('/registry'+path)).text();
+ const ids=[...html.matchAll(/<tr id="chart-([^"<>]+)"/g)].map(match=>decodeURIComponent(match[1]));
+ const selected=ids.at(-1);expect(selected).toBeTruthy();
+ await page.goto(path+'#chart-'+encodeURIComponent(selected));
+ const expanded=page.locator('#seo-route-view .song-row').filter({has:page.locator('.chart-row[aria-expanded=true]')});
+ await expect(expanded).toHaveCount(1);await expect(expanded).toHaveAttribute('data-chart-id',selected);
+ await expect.poll(()=>page.evaluate(()=>window.fixtureStorageHeld)).toBe(true);
+ await expanded.locator('.chart-row').click();
+ await page.evaluate(async()=>{fixtureReleaseStorage();await maimaiPersonal.ready;});
+ await expect(expanded).toHaveCount(0);
+ await page.locator('#seo-route-view [data-seo-international]').check();
+ await expect(expanded).toHaveCount(0);
 });

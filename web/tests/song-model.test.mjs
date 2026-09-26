@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { createSongModel } from '../src/domain/song-model.ts';
+import { readFileSync } from 'node:fs';
+import { createSongModel, songDifficultyRank } from '../src/domain/song-model.ts';
 
 const chart = (id = 'a', extra = {}) => ({
   chart_id: id,
@@ -60,7 +61,7 @@ test('regional song projection is independent, exact, and never mutates accepted
     intl = model(true);
   assert.deepEqual(
     jp.charts.map((c) => c.chart_id),
-    ['a', 'b', 'std', 'variant'],
+    ['a', 'b', 'variant', 'std'],
   );
   assert.equal(jp.charts[0].title, 'JP');
   assert.equal(intl.charts[0].title, 'INTL');
@@ -79,11 +80,11 @@ test('regional song projection is independent, exact, and never mutates accepted
     ['a', 'b'],
   );
   assert.deepEqual(
-    jp.choices(jp.charts[2]).map((c) => c.chart_id),
+    jp.choices(jp.charts[3]).map((c) => c.chart_id),
     ['std'],
   );
   assert.deepEqual(
-    jp.choices(jp.charts[3]).map((c) => c.chart_id),
+    jp.choices(jp.charts[2]).map((c) => c.chart_id),
     ['variant'],
   );
   assert.equal(model(false).charts[0].title, 'JP');
@@ -136,4 +137,59 @@ test('contradictory inventory genres fail before returning a song projection', (
   const data = fixture();
   data.navigation.charts.a.genre = 'unreviewed category';
   assert.throws(() => createSongModel(data, 'song'), /unrecognized genre/);
+});
+
+// Shared with Python preparation/static rendering; historical inputs can retain any storage order.
+test('song rows order formats and difficulties consistently without inheriting catalog storage order', () => {
+  const fixture = JSON.parse(
+    readFileSync(new URL('../../tests/fixtures/song-chart-order.json', import.meta.url)),
+  );
+  for (const schema of ['maimai-browser-catalog-1', 'maimai-browser-catalog-2']) {
+    const charts = fixture.charts.map((row) => chart(row.chart_id, row));
+    for (const shuffled of [
+      charts,
+      [...charts].reverse(),
+      [...charts.slice(3), ...charts.slice(0, 3)],
+    ]) {
+      const data = {
+        schema_version: schema,
+        catalog: [...shuffled, chart('unrelated', { song_id: 'another-song' })],
+        navigation: {
+          charts: Object.fromEntries(shuffled.map((c) => [c.chart_id, { genre: 'maimai' }])),
+          genres: [{ id: 'maimai', label: 'maimai' }],
+        },
+        snippets: {},
+      };
+      const before = structuredClone(data),
+        model = createSongModel(data, 'song');
+      for (const international of [false, true, false]) {
+        const view = model(international);
+        assert.deepEqual(
+          view.charts.map((c) => c.chart_id),
+          fixture.expected_ids,
+        );
+        const selected = view.charts.find((c) => c.chart_id === 'dx-basic');
+        assert.deepEqual(
+          view.choices(selected).map((c) => c.chart_id),
+          fixture.expected_ids.filter((id) => id.startsWith('dx-') && id !== 'dx-master-a'),
+        );
+        assert.deepEqual(data, before);
+      }
+    }
+  }
+});
+
+test('song difficulty rank preserves case-insensitive labels and unknown state', () => {
+  for (const [rank, difficulty] of [
+    'BASIC',
+    'ADVANCED',
+    'EXPERT',
+    'MASTER',
+    'RE:MASTER',
+  ].entries()) {
+    assert.equal(songDifficultyRank(difficulty), rank);
+    assert.equal(songDifficultyRank(difficulty.toLowerCase()), rank);
+  }
+  for (const difficulty of ['', 'FUTURE', 'SLOT_7'])
+    assert.equal(songDifficultyRank(difficulty), null);
 });

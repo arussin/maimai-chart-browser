@@ -7,6 +7,15 @@ from typing import Any
 
 from .catalog_loading import project_chart, project_maishift_join, project_provider_join
 
+SONG_DIFFICULTIES = ("BASIC", "ADVANCED", "EXPERT", "MASTER", "RE:MASTER")
+
+
+def song_chart_order(chart: dict[str, Any]) -> tuple[str, int, str]:
+    """Stable public display order; shared regression vectors cover the browser reader."""
+    difficulty = chart.get("difficulty", "").upper()
+    rank = SONG_DIFFICULTIES.index(difficulty) if difficulty in SONG_DIFFICULTIES else 99
+    return chart.get("format", ""), rank, chart["chart_id"]
+
 
 def prepare_song_catalog(
     data: dict[str, Any], song_id: str, charts: list[dict[str, Any]]
@@ -15,6 +24,7 @@ def prepare_song_catalog(
     ids = {chart["chart_id"] for chart in charts}
     if not ids or len(ids) != len(charts):
         raise ValueError("Song projection requires unique accepted chart identities")
+    charts = sorted(charts, key=song_chart_order)
     inventory = data.get("schema_version") == "maimai-browser-catalog-2"
     navigation = data.get("navigation", {})
     selected_navigation = {

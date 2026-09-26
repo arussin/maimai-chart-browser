@@ -6,6 +6,8 @@ import json
 import re
 import unittest
 from html import unescape
+from pathlib import Path
+from urllib.parse import unquote
 
 from maimai_intelligence.overview_codec import expand_tags
 from maimai_intelligence.seo import build_seo
@@ -115,6 +117,34 @@ class SongCatalogTests(unittest.TestCase):
             changed["analysis"]["charts"][chart["chart_id"]]["tags"][0][5] = [invalid]
             with self.assertRaisesRegex(ValueError, "evidence index"):
                 prepare_song_catalog(changed, chart["song_id"], [chart])
+
+    def test_chart_order_matches_static_pages_and_is_independent_of_storage_order(self):
+        fixture = json.loads(
+            (Path(__file__).parent / "fixtures" / "song-chart-order.json").read_text()
+        )
+        seed = catalog()["catalog"][0]
+        charts = [{**copy.deepcopy(seed), **row} for row in fixture["charts"]]
+        expected = fixture["expected_ids"]
+        prepared = None
+        for shuffled in (charts, list(reversed(charts)), charts[3:] + charts[:3]):
+            data = {"catalog": shuffled, "navigation": {"charts": {}}, "snippets": {}}
+            before = canonical(data)
+            content = prepare_song_catalog(data, seed["song_id"], shuffled)
+            self.assertEqual([c["chart_id"] for c in content["data"]["catalog"]], expected)
+            if prepared is not None:
+                self.assertEqual(canonical(content), prepared)
+            prepared = canonical(content)
+            assets, _, _ = build_seo(data)
+            pages = [
+                raw.decode()
+                for path, raw in assets.items()
+                if "/songs/" in path and path.endswith("index.html")
+            ]
+            self.assertEqual(len(pages), 4)
+            for page in pages:
+                ids = [unquote(value) for value in re.findall(r'<tr id="chart-([^"]+)"', page)]
+                self.assertEqual(ids, expected)
+            self.assertEqual(canonical(data), before)
 
     def test_locales_share_one_content_addressed_song_asset(self):
         data = catalog()

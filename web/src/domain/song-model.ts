@@ -2,9 +2,24 @@ import { createView, regionalValues, type ChartNavigation } from '../catalog-que
 import { normalizeGenres } from './catalog-genres.ts';
 import type { CatalogChart, PublicCatalog } from '../runtime/catalog';
 
+// Same policy as song_catalog.py; shared vectors: tests/fixtures/song-chart-order.json.
+const difficultyOrder = ['BASIC', 'ADVANCED', 'EXPERT', 'MASTER', 'RE:MASTER'];
+const ordinal = (left: string, right: string) => (left < right ? -1 : left > right ? 1 : 0);
+export function songDifficultyRank(difficulty: string): number | null {
+  const rank = difficultyOrder.indexOf(difficulty.toUpperCase());
+  return rank < 0 ? null : rank;
+}
+function songChartOrder(left: CatalogChart, right: CatalogChart) {
+  return (
+    ordinal(left.format, right.format) ||
+    (songDifficultyRank(left.difficulty) ?? 99) - (songDifficultyRank(right.difficulty) ?? 99) ||
+    ordinal(left.chart_id, right.chart_id)
+  );
+}
+
 /** A song owns its regional projection; it never inherits browser filters or sorting. */
 export function createSongModel(data: PublicCatalog, songID: string) {
-  const charts = data.catalog.filter((chart) => chart.song_id === songID);
+  const charts = data.catalog.filter((chart) => chart.song_id === songID).sort(songChartOrder);
   const canonical = normalizeGenres(
     createView({
       ...data,

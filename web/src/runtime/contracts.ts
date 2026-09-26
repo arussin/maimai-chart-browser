@@ -65,7 +65,9 @@ export interface BrowserPort {
   ready: Promise<void>;
   song(
     content: HTMLElement,
-  ): Promise<(root: HTMLElement, international: boolean) => SongWorkspacePort>;
+  ): Promise<
+    (root: HTMLElement, international: boolean, initialChart?: string) => SongWorkspacePort
+  >;
 }
 export interface LocalizationPort {
   readonly locale: Locale;
