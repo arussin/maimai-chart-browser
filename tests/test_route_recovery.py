@@ -133,15 +133,17 @@ class RouteRecoveryTests(unittest.TestCase):
             set(self.prepare(prepared).assets), {r.filename for r in prepared.emitted_routes}
         )
 
-    def test_maintenance_preserves_exact_ordinary_and_static_fixture_bytes(self):
-        # Captured from ce62a851 before extracting the route authority/handlers.
+    def test_ordinary_and_static_fixture_inventories_match_reviewed_bytes(self):
+        # The ordinary 368a630 fixture includes the approved song difficulty order
+        # and its content-addressed JSON/HTML bindings. Static recovery retains
+        # the exact ce62a851 bytes from before the route authority extraction.
         # These are complete path-to-content inventories, not selected HTML text.
         def inventory_digest(assets):
             return digest(canonical({name: digest(raw) for name, raw in sorted(assets.items())}))
 
         self.assertEqual(
             inventory_digest(self.prepared.assets),
-            "e6e80348e44760d65f8e38460d02ba6fa30d6ddaab7481b979dcf7812b73f6fd",
+            "aa5ac6c29c157356c566dea0b6f27acc97e8e518d6401aad5138b3fcb2590765",
         )
         self.assertEqual(
             inventory_digest(self.prepare().assets),
