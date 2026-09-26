@@ -4,6 +4,7 @@ import { resolve, dirname, relative, basename, isAbsolute } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
 import { hostedPreloads } from './build-graph.mjs';
+import { stagingBrowserPlugin } from './staging-profile.mjs';
 const base = dirname(fileURLToPath(import.meta.url)),
   root = resolve(base, '..'),
   productionAssets = resolve(root, 'src/maimai_intelligence/assets');
@@ -28,20 +29,7 @@ if (staging) {
   // A staging build never overwrites an accepted bundle or packaged production assets.
   await mkdir(assets);
 }
-const usageAdapter = staging
-  ? [
-      {
-        name: 'explicit-staging-usage',
-        setup(builder) {
-          builder.onResolve({ filter: /^\.\/usage$/ }, (argument) =>
-            resolve(argument.resolveDir, argument.path) === resolve(base, 'src/usage')
-              ? { path: resolve(base, 'src/usage-staging.ts') }
-              : undefined,
-          );
-        },
-      },
-    ]
-  : [];
+const usageAdapter = staging ? [stagingBrowserPlugin(base)] : [];
 let stale = false;
 const common = {
   bundle: true,
@@ -198,6 +186,8 @@ if (staging) {
         staging_manifest_sha256: digest(await readFile(resolve(assets, 'browser-assets.json')))
           .sha256,
         usage_adapter: 'web/src/usage-staging.ts',
+        public_request_credentials: 'same-origin',
+        offline_request_credentials: 'omit',
         shared_entry: 'web/src/browser-entry.ts',
       },
       null,

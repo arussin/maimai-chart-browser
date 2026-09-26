@@ -4,7 +4,7 @@ import vm from 'node:vm';
 import { moduleSource, evaluateModule } from './module.mjs';
 import { gzipSync } from 'node:zlib';
 const source = await moduleSource('usage');
-const stagingSource = await moduleSource('usage-staging');
+const stagingSource = await moduleSource('usage-staging', { staging: true });
 function fixture({
   host = 'maimai.party',
   module = source,
@@ -133,7 +133,7 @@ for (const [name, module, host, forbidden] of [
         JSON.parse(requests[0].options.body).events.map((row) => row.event),
         ['page_view', 'import_failed'],
       );
-      assert.equal(requests[0].options.credentials, 'omit');
+      assert.equal(requests[0].options.credentials, name === 'staging' ? 'same-origin' : 'omit');
       assert.equal(requests[0].options.referrerPolicy, 'no-referrer');
       api.emit('settings_opened');
       api.disable();

@@ -48,6 +48,14 @@ test(
       assert.equal(receipt.usage_origin, 'https://maimai-party-staging.pages.dev');
       assert.equal(receipt.shared_entry, 'web/src/browser-entry.ts');
       assert.equal(receipt.usage_adapter, 'web/src/usage-staging.ts');
+      assert.equal(receipt.public_request_credentials, 'same-origin');
+      assert.equal(receipt.offline_request_credentials, 'omit');
+      const production = JSON.parse(await readFile(join(assets, 'browser-assets.json')));
+      assert.equal(manifest.entries.offline, production.entries.offline);
+      assert.deepEqual(
+        manifest.assets[manifest.entries.offline],
+        production.assets[production.entries.offline],
+      );
       assert.equal(receipt.production_manifest_sha256, before.manifest);
       assert.equal(receipt.staging_manifest_sha256, hash(raw));
       assert.deepEqual(Object.keys(manifest.entries).sort(), ['hosted', 'offline']);

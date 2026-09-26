@@ -39,8 +39,12 @@ From the disposable prepared `web` workspace, run:
     node build.mjs --staging-output NEW_EXTERNAL_DIRECTORY
 
 The destination parent must exist; the destination itself must be new and outside
-source. This emits the same hosted/offline entry graph, replacing only the usage
-adapter at build time. `staging-build.json` binds its manifest to the packaged
+source. This emits the same hosted/offline entry graph. The hosted staging plugin
+selects the fixed usage origin and changes only the two maintained public-file and
+usage transport literals from `omit` to `same-origin`. Each replacement is bound
+to its exact module path and refuses a missing or duplicated literal. No private
+import or payment transport is changed. Production and offline compiler inputs
+remain unchanged; `node build.mjs --check` must still match every packaged byte. `staging-build.json` binds its manifest to the packaged
 production manifest and records the fixed staging origin. Production assets,
 compatibility assets and manifests are untouched. This is a browser runtime
 artifact for the separately prepared complete staging site, not a deployment or
@@ -57,6 +61,74 @@ against collector-written persisted D1 data, including a missing-table failure.
 It uses fictional dates/data, a child-process loopback transport guard and the
 same pinned Wrangler CLI as the owner command. Failed fixtures remain in the
 approved temporary directory for diagnosis; successful ones are removed.
+
+## Private staging Pages transport
+
+The separately compiled `pages/functions/__usage.ts` route calls the existing
+staging collector through `USAGE_COLLECTOR`; it never calls a public Worker URL.
+`pages/wrangler.jsonc` names only `maimai-party-staging`, with that binding targeting
+`maimai-private-usage-staging`. It has no D1 binding. The collector has its own
+`USAGE_DB` bound to `maimai-usage-staging`, its own kill switch, and no production
+database or service. Keep `USAGE_ENABLED=false` until owner verification. Disable
+the collector's workers.dev and preview URLs and give it no public route.
+
+Access must protect the base hostname, every deployment/preview hostname, every
+static asset and `/__usage`. There is no collector bypass policy. The browser
+lets its normal same-origin cookie mechanism authenticate public-data and usage
+requests; application code never reads cookies. Existing production/offline
+requests still omit credentials. The bridge reconstructs a fresh streaming request
+with only Content-Type, Origin, DNT and Sec-GPC. Cookies, authorization, Access JWTs,
+identity headers, referrers and incoming `cf` metadata are not copied. The edge can
+add mechanical Content-Length/Transfer-Encoding framing. The unchanged collector
+owns size, finite-payload, origin, opt-out, kill and daily-aggregation checks.
+
+The bridge accepts only the exact staging origin and `/__usage` without a query;
+missing/failed bindings return empty 503 responses. It uses edge-supported manual
+redirect mode and refuses any 3xx response without following or exposing its
+Location. Browser public reads continue to use `redirect: 'error'`.
+
+From a prepared disposable usage-worker workspace, assemble the **complete**
+reviewed staging site under `pages/site`, using the separate staging browser
+manifest when generating HTML and immutable resource references. Do not copy
+only the new chunks over existing HTML. Keep receipts outside `site`. Then use
+the existing pinned Wrangler, without an install or a new publishing mechanism:
+
+    node node_modules/wrangler/bin/wrangler.js pages functions build pages/functions --project-directory pages --outdir pages/site/_worker.js
+
+Place the reviewed `pages/_routes.json` at `pages/site/_routes.json`; only the usage
+path invokes Functions, while other paths retain Pages asset handling. The
+compiled `_worker.js` directory includes the generated router and its ASSETS
+fallback. It belongs only in the separate staging artifact. Do not place it in
+an accepted production artifact or point its config at the production project.
+
+The explicit staging `nodejs_compat` flag binds compiler and runtime behavior.
+Pinned Wrangler 4.135.0 defaults an unspecified Pages Node mode to its v1
+polyfills, whose initial output imported `node:stream` and `node:events`. The
+explicit current mode avoids that implicit build/runtime mismatch. This does not
+change the production collector's compatibility settings. Binding declarations
+are generated from the staging config, using the existing runtime declarations:
+
+    cd pages
+    node ../node_modules/wrangler/bin/wrangler.js types --config=wrangler.jsonc --include-runtime=false --env-interface=StagingPagesEnv pages-bindings.d.ts
+
+Pages' Wrangler configuration does **not** accept the Worker's observability or
+logpush fields. Before enabling the collector, the owner must separately verify
+and retain readbacks that Pages invocation/request logs, payload logging, tail
+consumers and export sinks are disabled, alongside the collector's
+`observability.enabled=false` and `logpush=false`. Neither bridge nor collector
+logs payloads. Do not disable unrelated Access security logs. Missing logging
+readback is an open activation gate, not evidence of disabled logging.
+
+Run web tests and `npm run check && npm test` in usage-worker. The latter compiles
+the actual Pages router and exercises a native service binding into the existing
+collector with a separate local D1, including no-write cases. Its CLI child has
+isolated configuration, no credentials, disabled metrics/update banner and a
+non-loopback transport denial; failed fixtures remain for diagnosis. Local
+simulation cannot prove hosted Access. Retain signed-out denial, owner-authorized
+file loads, one finite canary increment and actual owner-report readback before
+claiming hosted collection. Staging rollback rehearsals also need an explicitly
+reviewed staging-only credential adapter for the retained baseline's legacy
+public loader; never alter the accepted baseline itself.
 
 ## Coordinated activation
 

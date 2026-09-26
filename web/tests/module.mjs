@@ -1,7 +1,8 @@
 import { build } from 'esbuild';
 import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
-export async function moduleSource(name) {
+import { stagingBrowserPlugin } from '../staging-profile.mjs';
+export async function moduleSource(name, { staging = false } = {}) {
   const result = await build({
     entryPoints: [fileURLToPath(new URL('../src/' + name + '.ts', import.meta.url))],
     bundle: true,
@@ -9,6 +10,7 @@ export async function moduleSource(name) {
     format: 'cjs',
     target: 'es2022',
     minify: true,
+    plugins: staging ? [stagingBrowserPlugin(fileURLToPath(new URL('..', import.meta.url)))] : [],
   });
   return result.outputFiles[0].text;
 }
