@@ -1,0 +1,39 @@
+<!doctype html><html lang="en"><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; connect-src 'none'; form-action 'none'; base-uri 'none'">
+<title>Corpus workbench</title>
+<style>body{font:16px system-ui,sans-serif;max-width:1100px;margin:2rem auto;padding:0 1rem;color:#e8eaf0;background:#111827}h1,h2{line-height:1.2}input,button{font:inherit;padding:.6rem;border:1px solid #64748b;border-radius:.4rem;background:#1f2937;color:inherit}input{width:min(90%,35rem)}button{cursor:pointer}ul{padding:0;list-style:none}li{margin:.5rem 0}pre{white-space:pre-wrap;overflow-wrap:anywhere;padding:1rem;background:#1f2937}summary{cursor:pointer;padding:.5rem}small{color:#cbd5e1}</style>
+<h1>Corpus workbench</h1><p>RUN_TITLE</p><p>Read-only inspection. Accepted decisions and publication pointers cannot be edited here.</p>
+<p id="state"></p><details><summary>Stages and recovery</summary><pre id="stages"></pre></details>
+<label for="search">Find an identity, title, artist or provider</label><p><input id="search" type="search" autocomplete="off"></p>
+<p id="count" role="status"></p><ul id="records"></ul>
+<details id="analysis-details"><summary>Prepared analysis and provenance</summary><pre id="analysis"></pre></details>
+<details><summary>Unresolved candidates and build changes</summary><pre id="unresolved"></pre></details>
+<script type="application/json" id="data">DATA_JSON</script>
+<script>
+'use strict';
+const data=JSON.parse(document.getElementById('data').textContent),records=data.canonical.records;
+const text=(id,value)=>document.getElementById(id).textContent=value;
+text('state','State: '+data.operations.state.status+' · Integrity: inspection only; run corpus verify before reuse.');
+text('stages',JSON.stringify(data.operations.stages,null,2));
+const {records:_,sources:__,analysis:preparedAnalysis,...remaining}=data.canonical;text('unresolved',JSON.stringify(remaining,null,2));
+document.getElementById('analysis-details').addEventListener('toggle',event=>{
+ if(!event.currentTarget.open||document.getElementById('analysis').textContent)return;
+ const {charts={},...summary}=preparedAnalysis||{},chart_counts={total:0,available:0,unavailable:0};
+ for(const chart of Object.values(charts)){chart_counts.total++;chart_counts[chart.status]++;}
+ text('analysis',JSON.stringify({...summary,chart_counts},null,2));
+});
+const searches=records.map(record=>JSON.stringify(record).toLocaleLowerCase());
+function render(){
+ const query=document.getElementById('search').value.trim().toLocaleLowerCase(),matches=records.filter((_,i)=>searches[i].includes(query));
+ const list=document.getElementById('records');list.replaceChildren();
+ text('count',matches.length+' records; showing up to 100. Narrow the search for more.');
+ for(const record of matches.slice(0,100)){
+  const li=document.createElement('li'),details=document.createElement('details'),summary=document.createElement('summary'),pre=document.createElement('pre');
+  summary.textContent=record.id+' · '+(record.record.metadata?.title||record.record.format||'')+' · '+record.origin.kind;
+  details.addEventListener('toggle',()=>{if(details.open&&!pre.textContent)pre.textContent=JSON.stringify({...record,prepared_analysis:preparedAnalysis?.charts[record.id]||{status:"unavailable",reason:preparedAnalysis?.reason||"select_a_chart_record"},origin:{...record.origin,references:record.origin.references?.map(ref=>({...ref,assertion:data.canonical.sources[ref.source_id]}))}},null,2);});
+  details.append(summary,pre);li.append(details);list.append(li);
+ }
+}
+document.getElementById('search').addEventListener('input',render);render();
+</script></html>

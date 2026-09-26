@@ -1,12 +1,15 @@
 """Reviewed provider identities; raw source metadata must still agree at import."""
 
+from __future__ import annotations
+
 import re
+from typing import Any
 
 SCHEMA = "maishift-mapping-1"
 IDENTITY_FIELDS = ("title", "artist", "format", "difficulty")
 
 
-def validate_mapping(mapping, catalog):
+def validate_mapping(mapping: dict[str, Any], catalog: list[dict[str, Any]]) -> dict[str, Any]:
     if (
         mapping.get("schema_version") != SCHEMA
         or mapping.get("provider") != "maishift"

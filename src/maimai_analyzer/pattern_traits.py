@@ -9,7 +9,7 @@ from collections import defaultdict
 from math import sqrt
 from statistics import median
 
-from .contracts import content_hash
+from .chart_input import content_hash
 from .flow import is_known
 from .pattern_intervals import beat_clock
 from .pattern_sequences import _gap, _groups, _single_runs, occurrence

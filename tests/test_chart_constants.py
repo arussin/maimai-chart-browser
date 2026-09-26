@@ -70,7 +70,10 @@ class ConstantPreparationTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             source = write_package(root / "source")
-            with patch("scripts.prepare_chart_constants.write", side_effect=OSError("Interrupted")):
+            with patch(
+                "maimai_intelligence.source_preparation.prepare_chart_constants.write",
+                side_effect=OSError("Interrupted"),
+            ):
                 with self.assertRaises(OSError):
                     prepare(source, root / "interrupted")
             self.assertFalse((root / "interrupted/package.json").exists())

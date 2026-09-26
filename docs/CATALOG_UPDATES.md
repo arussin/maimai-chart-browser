@@ -4,6 +4,8 @@ The persistent inventory updater refreshes metadata and supplemental transcripti
 as part of every online `prepare --registry` invocation. This is the normal
 product pipeline, not a separate backfill script. See
 [the source waterfall](CATALOG_WATERFALL.md) for matching, validation and cache rules.
+Persistent title states, public mapping reconciliation and bounded song artwork
+are described in [sustainable coverage](SUSTAINABLE_COVERAGE.md).
 
 For subsequent runs, continue from the last verified publication:
 
@@ -14,6 +16,20 @@ python -m scripts.update_catalog refresh --store output/registry-updates
 This resolves the published run's browser, package and accepted registry, then
 prepares a new candidate. The first migration can use the versioned seed registry
 when the older published run predates saved registries. Preparation never publishes.
+`refresh` also verifies and reuses the published run's `public/` directory. For
+an initial migration from a retained release, pass `--previous-public PATH`
+alongside `--previous-browser PATH`. The public directory preserves immutable
+startup/index references and the permalink ledger; a browser preview alone is
+not evidence of the previously published URLs.
+
+Preparation resolves a verified `latest.json` when that directory is omitted.
+If a prior publication exists but its pointer is missing, explicit retained public
+input is required. It never guesses the newest directory or silently regenerates
+missing history. First-site and synthetic API preparation may omit the input.
+Readiness binds its manifest and ledger, and publication rejects an unbound or
+changed live preceding manifest before any upload attempt. Existing publication
+and uncertain-upload state guards continue to apply.
+
 New official inventory admissions and primary corpus pin changes still follow
 [the accepted inventory workflow](REGISTRY_IMPLEMENTATION.md#owner-preparation).
 
@@ -35,7 +51,7 @@ The workflow deliberately refuses a different revision; it never follows an
 unreviewed upstream branch automatically.
 
 ```text
-python -m scripts.update_catalog prepare --store output/catalog-updates --previous-browser output/site/lab --revision e164add85213bab150e1487d5eb15ccb631aedb9 --artwork-cache output/artwork-cache/downloads --overrides config/mai-notes-overrides.json
+python -m scripts.update_catalog prepare --store output/catalog-updates --previous-browser output/site/lab --previous-public output/site/public --revision e164add85213bab150e1487d5eb15ccb631aedb9 --artwork-cache output/artwork-cache/downloads --overrides config/mai-notes-overrides.json
 ```
 
 This captures the pinned public chart text, verifies its Git blob hashes,
@@ -50,7 +66,7 @@ uses the existing [song search preparation](SONG_SEARCH.md) before this workflow
 To refresh mai-notes and prepare a release from an already accepted chart package:
 
 ```text
-python -m scripts.update_catalog prepare --store output/catalog-updates --previous-browser output/site/lab --package output/challenge-constants-v1 --overrides config/mai-notes-overrides.json
+python -m scripts.update_catalog prepare --store output/catalog-updates --previous-browser output/site/lab --previous-public output/site/public --package output/challenge-constants-v1 --overrides config/mai-notes-overrides.json
 ```
 
 This mode preserves chart analysis. It is also the first-run path for adding
@@ -65,6 +81,8 @@ Each invocation creates a fresh `STORE/runs/RUN_ID/` containing:
 - `changes.json`: chart additions/removals/changes and player-link changes.
 - `mai-notes-audit.json`: retained and new player-link coverage.
 - `registry/`: the accepted registry for the next update.
+- `previous-public.json`: bound preceding manifest/permalink identities when supplied
+  or resolved from the current publication. Exact source replay requires those same inputs.
 - `source-captures.json` and `source-audit.json`: reproducible inputs, metadata gaps,
   validation outcomes and provider failures for online registry updates.
 - `package/`: the complete versioned research package with its link index.

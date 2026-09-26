@@ -1,6 +1,6 @@
 """Scoped compound forms; community naming is separate from review qualification."""
 
-from .pattern_evidence import phased_pairs_normalized
+from .phased_pairs import phased_pairs_normalized
 
 DEFINITIONS = {
     "pattern.umiyuri": (

@@ -1,0 +1,19 @@
+{
+  "reviewer": "Codex",
+  "method": "AI linguistic and implementation-context review; not native-speaker certification",
+  "date": "2026-09-22",
+  "scope": "Four replacement privacy messages in English, Simplified Chinese, Korean and Japanese. Existing unaffected messages and previous review records preserved.",
+  "checks": [
+    "GA opt-in remains distinct from first-party counts",
+    "No visitor/session identifiers, player/search/chart/URL/error data in collector contract",
+    "Indefinite daily aggregate retention is disclosed",
+    "GPC/DNT suppression and connection metadata boundaries match implementation"
+  ],
+  "corrections": [
+    "Korean broad page-category wording changed to natural page classification count terminology",
+    "Simplified Chinese chart identity changed to chart identifier terminology"
+  ],
+  "inputs": {
+    "src/maimai_intelligence/assets/locales/privacy.json": "6f48405c0b4f3f1f7c58dc78d72da442bd7f29690dbae732c087f0108a3d3b81"
+  }
+}

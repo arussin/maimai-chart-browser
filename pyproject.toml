@@ -24,3 +24,50 @@ extend-exclude = ["output", "dist", "extract_source.py"]
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "S", "UP"]
 ignore = ["S101"]
+
+# Incremental strict boundary checking: imported legacy implementations remain
+# subject to their existing runtime contracts and behavioral suites.
+[tool.mypy]
+python_version = "3.11"
+strict = true
+follow_imports = "silent"
+files = [
+  "src/maimai_intelligence/corpus_policy.py",
+  "src/maimai_intelligence/corpus_failures.py",
+  "src/maimai_intelligence/metadata_selection.py",
+  "src/maimai_intelligence/metadata_policy.py",
+  "src/maimai_intelligence/metadata_claims.py",
+  "src/maimai_intelligence/metadata_adapters.py",
+  "src/maimai_intelligence/source_json.py",
+  "src/maimai_intelligence/metadata_waterfall.py",
+  "src/maimai_intelligence/refresh_policy.py",
+  "src/maimai_intelligence/refresh_candidates.py",
+  "src/maimai_intelligence/catalog_refresh.py",
+  "src/maimai_intelligence/catalog_refresh_stages.py",
+  "src/maimai_intelligence/source_registration.py",
+  "src/maimai_intelligence/release_transition.py",
+  "src/maimai_intelligence/release_composition.py",
+  "src/maimai_intelligence/capacity_policy.py",
+  "src/maimai_intelligence/release_assembly.py",
+  "src/maimai_intelligence/recovery_policy.py",
+  "src/maimai_intelligence/route_model.py",
+  "src/maimai_intelligence/corpus_analysis.py",
+  "src/maimai_intelligence/route_recovery.py",
+  "src/maimai_intelligence/corpus_explain.py",
+  "src/maimai_intelligence/corpus_diagnostics.py",
+  "src/maimai_intelligence/corpus_attempts.py",
+  "src/maimai_intelligence/corpus_evidence.py",
+  "src/maimai_intelligence/corpus_update.py",
+  "src/maimai_intelligence/corpus_requests.py",
+  "src/maimai_intelligence/corpus_models.py",
+  "src/maimai_intelligence/source_identity.py",
+  "src/maimai_intelligence/corpus_registry.py",
+  "src/maimai_intelligence/corpus_cli.py",
+  "src/maimai_intelligence/corpus_workbench.py",
+  "src/maimai_intelligence/catalog_preparation.py",
+  "src/maimai_intelligence/catalog_document.py",
+  "src/maimai_intelligence/song_catalog.py",
+  "src/maimai_intelligence/public_release.py",
+  "src/maimai_intelligence/store_lock.py",
+  "src/maimai_intelligence/serialization.py",
+]

@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.js';
 
 // Existing control tests exercise the remembered-open state. Disclosure tests
 // below separately cover first visits and persistence across pages.
@@ -99,8 +99,8 @@ test('cabinet difficulty names update in filters, chart controls and comparison 
 
 test('cabinet difficulty names reach chart activity accessibility labels',async({page})=>{
   await page.goto('/progressive/?view=catalog');await settle(page);
-  // Activity replaces its loading figure; scroll the stable chart row instead.
-  await page.locator('#songs .song-row').first().scrollIntoViewIfNeeded();
+  // Initial personal-state restoration may replace rows; the catalog container is stable.
+  await page.locator('#songs').scrollIntoViewIfNeeded();
   const graph=page.locator('#songs .chart-flow svg').first();await expect(graph).toBeVisible();
   const original=await graph.getAttribute('aria-label');
   for(const locale of ['zh-Hans','ko','ja','en']){

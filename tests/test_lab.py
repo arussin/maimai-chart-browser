@@ -1,4 +1,5 @@
 import hashlib
+import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -17,12 +18,14 @@ class LabTests(unittest.TestCase):
                 html = build_lab(
                     source, site, catalog_version="fixture-v1", player_maishift=enabled
                 ).read_text("utf-8")
-                config = (site / "player-import-config.js").read_text("utf-8")
-                self.assertIn("maishift:" + str(enabled).lower(), config)
-                self.assertNotIn("maimaiPlayerContext", config)
+                config = json.loads((site / "browser-config.json").read_text("utf-8"))
+                self.assertEqual(config["features"]["maishift"], enabled)
+                self.assertFalse(config["pilot"])
                 self.assertNotIn('src="maishift-browser-pilot.js', html)
-                self.assertIn('src="feature-announcements.js', html)
-                self.assertIn('src="player-ranges.js', html)
+                graph = json.loads((site / "browser-assets.json").read_text("utf-8"))
+                self.assertIn(
+                    'type="module" data-maimai-browser src="' + graph["entries"]["hosted"], html
+                )
                 self.assertNotIn('id="loaded-count"', html)
                 self.assertIn('class="catalog-heading-actions"', html)
 
@@ -40,13 +43,20 @@ class LabTests(unittest.TestCase):
             self.assertNotIn("Recommendation samples", html)
             self.assertNotIn('id="challenge-data"', html)
             self.assertTrue((root / "site/manifest.json").exists())
-            scripts = (root / "site/challenge-review.js").read_bytes()
-            loader = (root / "site/lab-loader.js").read_bytes()
+            config = json.loads((root / "site/browser-config.json").read_text("utf-8"))
+            self.assertFalse(config["features"]["maishift"])
+            self.assertFalse(config["pilot"])
+            graph = json.loads((root / "site/browser-assets.json").read_text("utf-8"))
             self.assertIn(
-                "challenge-review.js?v=" + hashlib.sha256(scripts).hexdigest()[:16],
-                loader.decode("utf-8"),
+                'type="module" data-maimai-browser src="' + graph["entries"]["hosted"], html
             )
-            self.assertIn("lab-loader.js?v=" + hashlib.sha256(loader).hexdigest()[:16], html)
+            for path, reference in graph["assets"].items():
+                body = (root / "site" / path).read_bytes()
+                self.assertEqual(hashlib.sha256(body).hexdigest(), reference["sha256"])
+                self.assertEqual(len(body), reference["bytes"])
+            shell = (root / "site/browser-shell.html").read_text("utf-8")
+            self.assertIn("<template data-browser-shell>", shell)
+            self.assertNotIn("<script src=", shell)
             (source / "catalog.json").write_text("[]", encoding="utf-8")
             with self.assertRaisesRegex(ValueError, "integrity"):
                 build_lab(source, root / "site", catalog_version="fixture-v2")

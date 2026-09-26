@@ -53,12 +53,34 @@ def main(argv=None):
     )
     release.add_argument("--source", required=True, type=Path)
     release.add_argument("--output", required=True, type=Path)
+    release.add_argument(
+        "--previous-public",
+        type=Path,
+        help="Preceding immutable public release; retain its referenced URLs and permalink ledger",
+    )
+    release.add_argument(
+        "--permalinks", type=Path, help="Preceding accepted release permalink ledger"
+    )
+    release.add_argument(
+        "--song-redirects", type=Path, help="Reviewed registry song identity redirects"
+    )
+    from .corpus_cli import add_commands, execute
+
+    add_commands(commands)
     args = parser.parse_args(argv)
     try:
-        if args.command == "public-release":
+        if args.command == "corpus":
+            execute(args)
+        elif args.command == "public-release":
             from .public_release import build_public_release
 
-            result = build_public_release(args.source, args.output)
+            result = build_public_release(
+                args.source,
+                args.output,
+                permalinks=args.permalinks,
+                song_redirects=args.song_redirects,
+                previous_public=args.previous_public,
+            )
             print(f"Prepared {result['catalogs']} catalogs in {result['files']} public files")
         elif args.command == "lab":
             from .lab import build_lab
@@ -139,6 +161,11 @@ def main(argv=None):
         return 0
     except (ValueError, OSError, KeyError, TypeError) as exc:
         print(f"Could not complete: {exc}", file=sys.stderr)
+        if args.command == "corpus":
+            from .corpus_failures import secondary_failure_codes
+
+            for code in secondary_failure_codes(exc):
+                print(f"Additional failure: {code}", file=sys.stderr)
         return 1
 
 

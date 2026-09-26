@@ -78,8 +78,9 @@ class AnalyzerInputExtensionsTests(unittest.TestCase):
         ):
             with (
                 self.subTest(pair=pair),
-                patch.object(
-                    contracts, "Fraction", side_effect=AssertionError("Unsafe fraction work")
+                patch(
+                    "maimai_analyzer.rational.Fraction",
+                    side_effect=AssertionError("Unsafe fraction work"),
                 ),
                 self.assertRaisesRegex(ChartInputError, "bounded rational"),
             ):

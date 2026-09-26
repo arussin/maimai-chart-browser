@@ -10,6 +10,11 @@ from importlib.resources import files
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
+from maimai_intelligence.browser_bundle import (
+    RESOURCE_FILE,
+    STATIC_RESOURCES,
+    seal_browser_resources,
+)
 from maimai_intelligence.catalog_loading import MAX_CATALOG_BYTES, progressive_catalog
 from maimai_intelligence.lab import build_lab
 from maimai_intelligence.localization import localization_script
@@ -118,6 +123,7 @@ def prepare_browser_catalogs(destination):
 
 def build_browser(output, registry, retained_package=None):
     """Compose the real browser with opt-in isolated storage, without telemetry."""
+    output = Path(output).resolve()
     assets = files("maimai_intelligence.assets")
     destination = output / PREFIX / "browser"
     with TemporaryDirectory(prefix="browser-package-", dir=output) as temporary:
@@ -158,6 +164,7 @@ def build_browser(output, registry, retained_package=None):
         "player-maishift.js",
         "player-sources.js",
         "player-storage.js",
+        "player-session.js",
         "player-data.js",
         "view-navigation.js",
         "challenge-review.js",
@@ -167,6 +174,11 @@ def build_browser(output, registry, retained_package=None):
         "player-import-help.css",
         *(f"player-import-help.{locale}.html" for locale in ("en", "zh-Hans", "ko", "ja")),
     }
+    graph = json.loads((destination / "browser-assets.json").read_text("utf-8"))
+    allowed.difference_update(graph["replaces"])
+    allowed.update(
+        {"browser-assets.json", "browser-config.json", "browser-shell.html", RESOURCE_FILE}
+    )
     for path in destination.iterdir():
         if path.is_file() and path.name not in allowed:
             path.unlink()
@@ -177,6 +189,24 @@ def build_browser(output, registry, retained_package=None):
         assert integration.resolve().is_relative_to(output)
         shutil.rmtree(integration)
     prepare_browser_catalogs(destination)
+    # Catalog splitting removes the old full-catalog URLs. Bind activating HTML
+    # to the final manifest with the same immutable-resource contract as release.
+    names = {
+        *graph["assets"],
+        "browser-assets.json",
+        "browser-config.json",
+        "browser-shell.html",
+        RESOURCE_FILE,
+        "index.html",
+        *(name for name in STATIC_RESOURCES if (destination / name).is_file()),
+    }
+    manifest = json.loads((destination / "manifest.json").read_bytes())
+    for name, raw in seal_browser_resources(
+        {name: (destination / name).read_bytes() for name in names}, manifest
+    ).items():
+        target = destination / name
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(raw)
 
 
 def build(output, source=None, *, retained_package=None):

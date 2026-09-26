@@ -117,10 +117,21 @@ def build_sdist(sdist_directory, config_settings=None):
             "LICENSE",
             "THIRD_PARTY_NOTICES.md",
             "requirements-dev.txt",
+            "requirements-dev.lock",
+            "requirements-localization.txt",
             ".gitignore",
         )
     ]
-    for directory in ("src", "build_backend", "tests", "scripts", "docs"):
+    for directory in (
+        "src",
+        "build_backend",
+        "tests",
+        "scripts",
+        "docs",
+        "web",
+        "usage-worker",
+        "config",
+    ):
         selected.extend(
             p
             for p in Path(directory).rglob("*")
@@ -130,9 +141,29 @@ def build_sdist(sdist_directory, config_settings=None):
                 "node_modules",
                 "test-results",
                 "playwright-report",
+                ".wrangler",
             }.intersection(p.parts)
-            and p.suffix
-            in {".py", ".json", ".jsonl", ".js", ".mjs", ".css", ".html", ".md", ".toml", ".gz"}
+            and (
+                directory == "src"
+                and p.suffix != ".pyc"
+                or p.suffix
+                in {
+                    ".py",
+                    ".json",
+                    ".jsonc",
+                    ".jsonl",
+                    ".js",
+                    ".mjs",
+                    ".ts",
+                    ".css",
+                    ".html",
+                    ".md",
+                    ".toml",
+                    ".gz",
+                    ".sql",
+                    ".ps1",
+                }
+            )
         )
     with (
         target.open("wb") as stream,

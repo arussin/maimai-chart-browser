@@ -1,18 +1,24 @@
 """Allowlisted browser projection of accepted inventory and optional legacy analysis."""
 
+from __future__ import annotations
+
 import hashlib
 import json
 import unicodedata
 from collections import Counter, defaultdict
+from collections.abc import Mapping, Sequence
 from copy import deepcopy
 from pathlib import Path
+from typing import Any
 
 from maimai_analyzer.dataset import SOURCE_LOCK
 
 from .artwork import copy_artwork, validate_artwork
-from .catalog_loading import PROFILE_FIELDS
+from .catalog_schema import CHART_FIELDS as CHART_FIELDS
+from .catalog_schema import PROFILE_FIELDS
 from .maishift_mapping import SCHEMA as MAISHIFT_SCHEMA
 from .maishift_mapping import validate_mapping as validate_maishift
+from .metadata_policy import BUILTIN_CONTEXT, PolicyContext
 from .metadata_waterfall import project as project_metadata
 from .registry import STATES, digest, resolve, validate
 from .research_overview import validate_overview
@@ -20,15 +26,6 @@ from .research_package import read_package
 from .snapshots import atomic_json, canonical
 
 SCHEMA = "maimai-browser-catalog-2"
-CHART_FIELDS = PROFILE_FIELDS | {
-    "variant_id",
-    "capabilities",
-    "regional",
-    "metadata_region",
-    "legacy_identity",
-    "input_id",
-    "transcription",
-}
 # Stable IDs, display labels and explicit source aliases. Keep browser compatibility
 # in registry-browser.js in sync through tests/fixtures/genre-aliases.json.
 # JP/INTL observations captured 2026-09-17 include fullwidth ampersands and VOCALOID™.
@@ -73,7 +70,7 @@ def genre_label(value):
     return GENRES[genre_id(value)][0]
 
 
-def validate_genres(data):
+def validate_genres(data: dict[str, Any]) -> None:
     """Reject unreviewed categories without rewriting immutable historical catalogs."""
     navigation = data.get("navigation", {})
     charts = navigation.get("charts", {})
@@ -172,8 +169,14 @@ def version_label(code):
     return VERSIONS.get(number // 100 * 100, "SEGA version " + code)
 
 
-def project_registry(value, legacy):
-    validate(value)
+def project_registry(
+    value,
+    legacy,
+    *,
+    search_aliases: Mapping[str, Sequence[str]] | None = None,
+    policy_context: PolicyContext = BUILTIN_CONTEXT,
+):
+    validate(value, policy_context=policy_context)
     profiles = {c["chart_id"]: c for c in legacy.get("catalog", [])}
     observations = defaultdict(dict)
     metrics = defaultdict(list)
@@ -253,7 +256,13 @@ def project_registry(value, legacy):
         if profile and profile.get("version") != "challenge-profile-1-experimental":
             raise ValueError("Selected analysis is not an accepted profile")
         regions, aliases = {}, set(song["metadata"].get("aliases", []))
-        aliases.update(entry["value"] for entry in song.get("search_aliases", []))
+        # Explicit search projections do not participate in accepted registry identity.
+        # Omitted projections retain compatibility with historical enriched registries.
+        aliases.update(
+            search_aliases.get(sid, ())
+            if search_aliases is not None
+            else (entry["value"] for entry in song.get("search_aliases", []))
+        )
         for region in ("JP", "INTL"):
             meta = observations[sid].get((region, "metadata"))
             level = observations[cid].get((region, "level"))
@@ -346,6 +355,8 @@ def project_registry(value, legacy):
             "metadata_region": preferred,
             "capabilities": capabilities,
         }
+        if "title" in song.get("enrichment", {}):
+            row["title_state"] = song["enrichment"]["title"]["state"]
         if profile:
             id_map[profile["chart_id"]] = cid
             row.update(
@@ -481,16 +492,40 @@ def project_registry(value, legacy):
                 }
         art["versions"] = {k: v for k, v in art["versions"].items() if k in versions}
         used = {r["path"] for r in art["songs"].values()} | set(art["versions"].values())
+        used.update(
+            r["path"] for song in art["songs"].values() for r in song.get("regions", {}).values()
+        )
         art["assets"] = {k: v for k, v in art["assets"].items() if k in used}
         validate_artwork(art, data["catalog"], data["navigation"]["versions"])
         data["artwork"] = art
         for row in data["catalog"]:
             if row["song_id"] in art["songs"]:
                 row["capabilities"]["artwork"] = "available"
+    from .enrichment import project_artwork
+
+    artwork = project_artwork(value, data["catalog"], data.get("artwork"))
+    if artwork["songs"] or artwork["versions"]:
+        validate_artwork(artwork, data["catalog"], data["navigation"]["versions"])
+        data["artwork"] = artwork
+        for row in data["catalog"]:
+            if row["song_id"] in artwork["songs"]:
+                row["capabilities"]["artwork"] = "available"
+    outcomes = {
+        cid: {k: outcome[k] for k in ("status", "usable")}
+        for cid, chart in value["charts"].items()
+        if not chart.get("redirect")
+        for provider, outcome in chart.get("enrichment", {}).get("providers", {}).items()
+        if provider == "kamaitachi"
+    }
+    if outcomes:
+        data["coverage"] = {
+            "version": "catalog-coverage-1",
+            "providers": {"kamaitachi": {"charts": outcomes}},
+        }
     return validate_catalog(data)
 
 
-def coverage_report(data):
+def coverage_report(data: dict[str, Any]) -> dict[str, Any]:
     """Report exact inventory and optional capability coverage without source payloads."""
     charts = data["catalog"]
     return {
@@ -515,7 +550,7 @@ def coverage_report(data):
     }
 
 
-def validate_catalog(data):
+def validate_catalog(data: dict[str, Any]) -> dict[str, Any]:
     if data.get("schema_version") != SCHEMA:
         raise ValueError("Unsupported browser inventory schema")
     validate_genres(data)
@@ -546,7 +581,7 @@ def validate_catalog(data):
     return data
 
 
-def _legacy_enrichment(data):
+def _legacy_enrichment(data: dict[str, Any]) -> dict[str, Any]:
     """Recover retained profile identities when a v2 package is reused as enrichment."""
     rows = {c["chart_id"]: c for c in data["catalog"] if c.get("legacy_identity")}
     result = deepcopy(data)
@@ -580,7 +615,17 @@ def _legacy_enrichment(data):
     return result
 
 
-def build_registry_package(value, source, output, *, published=None, additions=None):
+def build_registry_package(
+    value: dict[str, Any],
+    source: Path | str | None,
+    output: Path | str,
+    *,
+    published: dict[str, Any] | None = None,
+    additions: dict[str, Any] | None = None,
+    search_aliases: Mapping[str, Sequence[str]] | None = None,
+    artwork_source: Path | str | None = None,
+    policy_context: PolicyContext = BUILTIN_CONTEXT,
+) -> dict[str, Any]:
     """Adapter retains accepted artifacts; inventory never depends on profile count."""
     if source is None:
         descriptor = {
@@ -665,9 +710,11 @@ def build_registry_package(value, source, output, *, published=None, additions=N
         ):
             invalid.add(selected["legacy_chart_id"])
     legacy["catalog"] = [c for c in legacy["catalog"] if c["chart_id"] not in invalid]
-    data = project_registry(value, legacy)
+    data = project_registry(
+        value, legacy, search_aliases=search_aliases, policy_context=policy_context
+    )
     if "artwork" in data:
-        copy_artwork(data["artwork"], source, output)
+        copy_artwork(data["artwork"], (artwork_source, source), output)
     values = {
         name: json.loads(raw)
         for name, raw in retained.items()
@@ -687,7 +734,9 @@ def build_registry_package(value, source, output, *, published=None, additions=N
         if key in data:
             values[name] = data[key]
     values["browser-metadata.json"] = {
-        k: data[k] for k in ("schema_version", "registry", "legacy_ids", "sources")
+        k: data[k]
+        for k in ("schema_version", "registry", "legacy_ids", "sources", "coverage")
+        if k in data
     }
     entries = []
     for name, entry in sorted(values.items()):

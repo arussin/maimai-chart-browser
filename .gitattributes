@@ -1,2 +1,5 @@
-# Registry manifest digests bind exact file bytes on every platform.
+# Canonical source bytes are portable; wheel contents must match across Windows/Linux.
+* text=auto eol=lf
+
+# Registry manifest digests bind these exact existing file bytes.
 registry/*.json -text

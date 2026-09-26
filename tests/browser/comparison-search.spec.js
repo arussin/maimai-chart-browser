@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.js';
 import AxeBuilder from '@axe-core/playwright';
 
 test('comparison autocomplete starts empty and reaches every chart independently of visible catalog rows',async({page,isMobile})=>{
@@ -61,4 +61,23 @@ test('keyboard autocomplete crosses result batches, dismisses cleanly and remain
   await right.fill('Capacity study 1749');await right.press('ArrowDown');await right.press('Enter');
   await expect(right).toHaveValue('Capacity study 1749');await expect(right).toHaveAttribute('aria-expanded','false');
   await right.press('Tab');await right.focus();await expect(page.locator('#comparison-pickers').getByRole('option')).toHaveCount(0);
+});
+
+
+test('public snapshot restores comparison and similarity choices without retaining player records',async({page})=>{
+  await page.goto('/lab/');await expect(page.locator('#songs .song-row')).toHaveCount(6);
+  await page.locator('#compare-tab').click();
+  for(const [side,title]of [['left','Fictional study 0'],['right','Fictional study 1']]){
+    const input=page.locator('#compare-'+side+'-search');await input.fill(title);await input.press('ArrowDown');await input.press('Enter');
+  }
+  await page.locator('#similar-priority').selectOption('measurements');await page.locator('#similar-use-filters').check();await page.locator('#find-similar').click();
+  const matches=await page.locator('#similar-results [data-compare-chart]').evaluateAll(nodes=>nodes.map(node=>node.dataset.compareChart));expect(matches.length).toBeGreaterThan(0);
+  const snapshot=await page.evaluate(()=>maimaiBrowserState.capture());
+  await page.locator('#comparison-clear').click();await expect(page.locator('#direct-comparison')).toBeEmpty();
+  await page.locator('#similar-priority').selectOption('patterns');await page.locator('#similar-use-filters').uncheck();
+  expect(await page.evaluate(value=>maimaiBrowserState.restore(value),snapshot)).toBe(true);
+  await expect(page.locator('#direct-comparison')).not.toBeEmpty();await expect(page.locator('#compare-left-search')).toHaveValue('Fictional study 0');
+  await expect(page.locator('#similar-priority')).toHaveValue('measurements');await expect(page.locator('#similar-use-filters')).toBeChecked();
+  expect(await page.locator('#similar-results [data-compare-chart]').evaluateAll(nodes=>nodes.map(node=>node.dataset.compareChart))).toEqual(matches);
+  expect(snapshot.personal).not.toHaveProperty('records');expect(snapshot.personal).not.toHaveProperty('sources');
 });

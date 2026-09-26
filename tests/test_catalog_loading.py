@@ -36,6 +36,25 @@ class ProgressiveCatalogTests(unittest.TestCase):
             )
             self.assertEqual(result.returncode, 0, result.stderr)
 
+    @unittest.skipUnless(shutil.which("node"), "Node.js is optional outside browser CI")
+    def test_shared_loader_uses_the_same_identity_integrity_and_retry_contract(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            build_lab(write_package(root / "package"), root / "lab", catalog_version="v1")
+            build_public_release(root / "lab", root / "public")
+            result = subprocess.run(  # noqa: S603
+                [
+                    shutil.which("node"),
+                    str(Path(__file__).with_name("progressive_loader.cjs")),
+                    str(root / "public"),
+                    "--shared",
+                ],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+
     def test_inventory_startup_keeps_regional_choices_without_duplicate_audit_fields(self):
         data = {
             "schema_version": "maimai-browser-catalog-2",

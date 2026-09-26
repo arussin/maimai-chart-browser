@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "locales": {
+    "en": "en",
+    "ja": "ja",
+    "ko": "ko",
+    "zh-hans": "zh-Hans"
+  },
+  "kinds": [
+    "songs",
+    "versions"
+  ]
+}

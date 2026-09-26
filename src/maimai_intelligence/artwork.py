@@ -67,6 +67,25 @@ def validate_artwork(value, catalog, versions):
             raise ValueError("Artwork identity differs from catalog")
         if record["path"] not in assets:
             raise ValueError("Missing public artwork asset")
+        for region, selection in record.get("regions", {}).items():
+            if region not in {"JP", "INTL"} or selection.get("path") not in assets:
+                raise ValueError("Invalid regional public artwork selection")
+            regional = {
+                (
+                    c.get("regional", {})
+                    .get(region, {})
+                    .get("metadata", {})
+                    .get("title", c["title"]),
+                    c.get("regional", {})
+                    .get(region, {})
+                    .get("metadata", {})
+                    .get("artist", c["artist"]),
+                )
+                for c in catalog
+                if c["song_id"] == song_id
+            }
+            if regional != {(selection.get("title"), selection.get("artist"))}:
+                raise ValueError("Regional artwork identity differs from catalog")
     for version, path in value["versions"].items():
         if version not in versions or path not in assets:
             raise ValueError("Invalid version artwork mapping")
@@ -77,7 +96,17 @@ def copy_artwork(value, source, output):
     """Verify every file before publishing; images are served from this site only."""
     pending = []
     for relative, record in value["assets"].items():
-        path = Path(source) / relative
+        roots = source if isinstance(source, (tuple, list)) else (source,)
+        path = next(
+            (
+                Path(root) / relative
+                for root in roots
+                if root is not None and (Path(root) / relative).is_file()
+            ),
+            None,
+        )
+        if path is None:
+            raise ValueError("Public artwork asset unavailable")
         with path.open("rb") as stream:
             raw = stream.read(256 * 1024 + 1)
         if (

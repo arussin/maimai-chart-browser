@@ -56,43 +56,34 @@ def display_readings(songs, entries, reviewed=()):
     return result
 
 
-def song_search_script():
+def song_search_data():
     assets = files("maimai_intelligence.assets")
     aliases = json.loads(assets.joinpath("song-aliases.json").read_text("utf-8"))
-    entries = json.dumps(aliases["entries"], ensure_ascii=False, separators=(",", ":"))
-    # Only title/artist/alias strings enter the script, never provenance URLs.
-    entries = entries.replace("&", "\\u0026").replace("<", "\\u003c").replace(">", "\\u003e")
     multilingual = json.loads(assets.joinpath("song-localizations.json").read_text("utf-8"))
     reviewed = json.loads(assets.joinpath("song-display-readings.json").read_text("utf-8"))
     if reviewed["source_revision"] != aliases["revision"]:
         raise ValueError("Display pronunciations require review against the current alias revision")
-    supplemental = (
-        json.dumps(
-            {
-                sid: sorted({alias["value"] for alias in row["aliases"]})
-                for sid, row in multilingual["songs"].items()
-            },
-            ensure_ascii=False,
-            separators=(",", ":"),
-        )
-        .replace("&", "\\u0026")
-        .replace("<", "\\u003c")
-        .replace(">", "\\u003e")
-    )
-    return (
-        assets.joinpath("song-search.js")
-        .read_text("utf-8")
-        .replace("__MAIMAI_SONG_ALIASES__", entries)
-        .replace("__MAIMAI_MULTILINGUAL_ALIASES__", supplemental)
-        .replace(
-            "__MAIMAI_DISPLAY_READINGS__",
-            json.dumps(
-                display_readings(multilingual["songs"], aliases["entries"], reviewed["entries"]),
-                ensure_ascii=False,
-                separators=(",", ":"),
-            )
-            .replace("&", "\\u0026")
-            .replace("<", "\\u003c")
-            .replace(">", "\\u003e"),
-        )
-    )
+    return {
+        "entries": aliases["entries"],
+        "multilingual": {
+            sid: sorted({alias["value"] for alias in row["aliases"]})
+            for sid, row in multilingual["songs"].items()
+        },
+        "readings": display_readings(
+            multilingual["songs"], aliases["entries"], reviewed["entries"]
+        ),
+    }
+
+
+def song_search_script():
+    data = song_search_data()
+    script = files("maimai_intelligence.assets").joinpath("song-search.js").read_text("utf-8")
+    for placeholder, field in {
+        "__MAIMAI_SONG_ALIASES__": "entries",
+        "__MAIMAI_MULTILINGUAL_ALIASES__": "multilingual",
+        "__MAIMAI_DISPLAY_READINGS__": "readings",
+    }.items():
+        value = json.dumps(data[field], ensure_ascii=False, separators=(",", ":"))
+        value = value.replace("&", "\\u0026").replace("<", "\\u003c").replace(">", "\\u003e")
+        script = script.replace(placeholder, value)
+    return script

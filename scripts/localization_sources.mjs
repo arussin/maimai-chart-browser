@@ -3,6 +3,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {createRequire} from 'node:module';
+import {createLiteralClassifier, isSvgPath} from './localization_literals.mjs';
 const root = path.resolve(process.argv[2] || '.');
 const require = createRequire(path.join(process.env.MAIMAI_NODE_MODULES_ROOT || root, 'tests/browser/package.json'));
 const {parse} = require('acorn');
@@ -45,7 +46,9 @@ for (const name of scripts) {
     for(const raw of values) {
     if(!/[a-zA-Z]/.test(raw) || !(/\s|^[A-Z]/.test(raw)||ui) ||
        parent?.type==='Property'&&parent.key===node) continue;
-    // SVG paths and other compact interpolation protocols carry no UI prose.
+    // Minification folds path templates into literals; neither carries UI prose.
+    if(!ui&&isSvgPath(raw.trim()))continue;
+    // Other compact interpolation protocols carry no UI prose.
     if(node.type==='TemplateLiteral'&&!ui&&!/[a-zA-Z]{2,}\s|\s[a-zA-Z]{2,}/.test(raw))continue;
     const value=raw.trim();
     if (!inventory.has(value)) inventory.set(value,[]);
@@ -61,7 +64,8 @@ if(process.argv.includes('--inventory')) {
     const catalog=JSON.parse(fs.readFileSync(path.join(folder,name),'utf8'));
     return [...Object.keys(catalog.messages||{}),...Object.keys(catalog.invariants||{})];
   }));
-  const missing=[...inventory].filter(([text])=>!known.has(text));
+  const classified=createLiteralClassifier(known);
+  const missing=[...inventory].filter(([text])=>!classified(text));
   for(const [text,locations] of missing) console.error(`${JSON.stringify(text)}: ${locations.join(', ')}`);
   if(missing.length) { console.error('Classify new prose in locales/messages.json and supply all translations.'); process.exitCode=1; }
 }

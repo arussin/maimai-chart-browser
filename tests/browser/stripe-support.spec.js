@@ -1,6 +1,9 @@
-import {test, expect} from '@playwright/test';
+import {browserConfigurationFixture} from './browser-configuration-fixture.mjs';
+import {test, expect} from './fixtures.js';
+test.beforeEach(async({fixtureOrigins})=>{for(const origin of ["https://maimai.party", "https://js.stripe.com", "https://checkout.stripe.com"])fixtureOrigins.synthetic(origin);});
 import AxeBuilder from '@axe-core/playwright';
 import {readFile} from 'node:fs/promises';
+import {createHash} from 'node:crypto';
 import {resolve, extname, sep} from 'node:path';
 import {fileURLToPath} from 'node:url';
 
@@ -28,6 +31,13 @@ document.getElementById('decline').onclick=()=>document.getElementById('result')
 
 async function hosted(context, {enabled = true, failScript = false, failCreate = 0, stallInit = false} = {}) {
   const state = {api: [], external: [], sessions: new Map(), status: 'open', failStatus: false};
+  const configuration=await browserConfigurationFixture(resolve(root,'registry'),value=>({...value,support:{...value.support,enabled,publishableKey:'pk_test_fixture'}}));
+  const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
+  const supportOriginal=await readFile(resolve(root,'registry','support-config.js'));
+  const supportOriginalPath=`browser-resources/${hash(supportOriginal)}.js`;
+  if(!(await readFile(resolve(root,'registry',supportOriginalPath))).equals(supportOriginal))throw Error('Support fixture integrity mismatch');
+  const supportBody=Buffer.from(supportOriginal.toString().replace(/enabled:\s*(?:!0|!1|true|false)/,'enabled:'+enabled).replace(/publishableKey:\s*['"][^'"]*['"]/,"publishableKey:'pk_test_fixture'"));
+  const supportPath=`browser-resources/${hash(supportBody)}.js`;
   await context.route('**/*', async route => {
     const request = route.request(), url = new URL(request.url());
     if (url.hostname !== 'maimai.party') {
@@ -50,14 +60,14 @@ async function hosted(context, {enabled = true, failScript = false, failCreate =
       if (failCreate-- > 0) return route.fulfill({status: 502, json: {error: 'unavailable'}});
       return route.fulfill({json: {status: state.status, session: value.session, clientSecret: 'fixture_client_secret'}});
     }
+    if(url.pathname==='/'+configuration.reference.path)return route.fulfill({contentType:'application/json',body:configuration.body});
+    if(url.pathname==='/'+supportPath||url.pathname==='/support-config.js')return route.fulfill({contentType:'application/javascript',body:supportBody});
     // Serve the actual allowlisted release, including its stricter return page.
     const path = resolve(root, 'registry', '.' + url.pathname + (url.pathname.endsWith('/') ? 'index.html' : ''));
     if (!path.startsWith(resolve(root, 'registry') + sep)) return route.abort();
     try {
       let bytes = await readFile(path);
-      if (url.pathname.endsWith('/support-config.js'))
-        bytes = Buffer.from(bytes.toString().replace(/enabled: (?:true|false)/, 'enabled: ' + enabled)
-          .replace(/publishableKey: '[^']*'/, "publishableKey: 'pk_test_fixture'"));
+      if(extname(path)==='.html')bytes=Buffer.from(configuration.rewriteDocument(bytes).toString().replaceAll('src="'+supportOriginalPath+'"','src="'+supportPath+'"'));
       return route.fulfill({contentType: mime[extname(path)] || 'application/octet-stream', body: bytes});
     } catch { return route.fulfill({status: 404, body: 'Missing fixture'}); }
   });

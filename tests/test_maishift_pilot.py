@@ -1,17 +1,96 @@
 import hashlib
 import json
+import os
 import re
 import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory, gettempdir
 from unittest.mock import patch
 
+from maimai_intelligence.browser_bundle import validate_browser_resources
 from maimai_intelligence.localization import localization_script
 from maimai_intelligence.public_release import MAX_PUBLIC_FILE_BYTES, MAX_PUBLIC_FILES
-from scripts.build_maishift_pilot import build, pilot_headers, prepare_browser_catalogs
+from scripts.build_maishift_pilot import (
+    build,
+    build_browser,
+    pilot_headers,
+    prepare_browser_catalogs,
+)
+from tests.lab_fixture import write_package
 
 
 class MaishiftPilotArtifactTests(unittest.TestCase):
+    def _assert_alias_output_builds(self, output):
+        def fictional_package(_registry, _retained, destination):
+            return write_package(destination)
+
+        with patch("scripts.build_maishift_pilot.build_registry_package", fictional_package):
+            build_browser(output, {})
+        browser = output.resolve() / "pilot/maishift/browser"
+        self.assertTrue((browser / "manifest.json").is_file())
+        self.assertFalse((browser / "integration").exists())
+
+    def test_browser_accepts_unresolved_output_root(self):
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            alias = root / ".." / root.name
+            self.assertNotEqual(alias, root.resolve())
+            self.assertEqual(alias.resolve(), root.resolve())
+            self._assert_alias_output_builds(alias)
+
+    @unittest.skipUnless(os.name == "nt", "Windows short path aliases")
+    def test_browser_accepts_native_windows_short_output_root(self):
+        import ctypes
+
+        with TemporaryDirectory(prefix="maishift-pilot-path-test-") as directory:
+            root = Path(directory)
+            buffer = ctypes.create_unicode_buffer(32768)
+            size = ctypes.windll.kernel32.GetShortPathNameW(str(root), buffer, len(buffer))
+            self.assertGreater(size, 0)
+            self.assertLess(size, len(buffer))
+            alias = Path(buffer.value)
+            if alias == alias.resolve():
+                self.skipTest("Filesystem did not expose a distinct short path alias")
+            self.assertEqual(alias.resolve(), root.resolve())
+            self._assert_alias_output_builds(alias)
+
+    def test_browser_binds_final_pilot_catalog_after_originals_are_removed(self):
+        # Exercise real pilot assembly with a small fictional research package.
+        def fictional_package(_registry, _retained, destination):
+            return write_package(destination)
+
+        with TemporaryDirectory() as directory:
+            output = Path(directory)
+            with patch("scripts.build_maishift_pilot.build_registry_package", fictional_package):
+                build_browser(output, {})
+            browser = output / "pilot/maishift/browser"
+            html = (browser / "index.html").read_text("utf-8")
+            descriptor = re.search(
+                r'<script type="application/json" id="browser-resources">([^<]+)</script>',
+                html,
+            )
+            self.assertIsNotNone(descriptor)
+            resources = validate_browser_resources(json.loads(descriptor[1])).record()
+            for role, ref in resources.items():
+                if role == "version":
+                    continue
+                if ref is None:
+                    continue
+                raw = (browser / ref["path"]).read_bytes()
+                self.assertEqual(len(raw), ref["bytes"])
+                self.assertEqual(hashlib.sha256(raw).hexdigest(), ref["sha256"])
+            bound = json.loads((browser / resources["catalog"]["path"]).read_bytes())
+            manifest = json.loads((browser / "manifest.json").read_bytes())
+            self.assertEqual(bound, manifest)
+            self.assertEqual(
+                json.loads((browser / "browser-resources.json").read_bytes()), resources
+            )
+            for entry in bound["releases"]:
+                self.assertNotIn("integration", entry)
+                self.assertFalse((browser / entry["path"]).exists())
+                self.assertTrue((browser / entry["startup"]["path"]).is_file())
+                self.assertTrue(all((browser / ref["path"]).is_file() for ref in entry["parts"]))
+
     def test_rich_inventory_keeps_progressive_startup_within_hosting_budget(self):
         # Scaled production shape: audit fields must not force the loader back
         # to a full catalog download when the browsing projection fits.
@@ -222,7 +301,16 @@ class MaishiftPilotArtifactTests(unittest.TestCase):
             self.assertIn("/pilot/maishift/index.html\n  Content-Security-Policy:", headers)
             browser = output / "pilot/maishift/browser"
             browser_html = (browser / "index.html").read_text("utf-8")
-            self.assertIn('src="maishift-browser-pilot.js?', browser_html)
+            configuration = json.loads((browser / "browser-config.json").read_text("utf-8"))
+            self.assertTrue(configuration["pilot"])
+            self.assertTrue(configuration["features"]["maishift"])
+            for script in re.findall(r'<script[^>]+src="([^"?]+)', browser_html):
+                self.assertTrue((browser / script).is_file(), script)
+            graph = json.loads((browser / "browser-assets.json").read_text("utf-8"))
+            self.assertIn(
+                'type="module" data-maimai-browser src="' + graph["entries"]["hosted"], browser_html
+            )
+            self.assertNotIn('src="usage.js', browser_html)
             self.assertNotIn('src="analytics.js', browser_html)
             self.assertNotIn('src="feature-announcements.js', browser_html)
             self.assertNotIn('src="support-', browser_html)
@@ -271,9 +359,7 @@ class MaishiftPilotArtifactTests(unittest.TestCase):
                 self.assertIn('id="session-report"', help_html)
                 self.assertIn('id="maishift"', help_html)
                 self.assertNotIn("<script", help_html)
-            self.assertNotIn(
-                "function seen(id)", (browser / "challenge-review.js").read_text("utf-8")
-            )
+            self.assertFalse((browser / "challenge-review.js").exists())
             with self.assertRaisesRegex(ValueError, "never overwrite"):
                 build(output)
 

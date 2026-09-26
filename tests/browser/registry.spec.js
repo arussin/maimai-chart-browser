@@ -1,4 +1,5 @@
-import {test,expect} from '@playwright/test';
+import {mockBrowserJSONResource} from './browser-configuration-fixture.mjs';
+import {test,expect} from './fixtures.js';
 
 // Existing control tests exercise the remembered-open state. Disclosure tests
 // below separately cover first visits and persistence across pages.
@@ -320,15 +321,17 @@ test('unreviewed historical genres fail before normalization changes any data',a
   for(const result of results){expect(result.error).toBe('This catalog contains an unrecognized genre and needs review.');expect(result.unchanged).toBe(true);}
 });
 
-test('an unreviewed catalog shows a localized error instead of publishing genre options',async({page})=>{
+for(const inventory of ['shared','legacy'])test('an unreviewed '+inventory+' catalog shows a localized error instead of publishing genre options',async({page})=>{
   const manifest=await(await page.request.get('/registry/manifest.json')).json();
   const entry=manifest.releases.find(r=>r.version==='duplicate-genres-fixture');
-  const data=await(await page.request.get('/registry/'+entry.startup.path)).json();
+  const reference=inventory==='shared'?'startup_shared':'startup';
+  if(inventory==='legacy')delete entry.startup_shared;
+  const data=await(await page.request.get('/registry/'+entry[reference].path)).json();
   data.navigation.genres.push({id:'sega:Future category',label:'Future category'});
   const bytes=Buffer.from(JSON.stringify(data)),sha=createHash('sha256').update(bytes).digest('hex');
-  entry.startup={path:'catalog-index/'+sha+'.json',sha256:sha,bytes:bytes.length};
-  await page.route('**/registry/manifest.json',route=>route.fulfill({json:manifest}));
-  await page.route('**/registry/'+entry.startup.path,route=>route.fulfill({body:bytes,contentType:'application/json'}));
+  entry[reference]={path:'catalog-index/'+sha+'.json',sha256:sha,bytes:bytes.length};
+  await mockBrowserJSONResource(page,'catalog',()=>manifest);
+  await page.route('**/registry/'+entry[reference].path,route=>route.fulfill({body:bytes,contentType:'application/json'}));
   await page.goto('/registry/?version=duplicate-genres-fixture');
   const messages={en:'This catalog contains an unrecognized genre and needs review.','zh-Hans':'此曲目目录包含未识别的曲风分类，需要审核。',ko:'이 곡 목록에 알 수 없는 장르가 포함되어 있어 검토가 필요합니다.',ja:'この楽曲カタログには未対応のジャンルが含まれているため、確認が必要です。'};
   for(const [locale,message]of Object.entries(messages)){
@@ -346,10 +349,7 @@ test('clean catalog URLs follow a changed manifest default on reload without acq
   await expect(page.locator('#catalog-count')).toHaveText('26 charts');
   expect(new URL(page.url()).searchParams.has('version')).toBe(false);
   await expect(page.locator('#filter-genre option[value="東方Project"]')).toHaveCount(0);
-  await page.route('**/registry/manifest.json',async route=>{
-    const response=await route.fetch(),manifest=await response.json();manifest.default='duplicate-genres-fixture';
-    await route.fulfill({response,json:manifest});
-  });
+  await mockBrowserJSONResource(page,'catalog',manifest=>({...manifest,default:'duplicate-genres-fixture'}));
   await page.reload();await expect(page.locator('#filter-genre option[value="東方Project"]')).toHaveCount(1);
   expect(new URL(page.url()).searchParams.has('version')).toBe(false);
 });
@@ -367,15 +367,8 @@ test('explicit historical URLs stay pinned and Open latest removes only the vers
   await expect(page.locator('#search')).toHaveValue('fixture');
 });
 
-test('regional availability filters rows, counts, comparison eligibility and chips independently of metadata',async({page})=>{
-  // Observe the comparison component's public eligibility callback, not its search picker
-  // (direct pair selection intentionally allows all charts).
-  await page.addInitScript(()=>{
-    let comparison;
-    Object.defineProperty(window,'maimaiChartComparison',{configurable:true,get:()=>comparison,set:value=>{
-      comparison={...value,mount(options){window.testEligibleIds=options.eligibleIds;return value.mount(options);}};
-    }});
-  });
+test('regional availability filters rows, counts and chips independently of metadata',async({page})=>{
+  // Similar-search filter eligibility is exercised through rendered results in standalone.spec.js.
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   const remote=[];page.on('request',r=>{if(!r.url().startsWith('http://127.0.0.1:'))remote.push(r.url());});
   await page.goto('/registry/');await expect(page.locator('#catalog-count')).toHaveText('26 charts');
@@ -387,13 +380,10 @@ test('regional availability filters rows, counts, comparison eligibility and chi
   await preference.uncheck();await region.locator('[data-region="JP"]').click();
   await expect(page.locator('#catalog-count')).toHaveText('16 charts');await expect(jp).toBeVisible();await expect(intl).toHaveCount(0);
   await expect(preference).not.toBeChecked();await expect(page.locator('#catalog-filter-count')).toHaveText('1 active');
-  expect(await page.evaluate(()=>testEligibleIds().length)).toBe(16);
   await region.locator('[data-region="INTL"]').click();await expect(preference).toBeChecked();
   await expect(page.locator('#catalog-count')).toHaveText('8 charts');await expect(intl).toBeVisible();await expect(jp).toHaveCount(0);
   expect((await page.locator('#catalog-count').boundingBox()).height).toBeGreaterThan(10);
   await expect(page.locator('#songs')).toContainText('Soteria fixture');await expect(page.locator('#catalog-filter-count')).toHaveText('2 active');
-  expect(await page.evaluate(()=>testEligibleIds().length)).toBe(8);
-  expect(await page.evaluate(()=>testEligibleIds().every(id=>maimaiResearchCatalog.catalog.find(c=>c.chart_id===id).regional.INTL.listing==='listed'))).toBe(true);
   await preference.uncheck();await expect(region.locator('[aria-checked="true"]')).toHaveAttribute('data-region','INTL');await expect(page.locator('#catalog-count')).toHaveText('8 charts');await expect(page.locator('#songs')).toContainText('ソテリア');
   for(const value of ['JP','']){
     await region.locator('[data-region="INTL"]').click();await expect(preference).toBeChecked();
@@ -407,7 +397,6 @@ test('regional availability filters rows, counts, comparison eligibility and chi
   await expect(region.locator('[aria-checked="true"]')).toHaveAttribute('data-region','');await expect(preference).not.toBeChecked();await expect(page.locator('#catalog-count')).toHaveText('26 charts');await expect(page.locator('#songs')).toContainText('ソテリア');
   await region.locator('[data-region="INTL"]').click();await page.locator('#reset-filters').click();
   await expect(region.locator('[aria-checked="true"]')).toHaveAttribute('data-region','');await expect(preference).not.toBeChecked();await expect(page.locator('#catalog-filter-count')).toBeEmpty();await expect(page.locator('#active-filters')).toBeEmpty();
-  expect(await page.evaluate(()=>testEligibleIds().length)).toBe(26);
   expect(await page.evaluate(()=>[undefined,'unknown','not_observed_in_latest_capture','listed'].map(listing=>maimaiRegistryBrowser.matchesRegion({regional:{JP:{listing}}},'JP')))).toEqual([false,false,false,true]);
   expect(errors).toEqual([]);expect(remote).toEqual([]);
 });
@@ -432,6 +421,7 @@ for(const width of [280,320,1280])for(const locale of ['en','zh-Hans','ko','ja']
 test('availability segments support radio keyboard navigation and place metadata on the right',async({page})=>{
   await page.setViewportSize({width:1280,height:900});await page.goto('/registry/');
   const radios=page.locator('#filter-region [role=radio]');
+  await expect(radios.nth(0)).toBeVisible();
   await radios.nth(0).focus();await radios.nth(0).press('ArrowRight');
   await expect(radios.nth(1)).toBeFocused();await expect(radios.nth(1)).toHaveAttribute('aria-checked','true');
   await radios.nth(1).press('End');await expect(radios.nth(2)).toBeFocused();await expect(page.locator('#use-international-data')).toBeChecked();

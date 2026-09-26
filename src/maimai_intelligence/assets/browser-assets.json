@@ -1,0 +1,49 @@
+{
+  "version": 1,
+  "tool": "esbuild-0.28.2",
+  "entries": {
+    "hosted": "browser/browser-entry-47Q5V7BP.js",
+    "offline": "browser/browser-offline-ICGS6ER7.js"
+  },
+  "assets": {
+    "browser/browser-entry-47Q5V7BP.js": {
+      "sha256": "174a80c7e740e30dfc8f7367ea2050718b02426e0b320d2c369635857545309c",
+      "bytes": 21123
+    },
+    "browser/application-5IVOJ4LX.js": {
+      "sha256": "2f69030b1a958496781acd41ea1aa026d19ffa4a56d76f2e35303607b8b84414",
+      "bytes": 223888
+    },
+    "browser/chunk-PQOHL5MV.js": {
+      "sha256": "c25d9c5050a2d5c3134eefe35d0504e5a3bb13809038eccb822eee8f37879f44",
+      "bytes": 2611
+    },
+    "browser/browser-offline-ICGS6ER7.js": {
+      "sha256": "0ada425caaa28c6b47f386f30ceb4eb0fe5fa37821fb4bce5b6694e66c025777",
+      "bytes": 242776
+    }
+  },
+  "replaces": [
+    "settings-menu.js",
+    "player-import-config.js",
+    "player-ranges.js",
+    "player-data-core.js",
+    "player-maishift.js",
+    "player-sources.js",
+    "player-storage.js",
+    "player-session.js",
+    "player-data.js",
+    "usage.js",
+    "seo-navigation.js",
+    "feature-announcements.js",
+    "analytics.js",
+    "catalog-query.js",
+    "view-navigation.js",
+    "challenge-review.js",
+    "lab-loader.js"
+  ],
+  "preloads": [
+    "browser/application-5IVOJ4LX.js",
+    "browser/chunk-PQOHL5MV.js"
+  ]
+}

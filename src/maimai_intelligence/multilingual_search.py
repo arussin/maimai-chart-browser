@@ -5,6 +5,8 @@ SEGA title_kana is often a sorting key with voicing removed. Its derived forms
 are explicitly approximate; an authored pronunciation overrides it completely.
 """
 
+from __future__ import annotations
+
 import gzip
 import hashlib
 import json
@@ -14,6 +16,7 @@ from collections import Counter, defaultdict
 from copy import deepcopy
 from functools import lru_cache
 from importlib.resources import files
+from typing import Any
 
 from .provider_mapping import normalized
 from .registry import resolve
@@ -317,7 +320,9 @@ def default_overrides():
     )
 
 
-def compile_aliases(registry, *, overrides=None):
+def compile_aliases(
+    registry: dict[str, Any], *, overrides: dict[str, Any] | None = None
+) -> dict[str, Any]:
     """Never reconcile identity here. Unknown override IDs/identities are errors."""
     bundled = overrides is None
     overrides = default_overrides() if bundled else overrides
@@ -489,7 +494,7 @@ def compile_aliases(registry, *, overrides=None):
     }
 
 
-def enrich_registry(registry, *, overrides=None):
+def enrich_registry(registry, *, overrides=None) -> tuple[dict[str, Any], dict[str, Any]]:
     artifact = compile_aliases(registry, overrides=overrides)
     result = deepcopy(registry)
     for sid, record in artifact["songs"].items():

@@ -99,6 +99,25 @@ observation details while keeping every field needed by the data preference.
 Use Wrangler rather than the dashboard uploader, whose 1,000-file limit is too
 small for retained history. Cloudflare documents [Direct Upload and its limits](https://developers.cloudflare.com/pages/get-started/direct-upload/).
 
+A larger composition is permitted only through the existing owner-reviewed
+capacity interface, after actual entitlement, price and the supported upload
+method are verified. `read_capacity_review(path, reviewed_sha256)` binds all three
+evidence files and rejects reviews older than 24 hours or dated in the future.
+The fixed reviewed profile permits up to 100,000 files; the per-file limit remains
+25 MiB. A numeric override cannot opt into that profile. Review evidence and
+fictional test fixtures are never publication authorization.
+
+Pass the returned review to `plan_release_composition` as capacity, together
+with an explicit aware `capacity_checked_at` from the caller's clock. Pass that
+same review to `assemble_release(capacity=...)`. The pure planner detaches and
+binds the complete authority; the assembly adapter rejects another review,
+rechecks freshness before writing and before its private completion receipt.
+The completion records the selected profile and evidence digests. Omit the
+review for the unchanged 20,000-file default. Optional numeric limits can only
+tighten the selected profile. A deliberately nondeployable review bundle remains
+the correct output while owner evidence is unavailable; never use test approvals
+to turn one into a release.
+
 ## Publish an update
 
 Use Wrangler 4.131.1 from the official npm registry, authenticated as the

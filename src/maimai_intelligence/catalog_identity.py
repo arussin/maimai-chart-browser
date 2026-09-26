@@ -4,16 +4,10 @@ import json
 import re
 from functools import lru_cache
 from importlib.resources import files
+from typing import Any
 
-from .provider_mapping import normalized
-
-
-def label(value):
-    # Spaces and typographic quote styles do not identify editions or artists.
-    # Keep all words, numbers, brackets and edition suffixes.
-    return "".join(normalized(value).split()).translate(
-        str.maketrans({"‘": "'", "’": "'", "“": '"', "”": '"'})
-    )
+from .identity_policy import label as label
+from .identity_policy import normalized
 
 
 @lru_cache(maxsize=1)
@@ -23,7 +17,7 @@ def rules():
     )
 
 
-def discovery_labels(row):
+def discovery_labels(row: dict[str, Any]) -> set[str]:
     title = normalized(row["title"])
     # Discovery hints only: the fetched page must still prove the full identity.
     hints = {title, *row.get("aliases", [])}
@@ -48,7 +42,7 @@ def identity(row):
     return result
 
 
-def key(row):
+def key(row: dict[str, Any]) -> tuple[str, str, str, str]:
     row = identity(row)
     return (
         label(row["title"]),

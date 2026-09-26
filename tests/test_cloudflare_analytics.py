@@ -1,3 +1,5 @@
+import hashlib
+import json
 import tempfile
 import unittest
 from html.parser import HTMLParser
@@ -33,7 +35,7 @@ class PagePolicy(HTMLParser):
 
 
 class CloudflareAnalyticsTests(unittest.TestCase):
-    def assert_native_policy(self, html, *, report_sources=False):
+    def assert_replacement_policy(self, html, *, report_sources=False):
         page = PagePolicy(html)
         self.assertEqual(len(page.policies), 1)
         policy = page.policies[0]
@@ -42,7 +44,6 @@ class CloudflareAnalyticsTests(unittest.TestCase):
             [
                 "'self'",
                 GA_SCRIPT,
-                CF_ORIGIN,
                 "https://js.stripe.com",
                 "https://*.js.stripe.com",
                 "https://checkout.stripe.com",
@@ -55,13 +56,13 @@ class CloudflareAnalyticsTests(unittest.TestCase):
                 *(["https:"] if report_sources else []),
                 "https://www.google-analytics.com",
                 "https://region1.google-analytics.com",
-                "https://cloudflareinsights.com/cdn-cgi/rum",
                 "https://api.stripe.com",
                 "https://checkout.stripe.com",
                 "https://link.com",
                 "https://*.link.com",
             ],
         )
+        self.assertNotIn(CF_ORIGIN, policy["script-src"])
         self.assertEqual(policy["default-src"], ["'none'"])
         self.assertEqual(policy["object-src"], ["'none'"])
         self.assertEqual(policy["base-uri"], ["'none'"])
@@ -71,9 +72,9 @@ class CloudflareAnalyticsTests(unittest.TestCase):
         self.assertFalse(any("stripe.com" in src for src in page.scripts))
         self.assertIn('name="referrer" content="no-referrer"', html)
 
-    def test_site_template_permits_only_native_collection_without_installing_a_tag(self):
+    def test_site_template_retires_beacon_without_changing_ga_or_checkout(self):
         html = files("maimai_intelligence.assets").joinpath("index.html").read_text("utf-8")
-        self.assert_native_policy(html)
+        self.assert_replacement_policy(html)
 
     def test_generated_lab_and_public_release_preserve_ga_and_redirect_boundaries(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -81,30 +82,45 @@ class CloudflareAnalyticsTests(unittest.TestCase):
             source = write_package(root / "package")
             preview = root / "preview"
             build_lab(source, preview, catalog_version="fixture-v1")
-            self.assert_native_policy(
+            self.assert_replacement_policy(
                 (preview / "index.html").read_text("utf-8"), report_sources=True
             )
             published = root / "public"
             build_public_release(preview, published)
-            self.assert_native_policy(
+            self.assert_replacement_policy(
                 (published / "index.html").read_text("utf-8"), report_sources=True
             )
-            # Asset builds normalize platform newlines; compare complete source text.
-            original = (
-                files("maimai_intelligence.assets").joinpath("analytics.js").read_text("utf-8")
-            )
-            self.assertEqual((preview / "analytics.js").read_text("utf-8"), original)
-            self.assertEqual((published / "analytics.js").read_text("utf-8"), original)
+            # The hosted application uses the verified module closure, with no
+            # standalone analytics script inserted by either builder.
+            graph = json.loads((preview / "browser-assets.json").read_text("utf-8"))
+            entry = graph["entries"]["hosted"]
+            for path, reference in graph["assets"].items():
+                original = (preview / path).read_bytes()
+                self.assertEqual(hashlib.sha256(original).hexdigest(), reference["sha256"])
+                self.assertEqual(len(original), reference["bytes"])
+                self.assertEqual((published / path).read_bytes(), original)
+            for directory in (preview, published):
+                scripts = PagePolicy((directory / "index.html").read_text("utf-8")).scripts
+                self.assertTrue(any(src.split("?")[0].lstrip("/") == entry for src in scripts))
+                self.assertFalse(any(src.split("?")[0].endswith("analytics.js") for src in scripts))
             redirect = PagePolicy((published / "lab/index.html").read_text("utf-8"))
             self.assertEqual(redirect.policies[0]["script-src"], ["'self'"])
             self.assertEqual(redirect.scripts, ["/lab-redirect.js"])
             checkout_return = PagePolicy((published / "support-return.html").read_text("utf-8"))
             self.assertEqual(checkout_return.policies[0]["script-src"], ["'self'"])
             self.assertEqual(checkout_return.policies[0]["connect-src"], ["'self'"])
-            self.assertEqual(
-                checkout_return.scripts,
-                ["localization.js", "support-config.js", "support-client.js", "support-return.js"],
-            )
+            expected_scripts = []
+            for logical in (
+                "localization.js",
+                "support-config.js",
+                "support-client.js",
+                "support-return.js",
+            ):
+                original = (published / logical).read_bytes()
+                immutable = f"browser-resources/{hashlib.sha256(original).hexdigest()}.js"
+                self.assertEqual((published / immutable).read_bytes(), original)
+                expected_scripts.append(immutable)
+            self.assertEqual(checkout_return.scripts, expected_scripts)
             self.assertNotIn("support-worker", str(list(published.rglob("*"))))
             self.assertIn(
                 "Referrer-Policy: no-referrer", (published / "_headers").read_text("utf-8")
