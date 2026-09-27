@@ -1,14 +1,16 @@
 import {browserResourceURL} from './browser-configuration-fixture.mjs';
 import {test,expect} from './fixtures.js';
+import {mountRegistryPage} from './registry-page-mount.mjs';
 import {readFile} from 'node:fs/promises';
 import {gzipSync} from 'node:zlib';
 
 // Synthetic corpus only. Every request stays on the isolated loopback fixture server.
+const mounts=new WeakMap();
 test.beforeEach(async({page,baseURL})=>{
- await page.route('**/*',async route=>{const url=new URL(route.request().url());if(url.origin!==baseURL){await route.abort();return;}const response=await route.fetch({url:baseURL+'/registry'+url.pathname+url.search});await route.fulfill({response});});
+ mounts.set(page,await mountRegistryPage(page,baseURL));
 });
-// Complete fixture responses before Playwright disposes their request context.
-test.afterEach(async({page})=>{await page.unrouteAll({behavior:'wait'});});
+// Keep remapping installed until the page stops requesting, then finish API fetches.
+test.afterEach(async({page})=>{await mounts.get(page)?.close();});
 for(const locale of ['en','ja','ko','zh-hans'])for(const width of [320,768,1280]){
  test('direct song workspace '+locale+' '+width,async({page,request},testInfo)=>{
   const errors=[];page.on('pageerror',error=>errors.push(error.message));
