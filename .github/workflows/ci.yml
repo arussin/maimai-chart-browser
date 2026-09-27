@@ -4,10 +4,21 @@ on:
     branches: [main]
   pull_request:
   workflow_dispatch:
+    inputs:
+      corpus_726:
+        description: 'Optional frozen726 proof; off runs ordinary CI'
+        type: choice
+        options: [off, capacity, full]
+        default: off
+      corpus_packet_url:
+        description: 'Approved public packet URL; required only for full mode'
+        type: string
+        required: false
 permissions:
   contents: read
 jobs:
   python:
+    if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.corpus_726 != 'off') }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 10
     strategy:
@@ -38,6 +49,7 @@ jobs:
       - run: python scripts/prepare_multilingual_search.py --registry registry --output src/maimai_intelligence/assets/song-localizations.json --check
       - run: maimai-chart demo --output output/site
   browser:
+    if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.corpus_726 != 'off') }}
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     strategy:
@@ -137,7 +149,7 @@ jobs:
   browser-required:
     name: browser
     needs: browser
-    if: always()
+    if: ${{ always() && !(github.event_name == 'workflow_dispatch' && inputs.corpus_726 != 'off') }}
     runs-on: ubuntu-24.04
     timeout-minutes: 1
     steps:
@@ -147,6 +159,7 @@ jobs:
         run: test "$BROWSER_RESULT" = success
 
   compatibility:
+    if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.corpus_726 != 'off') }}
     name: Pinned reciprocal contract and reproducibility
     runs-on: ${{ matrix.os }}
     timeout-minutes: 20
@@ -221,6 +234,7 @@ jobs:
           retention-days: 14
 
   cross-os-artifacts:
+    if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.corpus_726 != 'off') }}
     name: Compare Linux and Windows wheel contents
     needs: compatibility
     runs-on: ubuntu-24.04
@@ -241,3 +255,68 @@ jobs:
           assert left['builds'][0]['wheel_entries']==right['builds'][0]['wheel_entries']
           print('Linux and Windows wheel member hashes match; each local archive reproduction passed.')
           PY
+
+  corpus-726:
+    name: Frozen726 corpus capacity or full proof
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.corpus_726 != 'off' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 210
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+      CORPUS_MODE: ${{ inputs.corpus_726 }}
+      CORPUS_PACKET_URL: ${{ inputs.corpus_packet_url }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          ref: 726e5466960fa076f76a46f2b89ac462e910b33f
+          path: registry
+          persist-credentials: false
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          ref: ${{ github.sha }}
+          path: toolkit
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: '3.11.14'
+      - name: Bind frozen product and reviewed toolkit separately
+        id: provenance
+        run: >-
+          python -B toolkit/.github/corpus-726/ci-proof-726.py provenance
+          --source registry --toolkit toolkit --output "$RUNNER_TEMP"
+      - name: Existing canonical Linux acquisition and package proof
+        timeout-minutes: 20
+        run: >-
+          python -B registry/scripts/run_canonical_reproduction.py
+          --source registry --toolkit registry --output "$RUNNER_TEMP/reproduction"
+      - name: Require the exact frozen726 canonical source and Linux wheel
+        run: python -B toolkit/.github/corpus-726/ci-proof-726.py package --output "$RUNNER_TEMP"
+      - name: Measure full input and pair capacity before any corpus download
+        run: python -B toolkit/.github/corpus-726/ci-proof-726.py capacity --output "$RUNNER_TEMP"
+      - name: Acquire exact public corpus inputs after approved disclosure
+        if: inputs.corpus_726 == 'full'
+        timeout-minutes: 45
+        run: >-
+          python -B toolkit/.github/corpus-726/consume-726.py acquire
+          --wheel "$RUNNER_TEMP/reproduction/proof/first/artifacts/maimai_chart_intelligence-0.2.0-py3-none-any.whl"
+          --packet-url "$CORPUS_PACKET_URL" --output "$RUNNER_TEMP/corpus-input-726"
+      - name: Two clean offline complete preparations and public review renders
+        if: inputs.corpus_726 == 'full'
+        timeout-minutes: 125
+        run: >-
+          python -B toolkit/.github/corpus-726/consume-726.py run
+          --acquired "$RUNNER_TEMP/corpus-input-726" --output "$RUNNER_TEMP/corpus-pair-726"
+      - name: Retain bounded proof metadata and every reported difference
+        if: ${{ always() && steps.provenance.outcome == 'success' }}
+        timeout-minutes: 5
+        run: python -B toolkit/.github/corpus-726/ci-proof-726.py retain --output "$RUNNER_TEMP"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: ${{ always() && steps.provenance.outcome == 'success' }}
+        with:
+          name: corpus-726-${{ inputs.corpus_726 }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/corpus-proof-726.zip
+            ${{ runner.temp }}/corpus-proof-726-retention.json
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 14

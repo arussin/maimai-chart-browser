@@ -1,0 +1,84 @@
+{
+  "schema": "maimai-linux-retained-corpus-inputs-2",
+  "source_commit": "726e5466960fa076f76a46f2b89ac462e910b33f",
+  "image": "python:3.11.14-slim-bookworm@sha256:83f339c1be6340ae1096010fdccf6552ac932d8f410d45d206014916bdf37e48",
+  "platform": "linux/amd64",
+  "python": "3.11.14",
+  "inputs": {
+    "registry": {
+      "kind": "tree",
+      "files": 7,
+      "bytes": 81860010,
+      "inventory_sha256": "2891191823999e5e13392fadf2b315318ed6490b42b70cc9a5a84b3264b0a30b"
+    },
+    "package": {
+      "kind": "tree",
+      "files": 1602,
+      "bytes": 82338433,
+      "inventory_sha256": "345e30f32541a472563437d55164aefe58cf05959310cfc4f86e75671018bee7"
+    },
+    "previous-browser": {
+      "kind": "tree",
+      "files": 1472,
+      "bytes": 609876617,
+      "inventory_sha256": "c0dd306db0153fb650a410f8313e7f593918d4f22b6c15ff611fdb83029dcd04"
+    },
+    "previous-public": {
+      "kind": "tree",
+      "files": 15896,
+      "bytes": 964116156,
+      "inventory_sha256": "0c860b8e6df8529d17cb15cce619d2ae24ca0dbfc5417e0b11da79bde244c3ef"
+    },
+    "wheel": {
+      "kind": "file",
+      "bytes": null,
+      "sha256": "10ea126d46cfd41d39da1bb669f0329a46324b0093447d407ff199a1e0e84cd1"
+    },
+    "reviews": {
+      "kind": "file",
+      "bytes": 904,
+      "sha256": "6595688a8e8307748acb82a0802047324b0d9d75aa2c81f59bce8e16f3e166bf"
+    }
+  },
+  "inventory_algorithm": "sha256 of UTF-8 json.dumps(relative_posix_name_to_bytes_and_sha256, sort_keys=True, separators=(',', ':'))",
+  "total_input_bytes": null,
+  "allocation": {
+    "per_attempt_max_bytes": 4294967296,
+    "pair_receipt_reserve_bytes": 134217728,
+    "free_reserve_bytes": 32212254720,
+    "ordinary_guard_bytes": 21474836480
+  },
+  "expected_public_files": null,
+  "capacity": {
+    "profile": "pages-default",
+    "max_files": 20000
+  },
+  "dependency_scope": "Wheel declares no Requires-Dist. Retained offline artwork migration verifies accepted bytes; Pillow is used only for new thumbnail conversion. No online, replay or reassessment is requested. Missing optional imports must fail, never install implicitly.",
+  "local_authority": {
+    "name": "attempt.json",
+    "sha256": "617131b2159dc7100e889650f332589ef9434d605021f21b9b11ade627e4d857"
+  },
+  "exclusions": [
+    "raw captures",
+    "source/quarantine containers",
+    "private player inputs",
+    "credentials and Access sessions",
+    "account receipts",
+    "D1 and owner reports",
+    "dependency caches",
+    "operational logs"
+  ],
+  "acceptance_mode": "derived-count-with-exact-corpus-and-closure",
+  "current_authority": {
+    "ci_run": 36285343924,
+    "linux_proof_artifact_sha256": "03dbba91250f4ed69c7574de30bd147079c41dd72992d86fd19acd01126a9b7a",
+    "wheel_bytes_measured_after_exact_sha_verification": true,
+    "preparation_counts": {
+      "charts": 7251,
+      "public_songs": 1694,
+      "accepted_songs": 1765,
+      "artwork": 1561
+    },
+    "canonical_registry_sha256": "a6fc949ec76c98106a7444284233a88150d294ec980416acc2b5b54f1f490920"
+  }
+}
