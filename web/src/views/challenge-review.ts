@@ -1,4 +1,5 @@
 import { createChartCard } from '../components/chart-card';
+import { selectCatalogRows } from '../domain/catalog-row-selection';
 import { PositionRestorer } from '../runtime/position';
 import { effectiveSortRules } from '../runtime/browser-state';
 import type { CatalogChart, PublicCatalog } from '../runtime/catalog';
@@ -132,6 +133,7 @@ export function createChallengeReview(ports: ReviewPorts) {
 
   function selectView(name: Tab, preservePattern = false) {
     ports.views.show(name, preservePattern);
+    if (!new URLSearchParams(location.search).get('chart')) state.focusChart(null);
     ports.patternLibrary.stop();
     if (name === 'catalog') catalog();
     else if (name === 'compare') comparisonUI?.render();
@@ -589,13 +591,14 @@ export function createChallengeReview(ports: ReviewPorts) {
     const rows = charts
       .map((chart) => ({ key: chart.chart_id, chart }))
       .sort((a, b) => compareCharts(a.chart, b.chart, rules));
-    if (focusKey) {
-      state.selectedCharts.delete(focusKey);
-      state.visible = Math.max(state.visible, rows.findIndex((row) => row.key === focusKey) + 1);
-    }
+    if (focusKey) state.selectedCharts.delete(focusKey);
+    const selectedRows = selectCatalogRows(rows, state.visible, state.focusedChart);
     el('songs').replaceChildren();
     activeFilters();
-    for (const [index, { key, chart }] of rows.slice(0, state.visible).entries()) {
+    for (const {
+      index,
+      row: { key, chart },
+    } of selectedRows) {
       const choices = grouped.get(rowKey(chart))!;
       const selected = choices.find((c) => c.chart_id === state.selectedCharts.get(key));
       if (!selected) state.selectedCharts.delete(key);
@@ -640,7 +643,7 @@ export function createChallengeReview(ports: ReviewPorts) {
           'empty-state',
         ),
       );
-    el('more').hidden = rows.length <= state.visible;
+    el('more').hidden = rows.length <= selectedRows.length;
   }
 
   el('search').oninput = (event) => {
@@ -737,6 +740,7 @@ export function createChallengeReview(ports: ReviewPorts) {
   function applyRoute() {
     const p = new URLSearchParams(location.search),
       id = ports.registry.resolve(data, p.get('chart') ?? '');
+    state.focusChart(p.get('view') === 'catalog' ? id : null);
     if (id && p.get('view') === 'catalog') {
       const c = byId.get(id);
       if (c) {

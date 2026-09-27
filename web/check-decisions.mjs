@@ -6,6 +6,7 @@ for (const [folder, name] of [
   ['domain', 'artwork'],
   ['domain', 'song-model'],
   ['domain', 'catalog-genres'],
+  ['domain', 'catalog-row-selection'],
   ['domain', 'challenge-matching'],
   ['runtime', 'recovery'],
 ]) {

@@ -439,3 +439,44 @@ test('chart fragments round-trip public identities and reject malformed or unrel
   for (const fragment of ['', '#privacy', '#chart-', '#chart-%E0%A4%A'])
     assert.equal(routes.chartFromFragment(fragment), undefined);
 });
+
+test('route focus belongs to browser snapshots without changing pagination, collapse or difficulty', () => {
+  const { state } = mountedState();
+  state.focusChart('b');
+  state.visible = 40;
+  state.selectedCharts.set('b', 'a');
+  state.expandedRows.delete('b');
+  const saved = state.capture();
+  assert.equal(saved.focusedChart, 'b');
+  state.focusChart('a');
+  state.visible = 80;
+  state.expandedRows.add('b');
+  assert.equal(state.restore(saved), true);
+  assert.equal(state.focusedChart, 'b');
+  assert.equal(state.visible, 40);
+  assert.equal(state.expandedRows.has('b'), false);
+  assert.equal(state.selectedCharts.get('b'), 'a');
+  state.changeSort('title', false);
+  assert.equal(state.focusedChart, 'b');
+  assert.equal(state.visible, 40);
+  assert.equal(state.expandedRows.has('b'), false);
+});
+
+test('route focus rejects missing identities and historical snapshots remain readable', () => {
+  const { state } = mountedState();
+  state.focusChart('unknown');
+  assert.equal(state.focusedChart, null);
+  state.focusChart('b');
+  state.focusChart(null);
+  assert.equal(state.focusedChart, null);
+  state.focusChart('b');
+  const older = state.capture();
+  delete older.focusedChart;
+  assert.equal(state.restore(older), true);
+  assert.equal(state.focusedChart, null);
+  assert.equal(state.restore({ ...older, focusedChart: 'unknown' }), true);
+  assert.equal(state.focusedChart, null);
+  state.focusChart('b');
+  state.configure({ catalog: [{ chart_id: 'a' }], source_catalog_sha256: 'next' });
+  assert.equal(state.focusedChart, null);
+});

@@ -8,6 +8,7 @@ from copy import deepcopy
 
 from maimai_intelligence.browser_bundle import (
     read_browser_assets,
+    recovery_pagination_asset,
     seal_browser_resources,
     validate_browser_resources,
 )
@@ -76,6 +77,70 @@ class BrowserResourceTests(unittest.TestCase):
             }
         assets["browser-assets.json"] = canonical(graph)
         return assets
+
+    def pagination_assets(self):
+        assets = self.preload_assets()
+        graph = json.loads(assets["browser-assets.json"])
+        expression = b"(() => ((rows, visible, focus) => []))()"
+        sha256 = hashlib.sha256(expression).hexdigest()
+        path = "browser/recovery-pagination-" + sha256[:16] + ".js"
+        assets[path] = expression
+        graph["recoveryPagination"] = path
+        graph["assets"][path] = {"bytes": len(expression), "sha256": sha256}
+        assets["browser-assets.json"] = canonical(graph)
+        return assets, graph
+
+    def test_recovery_pagination_is_verified_but_never_activated(self):
+        assets, graph = self.pagination_assets()
+        for with_preloads in (True, False):
+            current = deepcopy(graph)
+            if not with_preloads:
+                current.pop("preloads")
+            values = {**assets, "browser-assets.json": canonical(current)}
+            raw, sha256 = recovery_pagination_asset(
+                lambda name, _limit, values=values: values[name]
+            )
+            self.assertEqual(raw, assets[graph["recoveryPagination"]])
+            self.assertEqual(sha256, hashlib.sha256(raw).hexdigest())
+            sealed = seal_browser_resources(values, self.manifest)
+            for name in ("index.html", "browser-shell.html", "en/songs/fixture/index.html"):
+                self.assertNotIn(graph["recoveryPagination"].encode(), sealed[name])
+        with self.assertRaisesRegex(ValueError, "requires the generated"):
+            recovery_pagination_asset(lambda name, _limit: self.assets[name])
+
+    def test_recovery_pagination_rejects_bad_reference_execution_and_name_binding(self):
+        assets, graph = self.pagination_assets()
+        for invalid in (None, False, {}, "browser/missing.js", graph["entries"]["hosted"]):
+            values = {
+                **assets,
+                "browser-assets.json": canonical({**graph, "recoveryPagination": invalid}),
+            }
+            with self.subTest(invalid=invalid), self.assertRaises(ValueError):
+                read_browser_assets(lambda name, _limit, values=values: values[name])
+        for change in ("preloads", "hosted", "offline", "name", "size", "tampered"):
+            altered, current = dict(assets), deepcopy(graph)
+            path = graph["recoveryPagination"]
+            if change == "preloads":
+                current["preloads"].append(path)
+            elif change in ("hosted", "offline"):
+                current["entries"][change] = path
+            elif change == "name":
+                wrong = "browser/recovery-pagination-" + "0" * 16 + ".js"
+                altered[wrong] = altered[path]
+                current["assets"][wrong] = current["assets"].pop(path)
+                current["recoveryPagination"] = wrong
+            elif change == "size":
+                raw = b"x" * 8193
+                sha256 = hashlib.sha256(raw).hexdigest()
+                large = "browser/recovery-pagination-" + sha256[:16] + ".js"
+                altered[large] = raw
+                current["assets"][large] = {"bytes": len(raw), "sha256": sha256}
+                current["recoveryPagination"] = large
+            else:
+                altered[path] = b"tampered"
+            altered["browser-assets.json"] = canonical(current)
+            with self.subTest(change=change), self.assertRaises(ValueError):
+                read_browser_assets(lambda name, _limit, altered=altered: altered[name])
 
     def test_manifest_preloads_are_verified_members_without_entry_or_offline_execution(self):
         assets = self.preload_assets()

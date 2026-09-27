@@ -1,4 +1,7 @@
-import {browserResourceURL} from './browser-configuration-fixture.mjs';
+import {browserResourceURL,browserJSONResourceFixture} from './browser-configuration-fixture.mjs';
+import {createHash} from 'node:crypto';
+import {resolve} from 'node:path';
+import {fileURLToPath} from 'node:url';
 import {test,expect} from './fixtures.js';
 
 // Mount the synthetic release at the production root without external requests.
@@ -433,4 +436,79 @@ test('direct nested routes resolve shell images before activating imported nodes
   await page.evaluate(async()=>{document.querySelectorAll('img').forEach(image=>image.loading='eager');await Promise.all([...document.images].map(image=>image.decode().catch(()=>{})));});
   expect(misresolved,locale+'/'+kind+' must not issue nested asset requests').toEqual([]);
  }
+});
+
+test('a late historical chart keeps a bounded prefix, local choices and Back restoration',async({page,request,baseURL})=>{
+  const manifest=await(await request.get('/registry/manifest.json')).json();
+  const entry=manifest.releases.find(value=>value.version===manifest.default);
+  const data=await(await request.get('/registry/'+entry.startup_shared.path)).json();
+  const target=data.catalog.find(chart=>chart.title==='ソテリア'&&chart.difficulty==='ADVANCED');
+  const other=data.catalog.find(chart=>chart.song_id===target.song_id&&chart.format===target.format&&chart.difficulty==='EXPERT');
+  expect(target).toBeTruthy();expect(other).toBeTruthy();
+  const source=data.navigation.charts[target.chart_id];
+  for(let index=0;index<4100;index++){
+    const id='fictional-pagination-'+index,hash=createHash('sha256').update(id).digest('hex');
+    const chart={...target,chart_id:id,song_id:'fictional-song-'+index,source_hash:hash,title:'0000 Fictional pagination '+String(index).padStart(4,'0'),artist:'Fictional fixture',aliases:[],regional:{}};
+    delete chart.detail_bucket;
+    data.catalog.push(chart);
+    data.navigation.charts[id]={...source,chart_id:id,source_hash:hash,source_path:'fictional/pagination/'+index};
+  }
+  const body=Buffer.from(JSON.stringify(data)),hash=createHash('sha256').update(body).digest('hex');
+  entry.startup_shared={path:'catalog-index/'+hash+'.json',sha256:hash,bytes:body.length};
+  const directory=resolve(process.env.MAIMAI_BROWSER_OUTPUT||fileURLToPath(new URL('../../output/browser-tests/',import.meta.url)),'registry');
+  const amended=await browserJSONResourceFixture(directory,'catalog',()=>manifest);
+  await page.route(url=>url.origin===baseURL,async route=>{
+    const url=new URL(route.request().url());
+    if(url.pathname==='/'+amended.reference.path)return route.fulfill({body:amended.body,contentType:'application/json'});
+    if(url.pathname==='/'+entry.startup_shared.path)return route.fulfill({body,contentType:'application/json'});
+    if(route.request().resourceType()!=='document')return route.fallback();
+    const response=await route.fetch({url:baseURL+'/registry'+url.pathname+url.search});
+    return route.fulfill({response,body:amended.rewriteDocument(await response.body())});
+  });
+  const targetURL=baseURL+'/?view=catalog&chart='+encodeURIComponent(target.chart_id);
+  await page.goto(targetURL);
+  const row=page.locator('#songs .song-row[data-row-key="'+target.chart_id+'"]');
+  await expect(page.locator('#songs .song-row')).toHaveCount(41);
+  await expect(row.locator('.chart-row')).toHaveAttribute('aria-expanded','true');
+  await expect(row.locator('.chart-measurements')).toBeVisible();
+  expect(await row.locator('.row-difficulty').getAttribute('id')).toMatch(/^row-difficulty-4\d{3}$/);
+  expect(await page.evaluate(()=>maimaiBrowserState.capture().visible)).toBe(40);
+  await row.locator('.chart-row').click();
+  await row.locator('.row-difficulty').selectOption(other.chart_id);
+  await expect(row).toHaveAttribute('data-chart-id',other.chart_id);
+  await expect(row.locator('.chart-measurements')).toBeHidden();
+  await page.locator('#more').click();
+  await expect(page.locator('#songs .song-row')).toHaveCount(81);
+  await expect(row).toHaveAttribute('data-chart-id',other.chart_id);
+  await expect(row.locator('.chart-measurements')).toBeHidden();
+  await row.locator('.chart-row').click();
+  await expect(row.locator('.chart-measurements')).toBeVisible();
+  const saved=await page.evaluate(()=>maimaiBrowserState.capture());
+  expect(saved.focusedChart).toBe(target.chart_id);expect(saved.visible).toBe(80);
+  const link=row.locator('a[data-song-page]');await expect(link).toBeVisible();await link.click();
+  await expect(page.locator('#seo-route-view .song-workspace')).toBeVisible();
+  await page.goBack();await expect(page).toHaveURL(targetURL);
+  await expect(row).toHaveAttribute('data-chart-id',other.chart_id);
+  await expect(row.locator('.chart-row')).toHaveAttribute('aria-expanded','true');
+  await expect(row.locator('.chart-measurements')).toBeVisible();
+  await expect(page.locator('#songs .song-row')).toHaveCount(81);
+  const restored=await page.evaluate(()=>maimaiBrowserState.capture());
+  for(const key of ['focusedChart','visible','selectedCharts','expandedRows'])expect(restored[key]).toEqual(saved[key]);
+  await row.locator('.chart-row').click();
+  await expect(row.locator('.chart-measurements')).toBeHidden();
+  await page.locator('#search').fill('0000 Fictional pagination');
+  await expect(row).toHaveCount(0);await expect(page.locator('#songs .song-row')).toHaveCount(40);
+  await page.locator('#search').fill('');
+  await expect(row).toHaveAttribute('data-chart-id',other.chart_id);
+  await expect(row.locator('.chart-measurements')).toBeHidden();
+  await expect(page.locator('#songs .song-row')).toHaveCount(41);
+  await row.locator('.chart-row').click();
+  await expect(row.locator('.chart-measurements')).toBeVisible();
+  await row.locator('a[data-song-page]').click();
+  await expect(page.locator('#seo-route-view .song-workspace')).toBeVisible();
+  await page.locator('#catalog-tab').click();
+  await expect(page.locator('#songs')).toBeVisible();
+  expect(new URL(page.url()).searchParams.has('chart')).toBe(false);
+  expect(await page.evaluate(()=>maimaiBrowserState.capture().focusedChart)).toBeNull();
+  await expect(page.locator('#songs .song-row')).toHaveCount(40);
 });

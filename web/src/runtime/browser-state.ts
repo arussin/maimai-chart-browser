@@ -128,6 +128,7 @@ export interface BrowserViewPort {
  */
 export class BrowserState {
   visible = 40;
+  focusedChart: string | null = null;
   format = 'all';
   search = '';
   genre = '';
@@ -189,6 +190,11 @@ export class BrowserState {
     this.versions.clear();
     data.navigation?.versions?.forEach((version) => this.versions.add(version));
     this.catalogHash = data.source_catalog_sha256 ?? null;
+    this.focusChart(this.focusedChart);
+  }
+
+  focusChart(id: string | null): void {
+    this.focusedChart = id !== null && this.chartIds.has(id) ? id : null;
   }
 
   bind(view: BrowserViewPort): this {
@@ -313,6 +319,7 @@ export class BrowserState {
       region: { ...this.region },
       personal: { ...this.personal, grade: [...this.personal.grade] },
       visible: this.visible,
+      focusedChart: this.focusedChart,
       selectedCharts: [...this.selectedCharts],
       expandedRows: [...this.expandedRows],
       history: [...this.history],
@@ -324,6 +331,7 @@ export class BrowserState {
   }
 
   private restoreIdentities(value: Record<string, unknown>): void {
+    this.focusChart(text(value.focusedChart));
     this.selectedVersions.clear();
     strings(value.versions)
       .filter((version) => this.versions.has(version))

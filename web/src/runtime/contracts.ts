@@ -34,6 +34,7 @@ export interface BrowserSnapshot {
   region?: { availability: string; international: boolean };
   personal?: unknown;
   visible: number;
+  focusedChart?: string | null;
   selectedCharts: [string, string][];
   expandedRows: string[];
   comparison?: {

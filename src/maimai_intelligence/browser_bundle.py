@@ -265,6 +265,8 @@ def read_browser_assets(
         not in (
             {"version", "tool", "entries", "assets", "replaces"},
             {"version", "tool", "entries", "assets", "replaces", "preloads"},
+            {"version", "tool", "entries", "assets", "replaces", "recoveryPagination"},
+            {"version", "tool", "entries", "assets", "replaces", "preloads", "recoveryPagination"},
         )
         or manifest["version"] != 1
         or not isinstance(manifest["tool"], str)
@@ -309,6 +311,21 @@ def read_browser_assets(
         if len(body) != record["bytes"] or hashlib.sha256(body).hexdigest() != record["sha256"]:
             raise ValueError("Generated browser asset integrity mismatch")
         assets[name] = body
+    if "recoveryPagination" in manifest:
+        pagination = manifest["recoveryPagination"]
+        if (
+            not isinstance(pagination, str)
+            or re.fullmatch(r"browser/recovery-pagination-[a-f0-9]{16}\.js", pagination) is None
+            or pagination not in assets
+            or pagination in manifest["entries"].values()
+            or pagination in preloads
+            or len(assets[pagination]) > 8192
+            or pagination
+            != "browser/recovery-pagination-"
+            + manifest["assets"][pagination]["sha256"][:16]
+            + ".js"
+        ):
+            raise ValueError("Invalid generated recovery pagination asset")
     assets["browser-assets.json"] = raw
     return manifest, assets
 
@@ -324,6 +341,17 @@ def browser_assets():
         return raw
 
     return read_browser_assets(read)
+
+
+def recovery_pagination_asset(
+    read: Callable[[str, int], bytes] | None = None,
+) -> tuple[bytes, str]:
+    """Return the verified shared decision expression; never execute it in Python."""
+    manifest, assets = read_browser_assets(read) if read is not None else browser_assets()
+    path = manifest.get("recoveryPagination")
+    if path is None:
+        raise ValueError("Recovery derivation requires the generated shared pagination asset")
+    return assets[path], manifest["assets"][path]["sha256"]
 
 
 def offline_script():

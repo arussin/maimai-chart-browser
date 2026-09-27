@@ -151,6 +151,24 @@ for (const file of [...hosted.outputFiles, ...offline.outputFiles]) {
   manifest.assets[path] = digest(file.contents);
   await output(file.path, file.contents);
 }
+// Recovery embeds this expression inside its hash-bound legacy controller.
+// It is never a browser entry, preload or global service.
+const recoveryPagination = await build({
+  ...common,
+  entryPoints: [resolve(base, 'src/domain/catalog-row-selection.ts')],
+  format: 'iife',
+  globalName: 'rowSelection',
+});
+const recoveryBytes = Buffer.from(
+  '(()=>{' +
+    recoveryPagination.outputFiles[0].text +
+    '\nreturn rowSelection.selectCatalogRows;})()',
+);
+const recoveryDigest = digest(recoveryBytes);
+manifest.recoveryPagination =
+  'browser/recovery-pagination-' + recoveryDigest.sha256.slice(0, 16) + '.js';
+manifest.assets[manifest.recoveryPagination] = recoveryDigest;
+await output(resolve(assets, manifest.recoveryPagination), recoveryBytes);
 // This directory is generated exclusively by this build. Reject or prune stale JS chunks.
 const generatedRoot = resolve(assets, 'browser');
 for (const name of await readdir(generatedRoot, { recursive: true }).catch(() => [])) {

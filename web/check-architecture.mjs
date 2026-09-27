@@ -36,6 +36,7 @@ const pureDomains = new Set([
   'src/domain/artwork.ts',
   'src/domain/song-model.ts',
   'src/domain/catalog-genres.ts',
+  'src/domain/catalog-row-selection.ts',
   'src/catalog-query.ts',
   'src/player-session.ts',
   'src/views/player-data-core.ts',
@@ -122,6 +123,7 @@ for (const path of graph.keys()) {
       node.type === 'VariableDeclarator' &&
       [
         'visible',
+        'focusedChart',
         'format',
         'sortRules',
         'selectedVersions',
