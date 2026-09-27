@@ -8,8 +8,8 @@ on:
       corpus_726:
         description: 'Optional frozen726 proof; off runs ordinary CI'
         type: choice
-        options: [off, capacity, full]
-        default: off
+        options: ['off', capacity, full]
+        default: 'off'
       corpus_packet_url:
         description: 'Approved public packet URL; required only for full mode'
         type: string
