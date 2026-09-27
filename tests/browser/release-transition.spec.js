@@ -9,19 +9,22 @@
  */
 import {test as base, expect} from './fixtures.js';
 import {gzipSync} from 'node:zlib';
-import {inspectArtifact, startArtifactSwitch, sha256} from './release-transition-server.mjs';
+import {inspectArtifact, startArtifactSwitch, sha256, readRecoveryDerivation, assertRecoveryBinding} from './release-transition-server.mjs';
 
 const test = base.extend({
   transition: async ({fixtureOrigins, context}, use, testInfo) => {
+    const derivation = await readRecoveryDerivation(
+      process.env.MAIMAI_TRANSITION_DERIVED_RECEIPT,
+      process.env.MAIMAI_TRANSITION_DERIVED_RECEIPT_SHA256,
+    );
     const baseline = await inspectArtifact(process.env.MAIMAI_TRANSITION_BASELINE_ROOT, 'legacy');
     const candidate = await inspectArtifact(process.env.MAIMAI_TRANSITION_CANDIDATE_ROOT, 'modular');
     const rollback = await inspectArtifact(
-      process.env.MAIMAI_TRANSITION_ROLLBACK_ROOT || baseline.root, 'legacy',
+      process.env.MAIMAI_TRANSITION_ROLLBACK_ROOT || baseline.root, 'legacy', derivation,
     );
     expect(candidate.root, 'The candidate must be a distinct retained artifact').not.toBe(baseline.root);
     expect(candidate.runtimeSha256, 'Do not simulate two versions with the same runtime').not.toBe(baseline.runtimeSha256);
-    expect(rollback.htmlSha256, 'Rollback must serve the exact baseline document').toBe(baseline.htmlSha256);
-    expect(rollback.runtimeSha256, 'Rollback must serve the exact baseline runtime entry').toBe(baseline.runtimeSha256);
+    const recoveryBinding = assertRecoveryBinding(baseline, rollback, derivation);
     const artifacts = {baseline, candidate, rollback};
     const server = await startArtifactSwitch(artifacts);
     fixtureOrigins.allow(server.origin);
@@ -53,6 +56,7 @@ const test = base.extend({
           status: testInfo.status,
           origin: server.origin,
           artifacts,
+          recoveryBinding,
           pageErrors: errors,
           requests: server.requests,
         }, null, 2),

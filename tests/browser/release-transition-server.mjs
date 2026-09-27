@@ -1,8 +1,10 @@
 /** Read-only loopback artifact switch. This simulates routing, not Cloudflare Pages. */
 import {createServer} from 'node:http';
 import {createHash} from 'node:crypto';
-import {readFile, realpath, stat} from 'node:fs/promises';
+import {readFile, realpath, stat, lstat} from 'node:fs/promises';
 import path from 'node:path';
+import {recoveryDerivation, derivedEntry} from './release-transition-recovery.mjs';
+export {assertRecoveryBinding} from './release-transition-recovery.mjs';
 
 const mime = {
   '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8',
@@ -25,7 +27,21 @@ async function artifactFile(root, pathname) {
   return {filename, bytes: await readFile(filename)};
 }
 
-export async function inspectArtifact(directory, expectedRuntime) {
+export async function readRecoveryDerivation(filename, expectedSHA) {
+  if (filename === undefined && expectedSHA === undefined) return null;
+  if (typeof filename !== 'string' || !path.isAbsolute(filename)
+    || typeof expectedSHA !== 'string' || !/^[a-f0-9]{64}$/.test(expectedSHA))
+    throw Error('Derived recovery requires an absolute receipt path and SHA-256');
+  const info = await lstat(filename);
+  if (!info.isFile() || info.isSymbolicLink() || info.size > 32 * 1024 * 1024)
+    throw Error('Invalid derived recovery completion receipt');
+  const raw = await readFile(filename);
+  if (raw.length !== info.size || sha256(raw) !== expectedSHA)
+    throw Error('Derived recovery completion receipt changed');
+  return recoveryDerivation(JSON.parse(raw.toString('utf8')), expectedSHA);
+}
+
+export async function inspectArtifact(directory, expectedRuntime, derivation = null) {
   if (!directory || !path.isAbsolute(directory)) throw Error('Artifact roots must be explicit absolute paths');
   const root = await realpath(directory);
   const html = (await artifactFile(root, '/index.html')).bytes;
@@ -33,7 +49,8 @@ export async function inspectArtifact(directory, expectedRuntime) {
   const modular = scripts.find(value => /(?:^|\/)browser-entry(?:-[A-Za-z0-9]+)?\.js(?:\?|$)/.test(value));
   const kind = modular ? 'modular' : 'legacy';
   if (kind !== expectedRuntime) throw Error(`Expected ${expectedRuntime} runtime at ${root}; found ${kind}`);
-  const runtimeReference = modular || scripts.find(value => /(?:^|\/)lab-loader\.js(?:\?|$)/.test(value));
+  const runtimeReference = modular || (derivation ? derivedEntry(html, scripts, derivation)
+    : scripts.find(value => /(?:^|\/)lab-loader\.js(?:\?|$)/.test(value)));
   if (!runtimeReference) throw Error('Artifact does not contain a recognized maintained browser entry');
   const reference = new URL(runtimeReference, 'http://artifact.invalid/');
   if (reference.origin !== 'http://artifact.invalid') throw Error('Runtime must be a local artifact asset');
@@ -46,6 +63,15 @@ export async function inspectArtifact(directory, expectedRuntime) {
     lateURL = late.pathname + late.search;
   }
   const lateBytes = (await artifactFile(root, new URL(lateURL, reference).pathname)).bytes;
+  let bundle = null, bundleURL = null;
+  if (kind === 'legacy') {
+    const targets = [...runtime.bytes.toString('utf8').matchAll(/script\.src=['"]([^'"]+)['"]/g)];
+    if (targets.length !== 1) throw Error('Expected one actual legacy bundle target');
+    const target = new URL(targets[0][1], reference);
+    if (target.origin !== reference.origin || target.hash) throw Error('Legacy bundle must be local');
+    bundleURL = target.pathname + target.search;
+    bundle = (await artifactFile(root, target.pathname)).bytes;
+  }
   const boundResources = {}, publicRoutes = [];
   const descriptor = html.toString('utf8').match(/<script\b(?=[^>]*\bid=["']browser-resources["'])[^>]*>([\s\S]*?)<\/script>/);
   if (descriptor) {
@@ -80,6 +106,8 @@ export async function inspectArtifact(directory, expectedRuntime) {
     root, kind, htmlSha256: sha256(html), runtimeSha256: sha256(runtime.bytes),
     runtimeURL: reference.pathname + reference.search, lateURL, lateSha256: sha256(lateBytes),
     boundResources, publicRoutes,
+    htmlBytes: html.length, runtimeBytes: runtime.bytes.length,
+    bundleURL, bundleSha256: bundle ? sha256(bundle) : null, bundleBytes: bundle?.length ?? null,
   };
 }
 

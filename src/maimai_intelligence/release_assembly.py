@@ -8,6 +8,7 @@ The completion receipt is private, atomic, and installed only after verification
 from __future__ import annotations
 
 import hashlib
+import json
 import os
 import stat
 import tempfile
@@ -16,7 +17,9 @@ from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 
+from .browser_bundle import recovery_pagination_asset
 from .capacity_policy import DEFAULT_FILES, CapacityAuthority
+from .derived_recovery_baseline import DerivedRecoveryBaseline, verify_recovery_derivation
 from .public_routes import ROUTE_MODEL
 from .publication_capacity import ReviewedCapacity
 from .release_composition import (
@@ -222,6 +225,7 @@ def assemble_release(
     baseline_runtime: RuntimeClosure,
     candidate_runtime: RuntimeClosure,
     receipt_path: Path,
+    derived_baseline: DerivedRecoveryBaseline | None = None,
     recovery_documents: Mapping[str, bytes] | None = None,
     recovery_evidence_sha256: str | None = None,
     recovery_candidate_inventory_sha256: str | None = None,
@@ -236,6 +240,9 @@ def assemble_release(
     directories, not paths being concurrently rearranged by another process.
     Optional recovery documents are detached before writing and must match their
     explicit candidate inventory and evidence bindings; no input is rewritten.
+    A derived baseline is rederived from the original physical artifact and the
+    installed shared pagination helper. It intentionally changes only recovery
+    activation; its immutable scripts survive either composition direction.
     """
     if not isinstance(plan, CompositionPlan):
         raise ValueError("Expected a validated composition plan")
@@ -264,7 +271,22 @@ def assemble_release(
         raise ValueError("The completion receipt must stay outside public artifacts")
     if output.exists() or receipt_path.exists():
         raise ValueError("Use a fresh output directory and private receipt path")
-    old, new = _inventory(baseline), _inventory(candidate)
+    physical_old, new = _inventory(baseline), _inventory(candidate)
+    old = physical_old
+    derived_assets: Mapping[str, bytes] = {}
+    if derived_baseline is not None:
+        selector, selector_sha256 = recovery_pagination_asset()
+        verify_recovery_derivation(
+            derived_baseline,
+            physical_old,
+            index=_read_file(baseline / "index.html"),
+            loader=_read_file(baseline / "lab-loader.js"),
+            bundle=_read_file(baseline / "challenge-review.js"),
+            selector=selector,
+            selector_sha256=selector_sha256,
+        )
+        old = derived_baseline.inventory
+        derived_assets = derived_baseline.asset_map
     validated = plan_release_composition(
         old,
         new,
@@ -280,6 +302,14 @@ def assemble_release(
     )
     if validated != plan:
         raise ValueError("Composition plan does not match verified inputs and runtime evidence")
+    if derived_baseline is not None:
+        declared = {item.path: item.fingerprint for item in baseline_runtime.files}
+        if any(
+            declared.get(path) != _fingerprint(raw)
+            for path, raw in derived_assets.items()
+            if path != "index.html"
+        ):
+            raise ValueError("Derived recovery scripts must belong to the baseline runtime closure")
     expected = ArtifactInventory(
         tuple(InventoryFile(item.path, item.expected) for item in plan.files)
     )
@@ -294,13 +324,15 @@ def assemble_release(
     for item in plan.files:
         if item.owner == "recovery":
             _write_file(documents[item.path], output / item.path, item.expected)
+        elif item.owner == "baseline" and item.path in derived_assets:
+            _write_file(derived_assets[item.path], output / item.path, item.expected)
         else:
             _copy_file(sources[item.owner] / item.path, output / item.path, item.expected)
     if _inventory(output) != expected:
         raise ValueError("Assembled output differs from its exact planned inventory")
     # Include files that were not selected from their source: a complete input
     # changed during preparation must not receive a successful-looking receipt.
-    if _inventory(baseline) != old or _inventory(candidate) != new:
+    if _inventory(baseline) != physical_old or _inventory(candidate) != new:
         raise ValueError("An input artifact changed during assembly")
     result = AssemblyReceipt(
         digest(asdict(plan)), digest(_records(expected.files)), expected.files, str(receipt_path)
@@ -320,6 +352,17 @@ def assemble_release(
             "plan_sha256": result.plan_sha256,
             "output_inventory_sha256": result.output_inventory_sha256,
             "files": _records(result.files),
+            **(
+                {
+                    "derived_baseline": {
+                        "original_inventory_sha256": derived_baseline.original_inventory_sha256,
+                        "evidence_sha256": derived_baseline.evidence_sha256,
+                        "evidence": json.loads(derived_baseline.evidence),
+                    }
+                }
+                if derived_baseline is not None
+                else {}
+            ),
         },
     )
     return result
