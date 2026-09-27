@@ -130,8 +130,8 @@ export function createChallengeReview(ports: ReviewPorts) {
     ports.catalogQuery?.titleLabel(c, i18n.locale) ||
     (c.title.trim() ? c.title : '〈Blank title〉');
 
-  function selectView(name: Tab) {
-    ports.views.show(name);
+  function selectView(name: Tab, preservePattern = false) {
+    ports.views.show(name, preservePattern);
     ports.patternLibrary.stop();
     if (name === 'catalog') catalog();
     else if (name === 'compare') comparisonUI?.render();
@@ -699,7 +699,17 @@ export function createChallengeReview(ports: ReviewPorts) {
         })
         .map((c) => c.chart_id),
   });
-  const compareChart = (id: string, similar = false) => {
+  const compareChart = (id: string, similar = false, international?: boolean) => {
+    if (
+      international !== undefined &&
+      regionFilter &&
+      state.region.international !== international
+    ) {
+      // Change the active metadata preference without changing detached return snapshots.
+      regionFilter.restore({ ...regionFilter.snapshot(), international });
+      updateVersionCounts();
+      comparisonUI!.sync();
+    }
     selectView('compare');
     if (!similar && comparisonUI!.first() && comparisonUI!.first() !== id)
       comparisonUI!.useAsSecond(id);

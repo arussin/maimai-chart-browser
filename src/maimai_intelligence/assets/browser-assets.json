@@ -2,25 +2,25 @@
   "version": 1,
   "tool": "esbuild-0.28.2",
   "entries": {
-    "hosted": "browser/browser-entry-ZXOTAEJY.js",
-    "offline": "browser/browser-offline-MOTGBMRP.js"
+    "hosted": "browser/browser-entry-OK467FSA.js",
+    "offline": "browser/browser-offline-3FP2SNDH.js"
   },
   "assets": {
-    "browser/browser-entry-ZXOTAEJY.js": {
-      "sha256": "449fa7c2805f4ee2c54422156cb0bcba02a1348b495252c1d353f00d021ef035",
-      "bytes": 21380
+    "browser/browser-entry-OK467FSA.js": {
+      "sha256": "434a653df5181877ab9eaa6c16a59523caa0815c5aaa6bffc99f50e06d9462e9",
+      "bytes": 21625
     },
-    "browser/application-4YHAXUW3.js": {
-      "sha256": "20b52e831a589745c5ca902a389910b8d82599065794ada7f5c85bb86b5feb3a",
-      "bytes": 224086
+    "browser/application-F2S6KOL6.js": {
+      "sha256": "eb6e06bcfb04ec4cf59023ecda81233464ce01f17f806079b7b54f5e508d029c",
+      "bytes": 224251
     },
     "browser/chunk-PQOHL5MV.js": {
       "sha256": "c25d9c5050a2d5c3134eefe35d0504e5a3bb13809038eccb822eee8f37879f44",
       "bytes": 2611
     },
-    "browser/browser-offline-MOTGBMRP.js": {
-      "sha256": "c04bf7473514f7a1cdb995bd44df1b1c48025fed3e3891f64648c5613e1759ec",
-      "bytes": 243236
+    "browser/browser-offline-3FP2SNDH.js": {
+      "sha256": "1fb8138a2e779f3d0611522bb65b890b9ff6a79c3bb047924b943037e716e0f4",
+      "bytes": 243647
     }
   },
   "replaces": [
@@ -43,7 +43,7 @@
     "lab-loader.js"
   ],
   "preloads": [
-    "browser/application-4YHAXUW3.js",
+    "browser/application-F2S6KOL6.js",
     "browser/chunk-PQOHL5MV.js"
   ]
 }

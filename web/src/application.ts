@@ -45,6 +45,7 @@ import type {
   BrowserSnapshot,
   LocalizationPort,
   PageMetadata,
+  Tab,
 } from './runtime/contracts';
 export interface BrowserConfiguration {
   messages: LocalizationConfiguration['messages'];
@@ -380,6 +381,7 @@ export async function createApplication(options: ApplicationOptions) {
     cancelRestoration: () => browserState.cancelRestoration(),
     capture: () => browserState.capture(),
     restore: (value: BrowserSnapshot) => browserState.restore(value),
+    selectView: (name: Tab) => controller!.selectView!(name, true),
     version: (value: string) => browserState.version(value),
     open: () => browserState.open(),
     ready: personal.ready,
@@ -439,7 +441,9 @@ export async function createApplication(options: ApplicationOptions) {
             },
             romaji: songSearch.romaji,
             compare: (id, similar) => {
-              void navigation.browserAction(() => controller!.compareChart!(id, similar));
+              void navigation.browserAction(() =>
+                controller!.compareChart!(id, similar, navigation.songInternational),
+              );
             },
             changed: personal.subscribe,
             usage,

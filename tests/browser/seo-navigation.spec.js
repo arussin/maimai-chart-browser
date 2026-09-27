@@ -413,6 +413,9 @@ test('remembered personal sorting survives return while player storage is still 
   await expect(page.locator('#seo-route-view')).toBeVisible();
   await page.evaluate(()=>sessionStorage.setItem('fixture-delay-player','1'));await page.reload();
   await page.locator('[data-back-results]').click();await ready(page);await expect.poll(()=>page.evaluate(()=>window.fixtureStorageHeld)).toBe(true);
+  await expect(page.locator('#songs')).toBeVisible();
+  await expect(page.locator('#search')).toHaveValue('ソテリア');
+  expect(await page.evaluate(()=>maimaiBrowserState.capture().sortRules)).toEqual([{key:'rating',direction:-1}]);
   await page.evaluate(()=>{sessionStorage.removeItem('fixture-delay-player');fixtureReleaseStorage();});await expect.poll(()=>page.evaluate(()=>!!window.maimaiPersonal)).toBe(true);await page.evaluate(()=>maimaiPersonal.ready);
   expect(await page.evaluate(()=>maimaiBrowserState.capture().sortRules)).toEqual([{key:'rating',direction:-1}]);
 });

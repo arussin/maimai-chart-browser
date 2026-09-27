@@ -57,6 +57,216 @@ test('song choices cannot overwrite browser filters and personal sort intent',as
  await expect(page.locator('#search')).toHaveValue('ソテリア');
 });
 
+test('song regional preference restores base values after international browser navigation', async ({ page }) => {
+  await page.goto('/?lang=en');
+  await expect(page.locator('#catalog-count')).toHaveText('26 charts');
+  await page.locator('#search').fill('ソテリア');
+  await expect(page.locator('#catalog-count')).toHaveText('4 charts');
+  const initial = page.locator('#songs .song-row[data-difficulty="ADVANCED"]').filter({ hasText: 'ソテリア' });
+  await expect(initial).toHaveCount(1);
+  const chartID = await initial.getAttribute('data-chart-id');
+  expect(chartID).toBeTruthy();
+  const browserRow = page.locator('#songs .song-row[data-chart-id=' + JSON.stringify(chartID) + ']');
+  await expect(browserRow.locator('.chart-constant')).toHaveText('8.2');
+  await expect(browserRow.locator('.chart-constant')).toHaveAttribute('title', /\bJP\b/);
+  await expect(browserRow).toHaveAttribute('data-level', '8');
+  const filters = page.locator('#catalog-filters-toggle');
+  if (await filters.getAttribute('aria-expanded') !== 'true') await filters.click();
+  await expect(filters).toHaveAttribute('aria-expanded', 'true');
+  await page.locator('#use-international-data').check();
+  await expect(browserRow.locator('.chart-constant')).toHaveText('7.4');
+  await expect(browserRow.locator('.chart-constant')).toHaveAttribute('title', /\bINTL\b/);
+  await expect(browserRow).toHaveAttribute('data-level', '7');
+  await expect(browserRow.locator('.song-title')).toHaveText('Soteria fixture');
+  await browserRow.locator('.chart-row').click();
+  const link = browserRow.locator('a[data-song-page]');
+  await expect(link).toBeVisible();
+  const saved = await page.evaluate(() => window.maimaiBrowserState.capture());
+  expect(saved.region.international).toBe(true);
+  await link.click();
+  const songRow = page.locator('#seo-route-view .song-row[data-chart-id=' + JSON.stringify(chartID) + ']');
+  const preference = page.locator('#seo-route-view [data-seo-international]');
+  await expect(songRow).toHaveCount(1);
+  await expect(preference).toBeChecked();
+  await expect(songRow.locator('.chart-constant')).toHaveText('7.4');
+  await preference.uncheck();
+  await expect(songRow.locator('.chart-constant')).toHaveText('8.2');
+  await expect(songRow.locator('.chart-constant')).toHaveAttribute('title', /\bJP\b/);
+  await expect(songRow).toHaveAttribute('data-level', '8');
+  await expect(songRow.locator('.song-title')).toHaveText('ソテリア');
+  await preference.check();
+  await expect(songRow.locator('.chart-constant')).toHaveText('7.4');
+  await expect(songRow.locator('.chart-constant')).toHaveAttribute('title', /\bINTL\b/);
+  await expect(songRow).toHaveAttribute('data-level', '7');
+  await expect(songRow.locator('.song-title')).toHaveText('Soteria fixture');
+  // Leave the song preference different from the saved browser preference.
+  await preference.uncheck();
+  await expect(songRow.locator('.chart-constant')).toHaveText('8.2');
+  await page.locator('#seo-route-view [data-back-results]').click();
+  await expect(page.locator('#songs')).toBeVisible();
+  await expect(page.locator('#use-international-data')).toBeChecked();
+  await expect(browserRow.locator('.chart-constant')).toHaveText('7.4');
+  const keys = ['search', 'genre', 'format', 'versions', 'sortRules', 'chartFilters', 'patterns', 'region', 'personal', 'selectedCharts', 'expandedRows'];
+  const expected = Object.fromEntries(keys.map(key => [key, saved[key]]));
+  await expect.poll(async () => {
+    const restored = await page.evaluate(() => window.maimaiBrowserState.capture());
+    return Object.fromEntries(keys.map(key => [key, restored[key]]));
+  }).toEqual(expected);
+});
+
+test('direct song international preference follows the exact chart into comparison', async ({ page, request }) => {
+  const map = await (await request.get('/registry/permalinks.json')).json();
+  const entry = Object.entries(map.songs).find(([, slug]) => slug.includes('ソテリア'));
+  expect(entry).toBeTruthy();
+  const [songID, slug] = entry;
+  await page.goto('/en/songs/' + encodeURIComponent(slug) + '/');
+  await expect(page.locator('#seo-route-view [data-song-id]')).toHaveAttribute('data-song-id', songID);
+  const initial = page.locator('#seo-route-view .song-row[data-difficulty="ADVANCED"]');
+  await expect(initial).toHaveCount(1);
+  const chartID = await initial.getAttribute('data-chart-id');
+  expect(chartID).toBeTruthy();
+  const row = page.locator('#seo-route-view .song-row[data-chart-id=' + JSON.stringify(chartID) + ']');
+  await expect(row.locator('.chart-constant')).toHaveText('8.2');
+  await expect(row).toHaveAttribute('data-level', '8');
+  await expect(row.locator('.song-title')).toHaveText('ソテリア');
+  await page.locator('#seo-route-view [data-seo-international]').check();
+  await expect(row.locator('.chart-constant')).toHaveText('7.4');
+  await expect(row.locator('.chart-constant')).toHaveAttribute('title', /\bINTL\b/);
+  await expect(row).toHaveAttribute('data-level', '7');
+  await expect(row.locator('.song-title')).toHaveText('Soteria fixture');
+  await row.locator('.chart-row').click();
+  await row.getByRole('button', { name: 'Compare this chart', exact: true }).click();
+  await expect(page.locator('#compare')).toBeVisible();
+  expect(new URL(page.url()).searchParams.get('left')).toBe(chartID);
+  await expect(page.locator('#compare-left-search')).toHaveValue('Soteria fixture');
+  const chosen = page.locator('#comparison-pickers .chart-picker')
+    .filter({ has: page.locator('#compare-left-search') }).locator('.chosen-chart');
+  await expect(chosen).toHaveCount(1);
+  await expect(chosen.locator(':scope > strong')).toHaveText('Soteria fixture');
+  await expect(chosen.locator(':scope > p').first()).toContainText('DX ADVANCED');
+  await expect(chosen.locator(':scope > p').first()).toContainText(/\bLv\. 7(?:\s|·|$)/);
+});
+
+
+test('lazy song comparison uses the regional preference changed during catalog acquisition', async ({ page, request }) => {
+  const map = await (await request.get('/registry/permalinks.json')).json();
+  const entry = Object.entries(map.songs).find(([, slug]) => slug.includes('ソテリア'));
+  expect(entry).toBeTruthy();
+  const [songID, slug] = entry;
+  let release;
+  const held = new Promise(resolve => { release = resolve; });
+  let requests = 0;
+  await page.route(await browserResourceURL('catalog'), async route => {
+    requests++;
+    await held;
+    await route.fallback();
+  });
+  try {
+    await page.goto('/en/songs/' + encodeURIComponent(slug) + '/');
+    await expect(page.locator('#seo-route-view [data-song-id]')).toHaveAttribute('data-song-id', songID);
+    const initial = page.locator('#seo-route-view .song-row[data-difficulty="ADVANCED"]');
+    await expect(initial).toHaveCount(1);
+    const chartID = await initial.getAttribute('data-chart-id');
+    expect(chartID).toBeTruthy();
+    const row = page.locator('#seo-route-view .song-row[data-chart-id=' + JSON.stringify(chartID) + ']');
+    const preference = page.locator('#seo-route-view [data-seo-international]');
+    await expect(preference).not.toBeChecked();
+    await expect(row.locator('.chart-constant')).toHaveText('8.2');
+    expect(requests).toBe(0);
+    await row.locator('.chart-row').click();
+    await row.getByRole('button', { name: 'Compare this chart', exact: true }).click();
+    await expect.poll(() => requests).toBe(1);
+    await expect(page.locator('[data-catalog-progress]')).toBeVisible();
+    await preference.check();
+    await expect(row.locator('.chart-constant')).toHaveText('7.4');
+    await expect(row.locator('.song-title')).toHaveText('Soteria fixture');
+    release();
+    await expect(page.locator('#compare')).toBeVisible();
+    await expect(page.locator('[data-catalog-progress]')).toHaveCount(0);
+    expect(new URL(page.url()).searchParams.get('left')).toBe(chartID);
+    await expect(page.locator('#compare-left-search')).toHaveValue('Soteria fixture');
+    const chosen = page.locator('#comparison-pickers .chart-picker')
+      .filter({ has: page.locator('#compare-left-search') }).locator('.chosen-chart');
+    await expect(chosen.locator(':scope > strong')).toHaveText('Soteria fixture');
+    await expect(chosen.locator(':scope > p').first()).toContainText('DX ADVANCED');
+    await expect(chosen.locator(':scope > p').first()).toContainText(/\bLv\. 7(?:\s|·|$)/);
+    expect(requests).toBe(1);
+  } finally {
+    release();
+  }
+});
+
+test('song comparison updates both regional identities without changing its saved browser return', async ({ page }) => {
+  await page.goto('/?lang=en');
+  await expect(page.locator('#catalog-count')).toHaveText('26 charts');
+  await page.locator('#search').fill('ソテリア');
+  await expect(page.locator('#catalog-count')).toHaveText('4 charts');
+  const first = page.locator('#songs .song-row[data-difficulty="ADVANCED"]');
+  await expect(first).toHaveCount(1);
+  const firstID = await first.getAttribute('data-chart-id');
+  expect(firstID).toBeTruthy();
+  await expect(first.locator('.chart-constant')).toHaveText('8.2');
+  await first.locator('.chart-row').click();
+  await first.getByRole('button', { name: 'Compare this chart', exact: true }).click();
+  await expect(page.locator('#compare')).toBeVisible();
+  expect(new URL(page.url()).searchParams.get('left')).toBe(firstID);
+  await expect(page.locator('#compare-left-search')).toHaveValue('ソテリア');
+  const left = page.locator('#comparison-pickers .chart-picker')
+    .filter({ has: page.locator('#compare-left-search') }).locator('.chosen-chart');
+  await expect(left.locator(':scope > p').first()).toContainText(/\bLv\. 8(?:\s|·|$)/);
+  await page.locator('#catalog-tab').click();
+  await expect(page.locator('#songs')).toBeVisible();
+  const second = page.locator('#songs .song-row[data-difficulty="EXPERT"]');
+  await expect(second).toHaveCount(1);
+  const secondID = await second.getAttribute('data-chart-id');
+  expect(secondID).toBeTruthy();
+  expect(secondID).not.toBe(firstID);
+  await second.locator('.chart-row').click();
+  const link = second.locator('a[data-song-page]');
+  await expect(link).toBeVisible();
+  await link.click();
+  const songRow = page.locator('#seo-route-view .song-row[data-chart-id=' + JSON.stringify(secondID) + ']');
+  await expect(songRow).toHaveCount(1);
+  const saved = await page.evaluate(() => history.state.maimaiReturn);
+  expect(new URL(saved.url).searchParams.get('view')).toBe('catalog');
+  expect(saved.snapshot.region.international).toBe(false);
+  expect(saved.snapshot.comparison.left).toBe(firstID);
+  expect(saved.snapshot.comparison.right).toBeNull();
+  await page.locator('#seo-route-view [data-seo-international]').check();
+  await expect(songRow.locator('.song-title')).toHaveText('Soteria fixture');
+  await expect(songRow).toHaveAttribute('data-level', '12');
+  await expect(songRow.locator('.chart-constant')).toHaveText('12.1');
+  await expect(songRow.locator('.chart-constant')).toHaveAttribute('title', /\bJP\b/);
+  // The clicked browser chart is already expanded by its public fragment.
+  await expect(songRow.locator('.chart-row')).toHaveAttribute('aria-expanded', 'true');
+  await songRow.getByRole('button', { name: 'Compare this chart', exact: true }).click();
+  await expect(page.locator('#compare')).toBeVisible();
+  const url = new URL(page.url());
+  expect(url.searchParams.get('left')).toBe(firstID);
+  expect(url.searchParams.get('right')).toBe(secondID);
+  for (const side of ['left', 'right']) {
+    await expect(page.locator('#compare-' + side + '-search')).toHaveValue('Soteria fixture');
+    const chosen = page.locator('#comparison-pickers .chart-picker')
+      .filter({ has: page.locator('#compare-' + side + '-search') }).locator('.chosen-chart');
+    await expect(chosen).toHaveCount(1);
+    await expect(chosen.locator(':scope > strong')).toHaveText('Soteria fixture');
+    await expect(chosen.locator(':scope > p').first()).toContainText(side === 'left' ? 'DX ADVANCED' : 'DX EXPERT');
+    await expect(chosen.locator(':scope > p').first()).toContainText(side === 'left' ? /\bLv\. 7(?:\s|·|$)/ : /\bLv\. 12(?:\s|·|$)/);
+  }
+  expect(await page.evaluate(() => history.state.maimaiReturn)).toEqual(saved);
+  await page.goBack();
+  await expect(page).toHaveURL(saved.url);
+  await expect(page.locator('#songs')).toBeVisible();
+  await expect(page.locator('#use-international-data')).not.toBeChecked();
+  const keys = ['search', 'genre', 'format', 'versions', 'sortRules', 'chartFilters', 'patterns', 'region', 'personal', 'selectedCharts', 'expandedRows', 'comparison'];
+  const expected = Object.fromEntries(keys.map(key => [key, saved.snapshot[key]]));
+  await expect.poll(async () => {
+    const restored = await page.evaluate(() => window.maimaiBrowserState.capture());
+    return Object.fromEntries(keys.map(key => [key, restored[key]]));
+  }).toEqual(expected);
+});
+
+
 for(const selector of ['.chart-row','.row-difficulty','.chart-detail-actions button:first-child','#settings-toggle']){
  test('delayed player readiness preserves song keyboard focus '+selector,async({page,request})=>{
   await page.addInitScript(()=>{

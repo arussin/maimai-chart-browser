@@ -60,6 +60,7 @@ export interface BrowserPort {
   cancelRestoration(): void;
   capture(): BrowserSnapshot;
   restore(value: BrowserSnapshot): boolean | Promise<boolean>;
+  selectView(name: Tab): void;
   version(value: string): boolean;
   open(): void;
   ready: Promise<void>;

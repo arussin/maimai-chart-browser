@@ -67,6 +67,9 @@ export class NavigationCoordinator {
   get restoring() {
     return this.restoreDepth > 0;
   }
+  get songInternational(): boolean {
+    return historyPort.state.maimaiInternational === true;
+  }
   asset(path: string) {
     return routePattern.test(location.pathname) ? new URL(path, location.origin + '/').href : path;
   }
@@ -200,7 +203,19 @@ export class NavigationCoordinator {
     document.documentElement.lang =
       snapshot?.locale || this.ports.localization()?.locale || this.browserLanguage;
     replaceMetadata(this.browserMetadata);
-    if (snapshot) this.silent(() => this.browser?.restore(snapshot));
+    if (snapshot) {
+      const requested = new URLSearchParams(location.search).get('view');
+      const view: Tab =
+        location.hash === '#privacy'
+          ? 'about'
+          : requested === 'patterns' || requested === 'compare' || requested === 'about'
+            ? requested
+            : 'catalog';
+      this.silent(() => {
+        this.browser?.selectView(view);
+        this.browser?.restore(snapshot);
+      });
+    }
   }
   private loadDocument(target: string, push: boolean) {
     const destination = new URL(target, location.href).href;
