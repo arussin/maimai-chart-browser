@@ -154,6 +154,8 @@ test('filter disclosures default closed, count active groups and remember indepe
   await expect(personal).toHaveAttribute('aria-expanded','false');
   await expect(personal).toHaveAttribute('title','Click to expand');
   await personal.click();await expect(personal).toHaveAttribute('aria-expanded','true');
+  // Count and persistence checks begin after the actual disclosure transition finishes.
+  await page.locator('#personal-filter-content').evaluate(element=>Promise.all(element.getAnimations().map(animation=>animation.finished)));
   await page.locator('#personal-lamp-button').click();await page.locator('#personal-lamp-choices [data-value="FULL COMBO"]').click();
   await expect(page.locator('.player-filter-count').last()).toHaveText('1 active');
   await personal.click();
