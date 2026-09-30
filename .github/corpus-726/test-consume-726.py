@@ -228,5 +228,48 @@ class HtmlTransportTests(unittest.TestCase):
         self.assertEqual(progress["pages_analytics_blocks_removed"], 3)
 
 
+class RetainedReviewTests(unittest.TestCase):
+    def source(self):
+        retained = (
+            Path(__file__).resolve().parents[2] / "config/coverage-reviews.json"
+        ).read_bytes()
+        return retained.replace(b"\r\n", b"\n")
+
+    def expected(self):
+        return {
+            "bytes": 904,
+            "sha256": "6595688a8e8307748acb82a0802047324b0d9d75aa2c81f59bce8e16f3e166bf",
+        }
+
+    def test_exact_git_blob_recovers_the_retained_input_hash_and_policy(self):
+        raw = self.source()
+        restored = consumer.restore_retained_reviews(raw, self.expected())
+        self.assertEqual(len(raw), 879)
+        self.assertEqual(restored.count(b"\r\n"), 25)
+        self.assertEqual(len(restored), 904)
+        self.assertEqual(hashlib.sha256(restored).hexdigest(), self.expected()["sha256"])
+        self.assertEqual(json.loads(raw), json.loads(restored))
+
+    def test_changed_source_or_wrong_line_ending_form_is_rejected(self):
+        raw = self.source()
+        for changed in (raw + b" ", raw.replace(b"titles", b"titlez"), raw.replace(b"\n", b"\r\n")):
+            with (
+                self.subTest(length=len(changed)),
+                self.assertRaisesRegex(ValueError, "REVIEW_SOURCE_CHANGED"),
+            ):
+                consumer.restore_retained_reviews(changed, self.expected())
+
+    def test_changed_retained_pin_is_rejected(self):
+        for expected in (
+            {**self.expected(), "bytes": 903},
+            {**self.expected(), "sha256": "0" * 64},
+        ):
+            with (
+                self.subTest(expected=expected),
+                self.assertRaisesRegex(ValueError, "RETAINED_REVIEWS_CHANGED"),
+            ):
+                consumer.restore_retained_reviews(self.source(), expected)
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -42,6 +42,12 @@ PUBLIC_SOURCE = {
     "bytes": 12786,
     "sha256": "d2b05a9354352261b6046473c289d75097902ab15d2ba844c5bd7adbc9354125",
 }
+# Git stores this public review file with LF; the accepted retained input uses
+# CRLF. Bind both representations instead of weakening either inventory pin.
+REVIEWS_SOURCE = {
+    "bytes": 879,
+    "sha256": "104179101b1ac69e15e15a2ba1543a8355fd20387d1ed667e8e5c27530732d4f",
+}
 CONTROL_SOURCE = "src/maimai_intelligence/public_release.py"
 IMMUTABLE_PREFIXES = (
     "catalogs/",
@@ -300,6 +306,16 @@ def download(url, path, expected, category):
         if failure is None:
             raise
         raise failure from None
+    return restored
+
+
+def restore_retained_reviews(raw, expected):
+    """One exact public Git blob to one exact retained Windows input."""
+    if {"bytes": len(raw), "sha256": sha(raw)} != REVIEWS_SOURCE:
+        raise ValueError("REVIEW_SOURCE_CHANGED")
+    restored = raw.replace(b"\n", b"\r\n")
+    if {"bytes": len(restored), "sha256": sha(restored)} != expected:
+        raise ValueError("RETAINED_REVIEWS_CHANGED")
     return restored
 
 
@@ -623,6 +639,24 @@ def acquire(args, trees, template):
             if {"bytes": len(raw), "sha256": sha(raw)} != trees["previous-public"][name]:
                 raise ValueError("CONTROL_RECONSTRUCTION_CHANGED")
             write_new(inputs / "previous-public" / name, raw)
+        # Verify this small retained-input adapter before the large public batch.
+        reviews_source = root / "coverage-reviews-source.json"
+        download(
+            RAW + SOURCE + "/config/coverage-reviews.json",
+            reviews_source,
+            REVIEWS_SOURCE,
+            "source",
+        )
+        expected_reviews = {k: v for k, v in template["inputs"]["reviews"].items() if k != "kind"}
+        write_new(
+            inputs / "reviews.json",
+            restore_retained_reviews(reviews_source.read_bytes(), expected_reviews),
+        )
+        result["review_input_reconstruction"] = {
+            "source": REVIEWS_SOURCE,
+            "retained": expected_reviews,
+            "transformation": "exact_git_lf_to_retained_crlf",
+        }
         tasks = [
             (
                 PUBLIC + "/" + urllib.parse.quote(name, safe="/"),
@@ -647,12 +681,6 @@ def acquire(args, trees, template):
                 RAW + SOURCE + "/config/mai-notes-overrides.json",
                 inputs / "package/review.json",
                 trees["package"]["review.json"],
-                "source",
-            ),
-            (
-                RAW + SOURCE + "/config/coverage-reviews.json",
-                inputs / "reviews.json",
-                {k: v for k, v in template["inputs"]["reviews"].items() if k != "kind"},
                 "source",
             ),
         ]
@@ -683,7 +711,7 @@ def acquire(args, trees, template):
             runner_sha256=RUNNER_SHA,
             inventory_recipe_sha256=INVENTORY_SHA,
             footprint_bytes=sum(row["bytes"] for row in actual.values()),
-            public_request_count=len(tasks) + 2,
+            public_request_count=len(tasks) + 3,
         )
     except BaseException as error:
         result["failure_type"] = type(error).__name__
@@ -696,6 +724,8 @@ def acquire(args, trees, template):
                 "PUBLIC_INPUT_ACQUISITION_FAILED",
                 "ACQUISITION_BOUND_EXCEEDED",
                 "CONTROL_RECONSTRUCTION_CHANGED",
+                "REVIEW_SOURCE_CHANGED",
+                "RETAINED_REVIEWS_CHANGED",
             }
             else "ACQUISITION_INTEGRITY_FAILURE"
         )
