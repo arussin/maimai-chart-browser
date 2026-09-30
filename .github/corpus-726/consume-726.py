@@ -10,6 +10,7 @@ import gzip
 import hashlib
 import http.client
 import importlib.util
+import io
 import json
 import os
 import shutil
@@ -49,6 +50,15 @@ IMMUTABLE_PREFIXES = (
     "chart-details/",
     "media/",
     "integration/",
+)
+# Existing Pages edge insertion, verified against all eight public HTML inputs.
+# This is a public beacon identifier, not an authentication credential. Only this
+# exact 214-byte block is removable; original size and SHA256 remain mandatory.
+PAGES_ANALYTICS_INSERTION = (
+    b"<!-- Cloudflare Pages Analytics --><script defer "
+    b"src='https://static.cloudflareinsights.com/beacon.min.js' "
+    b'data-cf-beacon=\'{"token": "c2c3ed2a66ca4d42bd5ddc6fe67f887b"}\'>'
+    b"</script><!-- Cloudflare Pages Analytics -->"
 )
 FREE_RESERVE = 30 * 1024**3
 ORDINARY_GUARD = 20 * 1024**3
@@ -250,6 +260,9 @@ def download_failure(error, category, expected):
 
 def download(url, path, expected, category):
     public_url(url, category)
+    html_transport = category == "pages" and urllib.parse.urlsplit(url).path.endswith(".html")
+    extra = len(PAGES_ANALYTICS_INSERTION) if html_transport else 0
+    restored = False
     path = regular(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     opener = urllib.request.build_opener(urllib.request.ProxyHandler({}), Redirects(category))
@@ -269,14 +282,25 @@ def download(url, path, expected, category):
                     length = int(length)
                 except ValueError:
                     raise ValueError("HTTP_LENGTH_INVALID") from None
-                if length != expected["bytes"]:
+                if length not in {expected["bytes"], expected["bytes"] + extra}:
                     raise ValueError("INPUT_LENGTH_MISMATCH")
-            stream_checked(response, path, expected)
+            if html_transport:
+                raw = response.read(expected["bytes"] + extra + 1)
+                if (
+                    len(raw) == expected["bytes"] + extra
+                    and raw.count(PAGES_ANALYTICS_INSERTION) == 1
+                ):
+                    raw = raw.replace(PAGES_ANALYTICS_INSERTION, b"", 1)
+                    restored = True
+                stream_checked(io.BytesIO(raw), path, expected)
+            else:
+                stream_checked(response, path, expected)
     except Exception as error:
         failure = download_failure(error, category, expected)
         if failure is None:
             raise
         raise failure from None
+    return restored
 
 
 def controls(source):
@@ -491,7 +515,9 @@ def acquire_tasks(tasks, progress=None):
     """Keep at most four requests live; stop scheduling after the first failure."""
     remaining = iter(tasks)
     progress = progress if progress is not None else {}
-    progress.update(total=len(tasks), scheduled=0, completed_observed=0)
+    progress.update(
+        total=len(tasks), scheduled=0, completed_observed=0, pages_analytics_blocks_removed=0
+    )
     with ThreadPoolExecutor(max_workers=4) as pool:
         pending = {
             pool.submit(download, *item)
@@ -503,7 +529,8 @@ def acquire_tasks(tasks, progress=None):
             while pending:
                 complete, pending = wait(pending, return_when=FIRST_COMPLETED)
                 for future in complete:
-                    future.result()
+                    if future.result() is True:
+                        progress["pages_analytics_blocks_removed"] += 1
                     progress["completed_observed"] += 1
                     if progress["completed_observed"] % 500 == 0:
                         print(

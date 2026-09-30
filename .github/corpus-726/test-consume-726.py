@@ -117,7 +117,15 @@ class DownloadTests(unittest.TestCase):
         with mock.patch.object(consumer, "download", side_effect=failure) as download:
             with self.assertRaises(consumer.AcquisitionFailure):
                 consumer.acquire_tasks([(URL, None, EXPECTED, "pages")] * 100, progress)
-        self.assertEqual(progress, {"total": 100, "scheduled": 4, "completed_observed": 0})
+        self.assertEqual(
+            progress,
+            {
+                "total": 100,
+                "scheduled": 4,
+                "completed_observed": 0,
+                "pages_analytics_blocks_removed": 0,
+            },
+        )
         self.assertLessEqual(download.call_count, 4)
 
     def test_completed_batch_reports_only_counts(self):
@@ -125,10 +133,99 @@ class DownloadTests(unittest.TestCase):
         output = io.StringIO()
         with mock.patch.object(consumer, "download"), contextlib.redirect_stdout(output):
             consumer.acquire_tasks([(URL, None, EXPECTED, "pages")] * 501, progress)
-        self.assertEqual(progress, {"total": 501, "scheduled": 501, "completed_observed": 501})
+        self.assertEqual(
+            progress,
+            {
+                "total": 501,
+                "scheduled": 501,
+                "completed_observed": 501,
+                "pages_analytics_blocks_removed": 0,
+            },
+        )
         report = json.loads(output.getvalue())
         self.assertEqual(report["completed_observed"], 500)
-        self.assertEqual(set(report), {"status", "total", "scheduled", "completed_observed"})
+        self.assertEqual(
+            set(report),
+            {
+                "status",
+                "total",
+                "scheduled",
+                "completed_observed",
+                "pages_analytics_blocks_removed",
+            },
+        )
+
+
+class HtmlTransportTests(unittest.TestCase):
+    def attempt(self, raw, *, url=None, category="pages", length=None):
+        url = url or consumer.PUBLIC + "/fixture.html"
+        source = io.BytesIO(raw)
+        response = mock.MagicMock(url=url, status=200)
+        response.read.side_effect = source.read
+        response.headers = {} if length is None else {"Content-Length": str(length)}
+        response.__enter__.return_value = response
+        opener = mock.Mock()
+        opener.open.return_value = response
+        target, output = mock.Mock(), io.BytesIO()
+        target.open.return_value = contextlib.nullcontext(output)
+        with (
+            mock.patch.object(consumer, "regular", return_value=target),
+            mock.patch.object(consumer.urllib.request, "build_opener", return_value=opener),
+        ):
+            restored = consumer.download(url, target, EXPECTED, category)
+        return restored, output.getvalue(), response.read.call_args_list
+
+    def test_exact_public_insertion_restores_original_bytes_with_or_without_length(self):
+        insertion = consumer.PAGES_ANALYTICS_INSERTION
+        self.assertEqual(len(insertion), 214)
+        self.assertEqual(
+            hashlib.sha256(insertion).hexdigest(),
+            "dd257de9578b13a8454e7e37ce50d0e6f0f5a4d658a4ef61632e76bd6f52ef4a",
+        )
+        for raw, expected_restore in ((b"abc", False), (b"a" + insertion + b"bc", True)):
+            for length in (None, len(raw)):
+                with self.subTest(restored=expected_restore, length=length):
+                    restored, data, calls = self.attempt(raw, length=length)
+                    self.assertIs(restored, expected_restore)
+                    self.assertEqual(data, b"abc")
+                    self.assertEqual(calls, [mock.call(218)])
+
+    def test_changed_original_bytes_still_fail_the_original_digest(self):
+        raw = b"abd" + consumer.PAGES_ANALYTICS_INSERTION
+        with self.assertRaises(consumer.AcquisitionFailure) as caught:
+            self.attempt(raw)
+        self.assertEqual(caught.exception.detail["code"], "INPUT_DIGEST_MISMATCH")
+
+    def test_changed_duplicate_or_extra_insertions_are_not_stripped(self):
+        insertion = consumer.PAGES_ANALYTICS_INSERTION
+        for raw in (
+            b"abc" + insertion.replace(b"c2c3", b"ffff"),
+            b"abc" + insertion * 2,
+            b"abc" + insertion + b"x",
+            b"abc<script>arbitrary</script>",
+        ):
+            with self.subTest(length=len(raw)), self.assertRaises(consumer.AcquisitionFailure):
+                self.attempt(raw)
+
+    def test_other_paths_and_origins_keep_exact_streaming_rules(self):
+        for url, category in (
+            (URL, "pages"),
+            (consumer.RAW + consumer.SOURCE + "/fixture.html", "source"),
+        ):
+            with self.subTest(category=category), self.assertRaises(consumer.AcquisitionFailure):
+                self.attempt(
+                    b"abc" + consumer.PAGES_ANALYTICS_INSERTION, url=url, category=category
+                )
+        with self.assertRaises(consumer.AcquisitionFailure) as caught:
+            self.attempt(b"abc", length=4)
+        self.assertEqual(caught.exception.detail["code"], "INPUT_LENGTH_MISMATCH")
+
+    def test_batch_counts_only_verified_transport_restorations(self):
+        progress = {}
+        with mock.patch.object(consumer, "download", return_value=True):
+            consumer.acquire_tasks([(URL, None, EXPECTED, "pages")] * 3, progress)
+        self.assertEqual(progress["completed_observed"], 3)
+        self.assertEqual(progress["pages_analytics_blocks_removed"], 3)
 
 
 if __name__ == "__main__":
