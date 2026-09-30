@@ -284,6 +284,8 @@ jobs:
         run: >-
           python -B toolkit/.github/corpus-726/ci-proof-726.py provenance
           --source registry --toolkit toolkit --output "$RUNNER_TEMP"
+      - name: Verify bounded acquisition diagnostics without network
+        run: python -B toolkit/.github/corpus-726/test-consume-726.py
       - name: Existing canonical Linux acquisition and package proof
         timeout-minutes: 20
         run: >-

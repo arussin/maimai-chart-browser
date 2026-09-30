@@ -8,14 +8,17 @@ import argparse
 import ast
 import gzip
 import hashlib
+import http.client
 import importlib.util
 import json
 import os
 import shutil
+import ssl
 import stat
 import subprocess
 import sys
 import time
+import urllib.error
 import urllib.parse
 import urllib.request
 import zipfile
@@ -200,6 +203,51 @@ def stream_checked(source, target, expected):
         raise ValueError("INPUT_DIGEST_MISMATCH")
 
 
+class AcquisitionFailure(ValueError):
+    """Finite diagnostics bound to a public input, never a request or response."""
+
+    def __init__(self, code, category, expected, http_status=None):
+        super().__init__("PUBLIC_INPUT_ACQUISITION_FAILED")
+        self.detail = {
+            "code": code,
+            "category": category,
+            "expected_sha256": expected["sha256"],
+            "expected_bytes": expected["bytes"],
+        }
+        if http_status is not None:
+            self.detail["http_status"] = http_status
+
+
+def download_failure(error, category, expected):
+    """Classify expected acquisition failures without serializing exception text."""
+    if isinstance(error, AcquisitionFailure):
+        return error
+    if isinstance(error, urllib.error.HTTPError):
+        return AcquisitionFailure("HTTP_STATUS", category, expected, error.code)
+    cause = error.reason if isinstance(error, urllib.error.URLError) else error
+    if isinstance(cause, ssl.SSLCertVerificationError):
+        code = "TLS_VERIFICATION_FAILED"
+    elif isinstance(cause, ssl.SSLError):
+        code = "TLS_FAILURE"
+    elif isinstance(cause, TimeoutError):
+        code = "TIMEOUT"
+    elif isinstance(cause, http.client.IncompleteRead):
+        code = "TRUNCATED_RESPONSE"
+    elif isinstance(error, (urllib.error.URLError, ConnectionError)):
+        code = "TRANSPORT_FAILURE"
+    elif isinstance(error, ValueError) and str(error) in {
+        "ENDPOINT_DENIED",
+        "HTTP_LENGTH_INVALID",
+        "INPUT_LENGTH_MISMATCH",
+        "INPUT_OVERSIZE",
+        "INPUT_DIGEST_MISMATCH",
+    }:
+        code = str(error)
+    else:
+        return None  # Programming and local filesystem errors must still abort.
+    return AcquisitionFailure(code, category, expected)
+
+
 def download(url, path, expected, category):
     public_url(url, category)
     path = regular(path)
@@ -211,18 +259,24 @@ def download(url, path, expected, category):
     try:
         with opener.open(request, timeout=30) as response:  # noqa: S310 -- HTTPS allowlist above
             public_url(response.url, category, redirect=True)
-            if (
-                response.status != 200
-                or response.headers.get("Content-Encoding", "identity") != "identity"
-            ):
-                raise ValueError("HTTP_RESPONSE_REJECTED")
+            if response.status != 200:
+                raise AcquisitionFailure("HTTP_STATUS", category, expected, response.status)
+            if response.headers.get("Content-Encoding", "identity") != "identity":
+                raise AcquisitionFailure("HTTP_ENCODING_REJECTED", category, expected)
             length = response.headers.get("Content-Length")
-            if length is not None and int(length) != expected["bytes"]:
-                raise ValueError("INPUT_LENGTH_MISMATCH")
+            if length is not None:
+                try:
+                    length = int(length)
+                except ValueError:
+                    raise ValueError("HTTP_LENGTH_INVALID") from None
+                if length != expected["bytes"]:
+                    raise ValueError("INPUT_LENGTH_MISMATCH")
             stream_checked(response, path, expected)
-    except BaseException:
-        # Never retain URLs, signed redirect queries, response bodies or headers.
-        raise ValueError("PUBLIC_INPUT_ACQUISITION_FAILED") from None
+    except Exception as error:
+        failure = download_failure(error, category, expected)
+        if failure is None:
+            raise
+        raise failure from None
 
 
 def controls(source):
@@ -433,24 +487,33 @@ def storage(roots, required_paths, free_path):
     }
 
 
-def acquire_tasks(tasks):
+def acquire_tasks(tasks, progress=None):
     """Keep at most four requests live; stop scheduling after the first failure."""
     remaining = iter(tasks)
+    progress = progress if progress is not None else {}
+    progress.update(total=len(tasks), scheduled=0, completed_observed=0)
     with ThreadPoolExecutor(max_workers=4) as pool:
         pending = {
             pool.submit(download, *item)
             for item in [next(remaining, None) for _ in range(4)]
             if item is not None
         }
+        progress["scheduled"] = len(pending)
         try:
             while pending:
                 complete, pending = wait(pending, return_when=FIRST_COMPLETED)
                 for future in complete:
                     future.result()
+                    progress["completed_observed"] += 1
+                    if progress["completed_observed"] % 500 == 0:
+                        print(
+                            json.dumps({"status": "acquisition_progress", **progress}), flush=True
+                        )
                 for _ in complete:
                     item = next(remaining, None)
                     if item is not None:
                         pending.add(pool.submit(download, *item))
+                        progress["scheduled"] += 1
         except BaseException:
             for future in pending:
                 future.cancel()
@@ -567,7 +630,8 @@ def acquire(args, trees, template):
             ),
         ]
         # Four bounded static requests at a time; never retries failed providers.
-        acquire_tasks(tasks)
+        result["progress"] = {}
+        acquire_tasks(tasks, result["progress"])
         materialize_derived(inputs, trees)
         paths = {name: str(inputs / name) for name in trees}
         paths.update(wheel=str(wheel), reviews=str(inputs / "reviews.json"))
@@ -596,6 +660,8 @@ def acquire(args, trees, template):
         )
     except BaseException as error:
         result["failure_type"] = type(error).__name__
+        if isinstance(error, AcquisitionFailure):
+            result["failure_detail"] = error.detail
         result["failure_code"] = (
             str(error)
             if str(error)
