@@ -159,6 +159,11 @@ export class NavigationCoordinator {
     return { url: location.href, snapshot };
   }
   private regional(root: ParentNode) {
+    const returnTarget = historyPort.state.maimaiReturn;
+    root.querySelectorAll<HTMLAnchorElement>('[data-back-results]').forEach((link) => {
+      link.hidden = !returnTarget?.snapshot;
+      if (returnTarget?.snapshot) link.href = returnTarget.url;
+    });
     const update = (enabled: boolean) => {
       root.querySelectorAll<HTMLImageElement>('[data-seo-jp-src]').forEach((node) => {
         node.src = (enabled ? node.dataset.seoIntlSrc : node.dataset.seoJpSrc)!;

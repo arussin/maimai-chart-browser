@@ -2,13 +2,13 @@
   "version": 1,
   "tool": "esbuild-0.28.2",
   "entries": {
-    "hosted": "browser/browser-entry-LYTXOGKA.js",
-    "offline": "browser/browser-offline-PE2UZJ5U.js"
+    "hosted": "browser/browser-entry-IYR3KMEI.js",
+    "offline": "browser/browser-offline-3JPX7WUM.js"
   },
   "assets": {
-    "browser/browser-entry-LYTXOGKA.js": {
-      "sha256": "16f1fdb308f8c90c0379965d77e0845bb51aa46dc51fa2403eeae74771b89caf",
-      "bytes": 21625
+    "browser/browser-entry-IYR3KMEI.js": {
+      "sha256": "f2a0aaa2e2368d00980c5a6b78899345692fa1a708d429bbc42e241a0457435a",
+      "bytes": 21758
     },
     "browser/application-LNUCCDRF.js": {
       "sha256": "a41b4a8d8520cadde2c4ca65c7429156e9bef0800c64fbb97acfabed99be54aa",
@@ -18,9 +18,9 @@
       "sha256": "c25d9c5050a2d5c3134eefe35d0504e5a3bb13809038eccb822eee8f37879f44",
       "bytes": 2611
     },
-    "browser/browser-offline-PE2UZJ5U.js": {
-      "sha256": "6cee06a7e02a063b199fb46c95634d9a61e250b016cdbc0e33850e7c96aed453",
-      "bytes": 244181
+    "browser/browser-offline-3JPX7WUM.js": {
+      "sha256": "fcb9b6b8a936497e7fc13c1f575d72f244e68ffea5230a13efdb2440c1ecdadd",
+      "bytes": 244315
     },
     "browser/recovery-pagination-c898b2432a221525.js": {
       "sha256": "c898b2432a221525bd523d99a8666f562002886ac907d715f3d1687e07c366b6",

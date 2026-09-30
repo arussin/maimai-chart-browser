@@ -23,6 +23,10 @@ for(const locale of ['en','ja','ko','zh-hans'])for(const width of [320,768,1280]
   await page.goto(url);
   await expect(page.locator('#seo-route-view .song-workspace .song-row').first()).toBeVisible();
   await expect(page.locator('#settings-toggle')).toBeVisible();
+  await expect(page.locator('#seo-route-view [data-back-results]')).toBeHidden();
+  await expect(page.locator('#seo-route-view .seo-actions [data-open-browser]')).toBeVisible();
+  await expect(page.locator('#seo-route-view [data-seo-version-links] a:visible').first()).toBeVisible();
+  await expect(page.locator('#seo-route-view .seo-document > ul')).toHaveCount(0);
   await expect(page.locator('#lab-status')).toBeEmpty();
   await expect(page.locator('#seo-route-view .song-row .chart-row[aria-expanded=true]')).toHaveCount(0);
   const order=await page.locator('#seo-route-view .song-row').evaluateAll(rows=>rows.map(row=>({id:row.dataset.chartId,difficulty:row.dataset.difficulty})));

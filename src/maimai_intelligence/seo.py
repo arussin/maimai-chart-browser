@@ -247,6 +247,32 @@ def _regional(tag, jp, intl, *, attributes=""):
     )
 
 
+def _version_facts(charts, navigation, locale, ledger, unknown):
+    """All chart releases remain discoverable beside the selected region's facts."""
+    parts = ["<dd data-seo-version-links>"]
+    for international in (False, True):
+        versions = sorted(
+            {
+                str(version)
+                for chart in charts
+                if (version := _projection(chart, navigation, international).get("version"))
+                and str(version) in ledger["versions"]
+            }
+        )
+        links = ", ".join(
+            "<a data-song-page "
+            f'href="{route(locale, "versions", ledger["versions"][version])}">'
+            f"{escape(version)}</a>"
+            for version in versions
+        ) or escape(unknown)
+        parts.append(
+            f'<span data-seo-jp-visible="{str(not international).lower()}" '
+            f'data-seo-intl-visible="{str(international).lower()}"'
+            f"{' hidden' if international else ''}>{links}</span>"
+        )
+    return "".join(parts) + "</dd>"
+
+
 def _document(locale, kind, slug, title, description, body, words, browser_csp=None):
     path = route(locale, kind, slug)
     alternates = "".join(
@@ -416,7 +442,7 @@ def prepare_seo(
             body += (
                 '<p class="seo-actions"><a class="seo-primary" data-open-browser '
                 f'href="{escape(browser, quote=True)}">{escape(words["open"])}</a> <a '
-                f'data-back-results href="/">{escape(words["back"])}</a></p>'
+                f'data-back-results hidden href="/">{escape(words["back"])}</a></p>'
             )
             body += (
                 '<label class="check international-data-option"><input type="checkbox" '
@@ -424,10 +450,15 @@ def prepare_seo(
                 'class="seo-facts">'
             )
             for key in ("artist", "genre", "version", "bpm"):
-                body += f"<dt>{escape(words[key])}</dt>" + _regional(
-                    "dd",
-                    _text(jp.get(key), words["unknown"]),
-                    _text(intl.get(key), words["unknown"]),
+                body += f"<dt>{escape(words[key])}</dt>"
+                body += (
+                    _version_facts(charts, navigation, locale, ledger, words["unknown"])
+                    if key == "version"
+                    else _regional(
+                        "dd",
+                        _text(jp.get(key), words["unknown"]),
+                        _text(intl.get(key), words["unknown"]),
+                    )
                 )
             body += (
                 f'</dl><h2>{escape(words["charts"])}</h2><div class="seo-table"><table><thead><tr>'
@@ -465,15 +496,8 @@ def prepare_seo(
                     f'<td><a data-open-browser href="{escape(link, quote=True)}">'
                     f"{escape(words['open'])}</a></td></tr>"
                 )
-            body += "</tbody></table></div><ul>"
-            for version, members in sorted(versions.items()):
-                if sid in members:
-                    body += (
-                        "<li><a data-song-page "
-                        f'href="{route(locale, "versions", ledger["versions"][version])}">'
-                        f"{escape(version)}</a></li>"
-                    )
-            body += f'</ul><p class="muted">{escape(words["qualification"])}</p></section>'
+            body += "</tbody></table></div>"
+            body += f'<p class="muted">{escape(words["qualification"])}</p></section>'
             path = route(locale, "songs", ledger["songs"][sid])
             assets[unquote(path[1:]) + "index.html"] = _document(
                 locale,
@@ -506,7 +530,7 @@ def prepare_seo(
                 f'data-seo-version="{escape(version, quote=True)}"><h1>{escape(version)}</h1><'
                 f'p>{escape(words["version_description"])}</p><p class="seo-actions"><a '
                 f'data-open-browser href="{escape(browser, quote=True)}">'
-                f'{escape(words["open"])}</a> <a data-back-results href="/">'
+                f'{escape(words["open"])}</a> <a data-back-results hidden href="/">'
                 f"{escape(words['back'])}</a></p>"
             )
             body += (

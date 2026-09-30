@@ -2,6 +2,7 @@
 
 import hashlib
 import json
+import re
 import unittest
 from urllib.parse import unquote
 from xml.etree import ElementTree
@@ -197,6 +198,43 @@ class SEOTests(unittest.TestCase):
             name = unquote(route(locale, "songs", ledger["songs"]["song:one"])[1:])
             html = assets[name + "index.html"].decode()
             self.assertIn('data-seo-intl="Verified international title"', html)
+
+    def test_song_release_links_are_in_regional_facts_without_stray_list(self):
+        data = catalog()
+        extra = next(chart for chart in data["catalog"] if chart["song_id"] == "song:one")
+        data["navigation"]["charts"][extra["chart_id"]]["version"] = "Another Japan release"
+        assets, ledger, _ = build_seo(data)
+        for locale in LOCALES:
+            html = assets[
+                unquote(route(locale, "songs", ledger["songs"]["song:one"])[1:]) + "index.html"
+            ].decode()
+            facts = re.search(r"<dd data-seo-version-links>(.*?)</dd>", html).group(1)
+            base, international = re.findall(r"<span[^>]*>(.*?)</span>", facts)
+            for version in ("Another Japan release", "Japan release"):
+                self.assertIn(route(locale, "versions", ledger["versions"][version]), base)
+            self.assertNotIn("International release", base)
+            self.assertIn(
+                route(locale, "versions", ledger["versions"]["International release"]),
+                international,
+            )
+            self.assertIn('data-seo-intl-visible="true" hidden', facts)
+            self.assertNotIn("<ul>", html)
+            self.assertIn('data-back-results hidden href="/"', html)
+            self.assertIn("data-open-browser", html)
+
+    def test_unknown_song_release_is_text_without_invented_route(self):
+        data = catalog()
+        for chart in data["catalog"]:
+            data["navigation"]["charts"][chart["chart_id"]]["version"] = "unknown"
+            chart.pop("regional")
+        assets, ledger, _ = build_seo(data)
+        self.assertEqual(ledger["versions"], {})
+        html = assets[
+            unquote(route("en", "songs", ledger["songs"]["song:one"])[1:]) + "index.html"
+        ].decode()
+        facts = re.search(r"<dd data-seo-version-links>(.*?)</dd>", html).group(1)
+        self.assertNotIn("<a", facts)
+        self.assertIn("Unknown", facts)
 
     def test_generation_is_pure_and_deterministic(self):
         data = catalog()
