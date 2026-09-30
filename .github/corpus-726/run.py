@@ -147,10 +147,10 @@ def manifest(path=None, expected_sha=None):
     spec = json.loads(raw)
     if path is not None and (
         spec["schema"] != "maimai-linux-retained-corpus-inputs-2"
-        or spec["source_commit"] != "2364f72de9d01a0636cbc22aec4f2c04d02607bb"
+        or spec["source_commit"] != "e51abd0d9a087819accc6344e4e392ccda0a4231"
         or spec["acceptance_mode"] != "derived-count-with-exact-corpus-and-closure"
         or spec["inputs"]["wheel"]["sha256"]
-        != "951f98d10f2a7f3b28ce5b4aae7f19ec5a699705cc1fcce4faa08c0bcde61552"
+        != "81c5c68a74ad2e7805c57b30c3888424d1e502f648389ea503feaf3c50ba264d"
         or type(spec["inputs"]["wheel"]["bytes"]) is not int
         or spec["total_input_bytes"] != sum(row["bytes"] for row in spec["inputs"].values())
     ):
@@ -159,7 +159,7 @@ def manifest(path=None, expected_sha=None):
         template_raw = (HERE / "inputs-726.template.json").read_bytes()
         if (
             digest(template_raw)
-            != "7bb09128e00aaa22bbe65443515d97e39273379dcfadecdbbe503d4b8c42e0a5"
+            != "e63483b9d4e839070464af855d64c7e2067e7c5bf23126c6976f3d531e810d88"
         ):
             raise ValueError("Current execution template changed")
         expected = json.loads(template_raw)
@@ -337,7 +337,7 @@ def check_capacity(summary, spec):
     derived = (
         spec.get("schema") == "maimai-linux-retained-corpus-inputs-2"
         and spec.get("acceptance_mode") == "derived-count-with-exact-corpus-and-closure"
-        and spec.get("source_commit") == "2364f72de9d01a0636cbc22aec4f2c04d02607bb"
+        and spec.get("source_commit") == "e51abd0d9a087819accc6344e4e392ccda0a4231"
         and expected is None
     )
     if (

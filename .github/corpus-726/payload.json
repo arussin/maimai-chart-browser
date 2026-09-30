@@ -2,15 +2,15 @@
   "files": {
     "ci-proof-726.py": {
       "bytes": 11393,
-      "sha256": "34e434277b9a1daa2ecd1aeae90dd0c4552ce477e4ec142a08d09d7dbdb49926"
+      "sha256": "81e39648b2f01b947c4b038cc57d94d4196316c015ca00cac3226a970cdcedef"
     },
     "consume-726.py": {
       "bytes": 33402,
-      "sha256": "f2dcf48d0a9b3d5d82df3e77b6133351f635c00e3952c2db64943276452c9e14"
+      "sha256": "565e54761c46ad8002037b4e2e8c728a1bc499dc928cbe42badd71dcad5d9f2e"
     },
     "inputs-726.template.json": {
       "bytes": 4134,
-      "sha256": "7bb09128e00aaa22bbe65443515d97e39273379dcfadecdbbe503d4b8c42e0a5"
+      "sha256": "e63483b9d4e839070464af855d64c7e2067e7c5bf23126c6976f3d531e810d88"
     },
     "inventory-726.json.gz": {
       "bytes": 895875,
@@ -18,7 +18,7 @@
     },
     "run.py": {
       "bytes": 39884,
-      "sha256": "71da8f7c4eef5a2710a7b78ade83c564330e9aaebc0f88e2e0bc52fb3c2c9e59"
+      "sha256": "b6bf382aed37dec0104b128d84f3f706afcf42dae42174e2a750243fa90e1004"
     }
   },
   "schema": "maimai-corpus-ci-payload-726-1"
