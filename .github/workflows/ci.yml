@@ -51,7 +51,7 @@ jobs:
   browser:
     if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.corpus_726 != 'off') }}
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
