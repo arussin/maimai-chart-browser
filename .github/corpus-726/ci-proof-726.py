@@ -1,4 +1,4 @@
-"""Finite provenance and receipt retention for the opt-in726 CI job only."""
+"""Finite provenance and receipt retention for the existing opt-in job, pinned to product236."""
 
 import argparse
 import hashlib
@@ -14,9 +14,9 @@ import zipfile
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-SOURCE = "726e5466960fa076f76a46f2b89ac462e910b33f"
-SOURCE_FILES_SHA = "035f41a52ec71fc6626b797ec8aee9b440ac4df83c065be064a7c0dffdb1620d"
-WHEEL_SHA = "10ea126d46cfd41d39da1bb669f0329a46324b0093447d407ff199a1e0e84cd1"
+SOURCE = "2364f72de9d01a0636cbc22aec4f2c04d02607bb"
+SOURCE_FILES_SHA = "89cefc24e64023edea4a8b61c8e5265162b9eeb6aa494f760dc827e7b2a36b72"
+WHEEL_SHA = "951f98d10f2a7f3b28ce5b4aae7f19ec5a699705cc1fcce4faa08c0bcde61552"
 WHEEL_NAME = "maimai_chart_intelligence-0.2.0-py3-none-any.whl"
 PAYLOAD = {
     "run.py",
@@ -116,12 +116,12 @@ def package_identity(proof, wheel_sha):
     if (
         proof["passed"] is not True
         or proof["source_sha256"] != SOURCE_FILES_SHA
-        or len(proof["source_files"]) != 773
+        or len(proof["source_files"]) != 787
         or len(proof["builds"]) != 2
         or any(row["wheel_sha256"] != WHEEL_SHA for row in proof["builds"])
         or wheel_sha != WHEEL_SHA
     ):
-        raise ValueError("Frozen726 canonical package identity differs")
+        raise ValueError("Frozen236 canonical package identity differs")
 
 
 def package_proof(output):

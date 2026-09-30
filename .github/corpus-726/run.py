@@ -147,10 +147,10 @@ def manifest(path=None, expected_sha=None):
     spec = json.loads(raw)
     if path is not None and (
         spec["schema"] != "maimai-linux-retained-corpus-inputs-2"
-        or spec["source_commit"] != "726e5466960fa076f76a46f2b89ac462e910b33f"
+        or spec["source_commit"] != "2364f72de9d01a0636cbc22aec4f2c04d02607bb"
         or spec["acceptance_mode"] != "derived-count-with-exact-corpus-and-closure"
         or spec["inputs"]["wheel"]["sha256"]
-        != "10ea126d46cfd41d39da1bb669f0329a46324b0093447d407ff199a1e0e84cd1"
+        != "951f98d10f2a7f3b28ce5b4aae7f19ec5a699705cc1fcce4faa08c0bcde61552"
         or type(spec["inputs"]["wheel"]["bytes"]) is not int
         or spec["total_input_bytes"] != sum(row["bytes"] for row in spec["inputs"].values())
     ):
@@ -159,7 +159,7 @@ def manifest(path=None, expected_sha=None):
         template_raw = (HERE / "inputs-726.template.json").read_bytes()
         if (
             digest(template_raw)
-            != "0bf8f20580784efc2b7c57f4272e4d30006b3062ca8a4f62f6abf5f99ed43cd9"
+            != "d4b42bf104c152eea9ba193f7b3c182c1c37e503697841fe8033e5723561d562"
         ):
             raise ValueError("Current execution template changed")
         expected = json.loads(template_raw)
@@ -173,7 +173,7 @@ def manifest(path=None, expected_sha=None):
 def verify_wheel(wheel, installed=None):
     with zipfile.ZipFile(wheel) as archive:
         files = {row.filename: archive.read(row) for row in archive.infolist() if not row.is_dir()}
-    if len(files) != 276 or any(
+    if len(files) != 278 or any(
         PurePosixPath(name).is_absolute() or ".." in PurePosixPath(name).parts or "\\" in name
         for name in files
     ):
@@ -186,7 +186,7 @@ def verify_wheel(wheel, installed=None):
         for name, raw in files.items()
         if name.startswith(("maimai_intelligence/", "maimai_analyzer/"))
     }
-    if len(runtime) != 268:
+    if len(runtime) != 270:
         raise ValueError("Unexpected runtime payload count")
     if installed is not None:
         actual = {}
@@ -265,7 +265,7 @@ def check_capacity(summary, spec):
     derived = (
         spec.get("schema") == "maimai-linux-retained-corpus-inputs-2"
         and spec.get("acceptance_mode") == "derived-count-with-exact-corpus-and-closure"
-        and spec.get("source_commit") == "726e5466960fa076f76a46f2b89ac462e910b33f"
+        and spec.get("source_commit") == "2364f72de9d01a0636cbc22aec4f2c04d02607bb"
         and expected is None
     )
     if (

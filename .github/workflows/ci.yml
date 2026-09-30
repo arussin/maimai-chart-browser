@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       corpus_726:
-        description: 'Optional frozen726 proof; off runs ordinary CI'
+        description: 'Optional frozen236 proof; off runs ordinary CI'
         type: choice
         options: ['off', capacity, full]
         default: 'off'
@@ -257,7 +257,7 @@ jobs:
           PY
 
   corpus-726:
-    name: Frozen726 corpus capacity or full proof
+    name: Frozen236 corpus capacity or full proof
     if: ${{ github.event_name == 'workflow_dispatch' && inputs.corpus_726 != 'off' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 210
@@ -268,7 +268,7 @@ jobs:
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
         with:
-          ref: 726e5466960fa076f76a46f2b89ac462e910b33f
+          ref: 2364f72de9d01a0636cbc22aec4f2c04d02607bb
           path: registry
           persist-credentials: false
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
@@ -289,7 +289,7 @@ jobs:
         run: >-
           python -B registry/scripts/run_canonical_reproduction.py
           --source registry --toolkit registry --output "$RUNNER_TEMP/reproduction"
-      - name: Require the exact frozen726 canonical source and Linux wheel
+      - name: Require the exact frozen236 canonical source and Linux wheel
         run: python -B toolkit/.github/corpus-726/ci-proof-726.py package --output "$RUNNER_TEMP"
       - name: Measure full input and pair capacity before any corpus download
         run: python -B toolkit/.github/corpus-726/ci-proof-726.py capacity --output "$RUNNER_TEMP"

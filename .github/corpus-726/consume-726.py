@@ -1,4 +1,4 @@
-"""Exact726 public acquisition, then a separately invoked networkless Linux pair.
+"""Exact236 public acquisition, then a separately invoked networkless Linux pair.
 
 Default is a small plan. No upload, image pull, dependency installation, cleanup,
 credential access, workflow dispatch or account mutation is implemented here.
@@ -23,13 +23,13 @@ from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
 from pathlib import Path, PurePosixPath
 
 HERE = Path(__file__).resolve().parent
-SOURCE = "726e5466960fa076f76a46f2b89ac462e910b33f"
+SOURCE = "2364f72de9d01a0636cbc22aec4f2c04d02607bb"
 BASE = "cc5a703936b61f3c3e9d151ade5b7a5067379d2e"
 PUBLIC = "https://6662deec.maimai-party.pages.dev"
 RAW = "https://raw.githubusercontent.com/arussin/maimai-chart-browser/"
 INVENTORY_SHA = "1e34913c85e95341b7c976caa878170db6457ef7b8b204f31c91d1d51fc104bd"
-TEMPLATE_SHA = "0bf8f20580784efc2b7c57f4272e4d30006b3062ca8a4f62f6abf5f99ed43cd9"
-RUNNER_SHA = "91d32d8d7c49fb805d9fa7c9b6456f3e6e49f85729ea383958d53395938a09d8"
+TEMPLATE_SHA = "d4b42bf104c152eea9ba193f7b3c182c1c37e503697841fe8033e5723561d562"
+RUNNER_SHA = "2fe2bf9271df711010facff0a5e1becf4f903e083ffbc8005f25c75c3a468e35"
 PACKET = {
     "bytes": 18015314,
     "sha256": "98480ad2b49313e233a0bddccb23c1ee45ebe9f9face81b094b218ca8ac3b319",

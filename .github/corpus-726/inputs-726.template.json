@@ -1,6 +1,6 @@
 {
   "schema": "maimai-linux-retained-corpus-inputs-2",
-  "source_commit": "726e5466960fa076f76a46f2b89ac462e910b33f",
+  "source_commit": "2364f72de9d01a0636cbc22aec4f2c04d02607bb",
   "image": "python:3.11.14-slim-bookworm@sha256:83f339c1be6340ae1096010fdccf6552ac932d8f410d45d206014916bdf37e48",
   "platform": "linux/amd64",
   "python": "3.11.14",
@@ -32,7 +32,7 @@
     "wheel": {
       "kind": "file",
       "bytes": null,
-      "sha256": "10ea126d46cfd41d39da1bb669f0329a46324b0093447d407ff199a1e0e84cd1"
+      "sha256": "951f98d10f2a7f3b28ce5b4aae7f19ec5a699705cc1fcce4faa08c0bcde61552"
     },
     "reviews": {
       "kind": "file",
@@ -70,8 +70,8 @@
   ],
   "acceptance_mode": "derived-count-with-exact-corpus-and-closure",
   "current_authority": {
-    "ci_run": 36285343924,
-    "linux_proof_artifact_sha256": "03dbba91250f4ed69c7574de30bd147079c41dd72992d86fd19acd01126a9b7a",
+    "ci_run": 36295036273,
+    "linux_proof_artifact_sha256": "258e60ab414cf24f4c5d3e48a302d27057498407982b61efbc6d28eb157b1b87",
     "wheel_bytes_measured_after_exact_sha_verification": true,
     "preparation_counts": {
       "charts": 7251,
