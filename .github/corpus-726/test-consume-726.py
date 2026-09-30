@@ -7,8 +7,10 @@ import importlib.util
 import io
 import json
 import ssl
+import tempfile
 import unittest
 import urllib.error
+import zipfile
 from pathlib import Path
 from unittest import mock
 
@@ -269,6 +271,122 @@ class RetainedReviewTests(unittest.TestCase):
                 self.assertRaisesRegex(ValueError, "RETAINED_REVIEWS_CHANGED"),
             ):
                 consumer.restore_retained_reviews(self.source(), expected)
+
+
+class OfflineBuilderTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.runner = consumer.load_runner()
+        cls.template = consumer.recipe()[1]
+
+    def test_existing_lock_and_complete_dependency_input_are_bound(self):
+        wheels = self.template["builder_wheels"]
+        lock = (consumer.HERE.parents[1] / "requirements-dev.lock").read_text()
+        files = {
+            name: {key: row[key] for key in ("bytes", "sha256")} for name, row in wheels.items()
+        }
+        self.assertEqual(len(files), 2)
+        for row in wheels.values():
+            self.assertIn(row["sha256"], lock)
+        self.assertEqual(
+            self.template["inputs"]["builder-wheels"],
+            {
+                "kind": "tree",
+                "files": 2,
+                "bytes": 1322016,
+                "inventory_sha256": consumer.sha(consumer.encoded(files)),
+            },
+        )
+
+    def test_only_exact_pinned_public_wheel_urls_are_allowed(self):
+        for row in self.template["builder_wheels"].values():
+            self.assertEqual(consumer.public_url(row["url"], "builder-wheel"), row["url"])
+            for changed in (
+                row["url"] + "?token=" + SENTINEL,
+                row["url"].replace("https:", "http:"),
+                row["url"].replace("0.55.0", "0.54.0").replace("0.1.7", "0.1.8"),
+                "https://files.pythonhosted.org/arbitrary.whl",
+            ):
+                with (
+                    self.subTest(url_kind="changed"),
+                    self.assertRaisesRegex(ValueError, "ENDPOINT_DENIED"),
+                ):
+                    consumer.public_url(changed, "builder-wheel", redirect=True)
+
+    def test_installation_uses_only_local_wheels_without_resolution_or_index(self):
+        paths = {"wheel": Path("/inputs/app.whl"), "builder-wheels": Path("/inputs/builder-wheels")}
+        command = self.runner.install_command(Path("/output/installed"), paths, self.template)
+        for flag in ("-I", "-B", "--no-index", "--no-deps", "--no-compile", "--no-cache-dir"):
+            self.assertIn(flag, command)
+        for name in self.template["builder_wheels"]:
+            self.assertIn(str(paths["builder-wheels"] / name), command)
+        self.assertFalse(any(item.startswith("https:") for item in command))
+
+    def test_input_and_installed_dependency_tampering_are_rejected(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            builder, installed = root / "wheels", root / "installed"
+            builder.mkdir()
+            (installed / "opencc").mkdir(parents=True)
+            target = installed / "opencc/__init__.py"
+            target.write_bytes(b"verified")
+            with zipfile.ZipFile(builder / "fixture.whl", "w") as archive:
+                archive.writestr("opencc/__init__.py", b"verified")
+            files = self.runner.inventory(builder)
+            spec = {
+                "builder_wheels": {"fixture.whl": files["fixture.whl"]},
+                "inputs": {
+                    "builder-wheels": {
+                        "kind": "tree",
+                        "files": 1,
+                        "bytes": files["fixture.whl"]["bytes"],
+                        "inventory_sha256": self.runner.digest(self.runner.encoded(files)),
+                    }
+                },
+            }
+            paths = {"builder-wheels": builder}
+            self.runner.verify_inputs(spec, paths)
+            self.runner.verify_builder_install(paths, spec, installed)
+            target.write_bytes(b"tampered")
+            with self.assertRaisesRegex(ValueError, "Installed builder dependency differs"):
+                self.runner.verify_builder_install(paths, spec, installed)
+            (builder / "fixture.whl").write_bytes(b"tampered")
+            with self.assertRaisesRegex(ValueError, "Complete input identity differs"):
+                self.runner.verify_inputs(spec, paths)
+            (builder / "fixture.whl").unlink()
+            with self.assertRaisesRegex(ValueError, "Complete input identity differs"):
+                self.runner.verify_inputs(spec, paths)
+
+    def test_chained_failure_receipt_explains_missing_module_without_private_data(self):
+        try:
+            try:
+                raise ModuleNotFoundError(SENTINEL, name="opencc")
+            except ModuleNotFoundError as cause:
+                raise RuntimeError("https://invalid.test/?token=" + SENTINEL) from cause
+        except RuntimeError as error:
+            receipt = self.runner.failure_receipt(error)
+        self.assertEqual(
+            [row["type"] for row in receipt["chain"]], ["RuntimeError", "ModuleNotFoundError"]
+        )
+        self.assertEqual(receipt["chain"][1]["missing_module"], "opencc")
+        self.assertTrue(receipt["chain"][0]["frames"])
+        encoded = json.dumps(receipt)
+        self.assertNotIn(SENTINEL, encoded)
+        self.assertNotIn("https://", encoded)
+        self.assertNotIn(str(consumer.HERE), encoded)
+        unknown = self.runner.failure_receipt(ModuleNotFoundError(SENTINEL, name=SENTINEL))
+        self.assertEqual(unknown["chain"][0]["missing_module"], "unlisted")
+        self.assertNotIn(SENTINEL, json.dumps(unknown))
+
+    def test_failure_chain_is_bounded_and_handles_cycles(self):
+        error = RuntimeError(SENTINEL)
+        error.__cause__ = error
+        self.assertEqual(len(self.runner.failure_receipt(error)["chain"]), 1)
+        for _ in range(10):
+            parent = RuntimeError(SENTINEL)
+            parent.__cause__ = error
+            error = parent
+        self.assertEqual(len(self.runner.failure_receipt(error)["chain"]), 4)
 
 
 if __name__ == "__main__":

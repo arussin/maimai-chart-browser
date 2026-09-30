@@ -32,8 +32,8 @@ BASE = "cc5a703936b61f3c3e9d151ade5b7a5067379d2e"
 PUBLIC = "https://6662deec.maimai-party.pages.dev"
 RAW = "https://raw.githubusercontent.com/arussin/maimai-chart-browser/"
 INVENTORY_SHA = "1e34913c85e95341b7c976caa878170db6457ef7b8b204f31c91d1d51fc104bd"
-TEMPLATE_SHA = "d4b42bf104c152eea9ba193f7b3c182c1c37e503697841fe8033e5723561d562"
-RUNNER_SHA = "2fe2bf9271df711010facff0a5e1becf4f903e083ffbc8005f25c75c3a468e35"
+TEMPLATE_SHA = "7bb09128e00aaa22bbe65443515d97e39273379dcfadecdbbe503d4b8c42e0a5"
+RUNNER_SHA = "71da8f7c4eef5a2710a7b78ade83c564330e9aaebc0f88e2e0bc52fb3c2c9e59"
 PACKET = {
     "bytes": 18015314,
     "sha256": "98480ad2b49313e233a0bddccb23c1ee45ebe9f9face81b094b218ca8ac3b319",
@@ -182,6 +182,9 @@ def public_url(url, category, *, redirect=False):
             )
             and not parsed.query
         )
+    elif category == "builder-wheel":
+        template = json.loads(checked_raw(HERE / "inputs-726.template.json", TEMPLATE_SHA))
+        allowed = url in {row["url"] for row in template["builder_wheels"].values()}
     elif category == "packet":
         initial = (
             parsed.netloc == "github.com"
@@ -611,6 +614,7 @@ def acquire(args, trees, template):
     addition = (
         sum(row["bytes"] for label, files in trees.items() for row in files.values())
         + 904
+        + template["inputs"]["builder-wheels"]["bytes"]
         + PACKET["bytes"]
         + ACQUISITION_RESERVE
     )
@@ -630,6 +634,16 @@ def acquire(args, trees, template):
     try:
         inputs = root / "inputs"
         inputs.mkdir()
+        # Exact existing builder dependencies are acquired before the large public batch.
+        builder = inputs / "builder-wheels"
+        builder.mkdir()
+        for name, row in template["builder_wheels"].items():
+            download(
+                row["url"],
+                builder / name,
+                {key: row[key] for key in ("bytes", "sha256")},
+                "builder-wheel",
+            )
         packet = root / "packet.zip"
         download(args.packet_url, packet, PACKET, "packet")
         unpack_packet(packet, inputs, packet_members(trees))
@@ -690,6 +704,7 @@ def acquire(args, trees, template):
         materialize_derived(inputs, trees)
         paths = {name: str(inputs / name) for name in trees}
         paths.update(wheel=str(wheel), reviews=str(inputs / "reviews.json"))
+        paths["builder-wheels"] = str(builder)
         spec = {
             **template,
             "inputs": {**template["inputs"], "wheel": {"kind": "file", **actual_wheel}},
@@ -711,7 +726,7 @@ def acquire(args, trees, template):
             runner_sha256=RUNNER_SHA,
             inventory_recipe_sha256=INVENTORY_SHA,
             footprint_bytes=sum(row["bytes"] for row in actual.values()),
-            public_request_count=len(tasks) + 3,
+            public_request_count=len(tasks) + 3 + len(template["builder_wheels"]),
         )
     except BaseException as error:
         result["failure_type"] = type(error).__name__

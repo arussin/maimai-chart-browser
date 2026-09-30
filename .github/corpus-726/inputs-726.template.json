@@ -38,6 +38,12 @@
       "kind": "file",
       "bytes": 904,
       "sha256": "6595688a8e8307748acb82a0802047324b0d9d75aa2c81f59bce8e16f3e166bf"
+    },
+    "builder-wheels": {
+      "kind": "tree",
+      "files": 2,
+      "bytes": 1322016,
+      "inventory_sha256": "fc45b4ebb245a8d2625aa83f660bc96b9b36181e16ac9a75ba3ecc9ebd0dbf81"
     }
   },
   "inventory_algorithm": "sha256 of UTF-8 json.dumps(relative_posix_name_to_bytes_and_sha256, sort_keys=True, separators=(',', ':'))",
@@ -53,7 +59,7 @@
     "profile": "pages-default",
     "max_files": 20000
   },
-  "dependency_scope": "Wheel declares no Requires-Dist. Retained offline artwork migration verifies accepted bytes; Pillow is used only for new thumbnail conversion. No online, replay or reassessment is requested. Missing optional imports must fail, never install implicitly.",
+  "dependency_scope": "The application wheel declares no Requires-Dist. Catalog preparation also requires the two existing requirements-localization.txt builder dependencies, at their requirements-dev.lock versions and wheel hashes. Acquisition binds their exact public wheels before execution; both clean containers install those local wheels with no index or dependency resolution. Retained artwork needs no Pillow conversion. No Node, online, replay or reassessment is requested; missing imports fail closed.",
   "local_authority": {
     "name": "attempt.json",
     "sha256": "617131b2159dc7100e889650f332589ef9434d605021f21b9b11ade627e4d857"
@@ -80,5 +86,17 @@
       "artwork": 1561
     },
     "canonical_registry_sha256": "a6fc949ec76c98106a7444284233a88150d294ec980416acc2b5b54f1f490920"
+  },
+  "builder_wheels": {
+    "opencc_python_reimplemented-0.1.7-py2.py3-none-any.whl": {
+      "bytes": 481813,
+      "sha256": "41b3b92943c7bed291f448e9c7fad4b577c8c2eae30fcfe5a74edf8818493aa6",
+      "url": "https://files.pythonhosted.org/packages/30/6b/055b7806f320cc8f2cdf23c5f70221c0dc1683fca9ffaf76dfc2ad4b91b6/opencc_python_reimplemented-0.1.7-py2.py3-none-any.whl"
+    },
+    "pypinyin-0.55.0-py2.py3-none-any.whl": {
+      "bytes": 840203,
+      "sha256": "d53b1e8ad2cdb815fb2cb604ed3123372f5a28c6f447571244aca36fc62a286f",
+      "url": "https://files.pythonhosted.org/packages/b9/7b/4cabc76fcc21c3c7d5c671d8783984d30ac9d3bb387c4ba784fca3cdfa3a/pypinyin-0.55.0-py2.py3-none-any.whl"
+    }
   }
 }

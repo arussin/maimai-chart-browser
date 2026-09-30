@@ -83,7 +83,7 @@ def fingerprint(path):
 
 def verify_inputs(spec, paths):
     if set(paths) != set(spec["inputs"]):
-        raise ValueError("Supply exactly the six named inputs")
+        raise ValueError("Supply exactly the pinned named inputs")
     results = {}
     for name, expected in spec["inputs"].items():
         path = regular_path(paths[name])
@@ -159,7 +159,7 @@ def manifest(path=None, expected_sha=None):
         template_raw = (HERE / "inputs-726.template.json").read_bytes()
         if (
             digest(template_raw)
-            != "d4b42bf104c152eea9ba193f7b3c182c1c37e503697841fe8033e5723561d562"
+            != "7bb09128e00aaa22bbe65443515d97e39273379dcfadecdbbe503d4b8c42e0a5"
         ):
             raise ValueError("Current execution template changed")
         expected = json.loads(template_raw)
@@ -201,6 +201,78 @@ def verify_wheel(wheel, installed=None):
         "runtime_inventory_sha256": digest(encoded(runtime)),
         "requires_dist": [],
     }
+
+
+def install_command(installed, paths, spec):
+    """Only verified local wheels; never resolve or acquire dependencies here."""
+    return [
+        sys.executable,
+        "-I",
+        "-B",
+        "-m",
+        "pip",
+        "install",
+        "--no-index",
+        "--no-deps",
+        "--no-compile",
+        "--no-cache-dir",
+        "--disable-pip-version-check",
+        "--target",
+        str(installed),
+        str(paths["wheel"]),
+        *(str(paths["builder-wheels"] / name) for name in sorted(spec["builder_wheels"])),
+    ]
+
+
+def verify_builder_install(paths, spec, installed):
+    """Check installed dependency contents against the hash-verified local wheels."""
+    for name in sorted(spec["builder_wheels"]):
+        with zipfile.ZipFile(paths["builder-wheels"] / name) as archive:
+            names = archive.namelist()
+            if len(names) != len(set(names)):
+                raise ValueError("Duplicate builder wheel member")
+            for member in archive.infolist():
+                relative = PurePosixPath(member.filename)
+                if relative.is_absolute() or ".." in relative.parts or "\\" in member.filename:
+                    raise ValueError("Unexpected builder wheel member")
+                if member.is_dir() or member.filename.endswith(".dist-info/RECORD"):
+                    continue
+                raw = archive.read(member)
+                if fingerprint(installed / member.filename) != {
+                    "bytes": len(raw),
+                    "sha256": digest(raw),
+                }:
+                    raise ValueError("Installed builder dependency differs from its pinned wheel")
+
+
+def failure_receipt(error):
+    """Bounded code locations and error kinds; no messages, locals or raw requests."""
+    chain, seen = [], set()
+    while error is not None and id(error) not in seen and len(chain) < 4:
+        seen.add(id(error))
+        frames = []
+        trace = error.__traceback__
+        while trace is not None:
+            path = Path(trace.tb_frame.f_code.co_filename).resolve()
+            for root, label in ((Path("/output/installed"), "installed"), (HERE, "harness")):
+                if path.is_relative_to(root):
+                    frames.append(
+                        {
+                            "file": label + "/" + path.relative_to(root).as_posix(),
+                            "line": trace.tb_lineno,
+                        }
+                    )
+                    break
+            trace = trace.tb_next
+        kind = type(error).__name__ if type(error).__module__ == "builtins" else "application_error"
+        row = {"type": kind, "frames": frames[-12:]}
+        if isinstance(error, ModuleNotFoundError):
+            row["missing_module"] = (
+                error.name if error.name in {"opencc", "pypinyin"} else "unlisted"
+            )
+        chain.append(row)
+        error = error.__cause__ or (None if error.__suppress_context__ else error.__context__)
+    return {"schema": "maimai-offline-worker-failure-1", "status": "failed", "chain": chain}
 
 
 def require_linux(spec):
@@ -467,26 +539,12 @@ def worker(manifest_path=None, manifest_sha=None):
     verify_wheel(paths["wheel"])
     # Offline installation is part of explicit execution, never the default plan.
     subprocess.run(  # noqa: S603 -- pinned tools, explicit argv, no shell
-        [
-            sys.executable,
-            "-I",
-            "-B",
-            "-m",
-            "pip",
-            "install",
-            "--no-index",
-            "--no-deps",
-            "--no-compile",
-            "--no-cache-dir",
-            "--disable-pip-version-check",
-            "--target",
-            str(installed),
-            str(paths["wheel"]),
-        ],
+        install_command(installed, paths, spec),
         check=True,
         stdout=subprocess.DEVNULL,
     )
     wheel = verify_wheel(paths["wheel"], installed)
+    verify_builder_install(paths, spec, installed)
     sys.path.insert(0, str(installed))
     forbidden = guard_product(root)
     from maimai_intelligence.corpus_attempts import verify_attempt
@@ -582,10 +640,14 @@ def worker(manifest_path=None, manifest_sha=None):
     if bindings != verify_inputs(spec, paths) or forbidden:
         raise ValueError("Inputs changed or an offline boundary was attempted")
     verify_wheel(paths["wheel"], installed)
+    verify_builder_install(paths, spec, installed)
     for name, module in sys.modules.items():
-        if name.split(".")[0] in {"maimai_intelligence", "maimai_analyzer"} and not Path(
-            module.__file__
-        ).resolve().is_relative_to(installed):
+        if name.split(".")[0] in {
+            "maimai_intelligence",
+            "maimai_analyzer",
+            "opencc",
+            "pypinyin",
+        } and not Path(module.__file__).resolve().is_relative_to(installed):
             raise ValueError("Executing module escaped the installed wheel")
     observed = inventory(root)
     if sum(row["bytes"] for row in observed.values()) > spec["allocation"]["per_attempt_max_bytes"]:
@@ -782,7 +844,7 @@ def main():
     parser.add_argument(
         "--paths",
         type=Path,
-        help="Owner-local JSON map of the six labels to existing absolute paths",
+        help="Owner-local JSON map of the pinned labels to existing absolute paths",
     )
     parser.add_argument(
         "--output", type=Path, help="Absent directory in the destination's approved cache"
@@ -804,7 +866,11 @@ def main():
     parser.add_argument("--worker", action="store_true", help=argparse.SUPPRESS)
     args = parser.parse_args()
     if args.worker:
-        worker(args.manifest, args.manifest_sha256)
+        try:
+            worker(args.manifest, args.manifest_sha256)
+        except BaseException as error:
+            write(Path("/output/worker-failure.json"), failure_receipt(error))
+            raise
         return
     if args.paths is None or args.output is None or args.existing_ordinary_bytes is None:
         parser.error("--paths, --output and --existing-ordinary-bytes are required")

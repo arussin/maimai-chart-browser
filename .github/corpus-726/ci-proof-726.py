@@ -136,6 +136,7 @@ def reservation(consumer, trees):
     return (
         sum(row["bytes"] for files in trees.values() for row in files.values())
         + 904
+        + consumer.recipe()[1]["inputs"]["builder-wheels"]["bytes"]
         + consumer.PACKET["bytes"]
         + consumer.ACQUISITION_RESERVE
         + consumer.PAIR_BYTES
@@ -201,6 +202,7 @@ def selected_files(root):
     for attempt in ("a", "b"):
         prefix = "corpus-pair-726/" + attempt
         names.append(prefix + "/worker-result.json")
+        names.append(prefix + "/worker-failure.json")
         runs = ordinary(root / prefix / "store/runs")
         if runs.exists():
             children = list(runs.iterdir())
