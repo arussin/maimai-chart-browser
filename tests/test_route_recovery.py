@@ -134,20 +134,20 @@ class RouteRecoveryTests(unittest.TestCase):
         )
 
     def test_ordinary_and_static_fixture_inventories_match_reviewed_bytes(self):
-        # The ordinary 368a630 fixture includes the approved song difficulty order
-        # and its content-addressed JSON/HTML bindings. Static recovery retains
-        # the exact ce62a851 bytes from before the route authority extraction.
+        # Reviewed against 356bfa2: only inline version links and contextual
+        # return navigation changed in all 28 localized HTML documents. All
+        # other assets and chart recovery decisions remain byte-identical.
         # These are complete path-to-content inventories, not selected HTML text.
         def inventory_digest(assets):
             return digest(canonical({name: digest(raw) for name, raw in sorted(assets.items())}))
 
         self.assertEqual(
             inventory_digest(self.prepared.assets),
-            "aa5ac6c29c157356c566dea0b6f27acc97e8e518d6401aad5138b3fcb2590765",
+            "2d8d43d25f3525a935720c424e579292447c58a9a224b750181bc93938a19c1f",
         )
         self.assertEqual(
             inventory_digest(self.prepare().assets),
-            "ab8763297acf0ec5826884d26f5f08c30b8aaa06f4860f1fd69a7b7a95800e69",
+            "1c673e696962997d0351eab54437aa12bd2dd63c40be2dd04e89d1a4d440e904",
         )
         data = json.loads(self.baseline)
         data["catalog"] = data["catalog"][1:]
@@ -161,7 +161,7 @@ class RouteRecoveryTests(unittest.TestCase):
             inventory_digest(
                 self.prepare(baseline_catalog=raw, baseline_reference=reference).assets
             ),
-            "17ba679ab4a64abba44d44c06cc13783aaeeb86b1221ab3e04926809979a932c",
+            "875a4a47b00e044b3b57056c3b5c8d99aa3480c6ba2cbdb1a922fda58e68191f",
         )
 
     def test_static_recovery_removes_application_module_preloads(self):
@@ -340,6 +340,35 @@ class RouteRecoveryTests(unittest.TestCase):
         ):
             with self.subTest(resources=resources), self.assertRaises(ValueError):
                 self.prepare(resources=resources, resource_assets=styles)
+
+    def test_song_version_facts_keep_exact_routes_and_hide_international_fallback(self):
+        recovered = self.prepare()
+        for document in recovered.documents:
+            html = document.content.decode()
+            self.assertNotIn('<a hidden href="/">', html)
+            if document.path.split("/")[2] == "songs":
+                self.assertIn("<dd><span><a href=", html)
+                self.assertIn("<span hidden><a href=", html)
+                self.assertIn("Japan release</a>", html)
+                self.assertIn("International release</a>", html)
+                self.assertNotIn("<ul>", html)
+
+    def test_version_presentation_rejects_unknown_or_contradictory_markup(self):
+        for old, new in (
+            (b"<dd data-seo-version-links>", b'<dd data-seo-version-links="unexpected">'),
+            (b"<dd data-seo-version-links>", b"<div data-seo-version-links>"),
+            (
+                b'<span data-seo-jp-visible="true" data-seo-intl-visible="false">',
+                b'<span data-seo-jp-visible="true" data-seo-intl-visible="true">',
+            ),
+            (
+                b'<span data-seo-jp-visible="true" data-seo-intl-visible="false">',
+                b'<span data-seo-jp-visible="true" data-seo-intl-visible="false" hidden>',
+            ),
+            (b"</main>", b"<span>Unreviewed</span></main>"),
+        ):
+            with self.subTest(new=new), self.assertRaises(ValueError):
+                self.prepare(self.mutate_document(old, new))
 
     def test_scripts_are_removed_even_when_not_the_application_entry(self):
         changed = self.mutate_document(

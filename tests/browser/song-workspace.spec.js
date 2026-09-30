@@ -462,6 +462,18 @@ test('About stays available and supersedes a pending comparison catalog',async({
 for(const dependency of ['song','stylesheet'])for(const target of ['.seo-primary[data-open-browser]','[data-back-results]'])test('static song navigation survives enhancement during a pointer press ('+dependency+') '+target,async({page,request})=>{
  const map=await(await request.get('/registry/permalinks.json')).json();
  const slug=Object.values(map.songs).find(value=>value.includes('ソテリア'));
+ const restoring=target==='[data-back-results]';
+ if(restoring){
+  // A return link exists only for a real saved browser search. Retain that
+  // history entry across reload while enhancement is deliberately delayed.
+  await page.goto('/?lang=en');
+  await expect(page.locator('#catalog-count')).toHaveText('26 charts');
+  await page.locator('#search').fill('ソテリア');
+  const row=page.locator('#songs .song-row').first();
+  await row.locator('.chart-row').click();await row.locator('a[data-song-page]').click();
+  await expect(page.locator('#seo-route-view .song-workspace')).toBeVisible();
+  await expect(page.locator('#seo-route-view [data-back-results]')).toBeVisible();
+ }
  let release,requested=false;
  const held=new Promise(resolve=>{release=resolve;});
  const asset=dependency==='song'?'**/song-catalog/**':await browserResourceURL('seoStyle');
@@ -469,9 +481,12 @@ for(const dependency of ['song','stylesheet'])for(const target of ['.seo-primary
   if(dependency==='stylesheet'&&route.request().resourceType()!=='fetch')return route.fallback();
   requested=true;await held;await route.fallback();
  });
- await page.goto('/en/songs/'+encodeURIComponent(slug)+'/');
+ if(restoring)await page.reload();
+ else await page.goto('/en/songs/'+encodeURIComponent(slug)+'/');
  await expect.poll(()=>requested).toBe(true);
  const link=page.locator('body>main[data-seo-page=song] '+target);
+ await expect(link).toBeVisible();
+ if(!restoring)await expect(page.locator('body>main[data-seo-page=song] [data-back-results]')).toBeHidden();
  const box=await link.boundingBox();
  await page.mouse.move(box.x+box.width/2,box.y+box.height/2);
  await page.mouse.down();
@@ -480,7 +495,8 @@ for(const dependency of ['song','stylesheet'])for(const target of ['.seo-primary
  await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
  try {await expect(link).toBeVisible();} finally {await page.mouse.up();}
  await expect(page.locator('#songs')).toBeVisible();
- await expect(page.locator('#catalog-count')).toHaveText('26 charts');
+ await expect(page.locator('#catalog-count')).toHaveText(restoring?'4 charts':'26 charts');
+ if(restoring)await expect(page.locator('#search')).toHaveValue('ソテリア');
  expect(new URL(page.url()).pathname).toBe('/');
 });
 

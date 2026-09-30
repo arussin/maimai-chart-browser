@@ -150,6 +150,7 @@ class _StaticDocument(HTMLParser):
         "dl",
         "dt",
         "dd",
+        "span",
         "h2",
         "div",
         "table",
@@ -198,6 +199,7 @@ class _StaticDocument(HTMLParser):
         "data-back-results",
         "data-seo-international",
         "data-seo-version",
+        "data-seo-version-links",
         "data-seo-jp-visible",
         "data-seo-intl-visible",
     }
@@ -240,6 +242,24 @@ class _StaticDocument(HTMLParser):
             name in attrs for name in ("style", "contenteditable", "autofocus", "srcdoc")
         ):
             raise ValueError("Unreviewed interactive public attributes")
+        if "data-seo-version-links" in attrs and (
+            tag != "dd" or attrs != {"data-seo-version-links": None}
+        ):
+            raise ValueError("Unknown public version facts")
+        if tag == "span":
+            regional = {"data-seo-jp-visible": "true", "data-seo-intl-visible": "false"}
+            international = {
+                "data-seo-jp-visible": "false",
+                "data-seo-intl-visible": "true",
+                "hidden": None,
+            }
+            if (
+                self.record.kind != "song"
+                or not self.stack
+                or self.stack[-1][0] != "dd"
+                or attrs not in (regional, international)
+            ):
+                raise ValueError("Unknown public version presentation")
         identifier = attrs.get("id")
         if identifier:
             if identifier in self.ids:
@@ -382,6 +402,8 @@ class _StaticDocument(HTMLParser):
                 attrs = self._link(attrs)
         elif tag == "a":
             output_tag, attrs = self._anchor(attrs)
+            # A script-free recovery page has no browser snapshot to restore.
+            suppressed = "data-back-results" in attrs or suppressed
         else:
             self._content(tag, attrs)
         if not suppressed:
