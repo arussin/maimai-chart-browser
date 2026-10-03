@@ -15,7 +15,9 @@ jobs:
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
         with:
           node-version: 24
+      - name: Prepare temporary badge snapshot
+        run: cp -R community-badge "$RUNNER_TEMP/community-badge"
       - run: node tools/build-assets.mjs
-        working-directory: community-badge
+        working-directory: ${{ runner.temp }}/community-badge
       - run: node --test tests/*.test.mjs
-        working-directory: community-badge
+        working-directory: ${{ runner.temp }}/community-badge
