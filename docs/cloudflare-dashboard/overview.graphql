@@ -1,0 +1,5 @@
+# Read-only verification query. Supply a fresh rolling filter each run; do not freeze timestamps in dashboard charts.
+query Dashboard($account: string!, $filter: AccountHttpRequestsAdaptiveGroupsFilter_InputObject!) {viewer{accounts(filter:{accountTag:$account}){totals:httpRequestsAdaptiveGroups(limit:1,filter:{AND:[$filter]}){count sum{visits edgeResponseBytes} avg{sampleInterval}}
+daily:httpRequestsAdaptiveGroups(limit:32,filter:{AND:[$filter]},orderBy:[date_ASC]){dimensions{date} count sum{visits}}
+errors:httpRequestsAdaptiveGroups(limit:1,filter:{AND:[$filter],edgeResponseStatus_geq:500,edgeResponseStatus_lt:600}){count}
+errorTrend:httpRequestsAdaptiveGroups(limit:32,filter:{AND:[$filter],edgeResponseStatus_geq:500,edgeResponseStatus_lt:600},orderBy:[date_ASC]){dimensions{date} count}}}}

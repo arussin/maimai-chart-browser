@@ -1,0 +1,4 @@
+# Read-only verification query. Supply a fresh rolling filter each run; do not freeze timestamps in dashboard charts.
+query Dashboard($account: string!, $filter: AccountHttpRequestsAdaptiveGroupsFilter_InputObject!) {viewer{accounts(filter:{accountTag:$account}){countries:httpRequestsAdaptiveGroups(limit:10,filter:{AND:[$filter]},orderBy:[sum_visits_DESC]){dimensions{clientCountryName} sum{visits}}
+devices:httpRequestsAdaptiveGroups(limit:10,filter:{AND:[$filter]},orderBy:[sum_visits_DESC]){dimensions{clientDeviceType} sum{visits}}
+}}}
