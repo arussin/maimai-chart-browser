@@ -1,3 +1,4 @@
+import { TRAFFIC_POLICY } from './traffic-policy.mjs';
 import assets from './assets.mjs';
 import { monthPeriod, fetchAnalytics, readJsonBounded, validSnapshot } from './analytics.mjs';
 import { renderBadge } from './render.mjs';
@@ -7,7 +8,7 @@ export const FRESH_MS = 3600000;
 const RETRY_MS = 300000;
 
 export function cacheKey(env, month, origin) {
-  return new Request(origin + '/.community-badge-cache/v4/http-visits-30d-known-monitors-excluded/' + env.CF_ACCOUNT_ID + '/maimai.party/' + month);
+  return new Request(origin + '/.community-badge-cache/v5/http-visits-30d-identified-automation-excluded/' + env.CF_ACCOUNT_ID + '/maimai.party/' + month);
 }
 async function getState(cache, key, now) {
   try {
@@ -63,6 +64,7 @@ export async function handle(request, env, ctx, dependencies = {}) {
     'X-Content-Type-Options': 'nosniff',
     'Access-Control-Allow-Origin': '*',
     'X-Badge-State': state,
+    'X-Traffic-Policy': TRAFFIC_POLICY,
   });
   if (snapshot) headers.set('Last-Modified', new Date(snapshot.updatedAt).toUTCString());
   const matches = (request.headers.get('If-None-Match') ?? '').split(',').map(x => x.trim().replace(/^W\//, ''));

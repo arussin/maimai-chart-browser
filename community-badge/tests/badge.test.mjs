@@ -1,3 +1,4 @@
+import {automationExclusions} from '../traffic-policy.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { formatCount, formatExactCount, monthPeriod, queryBody, parseAnalytics, readJsonBounded, validSnapshot } from '../analytics.mjs';
@@ -49,7 +50,7 @@ test('rolling window covers exactly 30 days across month, year, leap-year and DS
 });
 test('analytics query uses dashboard visits restricted to the production hostname', () => {
   const body = queryBody(env,period);
-  assert.deepEqual(body.variables.filter, {clientRequestHTTPHost:'maimai.party',requestSource:'eyeball',AND:[{userAgent_neq:"Mozilla/5.0 (compatible;Cloudflare-Healthchecks/1.0;+https://www.cloudflare.com/; healthcheck-id: 9d3d35aa9299c6ce)"},{userAgent_neq:"Adam-Tidbyt-Suite/0.1 (read-only)"}],datetime_geq:period.start,datetime_lt:period.end});
+  assert.deepEqual(body.variables.filter, {clientRequestHTTPHost:'maimai.party',requestSource:'eyeball',AND:automationExclusions(),datetime_geq:period.start,datetime_lt:period.end});
   assert.match(body.query,/sum \{ visits \}/);
   assert.match(body.query,/httpRequestsAdaptiveGroups/);
   assert.match(body.query,/countryName: clientCountryName/);

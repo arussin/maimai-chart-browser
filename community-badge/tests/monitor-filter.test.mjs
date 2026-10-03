@@ -1,5 +1,8 @@
 
+import {automationExclusions} from '../traffic-policy.mjs';
 import test from 'node:test';
+const accepts = (f, ua) => f.AND.every(c => c.userAgent_neq !== undefined ? ua !== c.userAgent_neq : !new RegExp('^' + c.userAgent_notlike.split('%').map(RegExp.escape).join('.*') + '$').test(ua));
+
 import assert from 'node:assert/strict';
 import {queryBody,monthPeriod,parseAnalytics,validSnapshot} from '../analytics.mjs';
 import {handle,cacheKey} from '../handler.mjs';
@@ -20,32 +23,32 @@ const rows=[
  ['maimai.party','healthcheck','other','US',500],
 ];
 function responseFor(f) {
- const accepted=rows.filter(([host,source,ua])=>host===f.clientRequestHTTPHost && source===f.requestSource && f.AND.every(c=>ua!==c.userAgent_neq));
+ const accepted=rows.filter(([host,source,ua])=>host===f.clientRequestHTTPHost && source===f.requestSource && accepts(f,ua));
  const countries=new Map();for(const row of accepted)countries.set(row[3],(countries.get(row[3])||0)+row[4]);
  return {data:{viewer:{accounts:[{total:[{sum:{visits:accepted.reduce((n,r)=>n+r[4],0)},avg:{sampleInterval:1}}],
  regions:[...countries].map(([countryName,visits])=>({dimensions:{countryName},sum:{visits},avg:{sampleInterval:1}}))}]}}};
 }
-test('exact monitor exclusions preserve ordinary and other automated visits in total AND regions',async()=>{
+test('automation exclusions retain ordinary visits in both total and country queries',async()=>{
  let calls=0;
  const result=await handle(new Request('https://maimai.party/badges/community.svg'),env,{}, {now,
  cache:{match:async()=>undefined,put:async()=>{}},fetcher:async(_,options)=>{
   calls++;const body=JSON.parse(options.body),f=body.variables.filter;
-  assert.deepEqual(f.AND,[{userAgent_neq:native},{userAgent_neq:local}]);
+  assert.deepEqual(f.AND,automationExclusions());
   assert.equal(f.datetime_geq,period.start);assert.equal(f.datetime_lt,period.end);
   assert.equal((body.query.match(/filter: \$filter/g)||[]).length,2);
   const p=responseFor(f), snapshot=parseAnalytics(p,period);
-  assert.equal(snapshot.visits,169);
-  assert.deepEqual(snapshot.regions,[{country:'JP',visits:90},{country:'US',visits:60},{country:'SG',visits:10},{country:'CA',visits:9}]);
+  assert.equal(snapshot.visits,150);
+  assert.deepEqual(snapshot.regions,[{country:'JP',visits:90},{country:'US',visits:60}]);
   return Response.json(p);
  }});
  assert.equal(calls,1);assert.equal(result.headers.get('X-Badge-State'),'fresh');
- assert.match(await result.text(),/169 visits, past 30 days/);
+ assert.match(await result.text(),/150 visits, past 30 days/);
 });
-test('pre-filter v3 cache cannot reappear as filtered data even when upstream fails',async()=>{
+test('previous monitor-only v4 cache cannot reappear as filtered data even when upstream fails',async()=>{
  const current=parseAnalytics(responseFor(queryBody(env,period).variables.filter),period);
- const previous={...current,version:3,visits:41358};
+ const previous={...current,version:4,visits:41358};
  assert.equal(validSnapshot(current,now),true);assert.equal(validSnapshot(previous,now),false);
- const oldKey='https://maimai.party/.community-badge-cache/v3/http-visits-30d/'+env.CF_ACCOUNT_ID+'/maimai.party/'+period.month;
+ const oldKey='https://maimai.party/.community-badge-cache/v4/http-visits-30d-known-monitors-excluded/'+env.CF_ACCOUNT_ID+'/maimai.party/'+period.month;
  const key=cacheKey(env,period.month,'https://maimai.party').url;
  assert.notEqual(key,oldKey);
  for(const storedKey of [oldKey,key])for(const offline of [false,true]) {
