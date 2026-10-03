@@ -29,7 +29,7 @@
     "src/maimai_intelligence/assets/locales/errors.json": "8d606884cd61cfef308458f60bccdfb124a725140e4827ef1edba6b3621128f5",
     "src/maimai_intelligence/assets/locales/invariants.json": "458e3d52902a40e8c649cc8a226b84ec18115f6e3b6e83de734e60c55df9a1e1",
     "src/maimai_intelligence/assets/locales/lessons.json": "11c862874f1a6599defe50faf9973f909af473960079d798d93bc1c02c686cf4",
-    "src/maimai_intelligence/assets/locales/messages.json": "a5e34cc9ebdfe5acfca15a39e4b4ddb62c97ae5196a3e688ea922aa26499c1f2",
+    "src/maimai_intelligence/assets/locales/messages.json": "1579e667777cde8250c924621e84a2a0095444855eeb367787dd2bf6230581f7",
     "src/maimai_intelligence/assets/locales/pattern-aliases.json": "32a3ba91edd588b54b530bf877ed456e193807a57ffad07894f830e9b1dae03b",
     "src/maimai_intelligence/assets/locales/patterns.json": "ace85290f6d7ac0190b9aadcab30bba72b88c613cb1a7dca97fe26aff2716dfb",
     "src/maimai_intelligence/assets/locales/player.json": "54b74fc2b934d066b612681224dce80bfeaf6409bc78a4795247837876a080b2",
@@ -100,6 +100,12 @@
       "date": "2026-09-22",
       "scope": "Four shared title/navigation labels with complete Simplified Chinese, Korean and Japanese translations; three non-user-facing code constants explicitly classified. Existing entries preserved.",
       "record": "docs/localization-review/architecture-review-20260922.json"
+    },
+    {
+      "record": "docs/localization-review/chart-details-20261003.json",
+      "reviewer": "Codex",
+      "scope": "Two Chart details disclosure actions in English, Simplified Chinese, Korean and Japanese; no existing entries changed.",
+      "date": "2026-10-03"
     }
   ],
   "player_sources_review": {

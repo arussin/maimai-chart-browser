@@ -41,6 +41,17 @@
 @media(max-width:740px){.chart-card-footer{grid-row:5;flex-wrap:wrap;gap:8px}.chart-card-footer .chart-detail-actions{margin-left:auto}.chart-card-footer .chart-detail-actions button{min-height:40px}.chart-summary>.player-achievement{grid-row:6}.chart-detail-identity{gap:4px}.chart-section-toggle{gap:8px}.chart-section-name{font-size:12px}.chart-section .metric{padding:8px;font-size:10px}.chart-section .metric strong{font-size:14px}}
 @media(max-width:380px){.chart-section .demand{grid-template-columns:repeat(2,minmax(0,1fr))}.chart-card-footer .chart-detail-actions{width:100%}.chart-difficulty-badge{font-size:10px}}
 @media(prefers-reduced-motion:reduce){.chart-section-reveal,.chart-section-chevron{transition:none}}
+/* Chart details keep one semantic button for the title, identity and next action. */
+[data-chart-section=chart] .chart-section-toggle{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:12px;min-height:52px;padding:10px 12px;margin:6px 0 10px;border:1px solid color-mix(in srgb,var(--row-accent) 35%,white);border-radius:6px;background:#ffffff70;cursor:pointer;box-sizing:border-box}
+[data-chart-section=chart] .chart-section-toggle:hover{background:#ffffffa6;border-color:var(--row-accent)}
+[data-chart-section=chart] .chart-section-name{font-size:13px;font-weight:700}
+.chart-section-action{display:inline-flex;align-items:center;justify-self:end;gap:10px;color:var(--aqua);font-size:12px;font-weight:650;white-space:nowrap}
+[data-chart-section=chart] .chart-section-chevron{display:flex;width:16px;height:16px;margin:0;color:inherit;transform:rotate(180deg)}
+[data-chart-section=chart].is-section-collapsed .chart-section-chevron{transform:none}
+.chart-section-action svg{width:100%;height:100%;stroke-width:2.2}
+@media(max-width:800px){.song-row.is-expanded:has(>.chart-measurements [data-chart-section=chart]:not(.is-section-collapsed))>.chart-summary>.chart-flow.compact{display:none}}
+@media(max-width:740px){[data-chart-section=chart] .chart-section-toggle{grid-template-columns:minmax(0,1fr) auto;column-gap:8px;row-gap:6px;min-height:72px;padding:10px}[data-chart-section=chart] .chart-section-name{grid-column:1;grid-row:1}[data-chart-section=chart] .chart-detail-identity{grid-column:1;grid-row:2;justify-self:start}.chart-section-action{grid-column:2;grid-row:1/span 2;gap:7px}}
+@media(max-width:380px){[data-chart-section=chart] .chart-detail-identity{grid-column:1/-1}.chart-section-action{grid-row:1}}
 /* Romanized readings supplement the original title only in the English UI. */
 .song-title-line{display:flex;flex-wrap:wrap;align-items:baseline;column-gap:.5em;row-gap:.15em;min-width:0}
 .song-title-line .song-title{min-width:0;overflow-wrap:anywhere}

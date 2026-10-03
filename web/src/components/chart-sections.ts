@@ -41,6 +41,8 @@ export function createChartSections(
       const expanded = state[kind];
       if (!expanded && body.contains(root.ownerDocument.activeElement)) button.focus();
       button.setAttribute('aria-expanded', String(expanded));
+      const label = button.querySelector('.chart-section-action-label');
+      if (label) i18n.text(label, expanded ? 'Hide details' : 'Show details');
       node.classList.toggle('is-section-collapsed', !expanded);
       body.inert = !expanded;
     }
@@ -61,7 +63,26 @@ export function createChartSections(
     button.append(name);
     if (decoration) button.append(decoration);
     chevron.setAttribute('aria-hidden', 'true');
-    button.append(chevron);
+    if (kind === 'chart') {
+      const action = make('span', undefined, 'chart-section-action'),
+        label = make(
+          'span',
+          state[kind] ? 'Hide details' : 'Show details',
+          'chart-section-action-label',
+        ),
+        icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg'),
+        path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      icon.setAttribute('viewBox', '0 0 24 24');
+      icon.setAttribute('fill', 'none');
+      icon.setAttribute('stroke', 'currentColor');
+      path.setAttribute('d', 'm6 9 6 6 6-6');
+      path.setAttribute('stroke-linecap', 'round');
+      path.setAttribute('stroke-linejoin', 'round');
+      icon.append(path);
+      chevron.replaceChildren(icon);
+      action.append(label, chevron);
+      button.append(action);
+    } else button.append(chevron);
     heading.append(button);
     const reveal = make('div', undefined, 'chart-section-reveal'),
       body = make('div', undefined, 'chart-section-body'),
