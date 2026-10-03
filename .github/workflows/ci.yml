@@ -18,6 +18,8 @@ permissions:
   contents: read
 jobs:
   python:
+    # Keep existing branch-rule contexts stable while execution stays pinned.
+    name: ${{ matrix.check_name }}
     if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.corpus_726 != 'off') }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 20
@@ -25,9 +27,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - {os: ubuntu-24.04, python: '3.11.14'}
-          - {os: ubuntu-24.04, python: '3.13.7'}
-          - {os: windows-latest, python: '3.13.7'}
+          - {os: ubuntu-24.04, python: '3.11.14', check_name: 'python (ubuntu-latest, 3.11)'}
+          - {os: ubuntu-24.04, python: '3.13.7', check_name: 'python (ubuntu-latest, 3.13)'}
+          - {os: windows-latest, python: '3.13.7', check_name: 'python (windows-latest, 3.13)'}
     env:
       PYTHONUTF8: '1'
     steps:
