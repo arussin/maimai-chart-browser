@@ -1,0 +1,23 @@
+name: Community badge checks
+on:
+  pull_request:
+    paths: ["community-badge/**", ".github/workflows/community-badge.yml"]
+  push:
+    branches: [main]
+    paths: ["community-badge/**", ".github/workflows/community-badge.yml"]
+permissions:
+  contents: read
+jobs:
+  badge:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
+        with:
+          node-version: 24
+      - name: Prepare temporary badge snapshot
+        run: cp -R community-badge "$RUNNER_TEMP/community-badge"
+      - run: node tools/build-assets.mjs
+        working-directory: ${{ runner.temp }}/community-badge
+      - run: node --test tests/*.test.mjs
+        working-directory: ${{ runner.temp }}/community-badge

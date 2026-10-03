@@ -1,0 +1,12 @@
+{
+  "name": "maimai-community-badge",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "build:assets": "node tools/build-assets.mjs",
+    "test": "node --test tests/*.test.mjs"
+  }
+}

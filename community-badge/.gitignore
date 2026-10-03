@@ -1,0 +1,13 @@
+node_modules/
+assets.mjs
+.wrangler/
+.dev.vars*
+.env*
+worker-configuration.d.ts
+wrangler.jsonc
+tools/Prepare.ps1
+tools/import-assets.mjs
+tools/preview.mjs
+artwork/approved-reference.png
+artwork/approved-ears.png
+PROFILE-README.md
