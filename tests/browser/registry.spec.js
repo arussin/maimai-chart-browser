@@ -223,6 +223,31 @@ test('filter disclosures preview keeps scopes, aligned headings and removable ch
   await personal.screenshot({path:test.info().outputPath('personal-filters-expanded.png'),animations:'disabled'});
 });
 
+test('filter disclosures keep personal controls from scrolling inside an opening panel',async({page})=>{
+  await page.emulateMedia({reducedMotion:'no-preference'});
+  await page.goto('/registry/filter-preview.html');
+  const personal=page.locator('[data-personal-controls]'),body=personal.locator('.player-filter-body');
+  await expect(personal).toBeVisible();
+  // Hold the real disclosure transition partway open so focus cannot win a timing race.
+  await page.addStyleTag({content:'.player-filter-reveal{transition-duration:60s}'});
+  await personal.locator('.player-filter-toggle').click();
+  const transitions=await body.evaluate(body=>{
+    const animations=body.parentElement.getAnimations();
+    for(const animation of animations){animation.pause();animation.currentTime=10000;}
+    return animations.length;
+  });
+  expect(transitions).toBeGreaterThan(0);
+  expect(await body.evaluate(n=>n.clientHeight<n.scrollHeight)).toBe(true);
+  for(const field of ['lamp','sync']){
+    await page.locator('#personal-'+field+'-button').focus();
+    expect(await body.evaluate(n=>n.scrollTop)).toBe(0);
+  }
+  await body.evaluate(n=>n.parentElement.getAnimations().forEach(animation=>animation.finish()));
+  await page.locator('#personal-lamp-button').click();
+  await page.locator('#personal-lamp-choices [data-value="FULL COMBO"]').click();
+  await expect(personal.locator('.filter-chip')).toHaveText('Combo: FULL COMBO ×');
+});
+
 for(const width of [280,320,390,1280])for(const locale of ['en','zh-Hans','ko','ja'])test(`filter disclosures keep ${locale} text within heading columns at ${width}px`,async({page})=>{
   await page.setViewportSize({width,height:900});
   await page.goto('/registry/filter-preview.html');
