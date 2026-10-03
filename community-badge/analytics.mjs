@@ -1,5 +1,4 @@
-// Exact known monitors only. Keep total and country queries on the same filter.
-const MONITOR_USER_AGENTS = Object.freeze(["Mozilla/5.0 (compatible;Cloudflare-Healthchecks/1.0;+https://www.cloudflare.com/; healthcheck-id: 9d3d35aa9299c6ce)", "Adam-Tidbyt-Suite/0.1 (read-only)"]);
+import { automationExclusions } from './traffic-policy.mjs';
 export const GRAPHQL_ENDPOINT = 'https://api.cloudflare.com/client/v4/graphql';
 export const GRAPHQL_QUERY = `query CommunityBadge($account: string!, $filter: AccountHttpRequestsAdaptiveGroupsFilter_InputObject!) {
   viewer { accounts(filter: {accountTag: $account}) {
@@ -36,7 +35,7 @@ export function queryBody(env, period) {
       filter: {
         clientRequestHTTPHost: 'maimai.party',
         requestSource: 'eyeball',
-        AND: MONITOR_USER_AGENTS.map(userAgent => ({ userAgent_neq: userAgent })),
+        AND: automationExclusions(),
         datetime_geq: period.start,
         datetime_lt: period.end,
       },
@@ -80,7 +79,7 @@ export function parseAnalytics(payload, period) {
     rows.push({ country, visits: count });
   }
   rows.sort((a, b) => b.visits - a.visits || a.country.localeCompare(b.country, 'en'));
-  return { version: 4, source: 'httpRequestsAdaptiveGroups', metric: 'visits', month: period.month, start: period.start,
+  return { version: 5, source: 'httpRequestsAdaptiveGroups', metric: 'visits', month: period.month, start: period.start,
     updatedAt: period.end, visits, estimated, regions: rows.slice(0, 5) };
 }
 
@@ -119,7 +118,7 @@ export async function fetchAnalytics(env, period, fetcher = fetch) {
 
 export function validSnapshot(value, now = new Date()) {
   try {
-    if (value?.version !== 4 || value.source !== 'httpRequestsAdaptiveGroups' || value.metric !== 'visits' || value.month !== monthPeriod(now).month ||
+    if (value?.version !== 5 || value.source !== 'httpRequestsAdaptiveGroups' || value.metric !== 'visits' || value.month !== monthPeriod(now).month ||
         value.start !== monthPeriod(new Date(value.updatedAt)).start || typeof value.estimated !== 'boolean' ||
         !Array.isArray(value.regions) || value.regions.length > 5) return false;
     checkedCount(value.visits);
