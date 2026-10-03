@@ -39,7 +39,7 @@ function render(){
  el('download').disabled=false;
  const days=[];for(let day=from;day<=to;day=addDay(day,1))days.push(day);
  const inRange=data.totals.filter(r=>r.day>=from&&r.day<=to);
- const rows=inRange.filter(r=>(!page||r.page===page)&&(!search||[r.event,r.page,r.detail,r.failure].join(' ').replaceAll('_',' ').toLowerCase().includes(search)));
+ const rows=inRange.filter(r=>r.count>0&&(!page||r.page===page)&&(!search||[r.event,r.page,r.detail,r.failure].join(' ').replaceAll('_',' ').toLowerCase().includes(search)));
  const complete=days.filter(day=>coverage(day)==='Complete').length;
  const recorded=rows.length>0, measurable=complete===days.length;
  const total=recorded||measurable?sum(rows):null;
