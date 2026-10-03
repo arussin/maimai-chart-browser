@@ -2,11 +2,11 @@
 
 This source renders the public badge from Cloudflare HTTP visits over the rolling past 30 days. Counts are visits, not unique people. Both the independent total and country groups exclude the two exact known monitor user agents; other automation and repeat visits can still count. Sampling metadata remains explicit.
 
-The monitor-filter correction is prepared source, not a claim that production has been updated. Publishing this directory does not deploy the Worker.
+Known-monitor exclusions were deployed to the badge and companion Tidbyt traffic service on October 2, 2026. Publishing this directory tracks the maintained source; it does not deploy a Worker.
 
 ## Build and test
 
-Use Node 24 in a disposable workspace outside canonical source. No package installation is needed for these commands:
+Use Node 24 in a disposable workspace outside canonical source. On Windows, use a current-source copy under C:\DevCache; GitHub Actions uses a copy under its runner temporary directory. No package installation is needed for these commands:
 
 ```sh
 node tools/build-assets.mjs
