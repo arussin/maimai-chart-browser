@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.js';
 import {readFile} from 'node:fs/promises';
 import path from 'node:path';
 import {gzipSync} from 'node:zlib';
@@ -7,7 +7,7 @@ import {publicProfile,wire} from '../../player-import-worker/fixtures.mjs';
 const entry='/maishift-pilot/pilot/maishift/browser/';
 const saved=page=>page.evaluate(()=>maimaiPlayerStorage.read());
 const fixture=async()=>JSON.parse(await readFile(new URL('../../output/reconciliation-fixture.json',import.meta.url),'utf8'));
-async function boot(page){await page.goto(entry);await page.evaluate(()=>maimaiPersonal.ready);await expect(page.locator('#lab-status')).toBeHidden();}
+async function boot(page){await page.goto(entry);await expect.poll(()=>page.evaluate(()=>!!window.maimaiPersonal)).toBe(true);await page.evaluate(()=>maimaiPersonal.ready);await expect(page.locator('#lab-status')).toBeHidden();}
 async function setup(page,context,locale='en'){
   const root=process.env.MAIMAI_BROWSER_OUTPUT||'../../output/browser-tests';
   const config=JSON.parse(await readFile(path.join(root,'maishift-pilot/pilot/maishift/mapping.json'),'utf8'));
@@ -45,7 +45,7 @@ const localUpdateText=(page,time)=>page.evaluate(ms=>'Last Updated: '+new Date(m
 
 for(const [name,url]of [['main','/lab/'],['pilot',entry]]){
   test(`prominent Charts import and Settings import restore focus in the ${name} app and restores keyboard focus`,async({page,context})=>{
-    const state=await setup(page,context);if(url!==entry){await page.goto(url);await page.evaluate(()=>maimaiPersonal.ready);}
+    const state=await setup(page,context);if(url!==entry){await page.goto(url);await expect.poll(()=>page.evaluate(()=>!!window.maimaiPersonal)).toBe(true);await page.evaluate(()=>maimaiPersonal.ready);}
     const launch=page.locator('#player-import-primary'),dialog=page.locator('#player-import-dialog');
     await expect(launch).toHaveAccessibleName('Import player data');
     for(const view of ['catalog']){
@@ -60,7 +60,7 @@ for(const [name,url]of [['main','/lab/'],['pilot',entry]]){
   });
 
   test(`prominent import fits all four languages in the ${name} Charts heading`,async({page,context},testInfo)=>{
-    await setup(page,context);if(url!==entry){await page.goto(url);await page.evaluate(()=>maimaiPersonal.ready);}
+    await setup(page,context);if(url!==entry){await page.goto(url);await expect.poll(()=>page.evaluate(()=>!!window.maimaiPersonal)).toBe(true);await page.evaluate(()=>maimaiPersonal.ready);}
     const translations={en:'Import player data','zh-Hans':'导入玩家数据',ko:'플레이어 데이터 가져오기',ja:'プレイヤーデータを読み込む'};
     for(const width of [320,390,600,740,1061,1100,1280]){
       await page.setViewportSize({width,height:900});
@@ -111,7 +111,7 @@ test('Last Updated tracks committed imports and successful refreshes across relo
   expect((await saved(page)).active.lastImportedAt).toBe(refreshed);expect((await saved(page)).active.source.lastSuccess).toBe(refreshed);await expect(updatedLabel(page)).toHaveText(await localUpdateText(page,refreshed));
   // Older connections already record a local success time; source dates are never a fallback.
   await page.evaluate(async()=>{const s=await maimaiPlayerStorage.read();delete s.active.lastImportedAt;await maimaiPlayerStorage.save(s.active,s.token);});
-  await page.reload();await page.evaluate(()=>maimaiPersonal.ready);await expect(updatedLabel(page)).toHaveText(await localUpdateText(page,refreshed));
+  await page.reload();await expect.poll(()=>page.evaluate(()=>!!window.maimaiPersonal)).toBe(true);await page.evaluate(()=>maimaiPersonal.ready);await expect(updatedLabel(page)).toHaveText(await localUpdateText(page,refreshed));
   await menu(page,'player-forget');await expect(updatedLabel(page)).toHaveText(await localUpdateText(page,refreshed));
 });
 
@@ -126,7 +126,7 @@ test('derived grades restore without reimport and drive list, sorting, filters a
   // The persisted adapter records intentionally contain no reported grade.
   const original=await page.evaluate(async()=>{const d=await maimaiPlayerData.decode((await maimaiPlayerStorage.read()).active.bytes);return {grades:Object.values(d.records).map(r=>r.grade),plays:Object.keys(d.plays),snapshots:Object.keys(d.snapshots)};});
   expect(original.grades).toEqual(['','','']);expect(original.plays).toHaveLength(0);expect(original.snapshots).toHaveLength(1);
-  await page.reload();await page.evaluate(()=>maimaiPersonal.ready);await expect(page.locator('#lab-status')).toBeHidden();
+  await page.reload();await expect.poll(()=>page.evaluate(()=>!!window.maimaiPersonal)).toBe(true);await page.evaluate(()=>maimaiPersonal.ready);await expect(page.locator('#lab-status')).toBeHidden();
   expect(state.calls).toBe(1);expect((await saved(page)).active.bytes).toEqual(before.bytes);
   await page.getByRole('button',{name:'My PBs',exact:true}).click();
   const chartRows=page.locator('#songs .song-row');await expect(chartRows).toHaveCount(3);
@@ -150,16 +150,16 @@ for(const remember of [false,true])test(`Last Updated uses file commit time and 
   await expect(page.getByRole('heading',{name:'Import this profile?',exact:true})).toBeVisible();
   const accepted=start+60000;await page.clock.setFixedTime(accepted);await page.locator('.player-remember input').setChecked(remember);await page.getByRole('button',{name:'Import data',exact:true}).click();
   await expect(updatedLabel(page)).toHaveText(await localUpdateText(page,accepted));
-  await page.clock.setFixedTime(accepted+10000);await page.reload();await page.evaluate(()=>maimaiPersonal.ready);await expect(updatedLabel(page)).toHaveText(await localUpdateText(page,accepted));
+  await page.clock.setFixedTime(accepted+10000);await page.reload();await expect.poll(()=>page.evaluate(()=>!!window.maimaiPersonal)).toBe(true);await page.evaluate(()=>maimaiPersonal.ready);await expect(updatedLabel(page)).toHaveText(await localUpdateText(page,accepted));
   expect(await page.evaluate(async remember=>{const entry=remember?(await maimaiPlayerStorage.read()).active:JSON.parse(sessionStorage.getItem('maimai-pilot-maishift-v1:maimai-player-session'));const bytes=remember?entry.bytes:Uint8Array.from(atob(entry.bytes),c=>c.charCodeAt(0));return (await maimaiPlayerData.decode(bytes)).revision;},remember)).toBe(data.revision);
   // Do not fabricate a local timestamp when restoring pre-feature file imports.
   await page.evaluate(async remember=>{if(remember){const s=await maimaiPlayerStorage.read();delete s.active.lastImportedAt;await maimaiPlayerStorage.save(s.active,s.token);}else{const key='maimai-pilot-maishift-v1:maimai-player-session',entry=JSON.parse(sessionStorage.getItem(key));delete entry.lastImportedAt;sessionStorage.setItem(key,JSON.stringify(entry));}},remember);
-  await page.reload();await page.evaluate(()=>maimaiPersonal.ready);await expect(updatedLabel(page)).toHaveText('Last Updated: Date unknown');
+  await page.reload();await expect.poll(()=>page.evaluate(()=>!!window.maimaiPersonal)).toBe(true);await page.evaluate(()=>maimaiPersonal.ready);await expect(updatedLabel(page)).toHaveText('Last Updated: Date unknown');
 });
 
 test('real browser shows exact scores, filters, restored data and shared version artwork without main-site storage',async({page,context},testInfo)=>{
   const state=await setup(page,context);expect(state.calls).toBe(0);
-  const normal=await context.newPage();await normal.goto('/lab/');await normal.evaluate(()=>maimaiPersonal.ready);
+  const normal=await context.newPage();await normal.goto('/lab/');await expect.poll(()=>normal.evaluate(()=>!!window.maimaiPersonal)).toBe(true);await normal.evaluate(()=>maimaiPersonal.ready);
   const normalRevision=await normal.evaluate(async d=>{const data=await maimaiPlayerData.reconcile(d),s=await maimaiPlayerStorage.read();await maimaiPlayerStorage.save({revision:data.revision,bytes:await maimaiPlayerData.encode(data),source:null},s.token);localStorage.setItem('maimai-announcement:player-import-sources-v1','preserve');return data.revision;},await fixture());
   await importData(page);await page.getByRole('button',{name:'My PBs',exact:true}).click();
   await expect(page.locator('.player-achievement-value').first()).toHaveText('98.7654%');
@@ -170,7 +170,7 @@ test('real browser shows exact scores, filters, restored data and shared version
   await page.locator('#catalog-filters-toggle').click();
   expect(await page.evaluate(()=>localStorage.getItem('maimai-catalog-filters-collapsed'))).toBeNull();
   await page.screenshot({path:testInfo.outputPath('maishift-browser-fictional.png'),fullPage:true});
-  await page.reload();await page.evaluate(()=>maimaiPersonal.ready);await expect(page.locator('#lab-status')).toBeHidden();await expect.poll(()=>record(page,state.chart)).toMatchObject({achievement:987654});
+  await page.reload();await expect.poll(()=>page.evaluate(()=>!!window.maimaiPersonal)).toBe(true);await page.evaluate(()=>maimaiPersonal.ready);await expect(page.locator('#lab-status')).toBeHidden();await expect.poll(()=>record(page,state.chart)).toMatchObject({achievement:987654});
   expect(state.calls).toBe(1);expect((await saved(normal)).active.revision).toBe(normalRevision);
   expect(await normal.evaluate(()=>maimaiPlayerSources.capabilities.maishift)).toBe(false);
   expect(await page.locator('script[src*="analytics"],script[src*="support-"],script[src*="feature-announcements"]').count()).toBe(0);
@@ -182,7 +182,7 @@ test('real browser shows exact scores, filters, restored data and shared version
   await page.evaluate(()=>{for(const name of ['maimai','maimai DX FESTiVAL','maimai DX MAGiCAL'])document.body.prepend(maimaiChartArtwork.version(name));});
   await expect(page.locator('body>.version-logo.artwork-missing')).toHaveCount(0);
   await menu(page,'player-forget');await page.getByRole('button',{name:'Okay!',exact:true}).click();
-  expect((await saved(normal)).active.revision).toBe(normalRevision);await page.reload();await page.evaluate(()=>maimaiPersonal.ready);expect(await page.evaluate(()=>maimaiPersonal.enabled())).toBe(false);
+  expect((await saved(normal)).active.revision).toBe(normalRevision);await page.reload();await expect.poll(()=>page.evaluate(()=>!!window.maimaiPersonal)).toBe(true);await page.evaluate(()=>maimaiPersonal.ready);expect(await page.evaluate(()=>maimaiPersonal.enabled())).toBe(false);
 });
 
 test('unchanged refresh adds no history; corrected score preserves hidden state and filter selection',async({page,context})=>{
@@ -204,7 +204,7 @@ test('pilot tabs coordinate refresh and Forget aborts delayed work without resur
   await menu(other,'player-refresh');expect(state.calls).toBe(2);
   await menu(other,'player-forget');await other.getByRole('button',{name:'Okay!',exact:true}).click();release();
   await expect.poll(async()=>(await saved(page)).active).toBeNull();await expect(page.locator('#player-refresh')).toBeHidden();
-  await page.reload();await page.evaluate(()=>maimaiPersonal.ready);expect(await page.evaluate(()=>maimaiPersonal.enabled())).toBe(false);expect(state.calls).toBe(2);
+  await page.reload();await expect.poll(()=>page.evaluate(()=>!!window.maimaiPersonal)).toBe(true);await page.evaluate(()=>maimaiPersonal.ready);expect(await page.evaluate(()=>maimaiPersonal.enabled())).toBe(false);expect(state.calls).toBe(2);
 });
 
 test('new file replaces a delayed refresh and temporary imports remain isolated',async({page,context})=>{
@@ -270,7 +270,7 @@ test('Clear removes a hidden temporary import and its reload cache without touch
   expect(await record(page,state.chart)).toBeNull();expect(await page.locator('.player-achievement').evaluateAll(nodes=>nodes.every(n=>n.hidden))).toBe(true);await expect(page.locator('#player-status')).toBeHidden();
   expect(await page.evaluate(()=>sessionStorage.getItem('maimai-pilot-maishift-v1:maimai-player-session'))).toBeNull();
   expect(await page.evaluate(()=>localStorage.getItem('maimai-announcement:player-import-sources-v1'))).toBe('preserve');
-  await page.reload();await page.evaluate(()=>maimaiPersonal.ready);expect(await page.evaluate(()=>maimaiPersonal.enabled())).toBe(false);
+  await page.reload();await expect.poll(()=>page.evaluate(()=>!!window.maimaiPersonal)).toBe(true);await page.evaluate(()=>maimaiPersonal.ready);expect(await page.evaluate(()=>maimaiPersonal.enabled())).toBe(false);
   await page.locator('#player-import-primary').click();await expect(page.locator('.player-import-replace-warning')).toHaveCount(0);expect(state.calls).toBe(1);
 });
 
@@ -284,7 +284,7 @@ test('Clear reaches other tabs, cancels refresh, and is caught after missed noti
   // This tab intentionally missed both notification transports. The durable clear
   // marker must remove its in-memory scores when it becomes active again.
   await stale.evaluate(()=>window.dispatchEvent(new Event('focus')));await expect.poll(()=>stale.evaluate(()=>maimaiPersonal.enabled())).toBe(false);
-  await page.reload();await page.evaluate(()=>maimaiPersonal.ready);expect(await page.evaluate(()=>maimaiPersonal.enabled())).toBe(false);expect(state.calls).toBe(2);
+  await page.reload();await expect.poll(()=>page.evaluate(()=>!!window.maimaiPersonal)).toBe(true);await page.evaluate(()=>maimaiPersonal.ready);expect(await page.evaluate(()=>maimaiPersonal.enabled())).toBe(false);expect(state.calls).toBe(2);
 });
 
 test('Clear wins over a consented import still preparing its commit',async({page,context})=>{
@@ -296,7 +296,7 @@ test('Clear wins over a consented import still preparing its commit',async({page
   await page.getByRole('button',{name:'Import data',exact:true}).click();await page.waitForFunction(()=>window.commitWaiting);
   await menu(other,'player-clear');await expect.poll(async()=>(await saved(other)).active).toBeNull();
   await page.evaluate(()=>window.releaseCommit());await expect.poll(()=>page.evaluate(()=>maimaiPersonal.enabled())).toBe(false);
-  await page.reload();await page.evaluate(()=>maimaiPersonal.ready);expect(await page.evaluate(()=>maimaiPersonal.enabled())).toBe(false);expect((await saved(page)).active).toBeNull();
+  await page.reload();await expect.poll(()=>page.evaluate(()=>!!window.maimaiPersonal)).toBe(true);await page.evaluate(()=>maimaiPersonal.ready);expect(await page.evaluate(()=>maimaiPersonal.enabled())).toBe(false);expect((await saved(page)).active).toBeNull();
 });
 
 test('failed Clear preserves loaded scores and saved data; retry clears stale write tokens',async({page,context})=>{
@@ -324,7 +324,7 @@ test('only new imports into a loaded account warn; cancel and refresh preserve d
 });
 
 test('reported rating survives a temporary reload and missing rating stays unknown',async({page,context})=>{
-  const state=await setup(page,context);await importData(page,false);await page.reload();await page.evaluate(()=>maimaiPersonal.ready);
+  const state=await setup(page,context);await importData(page,false);await page.reload();await expect.poll(()=>page.evaluate(()=>!!window.maimaiPersonal)).toBe(true);await page.evaluate(()=>maimaiPersonal.ready);
   await expect(page.locator('#lab-status')).toBeHidden();
   await expect(page.locator('#player-status .player-rating')).toHaveAttribute('aria-label','Maishift rating 15432');
   await expect(page.locator('#player-status .player-profile-link')).toHaveAttribute('href','https://maimai.shiftpsh.com/en@intl/profile/fictional-player/home');
@@ -357,7 +357,7 @@ test('a portable Maishift identity without a verified public URL still imports a
   await page.locator('input[type=file]').setInputFiles({name:'fictional.gz',mimeType:'application/gzip',buffer:gzipSync(Buffer.from(JSON.stringify(data)))});
   await expect(page.getByRole('heading',{name:'Import this profile?',exact:true})).toBeVisible();await page.getByRole('button',{name:'Import data',exact:true}).click();
   await expect(page.locator('#player-status')).toContainText('Fictional portable identity');await expect(page.locator('#player-status .player-profile-link')).toHaveCount(0);
-  await page.reload();await page.evaluate(()=>maimaiPersonal.ready);await expect(page.locator('#player-status')).toContainText('Fictional portable identity');
+  await page.reload();await expect.poll(()=>page.evaluate(()=>!!window.maimaiPersonal)).toBe(true);await page.evaluate(()=>maimaiPersonal.ready);await expect(page.locator('#player-status')).toContainText('Fictional portable identity');
 });
 
 test('same-observation rating upgrade survives reload without new PB history and powers rating controls',async({page,context})=>{
@@ -367,7 +367,7 @@ test('same-observation rating upgrade survives reload without new PB history and
   await expect.poll(()=>record(page,state.chart)).toMatchObject({rate:315,achievement:987654});
   const facts=()=>page.evaluate(async()=>{const s=await maimaiPlayerStorage.read(),d=await maimaiPlayerData.decode(s.active.bytes);return {snapshots:Object.keys(d.snapshots).length,captures:Object.keys(d.captures).length,plays:Object.keys(d.plays).length,changes:maimaiPlayerData.chartHistory(d,Object.keys(d.charts)).changes.length,adapter:s.active.source.adapterVersion};});
   expect(await facts()).toEqual({snapshots:1,captures:1,plays:0,changes:1,adapter:2});
-  await page.reload();await expect(page.locator('#lab-status')).toBeHidden();await page.evaluate(()=>maimaiPersonal.ready);
+  await page.reload();await expect(page.locator('#lab-status')).toBeHidden();await expect.poll(()=>page.evaluate(()=>!!window.maimaiPersonal)).toBe(true);await page.evaluate(()=>maimaiPersonal.ready);
   await page.getByRole('button',{name:'My PBs',exact:true}).click();await expect(page.locator('.player-chart-rating')).toHaveText('315 RT');
   await page.locator('.player-filters .player-filter-toggle').click();await expect(page.locator('.player-filters .player-filter-toggle')).toHaveAttribute('aria-expanded','true');
   await page.locator('.player-sorting [data-sort-key=rating]').click();await expect(page.locator('#songs .song-row').first()).toHaveAttribute('data-chart-id',state.chart);

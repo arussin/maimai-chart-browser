@@ -61,7 +61,8 @@ class WaterfallTests(unittest.TestCase):
 
     def test_failed_source_falls_through_and_does_not_delete_retained_observations(self):
         bad = list(capture())
-        bad[2] = {**bad[2], "sha256": "0" * 64}
+        bad[1] = b"malformed source body"
+        bad[2] = {**bad[2], "sha256": hashlib.sha256(bad[1]).hexdigest(), "bytes": len(bad[1])}
         value, proposal, _ = self.accepted([tuple(bad), capture()])
         self.assertEqual(len(proposal["failures"]), 1)
         self.assertEqual(len(proposal["claims"]), 2)

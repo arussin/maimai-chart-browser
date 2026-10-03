@@ -4,6 +4,8 @@ Windows 개발: [DEVELOPMENT.md](DEVELOPMENT.md)를 읽어 주세요. 아래의 
 
 [English](README.md) · [简体中文](README.zh-Hans.md) · [한국어](README.ko.md) · [日本語](README.ja.md)
 
+**2026년 10월 3일 운영 배포:** [릴리스, 검증 결과 및 운영상 제한](docs/PRODUCTION_RELEASE_20261003.md). 다국어 곡·버전 페이지와 비공개 일일 사용량 집계가 운영 중입니다. [Search Console 및 사이트맵](docs/SEARCH_VISIBILITY.md)과 [운영자용 사용량 보고서](usage-worker/README.md)에 각각 운영 가이드가 있습니다.
+
 다국어 지원 관리: [기준 UI 문구, 게임 용어 및 다국어 검색 데이터 재생성](docs/LOCALIZATION.md).
 
 독립형 정적 채보 브라우저, 재사용 가능한 Python 분석 엔진, 읽기 전용 Kamaitachi 다운로드 도구입니다. 개인 추천은 다운로드 또는 내보내기 시 계산하며, 검색·필터·Flow·구조 비교는 화면에서 직접 조작할 수 있습니다.

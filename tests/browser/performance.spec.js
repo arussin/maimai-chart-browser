@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.js';
 
 // Capacity budgets on a fixed synthetic dataset. These are regression checks,
 // not field Core Web Vitals or a claim about Internet download speed.

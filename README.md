@@ -4,6 +4,8 @@ Windows development: read [DEVELOPMENT.md](DEVELOPMENT.md). Use the DevCache wor
 
 [English](README.md) · [简体中文](README.zh-Hans.md) · [한국어](README.ko.md) · [日本語](README.ja.md)
 
+**Production, 3 October 2026:** [release, verification and operating limits](docs/PRODUCTION_RELEASE_20261003.md). Localized song/version pages and the private daily usage collector are live; [Search Console and sitemaps](docs/SEARCH_VISIBILITY.md) and [owner usage reports](usage-worker/README.md) have separate operating guides.
+
 Localization maintenance: [canonical UI copy, game terms and multilingual search rebuilds](docs/LOCALIZATION.md).
 
 A standalone static chart browser, reusable Python intelligence engine and

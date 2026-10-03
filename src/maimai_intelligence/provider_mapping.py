@@ -1,16 +1,17 @@
 """Exact public Kamaitachi metadata joins. Ambiguities require explicit review."""
 
+from __future__ import annotations
+
 import gzip
 import hashlib
 import json
-import unicodedata
 from collections import defaultdict
 from functools import lru_cache
 from importlib.resources import files
+from typing import Any
 
-
-def normalized(value):
-    return " ".join(unicodedata.normalize("NFKC", value or "").casefold().split())
+from .identity_policy import normalized as normalized
+from .identity_policy import variant as variant
 
 
 @lru_cache(maxsize=1)
@@ -23,7 +24,7 @@ def registry():
     return json.loads(raw)
 
 
-def default_mapping(catalog):
+def default_mapping(catalog: list[dict[str, Any]]) -> dict[str, Any]:
     source = registry()
     usable = [
         c
@@ -40,10 +41,10 @@ def default_mapping(catalog):
     return build_mapping(usable, source["charts"], source["songs"], overrides=overrides)
 
 
-def integration_catalog(data, version):
+def integration_catalog(data: dict[str, Any], version: str) -> dict[str, Any]:
     from copy import deepcopy
 
-    from .catalog_loading import PROFILE_FIELDS
+    from .catalog_schema import PROFILE_FIELDS
 
     if data.get("schema_version") == "maimai-browser-catalog-2":
         # Session Report v1 consumes genuine experimental profiles and legacy IDs.
@@ -95,17 +96,6 @@ def integration_catalog(data, version):
         "analysis": analysis,
         "provider_mapping": data.get("provider_mapping", {"charts": {}}),
     }
-
-
-def variant(difficulty):
-    value = normalized(difficulty).upper()
-    format_ = "DX" if value.startswith("DX ") else "STD"
-    value = (
-        value.removeprefix("DX ")
-        .replace("REMASTER", "RE:MASTER")
-        .replace("RE: MASTER", "RE:MASTER")
-    )
-    return format_, value
 
 
 def build_mapping(catalog, charts, songs, *, overrides=None):
@@ -173,7 +163,7 @@ def build_mapping(catalog, charts, songs, *, overrides=None):
     }
 
 
-def validate_mapping(mapping, catalog):
+def validate_mapping(mapping: dict[str, Any], catalog: list[dict[str, Any]]) -> dict[str, Any]:
     if (
         mapping.get("schema_version") not in {"provider-mapping-1", "provider-mapping-2"}
         or mapping.get("provider") != "kamaitachi"
@@ -191,7 +181,8 @@ def validate_mapping(mapping, catalog):
             )
             or (
                 mapping["schema_version"] == "provider-mapping-2"
-                and row.get("acceptance_basis") not in {"reviewed", "legacy_published"}
+                and row.get("acceptance_basis")
+                not in {"reviewed", "legacy_published", "policy_exact"}
             )
             or (c["format"], c["difficulty"].upper()) != (row.get("format"), row.get("difficulty"))
         ):

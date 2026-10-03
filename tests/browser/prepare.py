@@ -8,6 +8,7 @@ from hashlib import sha256
 from pathlib import Path
 
 from maimai_intelligence import player_data
+from maimai_intelligence.challenge_review import render_review
 from maimai_intelligence.lab import build_lab
 from maimai_intelligence.mai_notes import prepare_links
 from maimai_intelligence.metadata_waterfall import accept as accept_metadata
@@ -55,6 +56,25 @@ player_data.write(
     ),
 )
 build_lab(write_package(Path("output/lab-fixture")), root / "lab", catalog_version="fixture-v5")
+# The offline distribution uses the exact same application graph, embedded once.
+(root / "offline-review.html").write_text(
+    render_review(
+        *[
+            json.loads((Path("output/lab-fixture") / name).read_bytes())
+            for name in (
+                "package.json",
+                "catalog.json",
+                "review.json",
+                "snippets.json",
+                "benchmark.json",
+                "navigation.json",
+                "analysis.json",
+            )
+        ]
+    ),
+    encoding="utf-8",
+)
+
 community_charts = []
 for key, (body, _) in CASES.items():
     chart = chart_for(body)
@@ -77,6 +97,10 @@ for source, target in [("lab", "progressive"), ("capacity", "progressive-capacit
         staged = Path(temporary) / "public"
         build_public_release(root / source, staged)
         shutil.copytree(staged, root / target, dirs_exist_ok=True)
+with tempfile.TemporaryDirectory() as temporary:
+    staged = Path(temporary) / "public"
+    build_public_release(root / "lab", staged, preserve_web_analytics=True)
+    shutil.copytree(staged, root / "public-analytics", dirs_exist_ok=True)
 build_lab(
     write_package(Path("output/grouped-fixture"), grouped=True),
     root / "grouped",

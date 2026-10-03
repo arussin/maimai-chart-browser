@@ -1,4 +1,6 @@
-import {test,expect} from '@playwright/test';
+import {browserResourceURL} from './browser-configuration-fixture.mjs';
+import {test,expect} from './fixtures.js';
+test.beforeEach(async({fixtureOrigins})=>{for(const origin of ["https://maimai.party", "https://www.maimai.party", "https://preview.invalid", "https://www.googletagmanager.com", "https://www.google-analytics.com", "https://region1.google-analytics.com", "https://github.com"])fixtureOrigins.synthetic(origin);});
 import AxeBuilder from '@axe-core/playwright';
 import {readFile} from 'node:fs/promises';
 import {resolve,extname,sep} from 'node:path';
@@ -56,10 +58,11 @@ test('versioned settings scripts refresh returning visitors with an older cached
     await page.route('https://maimai.party/'+asset,route=>route.fulfill({contentType:'application/javascript',body:'window.__staleAnalyticsUsed=true;'}));
     await ready(page,path);
     expect(await page.evaluate(()=>window.__staleAnalyticsUsed===true)).toBe(false);
-    for(const name of ['analytics.js','settings-menu.js']){
+    for(const name of path==='/lab/'?[]:['analytics.js','settings-menu.js']){
       const src=await page.locator('script[src*="'+name+'"]').getAttribute('src');
       expect(new URL(src,page.url()).searchParams.get('v')).toMatch(/^[a-f0-9]{16}$/);
     }
+    if(path==='/lab/')await expect(page.locator('script[data-maimai-browser]')).toHaveCount(1);
     await settings(page);await expect(page.locator('#analytics-dialog')).toBeVisible();
     await page.keyboard.press('Escape');await expect(page.locator('#settings-toggle')).toBeFocused();
   }
@@ -276,7 +279,7 @@ test('analytics Google tag serializes safe pages and honors opt-out, including a
 test('settings work before the catalog loads and after a catalog failure',async({page,context})=>{
   const external=await hosted(context);
   let release;const gate=new Promise(resolve=>{release=resolve;});
-  await page.route('**/manifest.json',async route=>{await gate;await route.fulfill({status:503,body:'Unavailable'});});
+  await page.route(await browserResourceURL('catalog',{fixture:'lab',mount:'/lab/',origin:'https://maimai.party'}),async route=>{await gate;await route.fulfill({status:503,body:'Unavailable'});});
   await page.goto('https://maimai.party/lab/?view=about',{waitUntil:'domcontentloaded'});
   await settings(page);await expect(page.locator('#analytics-dialog')).toBeVisible();
   await page.keyboard.press('Escape');await expect(page.locator('#settings-toggle')).toBeFocused();

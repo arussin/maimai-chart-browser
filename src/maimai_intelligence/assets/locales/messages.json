@@ -759,6 +759,26 @@
       "zh-Hans": "搜索：{0}",
       "ko": "검색: {0}",
       "ja": "検索：{0}"
+    },
+    "Untitled (intentional)": {
+      "zh-Hans": "无题（有意留空）",
+      "ko": "무제 (의도적 공백)",
+      "ja": "無題（意図的な空欄）"
+    },
+    "Title unavailable": {
+      "zh-Hans": "曲名未知",
+      "ko": "제목 정보 없음",
+      "ja": "曲名不明"
+    },
+    "Open song page": {
+      "zh-Hans": "打开歌曲页面",
+      "ko": "곡 페이지 열기",
+      "ja": "楽曲ページを開く"
+    },
+    "Back to results": {
+      "zh-Hans": "返回搜索结果",
+      "ko": "검색 결과로 돌아가기",
+      "ja": "検索結果に戻る"
     }
   },
   "invariants": {

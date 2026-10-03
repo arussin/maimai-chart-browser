@@ -2,3 +2,10 @@
 # Install once while online; tests themselves use only synthetic/mocked data.
 ruff==0.16.5
 -r requirements-localization.txt
+
+# Offline artwork acquisition validates decoded content before publishing thumbnails.
+Pillow==12.3.0
+
+# Strict extracted boundaries and measured branch coverage (development only).
+mypy==2.3.1
+coverage==7.14.2

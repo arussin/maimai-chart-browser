@@ -1,4 +1,8 @@
-import {test,expect} from '@playwright/test';
+import {browserResourceURL} from './browser-configuration-fixture.mjs';
+import {readFile} from 'node:fs/promises';
+import {resolve} from 'node:path';
+import {pathToFileURL} from 'node:url';
+import {test,expect} from './fixtures.js';
 
 // Existing control tests exercise the remembered-open state. Disclosure tests
 // below separately cover first visits and persistence across pages.
@@ -11,7 +15,6 @@ test.beforeEach(async({page},testInfo)=>{
   });
 });
 import AxeBuilder from '@axe-core/playwright';
-import {readFile} from 'node:fs/promises';
 // Resolve fixtures from repository root rather than the browser's served directory.
 const fixtureURL=new URL('../../output/personal-fixture.json',import.meta.url);
 async function personal(){return JSON.parse(await readFile(fixtureURL,'utf8'));}
@@ -43,7 +46,7 @@ test('About exposes credits and hides unconfigured support while preserving char
 });
 
 test('About links work even when the catalog cannot load',async({page})=>{
-  await page.route('**/manifest.json',route=>route.fulfill({status:503,body:'Unavailable'}));
+  await page.route(await browserResourceURL('catalog',{fixture:'progressive',mount:'/progressive/'}),route=>route.fulfill({status:503,body:'Unavailable'}));
   await page.goto('/progressive/?view=about');
   await expect(page.locator('#about')).toBeVisible();
   await expect(page.locator('#about h1')).toHaveText('About maimai.party');
@@ -184,7 +187,7 @@ test('three sort priorities preserve level ties and reverse independently',async
 });
 
 test('difficulty sorts displayed levels numerically across chart types in both directions and through filters',async({page})=>{
-  await page.goto('/levels/');
+  await page.goto('/levels/');await expect(page.locator('#songs .song-row')).toHaveCount(6);
   const sort=page.locator('[data-sort-key=difficulty]');
   const levels=()=>page.locator('#songs .song-row').evaluateAll(rows=>rows.map(row=>row.dataset.level));
   await sort.click();
@@ -557,7 +560,8 @@ test('pattern comparison distinguishes frequency even when chart tags are identi
 });
 
 test('BPM sorting keeps missing values last and completed lessons are visible',async({page})=>{
-  await page.goto('/lab/');await page.locator('[data-sort-key=title]').focus();
+  await page.goto('/lab/');await expect(page.locator('#catalog-count strong')).toHaveText('6');
+  await page.locator('[data-sort-key=title]').focus();
   await page.locator('[data-sort-key=bpm]').click();
   const tempos=()=>page.locator('#songs .chart-bpm').allTextContents();
   expect(await tempos()).toEqual(['120','120','160','160','180','—']);
@@ -661,7 +665,7 @@ test('difficulty checkboxes combine independent rows and preserve sorting',async
 });
 
 test('level handles and typed plus values stay in sync, validate input and retain ordered bounds',async({page})=>{
-  await page.goto('/levels/');await expect(page.locator('.song-row')).toHaveCount(6);
+  await page.goto('/levels/');await expect(page.locator('#songs .song-row')).toHaveCount(6);await expect(page.locator('.song-row')).toHaveCount(6);
   const low=page.getByRole('slider',{name:'Minimum level',exact:true}),high=page.getByRole('slider',{name:'Maximum level',exact:true});
   await setLevel(page,'min','10+');await setLevel(page,'max','13.5');await expect(page.locator('#filter-max')).toHaveValue('13+');await expect(page.locator('.song-row')).toHaveCount(4);
   await expect(low).toHaveAttribute('aria-valuetext','Level 10+');await expect(high).toHaveAttribute('aria-valuetext','Level 13+');
@@ -677,7 +681,7 @@ test('level handles and typed plus values stay in sync, validate input and retai
 });
 
 test('both level handles drag and a collapsed range can reopen by tapping the track',async({page})=>{
-  await page.goto('/levels/');await expect(page.locator('.song-row')).toHaveCount(6);
+  await page.goto('/levels/');await expect(page.locator('#songs .song-row')).toHaveCount(6);await expect(page.locator('.song-row')).toHaveCount(6);
   const track=page.locator('#level-range');await track.scrollIntoViewIfNeeded();const box=await track.boundingBox(),x=i=>box.x+12+(box.width-24)*i/5,y=box.y+box.height/2;
   await page.mouse.move(x(0),y);await page.mouse.down();await page.mouse.move(x(2),y,{steps:8});await page.mouse.up();await expect(page.locator('#filter-min')).toHaveValue('11');
   await page.mouse.move(x(5),y);await page.mouse.down();await page.mouse.move(x(3),y,{steps:8});await page.mouse.up();await expect(page.locator('#filter-max')).toHaveValue('12');
@@ -688,7 +692,7 @@ test('both level handles drag and a collapsed range can reopen by tapping the tr
 });
 
 test('similar-chart filtering uses multiple difficulties and the selected level range',async({page})=>{
-  await page.goto('/levels/');await expect(page.locator('.song-row')).toHaveCount(6);
+  await page.goto('/levels/');await expect(page.locator('#songs .song-row')).toHaveCount(6);await expect(page.locator('.song-row')).toHaveCount(6);
   await selectDifficulties(page,['EXPERT','RE:MASTER']);await setLevel(page,'min','10+');await setLevel(page,'max','13+');
   await page.locator('#compare-tab').click();await chooseComparisonChart(page,'left','Fictional study 4');await page.locator('#similar-use-filters').check();await page.locator('#find-similar').click();
   const cards=page.locator('#similar-results .similar-chart');await expect(cards).toHaveCount(1);await expect(cards).toContainText('Fictional study 2');
@@ -706,6 +710,8 @@ async function selectPatterns(page,ids){
 
 test('searchable pattern multi-select searches aliases, unions results and preserves links',async({page})=>{
   await page.goto('/lab/');await expect(page.locator('.song-row')).toHaveCount(6);
+  // Finish initial lazy artwork before measuring requests caused by pattern controls.
+  await page.evaluate(()=>Promise.all([...document.images].map(image=>{image.loading='eager';return image.decode();})));
   const requests=[];page.on('request',r=>requests.push(r.url()));
   const a='pattern.two_position_alternation',b='trait.steady_density',ids=()=>page.locator('.song-row').evaluateAll(rows=>rows.map(r=>r.dataset.chartId).sort());
   await selectPatterns(page,[a]);const first=await ids();await selectPatterns(page,[b]);const second=await ids();expect(first.length).toBeGreaterThan(0);expect(second.length).toBeGreaterThan(0);
@@ -730,4 +736,15 @@ test('pattern search remains accessible, keeps other filters and passes selectio
   await page.locator('#compare-tab').click();await chooseComparisonChart(page,'left','Fictional study 0');await page.locator('#similar-use-filters').check();await page.locator('#find-similar').click();
   const matches=await page.locator('#similar-results [data-compare-chart]').evaluateAll(nodes=>nodes.map(n=>n.dataset.compareChart));expect(matches.length).toBeGreaterThan(0);expect(matches.every(id=>eligible.includes(id))).toBe(true);
   await page.locator('#catalog-tab').click();await page.locator('#pattern-filter-summary').click();await page.locator('#pattern-filter-clear').click();await expect(page.locator('#pattern-filter-summary')).toHaveText('All patterns');await expect(page.locator('#filter-min')).toHaveValue('11');await expect(page.locator('.song-row')).toHaveCount(3);
+});
+
+test('one embedded offline build works at a file URL without scripts or network dependencies',async({page})=>{
+  const path=resolve(process.env.MAIMAI_BROWSER_OUTPUT||'../../output/browser-tests','offline-review.html'),target=pathToFileURL(path).href;
+  const body=await readFile(path),requests=[],errors=[];page.on('request',request=>requests.push(request.url()));page.on('pageerror',error=>errors.push(error.message));
+  await page.route(target,route=>route.fulfill({contentType:'text/html',body}));await page.goto(target);
+  await expect(page.locator('#catalog-count strong')).toHaveText('6');await expect(page.locator('script[src]')).toHaveCount(0);
+  await page.locator('#search').fill('Fictional study 0');await expect(page.locator('#songs .song-row')).toHaveCount(1);
+  await page.locator('#songs .chart-row').click();await expect(page.locator('.chart-pattern-detail svg').first()).toBeVisible();
+  await page.locator('#patterns-tab').click();await expect(page.locator('#pattern-list')).toBeVisible();
+  expect(requests.filter(url=>url!==target)).toEqual([]);expect(errors).toEqual([]);
 });

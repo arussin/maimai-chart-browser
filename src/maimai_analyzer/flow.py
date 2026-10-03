@@ -6,7 +6,7 @@ from bisect import bisect_left
 from copy import deepcopy
 from math import sqrt
 
-from .contracts import ChartInputError
+from .chart_input import ChartInputError
 
 DEFAULT_CONFIG = {
     "policy_version": "structural-demand-0.1-experimental",

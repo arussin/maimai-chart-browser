@@ -13,20 +13,37 @@ import os
 import re
 import subprocess
 import urllib.request
-from contextlib import contextmanager
-from datetime import UTC, datetime
 from pathlib import Path
-from uuid import uuid4
 
-from maimai_analyzer.contracts import content_hash
-from maimai_analyzer.dataset import SOURCE_LOCK
-from maimai_intelligence.artwork import MEDIA_PATH
-from maimai_intelligence.catalog_loading import MAX_CATALOG_BYTES
-from maimai_intelligence.lab import build_lab
-from maimai_intelligence.mai_notes import MAX_INDEX_BYTES, download_index, prepare_links
-from maimai_intelligence.public_release import _read, build_public_release
-from maimai_intelligence.research_package import extend_package, read_package
-from maimai_intelligence.snapshots import MAX_BYTES, atomic_json, read_json
+from maimai_intelligence import corpus_update
+from maimai_intelligence.corpus_update import (
+    chart_changes as chart_changes,
+)
+from maimai_intelligence.corpus_update import (
+    file_inventory as file_inventory,
+)
+from maimai_intelligence.corpus_update import (
+    previous_public_identity as previous_public_identity,
+)
+from maimai_intelligence.corpus_update import (
+    published_public as published_public,
+)
+from maimai_intelligence.corpus_update import (
+    retain_history as retain_history,
+)
+from maimai_intelligence.corpus_update import (
+    retained_browser_features as retained_browser_features,
+)
+from maimai_intelligence.corpus_update import (
+    source_package as source_package,
+)
+from maimai_intelligence.public_release import build_public_release as build_public_release
+from maimai_intelligence.snapshots import atomic_json, read_json
+from maimai_intelligence.source_identity import (
+    source_implementation_hash,
+    verified_source_implementation_hash,
+)
+from maimai_intelligence.store_lock import writer_lock as writer_lock
 
 REPOSITORY = "arussin/maimai-chart-browser"
 OWNER = "arussin"
@@ -35,411 +52,27 @@ PROJECT = "maimai-party"
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
-@contextmanager
-def writer_lock(store):
-    store = Path(store).resolve()
-    store.mkdir(parents=True, exist_ok=True)
-    lock = store / "writer.lock"
-    try:
-        stream = lock.open("x", encoding="utf-8")
-    except FileExistsError as error:
-        raise ValueError(
-            "An update is running or was interrupted; inspect writer.lock first"
-        ) from error
-    try:
-        with stream:
-            stream.write(str(os.getpid()))
-        yield
-    finally:
-        lock.unlink()
-
-
 def implementation_hash(root=REPO_ROOT):
-    root = Path(root)
-    paths = sorted(
-        p
-        for area in ("src", "scripts", "registry")
-        for p in (root / area).rglob("*")
-        if p.is_file() and "__pycache__" not in p.parts and p.suffix != ".pyc"
-    )
-    return content_hash(
-        {p.relative_to(root).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest() for p in paths}
-    )
+    return source_implementation_hash(Path(root))
 
 
-def file_inventory(root):
-    root = Path(root).resolve()
-    result = {}
-    for path in sorted(root.rglob("*")):
-        if path.is_symlink() or not path.resolve().is_relative_to(root):
-            raise ValueError("Release files must not be links outside the candidate")
-        if path.is_file():
-            raw = path.read_bytes()
-            result[path.relative_to(root).as_posix()] = {
-                "bytes": len(raw),
-                "sha256": hashlib.sha256(raw).hexdigest(),
-            }
-    return result
-
-
-def retain_history(source, destination):
-    """Copy only manifest-listed catalogs and validated media, never arbitrary preview files."""
-    source, destination = Path(source).resolve(), Path(destination).resolve()
-    manifest = read_json(source / "manifest.json")
-    if manifest.get("schema_version") != "1.0.0":
-        raise ValueError("Previous browser must be a retained lab build, not a deployment download")
-    pending, versions, latest = {}, set(), None
-    for entry in manifest["releases"]:
-        sha, version = entry["sha256"], entry["version"]
-        if not re.fullmatch(r"[0-9a-f]{64}", sha) or entry["path"] != f"catalogs/{sha}.json":
-            raise ValueError("Invalid retained catalog path")
-        if version in versions:
-            raise ValueError("Duplicate retained catalog version")
-        versions.add(version)
-        raw = _read(source, entry["path"], MAX_CATALOG_BYTES)
-        if hashlib.sha256(raw).hexdigest() != sha:
-            raise ValueError("Retained catalog hash mismatch")
-        data = json.loads(raw)
-        if data.get("package", {}).get("status") != "research_preview":
-            raise ValueError("Previous catalog is not a public research catalog")
-        pending[entry["path"]] = raw
-        if "integration" in entry:
-            ref = entry["integration"]
-            if (
-                not re.fullmatch(r"[a-f0-9]{64}", ref.get("sha256", ""))
-                or ref.get("path") != f"integration/{ref['sha256']}.json"
-            ):
-                raise ValueError("Invalid retained integration catalog reference")
-            integration = _read(source, ref["path"], MAX_BYTES)
-            if (
-                len(integration) != ref.get("bytes")
-                or hashlib.sha256(integration).hexdigest() != ref["sha256"]
-            ):
-                raise ValueError("Retained integration catalog hash mismatch")
-            pending[ref["path"]] = integration
-        if version == manifest["default"]:
-            latest = data
-        for path, record in data.get("artwork", {}).get("assets", {}).items():
-            if not MEDIA_PATH.fullmatch(path) or path != f"media/{record['sha256']}.webp":
-                raise ValueError("Invalid retained media path")
-            raw = _read(source, path, 256 * 1024)
-            if len(raw) != record["bytes"] or hashlib.sha256(raw).hexdigest() != record["sha256"]:
-                raise ValueError("Retained media hash mismatch")
-            pending[path] = raw
-    if latest is None:
-        raise ValueError("Previous browser has no default catalog")
-    for name, raw in pending.items():
-        path = destination / name
-        path.parent.mkdir(parents=True, exist_ok=True)
-        with path.open("xb") as stream:
-            stream.write(raw)
-    atomic_json(destination / "manifest.json", manifest)
-    return latest
-
-
-def chart_changes(before, after):
-    def index(charts):
-        # The upstream input identity survives a changed chart body/hash.
-        pairs = [
-            (c["chart_id"] if "capabilities" in c else c.get("input_id", c["chart_id"]), c)
-            for c in charts
-        ]
-        if len(dict(pairs)) != len(pairs):
-            raise ValueError("Duplicate input identity in change report")
-        return dict(pairs)
-
-    left, right = index(before), index(after)
-    changed = []
-    for key in sorted(left.keys() & right.keys()):
-        fields = [
-            k
-            for k in ("source_hash", "title", "artist", "format", "difficulty", "level", "demand")
-            if left[key].get(k) != right[key].get(k)
-        ]
-        if fields:
-            changed.append({"input_id": key, "title": right[key]["title"], "fields": fields})
-
-    def brief(keys, records):
-        return [
-            {"input_id": k, "title": records[k]["title"], "difficulty": records[k]["difficulty"]}
-            for k in sorted(keys)
-        ]
-
-    return {
-        "added": brief(right.keys() - left.keys(), right),
-        "removed": brief(left.keys() - right.keys(), left),
-        "changed": changed,
-    }
-
-
-def source_package(run, store, revision, artwork_cache, *, offline=False):
-    # New upstream commits are an explicit reviewed source-pin change in code.
-    if revision != SOURCE_LOCK["revision"]:
-        raise ValueError(
-            "Review and update SOURCE_LOCK before acquiring a different source revision"
-        )
-    from scripts.acquire_maichart_pack import capture
-    from scripts.build_challenge_package import build
-    from scripts.build_research_overview import build as build_overview
-    from scripts.prepare_maichart_pack import prepare as extract
-    from scripts.prepare_public_artwork import prepare as artwork
-
-    capture_root = store / "sources" / revision
-    capture(capture_root, revision, offline=offline)
-    extract(capture_root)
-    build(capture_root, run / "profiles", cache_directory=store / "cache" / "profiles")
-    build_overview(
-        capture_root,
-        run / "profiles",
-        run / "patterns",
-        cache_directory=store / "cache" / "overview",
-    )
-    artwork(
-        run / "patterns", run / "artwork", artwork_cache, offline=offline, refresh_metadata=True
-    )
-    return run / "artwork"
-
-
-def prepare_update(
-    store,
-    previous_browser,
-    *,
-    package=None,
-    revision=None,
-    artwork_cache=None,
-    mai_notes_snapshot=None,
-    registry=None,
-    overrides=None,
-    offline=False,
-    fetcher=download_index,
-    replay_sources=None,
-    source_fetcher=None,
-):
-    store, previous_browser = Path(store).resolve(), Path(previous_browser).resolve()
-    if (package is not None and revision is not None) or (
-        package is None and revision is None and registry is None
-    ):
-        raise ValueError("Choose an accepted package or an explicit reviewed source revision")
-    if replay_sources is not None and (not offline or registry is None):
-        raise ValueError("Source replay requires --offline and a registry")
-    if revision is not None and artwork_cache is None:
-        raise ValueError("Source updates require an artwork cache")
-    if offline and mai_notes_snapshot is None and registry is None:
-        raise ValueError("Offline preparation needs an explicit retained mai-notes snapshot")
-    for value in (
+def prepare_update(store, previous_browser, **options):
+    """Owner defaults around the installed preparation service."""
+    options.setdefault("registry_seed", REPO_ROOT / "registry")
+    if options.get("coverage_reviews") is None:
+        options["coverage_reviews"] = read_json(REPO_ROOT / "config/coverage-reviews.json")
+    return corpus_update.prepare_update(
+        store,
         previous_browser,
-        package,
-        mai_notes_snapshot,
-        registry,
-        overrides,
-        artwork_cache,
-    ):
-        if value is not None and (
-            Path(value).resolve() == store or store.is_relative_to(Path(value).resolve())
-        ):
-            raise ValueError("Update store must not replace or sit inside an input directory")
-    with writer_lock(store):
-        run = store / "runs" / (datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ-") + uuid4().hex[:8])
-        run.mkdir(parents=True)
-        atomic_json(run / "state.json", {"status": "preparing"})
-        try:
-            before = retain_history(previous_browser, run / "browser")
-            if package is None and revision is not None:
-                package = source_package(run, store, revision, Path(artwork_cache), offline=offline)
-            if registry is not None:
-                from maimai_intelligence.registry import read_registry
-                from maimai_intelligence.registry_catalog import build_registry_package
-
-                accepted = read_registry(registry)
-                regions = {
-                    s.get("region")
-                    for s in accepted["sources"].values()
-                    if s.get("acquisition") == "complete_validated_capture"
-                }
-                if not {"JP", "INTL"} <= regions:
-                    raise ValueError(
-                        "Registry preparation requires complete accepted captures "
-                        "for JP and International"
-                    )
-                additions = None
-                if not offline or replay_sources:
-                    from maimai_intelligence.catalog_refresh import refresh
-
-                    accepted, additions, source_audit = refresh(
-                        accepted,
-                        before,
-                        store / "cache" / "waterfall",
-                        run,
-                        offline=offline,
-                        replay=replay_sources,
-                        fetcher=source_fetcher,
-                    )
-                else:
-                    from maimai_intelligence.registry import write_registry
-
-                    write_registry(accepted, run / "registry")
-                from maimai_intelligence.multilingual_search import enrich_registry
-
-                # Search aids belong to the projection and its retained report;
-                # the accepted identity registry remains exactly as reconciled.
-                accepted, search_aliases = enrich_registry(accepted)
-                atomic_json(run / "multilingual-search.json", search_aliases)
-                prepared = build_registry_package(
-                    accepted,
-                    package,
-                    run / "package",
-                    published=before if revision is None else None,
-                    additions=additions,
-                )
-                descriptor, _ = read_package(run / "package")
-                charts = prepared["catalog"]
-                links = prepared.get("mai_notes", {"charts": {}})
-                audit = {"counts": {"retained_accepted_links": len(links["charts"])}}
-                atomic_json(
-                    run / "registry-provenance.json",
-                    {"registry": prepared["registry"], "sources": prepared["sources"]},
-                )
-                atomic_json(run / "mai-notes-audit.json", audit)
-            else:
-                from scripts.prepare_chart_constants import prepare as constants
-
-                constants(package, run / "constants")
-                descriptor, retained = read_package(run / "constants")
-                charts = json.loads(retained["catalog.json"])
-                captured_at = datetime.now(UTC).isoformat()
-                if mai_notes_snapshot is None:
-                    raw = fetcher()
-                else:
-                    with Path(mai_notes_snapshot).open("rb") as stream:
-                        raw = stream.read(MAX_INDEX_BYTES + 1)
-                    # A retained file is a replay, not a fresh network verification.
-                    captured_at = datetime.fromtimestamp(
-                        Path(mai_notes_snapshot).stat().st_mtime, UTC
-                    ).isoformat()
-                links, audit = prepare_links(
-                    charts,
-                    raw,
-                    captured_at=captured_at,
-                    overrides=json.loads(Path(overrides).read_bytes()) if overrides else (),
-                )
-                (run / "inputs").mkdir()
-                (run / "inputs" / "mai-notes.json").write_bytes(raw)
-                atomic_json(run / "mai-notes-audit.json", audit)
-                extend_package(run / "constants", run / "package", {"mai-notes.json": links})
-            version = (
-                "research-"
-                + hashlib.sha256((run / "package" / "package.json").read_bytes()).hexdigest()[:12]
-            )
-            build_lab(run / "package", run / "browser", catalog_version=version)
-            release = build_public_release(run / "browser", run / "public")
-            changes = chart_changes(before["catalog"], charts)
-            old_links = before.get("mai_notes", {}).get("charts", {})
-            if registry:
-                aliases = prepared.get("legacy_ids", {})
-                old_links = {aliases.get(cid, cid): row for cid, row in old_links.items()}
-                from maimai_intelligence.official_inventory import coverage
-                from maimai_intelligence.registry_catalog import coverage_report
-
-                changes["registry"] = coverage(accepted) | coverage_report(prepared)
-                if additions is not None:
-                    changes["sources"] = source_audit["counts"]
-            changes["mai_notes"] = {
-                **audit["counts"],
-                "added": sorted(links["charts"].keys() - old_links.keys()),
-                "removed": sorted(old_links.keys() - links["charts"].keys()),
-                "changed": sorted(
-                    cid
-                    for cid in links["charts"].keys() & old_links.keys()
-                    if any(
-                        links["charts"][cid].get(field) != old_links[cid].get(field)
-                        for field in ("id", "format", "difficulty", "available")
-                    )
-                ),
-                "source_mode": "accepted_registry"
-                if registry
-                else "retained_snapshot"
-                if mai_notes_snapshot
-                else "downloaded",
-            }
-            atomic_json(run / "changes.json", changes)
-            report = [
-                "# Catalog update",
-                "",
-                f"Catalog: {version}",
-                f"Charts: {len(charts):,}",
-                "",
-                f"Chart changes: {len(changes['added'])} added, "
-                f"{len(changes['removed'])} removed, {len(changes['changed'])} changed.",
-                f"mai-notes: {len(links['charts']):,} playable links.",
-                f"Match coverage: {json.dumps(audit['counts'])}",
-                "",
-                "See changes.json and mai-notes-audit.json for changes and unresolved matches.",
-                "Preview browser/ before publishing public/. Captures and audits stay private.",
-                "",
-            ]
-            if registry:
-                report += [
-                    "## Persistent inventory",
-                    "",
-                    f"Prepared analysis: {changes['registry']['analysis_available']:,} charts. "
-                    f"Metadata only: {changes['registry']['metadata_only']:,} charts.",
-                    "Regional listing counts and capture provenance are in changes.json "
-                    "and registry-provenance.json. Absence from a capture is not removal.",
-                    "The integration asset retains Session Report's v1 profile contract. "
-                    "Metadata-only charts do not receive fabricated measurements or hashes.",
-                    "",
-                ]
-            if registry and additions is not None:
-                report += [
-                    "## Automatic source refresh",
-                    "",
-                    "Metadata observations added: "
-                    + str(source_audit["metadata"]["observations_added"]),
-                    "Transcription outcomes: " + json.dumps(source_audit["counts"]),
-                    "Charts with remaining numeric gaps: "
-                    + str(len(source_audit["metadata"]["remaining"])),
-                    "Provider failures: " + str(len(source_audit["failures"])),
-                    "See source-audit.json for failures, held changes and unresolved charts.",
-                    "source-captures.json pins inputs; registry/ is the next accepted state.",
-                    "",
-                ]
-            (run / "report.md").write_text("\n".join(report), "utf-8")
-            receipt = {
-                "version": "catalog-update-1",
-                "status": "ready",
-                "catalog_version": version,
-                "source": descriptor["source"],
-                "base_catalog_version": read_json(previous_browser / "manifest.json")["default"],
-                "implementation_hash": implementation_hash(),
-                "release": release,
-                "files": file_inventory(run / "public"),
-                **({"registry_files": file_inventory(run / "registry")} if registry else {}),
-            }
-            atomic_json(run / "state.json", {"status": "ready"})
-            # Last write is the sole marker that a complete candidate can be published.
-            atomic_json(run / "ready.json", receipt)
-            return run
-        except Exception:
-            atomic_json(run / "state.json", {"status": "failed"})
-            raise
+        implementation=lambda: verified_source_implementation_hash(REPO_ROOT),
+        **options,
+    )
 
 
 def verify_candidate(run):
-    run = Path(run).resolve()
-    receipt = read_json(run / "ready.json")
-    if (
-        receipt.get("version") != "catalog-update-1"
-        or receipt.get("status") != "ready"
-        or receipt.get("source") != SOURCE_LOCK
-        or receipt.get("implementation_hash") != implementation_hash()
-        or receipt.get("files") != file_inventory(run / "public")
-        or (
-            "registry_files" in receipt
-            and receipt["registry_files"] != file_inventory(run / "registry")
-        )
-    ):
-        raise ValueError("Candidate changed or was prepared by different code; prepare it again")
-    return receipt
+    return corpus_update.verify_candidate(
+        run, implementation=lambda: verified_source_implementation_hash(REPO_ROOT)
+    )
 
 
 def command(args, *, cwd=REPO_ROOT, env=None):
@@ -501,15 +134,31 @@ def publish_update(
         env = {**os.environ, "CLOUDFLARE_ACCOUNT_ID": ACCOUNT, "WRANGLER_SEND_METRICS": "false"}
         wrangler = str(Path(wrangler).resolve())
         prefix = [str(node), wrangler]
+        capacity = receipt.get("release", {}).get("capacity", {})
+        if capacity.get("profile") == "pages-paid-100000":
+            if capacity.get("account_id") != ACCOUNT or capacity.get("project") != PROJECT:
+                raise ValueError("Capacity review names a different publication target")
+            version = runner(prefix + ["--version"], env=env)
+            if not re.fullmatch(r"4\.\d+\.\d+(?:-[a-zA-Z0-9.-]+)?", version.strip()):
+                raise ValueError("Reviewed paid capacity requires Wrangler major version 4")
+            env["PAGES_WRANGLER_MAJOR_VERSION"] = "4"
         projects = json.loads(runner(prefix + ["pages", "project", "list", "--json"], env=env))
         project = next((p for p in projects if p.get("Project Name") == PROJECT), None)
         if project is None:
             raise ValueError("Existing maimai-party project is unavailable; do not create another")
         if project.get("Git Provider") != "No":
             raise ValueError("Official publication requires the existing Direct Upload project")
-        live = json.loads(fetch_manifest("https://maimai.party/manifest.json"))
+        live_raw = fetch_manifest("https://maimai.party/manifest.json")
+        live = json.loads(live_raw)
         if live.get("default") != receipt["base_catalog_version"]:
             raise ValueError("The live catalog changed since preparation; prepare against it again")
+        if live.get("releases") and receipt.get("previous_public", {}).get("inputs", {}).get(
+            "files", {}
+        ).get("manifest.json") != {
+            "bytes": len(live_raw),
+            "sha256": hashlib.sha256(live_raw).hexdigest(),
+        }:
+            raise ValueError("Candidate does not bind the live preceding publication")
         # Preserve an attempt marker even if the process/network dies after a successful upload.
         atomic_json(run / "publish-attempt.json", {"commit": head, "status": "started"})
         # Isolated cwd prevents an unrelated functions/ directory from joining this static upload.
@@ -551,16 +200,22 @@ def publish_update(
         return publication
 
 
-def refresh_latest(store, *, offline=False, replay_sources=None):
+def refresh_latest(
+    store,
+    *,
+    offline=False,
+    replay_sources=None,
+    capacity_review=None,
+    capacity_sha256=None,
+    reassess_captured_policy=False,
+    player_maishift=None,
+):
     """Continue from the last verified publication, including its accepted registry."""
     store = Path(store).resolve()
-    latest = read_json(store / "latest.json")
-    name = latest["run"]
-    if not re.fullmatch(r"[0-9]{8}T[0-9]{6}Z-[a-f0-9]{8}", name):
-        raise ValueError("Invalid published run identity")
-    previous = store / "runs" / name
-    if read_json(previous / "publication.json") != latest:
-        raise ValueError("Latest update is not a verified publication")
+    preceding_public = published_public(store)
+    if preceding_public is None:
+        raise ValueError("No verified current publication; use explicit preparation inputs")
+    previous = preceding_public.parent
     registry = previous / "registry"
     receipt = read_json(previous / "ready.json")
     if "registry_files" in receipt:
@@ -572,10 +227,15 @@ def refresh_latest(store, *, offline=False, replay_sources=None):
     return prepare_update(
         store,
         previous / "browser",
+        previous_public=preceding_public,
+        player_maishift=player_maishift,
         package=previous / "package",
         registry=registry,
         offline=offline,
         replay_sources=replay_sources,
+        reassess_captured_policy=reassess_captured_policy,
+        capacity_review=capacity_review,
+        capacity_sha256=capacity_sha256,
     )
 
 
@@ -587,6 +247,11 @@ def main(argv=None):
     )
     prepare.add_argument("--store", type=Path, required=True)
     prepare.add_argument("--previous-browser", type=Path, required=True)
+    prepare.add_argument(
+        "--previous-public",
+        type=Path,
+        help="Retain preceding public startup references and permalink identities exactly",
+    )
     source = prepare.add_mutually_exclusive_group()
     source.add_argument("--package", type=Path, help="Reuse an accepted package without reanalysis")
     source.add_argument(
@@ -610,6 +275,29 @@ def main(argv=None):
     refresh.add_argument("--store", type=Path, required=True)
     refresh.add_argument("--offline", action="store_true")
     refresh.add_argument("--replay-sources", type=Path)
+    for action in (prepare, refresh):
+        action.add_argument(
+            "--player-maishift",
+            action=argparse.BooleanOptionalAction,
+            default=None,
+            help="Override capability; otherwise preserve the preceding public configuration",
+        )
+        action.add_argument(
+            "--reassess-captured-policy",
+            action="store_true",
+            help=(
+                "Reassess retained source captures under the current policy; "
+                "not an exact old-policy replay"
+            ),
+        )
+        action.add_argument(
+            "--capacity-review",
+            type=Path,
+            help="Private reviewed capacity evidence; default is 20,000 files",
+        )
+        action.add_argument(
+            "--capacity-sha256", help="Explicitly reviewed SHA256 of the capacity review"
+        )
     publish = commands.add_parser("publish", help="Publish a reviewed candidate as the owner")
     publish.add_argument("run", type=Path)
     publish.add_argument("--gh", default="gh")

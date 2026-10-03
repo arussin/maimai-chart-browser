@@ -1,4 +1,5 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.js';
+test.beforeEach(async({fixtureOrigins})=>{for(const origin of ["https://fictional-report.example"])fixtureOrigins.synthetic(origin);});
 import {readFile} from 'node:fs/promises';
 import {gzipSync} from 'node:zlib';
 import {createHash} from 'node:crypto';
@@ -28,7 +29,7 @@ async function configure(page,data){
 }
 
 for(const source of ['session-file','session-hosted','maishift-file'])test(`${source}: all combo and sync badges filter, restore and retain original observations`,async({page,context})=>{
-  await page.goto('/lab/');await expect(page.locator('#catalog-count strong')).toHaveText('6');await expect(page.locator('#songs .song-row')).toHaveCount(6);await page.evaluate(()=>maimaiPersonal.ready);
+  await page.goto('/lab/');await expect(page.locator('#catalog-count strong')).toHaveText('6');await expect(page.locator('#songs .song-row')).toHaveCount(6);await expect.poll(()=>page.evaluate(()=>!!window.maimaiPersonal)).toBe(true);await page.evaluate(()=>maimaiPersonal.ready);
   const template=JSON.parse(await readFile(new URL('../../output/reconciliation-fixture.json',import.meta.url),'utf8'));
   const data=await page.evaluate(async({template,shift})=>{
     const core=maimaiPlayerData,baseChart=Object.values(template.charts)[0],baseRecord=Object.values(template.records)[0];

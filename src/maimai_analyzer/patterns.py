@@ -7,7 +7,7 @@ from bisect import bisect_left
 from collections import defaultdict
 from importlib.resources import files
 
-from .contracts import content_hash
+from .chart_input import content_hash
 from .flow import is_known, quantize
 from .pattern_community import CATALOG as COMMUNITY_CATALOG
 from .pattern_community import DEFINITIONS as COMMUNITY_DEFINITIONS

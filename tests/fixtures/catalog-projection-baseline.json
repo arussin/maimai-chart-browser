@@ -1,0 +1,59 @@
+{
+  "commit": "a47e8857197488b646585ae3b0d73c227e1742d9",
+  "cases": {
+    "full": {
+      "legacy": {
+        "reference": {
+          "path": "catalog-index/b280f0ed6f6f3c43b46354175c23de8ce19181cb0402b9db945b5007fc1cdf99.json",
+          "sha256": "b280f0ed6f6f3c43b46354175c23de8ce19181cb0402b9db945b5007fc1cdf99",
+          "bytes": 53599
+        },
+        "closure": "7cfe4d2a13777df958c6437b1a4644852e9b6a92010645c277d75af390274102"
+      },
+      "shared": {
+        "reference": {
+          "path": "catalog-index/efc4cac1773d7c41fe205812153bbaa5f7a2b616ebaa5f4767160866a1aa10d8.json",
+          "sha256": "efc4cac1773d7c41fe205812153bbaa5f7a2b616ebaa5f4767160866a1aa10d8",
+          "bytes": 53647
+        },
+        "closure": "a0ec031cb05309ea64379c040f47f8d354e9aa6cdaf119cbc30e852557ff140f"
+      }
+    },
+    "compact": {
+      "legacy": {
+        "reference": {
+          "path": "catalog-index/15662dbdccced738e047ab0adce01091765f66c5e7376532e214d61d88264760.json",
+          "sha256": "15662dbdccced738e047ab0adce01091765f66c5e7376532e214d61d88264760",
+          "bytes": 33414
+        },
+        "closure": "8bc5a6c5734b1563acaaf1275d470b7e728072885493b3a62df5c13433b3ceae"
+      },
+      "shared": {
+        "reference": {
+          "path": "catalog-index/ec05bb0a18bbaa3428a97c0216f8ee6583b8f9d761940e701fa22dea369033c1.json",
+          "sha256": "ec05bb0a18bbaa3428a97c0216f8ee6583b8f9d761940e701fa22dea369033c1",
+          "bytes": 33462
+        },
+        "closure": "e4cc89d3728ff824ead0a964f2290eb04184df354527d7c6edee00f4b4a9741a"
+      }
+    },
+    "metadata-only": {
+      "legacy": {
+        "reference": {
+          "path": "catalog-index/a6d243e9adbfbf3142c6263853404d90b3ab14f5e2ba6f496b3440f6c0541518.json",
+          "sha256": "a6d243e9adbfbf3142c6263853404d90b3ab14f5e2ba6f496b3440f6c0541518",
+          "bytes": 542
+        },
+        "closure": "44bae22658f828b8e5ff62265d789c5a998e5f4efd08e9e1ed65158398908e4e"
+      },
+      "shared": {
+        "reference": {
+          "path": "catalog-index/cdf1bf1e41516d9dbbf4c34608f6fedefcdbeba3248a52a735dde28c17a5017d.json",
+          "sha256": "cdf1bf1e41516d9dbbf4c34608f6fedefcdbeba3248a52a735dde28c17a5017d",
+          "bytes": 549
+        },
+        "closure": "85abd8e00c0ca83a55e2121d0351677cff06e8a3e11caaaf2c1f0b95132afb52"
+      }
+    }
+  }
+}

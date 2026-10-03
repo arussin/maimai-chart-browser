@@ -4,6 +4,8 @@ Windows 开发：请阅读 [DEVELOPMENT.md](DEVELOPMENT.md)。下文使用相对
 
 [English](README.md) · [简体中文](README.zh-Hans.md) · [한국어](README.ko.md) · [日本語](README.ja.md)
 
+**2026年10月3日正式发布：**[发布内容、验证结果与运行限制](docs/PRODUCTION_RELEASE_20261003.md)。多语言乐曲与版本页面以及非公开的日度使用统计已上线；[Search Console 与站点地图](docs/SEARCH_VISIBILITY.md)和[站点所有者使用统计报告](usage-worker/README.md)分别提供运行指南。
+
 本地化维护：[界面文案、游戏术语与多语言搜索数据重建](docs/LOCALIZATION.md)。
 
 本项目包含独立的静态谱面浏览器、可复用的 Python 分析引擎，以及只读的 Kamaitachi 下载工具。个人推荐在下载或导出时计算；搜索、筛选、Flow 和谱面结构比较均可交互操作。

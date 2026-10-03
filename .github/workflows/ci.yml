@@ -4,19 +4,32 @@ on:
     branches: [main]
   pull_request:
   workflow_dispatch:
+    inputs:
+      corpus_726:
+        description: 'Optional frozene51 proof; off runs ordinary CI'
+        type: choice
+        options: ['off', capacity, full]
+        default: 'off'
+      corpus_packet_url:
+        description: 'Approved public packet URL; required only for full mode'
+        type: string
+        required: false
 permissions:
   contents: read
 jobs:
   python:
+    # Keep existing branch-rule contexts stable while execution stays pinned.
+    name: ${{ matrix.check_name }}
+    if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.corpus_726 != 'off') }}
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 10
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
         include:
-          - {os: ubuntu-latest, python: '3.11'}
-          - {os: ubuntu-latest, python: '3.13'}
-          - {os: windows-latest, python: '3.13'}
+          - {os: ubuntu-24.04, python: '3.11.14', check_name: 'python (ubuntu-latest, 3.11)'}
+          - {os: ubuntu-24.04, python: '3.13.7', check_name: 'python (ubuntu-latest, 3.13)'}
+          - {os: windows-latest, python: '3.13.7', check_name: 'python (windows-latest, 3.13)'}
     env:
       PYTHONUTF8: '1'
     steps:
@@ -27,17 +40,20 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
       - run: python -m pip install --no-deps .
-      - run: python -m pip install -r requirements-dev.txt
+      - run: >-
+          python -m pip install --require-hashes --only-binary=:all: -r requirements-dev.lock
       - run: python -m ruff check .
       - run: python -m ruff format --check .
-      - run: python -m unittest discover -s tests
+      - run: python scripts/run_offline_tests.py
+      - run: python scripts/check_corpus_boundaries.py
       - run: python scripts/check_localization.py
       - run: python scripts/check_localization_review.py
       - run: python scripts/prepare_multilingual_search.py --registry registry --output src/maimai_intelligence/assets/song-localizations.json --check
       - run: maimai-chart demo --output output/site
   browser:
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
+    if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.corpus_726 != 'off') }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
@@ -48,23 +64,41 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
         with:
-          python-version: '3.13'
+          python-version: '3.13.7'
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
         with:
-          node-version: '22'
+          node-version: '24.14.1'
       - name: Use runner-local browser output
         run: echo "MAIMAI_BROWSER_OUTPUT=$RUNNER_TEMP/maimai-browser" >> "$GITHUB_ENV"
       - run: python -m pip install --no-deps .
-      - run: python -m pip install -r requirements-localization.txt
+      - run: >-
+          python -m pip install --require-hashes --only-binary=:all: -r requirements-dev.lock
       - run: python tests/browser/prepare.py
         env:
           PYTHONPATH: .
       - run: python scripts/build_maishift_pilot.py --output "$MAIMAI_BROWSER_OUTPUT/maishift-pilot"
       - run: npm ci
         working-directory: tests/browser
+      - run: node --test scripts/localization_literals.test.mjs
       - run: node scripts/localization_sources.mjs .
       - run: npx playwright install --with-deps chromium firefox webkit chrome msedge
         working-directory: tests/browser
+      - name: Verify enforced browser isolation
+        if: matrix.shard == 1
+        run: node --test isolation.test.mjs
+        working-directory: tests/browser
+      - name: Exercise isolated fictional human-preview simulations
+        if: matrix.shard == 1
+        run: node scripts/preview_revision.mjs
+      - name: Exercise real BFCache and prerender activation
+        if: matrix.shard == 1
+        run: node scripts/check_browser_lifecycle.mjs --public "$MAIMAI_BROWSER_OUTPUT/registry" --runtime tests/browser --output "$RUNNER_TEMP/lifecycle"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: ${{ !cancelled() && matrix.shard == 1 }}
+        with:
+          name: actual-browser-lifecycle
+          path: ${{ runner.temp }}/lifecycle/lifecycle.json
+          retention-days: 14
       - name: Browser coverage (shard ${{ matrix.shard }}/3)
         run: npm test -- --shard=${{ matrix.shard }}/3 --grep-invert='7000-chart startup and interactions'
         working-directory: tests/browser
@@ -83,6 +117,27 @@ jobs:
         working-directory: player-import-worker
         env:
           WRANGLER_SEND_METRICS: 'false'
+      - name: Verify typed browser source and immutable generated assets
+        if: matrix.shard == 1
+        run: |
+          npm ci --no-audit --no-fund
+          npm run check
+          npm test
+        working-directory: web
+      - name: Verify source metric parser contracts
+        if: matrix.shard == 1
+        run: |
+          MAIMAI_METRICS_WEB_RUNTIME="$PWD/web" python -m unittest tests.test_source_metrics
+          node --test tests/test_architecture_evidence.mjs
+      - name: Verify private usage schema, D1 and reports
+        if: matrix.shard == 1
+        run: |
+          npm ci --no-audit --no-fund
+          npm run check
+          npm test
+        working-directory: usage-worker
+        env:
+          WRANGLER_SEND_METRICS: 'false'
       - name: Retain fictional browser failure diagnostics
         if: failure()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
@@ -96,11 +151,176 @@ jobs:
   browser-required:
     name: browser
     needs: browser
-    if: always()
-    runs-on: ubuntu-latest
+    if: ${{ always() && !(github.event_name == 'workflow_dispatch' && inputs.corpus_726 != 'off') }}
+    runs-on: ubuntu-24.04
     timeout-minutes: 1
     steps:
       - name: Require every browser shard and its follow-up checks
         env:
           BROWSER_RESULT: ${{ needs.browser.result }}
         run: test "$BROWSER_RESULT" = success
+
+  compatibility:
+    if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.corpus_726 != 'off') }}
+    name: Pinned reciprocal contract and reproducibility
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Canonical Linux stays pinned; Windows uses its available test runtime.
+          - {os: ubuntu-24.04, python: '3.11.14'}
+          - {os: windows-latest, python: '3.13.7'}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          path: registry
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Read the reviewed report counterpart pin
+        id: counterpart
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json, os, re
+          from pathlib import Path
+          pin=json.loads(Path('registry/config/compatibility.json').read_text())['report']
+          assert pin['repository']=='arussin/maimai-session-report'
+          assert re.fullmatch('[a-f0-9]{40}',pin['revision'])
+          with open(os.environ['GITHUB_OUTPUT'],'a') as stream:
+              stream.write('revision='+pin['revision']+'\n')
+          PY
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          repository: arussin/maimai-session-report
+          ref: ${{ steps.counterpart.outputs.revision }}
+          path: report
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Exercise the real producer and report consumer offline
+        shell: bash
+        run: python registry/scripts/check_report_compatibility.py --registry registry --report report --candidate registry --output "$RUNNER_TEMP/compatibility"
+      - name: Canonical Linux build after pinned acquisition
+        if: runner.os == 'Linux'
+        shell: bash
+        run: python registry/scripts/run_canonical_reproduction.py --source registry --toolkit registry --output "$RUNNER_TEMP/reproduction"
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
+        if: runner.os == 'Windows'
+        with:
+          node-version: '24.14.1'
+      - name: Acquire pinned browser build dependencies outside source
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/npm-acquisition"
+          cp registry/web/package.json registry/web/package-lock.json "$RUNNER_TEMP/npm-acquisition/"
+          npm ci --ignore-scripts --no-audit --no-fund --prefix "$RUNNER_TEMP/npm-acquisition" --cache "$RUNNER_TEMP/npm-cache"
+      - name: Independent Windows archive and entry proof
+        if: runner.os == 'Windows'
+        shell: bash
+        run: python registry/scripts/verify_reproducible_build.py --source registry --output "$RUNNER_TEMP/reproduction/proof" --npm-cache "$RUNNER_TEMP/npm-cache"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: ${{ !cancelled() }}
+        with:
+          name: registry-contract-${{ runner.os }}
+          path: |
+            ${{ runner.temp }}/compatibility/receipt.json
+            ${{ runner.temp }}/compatibility/check-*.log
+            ${{ runner.temp }}/reproduction/acquisition.json
+            ${{ runner.temp }}/reproduction/proof/receipt.json
+          retention-days: 14
+
+  cross-os-artifacts:
+    if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.corpus_726 != 'off') }}
+    name: Compare Linux and Windows wheel contents
+    needs: compatibility
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          pattern: registry-contract-*
+          path: receipts
+      - name: Require identical portable package contents
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          paths=sorted(Path('receipts').glob('**/proof/receipt.json'))
+          assert len(paths)==2, paths
+          left,right=(json.loads(path.read_text()) for path in paths)
+          assert left['passed'] and right['passed']
+          assert left['builds'][0]['wheel_entries']==right['builds'][0]['wheel_entries']
+          print('Linux and Windows wheel member hashes match; each local archive reproduction passed.')
+          PY
+
+  corpus-726:
+    name: Frozene51 corpus capacity or full proof
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.corpus_726 != 'off' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 210
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+      CORPUS_MODE: ${{ inputs.corpus_726 }}
+      CORPUS_PACKET_URL: ${{ inputs.corpus_packet_url }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          ref: e51abd0d9a087819accc6344e4e392ccda0a4231
+          path: registry
+          persist-credentials: false
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          ref: ${{ github.sha }}
+          path: toolkit
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: '3.11.14'
+      - name: Bind frozen product and reviewed toolkit separately
+        id: provenance
+        run: >-
+          python -B toolkit/.github/corpus-726/ci-proof-726.py provenance
+          --source registry --toolkit toolkit --output "$RUNNER_TEMP"
+      - name: Verify bounded acquisition diagnostics without network
+        run: python -B toolkit/.github/corpus-726/test-consume-726.py
+      - name: Existing canonical Linux acquisition and package proof
+        timeout-minutes: 20
+        run: >-
+          python -B registry/scripts/run_canonical_reproduction.py
+          --source registry --toolkit registry --output "$RUNNER_TEMP/reproduction"
+      - name: Require the exact frozene51 canonical source and Linux wheel
+        run: python -B toolkit/.github/corpus-726/ci-proof-726.py package --output "$RUNNER_TEMP"
+      - name: Measure full input and pair capacity before any corpus download
+        run: python -B toolkit/.github/corpus-726/ci-proof-726.py capacity --output "$RUNNER_TEMP"
+      - name: Acquire exact public corpus inputs after approved disclosure
+        if: inputs.corpus_726 == 'full'
+        timeout-minutes: 45
+        run: >-
+          python -B toolkit/.github/corpus-726/consume-726.py acquire
+          --wheel "$RUNNER_TEMP/reproduction/proof/first/artifacts/maimai_chart_intelligence-0.2.0-py3-none-any.whl"
+          --packet-url "$CORPUS_PACKET_URL" --output "$RUNNER_TEMP/corpus-input-726"
+      - name: Two clean offline complete preparations and public review renders
+        if: inputs.corpus_726 == 'full'
+        timeout-minutes: 125
+        run: >-
+          python -B toolkit/.github/corpus-726/consume-726.py run
+          --acquired "$RUNNER_TEMP/corpus-input-726" --output "$RUNNER_TEMP/corpus-pair-726"
+      - name: Retain bounded proof metadata and every reported difference
+        if: ${{ always() && steps.provenance.outcome == 'success' }}
+        timeout-minutes: 5
+        run: python -B toolkit/.github/corpus-726/ci-proof-726.py retain --output "$RUNNER_TEMP"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: ${{ always() && steps.provenance.outcome == 'success' }}
+        with:
+          name: corpus-726-${{ inputs.corpus_726 }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/corpus-proof-726.zip
+            ${{ runner.temp }}/corpus-proof-726-retention.json
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 14

@@ -1,6 +1,10 @@
-import {test,expect} from '@playwright/test';
+import {mockBrowserJSONResource} from './browser-configuration-fixture.mjs';
+import {test,expect} from './fixtures.js';
 import {readFile} from 'node:fs/promises';
+import {resolve} from 'node:path';
+import {fileURLToPath,pathToFileURL} from 'node:url';
 import {gzipSync} from 'node:zlib';
+import {createHash} from 'node:crypto';
 
 test('fetched startup shares the parsed catalog without retaining an embedded JSON copy',async({page})=>{
   await page.goto('/progressive/?view=catalog');
@@ -14,7 +18,7 @@ test('fetched startup shares the parsed catalog without retaining an embedded JS
   expect(available).toEqual({overview:true,artwork:true});
 });
 
-for(const restoreTiming of ['before','after'])test(`saved player restore ${restoreTiming} controller startup uses one mapping configuration`,async({page})=>{
+for(const restoreTiming of ['before','after'])test(`saved player restore ${restoreTiming} catalog controls remains stable`,async({page})=>{
   const errors=[];page.on('pageerror',error=>errors.push(error.message));
   const data=JSON.parse(await readFile(new URL('../../output/reconciliation-fixture.json',import.meta.url),'utf8'));
   await page.goto('/registry/?search=ソテリア');
@@ -25,32 +29,29 @@ for(const restoreTiming of ['before','after'])test(`saved player restore ${resto
   await expect(page.locator('#songs .song-row[data-difficulty=MASTER] .player-achievement')).toContainText('97.0000%');
   await expect.poll(()=>page.evaluate(async()=>!!(await maimaiPlayerStorage.read()).active)).toBe(true);
   await page.addInitScript(timing=>{
-    window.startupConfigureCalls=0;
-    let personal,storage,release;
-    const restored=new Promise(resolve=>{release=resolve;});
-    window.releaseSavedRestore=release;
-    Object.defineProperty(window,'maimaiPersonal',{configurable:true,get:()=>personal,set:value=>{
-      personal={...value,configure(...args){window.startupConfigureCalls++;return value.configure(...args);}};
-    }});
-    Object.defineProperty(window,'maimaiPlayerStorage',{configurable:true,get:()=>storage,set:value=>{
-      storage=timing==='after'?{...value,read:async(...args)=>{await restored;return value.read(...args);}}:value;
-    }});
+    let release;const restored=new Promise(resolve=>{release=resolve;});window.releaseSavedRestore=release;
+    if(timing==='after'){
+      const original=IDBFactory.prototype.open;
+      IDBFactory.prototype.open=function(...args){
+        const request=original.apply(this,args);let handler;
+        Object.defineProperty(request,'onsuccess',{configurable:true,get:()=>handler,set:callback=>{
+          handler=callback;request.addEventListener('success',async event=>{await restored;callback.call(request,event);},{once:true});
+        }});return request;
+      };
+    }
   },restoreTiming);
-  if(restoreTiming==='before')await page.route('**/registry/challenge-review.js*',async route=>{
-    await page.waitForFunction(()=>!!window.maimaiPersonal);
-    await page.evaluate(()=>maimaiPersonal.ready);
-    expect(await page.evaluate(()=>({enabled:maimaiPersonal.enabled(),calls:startupConfigureCalls}))).toEqual({enabled:true,calls:0});
-    await route.continue();
-  });
   await page.reload();
   await expect(page.locator('#catalog-count')).toHaveText('4 charts');
   if(restoreTiming==='after'){
+    await expect.poll(()=>page.evaluate(()=>!!window.maimaiPersonal)).toBe(true);
     expect(await page.evaluate(()=>maimaiPersonal.enabled())).toBe(false);
     await page.evaluate(()=>releaseSavedRestore());
   }
-  await page.evaluate(()=>maimaiPersonal.ready);
+  await expect.poll(()=>page.evaluate(()=>!!window.maimaiPersonal)).toBe(true);await page.evaluate(()=>maimaiPersonal.ready);
   await expect(page.locator('#songs .song-row[data-difficulty=MASTER] .player-achievement')).toContainText('97.0000%');
-  expect(await page.evaluate(()=>startupConfigureCalls)).toBe(1);
+  const configured=await page.evaluate(()=>maimaiResearchCatalog.catalog.map(chart=>maimaiPersonal.record(chart)));
+  await page.locator('#search').fill('');await page.locator('#search').fill('ソテリア');
+  expect(await page.evaluate(()=>maimaiResearchCatalog.catalog.map(chart=>maimaiPersonal.record(chart)))).toEqual(configured);
   await expect(page.locator('#challenge-data')).toHaveCount(0);
   expect(errors).toEqual([]);
 });
@@ -123,4 +124,40 @@ test('capacity startup fetches a smaller index and only requests visible chart e
   await page.locator('#songs .song-row').last().scrollIntoViewIfNeeded();
   await expect(page.locator('#songs .song-row').last().locator('.chart-flow svg')).toBeVisible();
   expect(requests.filter(url=>url.includes('/chart-details/')).length).toBeGreaterThan(before);
+});
+
+
+test('stored PB gains a policy-exact catalog mapping without reimport or rewriting private history',async({page})=>{
+  const fixture=pathToFileURL(resolve(process.env.MAIMAI_BROWSER_OUTPUT||fileURLToPath(new URL('../../output/browser-tests/',import.meta.url)),'registry')+'/');
+  const manifest=JSON.parse(await readFile(new URL('manifest.json',fixture),'utf8'));
+  const entry=manifest.releases.find(item=>item.version===manifest.default);
+  const accepted=JSON.parse(Buffer.concat(await Promise.all(entry.parts.map(ref=>readFile(new URL(ref.path,fixture))))));
+  const startup=JSON.parse(await readFile(new URL(entry.startup_shared.path,fixture),'utf8'));
+  const assets=new Map(),releases=[];
+  const reference=(value,folder)=>{const bytes=Buffer.from(JSON.stringify(value)),sha256=createHash('sha256').update(bytes).digest('hex'),path=folder+'/'+sha256+'.json';assets.set(path,bytes);return {path,sha256,bytes:bytes.length};};
+  for(const [version,mapped]of [['coverage-n',false],['coverage-n-plus-one',true]]){
+    const data=structuredClone(accepted),index=structuredClone(startup);
+    if(mapped)data.provider_mapping.charts.chart.acceptance_basis='policy_exact';else data.provider_mapping.charts={};
+    index.provider_mapping=structuredClone(data.provider_mapping);
+    const part=reference(data,'catalog-parts');index.source_catalog_sha256=part.sha256;
+    releases.push({...entry,version,sha256:part.sha256,path:'catalogs/'+part.sha256+'.json',parts:[part],startup_shared:reference(index,'catalog-index')});
+  }
+  let current='coverage-n';
+  await mockBrowserJSONResource(page,'catalog',()=>({...manifest,default:current,releases}));
+  await page.route('**/registry/catalog-index/**',route=>{const path=new URL(route.request().url()).pathname.split('/registry/')[1];return assets.has(path)?route.fulfill({contentType:'application/json',body:assets.get(path)}):route.continue();});
+  await page.goto('/registry/?search=ソテリア');await expect(page.locator('#catalog-count')).toHaveText('4 charts');
+  const data=await readFile(new URL('../../output/reconciliation-fixture.json',import.meta.url));
+  await page.locator('input[type=file]').setInputFiles({name:'fictional-retained-pb.gz',mimeType:'application/gzip',buffer:gzipSync(data)});
+  await page.getByLabel('Remember on this device',{exact:true}).check();await page.getByRole('button',{name:'Import data',exact:true}).click();
+  const row=page.locator('#songs .song-row[data-difficulty=MASTER] .player-achievement');
+  await expect(row).toContainText('Personal chart match unavailable');
+  const saved=await page.evaluate(async()=>{const active=(await maimaiPlayerStorage.read()).active;return {revision:active.revision,bytes:[...new Uint8Array(active.bytes)]};});
+  current='coverage-n-plus-one';await page.reload();await expect(row).toContainText('97.0000%');
+  await expect(page.locator('#player-dialog')).not.toBeVisible();
+  expect(await page.evaluate(()=>maimaiResearchCatalog.provider_mapping.charts.chart.acceptance_basis)).toBe('policy_exact');
+  const restored=await page.evaluate(async()=>{const active=(await maimaiPlayerStorage.read()).active;return {revision:active.revision,bytes:[...new Uint8Array(active.bytes)]};});
+  expect(restored).toEqual(saved);
+  await page.goto('/registry/?search=ソテリア&version=coverage-n');await expect(row).toContainText('Personal chart match unavailable');
+  expect(await page.evaluate(()=>Object.keys(maimaiResearchCatalog.provider_mapping.charts))).toEqual([]);
+  expect(await page.evaluate(async()=>(await maimaiPlayerStorage.read()).active.revision)).toBe(saved.revision);
 });

@@ -1,8 +1,11 @@
 """Hash-checked local research package copying for owner preparation tools."""
 
+from __future__ import annotations
+
 import hashlib
 import json
 from pathlib import Path
+from typing import Any
 
 from maimai_analyzer.dataset import SOURCE_LOCK
 
@@ -10,7 +13,7 @@ from .artwork import copy_artwork, validate_artwork
 from .snapshots import MAX_BYTES, atomic_json, read_json
 
 
-def read_package(directory):
+def read_package(directory: Path | str) -> tuple[dict[str, Any], dict[str, bytes]]:
     root = Path(directory).resolve()
     package = read_json(root / "package.json")
     if package.get("source") != SOURCE_LOCK or package.get("status") != "research_preview":
@@ -39,7 +42,7 @@ def read_package(directory):
     return package, retained
 
 
-def extend_package(source, output, additions):
+def extend_package(source: Path | str, output: Path | str, additions: dict[str, Any]) -> Path:
     source, output = Path(source).resolve(), Path(output).resolve()
     if source == output or source.is_relative_to(output) or output.is_relative_to(source):
         raise ValueError("Use a separate package destination")

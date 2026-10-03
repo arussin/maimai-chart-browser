@@ -1,151 +1,58 @@
 """Source-bound, field-by-field metadata proposals; never chart analysis or inventory."""
 
+from __future__ import annotations
+
 import hashlib
-import json
-import math
-from collections import defaultdict
+from collections.abc import Iterable, Mapping
 from copy import deepcopy
 from datetime import datetime
+from typing import TYPE_CHECKING, Any
 
 from .catalog_identity import key
+from .coverage_types import IntegrityError, SnapshotError
+from .metadata_claims import VERSION as VERSION
+from .metadata_claims import CanonicalChartIdentity, decide_metadata_claims
+from .metadata_policy import (
+    BUILTIN_CONTEXT,
+    FIELDS,
+    SOURCE_POLICIES,
+    MetadataSourcePolicy,
+    PolicyContext,
+)
+from .metadata_policy import number as number
 from .registry import digest, validate
 
-VERSION = "metadata-waterfall-1"
-FIELDS = ("bpm", "chart_constant")
-PRIORITY = {
-    "reviewed-page": 10,
-    "gamerch-wiki": 15,
-    "arcade-songs": 20,
-    "otoge-db": 30,
-    "mai-notes": 40,
-}
-LABELS = {
-    "reviewed-page": "Reviewed public page",
-    "gamerch-wiki": "maimai Wiki (Gamerch)",
-    "mai-notes": "mai-notes",
-    "arcade-songs": "Arcade Songs",
-    "otoge-db": "OTOGE DB",
-}
+if TYPE_CHECKING:
+    from .metadata_adapters import MetadataAdapter
+
+LABELS = {name: policy.label for name, policy in SOURCE_POLICIES.items()}
 MAX_BYTES = 16 * 1024 * 1024
 
 
-def number(value, field):
-    if isinstance(value, bool) or value in (None, ""):
-        return None
-    try:
-        result = float(value)
-    except (TypeError, ValueError):
-        return None
-    ceiling = 15 if field == "chart_constant" else 2000
-    return result if math.isfinite(result) and 0 < result <= ceiling else None
+def parse(raw: bytes, provider: str) -> list[dict[str, Any]]:
+    """Historical public parser entry point uses the maintained source adapter."""
+    from .metadata_adapters import parse_metadata
+
+    return parse_metadata(raw, provider)
 
 
-def parse(raw, provider):
-    if len(raw) > MAX_BYTES or provider not in PRIORITY:
-        raise ValueError("Unsupported metadata source or size")
-    data = json.loads(raw)
-    rows = []
-    if provider == "mai-notes":
-        from .catalog_sources import mai_catalog
-
-        rows = list(mai_catalog(raw)[0].values())
-    elif provider == "gamerch-wiki":
-        raise ValueError("Wiki HTML requires its exact page URL; use propose with a captured page")
-    elif provider == "reviewed-page":
-        if data.get("schema_version") != "reviewed-public-metadata-1":
-            raise ValueError("Expected reviewed public metadata extraction")
-        for row in data["charts"]:
-            if not row.get("evidence") or not row.get("source_url", "").startswith("https://"):
-                raise ValueError("Public page extraction requires evidence and its exact URL")
-            rows.append(
-                {
-                    k: row.get(k)
-                    for k in (
-                        "title",
-                        "artist",
-                        "format",
-                        "difficulty",
-                        "bpm",
-                        "chart_constant",
-                        "region",
-                        "release",
-                        "source_url",
-                        "evidence",
-                    )
-                }
-            )
-    elif provider == "arcade-songs":
-        for song in data["songs"]:
-            for sheet in song["sheets"]:
-                if sheet["type"] not in {"std", "dx"} or sheet.get("isSpecial"):
-                    continue
-                rows.append(
-                    {
-                        "title": song["title"],
-                        "artist": song["artist"],
-                        "format": sheet["type"].upper(),
-                        "difficulty": sheet["difficulty"].upper().replace("REMASTER", "RE:MASTER"),
-                        "bpm": song.get("bpm"),
-                        # internalLevelValue is a computed printed-level fallback. Never admit it.
-                        "chart_constant": sheet.get("internalLevel"),
-                        "region": "JP",
-                        "release": None,
-                    }
-                )
-    else:
-        for song in data:
-            if song.get("lev_utage"):
-                continue
-            for fmt, prefix in (("STD", "lev_"), ("DX", "dx_lev_")):
-                for suffix, difficulty in (
-                    ("bas", "BASIC"),
-                    ("adv", "ADVANCED"),
-                    ("exp", "EXPERT"),
-                    ("mas", "MASTER"),
-                    ("remas", "RE:MASTER"),
-                ):
-                    if not song.get(prefix + suffix):
-                        continue
-                    rows.append(
-                        {
-                            "title": song["title"],
-                            "artist": song["artist"],
-                            "format": fmt,
-                            "difficulty": difficulty,
-                            "bpm": song.get("bpm"),
-                            "chart_constant": song.get(prefix + suffix + "_i"),
-                            "region": "JP",
-                            "release": None,
-                        }
-                    )
-    if not rows or len(rows) > 20000:
-        raise ValueError("Invalid metadata source row count")
-    for row in rows:
-        if (
-            not all(
-                isinstance(row.get(k), str) and len(row[k]) <= 2000 for k in ("title", "artist")
-            )
-            or row["format"] not in {"STD", "DX"}
-            or row["difficulty"] not in {"BASIC", "ADVANCED", "EXPERT", "MASTER", "RE:MASTER"}
-            or row.get("region") not in {None, "JP", "INTL"}
-        ):
-            raise ValueError("Malformed metadata identity")
-        for field in FIELDS:
-            row[field] = number(row.get(field), field)
-    return rows
-
-
-def source(raw, provider, metadata):
+def source(
+    raw: bytes,
+    provider: str,
+    metadata: dict[str, Any],
+    *,
+    policy: MetadataSourcePolicy | None = None,
+) -> dict[str, Any]:
     sha = hashlib.sha256(raw).hexdigest()
     if metadata.get("sha256") != sha or metadata.get("bytes") != len(raw):
-        raise ValueError("Metadata capture integrity mismatch")
+        raise IntegrityError("Metadata capture integrity mismatch")
     if datetime.fromisoformat(metadata["captured_at"].replace("Z", "+00:00")).tzinfo is None:
         raise ValueError("Capture timestamp requires a timezone")
     if not metadata.get("url", "").startswith("https://"):
         raise ValueError("Metadata source requires its public URL")
     return {
         "provider": provider,
-        "label": LABELS[provider],
+        "label": policy.label if policy else LABELS[provider],
         "sha256": sha,
         "bytes": len(raw),
         "url": metadata["url"],
@@ -158,73 +65,61 @@ def source(raw, provider, metadata):
     }
 
 
-def propose(value, captures):
+def propose(
+    value: dict[str, Any],
+    captures: Iterable[tuple[str, bytes, dict[str, Any]]],
+    *,
+    adapters: Mapping[str, MetadataAdapter] | None = None,
+    policies: Mapping[str, MetadataSourcePolicy] | None = None,
+    policy_context: PolicyContext = BUILTIN_CONTEXT,
+) -> dict[str, Any]:
     """Exact unique matches only. A failure of an optional provider is retained in the report."""
-    validate(value)
-    own, claims, sources, failures, ambiguous = defaultdict(list), [], {}, [], []
+    from .metadata_adapters import normalize_builtin, normalize_source
+
+    policies = policy_context.policies if policies is None else policies
+    adapters = adapters or {}
+    validate(value, policy_context=policy_context)
+    charts, normalized, failures = [], [], []
     for chart in value["charts"].values():
         if not chart.get("redirect"):
             song = value["songs"][chart["song_id"]]["metadata"]
-            own[key({**song, **chart})].append(chart["chart_id"])
+            charts.append(CanonicalChartIdentity(chart["chart_id"], key({**song, **chart})))
     for provider, raw, metadata in captures:
+        if provider not in policies:
+            raise ValueError("Metadata source has no explicit policy entry")
+        policy = policies[provider]
+        captured = source(raw, provider, metadata, policy=policy)
+        if binding := policy_context.binding(provider):
+            captured["parser"] = binding.parser_revision
         try:
-            captured = source(raw, provider, metadata)
-            if provider == "gamerch-wiki":
-                from .catalog_sources import wiki_catalog
-
-                rows, _ = wiki_catalog(raw, metadata["url"])
-            else:
-                rows = parse(raw, provider)
-        except (ValueError, TypeError, KeyError, AttributeError) as error:
+            adapter = adapters.get(provider)
+            rows = (
+                adapter.normalize(raw, metadata)
+                if adapter
+                else normalize_builtin(provider, raw, metadata)
+            )
+            normalized.append(normalize_source(captured, policy, rows))
+        except SnapshotError as error:
             failures.append({"provider": provider, "reason": str(error)})
             continue
-        sid = provider + ":" + captured["sha256"]
-        sources[sid] = captured
-        index = defaultdict(list)
-        for row in rows:
-            index[key(row)].append(row)
-        for identity, chart_ids in own.items():
-            candidates = index.get(identity, [])
-            if len(candidates) > 1 or len(chart_ids) > 1:
-                if candidates:
-                    ambiguous.append({"provider": provider, "chart_ids": chart_ids})
-                continue
-            if not candidates:
-                continue
-            row, cid = candidates[0], chart_ids[0]
-            for field in FIELDS:
-                if row[field] is None:
-                    continue
-                claim = {
-                    "subject_id": cid,
-                    "snapshot_id": sid,
-                    "field": field,
-                    "value": row[field],
-                    "region": row.get("region") if field == "chart_constant" else None,
-                    "release": row.get("release") if field == "chart_constant" else None,
-                    "observed_at": captured["captured_at"],
-                    "priority": PRIORITY[provider],
-                    "source_url": row.get("source_url", captured["url"]),
-                    "evidence": row.get("evidence")
-                    or (
-                        "Unique normalized title, artist, format and difficulty; "
-                        "explicit numeric field"
-                    ),
-                    "policy": VERSION,
-                }
-                claim["observation_id"] = "metadata:" + digest(claim)
-                claims.append(claim)
+    decision = decide_metadata_claims(tuple(charts), tuple(normalized))
     return {
         "schema_version": VERSION,
         "registry_sha256": digest(value),
-        "sources": sources,
-        "claims": claims,
+        "sources": {item.evidence.snapshot_id: item.evidence.record() for item in normalized},
+        "claims": [claim.record() for claim in decision.claims],
         "failures": failures,
-        "ambiguous": ambiguous,
+        "ambiguous": [match.record() for match in decision.ambiguous],
     }
 
 
-def accept(value, proposal, review):
+def accept(
+    value: dict[str, Any],
+    proposal: dict[str, Any],
+    review: dict[str, Any],
+    *,
+    policy_context: PolicyContext = BUILTIN_CONTEXT,
+) -> dict[str, Any]:
     if (
         proposal["registry_sha256"] != digest(value)
         or review.get("proposal_sha256") != digest(proposal)
@@ -250,13 +145,15 @@ def accept(value, proposal, review):
             raise ValueError("Invalid reviewed song aliases")
         meta = result["songs"][sid]["metadata"]
         meta["aliases"] = sorted(set(meta.get("aliases", [])) | set(entry["aliases"]))
-    return validate(result)
+    return validate(result, policy_context=policy_context)
 
 
-def project(nav, claims, sources):
+def project(
+    nav: dict[str, Any], claims: list[dict[str, Any]], sources: dict[str, Any]
+) -> dict[str, Any]:
     """Retain accepted primary metrics; choose supplemental fields independently."""
 
-    def provenance(claim):
+    def provenance(claim: dict[str, Any]) -> dict[str, Any]:
         src = sources[claim["snapshot_id"]]
         return {
             "provider": src.get("label", LABELS.get(src["provider"], src["provider"])),

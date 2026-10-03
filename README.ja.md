@@ -4,6 +4,8 @@ Windows での開発：[DEVELOPMENT.md](DEVELOPMENT.md)を参照してくださ�
 
 [English](README.md) · [简体中文](README.zh-Hans.md) · [한국어](README.ko.md) · [日本語](README.ja.md)
 
+**2026年10月3日の本番公開：**[リリース、検証結果、運用上の制限](docs/PRODUCTION_RELEASE_20261003.md)。多言語の楽曲・バージョンページと非公開の日次利用集計が稼働しています。[Search Console とサイトマップ](docs/SEARCH_VISIBILITY.md)、[運営者向け利用状況レポート](usage-worker/README.md)には、それぞれ運用ガイドがあります。
+
 多言語対応の保守：[UI 文言、ゲーム用語、多言語検索データの再構築](docs/LOCALIZATION.md)。
 
 単体で動作する静的な譜面ブラウザー、再利用可能な Python 分析エンジン、読み取り専用の Kamaitachi ダウンローダーです。個人向けのおすすめはダウンロード／エクスポート時に計算され、検索、絞り込み、Flow、構造の比較は画面上で操作できます。

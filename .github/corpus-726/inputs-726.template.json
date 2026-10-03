@@ -1,0 +1,102 @@
+{
+  "schema": "maimai-linux-retained-corpus-inputs-2",
+  "source_commit": "e51abd0d9a087819accc6344e4e392ccda0a4231",
+  "image": "python:3.11.14-slim-bookworm@sha256:83f339c1be6340ae1096010fdccf6552ac932d8f410d45d206014916bdf37e48",
+  "platform": "linux/amd64",
+  "python": "3.11.14",
+  "inputs": {
+    "registry": {
+      "kind": "tree",
+      "files": 7,
+      "bytes": 81860010,
+      "inventory_sha256": "2891191823999e5e13392fadf2b315318ed6490b42b70cc9a5a84b3264b0a30b"
+    },
+    "package": {
+      "kind": "tree",
+      "files": 1602,
+      "bytes": 82338433,
+      "inventory_sha256": "345e30f32541a472563437d55164aefe58cf05959310cfc4f86e75671018bee7"
+    },
+    "previous-browser": {
+      "kind": "tree",
+      "files": 1472,
+      "bytes": 609876617,
+      "inventory_sha256": "c0dd306db0153fb650a410f8313e7f593918d4f22b6c15ff611fdb83029dcd04"
+    },
+    "previous-public": {
+      "kind": "tree",
+      "files": 15896,
+      "bytes": 964116156,
+      "inventory_sha256": "0c860b8e6df8529d17cb15cce619d2ae24ca0dbfc5417e0b11da79bde244c3ef"
+    },
+    "wheel": {
+      "kind": "file",
+      "bytes": null,
+      "sha256": "81c5c68a74ad2e7805c57b30c3888424d1e502f648389ea503feaf3c50ba264d"
+    },
+    "reviews": {
+      "kind": "file",
+      "bytes": 904,
+      "sha256": "6595688a8e8307748acb82a0802047324b0d9d75aa2c81f59bce8e16f3e166bf"
+    },
+    "builder-wheels": {
+      "kind": "tree",
+      "files": 2,
+      "bytes": 1322016,
+      "inventory_sha256": "fc45b4ebb245a8d2625aa83f660bc96b9b36181e16ac9a75ba3ecc9ebd0dbf81"
+    }
+  },
+  "inventory_algorithm": "sha256 of UTF-8 json.dumps(relative_posix_name_to_bytes_and_sha256, sort_keys=True, separators=(',', ':'))",
+  "total_input_bytes": null,
+  "allocation": {
+    "per_attempt_max_bytes": 4294967296,
+    "pair_receipt_reserve_bytes": 134217728,
+    "free_reserve_bytes": 32212254720,
+    "ordinary_guard_bytes": 21474836480
+  },
+  "expected_public_files": null,
+  "capacity": {
+    "profile": "pages-default",
+    "max_files": 20000
+  },
+  "dependency_scope": "The application wheel declares no Requires-Dist. Catalog preparation also requires the two existing requirements-localization.txt builder dependencies, at their requirements-dev.lock versions and wheel hashes. Acquisition binds their exact public wheels before execution; both clean containers install those local wheels with no index or dependency resolution. Retained artwork needs no Pillow conversion. No Node, online, replay or reassessment is requested; missing imports fail closed.",
+  "local_authority": {
+    "name": "attempt.json",
+    "sha256": "617131b2159dc7100e889650f332589ef9434d605021f21b9b11ade627e4d857"
+  },
+  "exclusions": [
+    "raw captures",
+    "source/quarantine containers",
+    "private player inputs",
+    "credentials and Access sessions",
+    "account receipts",
+    "D1 and owner reports",
+    "dependency caches",
+    "operational logs"
+  ],
+  "acceptance_mode": "derived-count-with-exact-corpus-and-closure",
+  "current_authority": {
+    "ci_run": 36295036273,
+    "linux_proof_artifact_sha256": "258e60ab414cf24f4c5d3e48a302d27057498407982b61efbc6d28eb157b1b87",
+    "wheel_bytes_measured_after_exact_sha_verification": true,
+    "preparation_counts": {
+      "charts": 7251,
+      "public_songs": 1694,
+      "accepted_songs": 1765,
+      "artwork": 1561
+    },
+    "canonical_registry_sha256": "a6fc949ec76c98106a7444284233a88150d294ec980416acc2b5b54f1f490920"
+  },
+  "builder_wheels": {
+    "opencc_python_reimplemented-0.1.7-py2.py3-none-any.whl": {
+      "bytes": 481813,
+      "sha256": "41b3b92943c7bed291f448e9c7fad4b577c8c2eae30fcfe5a74edf8818493aa6",
+      "url": "https://files.pythonhosted.org/packages/30/6b/055b7806f320cc8f2cdf23c5f70221c0dc1683fca9ffaf76dfc2ad4b91b6/opencc_python_reimplemented-0.1.7-py2.py3-none-any.whl"
+    },
+    "pypinyin-0.55.0-py2.py3-none-any.whl": {
+      "bytes": 840203,
+      "sha256": "d53b1e8ad2cdb815fb2cb604ed3123372f5a28c6f447571244aca36fc62a286f",
+      "url": "https://files.pythonhosted.org/packages/b9/7b/4cabc76fcc21c3c7d5c671d8783984d30ac9d3bb387c4ba784fca3cdfa3a/pypinyin-0.55.0-py2.py3-none-any.whl"
+    }
+  }
+}

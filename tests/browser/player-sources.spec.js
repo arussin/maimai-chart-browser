@@ -1,10 +1,12 @@
-import {test,expect} from '@playwright/test';
+import {mockBrowserConfiguration} from './browser-configuration-fixture.mjs';
+import {test,expect} from './fixtures.js';
+test.beforeEach(async({fixtureOrigins})=>{for(const origin of ["https://public-report.example"])fixtureOrigins.synthetic(origin);});
 import {readFile} from 'node:fs/promises';
 import {gzipSync} from 'node:zlib';
 import {createHash} from 'node:crypto';
 
 const manifest='https://public-report.example/fixture/party/latest.json';
-async function boot(page){await page.goto('/lab/');await page.evaluate(()=>maimaiPersonal.ready);}
+async function boot(page){await page.goto('/lab/');await expect.poll(()=>page.evaluate(()=>!!window.maimaiPersonal)).toBe(true);await page.evaluate(()=>maimaiPersonal.ready);}
 async function fixture(page){const data=JSON.parse(await readFile(new URL('../../output/reconciliation-fixture.json',import.meta.url),'utf8'));return page.evaluate(d=>maimaiPlayerData.reconcile(d),data);}
 async function mock(context,page,data,{status=200,html=false,delay=null}={}){
   const bytes=gzipSync(Buffer.from(JSON.stringify(data))),sha=createHash('sha256').update(bytes).digest('hex'),offer=await page.evaluate(d=>maimaiPlayerData.offer(d),data);
@@ -34,11 +36,11 @@ test('public source previews and remembers atomically; requests omit credentials
   await importReport(page);const state=await saved(page);expect(state.active.source.url).toBe(manifest);expect(state.active.source.playerKey).toBe(data.player.key);expect(state.active.source.generation).toBe(state.control.version);
   await expect(page.locator('#player-status .player-profile .player-profile-link')).toHaveAttribute('href',manifest);await expect(page.locator('#player-status > a')).toHaveCount(0);await expect(page.locator('#player-status .player-storage-label')).toContainText('Last Updated:');
   expect(await page.evaluate(()=>sourceOptions.every(o=>o.credentials==='omit'&&o.referrerPolicy==='no-referrer'&&o.redirect==='error'))).toBe(true);
-  await page.reload();await page.evaluate(()=>maimaiPersonal.ready);expect((await saved(page)).active.revision).toBe(state.active.revision);await openImport(page);await expect(page.getByLabel('Hosted Session Report',{exact:true})).toBeChecked();
+  await page.reload();await expect.poll(()=>page.evaluate(()=>!!window.maimaiPersonal)).toBe(true);await page.evaluate(()=>maimaiPersonal.ready);expect((await saved(page)).active.revision).toBe(state.active.revision);await openImport(page);await expect(page.getByLabel('Hosted Session Report',{exact:true})).toBeChecked();
 });
 
 test('one-time source import reloads in this tab without storing a connection',async({page,context})=>{
-  await boot(page);await mock(context,page,await fixture(page));await importReport(page,false);expect((await saved(page)).active).toBeNull();await page.reload();await page.evaluate(()=>maimaiPersonal.ready);expect(await page.evaluate(()=>maimaiPersonal.enabled())).toBe(true);await expect(page.locator('#player-refresh')).toBeHidden();
+  await boot(page);await mock(context,page,await fixture(page));await importReport(page,false);expect((await saved(page)).active).toBeNull();await page.reload();await expect.poll(()=>page.evaluate(()=>!!window.maimaiPersonal)).toBe(true);await page.evaluate(()=>maimaiPersonal.ready);expect(await page.evaluate(()=>maimaiPersonal.enabled())).toBe(true);await expect(page.locator('#player-refresh')).toBeHidden();
 });
 
 test('installation URLs with or without a trailing slash read only the documented manifest',async({page,context})=>{
@@ -72,7 +74,7 @@ test('unchanged refresh preserves hidden results and dataset history',async({pag
 });
 
 test('a login response preserves saved scores and offers report recovery',async({page,context})=>{
-  await boot(page);const data=await fixture(page);await mock(context,page,data);await importReport(page);const before=(await saved(page)).active.revision;await context.unroute('https://public-report.example/**');await mock(context,page,data,{html:true});await age(page);await page.reload();await page.evaluate(()=>maimaiPersonal.ready);
+  await boot(page);const data=await fixture(page);await mock(context,page,data);await importReport(page);const before=(await saved(page)).active.revision;await context.unroute('https://public-report.example/**');await mock(context,page,data,{html:true});await age(page);await page.reload();await expect.poll(()=>page.evaluate(()=>!!window.maimaiPersonal)).toBe(true);await page.evaluate(()=>maimaiPersonal.ready);
   await expect.poll(()=>page.locator('#player-status').textContent()).toContain('Could not refresh');expect((await saved(page)).active.revision).toBe(before);await expect(page.locator('.player-dialog')).not.toBeVisible();
 });
 
@@ -81,8 +83,8 @@ test('Forget aborts a pending refresh and prevents resurrection across tabs',asy
   await context.unroute('https://public-report.example/**');let release,started;const held=new Promise(resolve=>release=resolve),start=new Promise(resolve=>started=resolve);await mock(context,page,data,{delay:()=>{started();return held;}});
   await page.locator('#settings-toggle').click();await page.locator('#player-refresh').click();await start;
   await other.locator('#settings-toggle').click();await other.locator('#player-forget').click();release();
-  await expect.poll(async()=>(await saved(page)).active).toBeNull();await expect(page.locator('#player-refresh')).toBeHidden();await other.reload();await other.evaluate(()=>maimaiPersonal.ready);expect(await other.evaluate(()=>maimaiPersonal.enabled())).toBe(false);
-  await page.reload();await page.evaluate(()=>maimaiPersonal.ready);expect(await page.evaluate(()=>maimaiPersonal.enabled())).toBe(false);
+  await expect.poll(async()=>(await saved(page)).active).toBeNull();await expect(page.locator('#player-refresh')).toBeHidden();await other.reload();await expect.poll(()=>other.evaluate(()=>!!window.maimaiPersonal)).toBe(true);await other.evaluate(()=>maimaiPersonal.ready);expect(await other.evaluate(()=>maimaiPersonal.enabled())).toBe(false);
+  await page.reload();await expect.poll(()=>page.evaluate(()=>!!window.maimaiPersonal)).toBe(true);await page.evaluate(()=>maimaiPersonal.ready);expect(await page.evaluate(()=>maimaiPersonal.enabled())).toBe(false);
 });
 
 test('storage rejects stale commits, old clients, and duplicate refresh leases',async({page,context})=>{
@@ -99,7 +101,7 @@ test('public adapter rejects substituted payloads and unsafe endpoints',async({p
 test('a newer corrected PB may be lower and a partial snapshot retains other observations',async({page,context})=>{
   await boot(page);const data=await fixture(page);await mock(context,page,data);await importReport(page);const prior=await saved(page);
   const corrected=await page.evaluate(async d=>{const core=maimaiPlayerData,old=core.current(d).pbs.get('chart'),record={...old,achievement:960000},rid=await core.digest(record);d.records[rid]=record;const snapshot={capturedAt:5000,phase:'after',complete:false,versions:[],pbs:{chart:rid}};d.snapshots[await core.digest(snapshot)]=snapshot;d.player.displayName='A corrected name';const {revision,...body}=d;d.revision=await core.digest(body);return d;},data);
-  await context.unroute('https://public-report.example/**');await mock(context,page,corrected);await age(page);await page.reload();await page.evaluate(()=>maimaiPersonal.ready);
+  await context.unroute('https://public-report.example/**');await mock(context,page,corrected);await age(page);await page.reload();await expect.poll(()=>page.evaluate(()=>!!window.maimaiPersonal)).toBe(true);await page.evaluate(()=>maimaiPersonal.ready);
   await expect.poll(async()=>(await saved(page)).active.source.sourceRevision).toBe(corrected.revision);
   const result=await page.evaluate(async()=>{const s=await maimaiPlayerStorage.read(),d=await maimaiPlayerData.decode(s.active.bytes);return {score:maimaiPlayerData.current(d).pbs.get('chart').achievement,plays:Object.keys(d.plays).length,name:d.player.displayName};});
   expect(result).toEqual({score:960000,plays:1,name:'A corrected name'});expect((await saved(page)).active.revision).not.toBe(prior.active.revision);
@@ -123,18 +125,18 @@ test('storage denial reports failure without losing an active temporary import',
 
 test('upstream throttling records backoff without replacing scores',async({page,context})=>{
   await boot(page);const data=await fixture(page);await mock(context,page,data);await importReport(page);const before=(await saved(page)).active.revision;await age(page);await context.unroute('https://public-report.example/**');
-  await context.route('https://public-report.example/**',route=>route.fulfill({status:429,headers:{'Retry-After':'120'},body:''}));await page.reload();await page.evaluate(()=>maimaiPersonal.ready);
+  await context.route('https://public-report.example/**',route=>route.fulfill({status:429,headers:{'Retry-After':'120'},body:''}));await page.reload();await expect.poll(()=>page.evaluate(()=>!!window.maimaiPersonal)).toBe(true);await page.evaluate(()=>maimaiPersonal.ready);
   await expect.poll(async()=>(await saved(page)).active.source.retryAt??0).toBeGreaterThan(Date.now()+60000);expect((await saved(page)).active.revision).toBe(before);
 });
 
 test('announcement waits for a modal, shows once, replays, and survives Forget',async({page,context})=>{
   // Enable only the capability fixture. No production/debug switch is shipped.
-  await context.route('**/player-import-config.js?*',async route=>{const response=await route.fetch();await route.fulfill({response,body:(await response.text()).replace('maishift:false','maishift:true')});});
+  await mockBrowserConfiguration(context,configuration=>({...configuration,features:{...configuration.features,maishift:true}}));
   await page.addInitScript(()=>document.addEventListener('DOMContentLoaded',()=>{const d=document.createElement('dialog');d.id='blocking-fixture';d.textContent='Fixture';document.body.append(d);d.showModal();},{once:true}));
   await boot(page);await expect(page.locator('.feature-announcement')).toBeHidden();expect(await page.evaluate(()=>localStorage.getItem('maimai-announcement:player-import-sources-v1'))).toBeNull();
   await page.evaluate(()=>document.getElementById('blocking-fixture').close());await expect(page.locator('.feature-announcement')).toBeVisible();expect(await page.evaluate(()=>document.activeElement.closest('.feature-announcement')===null)).toBe(true);
   await expect.poll(()=>page.evaluate(()=>localStorage.getItem('maimai-announcement:player-import-sources-v1'))).toBe('seen');
-  await page.getByRole('button',{name:'Got it',exact:true}).click();await page.evaluate(()=>maimaiPlayerStorage.forget());await page.reload();await page.evaluate(()=>document.getElementById('blocking-fixture').close());await expect(page.locator('.feature-announcement')).toBeHidden();
+  await page.getByRole('button',{name:'Got it',exact:true}).click();await page.evaluate(()=>maimaiPlayerStorage.forget());await page.reload();await expect.poll(()=>page.evaluate(()=>!!window.maimaiPersonal)).toBe(true);await page.evaluate(()=>maimaiPersonal.ready);await page.evaluate(()=>document.getElementById('blocking-fixture').close());await expect(page.locator('.feature-announcement')).toBeHidden();
   await page.locator('#settings-toggle').click();await page.locator('#feature-announcement-replay').click();await expect(page.locator('.feature-announcement')).toBeVisible();await page.keyboard.press('Escape');await expect(page.locator('#settings-toggle')).toBeFocused();
 });
 
@@ -147,7 +149,7 @@ test('source selection remains localized and usable in all four languages',async
 
 test('unchecking remembering on the connected source revokes future automatic reads',async({page,context})=>{
   await boot(page);await mock(context,page,await fixture(page));await importReport(page);await importReport(page,false);
-  await expect.poll(async()=>(await saved(page)).active).toBeNull();await page.reload();await page.evaluate(()=>maimaiPersonal.ready);expect(await page.evaluate(()=>maimaiPersonal.enabled())).toBe(true);
+  await expect.poll(async()=>(await saved(page)).active).toBeNull();await page.reload();await expect.poll(()=>page.evaluate(()=>!!window.maimaiPersonal)).toBe(true);await page.evaluate(()=>maimaiPersonal.ready);expect(await page.evaluate(()=>maimaiPersonal.enabled())).toBe(true);
   const other=await context.newPage();await boot(other);expect(await other.evaluate(()=>maimaiPersonal.enabled())).toBe(false);
 });
 
@@ -167,9 +169,9 @@ test('cancelled reads cannot clear the busy state of a newer import',async({page
 });
 
 test('announcement suppression falls back to the tab session when device preferences fail',async({page,context})=>{
-  await context.route('**/player-import-config.js?*',async route=>{const response=await route.fetch();await route.fulfill({response,body:(await response.text()).replace('maishift:false','maishift:true')});});
+  await mockBrowserConfiguration(context,configuration=>({...configuration,features:{...configuration.features,maishift:true}}));
   await page.addInitScript(()=>{const set=Storage.prototype.setItem;Storage.prototype.setItem=function(key,value){if(this===localStorage&&key.startsWith('maimai-announcement:'))throw new DOMException('Storage unavailable','QuotaExceededError');return set.call(this,key,value);};});
-  await boot(page);await expect(page.locator('.feature-announcement')).toBeVisible();await expect.poll(()=>page.evaluate(()=>sessionStorage.getItem('maimai-announcement:player-import-sources-v1'))).toBe('seen');await page.reload();await page.evaluate(()=>maimaiPersonal.ready);await expect(page.locator('.feature-announcement')).toBeHidden();
+  await boot(page);await expect(page.locator('.feature-announcement')).toBeVisible();await expect.poll(()=>page.evaluate(()=>sessionStorage.getItem('maimai-announcement:player-import-sources-v1'))).toBe('seen');await page.reload();await expect.poll(()=>page.evaluate(()=>!!window.maimaiPersonal)).toBe(true);await page.evaluate(()=>maimaiPersonal.ready);await expect(page.locator('.feature-announcement')).toBeHidden();
 });
 
 test('Forget invalidates a pending commit before compression and storage complete',async({page,context})=>{
@@ -178,7 +180,7 @@ test('Forget invalidates a pending commit before compression and storage complet
   await page.evaluate(()=>{const digest=crypto.subtle.digest.bind(crypto.subtle);let held=true;crypto.subtle.digest=async(...args)=>{if(held){held=false;window.commitWaiting=true;await new Promise(resolve=>window.releaseCommit=resolve);}return digest(...args);};});
   await page.getByRole('button',{name:'Import data',exact:true}).click();await page.waitForFunction(()=>window.commitWaiting);
   await other.locator('#settings-toggle').click();await other.locator('#player-forget').click();await expect.poll(async()=>(await saved(other)).active).toBeNull();
-  await page.evaluate(()=>window.releaseCommit());await expect(page.locator('#player-refresh')).toBeHidden();expect((await saved(page)).active).toBeNull();await page.reload();await page.evaluate(()=>maimaiPersonal.ready);expect(await page.evaluate(()=>maimaiPersonal.enabled())).toBe(false);
+  await page.evaluate(()=>window.releaseCommit());await expect(page.locator('#player-refresh')).toBeHidden();expect((await saved(page)).active).toBeNull();await page.reload();await expect.poll(()=>page.evaluate(()=>!!window.maimaiPersonal)).toBe(true);await page.evaluate(()=>maimaiPersonal.ready);expect(await page.evaluate(()=>maimaiPersonal.enabled())).toBe(false);
 });
 
 test('a changed refresh preserves the selected chart and expanded PB history',async({page,context})=>{
@@ -188,4 +190,68 @@ test('a changed refresh preserves the selected chart and expanded PB history',as
   const changed=await page.evaluate(async data=>{const core=maimaiPlayerData,snapshot={...Object.values(data.snapshots).at(-1),capturedAt:5000};data.snapshots[await core.digest(snapshot)]=snapshot;const {revision,...body}=data;data.revision=await core.digest(body);return data;},data);
   await context.unroute('https://public-report.example/**');await mock(context,page,changed);await age(page);await page.evaluate(()=>dispatchEvent(new Event('online')));
   await expect.poll(async()=>(await saved(page)).active.source.sourceRevision).toBe(changed.revision);expect(page.url()).toBe(url);await expect(page.locator('.player-pb-toggle')).toHaveAttribute('aria-expanded','true');
+});
+
+test('real popup handoff imports, reuses and declines without returning private data to the report',async({page,context})=>{
+  await boot(page);
+  const data=await fixture(page);
+  const offer=await page.evaluate(value=>maimaiPlayerData.offer(value),data);
+  const browserURL=new URL('/lab/',page.url()).href;
+  const bytes=[...gzipSync(Buffer.from(JSON.stringify(data)))];
+  await context.route('https://public-report.example/handoff-fixture',route=>route.fulfill({
+    contentType:'text/html',body:'<!doctype html><html lang="en"><title>Fictional report</title><body>Fictional report</body></html>'
+  }));
+  await page.goto('https://public-report.example/handoff-fixture');
+  async function open(offered){
+    const popupReady=page.waitForEvent('popup');
+    await page.evaluate(({browserURL,offer,bytes})=>{
+      const protocol='maimai-player-handoff/1',nonce=crypto.randomUUID();
+      window.handoffReplies=[];window.handoffReady=[];window.handoffSentBytes=0;
+      const target=new URL(browserURL);target.hash='party-import='+nonce;
+      let child;
+      function receive(event){
+        if(event.source!==child||event.origin!==target.origin||event.data?.protocol!==protocol||event.data?.nonce!==nonce||event.data?.type!=='ready')return;
+        window.removeEventListener('message',receive);window.handoffReady.push(event.data);
+        const channel=new MessageChannel();
+        channel.port1.onmessage=event=>{
+          window.handoffReplies.push(event.data);
+          if(event.data?.type==='accept'){
+            const payload=new Uint8Array(bytes);window.handoffSentBytes+=payload.byteLength;
+            channel.port1.postMessage({type:'data',bytes:payload.buffer},[payload.buffer]);
+          }
+        };
+        child.postMessage({protocol,type:'offer',nonce,offer},target.origin,[channel.port2]);
+      }
+      window.addEventListener('message',receive);child=window.open(target.href,'_blank');
+    },{browserURL,offer:offered,bytes});
+    const popup=await popupReady;
+    await expect.poll(()=>popup.evaluate(()=>!!window.maimaiPersonal)).toBe(true);
+    await popup.evaluate(()=>maimaiPersonal.ready);
+    await expect.poll(()=>page.evaluate(()=>handoffReady.length)).toBe(1);
+    expect(popup.url()).not.toContain('party-import');
+    return popup;
+  }
+  const imported=await open(offer);
+  await expect(imported.getByRole('heading',{name:'Import this profile?',exact:true})).toBeVisible();
+  await imported.locator('.player-remember input').check();
+  await imported.getByRole('button',{name:'Import data',exact:true}).click();
+  await expect.poll(()=>page.evaluate(()=>handoffReplies.map(value=>value.type))).toEqual(['accept','imported']);
+  expect(await imported.evaluate(()=>maimaiPersonal.enabled())).toBe(true);
+  expect((await saved(imported)).active.revision).toBe(data.revision);
+  expect((await saved(imported)).active.source).toBeNull();
+  expect(await page.evaluate(()=>handoffSentBytes)).toBe(bytes.length);
+  expect(await page.evaluate(()=>handoffReplies.every(value=>Object.keys(value).join(',')==='type'))).toBe(true);
+  expect(await page.evaluate(()=>Object.keys(handoffReady[0]).sort())).toEqual(['nonce','protocol','type']);
+  await imported.close();
+  const reused=await open(offer);
+  await expect.poll(()=>page.evaluate(()=>handoffReplies)).toEqual([{type:'reused'}]);
+  expect(await page.evaluate(()=>handoffSentBytes)).toBe(0);
+  await expect(reused.locator('.player-dialog')).not.toBeVisible();
+  await reused.close();
+  const declined=await open({...offer,player:{...offer.player,key:'kamaitachi:maimaidx:another-fixture',username:'another-fixture',displayName:'Another fictional player'}});
+  await declined.getByRole('button',{name:'Not now',exact:true}).click();
+  await expect.poll(()=>page.evaluate(()=>handoffReplies)).toEqual([{type:'declined'}]);
+  expect(await page.evaluate(()=>handoffSentBytes)).toBe(0);
+  expect((await saved(declined)).active.revision).toBe(data.revision);
+  await declined.close();
 });

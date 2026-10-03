@@ -1,5 +1,7 @@
 import copy
 import json
+import shutil
+import subprocess
 import unittest
 from importlib.resources import files
 
@@ -30,7 +32,19 @@ class DisplayReadingsTests(unittest.TestCase):
     def test_packaged_script_contains_no_unresolved_markers(self):
         script = song_search_script()
         self.assertNotIn("__MAIMAI_", script)
-        self.assertIn("{query,romaji}", script)
+        node = shutil.which("node")
+        if not node:
+            self.skipTest("Node is required for the generated adapter contract")
+        program = """
+const vm=require('vm'),fs=require('fs');
+vm.runInThisContext(fs.readFileSync(0,'utf8'));
+const chart={title:'ソテリア',artist:'Aran'};
+if(typeof maimaiSongSearch.romaji!=='function'||!maimaiSongSearch.query('ソテリア')(chart)
+ ||maimaiSongSearch.query('unrelated sentinel')(chart))process.exitCode=1;
+"""
+        subprocess.run(  # noqa: S603 -- generated local adapter and authored synthetic input
+            [node, "-e", program], input=script, text=True, check=True, timeout=20
+        )
 
     def test_reviewed_aliases_fill_real_reading_gaps_without_translations(self):
         assets = files("maimai_intelligence.assets")

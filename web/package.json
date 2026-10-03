@@ -1,0 +1,18 @@
+{
+  "name": "maimai-web-source",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "check": "npm run format:check && tsc --noEmit && node check-architecture.mjs && node check-decisions.mjs && node build.mjs --check",
+    "test": "node --test tests/*.test.mjs",
+    "format": "prettier --write src tests *.mjs *.json",
+    "format:check": "prettier --check src tests *.mjs *.json"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2",
+    "typescript": "7.0.2",
+    "acorn": "8.15.0",
+    "prettier": "3.9.8"
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "0:0": {
+    "data": "d83d2bf44489dc30c812c9a52fd46f0f07ec4291e0b0013d7c6462d4adb2a0bd",
+    "patterns": "8aa9fa6da1e1014f02fda98bda625cb64525bd0b33f8eaea189cd0d052d3bb47"
+  },
+  "0:1": {
+    "data": "471b824fbd1ca88727b0ce235b1b288484ccf90f402bc3b17efbe5dcf7dbd000",
+    "patterns": "8aa9fa6da1e1014f02fda98bda625cb64525bd0b33f8eaea189cd0d052d3bb47"
+  },
+  "1:0": {
+    "data": "6fdd7722f67a55e257fc985d786df9222f6ea7433775ef1b190460a5443ca57c",
+    "patterns": "8aa9fa6da1e1014f02fda98bda625cb64525bd0b33f8eaea189cd0d052d3bb47"
+  },
+  "1:1": {
+    "data": "a5fa2b274a69bb8469c8d5e00bb7e3142cb8e44d8584c7701ae27e5c09a36f4d",
+    "patterns": "8aa9fa6da1e1014f02fda98bda625cb64525bd0b33f8eaea189cd0d052d3bb47"
+  }
+}

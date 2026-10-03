@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect} from './fixtures.js';
 import {gzipSync} from 'node:zlib';
 async function importFictional(page,rates,updatedAt){
   const data=await page.evaluate(async({rates,updatedAt})=>{
@@ -12,7 +12,7 @@ async function importFictional(page,rates,updatedAt){
   await page.waitForFunction(()=>maimaiPersonal.enabled());
 }
 async function openRanges(page){
-  await page.goto('/maishift-pilot/pilot/maishift/browser/');await page.evaluate(()=>maimaiPersonal.ready);await expect(page.locator('#lab-status')).toBeHidden();
+  await page.goto('/maishift-pilot/pilot/maishift/browser/');await expect.poll(()=>page.evaluate(()=>!!window.maimaiPersonal)).toBe(true);await page.evaluate(()=>maimaiPersonal.ready);await expect(page.locator('#lab-status')).toBeHidden();
   await importFictional(page,[0,150,240,315,null],100000);
   const disclosure=page.locator('.player-filters .player-filter-toggle');if(await disclosure.getAttribute('aria-expanded')==='false')await disclosure.click();
 }
@@ -86,7 +86,7 @@ for(const width of [320,537,1280]){
 
 test('production enables Maishift without adopting pilot storage or launching a request',async({page})=>{
   const requests=[];page.on('request',r=>{if(r.url().includes('/api/player-import'))requests.push(r.url());});
-  await page.goto('/production/');await page.evaluate(()=>maimaiPersonal.ready);await expect(page.locator('#lab-status')).toBeHidden();
+  await page.goto('/production/');await expect.poll(()=>page.evaluate(()=>!!window.maimaiPersonal)).toBe(true);await page.evaluate(()=>maimaiPersonal.ready);await expect(page.locator('#lab-status')).toBeHidden();
   expect(await page.evaluate(()=>({enabled:maimaiPlayerSources.capabilities.maishift,pilot:globalThis.maimaiPlayerContext?.pilot===true}))).toEqual({enabled:true,pilot:false});
   await expect(page.locator('.feature-announcement')).toBeVisible();await page.keyboard.press('Escape');await expect(page.locator('.feature-announcement')).toBeHidden();
   await page.locator('#player-import-primary').click();await page.locator('input[value=maishift]').check();await page.locator('#player-maishift-url').fill('fictional-player');await expect(page.getByRole('button',{name:'Continue',exact:true})).toBeEnabled();expect(requests).toEqual([]);

@@ -1,5 +1,7 @@
 """Bounded, regional SEGA listing captures and explicitly reviewed reconciliation."""
 
+from __future__ import annotations
+
 import hashlib
 import json
 import re
@@ -7,7 +9,10 @@ import urllib.request
 from collections import Counter
 from copy import deepcopy
 from datetime import UTC, datetime
+from typing import Any
 
+from .official_contract import PARSER as PARSER
+from .official_contract import URLS as URLS
 from .registry import (
     accept_mapping,
     admit_chart,
@@ -19,11 +24,6 @@ from .registry import (
     validate,
 )
 
-URLS = {
-    "JP": "https://maimai.sega.jp/data/maimai_songs.json",
-    "INTL": "https://maimai.sega.com/assets/data/maimai_songs.json",
-}
-PARSER = "sega-listing-1"
 MAX_CAPTURE = 8 * 1024 * 1024
 SLOTS = {"bas": "BASIC", "adv": "ADVANCED", "exp": "EXPERT", "mas": "MASTER", "remas": "RE:MASTER"}
 LEVEL = re.compile(r"(?:[1-9]|1[0-5])\+?")
@@ -263,7 +263,7 @@ def apply_snapshot(value, raw, source, decisions, *, count_review=None):
     return validate(result)
 
 
-def coverage(value):
+def coverage(value: dict[str, Any]) -> dict[str, Any]:
     return {
         "songs": sum(not s.get("redirect") for s in value["songs"].values()),
         "charts": sum(not c.get("redirect") for c in value["charts"].values()),

@@ -13,6 +13,7 @@ from maimai_intelligence.catalog_identity import key, rules
 from maimai_intelligence.catalog_refresh import METADATA_URLS, refresh
 from maimai_intelligence.catalog_sources import WIKI, discovery_pages, mai_catalog, wiki_catalog
 from maimai_intelligence.catalog_transcriptions import prepare_body
+from maimai_intelligence.coverage_types import IntegrityError
 from maimai_intelligence.lab import build_lab
 from maimai_intelligence.overview_codec import compact_overview
 from maimai_intelligence.registry import read_registry, write_registry
@@ -76,6 +77,67 @@ class CaptureTests(unittest.TestCase):
                 CaptureStore(tmp, offline=True).get(url)
             with self.assertRaisesRegex(ValueError, "allowlist"):
                 first.get("https://example.com/arbitrary")
+
+
+class ReplayCaptureTests(unittest.TestCase):
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.root = Path(self.temp.name)
+        self.url = METADATA_URLS["mai-notes"]
+        store = CaptureStore(self.root, fetcher=lambda *_: (200, b"fixture", {}))
+        self.expected = store.get(self.url)
+        self.receipt = self.root / "receipt.json"
+        atomic_json(self.receipt, store.receipt())
+        self.pointer = (
+            self.root / "urls" / (hashlib.sha256(self.url.encode()).hexdigest() + ".json")
+        )
+
+    def test_exact_replay_ignores_damaged_mutable_index(self):
+        for contents in ("{", '{"url":"https://example.invalid/"}'):
+            with self.subTest(contents=contents):
+                self.pointer.write_text(contents)
+                store = CaptureStore(self.root, offline=True, replay=self.receipt)
+                with patch("socket.socket", side_effect=AssertionError("Network forbidden")):
+                    self.assertEqual(store.get(self.url), self.expected)
+                self.assertEqual(self.pointer.read_text(), contents)
+
+    def test_exact_replay_reads_no_mutable_index(self):
+        store = CaptureStore(self.root, offline=True, replay=self.receipt)
+        with patch(
+            "maimai_intelligence.catalog_capture.read_json",
+            side_effect=AssertionError("Mutable index must not be read"),
+        ):
+            self.assertEqual(store.get(self.url), self.expected)
+
+    def test_exact_replay_does_not_fall_back_to_cache(self):
+        for captures in ({}, {self.url: {**self.expected[1], "url": "https://example.invalid/"}}):
+            with self.subTest(captures=captures):
+                atomic_json(self.receipt, {"captures": captures})
+                store = CaptureStore(self.root, offline=True, replay=self.receipt)
+                with self.assertRaisesRegex(IntegrityError, "No retained capture"):
+                    store.get(self.url)
+
+    def test_exact_replay_still_verifies_blob_integrity(self):
+        blob = self.root / "blobs" / self.expected[1]["sha256"]
+        for contents in (b"altered", b""):
+            with self.subTest(contents=contents):
+                blob.write_bytes(contents)
+                store = CaptureStore(self.root, offline=True, replay=self.receipt)
+                with self.assertRaisesRegex(IntegrityError, "integrity"):
+                    store.get(self.url)
+
+    def test_cached_reads_still_validate_mutable_index(self):
+        for offline in (True, False):
+            for contents in ("{", '{"url":"https://example.invalid/"}'):
+                with self.subTest(offline=offline, contents=contents):
+                    self.pointer.write_text(contents)
+                    store = CaptureStore(self.root, offline=offline)
+                    with (
+                        patch("socket.socket", side_effect=AssertionError("Network forbidden")),
+                        self.assertRaises((json.JSONDecodeError, IntegrityError)),
+                    ):
+                        store.get(self.url)
 
 
 class WaterfallTests(unittest.TestCase):
@@ -273,11 +335,86 @@ class WaterfallTests(unittest.TestCase):
         with patch("scripts.update_catalog.prepare_update", return_value="prepared") as prepare:
             self.assertEqual(refresh_latest(run.parent.parent), "prepared")
             self.assertEqual(prepare.call_args.kwargs["registry"], run / "registry")
+            self.assertEqual(prepare.call_args.kwargs["previous_public"], run / "public")
+        self.assertEqual(
+            set(receipt["coverage_files"]),
+            {
+                "coverage-inputs.json",
+                "coverage-start.json",
+                "coverage-state.json",
+                "coverage-audit.json",
+                "source-captures.json",
+                "coverage-checkpoint.json",
+            },
+        )
+        for name in receipt["coverage_files"]:
+            path = run / name
+            original = path.read_bytes()
+            path.write_bytes(original + b" ")
+            with (
+                self.subTest(tampered=name),
+                self.assertRaisesRegex(ValueError, "coverage inputs changed"),
+            ):
+                verify_candidate(run)
+            path.write_bytes(original)
+        verify_candidate(run)
         (run / "registry/extra.json").write_text("{}")
         with self.assertRaisesRegex(ValueError, "Candidate changed"):
             verify_candidate(run)
         with self.assertRaisesRegex(ValueError, "Published registry changed"):
             refresh_latest(run.parent.parent)
+
+    def test_failed_publication_plan_preserves_coverage_and_resumed_batch_replays(self):
+        registry, browser, initial = (
+            self.root / name for name in ("registry", "browser", "initial")
+        )
+        write_registry(self.value, registry)
+        build_registry_package(self.value, self.package, initial)
+        build_lab(initial, browser, catalog_version="before")
+        store = self.root / "updates"
+        with (
+            patch(
+                "maimai_intelligence.corpus_update.build_public_release",
+                side_effect=ValueError("authored capacity gate"),
+            ),
+            self.assertRaisesRegex(ValueError, "capacity gate"),
+        ):
+            prepare_update(
+                store, browser, package=initial, registry=registry, source_fetcher=self.fetch
+            )
+        self.assertTrue((store / "cache/coverage/checkpoint.json").is_file())
+        self.assertFalse((store / "latest.json").exists())
+        self.assertFalse(any((store / "runs").glob("*/ready.json")))
+        resumed = prepare_update(
+            store, browser, package=initial, registry=registry, source_fetcher=self.fetch
+        )
+        first = verify_candidate(resumed)
+        with patch("socket.socket", side_effect=AssertionError("replay network forbidden")):
+            replay = prepare_update(
+                store,
+                browser,
+                package=initial,
+                registry=registry,
+                offline=True,
+                replay_sources=resumed / "source-captures.json",
+            )
+        self.assertEqual(read_registry(resumed / "registry"), read_registry(replay / "registry"))
+        self.assertEqual(first["files"], verify_candidate(replay)["files"])
+        self.assertEqual(read_registry(registry), self.value)
+
+    def test_waterfall_does_not_relabel_corrupted_capture_as_provider_outage(self):
+        capture = CaptureStore(self.root / "captures", fetcher=self.fetch)
+        _, record = capture.get(METADATA_URLS["mai-notes"])
+        (capture.root / "blobs" / record["sha256"]).write_bytes(b"corrupt")
+        with self.assertRaises(IntegrityError):
+            refresh(
+                self.value,
+                self.legacy,
+                self.cache,
+                self.root / "corrupt-run",
+                capture_store=CaptureStore(capture.root, fetcher=self.fetch),
+            )
+        self.assertFalse((self.root / "corrupt-run/registry").exists())
 
     def test_changed_source_or_outage_retains_accepted_analysis(self):
         value, additions, _ = refresh(

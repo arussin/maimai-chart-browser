@@ -9,6 +9,7 @@ $env:UV_CACHE_DIR='C:\DevCache\uv'
 $env:UV_PYTHON_INSTALL_DIR='C:\DevTools\python'
 $env:PYTHONPYCACHEPREFIX=Join-Path $RegistryCache 'pycache'
 $env:RUFF_CACHE_DIR=Join-Path $RegistryCache 'ruff'
+$env:MYPY_CACHE_DIR=Join-Path $RegistryCache 'mypy'
 $env:PYTEST_ADDOPTS='-o cache_dir='+((Join-Path $RegistryCache 'pytest') -replace '\\','/')
 $env:PLAYWRIGHT_BROWSERS_PATH='C:\DevCache\playwright'
 $env:npm_config_cache='C:\DevCache\npm'

@@ -1633,6 +1633,24 @@
       "sources": [
         "chart-visuals.js"
       ]
+    },
+    "Public page unavailable": {
+      "reason": "Internal caught navigation error, never rendered or logged; static navigation fallback handles this condition.",
+      "sources": [
+        "seo-navigation.js"
+      ]
+    },
+    "Public page exceeds its limit": {
+      "reason": "Internal caught navigation error, never rendered or logged; static navigation fallback handles this condition.",
+      "sources": [
+        "seo-navigation.js"
+      ]
+    },
+    "SCRIPT": {
+      "reason": "DOM tagName protocol constant; not UI prose.",
+      "sources": [
+        "seo-navigation.js"
+      ]
     }
   }
 }
