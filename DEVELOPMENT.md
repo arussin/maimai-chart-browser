@@ -46,3 +46,11 @@ The shared song/browser ownership and immutable song-data contract are documente
 in [BROWSER_APPLICATION.md](docs/BROWSER_APPLICATION.md). The environment helper
 sets `MYPY_CACHE_DIR` along with the other project caches; keep all ad hoc checks
 on those paths as well.
+
+## Retention commands
+
+Use `tools/Test-Development.ps1 -CleanupOnly` to apply the bounded policy without creating another workspace. Active leases, pins, unfinished preparations and unknown or linked directories remain protected.
+
+Use `-Offline` only with the required dependency caches already present. After all consumers of a manually prepared workspace stop, record its outcome with `-CompletePreparedWorkspace PATH -PreparedOutcome passed` (or `failed`). Add `-KeepWorkspace` only for the selected current environment or unique retained evidence.
+
+The fictional retention safeguard checks are available through `pwsh -NoProfile -File tools/Test-WorkspaceRetention.ps1`. They do not delete existing project workspaces.
