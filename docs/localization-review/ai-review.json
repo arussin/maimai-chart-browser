@@ -37,10 +37,10 @@
     "src/maimai_intelligence/assets/locales/remaining.json": "e9bf3c25b346b4c700e921603d6a1fb039d4b6a521c8eb7ba8c0115e1f3854ac",
     "src/maimai_intelligence/assets/locales/support.json": "27a1b15fe77028ce8d635926c2c3956402f160f879162ecd03cd4c2525ade27d",
     "src/maimai_intelligence/assets/song-pronunciations.json": "fd237c304809ac65354b59a0f0defd51ea1bf4d57a920475915d155bd768a864",
-    "README.md": "3af88da178337b468db796b35d6995ff1d2a68b07b51986a05476f3633717021",
-    "README.zh-Hans.md": "bd14d58f6d0d4033c564cd143de9233d9a8e210bb339e53fa195209fdaf597bf",
-    "README.ko.md": "16f88597ed58e405c4b14c820bca9e21b6341f9f3a131a3a1a164c83b48e3e93",
-    "README.ja.md": "a52749c6cd74759fd9a732a607fc7fc0defdd7958e3cd1f127a229c015a4f482",
+    "README.md": "c43705f01667c6107783e07d93917d1bf00af8b2f253984211b57cff7e45e0f5",
+    "README.zh-Hans.md": "deb883a800b4977061a5e512ebdfbe892d203d8a41655c6b3db99cbee4c60e74",
+    "README.ko.md": "a980df49d470ed16c1ac497c7ddc392d416b6a362c33398da937e8fa3ba8bb30",
+    "README.ja.md": "115e1323077beacf35a0809c48f3d6e381e8e7889cda0f995b4b1b58f90cd4ec",
     "src/maimai_intelligence/assets/locales/share.json": "20585e67f1443547ae3ba6b164a38b634f5b233f846f40d51af98ee9da825839",
     "src/maimai_intelligence/assets/locales/player-sources.json": "b39950e73f1a0c72b065ff0ead3a8709e6ae7a513a91ceeb0adee0137a2d5b14",
     "src/maimai_intelligence/assets/locales/player-maishift.json": "3818565f5eae7310e64f79292312a424a07d517a26bcadafc98ee994629bb8e4",
@@ -199,6 +199,19 @@
       "method": "Independent AI semantic review by reporting_requirement; no native-speaker certification.",
       "result": "All translations preserve independent RUM and control boundaries; no all-analytics GPC/DNT claim. No corrections required.",
       "file": "src/maimai_intelligence/assets/locales/privacy.json"
+    },
+    {
+      "date": "2026-10-03",
+      "reviewer": "Codex",
+      "scope": "Release closeout paragraph in all four READMEs; all three link destinations and the October 3 date.",
+      "method": "AI contextual semantic review against the canonical English paragraph and adjacent translated introduction; not native-speaker certification.",
+      "result": "Translations preserve live localized song/version pages, private daily usage reporting, separate operating guides and verification limits. No claim of a public dashboard, completed Google indexing, or unique-user measurement. Commands and existing text are unchanged.",
+      "files": [
+        "README.md",
+        "README.ja.md",
+        "README.ko.md",
+        "README.zh-Hans.md"
+      ]
     }
   ]
 }
