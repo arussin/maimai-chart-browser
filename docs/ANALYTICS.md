@@ -81,12 +81,25 @@ No accounts, upload endpoint or personal-data server were added.
 
 ## Cloudflare Web Analytics: aggregate traffic
 
+Preserve the existing single injection source; do not enable a second source
+or migrate downstream consumers as part of this release. The new `/__usage`
+collector is a separate source of finite daily action counts, not a replacement
+for RUM traffic/performance metrics or edge-request analytics. Its GPC/DNT and
+no-identifier guarantees apply to that collector, not every analytics service.
+
 Use the **native Pages integration**, not an additional hard-coded script, Google
 Tag Manager container, proxy Worker, custom collector or second zone-level
 injection. Cloudflare supplies the public site token and beacon at deployment.
 Do not commit API credentials or change the owner-only publication boundary.
 
-The generated browser CSP allows `https://static.cloudflareinsights.com` in
+For the production release, pass `--preserve-web-analytics` to `public-release`, or
+`preserve_web_analytics=True` to `plan_public_release` / `build_public_release`.
+This explicit production option preserves the existing integration on the public
+root, browser shell and generated song/version pages. Default local/staging
+outputs remain restricted; checkout, return and redirect pages are unchanged.
+It changes no hosting setting and embeds no beacon or token.
+
+The selected production browser CSP allows `https://static.cloudflareinsights.com` in
 `script-src`. This covers Cloudflare's unversioned and versioned beacon paths.
 Pages' native token-only snippet reports to
 `https://cloudflareinsights.com/cdn-cgi/rum`, allowed at that exact path in
@@ -114,8 +127,9 @@ bodies and headers before activation, and recheck when the vendor changes.
 
 ### Owner activation and live verification
 
-1. In Cloudflare, select **Workers & Pages → maimai-party → Metrics → Web Analytics → Enable**.
-   Inspect existing Pages and zone-level settings first. Use exactly one native
+1. Inspect and preserve the existing Pages/zone Web Analytics configuration.
+   Do not toggle Enable or Disable during this compatibility release. Any new
+   activation is a separate owner-approved action. Use exactly one native
    injection source, not a manual snippet as well. Confirm the intended hostname
    and any region exclusions; an EU-excluded configuration is not global coverage.
 2. Rebuild the interface using the existing accepted catalog package and publish

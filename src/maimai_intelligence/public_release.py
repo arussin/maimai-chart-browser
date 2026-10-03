@@ -162,6 +162,38 @@ def _browser_csp(raw: bytes) -> str | None:
     return parser.policy
 
 
+def _preserve_web_analytics(raw: bytes) -> bytes:
+    """Allow the existing native beacon on explicitly selected public documents only.
+
+    This adds no script or token. Local/staging/private builders keep their CSP;
+    the owner-controlled hosting integration remains the sole injection source.
+    """
+    from html import escape
+
+    policy = _browser_csp(raw)
+    if policy is None:
+        raise ValueError("Expected a public document content security policy")
+    directives = [part.strip().split() for part in policy.split(";") if part.strip()]
+    for name, permission in (
+        ("script-src", "https://static.cloudflareinsights.com"),
+        ("connect-src", "https://cloudflareinsights.com/cdn-cgi/rum"),
+    ):
+        matches = [part for part in directives if part[0] == name]
+        if len(matches) != 1 or "'none'" in matches[0]:
+            raise ValueError("Expected one compatible public analytics CSP directive")
+        if permission not in matches[0]:
+            matches[0].append(permission)
+    updated = "; ".join(" ".join(part) for part in directives)
+    html = raw.decode("utf-8")
+    pattern = r'(<meta\s+http-equiv="Content-Security-Policy"\s+content=")[^"]*(")'
+    html, count = re.subn(
+        pattern, lambda match: match[1] + escape(updated, quote=True) + match[2], html
+    )
+    if count != 1:
+        raise ValueError("Expected one generated public analytics policy element")
+    return html.encode("utf-8")
+
+
 def _read(source: Path, name: str, limit: int) -> bytes:
     source = source.resolve()
     path = (source / name).resolve()
@@ -770,6 +802,7 @@ def plan_public_release(
     previous_public: Path | str | None = None,
     capacity: ReviewedCapacity | None = None,
     prepared_catalogs: Mapping[str, CatalogDocument] | None = None,
+    preserve_web_analytics: bool = False,
 ) -> ReleasePlan:
     """Prepare shell, verified catalogs, public routes, then the complete release inventory."""
     source = Path(source).resolve()
@@ -784,7 +817,15 @@ def plan_public_release(
     if manifest.get("schema_version") != "1.0.0" or not manifest.get("releases"):
         raise ValueError("Expected an accepted research browser manifest")
     documents = dict(prepared_catalogs or {})
+    if type(preserve_web_analytics) is not bool:
+        raise ValueError("Public Web Analytics preservation must be explicit")
+    if preserve_web_analytics and (source / "staging-build.json").exists():
+        raise ValueError("A staging browser cannot opt into production Web Analytics")
     pending = _prepare_browser_shell(source)
+    if preserve_web_analytics:
+        for name in ("index.html", "browser-shell.html"):
+            if name in pending:
+                pending[name] = _preserve_web_analytics(pending[name])
     releases: list[dict[str, Any]] = []
     versions: set[str] = set()
     legacy_assets: set[str] = set()
@@ -848,6 +889,7 @@ def build_public_release(
     previous_public: Path | str | None = None,
     capacity: ReviewedCapacity | None = None,
     prepared_catalogs: Mapping[str, CatalogDocument] | None = None,
+    preserve_web_analytics: bool = False,
 ) -> dict[str, Any]:
     source, output = Path(source).resolve(), Path(output).resolve()
     if source == output or output.is_relative_to(source) or source.is_relative_to(output):
@@ -861,4 +903,5 @@ def build_public_release(
         previous_public=previous_public,
         capacity=capacity,
         prepared_catalogs=prepared_catalogs,
+        preserve_web_analytics=preserve_web_analytics,
     ).write_to(output)

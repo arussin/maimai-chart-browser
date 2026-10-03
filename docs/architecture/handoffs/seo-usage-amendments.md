@@ -35,7 +35,7 @@ Work in the canonical registry checkout, preserve its unrelated uncommitted chan
 
 ## Private usage collection and reporting
 
-- Replace the existing Cloudflare Web Analytics browser beacon at combined launch. Preserve opt-in GA’s four sanitized page categories and existing support events. Verify that the retired beacon is absent from both direct loads and in-app navigation.
+- October 3 owner correction: preserve existing Cloudflare Web Analytics and its downstream consumers alongside the new daily collector; defer consumer migration. Preserve opt-in GA’s four sanitized page categories and existing support events. Permit exactly the existing native injection on intended production public pages; keep staging, private reports, checkout, return and redirect boundaries unchanged. The finite-counter privacy guarantees do not describe the independent vendor-managed beacon.
 - Add a dedicated collector at `/__usage`, isolated from payments and imports, with exact host/path validation. Its narrow Worker route also catches and rejects malformed suffixes or query-bearing requests.
 - Use a versioned, finite contract: event, broad page category, approved detail/failure enums, and bounded integer count. Reject unknown fields and validate the entire batch before writing.
 - Cover the handoff’s existing-feature action dictionary: settings, filters, search, chart exploration, comparison, imports, personal-data controls, sharing, resources, and issue reporting. Include implemented file, hosted-session, and Maishift flows. Record successful application of imported data separately from dialog closure; exclude automatic restoration and refresh from deliberate import actions.

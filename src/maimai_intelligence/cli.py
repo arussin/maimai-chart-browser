@@ -54,6 +54,11 @@ def main(argv=None):
     release.add_argument("--source", required=True, type=Path)
     release.add_argument("--output", required=True, type=Path)
     release.add_argument(
+        "--preserve-web-analytics",
+        action="store_true",
+        help="Preserve the existing native Cloudflare beacon on production public pages only",
+    )
+    release.add_argument(
         "--previous-public",
         type=Path,
         help="Preceding immutable public release; retain its referenced URLs and permalink ledger",
@@ -80,6 +85,7 @@ def main(argv=None):
                 permalinks=args.permalinks,
                 song_redirects=args.song_redirects,
                 previous_public=args.previous_public,
+                preserve_web_analytics=args.preserve_web_analytics,
             )
             print(f"Prepared {result['catalogs']} catalogs in {result['files']} public files")
         elif args.command == "lab":

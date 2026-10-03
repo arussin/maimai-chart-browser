@@ -149,6 +149,11 @@
       "zh-Hans": "Cloudflare 在提供本网站和使用统计端点时会接收连接信息。这并不意味着所有网络处理都是匿名的。请参阅",
       "ko": "Cloudflare는 웹사이트와 사용 집계 엔드포인트를 제공하기 위해 연결 정보를 받습니다. 모든 네트워크 처리가 익명이라는 뜻은 아닙니다. 참고:",
       "ja": "Cloudflare はこのサイトと利用集計エンドポイントを提供するために接続情報を受け取ります。すべてのネットワーク処理が匿名であることを意味しません。参照："
+    },
+    "Cloudflare Web Analytics also measures traffic and page performance on the public site, separately from Google Analytics and the daily feature counts. The Google choice and the daily-count privacy controls do not control this vendor-managed beacon.": {
+      "ja": "公開サイトでは、Cloudflare Web Analyticsもトラフィックとページのパフォーマンスを測定します。これはGoogle Analyticsや日次の機能利用集計とは別の仕組みです。Googleの設定や日次集計のプライバシー設定は、Cloudflareが管理するこのビーコンには適用されません。",
+      "ko": "공개 사이트에서는 Cloudflare Web Analytics도 트래픽과 페이지 성능을 측정합니다. 이는 Google Analytics 및 일별 기능 사용 집계와 별개입니다. Google 선택 설정과 일별 집계의 개인정보 보호 설정은 Cloudflare가 관리하는 이 비콘을 제어하지 않습니다.",
+      "zh-Hans": "Cloudflare Web Analytics也会衡量公开网站的流量和页面性能，与Google Analytics及每日功能使用计数相互独立。Google选项和每日计数的隐私控制不会控制这个由Cloudflare管理的信标。"
     }
   }
 }

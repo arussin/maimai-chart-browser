@@ -97,6 +97,10 @@ for source, target in [("lab", "progressive"), ("capacity", "progressive-capacit
         staged = Path(temporary) / "public"
         build_public_release(root / source, staged)
         shutil.copytree(staged, root / target, dirs_exist_ok=True)
+with tempfile.TemporaryDirectory() as temporary:
+    staged = Path(temporary) / "public"
+    build_public_release(root / "lab", staged, preserve_web_analytics=True)
+    shutil.copytree(staged, root / "public-analytics", dirs_exist_ok=True)
 build_lab(
     write_package(Path("output/grouped-fixture"), grouped=True),
     root / "grouped",

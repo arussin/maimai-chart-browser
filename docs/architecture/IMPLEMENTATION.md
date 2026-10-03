@@ -43,7 +43,7 @@ The original handoffs and accepted amendments in `handoffs/` remain the scope re
 
 Song/version pages use stable persisted routes, canonical identities, four explicit languages, regional metadata/artwork and translated initial HTML. Existing chart clicks still expand inline. The separate song-page link retains the mounted browser; history snapshots contain browser controls and public identities, never copies of scores. Direct arrivals retain ordinary working browser links, and version pages progressively initialize the existing UI.
 
-The first-party collector replaces the Cloudflare Web Analytics browser beacon at combined launch. Optional GA remains separate. GPC/DNT, preview suppression, independent client/server kills, bounded in-memory buffering and best-effort delivery are implemented. D1 retains New York daily totals indefinitely. JSON, Markdown, totals CSV and coverage CSV distinguish measured zero from unknown/partial periods and display UTC boundaries.
+The first-party collector coexists with the existing Cloudflare Web Analytics browser beacon; the October 3 owner correction defers consumer migration. Optional GA remains separate. Production public-release preparation explicitly passes `preserve_web_analytics=True`; the default preview/staging policy remains restricted. This adds CSP permissions, never a second injected script. GPC/DNT, preview suppression, independent client/server kills, bounded in-memory buffering and best-effort delivery are implemented. D1 retains New York daily totals indefinitely. JSON, Markdown, totals CSV and coverage CSV distinguish measured zero from unknown/partial periods and display UTC boundaries.
 
 ## Evidence and review entry points
 

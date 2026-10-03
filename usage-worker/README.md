@@ -1,6 +1,6 @@
 # Daily product counts
 
-This local candidate replaces the public Cloudflare Web Analytics browser beacon. Existing opt-in Google Analytics stays separate. It is not a deployed collector.
+The first-party daily counter coexists with the existing Cloudflare Web Analytics browser beacon and separate opt-in Google Analytics. Existing analytics consumers remain in place; their migration is deferred. This source is not proof of a deployed collector.
 
 The Worker accepts only POST https://maimai.party/__usage with the production Origin and exact application/json type. The contract is web/src/usage-contract.ts: at most 16 rows, 4 KiB, count 1–100 and known event/page/detail/failure combinations. Unknown fields reject the whole batch. D1 receives only reconstructed daily totals; no individual event table, IP or hash, identity, URL, referrer, query/search/filter value, chart identity, player data, raw error or client timestamp is stored. USAGE_ENABLED=false is the independent server-write kill. window.maimaiUsageEnabled=false (set before startup) suppresses client requests. The application uses an imported collector instance; no global service API is exposed. GPC and DNT suppress both. Network failures drop data and never retry.
 
@@ -132,7 +132,7 @@ public loader; never alter the accepted baseline itself.
 
 ## Coordinated activation
 
-No account, database, route, schedule or credential is provisioned here. The all-zero database ID is a local placeholder and MUST NOT be deployed. The release checklist must record the actual D1 binding, quota/cost review, exact route, migrated schema, USAGE_ENABLED=true, client enabled state, disabled account-level beacon injection, and absence of request/payload logging in inherited invocation logs, traces, tail consumers and export sinks. Keep unrelated security logging unchanged.
+No account, database, route, schedule or credential is provisioned here. The all-zero database ID is a local placeholder and MUST NOT be deployed. The release checklist must record the actual D1 binding, quota/cost review, exact route, migrated schema, USAGE_ENABLED=true, client enabled state, preserved existing single-source public Web Analytics injection, and absence of request/payload logging in inherited invocation logs, traces, tail consumers and export sinks. Keep unrelated security logging unchanged.
 
 This crosses the protected security boundary and needs the security-sensitive / privileged workflow.
 
