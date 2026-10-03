@@ -60,14 +60,14 @@ test('previous monitor-only v4 cache cannot reappear as filtered data even when 
   assert.doesNotMatch(await result.text(),/41,358/);
  }
 });
-test('accurate label fits existing headline width with supported glyphs at count extremes',()=>{
+test('approved freely-serving headline fits with supported glyphs at count extremes',()=>{
  const snapshot=parseAnalytics(responseFor(queryBody(env,period).variables.filter),period);
  for(const visits of [0,169,9999,10000,41358,Number.MAX_SAFE_INTEGER]) {
   const svg=renderBadge({...snapshot,visits},'fresh',assets);
-  assert.match(svg,/visits, past 30 days/);assert.doesNotMatch(svg,/visitors this month|monthly visitor/);
+  assert.match(svg,/visits, past 30 days/);assert.match(svg,/aria-label="freely serving "/);assert.match(svg,/aria-label=" visitors this month"/);
   const fit=Number(svg.match(/translate\(950 0\) scale\(([^ ]+) 1\)/)[1]);
   assert.ok(fit>0 && fit<=1);
-  const label=' visits, past 30 days';
+  const label='freely serving  visitors this month';
   assert.ok([...label].every(c=>assets.font.glyphs[c]),'New label must not use fallback glyphs');
   const text=[...svg.matchAll(/<g aria-label="([^"]*)" fill="[^"]+" transform="translate\([^)]*\) scale\(([^ ]+) ([^)]+)\)">/g)].slice(0,3);
   const width=text.reduce((n,g)=>n+[...g[1]].reduce((w,c)=>w+assets.font.glyphs[c].advance,0)*Number(g[2]),0);

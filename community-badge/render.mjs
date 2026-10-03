@@ -42,8 +42,8 @@ export function renderBadge(snapshot, state, assets) {
   const a = assets.font;
   let main;
   if (available) {
-    const lead = '';
-    const tail = ' visits, past 30 days';
+    const lead = 'freely serving ';
+    const tail = ' visitors this month';
     const leadW = width(lead, 62, a), countW = width(amount, 92, a), tailW = width(tail, 62, a);
     const totalW = leadW + countW + tailW;
     const fit = Math.min(1, 1045 / totalW);
@@ -51,7 +51,7 @@ export function renderBadge(snapshot, state, assets) {
       lettering(lead, 0, 338, 62, '#293f5c', a) +
       lettering(amount, leadW, 344, 92, '#09aa7d', a) +
       lettering(tail, leadW + countW, 338, 62, '#293f5c', a) + '</g>';
-  } else main = lettering('visit stats unavailable', 962, 338, 67, '#526b86', a, 1030);
+  } else main = lettering('visitor stats unavailable', 962, 338, 67, '#526b86', a, 1030);
   let rows = '';
   // Bounds of the five pills in the approved artwork; their widths differ.
   const slots = [[756, 965], [978, 1174], [1189, 1384], [1398, 1610], [1623, 1834]];

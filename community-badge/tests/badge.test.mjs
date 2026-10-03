@@ -95,6 +95,8 @@ test('SVG is self contained, uses library flags, compact display, exact descript
   const svg=renderBadge({...parseAnalytics(payload(),period),estimated:true},'fresh',assets);
   assert.match(svg,/12,000 visits/); assert.match(svg,/aria-label="12k"/); assert.match(svg,/9,600 visits/);
   assert.match(svg,/Cloudflare HTTP traffic analytics visits/);
+  assert.match(svg,/aria-label="freely serving "/);
+  assert.match(svg,/aria-label=" visitors this month"/);
   assert.match(svg,/Rolling past 30 days \(UTC\): 2026-08-21T12:00:00.000Z to 2026-09-20T12:00:00.000Z/);
   assert.match(svg,/May include other automated traffic/);
   assert.doesNotMatch(svg,/known bots excluded|Cloudflare Web Analytics/);

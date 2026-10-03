@@ -22,3 +22,5 @@ The Worker expects CF_ACCOUNT_ID and the existing CF_ANALYTICS_TOKEN secret. Con
 Fresh analytics snapshots are cached for one hour, with five-minute browser caching. Refresh occurs on a request after expiry. Failure can use a labelled valid snapshot for at most 24 hours with five-minute retry backoff. Invalid/missing data shows unavailable. Snapshot/cache version 5 isolates the broader policy from every earlier count, including the monitor-only version 4. Old pre-filter cache versions cannot masquerade as filtered counts.
 
 The SVG embeds artwork, flags and lettering without external asset requests. See ARTWORK.md and artwork/provenance.json for attribution and hashes.
+
+The visible headline retains the approved “freely serving [count] visitors this month” design, using the original Nunito outlines, colors and positioning. The SVG title and description specify that the underlying metric is sampled rolling-30-day visits.
