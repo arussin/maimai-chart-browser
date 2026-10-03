@@ -138,6 +138,12 @@ jobs:
         working-directory: usage-worker
         env:
           WRANGLER_SEND_METRICS: 'false'
+      - name: Verify private hosted usage dashboard
+        if: matrix.shard == 1
+        run: |
+          npm ci --prefix usage-worker/dashboard-hosted --ignore-scripts --no-audit --no-fund
+          npm test --prefix usage-worker/dashboard-hosted
+          node usage-worker/dashboard-hosted/build.mjs --output "$RUNNER_TEMP/private-dashboard/worker.mjs"
       - name: Retain fictional browser failure diagnostics
         if: failure()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
