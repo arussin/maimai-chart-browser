@@ -6,6 +6,34 @@ The Worker accepts only POST https://maimai.party/__usage with the production Or
 
 Days use America/New_York. Totals are retained indefinitely. The optional owner-maintained usage_coverage ledger records complete/partial/off by day and instrumentation version. Missing ledger rows mean unknown coverage, even when counts exist; zero is measurable only for a day the owner has confirmed complete. Never infer exact unobserved drop counts, users, sessions, funnels, retention, geography or owner exclusion.
 
+## Private local dashboard
+
+`dashboard.mjs` renders a self-contained HTML dashboard from a successful
+`usage-export-1` aggregate export. Use Node 24.14.1 (the repository's pinned
+runtime); the renderer imports the maintained TypeScript usage contract directly,
+so no dependency install or browser-asset rebuild is needed.
+
+    node usage-worker/dashboard.mjs --input PRIVATE/usage-export.json --output PRIVATE/usage-dashboard.html --captured-at 2026-10-03T13:37:47.765Z
+
+Use the actual query-completion timestamp for `--captured-at`. Open the generated
+file locally. The view provides Today, completed 7/30-day and custom ranges,
+page/action filters, daily received counts, feature detail, a coverage ledger and
+CSV export. Today and the day captured partway through remain incomplete even if
+a ledger row says complete. Unknown or pre-activation coverage is never displayed
+as a measured zero. Counts are actions, not visitors, sessions or funnels.
+
+The HTML contains private aggregates and must stay outside public site assets and
+Git. It contains no credentials, external scripts, fonts, trackers or network
+calls; its CSP also disables connections. Refresh the aggregate export through
+the existing owner read-only reporting workflow, render again, then use Reload
+saved snapshot. A failed query or invalid export must not overwrite a good file.
+There is no new authentication, hosted endpoint, public dashboard, schedule or
+background collector in this renderer. It never modifies D1 or coverage records.
+
+Run `node --test usage-worker/test/dashboard.test.mjs` for the focused data,
+timezone, injection and offline-rendering checks. Normal usage-worker CI also
+includes those tests. Existing owner reports and public collection are unchanged.
+
 ## Local validation
 
 Use tools/Test-Web.ps1 from the linked checkout. Dependencies, emitted test bundles and local D1 state belong in the disposable DevCache workspace. Tests cover the real local D1 API, concurrent increments, batch rollback, strict rejection, opt-out, no retries and daylight-saving boundaries.
