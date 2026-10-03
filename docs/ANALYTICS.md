@@ -1,5 +1,9 @@
 # maimai.party analytics
 
+## First-party daily product counts
+
+The [3 October production release](PRODUCTION_RELEASE_20261003.md) activated the dedicated first-party daily counter and verified read-only owner reports. It preserves the existing Cloudflare Web Analytics and opt-in GA configuration and consumers. See [usage collection and reports](../usage-worker/README.md) for the finite contract, coverage ledger, independent kills and report limits. The historical hosting setup guidance below is not the activation record for this release.
+
 The published site has opt-in GA4 for broad page views. The source also permits
 Cloudflare Pages' native cookie-free Web Analytics beacon for aggregate traffic.
 These are separate systems: refusing Google Analytics does not enable it in a

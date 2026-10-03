@@ -1,5 +1,7 @@
 # Production revision and acceptance record
 
+> Production closeout: [3 October 2026 release](../PRODUCTION_RELEASE_20261003.md). Its current hosted acceptance and sitemap/collector status supersede earlier pending-production statements below; the historical local test evidence remains unchanged.
+
 This document supersedes the initial implementation's architecture claims in
 `IMPLEMENTATION.md`, `VALIDATION.md`, `PERFORMANCE.md`, and `COVERAGE_VALIDATION.md`.
 Those documents retain useful historical evidence; their counts and asset names

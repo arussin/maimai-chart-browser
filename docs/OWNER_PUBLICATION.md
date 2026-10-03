@@ -1,5 +1,9 @@
 # Owner publication and rollback
 
+## Current production
+
+The [3 October 2026 release](PRODUCTION_RELEASE_20261003.md) records the current source, candidate and compatible recovery deployments, combined usage activation, sitemap submission and remaining verification limits. The launch record below is historical (12 September), not the current deployment. Reuse the sealed release files; never rerun a stopped release executor.
+
 For catalog and mai-notes updates, use the [owner-run catalog workflow](CATALOG_UPDATES.md).
 It joins the source, metadata, analysis, link preparation, change report and
 verified Direct Upload stages. Ordinary interface-only releases can still reuse
