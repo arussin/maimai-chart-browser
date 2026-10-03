@@ -11,6 +11,81 @@ test.beforeEach(async({page,baseURL})=>{
 });
 // Keep remapping installed until the page stops requesting, then finish API fetches.
 test.afterEach(async({page})=>{await mounts.get(page)?.close();});
+
+const detailActions={
+ en:['Show details','Hide details'],
+ 'zh-Hans':['展开详情','收起详情'],
+ ko:['상세 보기','상세 접기'],
+ ja:['詳細を表示','詳細を閉じる']
+};
+for(const [locale,[show,hide]]of Object.entries(detailActions))for(const width of [280,320,390,740,741,800,801,1280])test('chart details disclosure layout and flow follow state in '+locale+' at '+width,async({page})=>{
+ await page.setViewportSize({width,height:900});
+ await page.goto('/?search=Fictional%20study&lang='+locale);
+ await expect(page.locator('#songs .song-row').first()).toBeVisible();
+ await expect(page.locator('html')).toHaveAttribute('lang',locale);
+ const row=page.locator('#songs .song-row').first(),outer=row.locator('.chart-row');
+ const compact=row.locator('.chart-summary>.chart-flow.compact');
+ const section=row.locator('[data-chart-section=chart]'),toggle=section.locator('.chart-section-toggle');
+ const label=toggle.locator('.chart-section-action-label');
+  await expect(compact).toBeVisible();
+  await outer.click();
+  await expect(toggle).toHaveAttribute('aria-expanded','true');
+  await expect(label).toHaveText(hide);
+  await expect(section.locator('.chart-flow svg')).toBeVisible();
+  if(width<=800)await expect(compact).toBeHidden();else await expect(compact).toBeVisible();
+  // Each localized control must fit its own header, including the chart identity.
+  const fit=await toggle.evaluate(button=>{
+   const rect=button.getBoundingClientRect(),parts=[...button.querySelectorAll('.chart-section-name,.chart-detail-identity,.chart-section-action')].map(n=>n.getBoundingClientRect());
+   return button.scrollWidth<=button.clientWidth+1&&rect.height>=44&&parts.every(r=>r.left>=rect.left&&r.right<=rect.right+1)&&parts.every((a,i)=>parts.slice(i+1).every(b=>Math.min(a.right,b.right)<=Math.max(a.left,b.left)||Math.min(a.bottom,b.bottom)<=Math.max(a.top,b.top)));
+  });
+  expect(fit,'header fit at '+width).toBe(true);
+  await toggle.focus();await page.keyboard.press('Enter');
+  await expect(toggle).toBeFocused();await expect(toggle).toHaveAttribute('aria-expanded','false');
+  await expect(label).toHaveText(show);await expect(compact).toBeVisible();
+  await expect(section.locator('.chart-section-body')).toHaveJSProperty('inert',true);
+  await expect.poll(async()=>Math.round((await section.locator('.chart-section-reveal').boundingBox()).height)).toBe(0);
+  await page.keyboard.press('Space');
+  await expect(toggle).toBeFocused();await expect(label).toHaveText(hide);
+  await outer.click();await expect(row.locator('.chart-measurements')).toBeHidden();
+  await expect(compact).toBeVisible();
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
+});
+
+test('chart details disclosure restores preferences, translates actions and returns focus when hidden',async({page})=>{
+ await page.setViewportSize({width:390,height:900});await page.goto('/?search=Fictional%20study&lang=en');
+ const rows=page.locator('#songs .song-row'),row=rows.first(),outer=row.locator('.chart-row');
+ const compact=row.locator('.chart-summary>.chart-flow.compact');
+ const toggle=row.locator('[data-chart-section=chart] .chart-section-toggle');
+ const label=toggle.locator('.chart-section-action-label');
+ await outer.click();await expect(label).toHaveText('Hide details');
+ await toggle.click();await expect(label).toHaveText('Show details');
+ await outer.click();await outer.click();
+ await expect(toggle).toHaveAttribute('aria-expanded','false');await expect(compact).toBeVisible();
+ await rows.nth(1).locator('.chart-row').click();
+ await expect(rows.nth(1).locator('.chart-section-action-label')).toHaveText('Show details');
+ await page.reload();await outer.click();
+ await expect(label).toHaveText('Show details');await expect(compact).toBeVisible();
+ for(const [locale,[show,hide]]of Object.entries(detailActions)){
+  await page.locator('.site-header [data-language="'+locale+'"]').click();
+  await expect(label).toHaveText(show);await toggle.click();await expect(label).toHaveText(hide);
+  await toggle.click();await expect(label).toHaveText(show);
+ }
+ await toggle.click();await expect(compact).toBeHidden();
+ await page.reload();await outer.click();
+ await expect(toggle).toHaveAttribute('aria-expanded','true');await expect(compact).toBeHidden();
+ const inside=row.locator('[data-chart-section=chart] a[data-song-page]');
+ await inside.focus();await expect(inside).toBeFocused();
+ // Model a preference notification from another tab while focus is in the details.
+ await page.evaluate(()=>{
+  const key='maimai-chart-sections-v1',value=JSON.stringify({chart:false,player:true});
+  localStorage.setItem(key,value);dispatchEvent(new StorageEvent('storage',{key,newValue:value}));
+ });
+ await expect(toggle).toBeFocused();await expect(toggle).toHaveAttribute('aria-expanded','false');
+ // The explicit English route wins over the last transient language selection on reload.
+ await expect(page.locator('html')).toHaveAttribute('lang','en');
+ await expect(label).toHaveText(detailActions.en[0]);await expect(compact).toBeVisible();
+});
+
 for(const locale of ['en','ja','ko','zh-hans'])for(const width of [320,768,1280]){
  test('direct song workspace '+locale+' '+width,async({page,request},testInfo)=>{
   const errors=[];page.on('pageerror',error=>errors.push(error.message));

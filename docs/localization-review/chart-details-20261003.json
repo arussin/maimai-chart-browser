@@ -1,0 +1,11 @@
+{
+  "reviewer": "Codex",
+  "date": "2026-10-03",
+  "method": "AI contextual review of two disclosure actions in all supported UI languages; not native-speaker certification.",
+  "scope": "Show details / Hide details in the existing Chart details header. Reviewed the next-action meaning, concise phone-width wording and consistency with the maintained interface terminology guide. No game terms, identifiers or song aliases changed.",
+  "entries": {
+    "Show details": {"zh-Hans": "展开详情", "ko": "상세 보기", "ja": "詳細を表示"},
+    "Hide details": {"zh-Hans": "收起详情", "ko": "상세 접기", "ja": "詳細を閉じる"}
+  },
+  "notes": "Chinese expand/collapse and Korean view/collapse wording describe reversible disclosure actions. Japanese display/close refers to the details section, not navigation away from the card. English remains the canonical source text."
+}
