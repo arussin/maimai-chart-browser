@@ -239,10 +239,7 @@ export function createPlayerData(ports: PersonalPorts) {
     return ms == null || ms === 0 ? 'Date unknown' : new Date(ms).toLocaleString();
   }
   function changed(redraw = true) {
-    const scroll: [number, number] = [scrollX, scrollY],
-      expandedHistory = [
-        ...root.querySelectorAll<HTMLElement>('.player-pb-toggle[aria-expanded="true"]'),
-      ].map((node) => node.getAttribute('aria-controls'));
+    const scroll: [number, number] = [scrollX, scrollY];
     pbs = player.active ? core.current(player.active).pbs : new Map();
     pbDates = new Map();
     if (player.active)
@@ -287,14 +284,6 @@ export function createPlayerData(ports: PersonalPorts) {
       .forEach((n) => (n.hidden = !player.active || !visible));
     if (redraw) {
       notifyChange();
-      for (const id of expandedHistory) {
-        const toggle = find(id)?.previousElementSibling;
-        if (
-          toggle?.classList.contains('player-pb-toggle') &&
-          toggle.getAttribute('aria-expanded') === 'false'
-        )
-          (toggle as HTMLElement).click();
-      }
       scrollTo(...scroll);
     }
   }
@@ -876,27 +865,29 @@ export function createPlayerData(ports: PersonalPorts) {
   function details(c: CatalogChart) {
     const group = ports.sections.section('player', 'Your data'),
       root = group.root,
-      body = group.content;
+      body = group.content,
+      cid = providerID(c);
     root.classList.add('player-history');
-    root.hidden = !player.active || !visible;
+    root.hidden = !player.active || !visible || !cid;
     if (root.hidden) return root;
-    body.append(summary(c));
-    const cid = providerID(c);
-    if (!cid) return root;
-    const { plays, changes } = core.chartHistory(player.active!, [
-      cid,
+    const { plays } = core.chartHistory(player.active!, [
+      cid!,
       ...providerIDs(c).filter((id) => id !== cid),
     ]);
-    body.append(
-      make('h4', 'Recorded plays', 'player-history-title'),
-      make(
-        'p',
-        plays.length
-          ? `${plays.length} retained ${plays.length === 1 ? 'play' : 'plays'} · Dates show when you played.`
-          : 'No recorded plays for this chart. Your saved PB is shown above.',
-        'muted',
-      ),
-    );
+    if (!plays.length) {
+      root.hidden = true;
+      return root;
+    }
+    const prefix = 'played-history-' + c.chart_id,
+      title = make('h4', 'Recorded plays', 'player-history-title'),
+      count = make('p', undefined, 'muted player-history-count');
+    title.id = prefix + '-title';
+    title.tabIndex = -1;
+    count.id = prefix + '-count';
+    count.setAttribute('role', 'status');
+    count.setAttribute('aria-live', 'polite');
+    count.setAttribute('aria-atomic', 'true');
+    body.append(title, count);
     const points = plays
       .filter((e) => e.time != null && e.r.achievement != null)
       .slice()
@@ -925,85 +916,124 @@ export function createPlayerData(ports: PersonalPorts) {
       svg.append(line);
       body.append(svg);
     }
-    function tableFor(
-      entries: { time: number | null; r: PlayerRecord }[],
-      firstLabel: string,
-      label: string,
-    ) {
-      const wrap = make('div'),
-        table = make('table'),
-        head = make('tr');
-      for (const title of [firstLabel, 'Achievement', 'Grade', 'Chart rating', 'Badges']) {
-        const th = make('th', title);
-        th.scope = 'col';
-        head.append(th);
-      }
-      const thead = make('thead');
-      thead.append(head);
-      const tbody = make('tbody');
-      table.append(thead, tbody);
-      let shown = 0;
-      const more = make('button', 'Show more ' + label.toLowerCase());
-      more.type = 'button';
-      const show = () => {
-        for (const e of entries.slice(shown, shown + 50)) {
-          const row = make('tr');
-          row.append(
-            make('td', date(e.time)),
-            make(
-              'td',
-              e.r.achievement == null ? 'Unknown' : (e.r.achievement / 10000).toFixed(4) + '%',
-            ),
-          );
-          const grade = make('td'),
-            icons = make('td');
-          grade.append(gradeNode(displayRecord(e.r)!.grade));
-          icons.append(badges(e.r));
-          row.append(grade, make('td', String(e.r.rate ?? '—')), icons);
-          tbody.append(row);
-        }
-        shown += 50;
-        more.hidden = shown >= entries.length;
-      };
-      more.onclick = show;
-      show();
-      const scroll = make('div', undefined, 'player-history-table');
-      scroll.tabIndex = 0;
-      scroll.setAttribute('role', 'region');
-      i18n.attribute(scroll, 'aria-label', label);
-      scroll.append(table);
-      wrap.append(scroll, more);
-      return wrap;
+    body.append(
+      make(
+        'p',
+        'Dates show when you played. The graph includes all dated plays with known achievement.',
+        'muted',
+      ),
+    );
+    const table = make('table'),
+      thead = make('thead'),
+      head = make('tr'),
+      tbody = make('tbody'),
+      labels = ['Played on', 'Achievement', 'Grade', 'Chart rating', 'Badges'];
+    table.setAttribute('role', 'table');
+    table.setAttribute('aria-labelledby', title.id);
+    table.setAttribute('aria-describedby', count.id);
+    thead.setAttribute('role', 'rowgroup');
+    tbody.setAttribute('role', 'rowgroup');
+    tbody.id = prefix + '-rows';
+    head.setAttribute('role', 'row');
+    for (const label of labels) {
+      const th = make('th', label);
+      th.scope = 'col';
+      th.setAttribute('role', 'columnheader');
+      head.append(th);
     }
-    if (plays.length) body.append(tableFor(plays, 'Played on', 'Recorded plays'));
-    if (changes.length) {
-      const toggle = make(
-          'button',
-          `Show saved PB changes (${changes.length})`,
-          'player-pb-toggle',
-        ),
-        saved = make('div', undefined, 'player-pb-history');
-      toggle.type = 'button';
-      toggle.setAttribute('aria-expanded', 'false');
-      saved.hidden = true;
-      saved.id = 'saved-pbs-' + c.chart_id;
-      toggle.setAttribute('aria-controls', saved.id);
-      saved.append(
-        make(
-          'p',
-          'These dates show when a PB was saved, not when you played. Unchanged scores are grouped.',
-          'muted',
-        ),
-        tableFor(changes, 'Saved on', 'Saved PB changes'),
+    thead.append(head);
+    table.append(thead, tbody);
+    const wrap = make('div', undefined, 'player-history-table');
+    wrap.setAttribute('role', 'region');
+    i18n.attribute(wrap, 'aria-label', 'Recorded plays');
+    wrap.append(table);
+    body.append(wrap);
+    let shown = 0;
+    const controls = make('div', undefined, 'player-history-controls'),
+      more = make('button', undefined, 'player-history-more'),
+      less = make('button', 'Show less', 'player-history-less');
+    more.type = less.type = 'button';
+    more.id = prefix + '-more';
+    less.id = prefix + '-less';
+    more.setAttribute('aria-controls', tbody.id);
+    less.setAttribute('aria-controls', tbody.id);
+    function update() {
+      i18n.text(
+        count,
+        i18n.message('Showing {0} of {1} plays · Newest first', [shown, plays.length]),
       );
-      toggle.onclick = () => {
-        saved.hidden = !saved.hidden;
-        if (saved.hidden) ports.browserState.history.delete(saved.id);
-        else ports.browserState.history.add(saved.id);
-        toggle.setAttribute('aria-expanded', String(!saved.hidden));
-        i18n.text(toggle, `${saved.hidden ? 'Show' : 'Hide'} saved PB changes (${changes.length})`);
-      };
-      body.append(toggle, saved);
+      i18n.text(more, i18n.message('Show more history ({0} plays)', [plays.length]));
+      i18n.attribute(
+        more,
+        'aria-label',
+        i18n.message('Show {0} more plays; {1} of {2} shown', [
+          Math.min(20, plays.length - shown),
+          shown,
+          plays.length,
+        ]),
+      );
+      more.hidden = shown === plays.length;
+      less.hidden = shown <= 3;
+      if (shown > 3) ports.browserState.historyRows.set(c.chart_id, shown);
+      else ports.browserState.historyRows.delete(c.chart_id);
+    }
+    function appendTo(limit: number) {
+      const fragment = document.createDocumentFragment();
+      for (let i = shown; i < limit; i++) {
+        const e = plays[i],
+          row = make('tr');
+        row.id = prefix + '-row-' + i;
+        row.tabIndex = -1;
+        row.setAttribute('role', 'row');
+        const values: (LocalizedText | Node)[] = [
+          date(e.time),
+          e.r.achievement == null
+            ? 'Unknown'
+            : i18n.verbatim((e.r.achievement / 10000).toFixed(4) + '%'),
+          gradeNode(displayRecord(e.r)!.grade),
+          i18n.verbatim(e.r.rate ?? '—'),
+          badges(e.r),
+        ];
+        values.forEach((value, index) => {
+          const cell = make('td'),
+            label = make('span', labels[index], 'player-history-field-label'),
+            content = make('span', undefined, 'player-history-value');
+          cell.setAttribute('role', 'cell');
+          label.setAttribute('aria-hidden', 'true');
+          if (value instanceof Node) content.append(value);
+          else i18n.text(content, value);
+          if (!content.hasChildNodes()) i18n.text(content, '—');
+          cell.append(label, content);
+          row.append(cell);
+        });
+        fragment.append(row);
+      }
+      tbody.append(fragment);
+      shown = limit;
+      update();
+    }
+    function anchor(node: HTMLElement) {
+      ports.browserState.cancelRestoration();
+      node.focus({ preventScroll: true });
+      node.scrollIntoView({ block: 'start', behavior: 'instant' });
+    }
+    more.onclick = () => {
+      const firstNew = shown;
+      appendTo(Math.min(shown + 20, plays.length));
+      anchor(tbody.children[firstNew] as HTMLElement);
+    };
+    less.onclick = () => {
+      [...tbody.children].slice(3).forEach((row) => row.remove());
+      shown = Math.min(3, plays.length);
+      update();
+      anchor(title);
+    };
+    appendTo(
+      Math.min(plays.length, Math.max(3, ports.browserState.historyRows.get(c.chart_id) ?? 3)),
+    );
+    if (plays.length > 3) {
+      controls.append(more, less);
+      body.append(controls);
     }
     return root;
   }
@@ -1424,6 +1454,7 @@ export function createPlayerData(ports: PersonalPorts) {
     record,
     summary,
     details,
+    resetHistory: (c: CatalogChart) => ports.browserState.historyRows.delete(c.chart_id),
     matches,
     controls,
     lastPlayed,

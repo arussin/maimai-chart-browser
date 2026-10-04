@@ -284,6 +284,13 @@ test('one public state owner restores allowlisted controls and validates catalog
       ['private', 'b'],
     ],
     history: ['saved-pbs-a', 'private'],
+    historyRows: [
+      ['a', 43],
+      ['private', 23],
+      ['b', -1],
+      ['b', 3.5],
+      ['b', '23'],
+    ],
     sections: { chart: false, player: true },
     disclosures: [
       ['player-filters-toggle', 'true'],
@@ -310,6 +317,7 @@ test('one public state owner restores allowlisted controls and validates catalog
   assert.equal(serialized.includes('sourceURL'), false);
   assert.equal(Object.hasOwn(committed.personal, 'pbs'), false);
   assert.equal(committed.personal.rateMin, '250');
+  assert.deepEqual(JSON.parse(JSON.stringify(committed.historyRows)), [['a', 43]]);
   assert.deepEqual(JSON.parse(JSON.stringify(committed.disclosures)), [
     ['player-filters-toggle', 'true'],
   ]);

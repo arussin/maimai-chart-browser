@@ -49,7 +49,8 @@
     "src/maimai_intelligence/assets/import-help/README.ko.md": "0c2ecd61b9e5f4af2642f7bba76e38d9665ddaae0ef15a92c54871ae7ae82300",
     "src/maimai_intelligence/assets/import-help/README.md": "0f48fe33e30370ccd863268b0a454e9ac710a32b1db4921adc2e6756fc154dce",
     "src/maimai_intelligence/assets/import-help/README.zh-Hans.md": "fc7cf8161fa13d19f052a5c9b5c66eae05be1b1ee98490e082e4441c9da996cf",
-    "src/maimai_intelligence/assets/song-display-readings.json": "94d944ed0f56d8a36d5565af9893f6701b99666b224a1f7db6e767413b67973c"
+    "src/maimai_intelligence/assets/song-display-readings.json": "94d944ed0f56d8a36d5565af9893f6701b99666b224a1f7db6e767413b67973c",
+    "src/maimai_intelligence/assets/locales/card-history.json": "c3c63c84b749b9a1300d527c581541fcd00433a7fc3988ad112d1d56a52d4314"
   },
   "documentation": {
     "source": "README.md",
@@ -218,6 +219,13 @@
         "README.ko.md",
         "README.zh-Hans.md"
       ]
+    }
+  ],
+  "followups": [
+    {
+      "date": "2026-10-04",
+      "record": "docs/localization-review/card-history-20261004.json",
+      "scope": "Seven card/history controls reviewed in context; no existing translations changed."
     }
   ]
 }

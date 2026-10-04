@@ -225,26 +225,16 @@ test('decimal constants sort all difficulties numerically with unknowns last',as
   expect(requests).toEqual([]);expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
 });
 
-test('chart detail preferences follow other songs, sorting and reloads',async({page})=>{
+test('chart details remain direct across sorting, reloads and old preferences',async({page})=>{
+  await page.addInitScript(()=>localStorage.setItem('maimai-chart-sections-v1',JSON.stringify({chart:false,player:false})));
   await page.goto('/constants/');
   const rows=page.locator('#songs .song-row'),first=rows.nth(0),second=rows.nth(1);
-  await first.locator('.chart-row').click();
-  const toggle=first.locator('[data-chart-section=chart] .chart-section-toggle');
-  await toggle.press('Enter');await expect(toggle).toHaveAttribute('aria-expanded','false');
-  await expect(first.locator('[data-chart-section=chart] .chart-section-body')).toHaveAttribute('inert','');
-  await second.locator('.chart-row').click();
-  await expect(second.locator('[data-chart-section=chart] .chart-section-toggle')).toHaveAttribute('aria-expanded','false');
+  await first.locator('.chart-row').click();await second.locator('.chart-row').click();
+  for(const row of [first,second]){await expect(row.locator('[data-chart-section=chart] .chart-section-body')).toBeVisible();await expect(row.locator('.chart-section-toggle')).toHaveCount(0);}
   await page.locator('[data-sort-key=bpm]').click();
-  for(const button of await page.locator('[data-chart-section=chart] .chart-section-toggle').all())await expect(button).toHaveAttribute('aria-expanded','false');
-  await page.reload();await first.locator('.chart-row').click();
-  await expect(toggle).toHaveAttribute('aria-expanded','false');
-  await toggle.press('Enter');await expect(toggle).toHaveAttribute('aria-expanded','true');
-  await first.locator('.chart-row').click();
-  await expect(first.locator('.chart-summary .chart-detail-actions')).toBeVisible();
-  await expect(first.locator('.chart-measurements')).toBeHidden();
-  await first.getByRole('button',{name:'Find similar',exact:true}).click();
-  await expect(page.locator('#similar-results h2')).toBeVisible();
-  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+  for(const body of await page.locator('.chart-measurements:not([hidden]) .chart-section-body').all())await expect(body).toHaveJSProperty('inert',false);
+  await page.reload();await first.locator('.chart-row').click();await expect(first.locator('[data-chart-section=chart]')).toBeVisible();
+  await first.locator('.chart-row').click();await expect(first.locator('.chart-summary .chart-detail-actions')).toBeVisible();
 });
 
 test('complete dictionary supports demos, keyboard close and stable links',async({page})=>{
@@ -479,12 +469,12 @@ test('pattern mappings connect rows, lesson discovery, filters and observed sect
   await expect(page.locator('.song-row>.chart-summary>.chart-flow svg')).toHaveCount(6);
   const id='pattern.two_position_alternation';await selectPatterns(page,[id]);
   const rows=page.locator('#songs .song-row');expect(await rows.count()).toBeGreaterThan(0);
-  for(const row of await rows.all())await expect(row.locator('.chart-patterns')).toContainText('alternation');
+  for(const row of await rows.all())await expect(row.locator('.chart-summary .chart-patterns')).toHaveCount(0);
   const first=rows.first();await first.locator('.chart-row').click();
   await expect(first.locator('.chart-pattern-detail .pattern-evidence')).not.toHaveCount(0);
   await first.locator('.span-button').first().click();await expect(first.locator('.flow-reading')).toContainText('highlighted');
   await expect(first.locator('.flow-highlight')).not.toHaveCount(0);
-  await first.locator('.chart-patterns [data-pattern]').first().click();await expect(page.locator('#pattern-dialog')).toBeVisible();
+  await first.locator('.chart-pattern-detail [data-pattern]').first().click();await expect(page.locator('#pattern-dialog')).toBeVisible();
   await page.locator('#pattern-dialog').getByRole('button',{name:'Find charts with this pattern',exact:true}).click();
   await expect(page.locator('#pattern-dialog')).toBeHidden();await expect(page.locator('#catalog')).toBeVisible();
   const link=page.url();expect(link).toContain('pattern-filter=');expect(requests).toEqual([]);
@@ -747,4 +737,16 @@ test('one embedded offline build works at a file URL without scripts or network 
   await page.locator('#songs .chart-row').click();await expect(page.locator('.chart-pattern-detail svg').first()).toBeVisible();
   await page.locator('#patterns-tab').click();await expect(page.locator('#pattern-list')).toBeVisible();
   expect(requests.filter(url=>url!==target)).toEqual([]);expect(errors).toEqual([]);
+});
+
+test('expanded patterns reveal every passage and collapse back to four',async({page})=>{
+ await page.goto('/lab/');await expect(page.locator('#catalog-count strong')).toHaveText('6');
+ const row=page.locator('#songs .song-row[data-chart-id="synthetic:pulse:STD:MASTER:r1"]');await row.locator('.chart-row').click();
+ const evidence=row.locator('.pattern-evidence'),toggle=row.locator('.chart-pattern-more');
+ const total=await evidence.count();expect(total).toBeGreaterThan(4);await expect(evidence.filter({visible:true})).toHaveCount(4);
+ const passages=await evidence.locator('.span-button').count();
+ await toggle.focus();await page.keyboard.press('Enter');await expect(toggle).toHaveAttribute('aria-expanded','true');await expect(evidence.filter({visible:true})).toHaveCount(total);
+ await evidence.last().locator('.span-button').first().click();await expect(row.locator('.flow-highlight')).not.toHaveCount(0);
+ const opener=evidence.last().locator('[data-pattern]');await opener.click();await expect(page.locator('#pattern-dialog')).toBeVisible();await page.keyboard.press('Escape');await expect(page.locator('#pattern-dialog')).toBeHidden();await expect(opener).toBeFocused();
+ await toggle.focus();await expect(toggle).toBeFocused();await page.keyboard.press('Space');await expect(toggle).toHaveAttribute('aria-expanded','false');await expect(evidence.filter({visible:true})).toHaveCount(4);await expect(evidence.locator('.span-button')).toHaveCount(passages);await expect(toggle).toBeFocused();
 });

@@ -46,6 +46,7 @@ export interface BrowserSnapshot {
   };
   sections?: { chart: boolean; player: boolean };
   history: string[];
+  historyRows?: [string, number][];
   disclosures: [string, string | null | undefined][];
   scroll: [number, number];
   focus: string | null;

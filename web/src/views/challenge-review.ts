@@ -593,6 +593,13 @@ export function createChallengeReview(ports: ReviewPorts) {
       .sort((a, b) => compareCharts(a.chart, b.chart, rules));
     if (focusKey) state.selectedCharts.delete(focusKey);
     const selectedRows = selectCatalogRows(rows, state.visible, state.focusedChart);
+    const focused =
+      document.activeElement instanceof HTMLElement && el('songs').contains(document.activeElement)
+        ? document.activeElement
+        : null;
+    const focusRow = focused?.closest<HTMLElement>('[data-row-key]')?.dataset.rowKey;
+    const focusAction = focused?.dataset.chartAction;
+    const focusId = focused?.id;
     el('songs').replaceChildren();
     activeFilters();
     for (const {
@@ -644,6 +651,21 @@ export function createChallengeReview(ports: ReviewPorts) {
         ),
       );
     el('more').hidden = rows.length <= selectedRows.length;
+    // A late profile read can redraw cards during keyboard interaction.
+    // Restore only the control that belonged to a surviving catalog row.
+    if (focusRow) {
+      const row = el('songs').querySelector<HTMLElement>(
+        '[data-row-key="' + CSS.escape(focusRow) + '"]',
+      );
+      const target =
+        (focusAction &&
+          row?.querySelector<HTMLElement>(
+            '[data-chart-action="' + CSS.escape(focusAction) + '"]',
+          )) ||
+        (focusId && row?.querySelector<HTMLElement>('#' + CSS.escape(focusId))) ||
+        row?.querySelector<HTMLElement>('.chart-row');
+      target?.focus({ preventScroll: true });
+    }
   }
 
   el('search').oninput = (event) => {
@@ -818,14 +840,6 @@ export function createChallengeReview(ports: ReviewPorts) {
         el('pattern-filter-search').value = value.auxiliary.patternSearch;
         el('pattern-filter-search').dispatchEvent(new Event('input'));
         for (const [id, open] of value.auxiliary.menus) (el(id) as HTMLDetailsElement).open = open;
-      }
-      for (const id of value.history) {
-        const toggle = el(id)?.previousElementSibling;
-        if (
-          toggle?.classList.contains('player-pb-toggle') &&
-          toggle.getAttribute('aria-expanded') === 'false'
-        )
-          (toggle as HTMLElement).click();
       }
     },
     openRoute: restoreRoute,

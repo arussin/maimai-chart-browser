@@ -84,7 +84,7 @@ for(const source of ['session-file','session-hosted','maishift-file'])test(`${so
       try{await image.decode();return {icon:n.dataset.icon,decoded:image.naturalWidth>0};}catch{return {icon:n.dataset.icon,decoded:false};}
     }));details.remove();return output;
   });
-  expect(badges.length).toBeGreaterThanOrEqual(4);expect(badges.every(b=>b.decoded)).toBe(true);
+  expect(badges.map(b=>b.icon)).toEqual(source==='maishift-file'?[]:['ap+','fdx+']);expect(badges.every(b=>b.decoded)).toBe(true);
   const button=page.locator('#personal-lamp-button'),menu=page.locator('#personal-lamp-choices');
   await button.focus();await button.press('ArrowDown');await expect(menu).toBeVisible();await page.keyboard.press('End');await page.keyboard.press('Enter');
   await expect(button).toBeFocused();await expect(page.locator('#personal-lamp')).toHaveValue('ALL PERFECT+');
