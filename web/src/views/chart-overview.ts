@@ -35,6 +35,7 @@ export function createChartOverview(ports: OverviewPorts) {
     return n;
   };
   const section = ports.sections.section;
+  let patternSerial = 0;
   const svg = <K extends keyof SVGElementTagNameMap>(
     tag: K,
     attrs: Record<string, LocalizedText>,
@@ -310,7 +311,10 @@ export function createChartOverview(ports: OverviewPorts) {
     }
     if (!found.length)
       evidenceList.append(make('p', 'No patterns detected in supported coverage.', 'muted'));
-    for (const tag of found) {
+    const extra = make('div', undefined, 'chart-pattern-extra');
+    extra.id = 'chart-pattern-extra-' + ++patternSerial;
+    extra.hidden = true;
+    for (const [index, tag] of found.entries()) {
       const row = make('div', undefined, 'pattern-evidence');
       row.append(
         patternButton(tag.id),
@@ -348,7 +352,28 @@ export function createChartOverview(ports: OverviewPorts) {
         row.append(
           make('span', 'Recurring-pair form · other variants may not be detected', 'muted'),
         );
-      evidenceList.append(row);
+      (index < 4 ? evidenceList : extra).append(row);
+    }
+    if (found.length > 4) {
+      const more = make(
+        'button',
+        i18n.message('Show all {0} patterns', [found.length]),
+        'chart-pattern-more',
+      );
+      more.type = 'button';
+      more.setAttribute('aria-controls', extra.id);
+      more.setAttribute('aria-expanded', 'false');
+      more.onclick = () => {
+        extra.hidden = !extra.hidden;
+        more.setAttribute('aria-expanded', String(!extra.hidden));
+        i18n.text(
+          more,
+          extra.hidden
+            ? i18n.message('Show all {0} patterns', [found.length])
+            : 'Show fewer patterns',
+        );
+      };
+      evidenceList.append(extra, more);
     }
     return box;
   }

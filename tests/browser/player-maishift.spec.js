@@ -49,14 +49,14 @@ async function mappedFixture(page){await page.waitForFunction(()=>!!window.maima
   data.maishift_mapping=mapping;maimaiPersonal.configure(data);return rows.map(c=>c.chart_id);
 });}
 
-test('reviewed mappings show exact PBs and observation history without invented plays',async({page,context})=>{
+test('reviewed mappings show exact PBs without invented plays or empty history',async({page,context})=>{
   await prepare(context);await boot(page);const ids=await mappedFixture(page);await preview(page);
   await expect(page.locator('.player-dialog')).not.toContainText('Unmatched PB charts');
   await page.getByRole('button',{name:'Import & remember',exact:true}).click();
   await expect.poll(()=>page.evaluate(()=>maimaiPersonal.enabled())).toBe(true);
-  const records=await page.evaluate(ids=>ids.map(id=>{const c=maimaiResearchCatalog.catalog.find(c=>c.chart_id===id);return {record:maimaiPersonal.record(c),lastPlayed:maimaiPersonal.lastPlayed(c),summary:maimaiPersonal.summary(c).textContent,details:maimaiPersonal.details(c).textContent};}),ids);
+  const records=await page.evaluate(ids=>ids.map(id=>{const c=maimaiResearchCatalog.catalog.find(c=>c.chart_id===id),details=maimaiPersonal.details(c);return {record:maimaiPersonal.record(c),lastPlayed:maimaiPersonal.lastPlayed(c),summary:maimaiPersonal.summary(c).textContent,historyHidden:details.hidden,playRows:details.querySelectorAll('tbody tr').length,duplicateSummary:details.querySelectorAll('.player-achievement').length};}),ids);
   expect(records.map(r=>r.record.achievement)).toEqual([987654,1009999,null]);
-  expect(records.every(r=>r.lastPlayed===null&&r.details.includes('No recorded plays for this chart.'))).toBe(true);
+  expect(records.map(({lastPlayed,historyHidden,playRows,duplicateSummary})=>({lastPlayed,historyHidden,playRows,duplicateSummary}))).toEqual(ids.map(()=>({lastPlayed:null,historyHidden:true,playRows:0,duplicateSummary:0})));
   expect(records[0].summary).toContain('98.7654%');expect(records[1].summary).toContain('100.9999%');expect(records[2].summary).toContain('Achievement unknown');
   await page.locator('#settings-toggle').click();await page.locator('#player-toggle').click();
   expect(await page.evaluate(ids=>ids.every(id=>maimaiPersonal.record(maimaiResearchCatalog.catalog.find(c=>c.chart_id===id))===null),ids)).toBe(true);

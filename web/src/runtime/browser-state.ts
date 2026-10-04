@@ -162,6 +162,7 @@ export class BrowserState {
   };
   readonly disclosures = new Map<string, { expanded: boolean }>();
   readonly history = new Set<string>();
+  readonly historyRows = new Map<string, number>();
   readonly sections = { chart: true, player: true };
   private readonly chartIds = new Set<string>();
   private readonly versions = new Set<string>();
@@ -323,6 +324,7 @@ export class BrowserState {
       selectedCharts: [...this.selectedCharts],
       expandedRows: [...this.expandedRows],
       history: [...this.history],
+      historyRows: [...this.historyRows],
       disclosures: [...this.disclosures].map(([id, value]) => [id, String(value.expanded)]),
       comparison: { ...this.comparison },
       sections: { ...this.sections },
@@ -383,6 +385,19 @@ export class BrowserState {
     );
     this.history.clear();
     history.forEach((id) => this.history.add(id));
+    this.historyRows.clear();
+    if (Array.isArray(value.historyRows)) {
+      for (const pair of value.historyRows) {
+        if (
+          Array.isArray(pair) &&
+          typeof pair[0] === 'string' &&
+          this.chartIds.has(pair[0]) &&
+          Number.isSafeInteger(pair[1]) &&
+          pair[1] > 3
+        )
+          this.historyRows.set(pair[0], pair[1]);
+      }
+    }
     const auxiliary = object(value.auxiliary)
       ? {
           sortKeep: value.auxiliary.sortKeep === true,

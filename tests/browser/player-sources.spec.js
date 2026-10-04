@@ -183,13 +183,13 @@ test('Forget invalidates a pending commit before compression and storage complet
   await page.evaluate(()=>window.releaseCommit());await expect(page.locator('#player-refresh')).toBeHidden();expect((await saved(page)).active).toBeNull();await page.reload();await expect.poll(()=>page.evaluate(()=>!!window.maimaiPersonal)).toBe(true);await page.evaluate(()=>maimaiPersonal.ready);expect(await page.evaluate(()=>maimaiPersonal.enabled())).toBe(false);
 });
 
-test('a changed refresh preserves the selected chart and expanded PB history',async({page,context})=>{
+test('a changed refresh preserves the selected chart, visible achievement and recorded plays',async({page,context})=>{
   await boot(page);const data=await fixture(page);await mock(context,page,data);await importReport(page);
   await page.evaluate(()=>{const data=maimaiResearchCatalog,c=data.catalog[0];maimaiPersonal.configure(data,{schema_version:'provider-mapping-1',charts:{chart:{chart_id:c.chart_id,source_hash:c.source_hash}}});const url=new URL(location.href);url.searchParams.set('chart',c.chart_id);history.replaceState(null,'',url);dispatchEvent(new PopStateEvent('popstate'));});
-  const url=page.url();await page.locator('.player-pb-toggle').click();await expect(page.locator('.player-pb-toggle')).toHaveAttribute('aria-expanded','true');
+  const url=page.url();await expect(page.locator('.song-row.is-expanded>.chart-summary>.player-achievement')).toBeVisible();await expect(page.locator('.player-history tbody tr')).toHaveCount(1);
   const changed=await page.evaluate(async data=>{const core=maimaiPlayerData,snapshot={...Object.values(data.snapshots).at(-1),capturedAt:5000};data.snapshots[await core.digest(snapshot)]=snapshot;const {revision,...body}=data;data.revision=await core.digest(body);return data;},data);
   await context.unroute('https://public-report.example/**');await mock(context,page,changed);await age(page);await page.evaluate(()=>dispatchEvent(new Event('online')));
-  await expect.poll(async()=>(await saved(page)).active.source.sourceRevision).toBe(changed.revision);expect(page.url()).toBe(url);await expect(page.locator('.player-pb-toggle')).toHaveAttribute('aria-expanded','true');
+  await expect.poll(async()=>(await saved(page)).active.source.sourceRevision).toBe(changed.revision);expect(page.url()).toBe(url);await expect(page.locator('.song-row.is-expanded>.chart-summary>.player-achievement')).toBeVisible();await expect(page.locator('.player-history tbody tr')).toHaveCount(1);
 });
 
 test('real popup handoff imports, reuses and declines without returning private data to the report',async({page,context})=>{

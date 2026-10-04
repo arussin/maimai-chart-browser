@@ -115,7 +115,7 @@ test('Last Updated tracks committed imports and successful refreshes across relo
   await menu(page,'player-forget');await expect(updatedLabel(page)).toHaveText(await localUpdateText(page,refreshed));
 });
 
-test('derived grades restore without reimport and drive list, sorting, filters and PB history without changing saved observations',async({page,context},testInfo)=>{
+test('derived grades restore without reimport and drive list, sorting and filters without fabricating play history',async({page,context},testInfo)=>{
   const state=await setup(page,context);
   const root=process.env.MAIMAI_BROWSER_OUTPUT||'../../output/browser-tests';
   const config=JSON.parse(await readFile(path.join(root,'maishift-pilot/pilot/maishift/mapping.json'),'utf8'));
@@ -138,8 +138,8 @@ test('derived grades restore without reimport and drive list, sorting, filters a
   await page.getByRole('group',{name:'Filter by grade',exact:true}).getByRole('button',{name:'SSS+',exact:true}).click();
   await expect(chartRows).toHaveCount(1);await expect(chartRows.first()).toHaveAttribute('data-chart-id',ids[0]);
   await page.screenshot({path:testInfo.outputPath('maishift-derived-grade.png'),fullPage:true});
-  const history=await page.evaluate(id=>{const c=maimaiResearchCatalog.catalog.find(c=>c.chart_id===id),details=maimaiPersonal.details(c);return {grade:details.querySelector('.player-history-table .player-grade')?.getAttribute('aria-label'),toggle:details.querySelector('.player-pb-toggle')?.textContent};},ids[0]);
-  expect(history).toEqual({grade:'SSS+',toggle:'Show saved PB changes (1)'});
+  const history=await page.evaluate(id=>{const c=maimaiResearchCatalog.catalog.find(c=>c.chart_id===id),details=maimaiPersonal.details(c);return {hidden:details.hidden,plays:details.querySelectorAll('tbody tr').length,duplicateSummary:details.querySelectorAll('.player-achievement').length};},ids[0]);
+  expect(history).toEqual({hidden:true,plays:0,duplicateSummary:0});
   expect((await saved(page)).active.bytes).toEqual(before.bytes);expect((await saved(page)).active.revision).toBe(before.revision);
 });
 

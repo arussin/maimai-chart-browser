@@ -53,7 +53,11 @@ export interface ChartCardComponents<C extends ChartSummary> {
       decoration: HTMLElement,
     ): { root: HTMLElement; content: HTMLElement };
   };
-  personal?: { summary(chart: C): HTMLElement; details(chart: C): HTMLElement };
+  personal?: {
+    summary(chart: C): HTMLElement;
+    details(chart: C): HTMLElement;
+    resetHistory?(chart: C): void;
+  };
   songLink?: (song: string, chart: string) => HTMLAnchorElement;
 }
 export interface ChartCardActions {
@@ -160,11 +164,7 @@ export function createChartCard<C extends ChartSummary>(
     );
     const heading = make('div', undefined, 'chart-row-heading'),
       videoLink = components.links(c);
-    heading.append(
-      components.artwork.jacket(c),
-      summary,
-      overview.chips(c, 3, presentation.patterns()),
-    );
+    heading.append(components.artwork.jacket(c), summary);
     if (videoLink) heading.append(videoLink);
     const picker = make('select', undefined, 'row-difficulty');
     picker.id = 'row-difficulty-' + domKey;
@@ -186,6 +186,8 @@ export function createChartCard<C extends ChartSummary>(
       const next = choices.find((choice) => choice.chart_id === picker.value);
       if (!next) return;
       if (actions.expanded()) actions.usage?.emit('chart_opened');
+      personal?.resetHistory?.(c);
+      personal?.resetHistory?.(next);
       actions.select(next.chart_id);
       const replacement = renderRow(next);
       row.replaceWith(replacement);
@@ -261,7 +263,15 @@ export function createChartCard<C extends ChartSummary>(
       actions.similar(c.chart_id);
     };
     actionBar.append(compareButton, similarButton);
-    footer.append(metadata, actionBar);
+    const cardLinks = make('div', undefined, 'chart-card-links');
+    cardLinks.append(actionBar);
+    if (components.songLink) {
+      const links = make('div', undefined, 'chart-external-links chart-song-navigation'),
+        link = components.songLink(c.song_id, c.chart_id);
+      links.append(link);
+      cardLinks.append(links);
+    }
+    footer.append(metadata, cardLinks);
     header.append(footer);
     if (personal) header.append(personal.summary(c));
     header.onclick = (event) => {
@@ -286,15 +296,19 @@ export function createChartCard<C extends ChartSummary>(
       const track = overview.section('chart', 'Chart details', identity);
       track.content.append(metrics(c), overview.details(c));
       panel.replaceChildren(track.root);
-      if (components.songLink) track.content.append(components.songLink(c.song_id, c.chart_id));
-      if (personal) panel.append(personal.details(c));
+      if (personal) {
+        const history = personal.details(c);
+        if (!history.hidden) panel.append(history);
+      }
     };
     summary.onclick = () => {
       panel.hidden = !panel.hidden;
       row.classList.toggle('is-expanded', !panel.hidden);
       summary.setAttribute('aria-expanded', String(!panel.hidden));
-      if (panel.hidden) actions.expand(false);
-      else {
+      if (panel.hidden) {
+        if (panel.contains(document.activeElement)) summary.focus({ preventScroll: true });
+        actions.expand(false);
+      } else {
         actions.expand(true);
         renderDetails();
         actions.usage?.emit('chart_opened');

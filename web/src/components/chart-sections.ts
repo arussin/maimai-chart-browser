@@ -1,4 +1,4 @@
-import type { TextView, LocalizedText } from './chart-card';
+import type { TextView } from './chart-card';
 import type { UsageAPI } from '../usage';
 export interface SectionState {
   chart: boolean;
@@ -9,99 +9,32 @@ export interface SectionPreferences {
   write(state: SectionState): void;
   subscribe(listener: () => void): () => void;
 }
-/** One shared disclosure renderer; persistence and the owning state are supplied. */
+/** Static peer headings: old disclosure preferences cannot hide chart or player context. */
 export function createChartSections(
-  root: HTMLElement,
-  state: SectionState,
+  _root: HTMLElement,
+  _state: SectionState,
   i18n: Pick<TextView, 'text'>,
-  preferences: SectionPreferences,
-  usage?: Pick<UsageAPI, 'emit'>,
+  _preferences: SectionPreferences,
+  _usage?: Pick<UsageAPI, 'emit'>,
 ) {
-  let serial = 0;
-  const make = <K extends keyof HTMLElementTagNameMap>(
-    tag: K,
-    text?: LocalizedText,
-    cls?: string,
-  ) => {
-    const node = document.createElement(tag);
-    if (text !== undefined) i18n.text(node, text);
-    if (cls) node.className = cls;
-    return node;
-  };
-  function read() {
-    Object.assign(state, preferences.read());
-  }
-  function sync() {
-    for (const node of root.querySelectorAll<HTMLElement>('[data-chart-section]')) {
-      const kind = node.dataset.chartSection;
-      if (kind !== 'chart' && kind !== 'player') continue;
-      const button = node.querySelector<HTMLButtonElement>('.chart-section-toggle'),
-        body = node.querySelector<HTMLElement>('.chart-section-body');
-      if (!button || !body) continue;
-      const expanded = state[kind];
-      if (!expanded && body.contains(root.ownerDocument.activeElement)) button.focus();
-      button.setAttribute('aria-expanded', String(expanded));
-      const label = button.querySelector('.chart-section-action-label');
-      if (label) i18n.text(label, expanded ? 'Hide details' : 'Show details');
-      node.classList.toggle('is-section-collapsed', !expanded);
-      body.inert = !expanded;
-    }
-  }
-  read();
-  const dispose = preferences.subscribe(() => {
-    read();
-    sync();
-  });
   function section(kind: keyof SectionState, title: string, decoration?: HTMLElement) {
-    const node = make('section', undefined, 'chart-section'),
-      heading = make('h3'),
-      button = make('button', undefined, 'chart-section-toggle'),
-      name = make('span', title, 'chart-section-name'),
-      chevron = make('span', '⌄', 'chart-section-chevron');
+    const node = document.createElement('section'),
+      heading = document.createElement('h3'),
+      name = document.createElement('span'),
+      body = document.createElement('div'),
+      content = document.createElement('div');
+    node.className = 'chart-section';
     node.dataset.chartSection = kind;
-    button.type = 'button';
-    button.append(name);
-    if (decoration) button.append(decoration);
-    chevron.setAttribute('aria-hidden', 'true');
-    if (kind === 'chart') {
-      const action = make('span', undefined, 'chart-section-action'),
-        label = make(
-          'span',
-          state[kind] ? 'Hide details' : 'Show details',
-          'chart-section-action-label',
-        ),
-        icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg'),
-        path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-      icon.setAttribute('viewBox', '0 0 24 24');
-      icon.setAttribute('fill', 'none');
-      icon.setAttribute('stroke', 'currentColor');
-      path.setAttribute('d', 'm6 9 6 6 6-6');
-      path.setAttribute('stroke-linecap', 'round');
-      path.setAttribute('stroke-linejoin', 'round');
-      icon.append(path);
-      chevron.replaceChildren(icon);
-      action.append(label, chevron);
-      button.append(action);
-    } else button.append(chevron);
-    heading.append(button);
-    const reveal = make('div', undefined, 'chart-section-reveal'),
-      body = make('div', undefined, 'chart-section-body'),
-      content = make('div', undefined, 'chart-section-content');
-    reveal.id = 'chart-section-' + ++serial;
-    button.setAttribute('aria-controls', reveal.id);
+    heading.className = 'chart-section-heading';
+    name.className = 'chart-section-name';
+    i18n.text(name, title);
+    heading.append(name);
+    if (decoration) heading.append(decoration);
+    body.className = 'chart-section-body';
+    content.className = 'chart-section-content';
     body.append(content);
-    reveal.append(body);
-    node.append(heading, reveal);
-    button.setAttribute('aria-expanded', String(state[kind]));
-    node.classList.toggle('is-section-collapsed', !state[kind]);
-    body.inert = !state[kind];
-    button.onclick = () => {
-      state[kind] = !state[kind];
-      if (state[kind]) usage?.emit('chart_section_opened', undefined, kind);
-      preferences.write(state);
-      sync();
-    };
+    node.append(heading, body);
     return { root: node, content };
   }
-  return Object.freeze({ section, dispose });
+  return Object.freeze({ section, dispose() {} });
 }
