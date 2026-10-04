@@ -48,7 +48,8 @@ export function browserResources(value: unknown): BrowserResources {
       ref.bytes > maximum ||
       (name === 'entry'
         ? !/^browser\/[A-Za-z0-9][A-Za-z0-9._-]*\.js$/.test(ref.path)
-        : ref.path !== `browser-resources/${ref.sha256}.${extension}`)
+        : ref.path !== `browser-resources/${ref.sha256}.${extension}` &&
+          !(name === 'shell' && ref.path === `browser-resources/${ref.sha256}.html`))
     )
       throw Error('Invalid browser resource reference');
     return Object.freeze({ path: ref.path, sha256: ref.sha256, bytes: ref.bytes });
@@ -57,7 +58,7 @@ export function browserResources(value: unknown): BrowserResources {
     version: 1,
     entry: reference('entry', 'js', 2 * MiB),
     configuration: reference('configuration', 'json', 4 * MiB),
-    shell: reference('shell', 'html', 2 * MiB),
+    shell: reference('shell', 'txt', 2 * MiB),
     catalog: reference('catalog', 'json', MiB),
     styles: reference('styles', 'css', 2 * MiB),
     permalinks: record.permalinks === null ? null : reference('permalinks', 'json', 2 * MiB),
