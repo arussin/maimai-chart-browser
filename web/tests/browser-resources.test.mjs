@@ -12,7 +12,7 @@ const fixture = () => ({
   version: 1,
   entry: { ...ref('js'), path: 'browser/browser-entry-FIXTURE.js' },
   configuration: ref(),
-  shell: ref('html'),
+  shell: ref('txt'),
   catalog: ref(),
   styles: ref('css'),
   permalinks: ref(),
@@ -29,6 +29,22 @@ test('hosted resources are immutable and keep exact document references', () => 
   assert.equal(Object.isFrozen(resources.configuration), true);
   const plain = browserResources({ ...fixture(), permalinks: null, seoStyle: null });
   assert.equal(plain.permalinks, null);
+});
+
+test('shell data and retained HTML references keep the exact hash and path contract', () => {
+  for (const extension of ['txt', 'html']) {
+    const shell = ref(extension);
+    assert.equal(browserResources({ ...fixture(), shell }).shell.path, shell.path);
+  }
+  for (const path of [
+    `browser-resources/${'a'.repeat(64)}`,
+    `browser-resources/${'b'.repeat(64)}.txt`,
+    `browser-resources/${'a'.repeat(64)}.json`,
+    'browser-shell.html',
+    `https://example.invalid/${'a'.repeat(64)}.txt`,
+  ])
+    assert.throws(() => browserResources({ ...fixture(), shell: { ...ref('txt'), path } }));
+  assert.throws(() => browserResources({ ...fixture(), catalog: ref('txt') }));
 });
 
 test('mutable aliases, foreign URLs, malformed hashes and over-limit references are rejected', () => {

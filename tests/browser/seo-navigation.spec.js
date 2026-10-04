@@ -64,6 +64,29 @@ for(const [title,slugPrefix,hasFlow]of [
   else {await expect(flow.getByText('Flow unavailable',{exact:true})).toBeVisible();await expect(flow.locator('svg')).toHaveCount(0);}
 });
 
+test('direct songs load an exact data shell when the host redirects and rewrites HTML assets',async({page,request})=>{
+  const map=await ledger(request),slug=Object.values(map.songs)[0];
+  const shellURL=await browserResourceURL('shell');let dataRequests=0,htmlRequests=0;
+  await page.route('**/browser-resources/*',async route=>{
+    const path=new URL(route.request().url()).pathname;
+    if(path.endsWith('.html')){htmlRequests++;return route.fulfill({status:308,headers:{location:path.slice(0,-5)}});}
+    if(path.endsWith('.txt')){
+      dataRequests++;
+      const response=await route.fetch({url:new URL('/registry'+path,route.request().url()).href});
+      return route.fulfill({response,contentType:'text/plain; charset=utf-8'});
+    }
+    if(!path.split('/').pop().includes('.'))return route.fulfill({contentType:'text/html',body:'<script src="/injected-beacon.js"></script>'});
+    return route.fallback();
+  });
+  expect(shellURL).toMatch(/\.txt$/);
+  for(const locale of ['en','ja','ko','zh-hans']){
+    await page.goto(songPath(locale,slug));
+    await expect(page.locator('#seo-route-view .song-workspace')).toBeVisible();
+    await expect(page.locator('[data-diagnostic="catalog_unavailable"]')).toHaveCount(0);
+  }
+  expect(dataRequests).toBeGreaterThan(0);expect(htmlRequests).toBe(0);
+});
+
 test('JavaScript-disabled public song pages retain four languages, canonical identity and crawlable charts',async({browser,request,baseURL})=>{
  const map=await ledger(request),slug=Object.values(map.songs).find(value=>/[^\x00-\x7f]/.test(value));
  const context=await browser.newContext({javaScriptEnabled:false});const document=await context.newPage(),requests=[];

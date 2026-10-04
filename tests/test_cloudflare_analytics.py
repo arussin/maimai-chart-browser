@@ -145,7 +145,7 @@ class CloudflareAnalyticsTests(unittest.TestCase):
             self.assertTrue(renamed)
             self.assertTrue(
                 all(
-                    name.startswith("browser-resources/") and name.endswith(".html")
+                    name.startswith("browser-resources/") and name.endswith(".txt")
                     for name in renamed
                 )
             )

@@ -100,3 +100,16 @@ production release.
 Use the existing isolated fixture harness. Performance measurements require its
 separate non-intercepting local-server harness; functional test timings are not
 page-performance claims.
+
+## Immutable shell delivery
+
+Direct song routes fetch the shell template from
+`browser-resources/<sha256>.txt`. Its bytes are HTML, but it is served as plain
+text data so Pages does not redirect an `.html` URL or inject its analytics beacon
+into the verified resource. The browser checks the declared byte count and SHA-256
+before parsing the template as HTML. Redirects and altered bytes still fail closed.
+Normal document analytics and the shell's rendered appearance are unchanged.
+
+Resource validators also accept the exact legacy `<sha256>.html` shell name when
+reading retained release descriptors. Publication emits `.txt` for new documents
+and preserves previous immutable assets for existing readers and rollback.

@@ -95,6 +95,9 @@ def validate_browser_resources(value: Any) -> BrowserResources:
             valid = re.fullmatch(r"browser/[A-Za-z0-9][A-Za-z0-9._-]*\.js", row["path"])
         else:
             valid = row["path"] == f"browser-resources/{row['sha256']}.{extension}"
+            # Retained documents may still describe the previous HTML shell asset.
+            if name == "shell" and row["path"] == f"browser-resources/{row['sha256']}.html":
+                valid = True
         if not valid:
             raise ValueError("Invalid immutable browser resource path")
         return BrowserResourceReference(row["path"], row["sha256"], row["bytes"])
@@ -102,7 +105,7 @@ def validate_browser_resources(value: Any) -> BrowserResources:
     return BrowserResources(
         entry=reference("entry", "js", 2 * 1024 * 1024),
         configuration=reference("configuration", "json", 4 * 1024 * 1024),
-        shell=reference("shell", "html", 2 * 1024 * 1024),
+        shell=reference("shell", "txt", 2 * 1024 * 1024),
         catalog=reference("catalog", "json", 1024 * 1024),
         styles=reference("styles", "css", 2 * 1024 * 1024),
         permalinks=reference("permalinks", "json", 2 * 1024 * 1024)
@@ -224,7 +227,8 @@ def seal_browser_resources(assets: dict[str, bytes], manifest: dict[str, Any]) -
     resources = BrowserResources(
         entry=entry,
         configuration=retain(result["browser-config.json"], "json"),
-        shell=retain(shell, "html"),
+        # Fetch as data: Pages redirects HTML paths and analytics can rewrite HTML bytes.
+        shell=retain(shell, "txt"),
         catalog=retain(canonical(manifest) + b"\n", "json"),
         styles=references["challenge-review.css"],
         permalinks=retain(result["permalinks.json"], "json")

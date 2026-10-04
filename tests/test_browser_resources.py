@@ -239,6 +239,36 @@ class BrowserResourceTests(unittest.TestCase):
         self.assertEqual(json.loads(sealed[resources.catalog.path]), self.manifest)
         self.assertEqual(sealed, seal_browser_resources(sealed, self.manifest))
 
+    def test_shell_is_exact_data_and_legacy_html_is_retained_when_resealed(self):
+        sealed = seal_browser_resources(self.assets, self.manifest)
+        descriptor = json.loads(sealed["browser-resources.json"])
+        shell = descriptor["shell"]
+        self.assertEqual(shell["path"], f"browser-resources/{shell['sha256']}.txt")
+        self.assertEqual(sealed[shell["path"]], sealed["browser-shell.html"])
+        legacy_path = shell["path"].removesuffix(".txt") + ".html"
+        legacy_descriptor = deepcopy(descriptor)
+        legacy_descriptor["shell"]["path"] = legacy_path
+        legacy = {
+            **sealed,
+            legacy_path: sealed[shell["path"]],
+            "browser-resources.json": canonical(legacy_descriptor),
+        }
+        del legacy[shell["path"]]
+        self.assertEqual(validate_browser_resources(legacy_descriptor).shell.path, legacy_path)
+        upgraded = seal_browser_resources(legacy, self.manifest)
+        self.assertEqual(upgraded[legacy_path], upgraded[shell["path"]])
+        self.assertEqual(json.loads(upgraded["browser-resources.json"]), descriptor)
+        for path in (
+            "browser-shell.html",
+            shell["path"] + ".html",
+            shell["path"].removesuffix(".txt"),
+            shell["path"].replace(shell["sha256"], "0" * 64),
+            "https://example.invalid/" + shell["path"],
+        ):
+            changed = {**descriptor, "shell": {**shell, "path": path}}
+            with self.subTest(path=path), self.assertRaises(ValueError):
+                validate_browser_resources(changed)
+
     def test_final_metadata_manifest_and_routes_bind_after_all_transformations(self):
         first = seal_browser_resources(self.assets, self.manifest)
         original = validate_browser_resources(json.loads(first["browser-resources.json"]))

@@ -8,7 +8,7 @@ const sha256=body=>createHash('sha256').update(body).digest('hex');
 const fixtureRoot=()=>resolve(process.env.MAIMAI_BROWSER_OUTPUT||fileURLToPath(new URL('../../output/browser-tests/',import.meta.url)));
 const fixtureOrigin=()=>`http://127.0.0.1:${process.env.MAIMAI_TEST_PORT||8766}`;
 const descriptor=/<script\b(?=[^>]*\bid=["']browser-resources["'])(?=[^>]*\btype=["']application\/json["'])[^>]*>([^<]*)<\/script>/g;
-const roles={configuration:['json',4],catalog:['json',1],permalinks:['json',2],shell:['html',2],styles:['css',2],seoStyle:['css',2]};
+const roles={configuration:['json',4],catalog:['json',1],permalinks:['json',2],shell:['txt',2],styles:['css',2],seoStyle:['css',2]};
 function resourceReference(value,role){
   const [extension,maximum]=roles[role]||[];
   if(!extension||!value||Object.keys(value).length!==3||!Number.isSafeInteger(value.bytes)||value.bytes<1||value.bytes>maximum*1024*1024||
