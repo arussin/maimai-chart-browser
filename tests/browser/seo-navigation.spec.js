@@ -195,10 +195,11 @@ for(const recovery of [false,true])test('history-route '+(recovery?'verified rec
 });
 
 
-test('lean static foundations preserve aggregate stylesheet pixels in every locale',async({browser,page,request,baseURL},testInfo)=>{
+// Keep each locale independent so five-language coverage does not share one timeout.
+for(const locale of ['en','ja','ko','zh-hans','id'])test('lean static foundations preserve aggregate stylesheet pixels in '+locale,async({browser,page,request,baseURL},testInfo)=>{
   test.setTimeout(90000);
   const map=await ledger(request),song=Object.values(map.songs)[0],version=Object.values(map.versions)[0];
-  for(const locale of ['en','ja','ko','zh-hans','id'])for(const [kind,slug]of [['songs',song],['versions',version]]){
+  for(const [kind,slug]of [['songs',song],['versions',version]]){
     const path='/'+locale+'/'+kind+'/'+encodeURIComponent(slug)+'/',response=await request.get('/registry'+path),html=(await response.text()).replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,'');
     // One DOM isolates the stylesheet change from separate-context glyph rasterization.
     // Scripts are stripped while keeping Firefox's font-readiness API usable.

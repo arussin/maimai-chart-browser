@@ -52,9 +52,10 @@ test('installation URLs with or without a trailing slash read only the documente
   expect(result.manifests).toEqual(Array(4).fill(manifest));expect(result.revision).toBe(data.revision);expect(result.unsupported).toEqual(Array(5).fill(null));
 });
 
-test('report recovery actions remain separated and accessible on narrow localized screens',async({page,context},testInfo)=>{
+// Give each locale its own timeout while retaining every width and accessibility check.
+for(const locale of ['en','zh-Hans','ko','ja','id'])test('report recovery actions remain separated and accessible on narrow screens in '+locale,async({page,context},testInfo)=>{
   await boot(page);await mock(context,page,await fixture(page),{html:true});
-  for(const width of [320,430,1280])for(const locale of ['en','zh-Hans','ko','ja','id']){
+  for(const width of [320,430,1280]){
     await page.setViewportSize({width,height:932});await page.evaluate(locale=>maimaiI18n.setLocale(locale),locale);
     await openImport(page);await page.locator('input[value=report]').check();await page.locator('#player-report-url').fill('https://public-report.example/fixture');await page.locator('.player-dialog .player-actions button').first().click();
     const actions=page.locator('.player-message-actions');await expect(actions.locator('a')).toHaveAttribute('href','https://public-report.example/fixture');
