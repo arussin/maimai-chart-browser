@@ -77,6 +77,47 @@ for (const width of [280, 320, 360, 390, 420, 768, 1280]) {
   });
 }
 
+// Wider fallback metrics reproduce the 280px overflow found on Linux CI.
+for (const width of [280, 320]) for (const font of ['Verdana, sans-serif', 'monospace']) {
+  test(`Indonesian controls fit ${font} at ${width}px`, async ({ page }, testInfo) => {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto('/registry/?view=catalog');
+    await settle(page);
+    await choose(page, 'id');
+    await expect(page.locator('html')).toHaveAttribute('lang', 'id');
+    await page.evaluate(font => document.documentElement.style.fontFamily = font, font);
+    const nav = page.locator('.site-header nav');
+    expect(await nav.evaluate(node => {
+      const box = node.getBoundingClientRect();
+      const children = [...node.children], rectangles = children.map(child => child.getBoundingClientRect());
+      return children.every((child, index) => {
+        const rect = rectangles[index], label = child.querySelector(':scope > span:first-child');
+        if (label) {
+          const range = document.createRange();
+          range.selectNodeContents(label);
+          if ([...range.getClientRects()].some(text => text.left < rect.left - 1 || text.right > rect.right + 1)) return false;
+        }
+        return rect.left >= box.left - 1 && rect.right <= box.right + 1 && rect.height >= 44 &&
+          rectangles.every((other, otherIndex) => index === otherIndex ||
+            Math.min(rect.right, other.right) <= Math.max(rect.left, other.left) + 1 ||
+            Math.min(rect.bottom, other.bottom) <= Math.max(rect.top, other.top) + 1);
+      });
+    })).toBe(true);
+    for (const region of ['', 'JP', 'INTL']) {
+      await page.locator('#filter-region [data-region="' + region + '"]').click();
+      expect(await page.locator('#filter-region button').evaluateAll(buttons => buttons.every(button => {
+        const box = button.getBoundingClientRect(), range = document.createRange();
+        range.selectNodeContents(button);
+        return [...range.getClientRects()].every(rect => rect.left >= box.left - 1 &&
+          rect.right <= box.right + 1 && rect.top >= box.top - 1 && rect.bottom <= box.bottom + 1);
+      }))).toBe(true);
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
+    }
+    await page.locator('#filter-region').scrollIntoViewIfNeeded();
+    await page.screenshot({ path: testInfo.outputPath('indonesian-fallback-font.png') });
+  });
+}
+
 test('Indonesian selection persists and opens its complete README', async ({ page }) => {
   await page.goto('/registry/?view=catalog');
   await settle(page);
