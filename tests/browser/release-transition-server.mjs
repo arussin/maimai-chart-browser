@@ -89,7 +89,7 @@ export async function inspectArtifact(directory, expectedRuntime, derivation = n
       boundResources[role] = {lateURL: url.pathname, lateSha256: item.sha256};
       if (role === 'permalinks') {
         const ledger = JSON.parse(bytes);
-        for (const locale of ['en', 'ja', 'ko', 'zh-hans']) {
+        for (const locale of ['en', 'ja', 'ko', 'zh-hans', 'id']) {
           for (const kind of ['songs', 'versions']) {
             for (const slug of Object.values(ledger[kind] || {})) {
               const route = `/${locale}/${kind}/${encodeURIComponent(slug)}/`;

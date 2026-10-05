@@ -87,7 +87,7 @@ refresh tests does not establish upstream snapshot chronology.
 5. Download the test summary and share it with your inviter through an agreed
    channel. Nothing is submitted automatically. Clear the test or close the tab.
 
-The page is available in English, Simplified Chinese, Korean and Japanese. UI
+The page is available in English, Simplified Chinese, Korean, Japanese and Indonesian. UI
 language does not select a game region. Refreshing/navigating away loses the
 baseline; the page deliberately cannot resume a test from browser storage.
 Do not manufacture a correction or alter the official sample. Test a legitimate

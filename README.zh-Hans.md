@@ -2,7 +2,7 @@ Windows 开发：请阅读 [DEVELOPMENT.md](DEVELOPMENT.md)。下文使用相对
 
 # maimai.party · 谱面浏览器
 
-[English](README.md) · [简体中文](README.zh-Hans.md) · [한국어](README.ko.md) · [日本語](README.ja.md)
+[English](README.md) · [简体中文](README.zh-Hans.md) · [한국어](README.ko.md) · [日本語](README.ja.md) · [Bahasa Indonesia](README.id.md)
 
 **2026年10月3日正式发布：**[发布内容、验证结果与运行限制](docs/PRODUCTION_RELEASE_20261003.md)。多语言乐曲与版本页面以及非公开的日度使用统计已上线；[Search Console 与站点地图](docs/SEARCH_VISIBILITY.md)和[站点所有者使用统计报告](usage-worker/README.md)分别提供运行指南。
 

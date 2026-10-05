@@ -3,20 +3,20 @@
 The public chart browser, pattern lessons, comparison view, player-data controls,
 About/credits, analytics choices, Support dialog, standalone Support page and
 payment-return page support English (`en`), Simplified Chinese (`zh-Hans`), Korean
-(`ko`) and Japanese (`ja`). Session Report and historical research viewers have
+(`ko`), Japanese (`ja`) and Indonesian (`id`). Session Report and historical research viewers have
 separate release scopes.
 
 ## Canonical copy and future changes
 
 `src/maimai_intelligence/assets/locales/*.json` is the canonical translation
 catalog, grouped by feature. Each exact existing English phrase is a key; its
-values supply all three translations. English continues to come from existing
+values supply all four translations. English continues to come from existing
 HTML/JavaScript, retaining punctuation, spacing and markup. Do not rephrase
 English as part of a translation correction.
 
 For every feature change:
 
-1. Add or update the phrase and all three translations in the same change. Search
+1. Add or update the phrase and all four translations in the same change. Search
    for the key first: duplicate keys, absent locales and mismatched placeholders
    fail validation.
 2. Static template copy is bound once. Generated elements use
@@ -62,8 +62,8 @@ when checking canonical source with dependencies stored in DevCache.
 ## Repository README translations
 
 `README.md` is the canonical English document. `README.zh-Hans.md`, `README.ko.md`
-and `README.ja.md` are complete Simplified Chinese, Korean and Japanese versions
-in the repository root. All four include the same language navigation links.
+`README.ja.md` and `README.id.md` are complete Simplified Chinese, Korean, Japanese and Indonesian versions
+in the repository root. All five include the same language navigation links.
 GitHub renders the default README; it does not negotiate our translated filenames
 from the visitor's language. See [GitHub's README documentation](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-readmes).
 
@@ -75,12 +75,12 @@ Source credits and other external links are not redirected. Linked technical
 documents have their own scope and currently remain English.
 
 When English README content changes, update the corresponding passages in all
-three translations in the same change. Preserve commands, file paths, API names,
+four translations in the same change. Preserve commands, file paths, API names,
 game titles, version names, links, numerical claims and limitations. Use the
 existing terminology guide and UI catalog for visible control names. AI review
 is acceptable; the owner does not need to translate or find native reviewers.
 Review the complete changed passages in context, then record the reviewer,
-method and date in `docs/localization-review/ai-review.json` and update the four
+method and date in `docs/localization-review/ai-review.json` and update the five
 README fingerprints with `scripts.check_localization_review.file_fingerprint`.
 Do not refresh fingerprints without doing that review.
 
@@ -96,13 +96,14 @@ and structural omissions, not fluency.
 Unmodified Famfamfam pixel flags have native language names in accessible labels. The saved
 `maimai-language-v1` choice takes precedence over the browser language list;
 unsupported preferences fall back to English. Chinese browser variants select
-Simplified Chinese. Same-origin pages and tabs share the choice. Blocked storage
+Simplified Chinese. Indonesian browser tags such as `id-ID` select `id`.
+Same-origin pages and tabs share the choice. Blocked storage
 still permits switching in memory. No account or translation request is needed.
 
 Switching updates bound text and accessible labels without reloading the catalog,
 resetting filters, changing game region, reimporting player data or restarting
-payment. Support also has flags inside its modal. CJK fonts apply only outside
-English. Existing English wording and styling remain unchanged apart from the
+payment. Support also has flags inside its modal. CJK fonts apply only to
+Chinese, Korean and Japanese; Indonesian retains the default Latin font stack. Existing English wording and styling remain unchanged apart from the
 added controls. JavaScript is required; the existing no-JavaScript fallback is
 English.
 

@@ -28,7 +28,7 @@ class LocalizationTests(unittest.TestCase):
                 "headings": re.findall(r"^#+(?= )", text, re.M),
             }
 
-        for locale in ("zh-Hans", "ko", "ja"):
+        for locale in ("zh-Hans", "ko", "ja", "id"):
             with self.subTest(locale=locale):
                 translated = (root / f"README.{locale}.md").read_text("utf-8")
                 self.assertEqual(structure(source), structure(translated))

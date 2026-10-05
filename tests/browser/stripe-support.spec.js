@@ -91,7 +91,7 @@ test('language changes translate Support without restarting or replacing checkou
   const saved=await page.evaluate(key=>sessionStorage.getItem(key),storageKey),calls=state.api.length;
   const dialog=page.locator('#support-checkout-dialog');
   const original=await dialog.locator('.support-invitation').textContent();
-  for(const locale of ['ko','zh-Hans','ja']){
+  for(const locale of ['ko','zh-Hans','ja','id']){
     await dialog.locator('[data-language="'+locale+'"]').click();
     await expect(page.locator('html')).toHaveAttribute('lang',locale);
     expect(await dialog.locator('.support-invitation').textContent()).not.toBe(original);
@@ -109,15 +109,19 @@ test('language changes translate Support without restarting or replacing checkou
   expect(axe.violations).toEqual([]);
 });
 
-test('compact Support errors keep flags and translated controls inside the dialog',async({page,context})=>{
+test('compact Support errors keep flags and translated controls inside the dialog',async({page,context},testInfo)=>{
+  test.setTimeout(90000);
   await hosted(context,{failScript:true});await page.goto('https://maimai.party/');await open(page);
   const dialog=page.locator('#support-checkout-dialog');
   await expect(dialog).toHaveAttribute('data-stage','result');
   // Fallback font metrics differ between Windows and the Linux CI runner.
-  for(const font of ['', 'Verdana, sans-serif']){
+  for(const width of [280,320,360,390,420,1280])for(const font of ['', 'Verdana, sans-serif']){
+    await page.setViewportSize({width,height:900});
     await dialog.locator('.support-dialog-title').evaluate((node,value)=>node.style.fontFamily=value,font);
-    for(const locale of ['en','ko','zh-Hans','ja']){
+    for(const locale of ['en','ko','zh-Hans','ja','id']){
       await dialog.locator('[data-language="'+locale+'"]').click();
+      await expect(dialog.locator('.language-controls button')).toHaveCount(5);
+      if(locale==='id'&&!font)await page.screenshot({path:testInfo.outputPath('support-id-'+width+'.png')});
       const widths=await dialog.evaluate(node=>({scroll:node.scrollWidth,client:node.clientWidth}));
       expect(widths.scroll,JSON.stringify({locale,font,widths})).toBeLessThanOrEqual(widths.client+1);
       const bounds=await dialog.boundingBox();
@@ -337,5 +341,28 @@ test('a stalled embedded SDK times out with retry and retains the same attempt',
   await expect(page.locator('#support-checkout-dialog')).not.toContainText('Buy Me a Coffee');
   await page.getByRole('button', {name: 'Try again', exact: true}).click();
   await expect.poll(() => state.api.filter(row => row.path.endsWith('/checkout')).length).toBe(2);
+  expect(state.sessions.size).toBe(1);
+});
+
+
+test('Indonesian site-owned checkout, unfinished return and paid status stay localized',async({page,context})=>{
+  const state=await hosted(context);
+  await context.addInitScript(()=>localStorage.setItem('maimai-language-v1','id'));
+  await page.goto('https://maimai.party/');await open(page);
+  const dialog=page.locator('#support-checkout-dialog');
+  await expect(dialog.locator('.support-dialog-title')).toHaveAccessibleName('Dukung maimai.party');
+  await expect(dialog.locator('.language-controls [data-language=id]')).toHaveAccessibleName('Bahasa Indonesia');
+  await expect(dialog.getByRole('button',{name:'Tutup checkout dukungan',exact:true})).toBeVisible();
+  await expect(frame(page).getByRole('heading')).toBeVisible();
+  await page.goto('https://maimai.party/support-return.html');
+  await expect(page.locator('html')).toHaveAttribute('lang','id');
+  await expect(page.getByRole('link',{name:'Kembali ke checkout',exact:true})).toBeVisible();
+  await expect(page.locator('body')).toContainText('Checkout Anda belum selesai.');
+  await page.getByRole('link',{name:'Kembali ke checkout',exact:true}).click();
+  await expect(frame(page).getByRole('heading')).toBeVisible();
+  state.status='paid';await payment(page).click();
+  await expect(dialog).toHaveAttribute('data-stage','result');
+  await expect(dialog).toContainText('Terima kasih telah mendukung maimai.party!');
+  await expect(dialog.getByRole('button',{name:'Dukung lagi',exact:true})).toBeVisible();
   expect(state.sessions.size).toBe(1);
 });

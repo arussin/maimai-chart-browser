@@ -79,7 +79,7 @@ async function historyFits(page){
     const nodes=[root,...root.querySelectorAll('*')];return{page:document.documentElement.scrollWidth<=innerWidth+1,clipped:nodes.filter(n=>n.clientWidth>0&&n.getBoundingClientRect().width&&n.scrollWidth>n.clientWidth+1&&!(innerWidth<=600&&n.closest('thead'))).map(n=>n.className),fields:[...root.querySelectorAll('.player-history-value')].every(n=>n.getBoundingClientRect().height>0)};
   });expect(result).toEqual({page:true,clipped:[],fields:true});
 }
-for(const locale of ['en','zh-Hans','ko','ja'])test('bounded real imported history, keyboard and all records in '+locale,async({page},testInfo)=>{
+for(const locale of ['en','zh-Hans','ko','ja','id'])test('bounded real imported history, keyboard and all records in '+locale,async({page},testInfo)=>{
   await page.addInitScript(()=>localStorage.setItem('maimai-chart-sections-v1',JSON.stringify({chart:false,player:false})));
   await page.goto('/lab/');await configure(page);const data=await historyFixture(page,243);await importHistory(page,data);
   await page.evaluate(locale=>maimaiI18n.setLocale(locale),locale);

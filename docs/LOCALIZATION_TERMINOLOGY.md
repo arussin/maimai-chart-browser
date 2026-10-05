@@ -74,3 +74,25 @@ Verify `html.lang` and the selected locale before identifying a screenshot:
 not identify the language on their own. Check each locale separately at 320,
 360, 375, 390 and 414px; navigation should fit on one line without clipping or
 shrinking the text. Localized navigation uses narrower gaps; English stays as-is.
+
+## Indonesian (id) source review — 2026-10-04
+
+Display the language as **Bahasa Indonesia**. This is an AI-authored/source-reviewed
+localization, not native-speaker certification or an assertion of official
+Indonesian community terminology. The release remains subject to build and
+real-browser validation recorded in `localization-review/indonesian-20261004.md`.
+
+Use **chart** for a playable chart and **grafik** for a plotted graph. Use
+**konstanta chart**, **rating**, **grade**, **pencapaian** and **riwayat** consistently.
+Retain tap, hold, slide, touch, break, PB, RT, STD, DX and game difficulty/rank
+labels where they name game concepts. Explain onset as the arrival/start of a
+new input; distinguish temporal gaps from spatial button distance. Preserve
+experimental/partial/unknown qualifications rather than implying complete coverage.
+
+Concise filter defaults use **Semua**; their accessible names keep the filter
+context. Longer Indonesian navigation may wrap rather than clip on narrow
+screens. Preserve placeholders, code, identifiers, thresholds and parser examples
+such as `13.5` unchanged. Translate saved dates differently from played dates.
+Language selection never changes the Japan/International data preference. No
+Indonesian song-alias corpus or provider-URL language support is inferred from
+adding this UI locale. Existing title/artist/romaji aliases remain searchable.

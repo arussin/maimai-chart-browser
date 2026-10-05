@@ -3,37 +3,44 @@
     "Showing {0} of {1} plays · Newest first": {
       "zh-Hans": "显示 {1} 次游玩中的 {0} 次 · 最新在前",
       "ko": "플레이 {1}회 중 {0}회 표시 · 최신순",
-      "ja": "全{1}回中{0}回を表示 · 新しい順"
+      "ja": "全{1}回中{0}回を表示 · 新しい順",
+      "id": "Menampilkan {0} dari {1} kali bermain · Terbaru di atas"
     },
     "Show more history ({0} plays)": {
       "zh-Hans": "显示更多记录（共 {0} 次游玩）",
       "ko": "기록 더 보기 (총 {0}회)",
-      "ja": "履歴をさらに表示（全{0}回）"
+      "ja": "履歴をさらに表示（全{0}回）",
+      "id": "Tampilkan riwayat lainnya ({0} kali bermain)"
     },
     "Show {0} more plays; {1} of {2} shown": {
       "zh-Hans": "再显示 {0} 次游玩；已显示 {2} 次中的 {1} 次",
       "ko": "플레이 {0}회 더 보기; {2}회 중 {1}회 표시됨",
-      "ja": "さらに{0}回のプレイを表示（全{2}回中{1}回表示中）"
+      "ja": "さらに{0}回のプレイを表示（全{2}回中{1}回表示中）",
+      "id": "Tampilkan {0} permainan lagi; {1} dari {2} ditampilkan"
     },
     "Show less": {
       "zh-Hans": "收起",
       "ko": "접기",
-      "ja": "折りたたむ"
+      "ja": "折りたたむ",
+      "id": "Tampilkan lebih sedikit"
     },
     "Dates show when you played. The graph includes all dated plays with known achievement.": {
       "zh-Hans": "日期表示游玩时间。图表包含所有日期和达成率已知的游玩记录。",
       "ko": "날짜는 플레이한 시간을 나타냅니다. 그래프에는 날짜와 달성률을 알 수 있는 모든 플레이가 포함됩니다.",
-      "ja": "日時はプレイした時点を示します。グラフには日時と達成率が分かるすべてのプレイを含みます。"
+      "ja": "日時はプレイした時点を示します。グラフには日時と達成率が分かるすべてのプレイを含みます。",
+      "id": "Tanggal menunjukkan waktu Anda bermain. Grafik mencakup semua permainan yang tanggal dan persentase pencapaiannya diketahui."
     },
     "Show all {0} patterns": {
       "zh-Hans": "显示全部 {0} 种配置",
       "ko": "패턴 {0}개 모두 보기",
-      "ja": "全{0}種類の配置を表示"
+      "ja": "全{0}種類の配置を表示",
+      "id": "Tampilkan semua {0} pola"
     },
     "Show fewer patterns": {
       "zh-Hans": "收起部分配置",
       "ko": "패턴 접기",
-      "ja": "配置の表示を減らす"
+      "ja": "配置の表示を減らす",
+      "id": "Tampilkan lebih sedikit pola"
     }
   }
 }

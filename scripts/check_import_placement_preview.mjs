@@ -58,7 +58,7 @@ async function checkRanges(page,engine){
   await min.fill('97');await max.fill('100.5');await rate.fill('150');
   for(const width of [320,537,1280]){
     await page.setViewportSize({width,height:1000});
-    for(const locale of ['en','zh-Hans','ko','ja']){
+    for(const locale of ['en','zh-Hans','ko','ja','id']){
       await page.locator('.site-header [data-language='+locale+']').click();await page.locator('.personal-range-sections').scrollIntoViewIfNeeded();
       const layout=await page.locator('.personal-range-sections').evaluate(root=>{
         const inputs=[...root.querySelectorAll('input[type=number],button,h3,.personal-range-hint')];
@@ -75,7 +75,7 @@ async function checkRanges(page,engine){
 }
 async function checkReportRecovery(page,engine){
   let reads=0;await page.route('https://public-report.example/**',route=>{reads++;return route.abort();});
-  for(const width of [320,430,1280])for(const locale of ['en','zh-Hans','ko','ja']){
+  for(const width of [320,430,1280])for(const locale of ['en','zh-Hans','ko','ja','id']){
     await page.setViewportSize({width,height:932});await page.locator('.site-header [data-language='+locale+']').click();await page.locator('#player-import-primary').click();
     await page.locator('input[value=report]').check();await page.locator('#player-report-url').fill('https://public-report.example/fixture');await page.locator('.player-dialog .player-actions button').first().click();
     const link=page.locator('.player-message-actions>a');await expect(link).toBeVisible();await expect(link).toHaveAttribute('href','https://public-report.example/fixture');
@@ -98,7 +98,7 @@ for(const [engine,type]of [['chrome',chromium],['webkit',webkit]]){
     await page.locator('#lab-status').waitFor({state:'hidden'});
     for(const width of process.env.IMPORT_PREVIEW_RANGES_ONLY?[]:[320,390,537,600,740,800,1024,1280]){
       await page.setViewportSize({width,height:900});
-      for(const locale of ['en','zh-Hans','ko','ja']){
+      for(const locale of ['en','zh-Hans','ko','ja','id']){
         await page.locator('.site-header [data-language="'+locale+'"]').click();
         const layout=await page.evaluate(()=>{
           const button=document.querySelector('#player-import-primary'),total=document.querySelector('.catalog-total'),count=document.querySelector('#catalog-count');

@@ -172,7 +172,7 @@ def build_browser(output, registry, retained_package=None):
         "lab-loader.js",
         "maishift-favicon.ico",
         "player-import-help.css",
-        *(f"player-import-help.{locale}.html" for locale in ("en", "zh-Hans", "ko", "ja")),
+        *(f"player-import-help.{locale}.html" for locale in ("en", "zh-Hans", "ko", "ja", "id")),
     }
     graph = json.loads((destination / "browser-assets.json").read_text("utf-8"))
     allowed.difference_update(graph["replaces"])

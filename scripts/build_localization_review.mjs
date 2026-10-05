@@ -15,7 +15,7 @@ assert.equal(source.schema_version, 'localization-review-1');
 await assert.rejects(fs.access(output), {code: 'ENOENT'}, 'Do not overwrite a review workbook');
 const wb = Workbook.create();
 const overview = wb.worksheets.add('Start here');
-const languages = [['Korean', 'ko'], ['Chinese', 'zh-Hans'], ['Japanese', 'ja']];
+const languages = [['Korean', 'ko'], ['Chinese', 'zh-Hans'], ['Japanese', 'ja'], ['Indonesian', 'id']];
 const uiSheets = languages.map(([name, locale]) => ({sheet: wb.worksheets.add(`UI ${name}`), name, locale}));
 const search = wb.worksheets.add('Search aliases');
 const first = 8;

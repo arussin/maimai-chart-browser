@@ -66,13 +66,13 @@ test('personal ranges preserve precision, grade stops and rating domains',async(
 });
 
 // Keep screenshot/font/layout work out of the behavior test's 30-second budget.
-// Each width has its own fixture and still covers all four locales.
+// Each width has its own fixture and still covers all five locales.
 for(const width of [320,537,1280]){
   test(`personal range layouts fit all languages at ${width}px`,async({page},testInfo)=>{
     await page.setViewportSize({width,height:1000});
     await test.step('Open ranges with fictional player data',()=>openRanges(page));
     await page.locator('#personal-min').fill('97');await page.locator('#personal-max').fill('100.5');await page.locator('#personal-rateMin').fill('150');
-    for(const locale of ['en','zh-Hans','ko','ja'])await test.step(`${locale} layout and screenshot`,async()=>{
+    for(const locale of ['en','zh-Hans','ko','ja','id'])await test.step(`${locale} layout and screenshot`,async()=>{
       await page.locator('.site-header [data-language='+locale+']').click();await page.locator('.personal-range-sections').scrollIntoViewIfNeeded();
       const layout=await page.locator('.personal-range-sections').evaluate(root=>{
         const inputs=[...root.querySelectorAll('input[type=number],button,h3,.personal-range-hint')];

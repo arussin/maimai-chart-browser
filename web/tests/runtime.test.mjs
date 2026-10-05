@@ -403,7 +403,7 @@ test('local operational diagnostics retain only bounded codes without usage or p
 
 test('one public route contract keeps Japanese ja and game regions out of canonical language paths', async () => {
   const routes = await loadModule('runtime/public-routes');
-  for (const locale of ['en', 'ja', 'ko', 'zh-hans'])
+  for (const locale of ['en', 'ja', 'ko', 'zh-hans', 'id'])
     for (const kind of ['songs', 'versions']) {
       const path = routes.publicPath(locale, kind, 'ソテリア-123');
       assert.equal(routes.routePattern.test(path), true);

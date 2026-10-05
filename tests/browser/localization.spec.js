@@ -11,7 +11,7 @@ test.beforeEach(async({page},testInfo)=>{
 });
 import AxeBuilder from '@axe-core/playwright';
 
-const labels={en:'Find a chart','zh-Hans':'查找谱面',ko:'채보 찾기',ja:'譜面を探す'};
+const labels={en:'Find a chart','zh-Hans':'查找谱面',ko:'채보 찾기',ja:'譜面を探す',id:'Cari chart'};
 const choose=(page,locale)=>page.locator('.site-header [data-language="'+locale+'"]').click();
 const settle=async page=>{await expect(page.locator('#songs .song-row').first()).toBeVisible();};
 
@@ -19,7 +19,8 @@ const cabinetGenres={
   en:['POPS & ANIME','niconico & VOCALOID™','東方Project','GAME & VARIETY','maimai','オンゲキ & CHUNITHM'],
   'zh-Hans':['流行&动漫','niconico＆VOCALOID™','东方Project','其他游戏','舞萌','音击/中二节奏'],
   ko:['POPS & ANIME','niconico & VOCALOID™','東方Project','GAME & VARIETY','maimai','オンゲキ & CHUNITHM'],
-  ja:['POPS＆アニメ','niconico＆ボーカロイド','東方Project','ゲーム＆バラエティ','maimai','オンゲキ＆CHUNITHM']
+  ja:['POPS＆アニメ','niconico＆ボーカロイド','東方Project','ゲーム＆バラエティ','maimai','オンゲキ＆CHUNITHM'],
+  id:['POPS & ANIME','niconico & VOCALOID™','Touhou Project','GAME & VARIETY','maimai','ONGEKI & CHUNITHM']
 };
 const cabinetGenreIds=['POPSアニメ','niconicoボーカロイド','東方Project','ゲームバラエティ','maimai','オンゲキCHUNITHM'];
 
@@ -31,7 +32,7 @@ for(const width of [320,1280])test(`cabinet genre labels follow language without
   const versionNames=()=>page.locator('#version-options .version-name').evaluateAll(nodes=>nodes.map(n=>n.firstChild.textContent));
   const versions=await versionNames();
   const genre=page.locator('#filter-genre');
-  for(const locale of ['en','zh-Hans','ko','ja','en']){
+  for(const locale of ['en','zh-Hans','ko','ja','id','en']){
     await choose(page,locale);await expect(genre.locator('option')).toHaveCount(7);
     await expect(page.locator('.party-brand')).toHaveText('maimai.party');
     expect(await versionNames()).toEqual(versions);
@@ -69,7 +70,7 @@ test('cabinet difficulty names update in filters, chart controls and comparison 
   await row.locator('.chart-row').click();
   await page.locator('#difficulty-summary').click();
   await page.locator('#difficulty-options input[value="MASTER"]').check();
-  for(const locale of ['zh-Hans','ko','ja','en']){
+  for(const locale of ['zh-Hans','ko','ja','id','en']){
     await choose(page,locale);
     const label=locale==='zh-Hans'?'大师':'MASTER';
     await expect(page.locator('#difficulty-summary')).toHaveText(label);
@@ -77,7 +78,7 @@ test('cabinet difficulty names update in filters, chart controls and comparison 
     await expect(row.locator('.row-difficulty option:checked')).toHaveText(label+' · 14');
     await expect(row.locator('.chart-difficulty-badge')).toHaveText(label);
     await expect(row.locator('.chart-row')).toHaveAttribute('aria-label',new RegExp(label));
-    await expect(row.locator('.chart-row')).toHaveAttribute('aria-label',new RegExp({en:'Chart constant unknown','zh-Hans':'谱面定数未知',ko:'채보 상수 알 수 없음',ja:'譜面定数不明'}[locale]));
+    await expect(row.locator('.chart-row')).toHaveAttribute('aria-label',new RegExp({en:'Chart constant unknown','zh-Hans':'谱面定数未知',ko:'채보 상수 알 수 없음',ja:'譜面定数不明',id:'Konstanta chart tidak diketahui'}[locale]));
     await expect(row).toHaveAttribute('data-chart-id',selected);
     await expect(page.locator('#active-filters')).toContainText(label);
     await expect(row).toHaveAttribute('data-difficulty','MASTER');
@@ -103,7 +104,7 @@ test('cabinet difficulty names reach chart activity accessibility labels',async(
   await page.locator('#songs').scrollIntoViewIfNeeded();
   const graph=page.locator('#songs .chart-flow svg').first();await expect(graph).toBeVisible();
   const original=await graph.getAttribute('aria-label');
-  for(const locale of ['zh-Hans','ko','ja','en']){
+  for(const locale of ['zh-Hans','ko','ja','id','en']){
     await choose(page,locale);
     await expect(graph).not.toHaveAttribute('aria-label',/\[object Object\]/);
     if(locale==='zh-Hans')await expect(graph).toHaveAttribute('aria-label',/初级|高级|专家|大师|宗师/);
@@ -115,7 +116,7 @@ test('GitHub link follows the chosen README language and restores the English de
   const repository='https://github.com/arussin/maimai-chart-browser';
   await page.goto('/registry/');await settle(page);await page.locator('#about-tab').click();
   const link=page.locator('a[data-localized-readme]');
-  for(const locale of ['zh-Hans','ko','ja','en']){
+  for(const locale of ['zh-Hans','ko','ja','id','en']){
     await choose(page,locale);
     await expect(link).toHaveAttribute('href',locale==='en'?repository:repository+'/blob/main/README.'+locale+'.md');
   }
@@ -152,6 +153,7 @@ test('concise filter defaults retain the filter context for screen readers',asyn
     ['ja','すべて','バージョン','難易度'],
     ['zh-Hans','全部','版本','难度'],
     ['ko','전체','버전','난이도'],
+    ['id','Semua','Versi','Kesulitan'],
   ]){
     await choose(page,locale);
     await expect(page.locator('#version-summary')).toHaveText(all);
@@ -178,10 +180,10 @@ test('all languages switch instantly, preserve state and return exact English te
     return clone.textContent;
   });
   const original=await snapshot(),data=await page.evaluate(()=>JSON.stringify(maimaiResearchCatalog));
-  for(const locale of ['zh-Hans','ko','ja','en']){
+  for(const locale of ['zh-Hans','ko','ja','id','en']){
     await choose(page,locale);await expect(page.locator('html')).toHaveAttribute('lang',locale);
     await expect(page.locator('#catalog h1')).toHaveText(labels[locale]);
-    await expect(page.locator('#sort-keep')).toHaveAccessibleName({en:'Enable multi-sorting','zh-Hans':'启用多条件排序',ko:'다중 기준 정렬 사용',ja:'複数条件で並べ替え'}[locale]);
+    await expect(page.locator('#sort-keep')).toHaveAccessibleName({en:'Enable multi-sorting','zh-Hans':'启用多条件排序',ko:'다중 기준 정렬 사용',ja:'複数条件で並べ替え',id:'Aktifkan pengurutan multikriteria'}[locale]);
     await expect(page.locator('#search')).toHaveValue('ソテリア');
     await expect(row).toHaveAttribute('data-chart-id',selected);
     await expect(row).toContainText('ソテリア');await expect(row).toContainText(locale==='zh-Hans'?'大师':'MASTER');
@@ -208,7 +210,7 @@ test('browser preference, explicit persistence, cross-page choice and storage de
 
 test('multilingual search works independently of UI language and keeps titles literal',async({page})=>{
   await page.goto('/registry/');await settle(page);
-  for(const locale of ['en','zh-Hans','ko','ja']){
+  for(const locale of ['en','zh-Hans','ko','ja','id']){
     await choose(page,locale);
     for(const query of ['Soteria','そてりあ','소테리아','索特里亚','suo te li ya']){
       await page.locator('#search').fill(query);await expect(page.locator('#songs .song-row')).toHaveCount(4);

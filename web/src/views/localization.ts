@@ -25,10 +25,16 @@ export function createLocalization(ports: {
   /* Site-owned copy only. No DOM observer, network translation, or catalog mutation. */
 
   const catalogs = ports.configuration.messages;
-  const languages: readonly Locale[] = ['en', 'zh-Hans', 'ko', 'ja'];
+  const languages: readonly Locale[] = ['en', 'zh-Hans', 'ko', 'ja', 'id'];
   const isLocale = (value: unknown): value is Locale =>
     typeof value === 'string' && languages.includes(value as Locale);
-  const names = { en: 'English', 'zh-Hans': '简体中文', ko: '한국어', ja: '日本語' };
+  const names = {
+    en: 'English',
+    'zh-Hans': '简体中文',
+    ko: '한국어',
+    ja: '日本語',
+    id: 'Bahasa Indonesia',
+  };
   const key = 'maimai-language-v1';
   const readmeLinks = new Map<HTMLAnchorElement, string>();
   const verbatim = (value: unknown) => ({ literal: String(value ?? '') });
@@ -50,6 +56,7 @@ export function createLocalization(ports: {
       if (/^zh(?:-|$)/.test(language)) return 'zh-Hans';
       if (/^ko(?:-|$)/.test(language)) return 'ko';
       if (/^ja(?:-|$)/.test(language)) return 'ja';
+      if (/^id(?:-|$)/.test(language)) return 'id';
       if (/^en(?:-|$)/.test(language)) return 'en';
     }
     return 'en';
@@ -61,7 +68,7 @@ export function createLocalization(ports: {
   } catch {}
   // Explicit public route language wins without overwriting the user's saved preference.
   const routeLocale = (
-    { en: 'en', ja: 'ja', ko: 'ko', 'zh-hans': 'zh-Hans' } as Record<string, Locale>
+    { en: 'en', ja: 'ja', ko: 'ko', 'zh-hans': 'zh-Hans', id: 'id' } as Record<string, Locale>
   )[location.pathname.split('/')[1]];
   const linkedLocale = new URLSearchParams(location.search).get('lang');
   if (routeLocale) locale = routeLocale;

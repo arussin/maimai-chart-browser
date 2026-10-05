@@ -100,6 +100,7 @@ export function titleLabel(chart: Pick<Chart, 'title' | 'title_state'>, locale =
     ja: ['無題（意図的な空欄）', '曲名不明'],
     ko: ['무제 (의도적 공백)', '제목 정보 없음'],
     'zh-Hans': ['无题（有意留空）', '曲名未知'],
+    id: ['Tanpa judul (disengaja)', 'Judul tidak tersedia'],
   };
   const labels = translations[locale] ?? translations.en;
   return chart.title_state === 'intentional_blank'

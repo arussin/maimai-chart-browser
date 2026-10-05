@@ -1,0 +1,553 @@
+{
+  "schema_version": "maimai-indonesian-implementation-1",
+  "date": "2026-10-04",
+  "recorded_at_utc": "2026-10-04T19:13:05.926Z",
+  "worktree": "C:\\Dev\\worktrees\\maimai-card-history-20261004",
+  "branch": "codex/chart-card-history-refinement",
+  "head": "2731429fb4bd6e1f85d276978ca09bb8bee11683",
+  "local_origin_main": "35d330fd911dca808b5109f219f6c5ea129a8ed8",
+  "state": "source-implemented; maintained-build-and-browser-validation-pending",
+  "translation_review": "docs/localization-review/indonesian-20261004-review.json",
+  "native_speaker_certified": false,
+  "independent_review": false,
+  "production_changed": false,
+  "git_commit_created": false,
+  "catalogs": [
+    {
+      "catalog": "messages.json",
+      "messages": 158,
+      "before_sha256": "e3581f26803f20218e3bf2578a3bd631f0c8622275a286a63d42b56888499f17",
+      "after_sha256": "1bb0f0bddd11c12adf27077b4d6830a34593bcb437d6d91450fbbcbb4e52df55",
+      "existing_content_preserved": true,
+      "placeholder_check_passed": true
+    },
+    {
+      "catalog": "card-history.json",
+      "messages": 7,
+      "before_sha256": "12fc80bb8de461ff9db45579c3a03bef07bdb83a3b8763da97ec67649935c425",
+      "after_sha256": "9b199690b8712eff3c9cc9b5f7e98f5b3e002effe3c2e838ca48829786ef683b",
+      "existing_content_preserved": true,
+      "placeholder_check_passed": true
+    },
+    {
+      "catalog": "about.json",
+      "messages": 52,
+      "before_sha256": "a19ca143a41e2bc435986f0d7222f7a8f6bd134d300f8a5cf18e74fc795d930a",
+      "after_sha256": "50ddf54afb596c406e9d75a82d72e411874dead8d111392b775dd48436c80d45",
+      "existing_content_preserved": true,
+      "placeholder_check_passed": true
+    },
+    {
+      "catalog": "analysis.json",
+      "messages": 73,
+      "before_sha256": "1d2def82565f93e0a14907d14b7b14b60ba4ad0cb04e7fd49ea9005a2d1cf023",
+      "after_sha256": "93706cc4cbd66cf8e927848b6251b0f27542a2135c9d2c582ebd1f1140ff97b1",
+      "existing_content_preserved": true,
+      "placeholder_check_passed": true
+    },
+    {
+      "catalog": "composed.json",
+      "messages": 24,
+      "before_sha256": "0753bf11692c2788d1960127e8a9f4bd7e80acdb23e0d63f5724c64650501026",
+      "after_sha256": "643a33eab725470713baeeab4389f11a1dacfa531c1ba86cf00d250f84d20adb",
+      "existing_content_preserved": true,
+      "placeholder_check_passed": true
+    },
+    {
+      "catalog": "errors.json",
+      "messages": 52,
+      "before_sha256": "0ab1c06217d239070b80c2f5ae2580304b4f084a799a131a84f26eb84d9b2a3f",
+      "after_sha256": "11e61ac0e52735039f548f667a05fd8cd2f9fd71adc0bb0c4960cb16c539a2a8",
+      "existing_content_preserved": true,
+      "placeholder_check_passed": true
+    },
+    {
+      "catalog": "lessons.json",
+      "messages": 112,
+      "before_sha256": "88bca4d022ebc48b1a6e2be8a7c342868a3acbf70f5fd331f6e40b7bf58e60b8",
+      "after_sha256": "07d694b060cb5b37c8dc45c8b71c8dc400f41a3a0a3db87e4cea71d9a76ba1ca",
+      "existing_content_preserved": true,
+      "placeholder_check_passed": true
+    },
+    {
+      "catalog": "patterns.json",
+      "messages": 98,
+      "before_sha256": "604b6f09e8937933e5ff076a9dc534e2f484913a6eff02ec7cd23a6711a8abb8",
+      "after_sha256": "efff970b2e74ad0d542694f2773d064c03a0942349cf82453d08899eb0ab7bbc",
+      "existing_content_preserved": true,
+      "placeholder_check_passed": true
+    },
+    {
+      "catalog": "pattern-aliases.json",
+      "messages": 80,
+      "before_sha256": "a4e4dc329699d87ddaf90d5bd39c764914ebd164614d4abbacdc299d309fc950",
+      "after_sha256": "443c843b79d8fa24e0ecf88638f179c89a6185cbb33a8e6955d39dd02c7a8565",
+      "existing_content_preserved": true,
+      "placeholder_check_passed": true
+    },
+    {
+      "catalog": "player.json",
+      "messages": 90,
+      "before_sha256": "9e685a05e8bc296856dd20cddfe8da1d7b3389206c7095e086e80ee38a17a05c",
+      "after_sha256": "59b5cad129ce3fdb402b82358fe99e17e7334a4bdcbcd543dbb27937c95f6c87",
+      "existing_content_preserved": true,
+      "placeholder_check_passed": true
+    },
+    {
+      "catalog": "player-sources.json",
+      "messages": 57,
+      "before_sha256": "8e3e903b6a0bb8e996fe5270976bfa88a70e559ec2fb8ff4ce85e1d8ad84cdd0",
+      "after_sha256": "0de05f28b67eff0f63f788c7bdd806e57d36183740464aad6b22af81db2ed3de",
+      "existing_content_preserved": true,
+      "placeholder_check_passed": true
+    },
+    {
+      "catalog": "player-maishift.json",
+      "messages": 20,
+      "before_sha256": "5fb915e17e699fab97d241ad4d986b57dae525950a4db96c3792bc4fad892a43",
+      "after_sha256": "67214c18d13684f79e3e65217ce5b386799213d29821542279e66310be48058c",
+      "existing_content_preserved": true,
+      "placeholder_check_passed": true
+    },
+    {
+      "catalog": "maishift-pilot.json",
+      "messages": 56,
+      "before_sha256": "df4e70f4e7aee7b29793dcf0c9fa432a28fb91bdb1c1a3898dd02ad9eb87449d",
+      "after_sha256": "62e46b83ac0f1a25367b1e097b1a78a44b590b60f6f7dd0b57a74e19bd4eb759",
+      "existing_content_preserved": true,
+      "placeholder_check_passed": true
+    },
+    {
+      "catalog": "privacy.json",
+      "messages": 31,
+      "before_sha256": "eb1ee4db67407d0e1fac168dfa9a3ae9667fa4bc4ff467b7c0957998f183f1a8",
+      "after_sha256": "69bacf68482a85f9c3ebec57d448a52d549c6d98f3ef53303490e2bf4a9d8006",
+      "existing_content_preserved": true,
+      "placeholder_check_passed": true
+    },
+    {
+      "catalog": "remaining.json",
+      "messages": 2,
+      "before_sha256": "1e1ef640b52f02d2ba1d76f49d8749e3bfa093e9e64c4d4d143c7e8a058be27e",
+      "after_sha256": "13abc00fed8489a5831f247d600dc6894a1cc7e35d974a8692964092ad32732a",
+      "existing_content_preserved": true,
+      "placeholder_check_passed": true
+    },
+    {
+      "catalog": "share.json",
+      "messages": 14,
+      "before_sha256": "b40683af17c50abc58002c282d22e52efb8ac2c261151ebdb78b02bac2f08893",
+      "after_sha256": "9d86b9b9345d013dd9155372b5de7b2e949bda0c3931ac155649873921e3cea8",
+      "existing_content_preserved": true,
+      "placeholder_check_passed": true
+    },
+    {
+      "catalog": "support.json",
+      "messages": 35,
+      "before_sha256": "02f38098e3ffdc093ec0ecc5d0b1c07fba461a2f6aa3f79d0b53bb8afbe32e4e",
+      "after_sha256": "32e0934def97caae0528ab3bcf1227d24376a6b8e473cf048bdd1f473326182f",
+      "existing_content_preserved": true,
+      "placeholder_check_passed": true
+    }
+  ],
+  "preservation": {
+    "existing_catalog_content_unchanged": true,
+    "english_keys_unchanged": true,
+    "placeholders_preserved": true,
+    "unrelated_working_file_differences": [],
+    "branch_head_unchanged": true,
+    "git_index_sha256_observed": "a729653e49618ac1574792331f98a939a4b9fe42f6d932031ca06bc445ddf764",
+    "git_index_writes_performed": false
+  },
+  "checks": {
+    "node_source_tests": {
+      "passed": 52,
+      "failed": 0,
+      "skipped": 0,
+      "files": [
+        "analysis-model.test.mjs",
+        "artwork.test.mjs",
+        "catalog-genres.test.mjs",
+        "catalog-row-selection.test.mjs",
+        "challenge-matching.test.mjs",
+        "song-model.test.mjs",
+        "indonesian.test.mjs",
+        "recovery.test.mjs"
+      ],
+      "last_executed_at_utc": "2026-10-04T19:13:41.684Z",
+      "node_version": "v24.14.1",
+      "exit_code": 0,
+      "summary": [
+        "ℹ tests 52",
+        "ℹ suites 0",
+        "ℹ pass 52",
+        "ℹ fail 0",
+        "ℹ cancelled 0",
+        "ℹ skipped 0",
+        "ℹ todo 0",
+        "ℹ duration_ms 184.722"
+      ]
+    },
+    "all_five_readme_structures_match": true,
+    "typescript_syntax_only": [
+      "web/src/runtime/contracts.ts",
+      "web/src/runtime/browser-state.ts",
+      "web/src/views/localization.ts",
+      "web/src/catalog-query.ts",
+      "web/src/runtime/diagnostics.ts",
+      "web/src/runtime/navigation.ts"
+    ],
+    "javascript_syntax_only": [
+      "scripts/serve_maishift_pilot.mjs",
+      "scripts/build_localization_review.mjs",
+      "web/tests/localization.test.mjs",
+      "web/tests/recovery.test.mjs",
+      "web/tests/runtime.test.mjs",
+      "web/tests/indonesian.test.mjs",
+      "tests/browser/indonesian.spec.js"
+    ],
+    "recorded_review_input_freshness": true,
+    "full_build": false,
+    "typecheck": false,
+    "formatter": false,
+    "full_python_tests": false,
+    "playwright": false,
+    "visual_review": false,
+    "release_capacity": false
+  },
+  "changed_tracked_files": [
+    {
+      "file": "README.ja.md",
+      "index_blob_sha1": "7c4471bb7e855c866efe008802540ad66e764103",
+      "current_sha256": "16b8bb6b7ce5d4dae6fb8ab7f5818ce62bd4bb3f168710f77044b61c83ca84bb"
+    },
+    {
+      "file": "README.ko.md",
+      "index_blob_sha1": "99200fcc95a1a94605042dc4b20c910b8986c16d",
+      "current_sha256": "33cd209d35891e44b6093de3d274b01d6475a1f4e1acc46308813d259bfb1c90"
+    },
+    {
+      "file": "README.md",
+      "index_blob_sha1": "148719ad3a9f5381aafbad5533e7f48bbd9bf963",
+      "current_sha256": "1ee28d3d6c15424a4c55024aa9c2faae874e17afd52968ed7adf90ac08194240"
+    },
+    {
+      "file": "README.zh-Hans.md",
+      "index_blob_sha1": "4512cc58dbfdf4c16239b14b9932e65e8c5bc49c",
+      "current_sha256": "6c9d056a5ceba2ad1447289916bd7d2711b483e3ec2ced0f3d85f216256a0da5"
+    },
+    {
+      "file": "docs/LOCALIZATION.md",
+      "index_blob_sha1": "84a868fe4e078171808f6041c7db0640316218d6",
+      "current_sha256": "5797b2c5c255a4e0d548a5795845dfc265b736070c8e8cf46af67d59f6c5d098"
+    },
+    {
+      "file": "docs/LOCALIZATION_REVIEW.md",
+      "index_blob_sha1": "12a91c1c189d3b292d8c7fda54bb027e374b8d01",
+      "current_sha256": "66e850df1b531ed267b84e446b95f38e1b111f401336282e475fc0e041727bdf"
+    },
+    {
+      "file": "docs/LOCALIZATION_TERMINOLOGY.md",
+      "index_blob_sha1": "eef72e6d4c584f1847e9b1b55f9092d6a27053a2",
+      "current_sha256": "eed5209adbf73df438e5e13700f1df1ca1ef7ccb4898ae27d214334ce51b7870"
+    },
+    {
+      "file": "docs/localization-review/ai-review.json",
+      "index_blob_sha1": "e7cb7213beab312f76e277a3a7d11b68fc018a42",
+      "current_sha256": "f3a2a09436ad6dedabed2f2cc57d98a8d5442145e346ef162612ff74c893000b"
+    },
+    {
+      "file": "scripts/build_localization_review.mjs",
+      "index_blob_sha1": "64f0a278e488322d332fd3023da3cbc802bd11ab",
+      "current_sha256": "b97f1e4f15d499de007e97eb703d59414f59f84aad2e700e7b97409a512328fd"
+    },
+    {
+      "file": "scripts/build_maishift_pilot.py",
+      "index_blob_sha1": "dadec60cb64a531a40e417a0f1d8aab81b966ebf",
+      "current_sha256": "6192716ac09ca9c657f34fbcfc0893944ee3d3edddaf83833e4f7b4a58d54799"
+    },
+    {
+      "file": "scripts/check_localization.py",
+      "index_blob_sha1": "46de450163f6c2d327eedee7b0c5ce280435000d",
+      "current_sha256": "2f0a4f9a00d97be08f3115bc6dd9cf9c41eae24f9ce746983ff205d413aa0223"
+    },
+    {
+      "file": "scripts/prepare_localization_review.py",
+      "index_blob_sha1": "a4f8c3414e71671a9c6068bdd769dc747fcfc16b",
+      "current_sha256": "826dfeff6f0473f8e7d9286cf361e79e8d56b459a48f6b4418422f2afc0739d8"
+    },
+    {
+      "file": "scripts/serve_maishift_pilot.mjs",
+      "index_blob_sha1": "cce7eac0d5cd4ae731be7d6ba5f1aef6cec4e4dc",
+      "current_sha256": "88b96020619e06536118fdd76d4a78b1cfff361e78c4863a441e89044ea4b68a"
+    },
+    {
+      "file": "src/maimai_intelligence/assets/flag-icons-source.json",
+      "index_blob_sha1": "a213933a3239e5795a1a41938e7a1e119d3b0c83",
+      "current_sha256": "16b4df27fab9bdc56209494bd10cbf57099b458cbfa043eb7ca6cc02539809d3"
+    },
+    {
+      "file": "src/maimai_intelligence/assets/locales/about.json",
+      "index_blob_sha1": "c1ccb3f94de3d89740b42367d3a4c0a848b6bc69",
+      "current_sha256": "50ddf54afb596c406e9d75a82d72e411874dead8d111392b775dd48436c80d45"
+    },
+    {
+      "file": "src/maimai_intelligence/assets/locales/analysis.json",
+      "index_blob_sha1": "fc6623003a8098aeaa16f07644909323eef73c8d",
+      "current_sha256": "93706cc4cbd66cf8e927848b6251b0f27542a2135c9d2c582ebd1f1140ff97b1"
+    },
+    {
+      "file": "src/maimai_intelligence/assets/locales/card-history.json",
+      "index_blob_sha1": "c3fb977af3fbe17be5216e9f8f9a0c1fb9981cc5",
+      "current_sha256": "9b199690b8712eff3c9cc9b5f7e98f5b3e002effe3c2e838ca48829786ef683b"
+    },
+    {
+      "file": "src/maimai_intelligence/assets/locales/composed.json",
+      "index_blob_sha1": "f2f2505a62c5ecca004247325031150486c6a42f",
+      "current_sha256": "643a33eab725470713baeeab4389f11a1dacfa531c1ba86cf00d250f84d20adb"
+    },
+    {
+      "file": "src/maimai_intelligence/assets/locales/errors.json",
+      "index_blob_sha1": "46028e6ab8065f85135ecf6b158efae80493f2d4",
+      "current_sha256": "11e61ac0e52735039f548f667a05fd8cd2f9fd71adc0bb0c4960cb16c539a2a8"
+    },
+    {
+      "file": "src/maimai_intelligence/assets/locales/lessons.json",
+      "index_blob_sha1": "fe7542dda8e54d2a34135d4d5f75f197d7222386",
+      "current_sha256": "07d694b060cb5b37c8dc45c8b71c8dc400f41a3a0a3db87e4cea71d9a76ba1ca"
+    },
+    {
+      "file": "src/maimai_intelligence/assets/locales/maishift-pilot.json",
+      "index_blob_sha1": "04b79eb62d66c85517bccedf770572b2ff8872c0",
+      "current_sha256": "62e46b83ac0f1a25367b1e097b1a78a44b590b60f6f7dd0b57a74e19bd4eb759"
+    },
+    {
+      "file": "src/maimai_intelligence/assets/locales/messages.json",
+      "index_blob_sha1": "24f6256e35b1f040531c0373bb0e4956053731fa",
+      "current_sha256": "1bb0f0bddd11c12adf27077b4d6830a34593bcb437d6d91450fbbcbb4e52df55"
+    },
+    {
+      "file": "src/maimai_intelligence/assets/locales/pattern-aliases.json",
+      "index_blob_sha1": "17825bcf9f54850b930a6bdfbbe74c8186b08d6b",
+      "current_sha256": "443c843b79d8fa24e0ecf88638f179c89a6185cbb33a8e6955d39dd02c7a8565"
+    },
+    {
+      "file": "src/maimai_intelligence/assets/locales/patterns.json",
+      "index_blob_sha1": "745e2d3e20a9f35eb86f909b30248743687daa11",
+      "current_sha256": "efff970b2e74ad0d542694f2773d064c03a0942349cf82453d08899eb0ab7bbc"
+    },
+    {
+      "file": "src/maimai_intelligence/assets/locales/player-maishift.json",
+      "index_blob_sha1": "814b43ee14db8ce9888e6b5c9552de885ff76d13",
+      "current_sha256": "67214c18d13684f79e3e65217ce5b386799213d29821542279e66310be48058c"
+    },
+    {
+      "file": "src/maimai_intelligence/assets/locales/player-sources.json",
+      "index_blob_sha1": "3e84a60d9fb12bdec96019151ee87253b5a5425f",
+      "current_sha256": "0de05f28b67eff0f63f788c7bdd806e57d36183740464aad6b22af81db2ed3de"
+    },
+    {
+      "file": "src/maimai_intelligence/assets/locales/player.json",
+      "index_blob_sha1": "eebdc058aad8868c1275ab7031d2cf36a4607288",
+      "current_sha256": "59b5cad129ce3fdb402b82358fe99e17e7334a4bdcbcd543dbb27937c95f6c87"
+    },
+    {
+      "file": "src/maimai_intelligence/assets/locales/privacy.json",
+      "index_blob_sha1": "d53084523b13a70f7f4e713b180d90013fa8dbff",
+      "current_sha256": "69bacf68482a85f9c3ebec57d448a52d549c6d98f3ef53303490e2bf4a9d8006"
+    },
+    {
+      "file": "src/maimai_intelligence/assets/locales/remaining.json",
+      "index_blob_sha1": "9e5e449e6d91e6338151dd9590313eaae86d49a6",
+      "current_sha256": "13abc00fed8489a5831f247d600dc6894a1cc7e35d974a8692964092ad32732a"
+    },
+    {
+      "file": "src/maimai_intelligence/assets/locales/share.json",
+      "index_blob_sha1": "5c2b0673c01840dc1de2c07e8465aa6fab5cf7fc",
+      "current_sha256": "9d86b9b9345d013dd9155372b5de7b2e949bda0c3931ac155649873921e3cea8"
+    },
+    {
+      "file": "src/maimai_intelligence/assets/locales/support.json",
+      "index_blob_sha1": "39bd402db0ce5cbfc50874a54846df58504504a2",
+      "current_sha256": "32e0934def97caae0528ab3bcf1227d24376a6b8e473cf048bdd1f473326182f"
+    },
+    {
+      "file": "src/maimai_intelligence/assets/localization.css",
+      "index_blob_sha1": "2fba15dc7da3aec72565ff61e603c9fdc62e2320",
+      "current_sha256": "d722e736d100283584edb94a30de0564a0558c5776dda35d0c17c4d8e7212241"
+    },
+    {
+      "file": "src/maimai_intelligence/assets/public-routes.json",
+      "index_blob_sha1": "d82f431134956901bad7dbbce48e2eea6eff348c",
+      "current_sha256": "d1f513560b89bd51fe6eb5d11739dfad6af4aaf875f81ebe391f3b323020628a"
+    },
+    {
+      "file": "src/maimai_intelligence/lab.py",
+      "index_blob_sha1": "717e97287b0d049d9dd50199ba3cbb944c3fa4ba",
+      "current_sha256": "8fd1c6d109d3f6c1c65bccaf34d5e3144fc9b11ce49a15685dfb2d78a1f17a1d"
+    },
+    {
+      "file": "src/maimai_intelligence/localization.py",
+      "index_blob_sha1": "586f38dfc1cb3689bff740c9969881b2392df318",
+      "current_sha256": "3f25ea3880f2d6743edc2a7e020ea99a2b005817884547cccbf15ed0924e1fa2"
+    },
+    {
+      "file": "src/maimai_intelligence/player_help.py",
+      "index_blob_sha1": "17a9f83daeafef974e3d88d3ce3c154f20caa963",
+      "current_sha256": "a98954c338eff006cf3282539ffa6ceee05b565371bf335fb3e70ef76a50d3f2"
+    },
+    {
+      "file": "src/maimai_intelligence/public_release.py",
+      "index_blob_sha1": "d3beb2f1bcf551879bdfc74240ff8fc8731d83ae",
+      "current_sha256": "a831e281dbd2c2db98938348bd2efd9f32217355678bfd32387754fa7351978c"
+    },
+    {
+      "file": "src/maimai_intelligence/route_recovery.py",
+      "index_blob_sha1": "71343524b10be881e49144ed37c71e25191e74ca",
+      "current_sha256": "9d2bc913a3df6ec2c12badd927ed1aca33a90967bd403ee7e4038c4995110568"
+    },
+    {
+      "file": "src/maimai_intelligence/seo.py",
+      "index_blob_sha1": "36a965739780c7257d4a39b45727c8692760b184",
+      "current_sha256": "1bb253d8cfdb0e20396cca194ab2cde47cd6267f758437824112b000da5e11b6"
+    },
+    {
+      "file": "tests/browser/prepare_transition.py",
+      "index_blob_sha1": "39167cfbffcda7b978722f0769ea5998a54ff72b",
+      "current_sha256": "2ba4959060933b4b3b0e66a962f436e5202501b9475d3d22e417a03a655e9a8f"
+    },
+    {
+      "file": "tests/test_browser_resources.py",
+      "index_blob_sha1": "749e0726ebc197803d3253c8b6369bef0a8e2d7e",
+      "current_sha256": "bbb14925452a685685f1abe298e69a0d37a4b19c004e2c941e160973d015a204"
+    },
+    {
+      "file": "tests/test_cloudflare_analytics.py",
+      "index_blob_sha1": "ec79acb9d26d4b2f013ff95a8e77ab35d5f70e9d",
+      "current_sha256": "f06758cc9a0a56e2784ff1b7502223ced5ea7f930ce65ea6aa1c7eec93891c2d"
+    },
+    {
+      "file": "tests/test_localization.py",
+      "index_blob_sha1": "c73a25c9afa57956088ec324eab67b17e344e87e",
+      "current_sha256": "5f54ae2d084d19e85e76e05553a6e247bc3bc401e0f1748aa1f40dccf483bfd9"
+    },
+    {
+      "file": "tests/test_maishift_pilot.py",
+      "index_blob_sha1": "c347fc2d7c811ee08a45bdb6c90b88805c9d02c6",
+      "current_sha256": "9c9e4eb4cb3b3da3a14a0f1b0c58ef874d27b5e5e10cdfa7c7504d0206c2c9c8"
+    },
+    {
+      "file": "tests/test_release_assembly.py",
+      "index_blob_sha1": "5b167507fae71889037331b609a70bc48876ace7",
+      "current_sha256": "ce832e3ac6f2482c76f86cc512e5304ae49e3226666e7ac7d1430bb56699800c"
+    },
+    {
+      "file": "tests/test_route_recovery.py",
+      "index_blob_sha1": "484f96341c30f0470a51fab8461b6a30f66cc91c",
+      "current_sha256": "8b117f2f15b7b2aaa36876c30c6c98d358b415259d11446ddf27f5e0d1c54467"
+    },
+    {
+      "file": "tests/test_seo.py",
+      "index_blob_sha1": "a13e739e35c6f1cd847f081982b3a5725e53977f",
+      "current_sha256": "18d3b440f57cf19ca6444724a3781da92db7e2fab9b5ec3376654f8b2164d4ac"
+    },
+    {
+      "file": "web/src/catalog-query.ts",
+      "index_blob_sha1": "f3a41f227f69e74dc86d5e5300019080ae46e397",
+      "current_sha256": "b0725782a5255f6261d165aeaa9d98a96b7cbca821ebb58f3672498768ce6ce8"
+    },
+    {
+      "file": "web/src/runtime/browser-state.ts",
+      "index_blob_sha1": "661ba743a27da92dcc94e8f619e317b8187cfc63",
+      "current_sha256": "7bb91c0f0073171b112d8c4b7e78454566bec54ab099f222a323573d67aab926"
+    },
+    {
+      "file": "web/src/runtime/contracts.ts",
+      "index_blob_sha1": "d84cad161f48e1636f4149febc8b6f07600c3ffd",
+      "current_sha256": "bd80b098cf83b31894883eb118dff63868f631ae718e34b87738cffca2922e10"
+    },
+    {
+      "file": "web/src/runtime/diagnostics.ts",
+      "index_blob_sha1": "18fd49f54bae38d67f3a528ef216483252c5b767",
+      "current_sha256": "e6844f8701a8d2c5178dbe9d504436265a28886eeb6ba7ab0521b95c3d04cd6a"
+    },
+    {
+      "file": "web/src/runtime/navigation.ts",
+      "index_blob_sha1": "5b420411a8214620367294b487c48d3b1567bfca",
+      "current_sha256": "1dff39802e63e958114bf0acc9175b19a310092775f638f515b818b1494ea263"
+    },
+    {
+      "file": "web/src/views/localization.ts",
+      "index_blob_sha1": "9cfd588049568e690d7fc8e697ffc0c359492da2",
+      "current_sha256": "d98d12b4d87f84179d35f9a4a00daa0c2578d9377aaf7bd3cdae08be79a0261e"
+    },
+    {
+      "file": "web/tests/localization.test.mjs",
+      "index_blob_sha1": "f36f4221ad4266e64cb8c0dbc60c120dcb118b33",
+      "current_sha256": "d2a798ce3e933239adc6ef0b82c881b163cc8bda4336d78f6b9f7e23d120e8af"
+    },
+    {
+      "file": "web/tests/recovery.test.mjs",
+      "index_blob_sha1": "121f8bcf1725acd8c5d84027b9c5d884a6e0e872",
+      "current_sha256": "c2248e77675ba92198c04234f43403e00174a6814135d018416efd74a9d4dd74"
+    },
+    {
+      "file": "web/tests/runtime.test.mjs",
+      "index_blob_sha1": "6254609d6d17f3ad0aba4c3adeac3cedb75c50fa",
+      "current_sha256": "c5164ceb48c10c2e463fa104fcde17c3ed9fac7e87f8ec6df7e71339e44a1eca"
+    }
+  ],
+  "added_files": [
+    {
+      "file": "docs/localization-review/indonesian-20261004-review.json",
+      "current_sha256": "618e3e95f7e29e9717c1bb5d3263aa48b5d47c201ffc90f4d41c0442d17d89d7"
+    },
+    {
+      "file": "docs/localization-review/indonesian-20261004.md",
+      "current_sha256": "e6387892798eff8fba3ca2128d53bb55a43848d1409a0f28500f980f41108a86"
+    },
+    {
+      "file": "README.id.md",
+      "current_sha256": "9597af05289961f0d011f2f961d0d4b3ce46c3c914145846967d80c840750251"
+    },
+    {
+      "file": "src/maimai_intelligence/assets/flag-id.png",
+      "current_sha256": "1f85c9e9a1a0def09db35b63b9aae2a3c4f92202d701322621c8cfddf8880162"
+    },
+    {
+      "file": "src/maimai_intelligence/assets/import-help/README.id.md",
+      "current_sha256": "30db7aa901caf74b05f5e0aac852467dc2cf81e39998ecf60a6dc7ec9a596fd9"
+    },
+    {
+      "file": "tests/browser/indonesian.spec.js",
+      "current_sha256": "71ecebfdc3cb8cc16a443809bf96eca3cfc388c94ad5369e60254ec25f2393c3"
+    },
+    {
+      "file": "web/tests/indonesian.test.mjs",
+      "current_sha256": "baf82a8b2fbae4dd325752c08480ca036c2674331806493395dd28ccb6d3f86b"
+    }
+  ],
+  "blocked": [
+    {
+      "resource": "C:/DevCache/projects/maimai-chart-browser-registry/3a960df9ab5f0df1/venv/Scripts/python.exe",
+      "operation": "stat/read access",
+      "code": "EPERM"
+    },
+    {
+      "resource": "C:/DevTools",
+      "operation": "Commander realpath/directory listing",
+      "code": "EPERM"
+    }
+  ],
+  "pending": [
+    "Maintained DevCache build and declared generated-asset promotion",
+    "Full Python, TypeScript type, formatter, architecture and generated-consistency checks",
+    "Real Playwright tests, broad Indonesian feature coverage, and visual validation including Support controls",
+    "Release capacity/inventory and deployment verification"
+  ],
+  "notes": [
+    "Generated/minified JavaScript remains unchanged; rebuild and explicitly promote only declared outputs through the maintained workflow.",
+    "New real-browser Indonesian tests are authored, not executed; wider feature and Support layout coverage remains a release requirement.",
+    "No permission changes, owner identity switch, credential access, parallel checkout, replacement environment, commit, push, merge, or deployment."
+  ]
+}

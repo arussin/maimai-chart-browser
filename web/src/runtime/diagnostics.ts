@@ -18,6 +18,7 @@ export function catalogFailure(root: HTMLElement, locale: string): void {
     ja: ['カタログを読み込めませんでした。公開楽曲情報は引き続き表示できます。', '再読み込み'],
     ko: ['카탈로그를 불러오지 못했습니다. 공개 곡 정보는 계속 볼 수 있습니다.', '다시 불러오기'],
     'zh-Hans': ['无法加载曲目库。仍可查看公开歌曲信息。', '重新加载'],
+    id: ['Katalog tidak dapat dimuat. Informasi lagu publik tetap tersedia.', 'Coba muat lagi'],
   };
   const document = root.ownerDocument;
   const status =
@@ -54,6 +55,7 @@ export function catalogPending(root: HTMLElement, locale: string): HTMLElement {
         ja: 'カタログを読み込み中…',
         ko: '카탈로그를 불러오는 중…',
         'zh-Hans': '正在加载曲目库…',
+        id: 'Memuat katalog…',
       } as Record<string, string>
     )[locale] || 'Loading catalog…';
   root.prepend(status);

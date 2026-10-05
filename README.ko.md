@@ -2,7 +2,7 @@ Windows 개발: [DEVELOPMENT.md](DEVELOPMENT.md)를 읽어 주세요. 아래의 
 
 # maimai.party · 채보 브라우저
 
-[English](README.md) · [简体中文](README.zh-Hans.md) · [한국어](README.ko.md) · [日本語](README.ja.md)
+[English](README.md) · [简体中文](README.zh-Hans.md) · [한국어](README.ko.md) · [日本語](README.ja.md) · [Bahasa Indonesia](README.id.md)
 
 **2026년 10월 3일 운영 배포:** [릴리스, 검증 결과 및 운영상 제한](docs/PRODUCTION_RELEASE_20261003.md). 다국어 곡·버전 페이지와 비공개 일일 사용량 집계가 운영 중입니다. [Search Console 및 사이트맵](docs/SEARCH_VISIBILITY.md)과 [운영자용 사용량 보고서](usage-worker/README.md)에 각각 운영 가이드가 있습니다.
 

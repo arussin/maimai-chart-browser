@@ -167,7 +167,7 @@ class BrowserResourceTests(unittest.TestCase):
 
     def test_hosted_documents_preload_the_graph_once_and_leave_shell_and_body_unchanged(self):
         assets = self.preload_assets()
-        for locale in ("en", "ja", "ko", "zh-hans"):
+        for locale in ("en", "ja", "ko", "zh-hans", "id"):
             for kind in ("songs", "versions"):
                 assets[f"{locale}/{kind}/fixture/index.html"] = assets[
                     "en/songs/fixture/index.html"
@@ -183,7 +183,7 @@ class BrowserResourceTests(unittest.TestCase):
             "index.html",
             *(
                 f"{locale}/{kind}/fixture/index.html"
-                for locale in ("en", "ja", "ko", "zh-hans")
+                for locale in ("en", "ja", "ko", "zh-hans", "id")
                 for kind in ("songs", "versions")
             ),
         ):

@@ -20,7 +20,7 @@ for(const [engine,type,options]of [['chrome',chromium,{channel:'chrome'}],['edge
     const fingerprint=await page.evaluate(()=>JSON.stringify(maimaiResearchCatalog.catalog));
     const controller=await page.locator('link[rel=preload][as=script][href^="challenge-review.js"]').getAttribute('href');
     expect(requested.some(url=>new URL(url).pathname.endsWith('/challenge-review.js')&&url.endsWith(controller))).toBe(true);
-    for(const width of [320,1280])for(const locale of ['en','zh-Hans','ko','ja']){
+    for(const width of [320,1280])for(const locale of ['en','zh-Hans','ko','ja','id']){
       await page.setViewportSize({width,height:932});await page.locator('.site-header [data-language="'+locale+'"]').click();
       await page.locator('#search').fill('馬と鹿');
       const row=page.locator('#songs .song-row').first(),title=row.locator('.song-title'),reading=row.locator('.song-romaji');
@@ -35,7 +35,7 @@ for(const [engine,type,options]of [['chrome',chromium,{channel:'chrome'}],['edge
     const rows=page.locator('#songs .song-row');await expect(rows).not.toHaveCount(0);
     const levels=await rows.evaluateAll(rows=>rows.map(r=>parseFloat(r.dataset.level)+(r.dataset.level.includes('+')?.5:0)));
     expect(levels).toEqual([...levels].sort((a,b)=>b-a));expect(new Set(await rows.evaluateAll(rows=>rows.map(r=>r.dataset.chartId))).size).toBe(await rows.count());
-    for(const width of [320,1280])for(const locale of ['en','zh-Hans','ko','ja']){
+    for(const width of [320,1280])for(const locale of ['en','zh-Hans','ko','ja','id']){
       await page.setViewportSize({width,height:932});await page.locator('.site-header [data-language="'+locale+'"]').click();
       const title=rows.first().locator('.song-title'),romaji=rows.first().locator('.song-romaji');
       await expect(title).toHaveText('ソテリア');if(locale==='en')await expect(romaji).toBeVisible();else await expect(romaji).toBeHidden();
@@ -66,7 +66,7 @@ for(const [engine,type,options]of [['chrome',chromium,{channel:'chrome'}],['edge
     await page.getByRole('button',{name:'My PBs',exact:true}).click();await expect(rows).toHaveCount(5);
     await expect(rows.locator('.player-icon')).toHaveCount(9);
     const personal=page.locator('.player-filters .player-filter-toggle');if(await personal.getAttribute('aria-expanded')==='false')await personal.click();
-    for(const width of [320,1280])for(const locale of ['en','zh-Hans','ko','ja'])for(const field of ['lamp','sync']){
+    for(const width of [320,1280])for(const locale of ['en','zh-Hans','ko','ja','id'])for(const field of ['lamp','sync']){
       await page.setViewportSize({width,height:932});await page.locator('.site-header [data-language="'+locale+'"]').click();
       await page.locator('#personal-'+field+'-button').click();const menu=page.locator('#personal-'+field+'-choices');await expect(menu).toBeVisible();
       await expect(menu.locator('.player-icon')).toHaveCount(field==='lamp'?4:5);

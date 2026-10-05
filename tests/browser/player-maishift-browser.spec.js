@@ -59,9 +59,9 @@ for(const [name,url]of [['main','/lab/'],['pilot',entry]]){
     await expect(page.locator('#settings-toggle')).toBeFocused();expect(state.calls).toBe(0);
   });
 
-  test(`prominent import fits all four languages in the ${name} Charts heading`,async({page,context},testInfo)=>{
+  test(`prominent import fits all five languages in the ${name} Charts heading`,async({page,context},testInfo)=>{
     await setup(page,context);if(url!==entry){await page.goto(url);await expect.poll(()=>page.evaluate(()=>!!window.maimaiPersonal)).toBe(true);await page.evaluate(()=>maimaiPersonal.ready);}
-    const translations={en:'Import player data','zh-Hans':'导入玩家数据',ko:'플레이어 데이터 가져오기',ja:'プレイヤーデータを読み込む'};
+    const translations={en:'Import player data','zh-Hans':'导入玩家数据',ko:'플레이어 데이터 가져오기',ja:'プレイヤーデータを読み込む',id:'Impor data pemain'};
     for(const width of [320,390,600,740,1061,1100,1280]){
       await page.setViewportSize({width,height:900});
       for(const [locale,label]of Object.entries(translations)){
@@ -217,7 +217,7 @@ test('new file replaces a delayed refresh and temporary imports remain isolated'
   expect(await page.evaluate(()=>!!sessionStorage.getItem('maimai-pilot-maishift-v1:maimai-player-session'))).toBe(true);
 });
 
-for(const locale of ['en','zh-Hans','ko','ja'])test(`browser pilot ${locale} fits narrow controls and supports keyboard import`,async({page,context},testInfo)=>{
+for(const locale of ['en','zh-Hans','ko','ja','id'])test(`browser pilot ${locale} fits narrow controls and supports keyboard import`,async({page,context},testInfo)=>{
   await page.setViewportSize({width:320,height:800});await setup(page,context,locale);
   await page.locator('#player-import-primary').focus();await page.keyboard.press('Enter');
   await expect(page.locator('.player-source-help')).toHaveCount(2);await expect(page.locator('.player-import-help')).toHaveCount(0);
@@ -244,16 +244,16 @@ for(const locale of ['en','zh-Hans','ko','ja'])test(`browser pilot ${locale} fit
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
   const clipped=await page.locator('#player-import-primary,#settings-actions button,.personal-scope button').evaluateAll(nodes=>nodes.filter(n=>n.getBoundingClientRect().width&&n.scrollWidth>n.clientWidth+2).map(n=>n.id));expect(clipped).toEqual([]);
   await page.locator('#settings-toggle').click();await expect(page.locator('#player-status .player-rating')).toBeVisible();
-  const updated={en:'Last Updated:', 'zh-Hans':'最后更新：',ko:'최근 업데이트:',ja:'最終更新：'};
+  const updated={en:'Last Updated:', 'zh-Hans':'最后更新：',ko:'최근 업데이트:',ja:'最終更新：',id:'Terakhir diperbarui:'};
   await expect(page.locator('#player-status>.player-storage-label')).toContainText(updated[locale]);
   await expect(page.locator('#player-status>small')).toHaveCount(1);await expect(page.locator('#player-status .player-profile-link')).toHaveCount(1);
   await expect(page.locator('#player-status .player-profile-link')).toHaveAttribute('href','https://maimai.shiftpsh.com/en@intl/profile/fictional-player/home');
   await page.screenshot({path:testInfo.outputPath('profile-settings-'+locale+'.png')});await page.locator('#settings-toggle').click();
-  const clearLabels={en:'Clear player data','zh-Hans':'清除玩家数据',ko:'플레이어 데이터 지우기',ja:'プレイヤーデータを消去'};
+  const clearLabels={en:'Clear player data','zh-Hans':'清除玩家数据',ko:'플레이어 데이터 지우기',ja:'プレイヤーデータを消去',id:'Hapus data pemain'};
   await expect(page.locator('#player-clear')).toHaveText(clearLabels[locale]);
   await menu(page,'player-import');await expect(page.locator('input[value=maishift]')).toBeChecked();
   const warning=page.locator('.player-import-replace-warning');await expect(warning).toBeVisible();
-  const overwrite={en:'Importing will overwrite data from the currently imported account.','zh-Hans':'导入将覆盖当前已导入账号的数据。',ko:'가져오면 현재 가져온 계정의 데이터를 덮어씁니다.',ja:'読み込むと、現在読み込み済みのアカウントのデータが上書きされます。'};
+  const overwrite={en:'Importing will overwrite data from the currently imported account.','zh-Hans':'导入将覆盖当前已导入账号的数据。',ko:'가져오면 현재 가져온 계정의 데이터를 덮어씁니다.',ja:'読み込むと、現在読み込み済みのアカウントのデータが上書きされます。',id:'Impor akan menimpa data dari akun yang saat ini diimpor.'};
   await expect(warning).toHaveText(overwrite[locale]);
   expect(await warning.evaluate(node=>{const d=node.closest('dialog').getBoundingClientRect(),r=node.getBoundingClientRect();return r.left>=d.left&&r.right<=d.right&&getComputedStyle(node).color==='rgb(163, 36, 50)';})).toBe(true);
   await page.screenshot({path:testInfo.outputPath('import-replacement-'+locale+'.png')});

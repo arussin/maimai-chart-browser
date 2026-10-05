@@ -12,7 +12,7 @@ test.beforeEach(async({page,baseURL})=>{
 // Keep remapping installed until the page stops requesting, then finish API fetches.
 test.afterEach(async({page})=>{await mounts.get(page)?.close();});
 
-const detailHeadings={en:'Chart details','zh-Hans':'谱面详情',ko:'채보 상세',ja:'譜面詳細'};
+const detailHeadings={en:'Chart details','zh-Hans':'谱面详情',ko:'채보 상세',ja:'譜面詳細',id:'Detail chart'};
 for(const locale of Object.keys(detailHeadings))for(const width of [280,320,390,740,741,800,801,1280])test('static chart details and flow fit '+locale+' at '+width,async({page})=>{
  await page.setViewportSize({width,height:900});
  await page.goto('/?search=Fictional%20study&lang='+locale);
@@ -45,7 +45,7 @@ test('obsolete inner-disclosure preferences cannot hide details or steal focus',
  await page.reload();await row.locator('.chart-row').click();await expect(body).toBeVisible();
 });
 
-for(const locale of ['en','ja','ko','zh-hans'])for(const width of [320,768,1280]){
+for(const locale of ['en','ja','ko','zh-hans','id'])for(const width of [320,768,1280]){
  test('direct song workspace '+locale+' '+width,async({page,request},testInfo)=>{
   const errors=[];page.on('pageerror',error=>errors.push(error.message));
   await page.setViewportSize({width,height:900});
@@ -377,7 +377,7 @@ for (const failure of [false,true]) test('lazy comparison '+(failure?'failure pr
  else await expect(page).toHaveURL(/\/ja\/songs\//);
 });
 
-for (const locale of ['en','ja','ko','zh-hans']) test('comparison recovers after one failed catalog request '+locale,async({page,request})=>{
+for (const locale of ['en','ja','ko','zh-hans','id']) test('comparison recovers after one failed catalog request '+locale,async({page,request})=>{
  const map=await(await request.get('/registry/permalinks.json')).json();
  const slug=Object.values(map.songs).find(value=>value.includes('ソテリア'));
  let requests=0;
@@ -566,7 +566,7 @@ for(const mode of ['legacy','stale','forged'])test('song release binding '+mode,
  }
 });
 
-for(const locale of ['en','ja','ko','zh-hans'])for(const width of [320,768,1280]){
+for(const locale of ['en','ja','ko','zh-hans','id'])for(const width of [320,768,1280]){
  test('browser opens only the selected song difficulty '+locale+' '+width,async({page})=>{
   await page.setViewportSize({width,height:900});
   await page.goto('/?lang='+locale);await expect(page.locator('#catalog-count')).toHaveText(/26/);

@@ -353,7 +353,7 @@ class MaishiftPilotArtifactTests(unittest.TestCase):
                 self.assertTrue(path.startswith("media/"))
                 self.assertTrue((browser / path).is_file())
             self.assertTrue((browser / "maishift-favicon.ico").is_file())
-            for locale in ("en", "zh-Hans", "ko", "ja"):
+            for locale in ("en", "zh-Hans", "ko", "ja", "id"):
                 help_html = (browser / f"player-import-help.{locale}.html").read_text("utf-8")
                 self.assertIn(f'<html lang="{locale}">', help_html)
                 self.assertIn('id="session-report"', help_html)

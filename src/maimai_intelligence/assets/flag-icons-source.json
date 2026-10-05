@@ -22,6 +22,11 @@
       "sha256": "5efce88ac7228ea159bcf7fd1cc56d73c19428394218706524bac0e9151d4c61",
       "file": "flag-jp.png",
       "source": "https://raw.githubusercontent.com/legacy-icons/famfamfam-flags/a79ec57f332a43717170cdcf159692bcf0012872/dist/png/jp.png"
+    },
+    {
+      "sha256": "1f85c9e9a1a0def09db35b63b9aae2a3c4f92202d701322621c8cfddf8880162",
+      "file": "flag-id.png",
+      "source": "https://raw.githubusercontent.com/legacy-icons/famfamfam-flags/a79ec57f332a43717170cdcf159692bcf0012872/dist/png/id.png"
     }
   ],
   "revision": "a79ec57f332a43717170cdcf159692bcf0012872",

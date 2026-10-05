@@ -98,7 +98,7 @@ because the UI looks ready.
    main site with normal consent; do not silently copy or merge pilot scores.
    Review the current Session Report pin and any shared-reader delta explicitly.
 5. **Prepare the announcement.** Preserve key `player-import-sources-v1`, Settings
-   anchoring, What's new replay and separate seen-state. Revise the four-language
+   anchoring, What's new replay and separate seen-state. Revise the five-language
    text to mention the visible Import player data action, rather than directing
    everyone only through Settings. Activate only with accepted capabilities;
    test first display, dialog deferral, keyboard dismissal and reduced motion.
@@ -107,7 +107,7 @@ because the UI looks ready.
    work in this task. Export only reviewed source; exclude unrelated dirty work
    and these mockup-only assets. Run the documented Python/browser/Worker and
    localization checks in DevCache, plus downstream checks if the pin changes.
-   Cover Chrome, Edge, Firefox, WebKit, four languages and desktop/phone widths;
+   Cover Chrome, Edge, Firefox, WebKit, five languages and desktop/phone widths;
    retest storage upgrades, source switches, stale tabs, Clear/Forget during work,
    no invented history and unknown-value handling. Inspect the actual final
    static artifact, all version logos, catalog identities and sharing/analytics

@@ -12,6 +12,16 @@ const {parse} = require('acorn');
 const excluded = new Set(['site.js','explore.js','explore-wire.js','explore-similarity.js','localization.js','song-search.js']);
 export const scripts = fs.readdirSync(path.join(root,'src/maimai_intelligence/assets')).filter(name=>name.endsWith('.js')&&!excluded.has(name)).map(name=>name.slice(0,-3));
 const inventory = new Map();
+const folder=path.join(root,'src/maimai_intelligence/assets/locales');
+const catalogs=fs.readdirSync(folder).filter(name=>name.endsWith('.json')).map(name=>
+  JSON.parse(fs.readFileSync(path.join(folder,name),'utf8')));
+const translations=new Map();
+for(const catalog of catalogs)for(const row of Object.values(catalog.messages||{})){
+  for(const [locale,value]of Object.entries(row))if(locale!=='$translate'&&typeof value==='string'){
+    if(!translations.has(locale))translations.set(locale,new Set());
+    translations.get(locale).add(value);
+  }
+}
 function templateVariants(node) {
   let values=[''], parameter=0;
   node.quasis.forEach((q,i)=>{
@@ -24,18 +34,24 @@ function templateVariants(node) {
   });
   return values;
 }
-function walk(node, visit, parent) {
+function walk(node, visit, parent, locale) {
   if (!node || typeof node !== 'object') return;
-  if (node.type) visit(node, parent);
+  // Pretranslated domain tables remain catalog-owned. Only exact registered
+  // translations in an explicit locale branch qualify; UI binding slots do not.
+  if(node.type==='Property'){
+    const key=node.key?.name??node.key?.value;
+    locale=translations.has(key)?key:undefined;
+  }
+  if (node.type) visit(node, parent, locale);
   for (const [key, value] of Object.entries(node)) if (!['loc','start','end'].includes(key)) {
-    if (Array.isArray(value)) value.forEach(child => walk(child, visit, node));
-    else if (value && typeof value === 'object') walk(value, visit, node);
+    if (Array.isArray(value)) value.forEach(child => walk(child, visit, node, locale));
+    else if (value && typeof value === 'object') walk(value, visit, node, locale);
   }
 }
 for (const name of scripts) {
   const filename = `src/maimai_intelligence/assets/${name}.js`;
   const source = fs.readFileSync(path.join(root,filename),'utf8');
-  walk(parse(source,{ecmaVersion:'latest',locations:true}), (node,parent) => {
+  walk(parse(source,{ecmaVersion:'latest',locations:true}), (node,parent,locale) => {
     const call=parent?.type==='CallExpression' || parent?.type==='NewExpression' ? parent : null;
     const name=call?.callee?.name || call?.callee?.property?.name;
     const argument=call?.arguments.indexOf(node);
@@ -51,6 +67,7 @@ for (const name of scripts) {
     // Other compact interpolation protocols carry no UI prose.
     if(node.type==='TemplateLiteral'&&!ui&&!/[a-zA-Z]{2,}\s|\s[a-zA-Z]{2,}/.test(raw))continue;
     const value=raw.trim();
+    if(!ui&&translations.get(locale)?.has(value))continue;
     if (!inventory.has(value)) inventory.set(value,[]);
     inventory.get(value).push(`${filename}:${node.loc.start.line}`);
     }
@@ -59,11 +76,8 @@ for (const name of scripts) {
 if(process.argv.includes('--inventory')) {
   process.stdout.write(JSON.stringify(Object.fromEntries([...inventory].sort()),null,2)+'\n');
 } else {
-  const folder=path.join(root,'src/maimai_intelligence/assets/locales');
-  const known=new Set(fs.readdirSync(folder).filter(name=>name.endsWith('.json')).flatMap(name=>{
-    const catalog=JSON.parse(fs.readFileSync(path.join(folder,name),'utf8'));
-    return [...Object.keys(catalog.messages||{}),...Object.keys(catalog.invariants||{})];
-  }));
+  const known=new Set(catalogs.flatMap(catalog=>
+    [...Object.keys(catalog.messages||{}),...Object.keys(catalog.invariants||{})]));
   const classified=createLiteralClassifier(known);
   const missing=[...inventory].filter(([text])=>!classified(text));
   for(const [text,locations] of missing) console.error(`${JSON.stringify(text)}: ${locations.join(', ')}`);

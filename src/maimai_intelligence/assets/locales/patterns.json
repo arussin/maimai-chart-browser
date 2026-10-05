@@ -3,412 +3,494 @@
     "Umiyuri pattern": {
       "zh-Hans": "海底谭配置",
       "ko": "우미유리 패턴",
-      "ja": "ウミユリ配置"
+      "ja": "ウミユリ配置",
+      "id": "Pola Umiyuri"
     },
     "Trill / two-position alternation": {
       "zh-Hans": "交互 / 两点交替",
       "ko": "트릴 / 두 위치 교대",
-      "ja": "トリル / 2点交互"
+      "ja": "トリル / 2点交互",
+      "id": "Trill / pergantian dua posisi"
     },
     "Repeated-button notes": {
       "zh-Hans": "纵连 / 同键连打",
       "ko": "같은 버튼 연타",
-      "ja": "縦連 / 同ボタン連打"
+      "ja": "縦連 / 同ボタン連打",
+      "id": "Not berulang pada tombol yang sama"
     },
     "Gallop notes": {
       "zh-Hans": "短长间隔连打",
       "ko": "갤럽 패턴",
-      "ja": "短長間隔の連打"
+      "ja": "短長間隔の連打",
+      "id": "Not gallop"
     },
     "Three-note burst": {
       "zh-Hans": "三连打",
       "ko": "3연타",
-      "ja": "3連打"
+      "ja": "3連打",
+      "id": "Rangkaian singkat tiga not"
     },
     "Triplet-grid sequence": {
       "zh-Hans": "三连音节奏",
       "ko": "셋잇단음표 패턴",
-      "ja": "3連符の配置"
+      "ja": "3連符の配置",
+      "id": "Urutan pada kisi triplet"
     },
     "Offbeat-onset run": {
       "zh-Hans": "反拍连续输入",
       "ko": "엇박 연속 입력",
-      "ja": "裏拍の連打"
+      "ja": "裏拍の連打",
+      "id": "Rangkaian input di sela ketukan"
     },
     "Simultaneous-note group": {
       "zh-Hans": "同时押组",
       "ko": "동시 입력 묶음",
-      "ja": "同時押しの組"
+      "ja": "同時押しの組",
+      "id": "Kelompok not serentak"
     },
     "Repeated simultaneous groups": {
       "zh-Hans": "连续同时押",
       "ko": "연속 동시 입력",
-      "ja": "連続同時押し"
+      "ja": "連続同時押し",
+      "id": "Kelompok serentak berulang"
     },
     "Button staircase": {
       "zh-Hans": "按钮阶梯",
       "ko": "버튼 계단",
-      "ja": "ボタン階段"
+      "ja": "ボタン階段",
+      "id": "Tangga tombol"
     },
     "Perimeter run": {
       "zh-Hans": "外圈连续输入",
       "ko": "외곽 회전",
-      "ja": "外周の連続入力"
+      "ja": "外周の連続入力",
+      "id": "Rangkaian mengelilingi tombol luar"
     },
     "Direction-reversal run": {
       "zh-Hans": "折返连续输入",
       "ko": "방향 전환 연타",
-      "ja": "折り返しの連打"
+      "ja": "折り返しの連打",
+      "id": "Rangkaian berbalik arah"
     },
     "Shared-head slide fan": {
       "zh-Hans": "同起点分岔滑动",
       "ko": "시작점을 공유하는 분기 슬라이드",
-      "ja": "同始点の分岐スライド"
+      "ja": "同始点の分岐スライド",
+      "id": "Slide bercabang dengan kepala bersama"
     },
     "Staggered slide starts": {
       "zh-Hans": "错时启动的滑动",
       "ko": "시간차 슬라이드 시작",
-      "ja": "時間差スライド始動"
+      "ja": "時間差スライド始動",
+      "id": "Awal slide berselang"
     },
     "Overlapping moving slides": {
       "zh-Hans": "滑动过程重叠",
       "ko": "이동 슬라이드 겹침",
-      "ja": "移動スライドの重なり"
+      "ja": "移動スライドの重なり",
+      "id": "Slide bergerak yang tumpang tindih"
     },
     "Slide/tap interleave": {
       "zh-Hans": "滑动与单点交织",
       "ko": "슬라이드 / 탭 교차",
-      "ja": "スライドとタップの複合"
+      "ja": "スライドとタップの複合",
+      "id": "Slide diselingi tap"
     },
     "Tap-while-slide-waits": {
       "zh-Hans": "滑动等待中单点",
       "ko": "슬라이드 대기 중 탭",
-      "ja": "スライド待機中のタップ"
+      "ja": "スライド待機中のタップ",
+      "id": "Tap saat slide menunggu"
     },
     "Changing slide waits": {
       "zh-Hans": "变化的滑动等待",
       "ko": "슬라이드 대기 시간 변화",
-      "ja": "スライド待機時間の変化"
+      "ja": "スライド待機時間の変化",
+      "id": "Waktu tunggu slide berubah"
     },
     "Connected slide chain": {
       "zh-Hans": "连接滑动链",
       "ko": "연결 슬라이드",
-      "ja": "連結スライド"
+      "ja": "連結スライド",
+      "id": "Rantai slide tersambung"
     },
     "Hold/tap interleave": {
       "zh-Hans": "长按与单点交织",
       "ko": "홀드 / 탭 교차",
-      "ja": "ホールドとタップの複合"
+      "ja": "ホールドとタップの複合",
+      "id": "Hold diselingi tap"
     },
     "Hold/slide overlap": {
       "zh-Hans": "长按与滑动重叠",
       "ko": "홀드 / 슬라이드 겹침",
-      "ja": "ホールドとスライドの重なり"
+      "ja": "ホールドとスライドの重なり",
+      "id": "Hold dan slide tumpang tindih"
     },
     "Touch/button interleave": {
       "zh-Hans": "触摸与按钮交织",
       "ko": "터치 / 버튼 교차",
-      "ja": "タッチとボタンの複合"
+      "ja": "タッチとボタンの複合",
+      "id": "Touch diselingi tombol"
     },
     "High onset density": {
       "zh-Hans": "高输入密度",
       "ko": "높은 입력 밀도",
-      "ja": "高い入力密度"
+      "ja": "高い入力密度",
+      "id": "Kepadatan awal input tinggi"
     },
     "Bursty density": {
       "zh-Hans": "短暂高密度",
       "ko": "순간적인 고밀도",
-      "ja": "突発的な密度"
+      "ja": "突発的な密度",
+      "id": "Kepadatan melonjak singkat"
     },
     "Sustained density": {
       "zh-Hans": "持续密集",
       "ko": "지속되는 고밀도",
-      "ja": "持続する高密度"
+      "ja": "持続する高密度",
+      "id": "Kepadatan berkelanjutan"
     },
     "Backloaded density": {
       "zh-Hans": "后段密集",
       "ko": "후반 밀집",
-      "ja": "終盤寄りの密度"
+      "ja": "終盤寄りの密度",
+      "id": "Kepadatan terpusat di akhir"
     },
     "Frontloaded density": {
       "zh-Hans": "前段密集",
       "ko": "초반 밀집",
-      "ja": "序盤寄りの密度"
+      "ja": "序盤寄りの密度",
+      "id": "Kepadatan terpusat di awal"
     },
     "Isolated density spike": {
       "zh-Hans": "孤立密度峰值",
       "ko": "단독 밀도 급증",
-      "ja": "孤立した密度ピーク"
+      "ja": "孤立した密度ピーク",
+      "id": "Lonjakan kepadatan tunggal"
     },
     "Multiple density peaks": {
       "zh-Hans": "多个密度峰值",
       "ko": "여러 구간의 밀도 피크",
-      "ja": "複数の密度ピーク"
+      "ja": "複数の密度ピーク",
+      "id": "Beberapa puncak kepadatan"
     },
     "Steady density": {
       "zh-Hans": "稳定密度",
       "ko": "일정한 밀도",
-      "ja": "一定の密度"
+      "ja": "一定の密度",
+      "id": "Kepadatan merata"
     },
     "Low-onset gaps": {
       "zh-Hans": "低输入间隙",
       "ko": "입력이 적은 구간",
-      "ja": "入力の少ない区間"
+      "ja": "入力の少ない区間",
+      "id": "Jeda dengan sedikit input baru"
     },
     "Break-note concentration": {
       "zh-Hans": "BREAK 集中",
       "ko": "BREAK 집중",
-      "ja": "BREAK の集中"
+      "ja": "BREAK の集中",
+      "id": "Konsentrasi not break"
     },
     "Variable onset spacing": {
       "zh-Hans": "输入间隔变化",
       "ko": "입력 간격 변화",
-      "ja": "入力間隔の変化"
+      "ja": "入力間隔の変化",
+      "id": "Selang awal input bervariasi"
     },
     "High moving-slide occupancy": {
       "zh-Hans": "滑动过程占比高",
       "ko": "높은 이동 슬라이드 점유율",
-      "ja": "移動スライドの高占有率"
+      "ja": "移動スライドの高占有率",
+      "id": "Porsi waktu gerakan slide tinggi"
     },
     "Repeated motif": {
       "zh-Hans": "重复乐句配置",
       "ko": "반복 모티프",
-      "ja": "繰り返すモチーフ"
+      "ja": "繰り返すモチーフ",
+      "id": "Motif berulang"
     },
     "Isolated pattern sections": {
       "zh-Hans": "独立配置段落",
       "ko": "독립 패턴 구간",
-      "ja": "独立した配置区間"
+      "ja": "独立した配置区間",
+      "id": "Bagian pola tersendiri"
     },
     "Anchored trill": {
       "zh-Hans": "轴交互",
       "ko": "축 트릴",
-      "ja": "軸トリル"
+      "ja": "軸トリル",
+      "id": "Trill dengan titik tetap"
     },
     "Scattered tap stream": {
       "zh-Hans": "连续散点",
       "ko": "산개 탭 연속",
-      "ja": "散らばるタップ連打"
+      "ja": "散らばるタップ連打",
+      "id": "Rangkaian tap tersebar"
     },
     "Touch stream": {
       "zh-Hans": "连续触摸",
       "ko": "터치 연속",
-      "ja": "タッチ連打"
+      "ja": "タッチ連打",
+      "id": "Rangkaian touch"
     },
     "Touch sweep": {
       "zh-Hans": "触摸扫动",
       "ko": "터치 쓸기",
-      "ja": "タッチのなぞり"
+      "ja": "タッチのなぞり",
+      "id": "Sapuan touch"
     },
     "Touch rotation": {
       "zh-Hans": "触摸转圈",
       "ko": "터치 회전",
-      "ja": "タッチ回転"
+      "ja": "タッチ回転",
+      "id": "Putaran touch"
     },
     "Repeated same-start slides": {
       "zh-Hans": "连续同起点滑动",
       "ko": "동일 시작점 반복 슬라이드",
-      "ja": "同始点の連続スライド"
+      "ja": "同始点の連続スライド",
+      "id": "Slide berulang dari titik awal yang sama"
     },
     "Alternating slide launches": {
       "zh-Hans": "交替启动滑动",
       "ko": "교대 슬라이드 시작",
-      "ja": "交互スライド始動"
+      "ja": "交互スライド始動",
+      "id": "Awal gerakan slide bergantian"
     },
     "Different-speed paired slides": {
       "zh-Hans": "不同速度的成对滑动",
       "ko": "서로 다른 속도의 슬라이드 쌍",
-      "ja": "異速スライドの組"
+      "ja": "異速スライドの組",
+      "id": "Pasangan slide berbeda kecepatan"
     },
     "Extended slide wait": {
       "zh-Hans": "长等待滑动",
       "ko": "긴 슬라이드 대기",
-      "ja": "長いスライド待機"
+      "ja": "長いスライド待機",
+      "id": "Waktu tunggu slide panjang"
     },
     "Back-and-forth slides": {
       "zh-Hans": "往返滑动",
       "ko": "왕복 슬라이드",
-      "ja": "往復スライド"
+      "ja": "往復スライド",
+      "id": "Slide bolak-balik"
     },
     "CYCLES pattern": {
       "zh-Hans": "CYCLES 配置",
       "ko": "CYCLES 패턴",
-      "ja": "CYCLES 配置"
+      "ja": "CYCLES 配置",
+      "id": "Pola CYCLES"
     },
     "Slip Flip pattern": {
       "zh-Hans": "Slip Flip 配置",
       "ko": "Slip Flip 패턴",
-      "ja": "Slip Flip 配置"
+      "ja": "Slip Flip 配置",
+      "id": "Pola Slip Flip"
     },
     "Death Scythe pattern": {
       "zh-Hans": "Death Scythe 配置",
       "ko": "Death Scythe 패턴",
-      "ja": "Death Scythe 配置"
+      "ja": "Death Scythe 配置",
+      "id": "Pola Death Scythe"
     },
     "Sugarbitter pattern": {
       "zh-Hans": "Sugarbitter 配置",
       "ko": "Sugarbitter 패턴",
-      "ja": "Sugarbitter 配置"
+      "ja": "Sugarbitter 配置",
+      "id": "Pola Sugarbitter"
     },
     "Future Re:MASTER pattern": {
       "zh-Hans": "Future Re:MASTER 配置",
       "ko": "Future Re:MASTER 패턴",
-      "ja": "Future Re:MASTER 配置"
+      "ja": "Future Re:MASTER 配置",
+      "id": "Pola Future Re:MASTER"
     },
     "Gekishou pattern": {
       "zh-Hans": "激唱配置",
       "ko": "격창 패턴",
-      "ja": "激唱配置"
+      "ja": "激唱配置",
+      "id": "Pola Gekishou"
     },
     "Hoshizora Spectacle pattern": {
       "zh-Hans": "星空配置",
       "ko": "호시조라 패턴",
-      "ja": "星空配置"
+      "ja": "星空配置",
+      "id": "Pola Hoshizora Spectacle"
     },
     "Outlaw pattern": {
       "zh-Hans": "Outlaw 配置",
       "ko": "Outlaw 패턴",
-      "ja": "アウトロー配置"
+      "ja": "アウトロー配置",
+      "id": "Pola Outlaw"
     },
     "AMAZING MIGHTYYYY!!!! EXPERT pattern": {
       "zh-Hans": "AMAZING MIGHTYYYY!!!! EXPERT 配置",
       "ko": "AMAZING MIGHTYYYY!!!! EXPERT 패턴",
-      "ja": "AMAZING MIGHTYYYY!!!! EXPERT 配置"
+      "ja": "AMAZING MIGHTYYYY!!!! EXPERT 配置",
+      "id": "Pola AMAZING MIGHTYYYY!!!! EXPERT"
     },
     "Magic-circle pattern": {
       "zh-Hans": "魔法阵配置",
       "ko": "마법진 패턴",
-      "ja": "魔法陣配置"
+      "ja": "魔法陣配置",
+      "id": "Pola lingkaran sihir"
     },
     "PATTERN": {
       "zh-Hans": "配置",
       "ko": "패턴",
-      "ja": "配置"
+      "ja": "配置",
+      "id": "POLA"
     },
     "CHART TRAIT": {
       "zh-Hans": "谱面特征",
       "ko": "채보 특성",
-      "ja": "譜面の特徴"
+      "ja": "譜面の特徴",
+      "id": "KARAKTERISTIK CHART"
     },
     "Open lesson →": {
       "zh-Hans": "打开教程 →",
       "ko": "강좌 보기 →",
-      "ja": "解説を開く →"
+      "ja": "解説を開く →",
+      "id": "Buka pelajaran →"
     },
     "Close pattern": {
       "zh-Hans": "关闭配置",
       "ko": "패턴 닫기",
-      "ja": "配置を閉じる"
+      "ja": "配置を閉じる",
+      "id": "Tutup pola"
     },
     "Find charts": {
       "zh-Hans": "查找谱面",
       "ko": "채보 찾기",
-      "ja": "譜面を探す"
+      "ja": "譜面を探す",
+      "id": "Cari chart"
     },
     "Find charts with this pattern": {
       "zh-Hans": "查找包含此配置的谱面",
       "ko": "이 패턴이 있는 채보 찾기",
-      "ja": "この配置を含む譜面を探す"
+      "ja": "この配置を含む譜面を探す",
+      "id": "Cari chart dengan pola ini"
     },
     "Chart matching unavailable": {
       "zh-Hans": "谱面匹配不可用",
       "ko": "채보 검색 불가",
-      "ja": "譜面検索を利用できません"
+      "ja": "譜面検索を利用できません",
+      "id": "Pencocokan chart tidak tersedia"
     },
     "No lessons match this search.": {
       "zh-Hans": "没有匹配的教程。",
       "ko": "검색에 맞는 강좌가 없습니다.",
-      "ja": "一致する解説がありません。"
+      "ja": "一致する解説がありません。",
+      "id": "Tidak ada pelajaran yang cocok dengan pencarian ini."
     },
     "No pattern data in this catalog release.": {
       "zh-Hans": "此曲库版本没有配置数据。",
       "ko": "이 카탈로그 버전에는 패턴 데이터가 없습니다.",
-      "ja": "この版のカタログには配置データがありません。"
+      "ja": "この版のカタログには配置データがありません。",
+      "id": "Tidak ada data pola dalam rilis katalog ini."
     },
     "No supported chart coverage": {
       "zh-Hans": "暂无支持的谱面数据",
       "ko": "지원되는 채보 데이터 없음",
-      "ja": "対応する譜面データなし"
+      "ja": "対応する譜面データなし",
+      "id": "Tidak ada cakupan chart yang didukung"
     },
     "Play demo": {
       "zh-Hans": "播放演示",
       "ko": "시연 재생",
-      "ja": "デモを再生"
+      "ja": "デモを再生",
+      "id": "Putar demo"
     },
     "Pause demo": {
       "zh-Hans": "暂停演示",
       "ko": "시연 일시 정지",
-      "ja": "デモを一時停止"
+      "ja": "デモを一時停止",
+      "id": "Jeda demo"
     },
     "Step": {
       "zh-Hans": "单步",
       "ko": "한 단계",
-      "ja": "コマ送り"
+      "ja": "コマ送り",
+      "id": "Langkah"
     },
     "Restart": {
       "zh-Hans": "重新开始",
       "ko": "처음부터",
-      "ja": "最初から"
+      "ja": "最初から",
+      "id": "Mulai ulang"
     },
     "Speed": {
       "zh-Hans": "速度",
       "ko": "속도",
-      "ja": "速度"
+      "ja": "速度",
+      "id": "Kecepatan"
     },
     "Demo speed": {
       "zh-Hans": "演示速度",
       "ko": "시연 속도",
-      "ja": "デモ速度"
+      "ja": "デモ速度",
+      "id": "Kecepatan demo"
     },
     "Demo progress": {
       "zh-Hans": "演示进度",
       "ko": "시연 진행도",
-      "ja": "デモの進行状況"
+      "ja": "デモの進行状況",
+      "id": "Progres demo"
     },
     "Authored input positions": {
       "zh-Hans": "示例输入位置",
       "ko": "제작된 예시 입력 위치",
-      "ja": "作成した例の入力位置"
+      "ja": "作成した例の入力位置",
+      "id": "Posisi input dalam ilustrasi"
     },
     "Input positions": {
       "zh-Hans": "输入位置",
       "ko": "입력 위치",
-      "ja": "入力位置"
+      "ja": "入力位置",
+      "id": "Posisi input"
     },
     "No new input": {
       "zh-Hans": "没有新输入",
       "ko": "새 입력 없음",
-      "ja": "新しい入力なし"
+      "ja": "新しい入力なし",
+      "id": "Tidak ada input baru"
     },
     "Gold inset bars are break inputs already included in the total.": {
       "zh-Hans": "金色内嵌柱表示已计入总数的 BREAK 输入。",
       "ko": "금색 내부 막대는 이미 합계에 포함된 BREAK 입력입니다.",
-      "ja": "金色の内側の棒は、合計に含まれている BREAK 入力です。"
+      "ja": "金色の内側の棒は、合計に含まれている BREAK 入力です。",
+      "id": "Batang emas di dalam batang utama adalah input break yang sudah termasuk dalam total."
     },
     "Reduced motion is on. Use Step or the progress slider.": {
       "zh-Hans": "已启用减少动态效果。请使用单步或进度滑块。",
       "ko": "동작 줄이기가 켜져 있습니다. 한 단계 또는 진행 슬라이더를 사용하세요.",
-      "ja": "動きを減らす設定が有効です。コマ送りか進行スライダーを使ってください。"
+      "ja": "動きを減らす設定が有効です。コマ送りか進行スライダーを使ってください。",
+      "id": "Pengurangan gerakan aktif. Gunakan Langkah atau penggeser progres."
     },
     "beats": {
       "zh-Hans": "拍",
       "ko": "박",
-      "ja": "拍"
+      "ja": "拍",
+      "id": "ketukan"
     },
     "seconds": {
       "zh-Hans": "秒",
       "ko": "초",
-      "ja": "秒"
+      "ja": "秒",
+      "id": "detik"
     },
     "Button {0}": {
       "zh-Hans": "按钮 {0}",
       "ko": "버튼 {0}",
-      "ja": "ボタン {0}"
+      "ja": "ボタン {0}",
+      "id": "Tombol {0}"
     },
     "Touch {0}": {
       "zh-Hans": "触摸区 {0}",
       "ko": "터치 {0}",
-      "ja": "タッチ {0}"
+      "ja": "タッチ {0}",
+      "id": "Touch {0}"
     },
     "Open lesson: {0}": {
       "zh-Hans": "打开教程：{0}",
@@ -416,27 +498,32 @@
       "ja": "解説を開く：{0}",
       "$translate": [
         0
-      ]
+      ],
+      "id": "Buka pelajaran: {0}"
     },
     "Find charts · {0}": {
       "zh-Hans": "查找谱面 · {0}",
       "ko": "채보 찾기 · {0}",
-      "ja": "譜面を探す · {0}"
+      "ja": "譜面を探す · {0}",
+      "id": "Cari chart · {0}"
     },
     "{0} lessons found": {
       "zh-Hans": "找到 {0} 个教程",
       "ko": "강좌 {0}개 검색됨",
-      "ja": "{0} 件の解説が見つかりました"
+      "ja": "{0} 件の解説が見つかりました",
+      "id": "{0} pelajaran ditemukan"
     },
     "{0} patterns selected": {
       "zh-Hans": "已选 {0} 个配置",
       "ko": "패턴 {0}개 선택됨",
-      "ja": "{0} 配置選択中"
+      "ja": "{0} 配置選択中",
+      "id": "{0} pola dipilih"
     },
     "{0} of {1} patterns and traits": {
       "zh-Hans": "{1} 个配置与特征中的 {0} 个",
       "ko": "패턴 및 특성 {1}개 중 {0}개",
-      "ja": "配置と特徴 {1} 件中 {0} 件"
+      "ja": "配置と特徴 {1} 件中 {0} 件",
+      "id": "{0} dari {1} pola dan karakteristik"
     },
     "Remove pattern {0}": {
       "zh-Hans": "移除配置 {0}",
@@ -444,7 +531,8 @@
       "ja": "配置 {0} を解除",
       "$translate": [
         0
-      ]
+      ],
+      "id": "Hapus pilihan pola {0}"
     },
     "{0} Authored illustration.": {
       "zh-Hans": "{0} 编写的示意图。",
@@ -452,7 +540,8 @@
       "ja": "{0} 作成した説明図です。",
       "$translate": [
         0
-      ]
+      ],
+      "id": "{0} Ilustrasi yang dibuat untuk penjelasan."
     },
     "Example: {0}": {
       "zh-Hans": "示例：{0}",
@@ -460,7 +549,8 @@
       "ja": "例：{0}",
       "$translate": [
         0
-      ]
+      ],
+      "id": "Contoh: {0}"
     },
     "{0} chart passage": {
       "zh-Hans": "{0} 谱面片段",
@@ -468,42 +558,50 @@
       "ja": "{0} 譜面区間",
       "$translate": [
         0
-      ]
+      ],
+      "id": "Bagian chart {0}"
     },
     "Wait: dashed gold · Move: solid teal": {
       "zh-Hans": "等待：金色虚线 · 移动：青色实线",
       "ko": "대기: 금색 점선 · 이동: 청록색 실선",
-      "ja": "待機：金色の破線 · 移動：青緑の実線"
+      "ja": "待機：金色の破線 · 移動：青緑の実線",
+      "id": "Tunggu: garis putus-putus emas · Bergerak: garis penuh hijau kebiruan"
     },
     "{0} s · Wait: dashed gold · Move: solid teal": {
       "zh-Hans": "{0} 秒 · 等待：金色虚线 · 移动：青色实线",
       "ko": "{0}초 · 대기: 금색 점선 · 이동: 청록색 실선",
-      "ja": "{0} 秒 · 待機：金色の破線 · 移動：青緑の実線"
+      "ja": "{0} 秒 · 待機：金色の破線 · 移動：青緑の実線",
+      "id": "{0} dtk · Tunggu: garis putus-putus emas · Bergerak: garis penuh hijau kebiruan"
     },
     "{0} s · {1} active path(s) not rendered": {
       "zh-Hans": "{0} 秒 · 未绘制 {1} 条活动路径",
       "ko": "{0}초 · 활성 경로 {1}개 미표시",
-      "ja": "{0} 秒 · 有効な軌跡 {1} 本は未描画"
+      "ja": "{0} 秒 · 有効な軌跡 {1} 本は未描画",
+      "id": "{0} dtk · {1} jalur aktif tidak ditampilkan"
     },
     "{0}% · {1} beats": {
       "zh-Hans": "{0}% · {1} 拍",
       "ko": "{0}% · {1} 박",
-      "ja": "{0}% · {1} 拍"
+      "ja": "{0}% · {1} 拍",
+      "id": "{0}% · {1} ketukan"
     },
     "{0}% · {1} beat": {
       "zh-Hans": "{0}% · {1} 拍",
       "ko": "{0}% · {1} 박",
-      "ja": "{0}% · {1} 拍"
+      "ja": "{0}% · {1} 拍",
+      "id": "{0}% · {1} ketukan"
     },
     "{0}% · {1} seconds": {
       "zh-Hans": "{0}% · {1} 秒",
       "ko": "{0}% · {1} 초",
-      "ja": "{0}% · {1} 秒"
+      "ja": "{0}% · {1} 秒",
+      "id": "{0}% · {1} detik"
     },
     "{0}% · {1} second": {
       "zh-Hans": "{0}% · {1} 秒",
       "ko": "{0}% · {1} 초",
-      "ja": "{0}% · {1} 秒"
+      "ja": "{0}% · {1} 秒",
+      "id": "{0}% · {1} detik"
     }
   }
 }

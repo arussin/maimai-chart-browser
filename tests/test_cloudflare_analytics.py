@@ -186,7 +186,7 @@ class CloudflareAnalyticsTests(unittest.TestCase):
             policy = PagePolicy(production.assets["index.html"].decode()).policies[0]
             csp = "; ".join(key + " " + " ".join(values) for key, values in policy.items())
             pages, _, _ = build_seo(catalog(), browser_csp=csp)
-            for locale in ("en", "ja", "ko", "zh-hans"):
+            for locale in ("en", "ja", "ko", "zh-hans", "id"):
                 for kind in ("songs", "versions"):
                     documents = [
                         raw
