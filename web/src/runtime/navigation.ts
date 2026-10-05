@@ -20,6 +20,7 @@ const labels: Record<string, readonly string[]> = {
   ja: ['楽曲ページを開く', '検索結果に戻る'],
   ko: ['곡 페이지 열기', '검색 결과로 돌아가기'],
   'zh-hans': ['打开歌曲页面', '返回搜索结果'],
+  id: ['Buka halaman lagu', 'Kembali ke hasil'],
 };
 interface Ledger {
   songs: Record<string, string>;

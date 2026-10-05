@@ -535,7 +535,7 @@ class ReleaseAssemblyTests(unittest.TestCase):
     def recovery_fixture(self):
         documents = {
             f"{locale}/{kind}/fictional/index.html": b"verified recovery document"
-            for locale in ("en", "ja", "ko", "zh-hans")
+            for locale in ("en", "ja", "ko", "zh-hans", "id")
             for kind in ("songs", "versions")
         }
         for path in documents:

@@ -248,7 +248,7 @@ test('filter disclosures keep personal controls from scrolling inside an opening
   await expect(personal.locator('.filter-chip')).toHaveText('Combo: FULL COMBO ×');
 });
 
-for(const width of [280,320,390,1280])for(const locale of ['en','zh-Hans','ko','ja'])test(`filter disclosures keep ${locale} text within heading columns at ${width}px`,async({page})=>{
+for(const width of [280,320,390,1280])for(const locale of ['en','zh-Hans','ko','ja','id'])test(`filter disclosures keep ${locale} text within heading columns at ${width}px`,async({page})=>{
   await page.setViewportSize({width,height:900});
   await page.goto('/registry/filter-preview.html');
   const personal=page.locator('[data-personal-controls]');await expect(personal).toBeVisible();
@@ -360,7 +360,7 @@ for(const inventory of ['shared','legacy'])test('an unreviewed '+inventory+' cat
   await mockBrowserJSONResource(page,'catalog',()=>manifest);
   await page.route('**/registry/'+entry[reference].path,route=>route.fulfill({body:bytes,contentType:'application/json'}));
   await page.goto('/registry/?version=duplicate-genres-fixture');
-  const messages={en:'This catalog contains an unrecognized genre and needs review.','zh-Hans':'此曲目目录包含未识别的曲风分类，需要审核。',ko:'이 곡 목록에 알 수 없는 장르가 포함되어 있어 검토가 필요합니다.',ja:'この楽曲カタログには未対応のジャンルが含まれているため、確認が必要です。'};
+  const messages={en:'This catalog contains an unrecognized genre and needs review.','zh-Hans':'此曲目目录包含未识别的曲风分类，需要审核。',ko:'이 곡 목록에 알 수 없는 장르가 포함되어 있어 검토가 필요합니다.',ja:'この楽曲カタログには未対応のジャンルが含まれているため、確認が必要です。',id:'Katalog ini memuat genre yang tidak dikenali dan perlu ditinjau.'};
   for(const [locale,message]of Object.entries(messages)){
     await page.locator('.site-header [data-language="'+locale+'"]').click();
     await expect(page.locator('#lab-status')).toHaveText(message);
@@ -428,10 +428,10 @@ test('regional availability filters rows, counts and chips independently of meta
   expect(errors).toEqual([]);expect(remote).toEqual([]);
 });
 
-for(const width of [280,320,1280])for(const locale of ['en','zh-Hans','ko','ja'])test(`availability control fits ${locale} at ${width}px in all three states`,async({page})=>{
+for(const width of [280,320,1280])for(const locale of ['en','zh-Hans','ko','ja','id'])test(`availability control fits ${locale} at ${width}px in all three states`,async({page})=>{
   await page.setViewportSize({width,height:900});await page.goto('/registry/');
   await expect(page.locator('#filter-region')).toBeVisible();await page.locator('.site-header [data-language="'+locale+'"]').click();
-  const expected={en:['All regions','JP','International'],'zh-Hans':['全部地区','日本','国际版'],ko:['모든 지역','일본','국제판'],ja:['すべての地域','日本','海外版']}[locale];
+  const expected={en:['All regions','JP','International'],'zh-Hans':['全部地区','日本','国际版'],ko:['모든 지역','일본','국제판'],ja:['すべての地域','日本','海外版'],id:['Semua wilayah','Jepang','Internasional']}[locale];
   await expect(page.locator('#filter-region [role=radio]')).toHaveText(expected);
   for(const value of ['','JP','INTL']){
     await page.locator('#filter-region [data-region="'+value+'"]').click();

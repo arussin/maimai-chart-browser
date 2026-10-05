@@ -18,6 +18,13 @@ import AxeBuilder from '@axe-core/playwright';
 // Resolve fixtures from repository root rather than the browser's served directory.
 const fixtureURL=new URL('../../output/personal-fixture.json',import.meta.url);
 async function personal(){return JSON.parse(await readFile(fixtureURL,'utf8'));}
+async function primeCatalogArtwork(page){
+  // Finish lazy public fixture images before measuring requests from local interactions.
+  await page.evaluate(async()=>{
+    for(const image of document.querySelectorAll('#songs img'))image.loading='eager';
+    await Promise.all([...document.querySelectorAll('#songs img')].map(image=>image.decode()));
+  });
+}
 async function open(page){await page.goto('/');await expect(page.locator('#explore-search')).toBeVisible();}
 async function importValue(page,value){await page.locator('#site-import').setInputFiles({name:'results.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(value))});}
 
@@ -58,6 +65,7 @@ test('About links work even when the catalog cannot load',async({page})=>{
 
 test('romaji searches share aliases across Charts and both comparison pickers',async({page})=>{
   await page.goto('/romaji/');await expect(page.locator('#catalog-count strong')).toHaveText('6');
+  await primeCatalogArtwork(page);
   const requests=[];page.on('request',r=>requests.push(r.url()));
   for(const query of ['Umiyuri','UMIYURI KAITEITAN','umi yuri','umiyuri-kaiteitan','Ｕｍｉｙｕｒｉ']){
     await page.locator('#search').fill(query);await expect(page.locator('#songs .song-row')).toHaveCount(1);
@@ -216,6 +224,7 @@ test('difficulty sorting keeps every chart, unknown levels last and explicit tie
 
 test('decimal constants sort all difficulties numerically with unknowns last',async({page})=>{
   await page.goto('/constants/');await expect(page.locator('#songs .song-row')).toHaveCount(6);
+  await primeCatalogArtwork(page);
   const requests=[];page.on('request',r=>requests.push(r.url()));
   const values=()=>page.locator('#songs .chart-constant').allTextContents();
   await page.locator('[data-sort-key=constant]').click();expect(await values()).toEqual(['9.9','10.4','10.5','11.0','11.6','—']);
@@ -262,6 +271,8 @@ test('complete dictionary supports demos, keyboard close and stable links',async
 test('research controls and pattern demos remain accessible and reflow at 200 percent',async({page})=>{
   await page.goto('/lab/');await expect(page.locator('#catalog-count strong')).toHaveText('6');
   await page.locator('[data-sort-key=title]').focus();
+  // Inspect settled controls, not their remembered-open opacity transition.
+  await expect(page.locator('#catalog-filter-content')).toHaveCSS('opacity','1');
   expect((await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21aa']).analyze()).violations).toEqual([]);
   await page.locator('#patterns-tab').click();
   await page.locator('[data-open-pattern="pattern.two_position_alternation"]').click();
@@ -428,6 +439,7 @@ test('same-level difficulties have separate rows, colors and exact chart actions
 test('YouTube searches follow difficulty and comparisons without background requests',async({page,context})=>{
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto('/grouped/');await expect(page.locator('#catalog-count strong')).toHaveText('6');
+  await primeCatalogArtwork(page);
   const requests=[];context.on('request',r=>requests.push({url:r.url(),referrer:r.headers().referer}));
   await page.locator('#search').fill('Fictional study 3');
   const row=page.locator('#songs .song-row[data-difficulty="RE:MASTER"]'),link=row.locator('.youtube-search');
@@ -464,6 +476,7 @@ test('YouTube queries preserve song punctuation and omit unknown titles and priv
 test('pattern mappings connect rows, lesson discovery, filters and observed sections',async({page})=>{
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto('/lab/');await expect(page.locator('#catalog-count strong')).toHaveText('6');
+  await primeCatalogArtwork(page);
   const requests=[];page.on('request',r=>requests.push(r.url()));
   await expect(page.locator('#mapping-note')).toHaveCount(0);
   await expect(page.locator('.song-row>.chart-summary>.chart-flow svg')).toHaveCount(6);
@@ -615,7 +628,11 @@ test('public artwork sits left of rows, versions retain accessible multi-select 
   await page.goto('/artwork/');await expect(page.locator('#catalog-count strong')).toHaveText('6');
   const row=page.locator('.song-row').filter({has:page.getByText('Fictional study 0',{exact:true})});
   const jacket=row.locator('.song-jacket');await expect(jacket).not.toHaveClass(/artwork-missing/);
-  const bounds=await jacket.boundingBox(),title=await row.locator('.chart-row').boundingBox();expect(bounds.x+bounds.width).toBeLessThanOrEqual(title.x);
+  await expect(jacket).toBeVisible();
+  await expect.poll(async()=>{
+    const bounds=await jacket.boundingBox(),title=await row.locator('.chart-row').boundingBox();
+    return !!bounds&&!!title&&bounds.x+bounds.width<=title.x;
+  }).toBe(true);
   await jacket.click();await expect(row.locator('.chart-measurements')).toBeVisible();
   await expect(page.locator('.song-jacket.artwork-missing')).toHaveCount(5);
   await page.locator('#version-summary').click();

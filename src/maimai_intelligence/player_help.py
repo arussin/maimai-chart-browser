@@ -7,7 +7,13 @@ from importlib.resources import files
 
 def build_player_help(root):
     assets = files("maimai_intelligence.assets")
-    languages = {"en": "English", "zh-Hans": "简体中文", "ko": "한국어", "ja": "日本語"}
+    languages = {
+        "en": "English",
+        "zh-Hans": "简体中文",
+        "ko": "한국어",
+        "ja": "日本語",
+        "id": "Bahasa Indonesia",
+    }
     navigation = " · ".join(
         f'<a href="player-import-help.{locale}.html" lang="{locale}">{name}</a>'
         for locale, name in languages.items()

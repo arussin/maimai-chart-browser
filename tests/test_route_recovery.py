@@ -122,7 +122,7 @@ class RouteRecoveryTests(unittest.TestCase):
         ledger = empty_permalinks()
         ledger["songs"]["absent"] = "historical-song"
         prepared = prepare_seo(self.catalog, previous=ledger)
-        self.assertEqual(len(prepared.emitted_routes), 28)
+        self.assertEqual(len(prepared.emitted_routes), 7 * len(LOCALES))
         self.assertEqual({record.locale for record in prepared.emitted_routes}, set(LOCALES))
         for record in prepared.emitted_routes:
             self.assertEqual(record.filename, unquote(record.path[1:]) + "index.html")
@@ -134,20 +134,20 @@ class RouteRecoveryTests(unittest.TestCase):
         )
 
     def test_ordinary_and_static_fixture_inventories_match_reviewed_bytes(self):
-        # Reviewed against 356bfa2: only inline version links and contextual
-        # return navigation changed in all 28 localized HTML documents. All
-        # other assets and chart recovery decisions remain byte-identical.
+        # Indonesian review reproduced the prior four-locale inventory exactly.
+        # Existing pages add only reciprocal id links; seven Indonesian routes
+        # and sitemap-id.xml are new. Chart recovery decisions are unchanged.
         # These are complete path-to-content inventories, not selected HTML text.
         def inventory_digest(assets):
             return digest(canonical({name: digest(raw) for name, raw in sorted(assets.items())}))
 
         self.assertEqual(
             inventory_digest(self.prepared.assets),
-            "2d8d43d25f3525a935720c424e579292447c58a9a224b750181bc93938a19c1f",
+            "2f334b44b9a6bb1886b7592dfcf69f42e60e258471da28c101329465959c6bab",
         )
         self.assertEqual(
             inventory_digest(self.prepare().assets),
-            "1c673e696962997d0351eab54437aa12bd2dd63c40be2dd04e89d1a4d440e904",
+            "4e67037355989fcb9a0b9932683122e9f5767f5d71c0e87c70db18db7f617f7a",
         )
         data = json.loads(self.baseline)
         data["catalog"] = data["catalog"][1:]
@@ -161,7 +161,7 @@ class RouteRecoveryTests(unittest.TestCase):
             inventory_digest(
                 self.prepare(baseline_catalog=raw, baseline_reference=reference).assets
             ),
-            "875a4a47b00e044b3b57056c3b5c8d99aa3480c6ba2cbdb1a922fda58e68191f",
+            "77b72a8ac2b579cfe96ef96b40da956b9430e04d15843cc26666384b53fe6ed4",
         )
 
     def test_static_recovery_removes_application_module_preloads(self):
@@ -195,7 +195,7 @@ class RouteRecoveryTests(unittest.TestCase):
             self.assertIn(POLICY.replace("'", "&#x27;"), text)
             self.assertIn('class="seo-document"', text)
             self.assertIn('rel="canonical"', text)
-            self.assertEqual(text.count('rel="alternate"'), 5)
+            self.assertEqual(text.count('rel="alternate"'), len(LOCALES) + 1)
             self.assertEqual(text.count('integrity="sha256-'), 2)
             for forbidden in (
                 "<script",
@@ -241,7 +241,7 @@ class RouteRecoveryTests(unittest.TestCase):
         evidence = json.loads(result.evidence)
         decisions = [d for row in evidence["documents"] for d in row["decisions"]]
         missing = [d for d in decisions if d["chart_id"] == absent]
-        self.assertEqual(len(missing), 4)
+        self.assertEqual(len(missing), len(LOCALES))
         self.assertTrue(
             all(
                 d["target"] is None and d["reason"] == "chart-absent-from-baseline" for d in missing

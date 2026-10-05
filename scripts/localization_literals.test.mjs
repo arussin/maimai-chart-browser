@@ -81,3 +81,34 @@ test('long malformed numeric path rejects without regex backtracking', () => {
   assert.equal(result.status, 0, result.stderr);
   assert.deepEqual(JSON.parse(result.stdout), [false, true]);
 });
+
+
+test('scanner recognizes exact catalog translations only within their locale table', (t) => {
+  const temporary = fs.mkdtempSync(path.join(os.tmpdir(), 'maimai-localization-table-'));
+  t.after(() => {
+    assert.equal(path.dirname(temporary), fs.realpathSync(os.tmpdir()));
+    fs.rmSync(temporary, { recursive: true });
+  });
+  const fixture = path.join(temporary, 'src/maimai_intelligence/assets');
+  fs.mkdirSync(path.join(fixture, 'locales'), { recursive: true });
+  fs.writeFileSync(path.join(fixture, 'locales/messages.json'), JSON.stringify({
+    messages: { 'Title unavailable': { id: 'Judul tidak tersedia', ja: '曲名不明' } },
+  }));
+  const run = (source) => {
+    fs.writeFileSync(path.join(fixture, 'chart-overview.js'), source);
+    return spawnSync(process.execPath, [path.join(root, 'scripts/localization_sources.mjs'), temporary], {
+      encoding: 'utf8', env: { ...process.env, MAIMAI_NODE_MODULES_ROOT: process.env.MAIMAI_NODE_MODULES_ROOT || root },
+    });
+  };
+  const accepted = run('const labels={en:["Title unavailable"],id:["Judul tidak tersedia"]};');
+  assert.equal(accepted.status, 0, accepted.stderr);
+  for (const source of [
+    'const labels={id:["Unregistered translation"]};',
+    'const labels={ja:["Judul tidak tersedia"]};',
+    'const unbound="Judul tidak tersedia";',
+    'const labels={id:()=>text(button,"Judul tidak tersedia")};',
+  ]) {
+    const rejected = run(source);
+    assert.equal(rejected.status, 1, source);
+  }
+});

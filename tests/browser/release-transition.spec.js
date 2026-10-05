@@ -406,7 +406,7 @@ async function staticRecovery(page, path, kind = 'song') {
 for (const javaScriptEnabled of [true, false]) {
   test.describe('static recovery JavaScript ' + javaScriptEnabled, () => {
     test.use({javaScriptEnabled});
-    for (const locale of ['en', 'ja', 'ko', 'zh-hans']) for (const kind of ['songs', 'versions']) {
+    for (const locale of ['en', 'ja', 'ko', 'zh-hans', 'id']) for (const kind of ['songs', 'versions']) {
       test(`direct ${locale} ${kind} arrival never starts the rolled-back application`, async ({page, transition}) => {
         const path = publicRoute(transition, locale, kind);
         transition.switchTo('rollback');

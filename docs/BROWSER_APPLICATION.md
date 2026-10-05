@@ -92,7 +92,7 @@ production release.
 - `tests/test_song_content.py`: unrelated title, genre, release and artwork edits leave other song bytes unchanged.
 - `tests/test_song_bindings.py`: canonical membership, redirects, stale/forged bindings and historical retention.
 - `tests/test_public_release.py`: retained song URLs across projection changes and corruption.
-- `tests/browser/song-workspace.spec.js`: four languages, three widths, delayed storage,
+- `tests/browser/song-workspace.spec.js`: five languages, three widths, delayed storage,
   lazy/failed catalog loading, superseding navigation, shared imports and Forget.
 - `scripts/check_corpus_boundaries.py`: strict Python boundaries and at least 95%
   branch coverage per extracted pure module, including song projection.

@@ -36,12 +36,16 @@ NOTICES = {
     "ja": "一時的な公開情報表示です。対応する譜面リンクからブラウザーの機能を利用できます。",
     "ko": "임시 공개 정보 화면입니다. 지원되는 채보 링크에서 브라우저 기능을 이용할 수 있습니다.",
     "zh-hans": "这是临时公开信息页面。可通过支持的谱面链接使用浏览器功能。",
+    "id": (
+        "Tampilan publik sementara. Alat interaktif tersedia melalui tautan chart yang didukung."
+    ),
 }
 UNAVAILABLE = {
     "en": "Public information only; this chart is unavailable in the retained browser.",
     "ja": "公開情報のみ。この譜面は保持されているブラウザーでは利用できません。",
     "ko": "공개 정보만 표시됩니다. 이 채보는 보존된 브라우저에서 사용할 수 없습니다.",
     "zh-hans": "仅显示公开信息；保留的浏览器中没有此谱面。",
+    "id": "Hanya informasi publik; chart ini tidak tersedia dalam browser yang dipertahankan.",
 }
 
 

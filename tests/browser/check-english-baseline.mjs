@@ -40,7 +40,7 @@ try{
       }
       if(name==='candidate'){
         await page.locator('#catalog-tab').click();
-        for(const locale of ['en','zh-Hans','ko','ja']){await page.locator('[data-language="'+locale+'"]').click();await page.screenshot({path:resolve(output,locale+'-'+width+'.png'),fullPage:false});}
+        for(const locale of ['en','zh-Hans','ko','ja','id']){await page.locator('[data-language="'+locale+'"]').click();await page.screenshot({path:resolve(output,locale+'-'+width+'.png'),fullPage:false});}
       }
       captures.push(views);await context.close();
     }

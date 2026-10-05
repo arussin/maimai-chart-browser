@@ -97,7 +97,7 @@ stored separately and is unaffected by Forget or Clear.
 - Run Python, browser, localization and source-copy checks through the canonical
   development wrappers. Use synthetic fixtures and DevCache outputs only.
 - Verify transactional races, malformed/oversized data, throttle/error recovery,
-  four-language layouts and Chrome/Edge/Firefox/WebKit behavior.
+  five-language layouts and Chrome/Edge/Firefox/WebKit behavior.
 - Keep Maishift and its combined announcement disabled until the gate in
   [MAISHIFT_INTEGRATION.md](MAISHIFT_INTEGRATION.md) is accepted.
 - Publish only after a separate release action. No proxy, hosted installation,

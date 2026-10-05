@@ -10,7 +10,7 @@ import '../src/maimai_intelligence/assets/player-maishift.js';
 
 const PREFIX='/pilot/maishift/';
 const BROWSER=PREFIX+'browser/';
-const browserFiles=new Set(['index.html','manifest.json','localization.js','settings-menu.js','maishift-browser-pilot.js','maishift-browser-pilot.css','player-data-core.js','player-maishift.js','player-sources.js','player-storage.js','player-data.js','view-navigation.js','challenge-review.js','challenge-review.css','lab-loader.js','maishift-favicon.ico','player-import-help.css',...['en','zh-Hans','ko','ja'].map(locale=>'player-import-help.'+locale+'.html')]);
+const browserFiles=new Set(['index.html','manifest.json','localization.js','settings-menu.js','maishift-browser-pilot.js','maishift-browser-pilot.css','player-data-core.js','player-maishift.js','player-sources.js','player-storage.js','player-data.js','view-navigation.js','challenge-review.js','challenge-review.css','lab-loader.js','maishift-favicon.ico','player-import-help.css',...['en','zh-Hans','ko','ja','id'].map(locale=>'player-import-help.'+locale+'.html')]);
 const policy={'Cache-Control':'no-store','Referrer-Policy':'no-referrer','X-Robots-Tag':'noindex, nofollow','X-Content-Type-Options':'nosniff','X-Frame-Options':'DENY',
   'Content-Security-Policy':"default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'none'"};
 const browserPolicy={...policy,'Content-Security-Policy':"default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https:; base-uri 'none'; frame-ancestors 'none'; form-action 'none'"};

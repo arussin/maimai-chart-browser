@@ -439,8 +439,8 @@ class ReleaseCompositionTests(unittest.TestCase):
         )
         self.assertEqual(result.recovery_evidence_sha256, overlay.evidence_sha256)
         self.assertEqual(len(result.recovery_inventory_sha256), 64)
-        self.assertEqual(result.total_bytes, 25 + 8 * 7)
-        self.assertEqual(result.file_count, 13)
+        self.assertEqual(result.total_bytes, 25 + len(ROUTE_MODEL.locales) * 2 * 7)
+        self.assertEqual(result.file_count, 5 + len(ROUTE_MODEL.locales) * 2)
         self.assertEqual(
             {file.path for file in result.files if file.owner == "recovery"},
             {file.path for file in overlay.inventory.files},

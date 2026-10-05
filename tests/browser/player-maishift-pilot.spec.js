@@ -51,7 +51,7 @@ test('clear aborts a delayed read; throttling keeps prior evidence and honors re
   state.status=200;let release;state.hold=new Promise(resolve=>{release=resolve;});await page.locator('#updated').click();await expect.poll(()=>state.calls).toBe(3);
   await page.locator('#clear').click();release();await expect(page.locator('#results')).toBeHidden();expect((await summary(page)).baseline).toBeNull();
 });
-for(const locale of ['en','zh-Hans','ko','ja'])test(`pilot ${locale} controls fit at 320px and support the keyboard`,async({page,context})=>{
+for(const locale of ['en','zh-Hans','ko','ja','id'])test(`pilot ${locale} controls fit at 320px and support the keyboard`,async({page,context})=>{
   await page.setViewportSize({width:320,height:800});const state=await setup(page,context,locale);await expect(page.locator('html')).toHaveAttribute('lang',locale);
   if(locale!=='en')await expect(page.locator('h1')).not.toHaveText('Maishift pilot test');
   await page.locator('#consent').focus();await page.keyboard.press('Space');await page.keyboard.press('Tab');await page.keyboard.press('Enter');await expect(page.locator('#results')).toBeVisible();

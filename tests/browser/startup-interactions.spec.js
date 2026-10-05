@@ -55,7 +55,7 @@ test('a public catalog failure does not disable private imports or settings',asy
 });
 
 
-test('catalog failure replaces loading and follows all four language choices',async({page})=>{
+test('catalog failure replaces loading and follows all five language choices',async({page})=>{
   await page.route(await browserResourceURL('catalog',{fixture:'lab',mount:'/lab/'}),route=>route.fulfill({status:503,body:'Fixture unavailable'}));
   await page.goto('/lab/');
   const status=page.locator('#lab-status');
@@ -66,6 +66,7 @@ test('catalog failure replaces loading and follows all four language choices',as
     ['ja','カタログを読み込めませんでした','再読み込み'],
     ['ko','카탈로그를 불러오지 못했습니다','다시 불러오기'],
     ['zh-Hans','无法加载曲目库','重新加载'],
+    ['id','Katalog tidak dapat dimuat','Coba muat lagi'],
   ]) {
     await page.locator('[data-language="'+locale+'"]').click();
     await expect(status).toContainText(message);

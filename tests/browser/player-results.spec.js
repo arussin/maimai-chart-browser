@@ -89,7 +89,7 @@ for(const source of ['session-file','session-hosted','maishift-file'])test(`${so
   await button.focus();await button.press('ArrowDown');await expect(menu).toBeVisible();await page.keyboard.press('End');await page.keyboard.press('Enter');
   await expect(button).toBeFocused();await expect(page.locator('#personal-lamp')).toHaveValue('ALL PERFECT+');
   await button.press('ArrowDown');await page.keyboard.press('Home');await page.keyboard.press('Escape');await expect(menu).toBeHidden();await expect(page.locator('#personal-lamp')).toHaveValue('ALL PERFECT+');
-  for(const locale of ['en','zh-Hans','ko','ja']){
+  for(const locale of ['en','zh-Hans','ko','ja','id']){
     await page.locator('[data-language="'+locale+'"]').click();await button.click();
     await expect(menu.locator('.player-icon')).toHaveCount(4);
     expect(await menu.evaluate(n=>n.getBoundingClientRect().left>=0&&n.getBoundingClientRect().right<=innerWidth&&[...n.querySelectorAll('button')].every(b=>b.scrollWidth<=b.clientWidth+1))).toBe(true);
@@ -146,7 +146,7 @@ test('English titles add faithful romaji and other languages retain original tit
   await expect(row.locator('.song-romaji')).toHaveText('soteria');
   await expect.poll(()=>row.evaluate(n=>n.isConnected&&parseFloat(getComputedStyle(n.querySelector('.song-title')).fontSize)>parseFloat(getComputedStyle(n.querySelector('.song-romaji')).fontSize))).toBe(true);
   const before=await row.locator('.song-title').textContent();
-  for(const locale of ['en','zh-Hans','ko','ja','en']){
+  for(const locale of ['en','zh-Hans','ko','ja','id','en']){
     await page.locator('[data-language="'+locale+'"]').click();
     if(locale==='en')await expect(row.locator('.song-romaji')).toBeVisible();else await expect(row.locator('.song-romaji')).toBeHidden();
     await expect(row.locator('.song-title')).toHaveText(before);

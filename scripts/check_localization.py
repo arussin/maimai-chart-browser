@@ -95,7 +95,7 @@ def main():
     elif pending:
         raise SystemExit("Unlocalized UI text:\n" + "\n".join(pending))
     else:
-        print(f"Validated {len(messages())} messages in zh-Hans, ko and ja")
+        print(f"Validated {len(messages())} messages in zh-Hans, ko, ja and id")
 
 
 if __name__ == "__main__":

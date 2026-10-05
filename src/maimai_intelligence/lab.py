@@ -236,7 +236,7 @@ def build_browser(
         *(name for name in STATIC_RESOURCES if name != "seo-pages.css"),
         "support.html",
         "support-return.html",
-        *(f"player-import-help.{locale}.html" for locale in ("en", "zh-Hans", "ko", "ja")),
+        *(f"player-import-help.{locale}.html" for locale in ("en", "zh-Hans", "ko", "ja", "id")),
     }
     for name, raw in seal_browser_resources(
         {name: (root / name).read_bytes() for name in names}, manifest

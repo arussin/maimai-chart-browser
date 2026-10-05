@@ -3,792 +3,950 @@
     "This catalog contains an unrecognized genre and needs review.": {
       "zh-Hans": "此曲目目录包含未识别的曲风分类，需要审核。",
       "ko": "이 곡 목록에 알 수 없는 장르가 포함되어 있어 검토가 필요합니다.",
-      "ja": "この楽曲カタログには未対応のジャンルが含まれているため、確認が必要です。"
+      "ja": "この楽曲カタログには未対応のジャンルが含まれているため、確認が必要です。",
+      "id": "Katalog ini memuat genre yang tidak dikenali dan perlu ditinjau."
     },
     "Availability": {
       "zh-Hans": "收录地区",
       "ko": "수록 지역",
-      "ja": "収録地域"
+      "ja": "収録地域",
+      "id": "Ketersediaan"
     },
     "All regions": {
       "zh-Hans": "全部地区",
       "ko": "모든 지역",
-      "ja": "すべての地域"
+      "ja": "すべての地域",
+      "id": "Semua wilayah"
     },
     "JP": {
       "zh-Hans": "日本",
       "ko": "일본",
-      "ja": "日本"
+      "ja": "日本",
+      "id": "Jepang"
     },
     "International": {
       "zh-Hans": "国际版",
       "ko": "국제판",
-      "ja": "海外版"
+      "ja": "海外版",
+      "id": "Internasional"
     },
     "Language": {
       "zh-Hans": "语言",
       "ko": "언어",
-      "ja": "言語"
+      "ja": "言語",
+      "id": "Bahasa"
     },
     "Views": {
       "zh-Hans": "视图",
       "ko": "화면",
-      "ja": "表示"
+      "ja": "表示",
+      "id": "Tampilan"
     },
     "Charts": {
       "zh-Hans": "谱面",
       "ko": "채보",
-      "ja": "譜面"
+      "ja": "譜面",
+      "id": "Chart"
     },
     "Pattern dictionary": {
       "zh-Hans": "谱面配置词典",
       "ko": "패턴 사전",
-      "ja": "配置辞典"
+      "ja": "配置辞典",
+      "id": "Kamus pola"
     },
     "Compare charts": {
       "zh-Hans": "比较谱面",
       "ko": "채보 비교",
-      "ja": "譜面比較"
+      "ja": "譜面比較",
+      "id": "Bandingkan chart"
     },
     "About": {
       "zh-Hans": "关于",
       "ko": "소개",
-      "ja": "サイト紹介"
+      "ja": "サイト紹介",
+      "id": "Tentang"
     },
     "About maimai.party": {
       "zh-Hans": "关于 maimai.party",
       "ko": "maimai.party 소개",
-      "ja": "maimai.party について"
+      "ja": "maimai.party について",
+      "id": "Tentang maimai.party"
     },
     "Settings": {
       "zh-Hans": "设置",
       "ko": "설정",
-      "ja": "設定"
+      "ja": "設定",
+      "id": "Pengaturan"
     },
     "Find a chart": {
       "zh-Hans": "查找谱面",
       "ko": "채보 찾기",
-      "ja": "譜面を探す"
+      "ja": "譜面を探す",
+      "id": "Cari chart"
     },
     "Research catalog": {
       "zh-Hans": "研究用曲库",
       "ko": "연구용 카탈로그",
-      "ja": "研究用カタログ"
+      "ja": "研究用カタログ",
+      "id": "Katalog riset"
     },
     "Loading research catalog…": {
       "zh-Hans": "正在加载研究用曲库…",
       "ko": "연구용 카탈로그 불러오는 중…",
-      "ja": "研究用カタログを読み込み中…"
+      "ja": "研究用カタログを読み込み中…",
+      "id": "Memuat katalog riset…"
     },
     "Search songs": {
       "zh-Hans": "搜索乐曲",
       "ko": "곡 검색",
-      "ja": "楽曲を検索"
+      "ja": "楽曲を検索",
+      "id": "Cari lagu"
     },
     "Song, romaji title or artist…": {
       "zh-Hans": "曲名、拼音、罗马字或艺术家…",
       "ko": "곡명, 한글 발음, 로마자 또는 아티스트…",
-      "ja": "曲名、読み、ローマ字、アーティスト…"
+      "ja": "曲名、読み、ローマ字、アーティスト…",
+      "id": "Lagu, judul romaji, atau artis…"
     },
     "Chart format": {
       "zh-Hans": "谱面类型",
       "ko": "채보 유형",
-      "ja": "譜面タイプ"
+      "ja": "譜面タイプ",
+      "id": "Format chart"
     },
     "All charts": {
       "zh-Hans": "全部",
       "ko": "전체",
-      "ja": "すべて"
+      "ja": "すべて",
+      "id": "Semua"
     },
     "Reset filters": {
       "zh-Hans": "重置筛选",
       "ko": "필터 초기화",
-      "ja": "絞り込みをリセット"
+      "ja": "絞り込みをリセット",
+      "id": "Atur ulang filter"
     },
     "Genre": {
       "zh-Hans": "分类",
       "ko": "장르",
-      "ja": "ジャンル"
+      "ja": "ジャンル",
+      "id": "Genre"
     },
     "All genres": {
       "zh-Hans": "全部",
       "ko": "전체",
-      "ja": "すべて"
+      "ja": "すべて",
+      "id": "Semua"
     },
     "Version": {
       "zh-Hans": "版本",
       "ko": "버전",
-      "ja": "バージョン"
+      "ja": "バージョン",
+      "id": "Versi"
     },
     "All versions": {
       "zh-Hans": "全部",
       "ko": "전체",
-      "ja": "すべて"
+      "ja": "すべて",
+      "id": "Semua"
     },
     "Difficulty": {
       "zh-Hans": "难度",
       "ko": "난이도",
-      "ja": "難易度"
+      "ja": "難易度",
+      "id": "Kesulitan"
     },
     "All difficulties": {
       "zh-Hans": "全部",
       "ko": "전체",
-      "ja": "すべて"
+      "ja": "すべて",
+      "id": "Semua"
     },
     "Level range": {
       "zh-Hans": "等级范围",
       "ko": "레벨 범위",
-      "ja": "レベル範囲"
+      "ja": "レベル範囲",
+      "id": "Rentang level"
     },
     "Reset levels": {
       "zh-Hans": "重置等级",
       "ko": "레벨 초기화",
-      "ja": "レベルをリセット"
+      "ja": "レベルをリセット",
+      "id": "Atur ulang level"
     },
     "From": {
       "zh-Hans": "从",
       "ko": "최소",
-      "ja": "下限"
+      "ja": "下限",
+      "id": "Dari"
     },
     "To": {
       "zh-Hans": "到",
       "ko": "최대",
-      "ja": "上限"
+      "ja": "上限",
+      "id": "Hingga"
     },
     "Minimum level": {
       "zh-Hans": "最低等级",
       "ko": "최소 레벨",
-      "ja": "最低レベル"
+      "ja": "最低レベル",
+      "id": "Level minimum"
     },
     "Maximum level": {
       "zh-Hans": "最高等级",
       "ko": "최대 레벨",
-      "ja": "最高レベル"
+      "ja": "最高レベル",
+      "id": "Level maksimum"
     },
     "Drag handles, or type 13, 13+ or 13.5.": {
       "zh-Hans": "拖动滑块，或输入 13、13+、13.5。",
       "ko": "슬라이더를 움직이거나 13, 13+, 13.5를 입력하세요.",
-      "ja": "つまみを動かすか、13、13+、13.5 と入力してください。"
+      "ja": "つまみを動かすか、13、13+、13.5 と入力してください。",
+      "id": "Geser penanda, atau ketik 13, 13+, atau 13.5."
     },
     "Patterns or chart traits": {
       "zh-Hans": "配置或谱面特征",
       "ko": "패턴 또는 채보 특성",
-      "ja": "配置・譜面の特徴"
+      "ja": "配置・譜面の特徴",
+      "id": "Pola atau karakteristik chart"
     },
     "All patterns": {
       "zh-Hans": "全部",
       "ko": "전체",
-      "ja": "すべて"
+      "ja": "すべて",
+      "id": "Semua"
     },
     "Find patterns": {
       "zh-Hans": "查找配置",
       "ko": "패턴 찾기",
-      "ja": "配置を探す"
+      "ja": "配置を探す",
+      "id": "Cari pola"
     },
     "Name or alias…": {
       "zh-Hans": "名称或别名…",
       "ko": "이름 또는 별칭…",
-      "ja": "名前・別名…"
+      "ja": "名前・別名…",
+      "id": "Nama atau alias…"
     },
     "Match any selected pattern.": {
       "zh-Hans": "匹配任意已选配置。",
       "ko": "선택한 패턴 중 하나라도 포함된 채보입니다.",
-      "ja": "選択した配置のいずれかを含む譜面を表示します。"
+      "ja": "選択した配置のいずれかを含む譜面を表示します。",
+      "id": "Tampilkan chart yang memiliki setidaknya satu pola yang dipilih."
     },
     "Clear patterns": {
       "zh-Hans": "清除配置筛选",
       "ko": "패턴 선택 해제",
-      "ja": "配置の選択を解除"
+      "ja": "配置の選択を解除",
+      "id": "Hapus pilihan pola"
     },
     "No patterns match this search.": {
       "zh-Hans": "没有匹配的配置。",
       "ko": "검색에 맞는 패턴이 없습니다.",
-      "ja": "一致する配置がありません。"
+      "ja": "一致する配置がありません。",
+      "id": "Tidak ada pola yang cocok dengan pencarian ini."
     },
     "Sort priorities": {
       "zh-Hans": "排序优先级",
       "ko": "정렬 우선순위",
-      "ja": "並べ替えの優先順位"
+      "ja": "並べ替えの優先順位",
+      "id": "Prioritas pengurutan"
     },
     "Active filters": {
       "zh-Hans": "当前筛选",
       "ko": "적용 중인 필터",
-      "ja": "適用中の絞り込み"
+      "ja": "適用中の絞り込み",
+      "id": "Filter aktif"
     },
     "Sort by column": {
       "zh-Hans": "按列排序",
       "ko": "열별 정렬",
-      "ja": "列で並べ替え"
+      "ja": "列で並べ替え",
+      "id": "Urutkan berdasarkan kolom"
     },
     "Song / artist": {
       "zh-Hans": "乐曲 / 艺术家",
       "ko": "곡 / 아티스트",
-      "ja": "楽曲 / アーティスト"
+      "ja": "楽曲 / アーティスト",
+      "id": "Lagu / artis"
     },
     "Source constant": {
       "zh-Hans": "来源定数",
       "ko": "출처 상수",
-      "ja": "出典の譜面定数"
+      "ja": "出典の譜面定数",
+      "id": "Konstanta dari sumber"
     },
     "Constant": {
       "zh-Hans": "定数",
       "ko": "상수",
-      "ja": "定数"
+      "ja": "定数",
+      "id": "Konstanta"
     },
     "Inputs / s": {
       "zh-Hans": "输入 / 秒",
       "ko": "입력 / 초",
-      "ja": "入力 / 秒"
+      "ja": "入力 / 秒",
+      "id": "Input / dtk"
     },
     "Flow · peak": {
       "zh-Hans": "输入趋势 · 峰值",
       "ko": "입력 흐름 · 최고치",
-      "ja": "入力推移 · ピーク"
+      "ja": "入力推移 · ピーク",
+      "id": "Alur input · puncak"
     },
     "Show more songs": {
       "zh-Hans": "显示更多乐曲",
       "ko": "곡 더 보기",
-      "ja": "楽曲をさらに表示"
+      "ja": "楽曲をさらに表示",
+      "id": "Tampilkan lebih banyak lagu"
     },
     "Find a pattern": {
       "zh-Hans": "查找配置",
       "ko": "패턴 찾기",
-      "ja": "配置を探す"
+      "ja": "配置を探す",
+      "id": "Cari pola"
     },
     "Name, alias or description…": {
       "zh-Hans": "名称、别名或描述…",
       "ko": "이름, 별칭 또는 설명…",
-      "ja": "名前・別名・説明…"
+      "ja": "名前・別名・説明…",
+      "id": "Nama, alias, atau deskripsi…"
     },
     "Show": {
       "zh-Hans": "显示",
       "ko": "표시",
-      "ja": "表示"
+      "ja": "表示",
+      "id": "Tampilkan"
     },
     "All lessons": {
       "zh-Hans": "全部",
       "ko": "전체",
-      "ja": "すべて"
+      "ja": "すべて",
+      "id": "Semua"
     },
     "Patterns": {
       "zh-Hans": "配置",
       "ko": "패턴",
-      "ja": "配置"
+      "ja": "配置",
+      "id": "Pola"
     },
     "Chart traits": {
       "zh-Hans": "谱面特征",
       "ko": "채보 특성",
-      "ja": "譜面の特徴"
+      "ja": "譜面の特徴",
+      "id": "Karakteristik chart"
     },
     "Find similar to first chart": {
       "zh-Hans": "查找与第一张谱面相似的谱面",
       "ko": "첫 번째 채보와 비슷한 채보 찾기",
-      "ja": "1つ目の譜面に似た譜面を探す"
+      "ja": "1つ目の譜面に似た譜面を探す",
+      "id": "Cari yang mirip dengan chart pertama"
     },
     "Prioritize": {
       "zh-Hans": "优先依据",
       "ko": "우선 기준",
-      "ja": "優先する項目"
+      "ja": "優先する項目",
+      "id": "Prioritaskan"
     },
     "Patterns & measurements": {
       "zh-Hans": "配置与测量值",
       "ko": "패턴 및 측정값",
-      "ja": "配置と測定値"
+      "ja": "配置と測定値",
+      "id": "Pola & hasil pengukuran"
     },
     "Measurements": {
       "zh-Hans": "测量值",
       "ko": "측정값",
-      "ja": "測定値"
+      "ja": "測定値",
+      "id": "Hasil pengukuran"
     },
     "Use chart filters for matches": {
       "zh-Hans": "使用谱面筛选条件匹配",
       "ko": "채보 필터를 적용하여 검색",
-      "ja": "譜面の絞り込み条件を使用"
+      "ja": "譜面の絞り込み条件を使用",
+      "id": "Terapkan filter chart pada hasil pencocokan"
     },
     "Clear comparison": {
       "zh-Hans": "清除比较",
       "ko": "비교 초기화",
-      "ja": "比較をクリア"
+      "ja": "比較をクリア",
+      "id": "Hapus perbandingan"
     },
     "Choose a first chart to begin.": {
       "zh-Hans": "请选择第一张谱面。",
       "ko": "첫 번째 채보를 선택하세요.",
-      "ja": "まず1つ目の譜面を選んでください。"
+      "ja": "まず1つ目の譜面を選んでください。",
+      "id": "Pilih chart pertama untuk memulai."
     },
     "Choose a second chart or find similar chart demands.": {
       "zh-Hans": "请选择第二张谱面，或查找所需操作相似的谱面。",
       "ko": "두 번째 채보를 선택하거나 요구 능력이 비슷한 채보를 찾아보세요.",
-      "ja": "2つ目の譜面を選ぶか、求められる動きが似た譜面を探してください。"
+      "ja": "2つ目の譜面を選ぶか、求められる動きが似た譜面を探してください。",
+      "id": "Pilih chart kedua atau cari chart dengan tuntutan permainan yang serupa."
     },
     "Both selections are the same chart. Choose another chart to compare.": {
       "zh-Hans": "两次选择的是同一张谱面，请选择另一张进行比较。",
       "ko": "같은 채보를 선택했습니다. 비교할 다른 채보를 선택하세요.",
-      "ja": "同じ譜面が選ばれています。比較する別の譜面を選んでください。"
+      "ja": "同じ譜面が選ばれています。比較する別の譜面を選んでください。",
+      "id": "Kedua pilihan adalah chart yang sama. Pilih chart lain untuk dibandingkan."
     },
     "First chart": {
       "zh-Hans": "第一张谱面",
       "ko": "첫 번째 채보",
-      "ja": "1つ目の譜面"
+      "ja": "1つ目の譜面",
+      "id": "Chart pertama"
     },
     "Second chart": {
       "zh-Hans": "第二张谱面",
       "ko": "두 번째 채보",
-      "ja": "2つ目の譜面"
+      "ja": "2つ目の譜面",
+      "id": "Chart kedua"
     },
     "Show more matches": {
       "zh-Hans": "显示更多匹配项",
       "ko": "검색 결과 더 보기",
-      "ja": "検索結果をさらに表示"
+      "ja": "検索結果をさらに表示",
+      "id": "Tampilkan lebih banyak hasil"
     },
     "No matching charts. Try another song, artist or difficulty.": {
       "zh-Hans": "没有匹配的谱面，请尝试其他乐曲、艺术家或难度。",
       "ko": "일치하는 채보가 없습니다. 다른 곡, 아티스트 또는 난이도로 검색하세요.",
-      "ja": "一致する譜面がありません。別の楽曲・アーティスト・難易度で検索してください。"
+      "ja": "一致する譜面がありません。別の楽曲・アーティスト・難易度で検索してください。",
+      "id": "Tidak ada chart yang cocok. Coba lagu, artis, atau tingkat kesulitan lain."
     },
     "Compare": {
       "zh-Hans": "比较",
       "ko": "비교",
-      "ja": "比較"
+      "ja": "比較",
+      "id": "Bandingkan"
     },
     "Comparing": {
       "zh-Hans": "正在比较",
       "ko": "비교 중",
-      "ja": "比較中"
+      "ja": "比較中",
+      "id": "Membandingkan"
     },
     "Compare this chart": {
       "zh-Hans": "比较此谱面",
       "ko": "이 채보 비교",
-      "ja": "この譜面を比較"
+      "ja": "この譜面を比較",
+      "id": "Bandingkan chart ini"
     },
     "Find similar": {
       "zh-Hans": "查找相似谱面",
       "ko": "비슷한 채보 찾기",
-      "ja": "似た譜面を探す"
+      "ja": "似た譜面を探す",
+      "id": "Cari yang serupa"
     },
     "Show details": {
       "zh-Hans": "展开详情",
       "ko": "상세 보기",
-      "ja": "詳細を表示"
+      "ja": "詳細を表示",
+      "id": "Tampilkan detail"
     },
     "Hide details": {
       "zh-Hans": "收起详情",
       "ko": "상세 접기",
-      "ja": "詳細を閉じる"
+      "ja": "詳細を閉じる",
+      "id": "Sembunyikan detail"
     },
     "Chart details": {
       "zh-Hans": "谱面详情",
       "ko": "채보 상세",
-      "ja": "譜面の詳細"
+      "ja": "譜面の詳細",
+      "id": "Detail chart"
     },
     "Artist": {
       "zh-Hans": "艺术家",
       "ko": "아티스트",
-      "ja": "アーティスト"
+      "ja": "アーティスト",
+      "id": "Artis"
     },
     "Artist not provided": {
       "zh-Hans": "未提供艺术家",
       "ko": "아티스트 정보 없음",
-      "ja": "アーティスト情報なし"
+      "ja": "アーティスト情報なし",
+      "id": "Informasi artis tidak tersedia"
     },
     "Title": {
       "zh-Hans": "曲名",
       "ko": "곡명",
-      "ja": "曲名"
+      "ja": "曲名",
+      "id": "Judul"
     },
     "Format": {
       "zh-Hans": "类型",
       "ko": "유형",
-      "ja": "タイプ"
+      "ja": "タイプ",
+      "id": "Format"
     },
     "Uncategorized": {
       "zh-Hans": "未分类",
       "ko": "미분류",
-      "ja": "未分類"
+      "ja": "未分類",
+      "id": "Tanpa kategori"
     },
     "Unknown": {
       "zh-Hans": "未知",
       "ko": "알 수 없음",
-      "ja": "不明"
+      "ja": "不明",
+      "id": "Tidak diketahui"
     },
     "Untitled": {
       "zh-Hans": "无标题",
       "ko": "제목 없음",
-      "ja": "無題"
+      "ja": "無題",
+      "id": "Tanpa judul"
     },
     "〈Blank title〉": {
       "zh-Hans": "〈空白曲名〉",
       "ko": "〈빈 곡명〉",
-      "ja": "〈空白の曲名〉"
+      "ja": "〈空白の曲名〉",
+      "id": "〈Judul kosong〉"
     },
     "Level": {
       "zh-Hans": "等级",
       "ko": "레벨",
-      "ja": "レベル"
+      "ja": "レベル",
+      "id": "Level"
     },
     "No levels available": {
       "zh-Hans": "无可用等级",
       "ko": "사용 가능한 레벨 없음",
-      "ja": "選択できるレベルがありません"
+      "ja": "選択できるレベルがありません",
+      "id": "Tidak ada level yang tersedia"
     },
     "Chart constant": {
       "zh-Hans": "谱面定数",
       "ko": "채보 상수",
-      "ja": "譜面定数"
+      "ja": "譜面定数",
+      "id": "Konstanta chart"
     },
     "BPM unknown": {
       "zh-Hans": "BPM 未知",
       "ko": "BPM 알 수 없음",
-      "ja": "BPM 不明"
+      "ja": "BPM 不明",
+      "id": "BPM tidak diketahui"
     },
     "Source song BPM; individual passages may change tempo.": {
       "zh-Hans": "来源乐曲 BPM；个别段落可能变速。",
       "ko": "출처에 기록된 곡 BPM입니다. 구간에 따라 템포가 바뀔 수 있습니다.",
-      "ja": "出典の楽曲 BPM です。区間によってテンポが変わる場合があります。"
+      "ja": "出典の楽曲 BPM です。区間によってテンポが変わる場合があります。",
+      "id": "BPM lagu menurut sumber; tempo dapat berubah pada bagian tertentu."
     },
     "No verified source constant is available for this context.": {
       "zh-Hans": "当前条件下没有已验证的来源定数。",
       "ko": "현재 조건에 맞는 출처의 채보 상수가 확인되지 않았습니다.",
-      "ja": "この条件で確認済みの譜面定数はありません。"
+      "ja": "この条件で確認済みの譜面定数はありません。",
+      "id": "Tidak ada konstanta dari sumber yang telah terverifikasi untuk konteks ini."
     },
     "Neskol source constant · regional and game-version scope unspecified.": {
       "zh-Hans": "Neskol 来源定数 · 地区与游戏版本范围未注明。",
       "ko": "Neskol 출처 상수 · 지역 및 게임 버전 범위 미지정.",
-      "ja": "Neskol 出典の定数 · 地域とゲームバージョンの範囲は未指定。"
+      "ja": "Neskol 出典の定数 · 地域とゲームバージョンの範囲は未指定。",
+      "id": "Konstanta dari sumber Neskol · cakupan wilayah dan versi game tidak disebutkan."
     },
     "game version unspecified": {
       "zh-Hans": "游戏版本未注明",
       "ko": "게임 버전 미지정",
-      "ja": "ゲームバージョン未指定"
+      "ja": "ゲームバージョン未指定",
+      "id": "versi game tidak disebutkan"
     },
     "Find charts with comparable measurements": {
       "zh-Hans": "查找测量值相近的谱面",
       "ko": "측정값이 비슷한 채보 찾기",
-      "ja": "測定値の近い譜面を探す"
+      "ja": "測定値の近い譜面を探す",
+      "id": "Cari chart dengan hasil pengukuran yang sebanding"
     },
     "Similarity needs prepared analysis": {
       "zh-Hans": "相似度需要预先生成的分析",
       "ko": "유사도 계산에는 준비된 분석이 필요합니다",
-      "ja": "類似度には事前の解析が必要です"
+      "ja": "類似度には事前の解析が必要です",
+      "id": "Pencocokan kemiripan memerlukan analisis yang sudah disiapkan"
     },
     "No charts match this combination. Remove a filter or try another search.": {
       "zh-Hans": "没有符合当前条件的谱面。请移除筛选条件或尝试其他搜索。",
       "ko": "조건에 맞는 채보가 없습니다. 필터를 해제하거나 다른 검색어를 입력하세요.",
-      "ja": "条件に一致する譜面がありません。絞り込みを解除するか、検索語を変えてください。"
+      "ja": "条件に一致する譜面がありません。絞り込みを解除するか、検索語を変えてください。",
+      "id": "Tidak ada chart yang cocok dengan kombinasi ini. Hapus salah satu filter atau coba pencarian lain."
     },
     "The linked chart is unavailable in this catalog version. Search for the song below.": {
       "zh-Hans": "当前曲库版本中没有链接的谱面。请在下方搜索乐曲。",
       "ko": "이 카탈로그 버전에는 링크된 채보가 없습니다. 아래에서 곡을 검색하세요.",
-      "ja": "このカタログにはリンク先の譜面がありません。下で楽曲を検索してください。"
+      "ja": "このカタログにはリンク先の譜面がありません。下で楽曲を検索してください。",
+      "id": "Chart pada tautan tidak tersedia dalam versi katalog ini. Cari lagunya di bawah."
     },
     "A linked chart is not available in this catalog version. Choose a chart below.": {
       "zh-Hans": "当前曲库版本中没有链接的谱面。请在下方选择谱面。",
       "ko": "이 카탈로그 버전에는 링크된 채보가 없습니다. 아래에서 채보를 선택하세요.",
-      "ja": "このカタログにはリンク先の譜面がありません。下で譜面を選んでください。"
+      "ja": "このカタログにはリンク先の譜面がありません。下で譜面を選んでください。",
+      "id": "Salah satu chart pada tautan tidak tersedia dalam versi katalog ini. Pilih chart di bawah."
     },
     "Use maimai international data": {
       "zh-Hans": "使用 maimai 国际版数据",
       "ko": "maimai 국제판 데이터 사용",
-      "ja": "maimai 海外版のデータを使用"
+      "ja": "maimai 海外版のデータを使用",
+      "id": "Gunakan data maimai versi Internasional"
     },
     "Close": {
       "zh-Hans": "关闭",
       "ko": "닫기",
-      "ja": "閉じる"
+      "ja": "閉じる",
+      "id": "Tutup"
     },
     "Cancel": {
       "zh-Hans": "取消",
       "ko": "취소",
-      "ja": "キャンセル"
+      "ja": "キャンセル",
+      "id": "Batal"
     },
     "Not now": {
       "zh-Hans": "暂时不要",
       "ko": "나중에",
-      "ja": "今はしない"
+      "ja": "今はしない",
+      "id": "Nanti saja"
     },
     "Okay!": {
       "zh-Hans": "好的！",
       "ko": "확인!",
-      "ja": "OK!"
+      "ja": "OK!",
+      "id": "Oke!"
     },
     "Any": {
       "zh-Hans": "任意",
       "ko": "전체",
-      "ja": "すべて"
+      "ja": "すべて",
+      "id": "Apa saja"
     },
     "YouTube search ↗": {
       "zh-Hans": "在 YouTube 搜索 ↗",
       "ko": "YouTube 검색 ↗",
-      "ja": "YouTube で検索 ↗"
+      "ja": "YouTube で検索 ↗",
+      "id": "Cari di YouTube ↗"
     },
     "mai-notes simai player ↗": {
       "zh-Hans": "mai-notes simai 播放器 ↗",
       "ko": "mai-notes simai 플레이어 ↗",
-      "ja": "mai-notes simai プレイヤー ↗"
+      "ja": "mai-notes simai プレイヤー ↗",
+      "id": "Pemutar simai mai-notes ↗"
     },
     "Search for this chart on YouTube; results may include other versions.": {
       "zh-Hans": "在 YouTube 搜索此谱面；结果可能包含其他版本。",
       "ko": "YouTube에서 이 채보를 검색합니다. 다른 버전이 포함될 수 있습니다.",
-      "ja": "この譜面を YouTube で検索します。別バージョンが含まれる場合があります。"
+      "ja": "この譜面を YouTube で検索します。別バージョンが含まれる場合があります。",
+      "id": "Cari chart ini di YouTube; hasilnya mungkin mencakup versi lain."
     },
     "Skip to charts": {
       "zh-Hans": "跳转到谱面",
       "ko": "채보로 이동",
-      "ja": "譜面へスキップ"
+      "ja": "譜面へスキップ",
+      "id": "Langsung ke chart"
     },
     "Skip to pattern dictionary": {
       "zh-Hans": "跳转到配置词典",
       "ko": "패턴 사전으로 이동",
-      "ja": "配置辞典へスキップ"
+      "ja": "配置辞典へスキップ",
+      "id": "Langsung ke kamus pola"
     },
     "Skip to compare charts": {
       "zh-Hans": "跳转到谱面比较",
       "ko": "채보 비교로 이동",
-      "ja": "譜面比較へスキップ"
+      "ja": "譜面比較へスキップ",
+      "id": "Langsung ke perbandingan chart"
     },
     "Skip to about": {
       "zh-Hans": "跳转到关于页面",
       "ko": "소개로 이동",
-      "ja": "サイトについてへスキップ"
+      "ja": "サイトについてへスキップ",
+      "id": "Langsung ke bagian Tentang"
     },
     "Through {0}": {
       "zh-Hans": "截至 {0}",
       "ko": "{0}까지",
-      "ja": "{0} まで"
+      "ja": "{0} まで",
+      "id": "Hingga {0}"
     },
     "{0} versions selected": {
       "zh-Hans": "已选 {0} 个版本",
       "ko": "버전 {0}개 선택됨",
-      "ja": "{0} バージョン選択中"
+      "ja": "{0} バージョン選択中",
+      "id": "{0} versi dipilih"
     },
     "{0} difficulties selected": {
       "zh-Hans": "已选 {0} 个难度",
       "ko": "난이도 {0}개 선택됨",
-      "ja": "{0} 難易度選択中"
+      "ja": "{0} 難易度選択中",
+      "id": "{0} tingkat kesulitan dipilih"
     },
     "{0} charts found": {
       "zh-Hans": "找到 {0} 张谱面",
       "ko": "채보 {0}개 검색됨",
-      "ja": "{0} 譜面が見つかりました"
+      "ja": "{0} 譜面が見つかりました",
+      "id": "{0} chart ditemukan"
     },
     "{0} charts": {
       "zh-Hans": "{0} 张谱面",
       "ko": "채보 {0}개",
-      "ja": "{0} 譜面"
+      "ja": "{0} 譜面",
+      "id": "{0} chart"
     },
     "{0} song · {1} charts": {
       "zh-Hans": "{0} 首乐曲 · {1} 张谱面",
       "ko": "{0}곡 · 채보 {1}개",
-      "ja": "{0} 曲 · {1} 譜面"
+      "ja": "{0} 曲 · {1} 譜面",
+      "id": "{0} lagu · {1} chart"
     },
     "{0} songs · {1} charts": {
       "zh-Hans": "{0} 首乐曲 · {1} 张谱面",
       "ko": "{0}곡 · 채보 {1}개",
-      "ja": "{0} 曲 · {1} 譜面"
+      "ja": "{0} 曲 · {1} 譜面",
+      "id": "{0} lagu · {1} chart"
     },
     "{0} song / format entries, {1} charts": {
       "zh-Hans": "{0} 个乐曲 / 类型条目，{1} 张谱面",
       "ko": "곡 / 유형 항목 {0}개, 채보 {1}개",
-      "ja": "楽曲 / タイプ {0} 件、{1} 譜面"
+      "ja": "楽曲 / タイプ {0} 件、{1} 譜面",
+      "id": "{0} entri lagu / format, {1} chart"
     },
     "Search all {0} charts by song, artist or difficulty.": {
       "zh-Hans": "按乐曲、艺术家或难度搜索全部 {0} 张谱面。",
       "ko": "곡, 아티스트 또는 난이도로 전체 채보 {0}개를 검색하세요.",
-      "ja": "楽曲・アーティスト・難易度で全 {0} 譜面を検索できます。"
+      "ja": "楽曲・アーティスト・難易度で全 {0} 譜面を検索できます。",
+      "id": "Cari di seluruh {0} chart berdasarkan lagu, artis, atau tingkat kesulitan."
     },
     "Showing {0} of {1} matching charts. Keep typing or show more.": {
       "zh-Hans": "显示 {1} 张匹配谱面中的 {0} 张。继续输入或显示更多。",
       "ko": "검색된 채보 {1}개 중 {0}개를 표시합니다. 계속 입력하거나 더 보기를 누르세요.",
-      "ja": "一致した {1} 譜面中 {0} 譜面を表示中。検索を続けるか、さらに表示してください。"
+      "ja": "一致した {1} 譜面中 {0} 譜面を表示中。検索を続けるか、さらに表示してください。",
+      "id": "Menampilkan {0} dari {1} chart yang cocok. Lanjutkan mengetik atau tampilkan lebih banyak."
     },
     "{0} matching charts.": {
       "zh-Hans": "{0} 张匹配谱面。",
       "ko": "일치하는 채보 {0}개.",
-      "ja": "{0} 譜面が一致しました。"
+      "ja": "{0} 譜面が一致しました。",
+      "id": "{0} chart yang cocok."
     },
     "Comparing {0} with {1}": {
       "zh-Hans": "比较 {0} 与 {1}",
       "ko": "비교 중: {0} / {1}",
-      "ja": "{0} と {1} を比較中"
+      "ja": "{0} と {1} を比較中",
+      "id": "Membandingkan {0} dengan {1}"
     },
     "Compare with {0}": {
       "zh-Hans": "与 {0} 比较",
       "ko": "비교 대상: {0}",
-      "ja": "{0} と比較"
+      "ja": "{0} と比較",
+      "id": "Bandingkan dengan {0}"
     },
     "Difficulty for {0}": {
       "zh-Hans": "{0} 的难度",
       "ko": "{0} 난이도",
-      "ja": "{0} の難易度"
+      "ja": "{0} の難易度",
+      "id": "Tingkat kesulitan untuk {0}"
     },
     "Remove version {0}": {
       "zh-Hans": "移除版本 {0}",
       "ko": "버전 {0} 제외",
-      "ja": "バージョン {0} を解除"
+      "ja": "バージョン {0} を解除",
+      "id": "Hapus pilihan versi {0}"
     },
     "Remove difficulty {0}": {
       "zh-Hans": "移除难度 {0}",
       "ko": "난이도 {0} 제외",
-      "ja": "難易度 {0} を解除"
+      "ja": "難易度 {0} を解除",
+      "id": "Hapus pilihan tingkat kesulitan {0}"
     },
     "From level {0}": {
       "zh-Hans": "最低等级 {0}",
       "ko": "최소 레벨 {0}",
-      "ja": "レベル {0} 以上"
+      "ja": "レベル {0} 以上",
+      "id": "Mulai level {0}"
     },
     "To level {0}": {
       "zh-Hans": "最高等级 {0}",
       "ko": "최대 레벨 {0}",
-      "ja": "レベル {0} 以下"
+      "ja": "レベル {0} 以下",
+      "id": "Hingga level {0}"
     },
     "Level {0}": {
       "zh-Hans": "等级 {0}",
       "ko": "레벨 {0}",
-      "ja": "レベル {0}"
+      "ja": "レベル {0}",
+      "id": "Level {0}"
     },
     "Remove minimum level filter": {
       "zh-Hans": "移除最低等级筛选",
       "ko": "최소 레벨 필터 해제",
-      "ja": "最低レベルの絞り込みを解除"
+      "ja": "最低レベルの絞り込みを解除",
+      "id": "Hapus filter level minimum"
     },
     "Remove maximum level filter": {
       "zh-Hans": "移除最高等级筛选",
       "ko": "최대 레벨 필터 해제",
-      "ja": "最高レベルの絞り込みを解除"
+      "ja": "最高レベルの絞り込みを解除",
+      "id": "Hapus filter level maksimum"
     },
     "Enter an available level from {0} to {1}. Use + for a plus level.": {
       "zh-Hans": "请输入 {0} 到 {1} 之间的可用等级。加号等级请使用 +。",
       "ko": "{0}부터 {1}까지 사용 가능한 레벨을 입력하세요. 플러스 레벨은 +를 사용하세요.",
-      "ja": "{0} から {1} までのレベルを入力してください。プラス付きは + を使います。"
+      "ja": "{0} から {1} までのレベルを入力してください。プラス付きは + を使います。",
+      "id": "Masukkan level yang tersedia dari {0} hingga {1}. Gunakan + untuk level bertanda plus."
     },
     "YouTube search for {0} (opens in a new tab)": {
       "zh-Hans": "在 YouTube 搜索 {0}（在新标签页打开）",
       "ko": "YouTube에서 {0} 검색 (새 탭에서 열림)",
-      "ja": "{0} を YouTube で検索（新しいタブで開きます）"
+      "ja": "{0} を YouTube で検索（新しいタブで開きます）",
+      "id": "Cari {0} di YouTube (terbuka di tab baru)"
     },
     "mai-notes simai player for {0} (opens in a new tab)": {
       "zh-Hans": "{0} 的 mai-notes simai 播放器（在新标签页打开）",
       "ko": "{0} mai-notes simai 플레이어 (새 탭에서 열림)",
-      "ja": "{0} の mai-notes simai プレイヤー（新しいタブで開きます）"
+      "ja": "{0} の mai-notes simai プレイヤー（新しいタブで開きます）",
+      "id": "Pemutar simai mai-notes untuk {0} (terbuka di tab baru)"
     },
     "Jacket for {0}": {
       "zh-Hans": "{0} 的封面",
       "ko": "{0} 재킷",
-      "ja": "{0} のジャケット"
+      "ja": "{0} のジャケット",
+      "id": "Gambar sampul {0}"
     },
     "Jacket for {0} unavailable": {
       "zh-Hans": "{0} 的封面不可用",
       "ko": "{0} 재킷 없음",
-      "ja": "{0} のジャケットなし"
+      "ja": "{0} のジャケットなし",
+      "id": "Gambar sampul {0} tidak tersedia"
     },
     "{0} logo unavailable": {
       "zh-Hans": "{0} 标志不可用",
       "ko": "{0} 로고 없음",
-      "ja": "{0} のロゴなし"
+      "ja": "{0} のロゴなし",
+      "id": "Logo {0} tidak tersedia"
     },
     "{0} logo": {
       "zh-Hans": "{0} 标志",
       "ko": "{0} 로고",
-      "ja": "{0} のロゴ"
+      "ja": "{0} のロゴ",
+      "id": "Logo {0}"
     },
     "Chart constant {0}": {
       "zh-Hans": "谱面定数 {0}",
       "ko": "채보 상수 {0}",
-      "ja": "譜面定数 {0}"
+      "ja": "譜面定数 {0}",
+      "id": "Konstanta chart {0}"
     },
     "{0} inputs per second": {
       "zh-Hans": "每秒 {0} 次输入",
       "ko": "초당 입력 {0}회",
-      "ja": "毎秒 {0} 入力"
+      "ja": "毎秒 {0} 入力",
+      "id": "{0} input per detik"
     },
     "Open {0} · {1} · Chart constant {2}": {
       "zh-Hans": "打开 {0} · {1} · 谱面定数 {2}",
       "ko": "{0} 열기 · {1} · 채보 상수 {2}",
-      "ja": "{0} を開く · {1} · 譜面定数 {2}"
+      "ja": "{0} を開く · {1} · 譜面定数 {2}",
+      "id": "Buka {0} · {1} · Konstanta chart {2}"
     },
     "First chart search results": {
       "zh-Hans": "第一张谱面的搜索结果",
       "ko": "첫 번째 채보 검색 결과",
-      "ja": "1つ目の譜面の検索結果"
+      "ja": "1つ目の譜面の検索結果",
+      "id": "Hasil pencarian chart pertama"
     },
     "Second chart search results": {
       "zh-Hans": "第二张谱面的搜索结果",
       "ko": "두 번째 채보 검색 결과",
-      "ja": "2つ目の譜面の検索結果"
+      "ja": "2つ目の譜面の検索結果",
+      "id": "Hasil pencarian chart kedua"
     },
     "Filters": {
       "zh-Hans": "筛选",
       "ko": "필터",
-      "ja": "フィルター"
+      "ja": "フィルター",
+      "id": "Filter"
     },
     "Expand": {
       "zh-Hans": "展开",
       "ko": "펼치기",
-      "ja": "展開"
+      "ja": "展開",
+      "id": "Perluas"
     },
     "Collapse": {
       "zh-Hans": "收起",
       "ko": "접기",
-      "ja": "折りたたむ"
+      "ja": "折りたたむ",
+      "id": "Ciutkan"
     },
     "Click to expand": {
       "zh-Hans": "点击展开",
       "ko": "클릭하여 펼치기",
-      "ja": "クリックして展開"
+      "ja": "クリックして展開",
+      "id": "Klik untuk memperluas"
     },
     "Click to collapse": {
       "zh-Hans": "点击收起",
       "ko": "클릭하여 접기",
-      "ja": "クリックして折りたたむ"
+      "ja": "クリックして折りたたむ",
+      "id": "Klik untuk menciutkan"
     },
     "Clear": {
       "zh-Hans": "清除",
       "ko": "지우기",
-      "ja": "クリア"
+      "ja": "クリア",
+      "id": "Hapus"
     },
     "Clear filters": {
       "zh-Hans": "清除筛选",
       "ko": "필터 지우기",
-      "ja": "フィルターをクリア"
+      "ja": "フィルターをクリア",
+      "id": "Hapus filter"
     },
     "No filters selected": {
       "zh-Hans": "未选择筛选条件",
       "ko": "선택한 필터 없음",
-      "ja": "フィルター未選択"
+      "ja": "フィルター未選択",
+      "id": "Tidak ada filter yang dipilih"
     },
     "Enable multi-sorting": {
       "zh-Hans": "启用多条件排序",
       "ko": "다중 기준 정렬 사용",
-      "ja": "複数条件で並べ替え"
+      "ja": "複数条件で並べ替え",
+      "id": "Aktifkan pengurutan multikriteria"
     },
     "Active personal filters": {
       "zh-Hans": "当前个人成绩筛选",
       "ko": "적용 중인 개인 기록 필터",
-      "ja": "適用中の個人成績フィルター"
+      "ja": "適用中の個人成績フィルター",
+      "id": "Filter skor pribadi yang aktif"
     },
     "Search: {0}": {
       "zh-Hans": "搜索：{0}",
       "ko": "검색: {0}",
-      "ja": "検索：{0}"
+      "ja": "検索：{0}",
+      "id": "Pencarian: {0}"
     },
     "Untitled (intentional)": {
       "zh-Hans": "无题（有意留空）",
       "ko": "무제 (의도적 공백)",
-      "ja": "無題（意図的な空欄）"
+      "ja": "無題（意図的な空欄）",
+      "id": "Tanpa judul (disengaja)"
     },
     "Title unavailable": {
       "zh-Hans": "曲名未知",
       "ko": "제목 정보 없음",
-      "ja": "曲名不明"
+      "ja": "曲名不明",
+      "id": "Judul tidak tersedia"
     },
     "Open song page": {
       "zh-Hans": "打开歌曲页面",
       "ko": "곡 페이지 열기",
-      "ja": "楽曲ページを開く"
+      "ja": "楽曲ページを開く",
+      "id": "Buka halaman lagu"
     },
     "Back to results": {
       "zh-Hans": "返回搜索结果",
       "ko": "검색 결과로 돌아가기",
-      "ja": "検索結果に戻る"
+      "ja": "検索結果に戻る",
+      "id": "Kembali ke hasil"
     }
   },
   "invariants": {

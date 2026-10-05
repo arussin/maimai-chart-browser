@@ -2,7 +2,7 @@ Windows での開発：[DEVELOPMENT.md](DEVELOPMENT.md)を参照してくださ�
 
 # maimai.party · 譜面ブラウザー
 
-[English](README.md) · [简体中文](README.zh-Hans.md) · [한국어](README.ko.md) · [日本語](README.ja.md)
+[English](README.md) · [简体中文](README.zh-Hans.md) · [한국어](README.ko.md) · [日本語](README.ja.md) · [Bahasa Indonesia](README.id.md)
 
 **2026年10月3日の本番公開：**[リリース、検証結果、運用上の制限](docs/PRODUCTION_RELEASE_20261003.md)。多言語の楽曲・バージョンページと非公開の日次利用集計が稼働しています。[Search Console とサイトマップ](docs/SEARCH_VISIBILITY.md)、[運営者向け利用状況レポート](usage-worker/README.md)には、それぞれ運用ガイドがあります。
 

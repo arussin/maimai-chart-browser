@@ -94,6 +94,29 @@ WORDS = {
         "이 maimai 버전의 곡.",
         "분석은 실험 단계이며 확인되지 않은 정보를 추정하지 않습니다.",
     ],
+    "id": [
+        "Lagu",
+        "Versi",
+        "Artis",
+        "Genre",
+        "BPM",
+        "Chart",
+        "Format",
+        "Kesulitan",
+        "Level",
+        "Konstanta",
+        "Buka di browser chart",
+        "Kembali ke hasil",
+        "Gunakan data maimai versi Internasional",
+        "Tidak diketahui",
+        "Lagu",
+        "Bahasa",
+        "Detail chart",
+        "Buka halaman lagu",
+        "Chart yang tersedia dan informasi lagu publik.",
+        "Lagu dalam versi maimai ini.",
+        "Analisis masih bersifat eksperimental; informasi yang tidak tersedia tidak disimpulkan.",
+    ],
     "zh-hans": [
         "歌曲",
         "版本",
@@ -146,6 +169,7 @@ DIFFICULTIES = {
     "ja": ("BASIC", "ADVANCED", "EXPERT", "MASTER", "Re:MASTER"),
     "ko": ("BASIC", "ADVANCED", "EXPERT", "MASTER", "Re:MASTER"),
     "zh-hans": ("初级", "高级", "专家", "大师", "宗师"),
+    "id": ("BASIC", "ADVANCED", "EXPERT", "MASTER", "Re:MASTER"),
 }
 
 TITLE_LABELS = {
@@ -153,6 +177,7 @@ TITLE_LABELS = {
     "ja": ("無題（意図的な空欄）", "曲名不明"),
     "ko": ("무제 (의도적 공백)", "제목 정보 없음"),
     "zh-hans": ("无题（有意留空）", "曲名未知"),
+    "id": ("Tanpa judul (disengaja)", "Judul tidak tersedia"),
 }
 
 
@@ -282,7 +307,13 @@ def _document(locale, kind, slug, title, description, body, words, browser_csp=N
     alternates += (
         f'<link rel="alternate" hreflang="x-default" href="{ORIGIN}{route("en", kind, slug)}">'
     )
-    language_labels = {"en": "English", "ja": "日本語", "ko": "한국어", "zh-hans": "简体中文"}
+    language_labels = {
+        "en": "English",
+        "ja": "日本語",
+        "ko": "한국어",
+        "zh-hans": "简体中文",
+        "id": "Bahasa Indonesia",
+    }
     languages = "".join(
         f'<a data-song-page hreflang="{language}" lang="{language}" '
         f'href="{route(code, kind, slug)}">'
@@ -633,7 +664,7 @@ def prepare_seo(
         {
             "songs": len(songs),
             "versions": len(versions),
-            "localized_documents": 4 * (len(songs) + len(versions)),
+            "localized_documents": len(LOCALES) * (len(songs) + len(versions)),
             "permalink_seeded": previous is not None,
         },
         list(song_references.values()),

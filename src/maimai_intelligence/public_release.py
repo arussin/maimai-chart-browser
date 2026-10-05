@@ -82,7 +82,7 @@ PUBLIC_FILES = (
     "feature-announcements.js",
     "maishift-favicon.ico",
     "player-import-help.css",
-    *(f"player-import-help.{locale}.html" for locale in ("en", "zh-Hans", "ko", "ja")),
+    *(f"player-import-help.{locale}.html" for locale in ("en", "zh-Hans", "ko", "ja", "id")),
 )
 
 

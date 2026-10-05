@@ -66,7 +66,7 @@ class SEOTests(unittest.TestCase):
         assets, ledger, summary = build_seo(catalog())
         self.assertEqual(summary["songs"], 5)
         self.assertEqual(summary["versions"], 2)
-        self.assertEqual(summary["localized_documents"], 28)
+        self.assertEqual(summary["localized_documents"], len(LOCALES) * 7)
         for locale in LOCALES:
             name = unquote(route(locale, "songs", ledger["songs"]["song:one"])[1:]) + "index.html"
             html = assets[name].decode()
@@ -80,9 +80,42 @@ class SEOTests(unittest.TestCase):
             self.assertIn("&lt;song&gt;", html)
             self.assertIn('hreflang="x-default"', html)
             self.assertEqual(html.count('rel="canonical"'), 1)
-            self.assertEqual(html.count('rel="alternate"'), 5)
+            self.assertEqual(html.count('rel="alternate"'), len(LOCALES) + 1)
             self.assertNotIn("lab-loader.js", html)
             self.assertNotIn("challenge-review.js", html)
+
+    def test_indonesian_documents_and_sitemaps_have_reciprocal_language_targets(self):
+        assets, ledger, _ = build_seo(catalog())
+        root = ElementTree.fromstring(assets["sitemap.xml"])  # noqa: S314 - generated XML
+        self.assertEqual(
+            {n.text for n in root.findall(".//{*}loc")},
+            {f"https://maimai.party/sitemap-{locale}.xml" for locale in LOCALES}
+            | {"https://maimai.party/sitemap-pages.xml"},
+        )
+        self.assertIn("id", LOCALES)
+        for kind in ("songs", "versions"):
+            slug = next(iter(ledger[kind].values()))
+            for locale, language in LOCALES.items():
+                name = unquote(route(locale, kind, slug)[1:]) + "index.html"
+                html = assets[name].decode()
+                self.assertIn(f'<html lang="{language}"', html)
+                for alternate, hreflang in LOCALES.items():
+                    self.assertIn(
+                        f'hreflang="{hreflang}" '
+                        f'href="https://maimai.party{route(alternate, kind, slug)}"',
+                        html,
+                    )
+                self.assertIn(
+                    f'hreflang="x-default" href="https://maimai.party{route("en", kind, slug)}"',
+                    html,
+                )
+                if locale == "id":
+                    self.assertIn("Bahasa Indonesia", html)
+                    self.assertIn("Gunakan data maimai versi Internasional", html)
+                    self.assertIn(
+                        f'rel="canonical" href="https://maimai.party{route(locale, kind, slug)}"',
+                        html,
+                    )
 
     def test_duplicate_titles_unicode_and_punctuation_have_stable_distinct_routes(self):
         data = catalog()

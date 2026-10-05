@@ -5,7 +5,7 @@ import json
 import re
 from importlib.resources import files
 
-LOCALES = ("zh-Hans", "ko", "ja")
+LOCALES = ("zh-Hans", "ko", "ja", "id")
 
 
 def messages():
@@ -40,7 +40,13 @@ def localization_data(*, sources=None):
     flags = {
         locale: "data:image/png;base64,"
         + base64.b64encode(assets.joinpath(f"flag-{country}.png").read_bytes()).decode("ascii")
-        for locale, country in {"en": "us", "zh-Hans": "cn", "ko": "kr", "ja": "jp"}.items()
+        for locale, country in {
+            "en": "us",
+            "zh-Hans": "cn",
+            "ko": "kr",
+            "ja": "jp",
+            "id": "id",
+        }.items()
     }
     catalog = messages()
     if sources is not None:

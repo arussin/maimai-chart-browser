@@ -10,7 +10,7 @@ from pathlib import Path
 from urllib.parse import unquote
 
 from maimai_intelligence.overview_codec import expand_tags
-from maimai_intelligence.seo import build_seo
+from maimai_intelligence.seo import LOCALES, build_seo
 from maimai_intelligence.serialization import canonical
 from maimai_intelligence.song_catalog import prepare_song_catalog
 from tests.test_seo import catalog
@@ -140,7 +140,7 @@ class SongCatalogTests(unittest.TestCase):
                 for path, raw in assets.items()
                 if "/songs/" in path and path.endswith("index.html")
             ]
-            self.assertEqual(len(pages), 4)
+            self.assertEqual(len(pages), len(LOCALES))
             for page in pages:
                 ids = [unquote(value) for value in re.findall(r'<tr id="chart-([^"]+)"', page)]
                 self.assertEqual(ids, expected)
@@ -162,7 +162,7 @@ class SongCatalogTests(unittest.TestCase):
                 for path, raw in assets.items()
                 if path.endswith("index.html") and name in raw.decode()
             ]
-            self.assertEqual(len(pages), 4)
+            self.assertEqual(len(pages), len(LOCALES))
             for page in pages:
                 binding = json.loads(unescape(re.search(r'data-song-binding="([^"]+)"', page)[1]))
                 self.assertEqual(binding["bytes"], len(raw))

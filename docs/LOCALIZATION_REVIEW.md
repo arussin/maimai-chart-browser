@@ -24,12 +24,12 @@ refresh the corresponding JSON fingerprints in the review record using
 Do not simply refresh hashes to make CI pass. No owner translation is required.
 
 For README changes, use the [README maintenance workflow](LOCALIZATION.md#repository-readme-translations).
-English remains canonical, and all three complete translations must be updated
+English remains canonical, and all four complete translations must be updated
 and reviewed together. Record Markdown fingerprints with
 `scripts.check_localization_review.file_fingerprint`, which normalizes line endings.
 
 The review workbook places each English phrase beside its current Korean,
-Simplified Chinese or Japanese translation. The separate Search aliases tab
+Simplified Chinese, Japanese or Indonesian translation. The separate Search aliases tab
 contains the generator's review queue. It does not rename songs or artists.
 
 Start with **UI Korean**, whose first entries cover Support. Work down the tab or

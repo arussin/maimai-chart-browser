@@ -32,7 +32,7 @@ const grades = [
   'SSS',
   'SSS+',
 ];
-const locales = new Set<Locale>(['en', 'ja', 'ko', 'zh-Hans']);
+const locales = new Set<Locale>(['en', 'ja', 'ko', 'zh-Hans', 'id']);
 const disclosureIds = new Set(['catalog-filters-toggle', 'player-filters-toggle']);
 const menuIds = new Set(['version-filter', 'difficulty-filter', 'pattern-filter']);
 

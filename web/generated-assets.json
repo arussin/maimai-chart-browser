@@ -3,8 +3,8 @@
   "tool": "esbuild-0.28.2",
   "assets": {
     "localization.js": {
-      "sha256": "dd035d732d5f06055f588e9eaa5345a31a290a555b81b2ae0bdc783b6d412bd8",
-      "bytes": 5619
+      "sha256": "31b677f384d11f6ca0cec5476b3cce2be26674bcdaea5e181a426743724ee7aa",
+      "bytes": 5689
     },
     "song-search.js": {
       "sha256": "150b81ce64d292679570d3878dd2c7d49c8530b2081184d55aef72fb42a4bba5",
@@ -43,8 +43,8 @@
       "bytes": 2578
     },
     "chart-overview.js": {
-      "sha256": "e242b200c7bddd30340bacb3b3e2d737b384e86881c5a954f8586793e34364e1",
-      "bytes": 14119
+      "sha256": "4ddab845ce4cd1429229549ecb2addd5a2d4bd932c48874acb4a3f40c34d0fff",
+      "bytes": 14173
     },
     "analytics.js": {
       "sha256": "9046e64f095d69de34f025f944a1547eeb9fd92b26f37111e38061df4c5f7178",

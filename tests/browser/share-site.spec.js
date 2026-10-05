@@ -48,7 +48,8 @@ async function hosted(context, {native = 'absent', mobile = false, clipboard = '
 }
 async function ready(page, path='/registry/?q=PRIVATE_SEARCH#PRIVATE_IMPORT') {
   await page.goto('https://maimai.party' + path, {waitUntil:'domcontentloaded'});
-  await expect(page.locator('#site-share')).toBeAttached();
+  // The trigger is server-rendered; its dialog is attached when handlers are installed.
+  await expect(page.locator('#site-share-dialog')).toBeAttached();
 }
 async function open(page) {
   await page.locator('#settings-toggle').click();
@@ -161,7 +162,7 @@ for (const clipboard of ['ok','fail','absent']) test('copy link handles '+clipbo
 
 test('every provider and More link contains only the public URL and title, with no referrer or opener', async ({page, context}) => {
   const external = await hosted(context); await ready(page); await page.waitForFunction(() => !!window.maimaiI18n); await open(page);
-  for (const locale of ['en','ja','ko','zh-Hans']) {
+  for (const locale of ['en','ja','ko','zh-Hans','id']) {
     await page.evaluate(locale => window.maimaiI18n.setLocale(locale), locale);
     const links = await page.locator('#site-share-dialog a').evaluateAll(nodes => nodes.map(n => ({href:n.href,service:n.dataset.shareService,rel:n.rel,policy:n.referrerPolicy})));
     for (const row of links) {
@@ -171,8 +172,8 @@ test('every provider and More link contains only the public URL and title, with 
       expect(row.rel).toBe('noopener noreferrer'); expect(row.policy).toBe('no-referrer');
     }
   }
-  for (const service of ['wechat','more','naver']) {
-    if (service==='naver') await page.evaluate(() => window.maimaiI18n.setLocale('ko'));
+  for (const [service,locale] of [['wechat','zh-Hans'],['more','id'],['naver','ko']]) {
+    await page.evaluate(locale => window.maimaiI18n.setLocale(locale),locale);
     const opened = context.waitForEvent('page');
     await page.locator('[data-share-service='+service+']').click();
     const popup = await opened; await expect(popup).toHaveTitle('Share destination fixture');

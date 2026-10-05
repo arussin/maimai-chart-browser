@@ -79,25 +79,27 @@ test('direct songs load an exact data shell when the host redirects and rewrites
     return route.fallback();
   });
   expect(shellURL).toMatch(/\.txt$/);
-  for(const locale of ['en','ja','ko','zh-hans']){
+  for(const locale of ['en','ja','ko','zh-hans','id']){
     await page.goto(songPath(locale,slug));
     await expect(page.locator('#seo-route-view .song-workspace')).toBeVisible();
     await expect(page.locator('[data-diagnostic="catalog_unavailable"]')).toHaveCount(0);
   }
   expect(dataRequests).toBeGreaterThan(0);expect(htmlRequests).toBe(0);
+  // Finish intercepted resource responses before Playwright disposes the context.
+  await page.unrouteAll({behavior:'wait'});
 });
 
-test('JavaScript-disabled public song pages retain four languages, canonical identity and crawlable charts',async({browser,request,baseURL})=>{
+test('JavaScript-disabled public song pages retain five languages, canonical identity and crawlable charts',async({browser,request,baseURL})=>{
  const map=await ledger(request),slug=Object.values(map.songs).find(value=>/[^\x00-\x7f]/.test(value));
  const context=await browser.newContext({javaScriptEnabled:false});const document=await context.newPage(),requests=[];
  document.on('request',request=>requests.push(request.url()));
  await context.route('**/*',async route=>{const url=new URL(route.request().url());if(url.origin!==baseURL)return route.abort();const response=await route.fetch({url:baseURL+'/registry'+url.pathname+url.search});return route.fulfill({response});});
- try{for(const [locale,htmlLanguage]of [['en','en'],['ja','ja'],['ko','ko'],['zh-hans','zh-Hans']]){
+ try{for(const [locale,htmlLanguage]of [['en','en'],['ja','ja'],['ko','ko'],['zh-hans','zh-Hans'],['id','id']]){
   await document.goto(baseURL+songPath(locale,slug));
   await expect(document.locator('main[data-seo-page="song"]')).toBeVisible();
   await expect(document.locator('html')).toHaveAttribute('lang',htmlLanguage);
   await expect(document.locator('link[rel="canonical"]')).toHaveAttribute('href','https://maimai.party'+songPath(locale,slug));
-  await expect(document.locator('link[rel="alternate"]')).toHaveCount(5);
+  await expect(document.locator('link[rel="alternate"]')).toHaveCount(6);
   await expect(document.locator('.seo-table a').first()).toHaveAttribute('href',/chart=/);
  }
  expect(requests.some(url=>/catalog-index|chart-details|lab-loader/.test(url))).toBe(false);
@@ -193,10 +195,11 @@ for(const recovery of [false,true])test('history-route '+(recovery?'verified rec
 });
 
 
-test('lean static foundations preserve aggregate stylesheet pixels in every locale',async({browser,page,request,baseURL},testInfo)=>{
+// Keep each locale independent so five-language coverage does not share one timeout.
+for(const locale of ['en','ja','ko','zh-hans','id'])test('lean static foundations preserve aggregate stylesheet pixels in '+locale,async({browser,page,request,baseURL},testInfo)=>{
   test.setTimeout(90000);
   const map=await ledger(request),song=Object.values(map.songs)[0],version=Object.values(map.versions)[0];
-  for(const locale of ['en','ja','ko','zh-hans'])for(const [kind,slug]of [['songs',song],['versions',version]]){
+  for(const [kind,slug]of [['songs',song],['versions',version]]){
     const path='/'+locale+'/'+kind+'/'+encodeURIComponent(slug)+'/',response=await request.get('/registry'+path),html=(await response.text()).replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,'');
     // One DOM isolates the stylesheet change from separate-context glyph rasterization.
     // Scripts are stripped while keeping Firefox's font-readiness API usable.
@@ -451,9 +454,9 @@ test('direct nested routes resolve shell images before activating imported nodes
  const map=await ledger(request),misresolved=[];
  page.on('request',request=>{
   const path=new URL(request.url()).pathname;
-  if(/^\/(en|ja|ko|zh-hans)\/(songs|versions)\/[^/]+\/browser-resources\//.test(path))misresolved.push(path);
+  if(/^\/(en|ja|ko|zh-hans|id)\/(songs|versions)\/[^/]+\/browser-resources\//.test(path))misresolved.push(path);
  });
- for(const locale of ['en','ja','ko','zh-hans'])for(const [kind,slug]of [['songs',Object.values(map.songs)[0]],['versions',Object.values(map.versions)[0]]]){
+ for(const locale of ['en','ja','ko','zh-hans','id'])for(const [kind,slug]of [['songs',Object.values(map.songs)[0]],['versions',Object.values(map.versions)[0]]]){
   await page.goto('/'+locale+'/'+kind+'/'+encodeURIComponent(slug)+'/');
   await expect(page.locator('#settings-toggle')).toBeVisible();await ready(page);
   await page.evaluate(async()=>{document.querySelectorAll('img').forEach(image=>image.loading='eager');await Promise.all([...document.images].map(image=>image.decode().catch(()=>{})));});

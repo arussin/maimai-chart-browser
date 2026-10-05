@@ -2,25 +2,25 @@
   "version": 1,
   "tool": "esbuild-0.28.2",
   "entries": {
-    "hosted": "browser/browser-entry-NKHEMMEC.js",
-    "offline": "browser/browser-offline-6Y6CUW36.js"
+    "hosted": "browser/browser-entry-NYJEP4KX.js",
+    "offline": "browser/browser-offline-GV2BVUS7.js"
   },
   "assets": {
-    "browser/browser-entry-NKHEMMEC.js": {
-      "sha256": "cfd0a60c28febb1ff09488e6db2d966a9651af1ba9ef518a560adaaed4ce7453",
-      "bytes": 21820
+    "browser/browser-entry-NYJEP4KX.js": {
+      "sha256": "1749b200cda508d4cb5f62a32174b00d3139b8fa3cad6c18c258426ba6301602",
+      "bytes": 21985
     },
-    "browser/application-HQLV3THK.js": {
-      "sha256": "1266b64566f8635329a27e062cdcfad2664a1c547d7232c1de7eb900da790024",
-      "bytes": 226010
+    "browser/application-2A2C2365.js": {
+      "sha256": "db6768289922a5a562905c3a1d33c4e186a012645adbb8b7776838778cdc77da",
+      "bytes": 226139
     },
     "browser/chunk-PQOHL5MV.js": {
       "sha256": "c25d9c5050a2d5c3134eefe35d0504e5a3bb13809038eccb822eee8f37879f44",
       "bytes": 2611
     },
-    "browser/browser-offline-6Y6CUW36.js": {
-      "sha256": "e660e1bc8e88c5065b8f4ff4a0179b82e07b39b81d17db3ed7f7588d312fdb9c",
-      "bytes": 245540
+    "browser/browser-offline-GV2BVUS7.js": {
+      "sha256": "d4d8bd6a11a86065c607a46276324f0676d6874da52e4766be67b5fe92f9293d",
+      "bytes": 245834
     },
     "browser/recovery-pagination-c898b2432a221525.js": {
       "sha256": "c898b2432a221525bd523d99a8666f562002886ac907d715f3d1687e07c366b6",
@@ -47,7 +47,7 @@
     "lab-loader.js"
   ],
   "preloads": [
-    "browser/application-HQLV3THK.js",
+    "browser/application-2A2C2365.js",
     "browser/chunk-PQOHL5MV.js"
   ],
   "recoveryPagination": "browser/recovery-pagination-c898b2432a221525.js"

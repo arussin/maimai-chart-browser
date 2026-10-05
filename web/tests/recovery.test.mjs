@@ -26,7 +26,7 @@ test('unmarked documents use normal navigation; detached marker facts are requir
 });
 
 test('every public language and route kind accepts exactly its canonical static document', () => {
-  for (const locale of ['en', 'ja', 'ko', 'zh-hans'])
+  for (const locale of ['en', 'ja', 'ko', 'zh-hans', 'id'])
     for (const [routeKind, pageKind] of [
       ['songs', 'song'],
       ['versions', 'version'],

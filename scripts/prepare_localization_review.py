@@ -27,6 +27,7 @@ FEATURES = {
     "remaining": "Other controls",
     "about": "About and credits",
     "maishift-pilot": "Opt-in Maishift pilot",
+    "card-history": "Chart card and play history",
 }
 
 
@@ -47,7 +48,7 @@ def review_snapshot():
                     "feature": label,
                     "source_file": "locales/" + path.name,
                     "english": english,
-                    "translations": {k: translations[k] for k in ("ko", "zh-Hans", "ja")},
+                    "translations": {k: translations[k] for k in ("ko", "zh-Hans", "ja", "id")},
                     "placeholders": sorted(set(re.findall(r"\{\d+\}", english))),
                     "source_sha256": fingerprint(translations),
                 }

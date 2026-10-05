@@ -1,0 +1,113 @@
+{
+  "date": "2026-10-04",
+  "reviewer": "ChatGPT AI assistant",
+  "method": "AI authoring and contextual source self-review against canonical English, feature source, and localization maintenance instructions; not an independent review",
+  "status": "source-reviewed; release-validation-pending",
+  "languages": [
+    "id"
+  ],
+  "message_count": 961,
+  "message_catalog_count": 17,
+  "native_speaker_certified": false,
+  "independent_reviewer": false,
+  "browser_review_performed": false,
+  "scope": [
+    "All 961 added Indonesian catalog values; English keys, Japanese/Korean/Simplified Chinese values, placeholders and invariants preserved.",
+    "Complete Indonesian root README and player import help; existing four root READMEs changed only by adding the Indonesian navigation link.",
+    "Indonesian labels in locale selection, title states, diagnostics, navigation, SEO and static recovery; browser language independent of game region.",
+    "No Indonesian song-title corpus, provider language support, matching identity changes, or checkout-provider translation claims."
+  ],
+  "review_focus": [
+    "Playable chart versus plotted grafik; onset timing versus physical spacing.",
+    "Saved dates versus play dates, complete versus partial histories, unknown measurements, and experimental detector qualifications.",
+    "Privacy/consent boundaries, failure preservation, refresh limits, payment retry cautions, literal game/user/source names, and parser numeric examples."
+  ],
+  "corrections": [
+    {
+      "english": "All charts",
+      "before": "Semua chart",
+      "after": "Semua",
+      "reason": "Match existing concise non-English filter defaults; accessible labels retain context."
+    },
+    {
+      "english": "All genres",
+      "before": "Semua genre",
+      "after": "Semua",
+      "reason": "Match existing concise non-English filter defaults; accessible labels retain context."
+    },
+    {
+      "english": "All versions",
+      "before": "Semua versi",
+      "after": "Semua",
+      "reason": "Match existing concise non-English filter defaults; accessible labels retain context."
+    },
+    {
+      "english": "All difficulties",
+      "before": "Semua tingkat kesulitan",
+      "after": "Semua",
+      "reason": "Match existing concise non-English filter defaults; accessible labels retain context."
+    },
+    {
+      "english": "All patterns",
+      "before": "Semua pola",
+      "after": "Semua",
+      "reason": "Match existing concise non-English filter defaults; accessible labels retain context."
+    },
+    {
+      "english": "All lessons",
+      "before": "Semua pelajaran",
+      "after": "Semua",
+      "reason": "Match existing concise non-English filter defaults; accessible labels retain context."
+    }
+  ],
+  "source_evidence": [
+    "docs/LOCALIZATION.md",
+    "docs/LOCALIZATION_REVIEW.md",
+    "docs/LOCALIZATION_TERMINOLOGY.md",
+    "web/src/views/localization.ts",
+    "src/maimai_intelligence/assets/import-help/README.md",
+    "README.md"
+  ],
+  "checks_completed": {
+    "catalog_original_content_and_placeholder_preservation": true,
+    "readme_commands_inline_code_links_and_heading_parity": true,
+    "node_source_tests": {
+      "passed": 52,
+      "failed": 0,
+      "skipped": 0
+    },
+    "typescript_syntax_parsed_in_memory": 6
+  },
+  "pending": [
+    "Maintained DevCache build and declared generated-asset promotion",
+    "Full Python, TypeScript type, formatter, architecture and generated-consistency checks",
+    "Real Playwright tests, broad Indonesian feature coverage, and visual validation including Support controls",
+    "Release capacity/inventory and deployment verification"
+  ],
+  "inputs": {
+    "src/maimai_intelligence/assets/locales/messages.json": "36c67c70d240d071e131e173b9e700699234760ca105640b8d5ecf7b9a35274a",
+    "src/maimai_intelligence/assets/locales/card-history.json": "0d706787dad9dbbce0a748b55fe2a89a86661ae0f6cca95fe97c408912ccad36",
+    "src/maimai_intelligence/assets/locales/about.json": "0bc7a173a5f434878ca26e362c9d4d1341d66fe933cc4b43ce11eaa18eaed252",
+    "src/maimai_intelligence/assets/locales/analysis.json": "6d11ca6347dbbb2a255588b55cd21b2db566f05a16741725312100d4131aeff6",
+    "src/maimai_intelligence/assets/locales/composed.json": "602228d6df4bfe352306c56fee97413782940df51388ebbd2bba5e876354918c",
+    "src/maimai_intelligence/assets/locales/errors.json": "6171073353a5d881728c9a159b56a1c457efe11c9213565b0152d6553e3c1adb",
+    "src/maimai_intelligence/assets/locales/lessons.json": "002f4515304ae70e5ddc91807649f08428fd85c8c4e7f9f52177864e2654354f",
+    "src/maimai_intelligence/assets/locales/patterns.json": "51e2344b1080c82474f0cc7609c121fd622d4e3e93e5e16f0e41146a1d8822d3",
+    "src/maimai_intelligence/assets/locales/pattern-aliases.json": "0dcf1a1d8d572bf210cc1f88f5790b1737a0840d901bfa9ed884aa08d3bb8548",
+    "src/maimai_intelligence/assets/locales/player.json": "b6f179f161f310bbb4ad19ba8ed6de76707a9cad843b9690688bc4b34d961fd5",
+    "src/maimai_intelligence/assets/locales/player-sources.json": "271942a5a1b88070930dc17a82df794fd031a7f327252fdc9f13c454c6ad439c",
+    "src/maimai_intelligence/assets/locales/player-maishift.json": "e1dd639655b9916aa5c8fe51dd4526aedca1cb347ec430291034a15e99bea277",
+    "src/maimai_intelligence/assets/locales/maishift-pilot.json": "a8bf4dd18c54c7898241462e7cbc5272d360aa645d9c989c92ef8aca26b695d3",
+    "src/maimai_intelligence/assets/locales/privacy.json": "36079fd22e5f5f0a2128f18344d07f0374298b31cb565475beb4af755c8995ce",
+    "src/maimai_intelligence/assets/locales/remaining.json": "e92aac89a60bfda27bcc2676e4e53cec27b2ceb564b1716243a4a247d676ba60",
+    "src/maimai_intelligence/assets/locales/share.json": "fd719ebe84e47c7b1bf02ae7d760cc3ac97001950e890bc3f2acf370a9ea9cae",
+    "src/maimai_intelligence/assets/locales/support.json": "d428d14a68af4afc000efb717bf91e9aca78b0a842cca439de56a2b3f558a243",
+    "README.md": "c892403040c4fb6f8866aae06d50a0acdb7675cdbaf5d0653588eb9e8b575efe",
+    "README.ja.md": "f79ffc1fa7e05fab0b52e15607da6669c9c19b8bf707497f8d469535228a2233",
+    "README.ko.md": "b155547648279fa05c43919d25d1c8f69837f166ea34561f539b0fab649d6558",
+    "README.zh-Hans.md": "78b12a7ed6f3ca0986d18c3b21ebaff9423ad1d967d4077356a6bc2c94cbb43b",
+    "README.id.md": "f95b7c38bbcec394c785fa97ae4f6168eb9bb01b8516ffa6d194138a6a8e4708",
+    "src/maimai_intelligence/assets/import-help/README.id.md": "0fc0a02bec2f1492a058dd86e6364e647d16b88655c5c532980199e2201e064b"
+  },
+  "release_approval": false
+}

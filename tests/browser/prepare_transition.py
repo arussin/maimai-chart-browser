@@ -51,7 +51,7 @@ DOCUMENTS = {
     "sitemap.xml",
     "support.html",
     "support-return.html",
-    *(f"player-import-help.{locale}.html" for locale in ("en", "ko", "ja", "zh-Hans")),
+    *(f"player-import-help.{locale}.html" for locale in ("en", "ko", "ja", "zh-Hans", "id")),
 }
 
 
