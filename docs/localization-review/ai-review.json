@@ -52,7 +52,8 @@
     "src/maimai_intelligence/assets/song-display-readings.json": "94d944ed0f56d8a36d5565af9893f6701b99666b224a1f7db6e767413b67973c",
     "src/maimai_intelligence/assets/locales/card-history.json": "0d706787dad9dbbce0a748b55fe2a89a86661ae0f6cca95fe97c408912ccad36",
     "README.id.md": "f95b7c38bbcec394c785fa97ae4f6168eb9bb01b8516ffa6d194138a6a8e4708",
-    "src/maimai_intelligence/assets/import-help/README.id.md": "0fc0a02bec2f1492a058dd86e6364e647d16b88655c5c532980199e2201e064b"
+    "src/maimai_intelligence/assets/import-help/README.id.md": "0fc0a02bec2f1492a058dd86e6364e647d16b88655c5c532980199e2201e064b",
+    "src/maimai_intelligence/assets/locales/bpm-filter.json": "de56afac29a72d7fcd7b55e74215fab9a34bb5ae16300984f692846866b71034"
   },
   "documentation": {
     "source": "README.md",
@@ -116,6 +117,12 @@
       "scope": "961 Indonesian UI messages, Indonesian README and import help, existing README navigation links, and source-localized labels. Source self-review only; full build and browser/release validation remain pending.",
       "method": "AI authoring and contextual source self-review against canonical English, feature source, and localization maintenance instructions; not an independent review",
       "date": "2026-10-04"
+    },
+    {
+      "date": "2026-10-06",
+      "reviewer": "ChatGPT AI assistant",
+      "record": "docs/localization-review/bpm-filter-20261006.json",
+      "scope": "Nine new BPM filter messages reviewed in all five UI languages; existing messages and review scopes unchanged."
     }
   ],
   "player_sources_review": {

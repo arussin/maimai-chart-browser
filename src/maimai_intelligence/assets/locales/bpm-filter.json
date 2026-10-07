@@ -1,0 +1,58 @@
+{
+  "messages": {
+    "BPM comparison": {
+      "zh-Hans": "BPM 比较方式",
+      "ko": "BPM 비교 조건",
+      "ja": "BPMの比較条件",
+      "id": "Perbandingan BPM"
+    },
+    "BPM value": {
+      "zh-Hans": "BPM 数值",
+      "ko": "BPM 값",
+      "ja": "BPMの値",
+      "id": "Nilai BPM"
+    },
+    "Any BPM": {
+      "zh-Hans": "不限 BPM",
+      "ko": "BPM 제한 없음",
+      "ja": "BPM指定なし",
+      "id": "BPM bebas"
+    },
+    "BPM less than or equal to": {
+      "zh-Hans": "BPM 小于或等于",
+      "ko": "BPM 이하",
+      "ja": "BPMが指定値以下",
+      "id": "BPM kurang dari atau sama dengan"
+    },
+    "BPM equal to": {
+      "zh-Hans": "BPM 等于",
+      "ko": "BPM 같음",
+      "ja": "BPMが指定値と等しい",
+      "id": "BPM sama dengan"
+    },
+    "BPM greater than or equal to": {
+      "zh-Hans": "BPM 大于或等于",
+      "ko": "BPM 이상",
+      "ja": "BPMが指定値以上",
+      "id": "BPM lebih dari atau sama dengan"
+    },
+    "Enter a positive BPM, or leave blank for any BPM.": {
+      "zh-Hans": "请输入大于 0 的 BPM，或留空以不限 BPM。",
+      "ko": "0보다 큰 BPM을 입력하거나, 제한하지 않으려면 비워 두세요.",
+      "ja": "0より大きいBPMを入力するか、空欄で制限なしにしてください。",
+      "id": "Masukkan BPM lebih dari nol, atau kosongkan untuk semua BPM."
+    },
+    "Remove BPM filter": {
+      "zh-Hans": "移除 BPM 筛选",
+      "ko": "BPM 필터 해제",
+      "ja": "BPMフィルターを解除",
+      "id": "Hapus filter BPM"
+    },
+    "BPM {0} {1} ×": {
+      "zh-Hans": "BPM {0} {1} ×",
+      "ko": "BPM {0} {1} ×",
+      "ja": "BPM {0} {1} ×",
+      "id": "BPM {0} {1} ×"
+    }
+  }
+}

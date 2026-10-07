@@ -45,3 +45,26 @@ test('collector failure and restoration leave the browser usable without replay'
  await page.evaluate(()=>maimaiUsage.suspend(()=>maimaiUsage.emit('settings_opened')));await page.evaluate(()=>maimaiUsage.flush());expect(counts).toHaveLength(before);
  await page.locator('#search').fill('Fictional study 0');await expect(page.locator('#catalog-count strong')).toHaveText('1');
 });
+
+test('BPM emits only its finite category and never replays on restore', async ({ page, context }) => {
+  const { counts, external } = await hosted(context);
+  await page.addInitScript(() => localStorage.setItem('maimai-catalog-filters-collapsed', '0'));
+  await page.goto('https://maimai.party/');
+  await expect(page.locator('#filter-bpm-value')).toBeVisible();
+  await page.locator('#filter-bpm-operator').selectOption('gte');
+  await page.evaluate(() => maimaiUsage.flush());
+  expect(counts.flatMap(batch => batch.events).filter(row => row.detail === 'bpm')).toHaveLength(0);
+  await page.locator('#filter-bpm-value').fill('173.125');
+  await page.locator('#filter-bpm-value').press('Enter');
+  await page.locator('#filter-bpm-value').press('Tab');
+  await page.evaluate(() => maimaiUsage.flush());
+  const events = counts.flatMap(batch => batch.events).filter(row => row.detail === 'bpm');
+  expect(events).toHaveLength(1);
+  expect(events[0].event).toBe('filter_first_used');
+  expect(events[0].count).toBe(1);
+  const before = JSON.stringify(counts);
+  await page.evaluate(() => { maimaiBrowserState.restore(maimaiBrowserState.capture()); maimaiUsage.flush(); });
+  expect(JSON.stringify(counts)).toBe(before);
+  expect(before).not.toContain('173.125');
+  expect(external).toEqual([]);
+});

@@ -1,6 +1,8 @@
 import type { BrowserSnapshot, Locale, SortKey, SortRule, LocalizationPort } from './contracts';
 import type { PositionRestorer } from './position';
 import type { UsageAPI } from '../usage';
+import type { BpmFilterValue } from '../domain/bpm-filter';
+import { isPositiveBpm, restoreBpmFilter } from '../domain/bpm-filter';
 
 const publicKeys: readonly SortKey[] = [
   'title',
@@ -95,6 +97,7 @@ interface FilterValue {
   difficulties: string[];
   low: number | null;
   high: number | null;
+  bpm: BpmFilterValue;
 }
 
 interface TransientView {
@@ -107,7 +110,7 @@ interface TransientView {
 interface CatalogIdentity {
   catalog: { chart_id: string }[];
   source_catalog_sha256?: string;
-  navigation?: { versions?: string[] };
+  navigation?: { versions?: string[]; charts?: Record<string, { bpm?: number | null }> };
 }
 
 export interface BrowserViewPort {
@@ -139,6 +142,7 @@ export class BrowserState {
   readonly patterns = new Set<string>();
   readonly difficulties = new Set<string>();
   readonly level = { low: 0, high: 0 };
+  readonly bpm: BpmFilterValue = { operator: 'eq', value: null };
   readonly region: { availability: '' | 'JP' | 'INTL'; international: boolean } = {
     availability: '',
     international: false,
@@ -165,6 +169,7 @@ export class BrowserState {
   readonly historyRows = new Map<string, number>();
   readonly sections = { chart: true, player: true };
   private readonly chartIds = new Set<string>();
+  private catalogBpm: (chartId: string) => unknown = () => null;
   private readonly versions = new Set<string>();
   private readonly patternIds = new Set<string>();
   private readonly difficultyIds = new Set<string>();
@@ -188,10 +193,18 @@ export class BrowserState {
   configure(data: CatalogIdentity): void {
     this.chartIds.clear();
     data.catalog.forEach((chart) => this.chartIds.add(chart.chart_id));
+    this.catalogBpm = (chartId) => data.navigation?.charts?.[chartId]?.bpm;
     this.versions.clear();
     data.navigation?.versions?.forEach((version) => this.versions.add(version));
     this.catalogHash = data.source_catalog_sha256 ?? null;
     this.focusChart(this.focusedChart);
+  }
+
+  /** The same catalog BPM used by chart display and sorting; not snapshot data. */
+  bpmFor(chartId: string | undefined): number | null {
+    if (chartId === undefined || !this.chartIds.has(chartId)) return null;
+    const bpm = this.catalogBpm(chartId);
+    return isPositiveBpm(bpm) ? bpm : null;
   }
 
   focusChart(id: string | null): void {
@@ -227,10 +240,12 @@ export class BrowserState {
       difficulties: [...this.difficulties],
       low: this.levels[this.level.low] ?? null,
       high: this.levels[this.level.high] ?? null,
+      bpm: { ...this.bpm },
     };
   }
 
   restoreFilters(value: unknown): void {
+    Object.assign(this.bpm, restoreBpmFilter(object(value) ? value.bpm : undefined));
     if (!object(value) || !Array.isArray(value.difficulties)) return;
     this.difficulties.clear();
     strings(value.difficulties)

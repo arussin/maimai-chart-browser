@@ -1,7 +1,9 @@
 import type { TextView } from '../components/chart-card';
 import type { BrowserState } from '../runtime/browser-state';
 import type { UsageAPI } from '../usage';
+import { createBpmFilter } from './bpm-filter';
 interface FilterChart {
+  chart_id?: string;
   difficulty: string;
   level?: string;
 }
@@ -92,6 +94,13 @@ export function createChartFilters(ports: FilterPorts) {
     return parseFloat(text) + (text.endsWith('+') ? 0.5 : 0);
   };
   function mount(charts: readonly FilterChart[], onChange: () => void) {
+    const bpmFilter = createBpmFilter({
+      root,
+      localization: i18n,
+      state: ports.browserState.bpm,
+      onChange,
+      onUse: () => ports.usage?.emit('filter_first_used', undefined, 'bpm'),
+    });
     const order = ['BASIC', 'ADVANCED', 'EXPERT', 'MASTER', 'RE:MASTER'];
     const selected = ports.browserState.difficulties,
       difficulties = [...new Set(charts.map((c) => c.difficulty))].sort(
@@ -305,27 +314,34 @@ export function createChartFilters(ports: FilterPorts) {
       snapshot: () => ports.browserState.filterSnapshot(),
       restore(value: unknown) {
         ports.browserState.restoreFilters(value);
+        bpmFilter.sync();
         updateDifficulties();
         sync();
       },
       sync() {
+        bpmFilter.sync();
         updateDifficulties();
         sync();
       },
       matches(chart: FilterChart) {
+        if (!bpmFilter.matches(ports.browserState.bpmFor(chart.chart_id))) return false;
         if (selected.size && !selected.has(chart.difficulty)) return false;
         if ((range.low === 0 && range.high === levels.length - 1) || !levels.length) return true;
         const value = number(chart.level);
         return value != null && value >= levels[range.low] && value <= levels[range.high];
       },
       clear() {
+        bpmFilter.clear();
         selected.clear();
         updateDifficulties();
         clearLevels();
       },
       activeCount() {
         return (
-          Number(selected.size > 0) + Number(range.low > 0) + Number(range.high < levels.length - 1)
+          Number(selected.size > 0) +
+          Number(range.low > 0) +
+          Number(range.high < levels.length - 1) +
+          bpmFilter.activeCount()
         );
       },
       chips() {
@@ -359,6 +375,7 @@ export function createChartFilters(ports: FilterPorts) {
             onChange();
             fields[1].focus();
           });
+        result.push(...bpmFilter.chips());
         return result;
       },
     };

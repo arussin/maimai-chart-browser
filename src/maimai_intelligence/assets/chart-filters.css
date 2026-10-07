@@ -33,3 +33,10 @@
 /* Regional preference is separate from the genre, version and difficulty controls. */
 .international-data-option{min-height:44px;margin:0 0 10px;gap:10px;color:var(--ink)}
 .international-data-option input{padding:0;width:18px;height:18px;min-height:18px;flex-shrink:0;accent-color:var(--aqua)}
+
+/* BPM occupies the existing third secondary-filter column; narrow grids wrap it. */
+.bpm-filter-field{display:flex;flex-direction:column;gap:6px;min-width:0;max-width:100%;font-size:13px;color:var(--muted)}
+.bpm-filter-controls{display:grid;grid-template-columns:4.5rem minmax(0,1fr);gap:8px;min-width:0;max-width:100%}
+.bpm-filter-controls>input,.bpm-filter-controls>select{box-sizing:border-box;width:100%;min-width:0;max-width:100%;min-height:44px;font-size:14px}
+#filter-bpm-value{font-variant-numeric:tabular-nums}#filter-bpm-value[aria-invalid=true]{border-color:#b12a40;outline-color:#b12a40}
+#bpm-filter-error{margin:0;font-size:11px;line-height:1.4;color:#a11e34;overflow-wrap:anywhere}#bpm-filter-error:empty{display:none}

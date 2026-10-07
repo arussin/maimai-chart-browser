@@ -1,0 +1,16 @@
+{
+  "date": "2026-10-06",
+  "reviewer": "ChatGPT AI assistant",
+  "method": "AI authoring and contextual source self-review; not independent or native-speaker certification.",
+  "locales": [
+    "en",
+    "zh-Hans",
+    "ko",
+    "ja",
+    "id"
+  ],
+  "entries": 9,
+  "scope": "Nine BPM filter labels, accessible operator descriptions, numeric validation and removal chip. Inclusive comparisons, positive-number input, blank unrestricted state and numeric placeholders were reviewed in UI source context. No existing translations, song names, identities or aliases changed. Browser layout and accessibility validation are separate.",
+  "file": "src/maimai_intelligence/assets/locales/bpm-filter.json",
+  "fingerprint": "de56afac29a72d7fcd7b55e74215fab9a34bb5ae16300984f692846866b71034"
+}
