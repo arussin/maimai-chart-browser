@@ -58,7 +58,9 @@ for(const restoreTiming of ['before','after'])test(`saved player restore ${resto
 
 test('browsing and matching work without details; failed evidence can be retried',async({page})=>{
   const requested=[];page.on('request',r=>requested.push(r.url()));
-  await page.route('**/chart-details/**',route=>route.abort());
+  let failDetails=true;
+  // Keep interception stable while in-flight evidence requests finish.
+  await page.route('**/chart-details/**',route=>failDetails?route.abort():route.fallback());
   await page.goto('/progressive/');
   await expect(page.locator('#catalog-count strong')).toHaveText('6');
   await expect(page.locator('#lab-status')).toBeEmpty();
@@ -71,7 +73,7 @@ test('browsing and matching work without details; failed evidence can be retried
   await page.getByRole('button',{name:'Find similar',exact:true}).click();
   await expect(page.locator('#similar-results .similar-chart')).not.toHaveCount(0);
   await page.locator('#catalog-tab').click();
-  await page.unroute('**/chart-details/**');
+  failDetails=false;
   await page.locator('.chart-pattern-detail').getByRole('button',{name:'Retry loading chart',exact:true}).click();
   await expect(page.locator('.chart-pattern-detail svg')).toBeVisible();
   await expect(page.locator('.chart-pattern-detail .pattern-evidence')).not.toHaveCount(0);
