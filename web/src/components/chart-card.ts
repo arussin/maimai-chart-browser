@@ -189,11 +189,15 @@ export function createChartCard<C extends ChartSummary>(
       personal?.resetHistory?.(c);
       personal?.resetHistory?.(next);
       actions.select(next.chart_id);
+      const viewport = row.ownerDocument.defaultView;
+      const scrollPosition = viewport && { left: viewport.scrollX, top: viewport.scrollY };
       const replacement = renderRow(next);
       row.replaceWith(replacement);
       replacement
         .querySelector<HTMLSelectElement>('.row-difficulty')!
         .focus({ preventScroll: true });
+      // Replacing an expanded row can trigger native scroll anchoring at narrow widths.
+      if (scrollPosition) viewport!.scrollTo({ ...scrollPosition, behavior: 'instant' });
     };
     const level = make('span', constantLabel(c), 'chart-level chart-constant'),
       bpm = make('span', values.bpm(c) == null ? '—' : String(values.bpm(c)), 'chart-bpm'),
