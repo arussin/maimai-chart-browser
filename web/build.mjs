@@ -3,7 +3,7 @@ import { readFile, writeFile, mkdir, readdir, unlink, realpath } from 'node:fs/p
 import { resolve, dirname, relative, basename, isAbsolute } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
-import { hostedPreloads } from './build-graph.mjs';
+import { hostedPreloads, validateBrowserAssetSizes } from './build-graph.mjs';
 import { stagingBrowserPlugin } from './staging-profile.mjs';
 const base = dirname(fileURLToPath(import.meta.url)),
   root = resolve(base, '..'),
@@ -145,11 +145,11 @@ manifest.preloads = hostedPreloads(
   hosted.metafile,
   resolve(assets, manifest.entries.hosted),
   assets,
+  [resolve(base, 'src/application.ts')],
 );
 for (const file of [...hosted.outputFiles, ...offline.outputFiles]) {
   const path = relative(assets, file.path).replaceAll('\\', '/');
   manifest.assets[path] = digest(file.contents);
-  await output(file.path, file.contents);
 }
 // Recovery embeds this expression inside its hash-bound legacy controller.
 // It is never a browser entry, preload or global service.
@@ -168,6 +168,9 @@ const recoveryDigest = digest(recoveryBytes);
 manifest.recoveryPagination =
   'browser/recovery-pagination-' + recoveryDigest.sha256.slice(0, 16) + '.js';
 manifest.assets[manifest.recoveryPagination] = recoveryDigest;
+validateBrowserAssetSizes(manifest);
+for (const file of [...hosted.outputFiles, ...offline.outputFiles])
+  await output(file.path, file.contents);
 await output(resolve(assets, manifest.recoveryPagination), recoveryBytes);
 // This directory is generated exclusively by this build. Reject or prune stale JS chunks.
 const generatedRoot = resolve(assets, 'browser');

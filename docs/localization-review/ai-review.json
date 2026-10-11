@@ -42,7 +42,7 @@
     "README.ko.md": "b155547648279fa05c43919d25d1c8f69837f166ea34561f539b0fab649d6558",
     "README.ja.md": "f79ffc1fa7e05fab0b52e15607da6669c9c19b8bf707497f8d469535228a2233",
     "src/maimai_intelligence/assets/locales/share.json": "fd719ebe84e47c7b1bf02ae7d760cc3ac97001950e890bc3f2acf370a9ea9cae",
-    "src/maimai_intelligence/assets/locales/player-sources.json": "271942a5a1b88070930dc17a82df794fd031a7f327252fdc9f13c454c6ad439c",
+    "src/maimai_intelligence/assets/locales/player-sources.json": "c58e424e0dab3089c9af72018a250f053bf7a5711690d9ec4eb7fe374c660591",
     "src/maimai_intelligence/assets/locales/player-maishift.json": "e1dd639655b9916aa5c8fe51dd4526aedca1cb347ec430291034a15e99bea277",
     "src/maimai_intelligence/assets/locales/maishift-pilot.json": "a8bf4dd18c54c7898241462e7cbc5272d360aa645d9c989c92ef8aca26b695d3",
     "src/maimai_intelligence/assets/import-help/README.ja.md": "793eedaee7afbc4b2464e5ad33a35e6aa9f788a66afebeb7ca4c6f23dfa5dcd3",
@@ -54,7 +54,7 @@
     "README.id.md": "f95b7c38bbcec394c785fa97ae4f6168eb9bb01b8516ffa6d194138a6a8e4708",
     "src/maimai_intelligence/assets/import-help/README.id.md": "0fc0a02bec2f1492a058dd86e6364e647d16b88655c5c532980199e2201e064b",
     "src/maimai_intelligence/assets/locales/bpm-filter.json": "de56afac29a72d7fcd7b55e74215fab9a34bb5ae16300984f692846866b71034",
-    "src/maimai_intelligence/assets/locales/score-export.json": "8a5dd5d0314110e331c79a1014c2d7616137122d56751a006ef91e131d3b2255"
+    "src/maimai_intelligence/assets/locales/score-export.json": "a14db896e44cedf0cb5e687e89b96673977e1ac22de1f875bcc0f32da66c4743"
   },
   "documentation": {
     "source": "README.md",
@@ -248,6 +248,16 @@
       "date": "2026-10-11",
       "record": "docs/localization-review/score-export-20261011.json",
       "scope": "57 Best 50 and achievement-export strings reviewed in context in Simplified Chinese, Korean, Japanese and Indonesian, including rating-estimate and community-metadata regional uncertainty; existing translations unchanged."
+    },
+    {
+      "date": "2026-10-11",
+      "record": "docs/localization-review/score-export-style-20261011.json",
+      "scope": "Three additional version-picker and Forget labels reviewed in Simplified Chinese, Korean, Japanese and Indonesian; existing translations unchanged."
+    },
+    {
+      "date": "2026-10-11",
+      "record": "docs/localization-review/score-export-preferences-20261011.json",
+      "scope": "Three export preference labels reviewed in Simplified Chinese, Korean, Japanese and Indonesian; official character names remain verbatim."
     }
   ]
 }

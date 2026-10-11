@@ -1,5 +1,35 @@
 {
   "messages": {
+    "Partner illustration": {
+      "zh-Hans": "伙伴插画",
+      "ko": "파트너 일러스트",
+      "ja": "パートナーイラスト",
+      "id": "Ilustrasi partner"
+    },
+    "None": {
+      "zh-Hans": "无",
+      "ko": "없음",
+      "ja": "なし",
+      "id": "Tidak ada"
+    },
+    "Using your saved version choice. Check that it matches this record.": {
+      "zh-Hans": "正在使用您上次保存的版本选择。请确认它与此记录的版本一致。",
+      "ko": "저장된 버전 선택을 사용 중입니다. 이 기록의 버전과 일치하는지 확인하세요.",
+      "ja": "保存されたバージョンの選択を使用しています。この記録のバージョンと一致するか確認してください。",
+      "id": "Menggunakan pilihan versi yang tersimpan. Pastikan versinya sesuai dengan catatan ini."
+    },
+    "Imported version: {0}": {
+      "zh-Hans": "导入的版本：{0}",
+      "ko": "가져온 버전: {0}",
+      "ja": "読み込んだバージョン：{0}",
+      "id": "Versi yang diimpor: {0}"
+    },
+    "Best 50 began with Splash PLUS. Earlier rating formats are not supported.": {
+      "zh-Hans": "Best 50 从 Splash PLUS 开始采用。不支持更早的 Rating 计算方式。",
+      "ko": "Best 50는 Splash PLUS부터 도입되었습니다. 이전 버전의 레이팅 방식은 지원하지 않습니다.",
+      "ja": "Best 50 は Splash PLUS から導入されました。それ以前のレーティング方式には対応していません。",
+      "id": "Best 50 diperkenalkan sejak Splash PLUS. Format rating versi sebelumnya belum didukung."
+    },
     "Best 50": {
       "zh-Hans": "Best 50",
       "ko": "Best 50",

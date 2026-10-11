@@ -3,6 +3,7 @@ import {readFile,writeFile} from 'node:fs/promises';
 import {pathToFileURL,fileURLToPath} from 'node:url';
 import {spawnSync} from 'node:child_process';
 import {validateRow} from './worker.mjs';
+import {actionLabel,isScoreExport} from './action-labels.mjs';
 export const zone='America/New_York';
 const dayFormat=new Intl.DateTimeFormat('en-CA',{timeZone:zone,year:'numeric',month:'2-digit',day:'2-digit'});
 export const dayKey=date=>dayFormat.format(date);
@@ -74,7 +75,11 @@ export function markdown(report){
   '| Day | Instrumentation | Coverage | Count |','|---|---:|---|---:|',
   ...report.coverage.map(r=>'| '+r.day+' | '+(r.version??'unknown')+' | '+r.status+' | '+(r.count||r.zero_is_measured?r.count:'unknown')+' |'),'',
   '| Day | Instrumentation | Event | Page | Detail | Failure | Count |','|---|---:|---|---|---|---|---:|',
-  ...report.totals.map(r=>'| '+[r.day,r.version,r.event,r.page,r.detail||'—',r.failure||'—',r.count].join(' | ')+' |'),'',
+  ...report.totals.map(r=>'| '+[r.day,r.version,r.event,r.page,r.event==='data_action'&&r.detail==='clear'?actionLabel(r.detail):r.detail||'—',r.failure||'—',r.count].join(' | ')+' |'),'',
+  '## Image exports','',
+  'Received actions only. PNG download clicks do not confirm a saved file. Earlier missing counters are not measured zero.','',
+  '| Day | Action | Page | Export or option | Count |','|---|---|---|---|---:|',
+  ...report.totals.filter(r=>isScoreExport(r.event)).map(r=>'| '+[r.day,actionLabel(r.event),actionLabel(r.page),actionLabel(r.detail),r.count].join(' | ')+' |'),'',
   ...report.limitations.map(s=>'- '+s),''].join('\n');
 }
 export function csv(report){const keys=['day','version','event','page','detail','failure','count'];return [keys.join(','),...report.totals.map(r=>keys.map(k=>JSON.stringify(r[k]??'')).join(','))].join('\n')+'\n';}

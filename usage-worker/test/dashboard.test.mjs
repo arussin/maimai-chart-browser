@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {dayKey,makeDashboardData,validateExport} from '../dashboard-model.mjs';
 import {renderDashboard,safeJSON} from '../dashboard.mjs';
+import {DETAILS} from '../../web/src/usage-contract.ts';
 const now=new Date('2026-10-03T13:00:00Z');
 const row={day:'2026-10-03',version:1,event:'page_view',page:'charts',detail:'',failure:'',count:7};
 const fixture=()=>({schema_version:'usage-export-1',query_status:'ok',activation:'2026-10-03',totals:[{...row}],coverage:[]});
@@ -16,6 +17,19 @@ test('received counts and missing coverage are preserved without inventing compl
  assert.equal(result.schema_version,'usage-dashboard-1');assert.equal(result.today,'2026-10-03');
  assert.equal(result.totals[0].count,7);assert.deepEqual(result.coverage,[]);
 });
+test('private dashboard labels and export section cover every new finite counter',async()=>{
+ const totals=Object.entries(DETAILS).filter(([event])=>event.startsWith('score_export_')).flatMap(([event,details])=>details.map(detail=>({...row,event,detail,count:1})));
+ const input={...fixture(),totals},data=makeDashboardData(input,{now,capturedAt:now.toISOString()});
+ assert.equal(data.totals.length,17);
+ for(const row of totals)assert(data.action_labels[row.event]);
+ assert.equal(data.action_labels.achievement_pb,'Personal best image');
+ assert.equal(data.action_labels.achievement_play,'Recorded play image');
+ assert.equal(data.action_labels.clear,'Forget / clear player data');
+ const html=await renderDashboard(input,{now,capturedAt:now.toISOString()});
+ assert(html.includes('id="score-exports"'));assert(html.includes('Best 50 and achievement images'));
+ assert(html.includes('Download clicks do not confirm a saved file'));
+});
+
 test('failed and malformed exports cannot become zero dashboards',()=>{
  for(const change of [{query_status:'failed'},{totals:null},{activation:'2026-02-30'},{credential:'unexpected'}])assert.throws(()=>validateExport({...fixture(),...change},now));
  assert.throws(()=>validateExport({...fixture(),totals:[row,row]},now),/Duplicate/);

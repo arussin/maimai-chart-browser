@@ -17,6 +17,10 @@ from .snapshots import canonical
 from .song_search import song_search_data
 
 RESOURCE_FILE = "browser-resources.json"
+BROWSER_MODULE_LIMIT = 2 * 1024 * 1024
+# The offline IIFE embeds all optional artwork so file:// exports need no network.
+OFFLINE_BROWSER_LIMIT = 8 * 1024 * 1024
+BROWSER_GRAPH_LIMIT = 16 * 1024 * 1024
 STATIC_RESOURCES = (
     "challenge-review.css",
     "seo-pages.css",
@@ -276,6 +280,7 @@ def read_browser_assets(
         or not isinstance(manifest["tool"], str)
         or not isinstance(manifest["entries"], dict)
         or set(manifest["entries"]) != {"hosted", "offline"}
+        or manifest["entries"]["hosted"] == manifest["entries"]["offline"]
         or not isinstance(manifest["assets"], dict)
         or not 2 <= len(manifest["assets"]) <= 128
         or not isinstance(manifest["replaces"], list)
@@ -300,7 +305,14 @@ def read_browser_assets(
     ):
         raise ValueError("Invalid generated browser module preloads")
     assets = {}
+    total_bytes = 0
     for name, record in manifest["assets"].items():
+        limit = (
+            OFFLINE_BROWSER_LIMIT
+            if name == manifest["entries"]["offline"]
+            and re.fullmatch(r"browser/browser-offline-[A-Za-z0-9_-]+\.js", name)
+            else BROWSER_MODULE_LIMIT
+        )
         if (
             not re.fullmatch(r"browser/[A-Za-z0-9][A-Za-z0-9._-]*\.js", name)
             or not isinstance(record, dict)
@@ -308,10 +320,13 @@ def read_browser_assets(
             or not isinstance(record["sha256"], str)
             or not re.fullmatch(r"[a-f0-9]{64}", record["sha256"])
             or type(record["bytes"]) is not int
-            or not 0 < record["bytes"] <= 2 * 1024 * 1024
+            or not 0 < record["bytes"] <= limit
         ):
             raise ValueError("Invalid generated browser asset reference")
-        body = read(name, 2 * 1024 * 1024)
+        total_bytes += record["bytes"]
+        if total_bytes > BROWSER_GRAPH_LIMIT:
+            raise ValueError("Generated browser graph exceeds its size limit")
+        body = read(name, limit)
         if len(body) != record["bytes"] or hashlib.sha256(body).hexdigest() != record["sha256"]:
             raise ValueError("Generated browser asset integrity mismatch")
         assets[name] = body

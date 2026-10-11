@@ -12,6 +12,9 @@ export interface VersionChoice {
   /** Chart debut releases in the New 15 pool, not catalog-build versions. */
   versions: string[];
   source: 'known' | 'snapshot';
+  /** Canonical artwork label, independent from imported spelling or chart identity. */
+  logoVersion: string | null;
+  supportsBest50: boolean;
 }
 export interface ExportEntry {
   chart: PlayerChart;
@@ -99,6 +102,10 @@ function versionToken(value: string): string {
     .replace(/^MAIMAI/, '')
     .replace(/^DX(?=SPLASH|UNIVERSE|FESTIVAL|BUDDIES|PRISM|CIRCLE|MAGICAL)/, '');
 }
+/** Stable release choices suitable for preferences; report-specific pools are excluded. */
+export function knownScoreExportVersionIDs(): string[] {
+  return releases.map((label) => versionToken(label).toLowerCase() || 'original');
+}
 const releaseRank = new Map(releases.map((name, index) => [versionToken(name), index]));
 const circleRank = releases.indexOf('maimai DX CiRCLE');
 const firstBest50Rank = releases.indexOf('maimai DX Splash PLUS');
@@ -121,11 +128,9 @@ function current(data: PlayerDataset) {
   return { refs, snapshot, observed };
 }
 
-function importedChoice(snapshot: PlayerSnapshot | null): VersionChoice | null {
+function importedChoice(snapshot: PlayerSnapshot | null) {
   const versions = [...new Set(snapshot?.versions.filter((v) => v.trim()) ?? [])].sort(ordinal);
-  return versions.length
-    ? { id: 'snapshot', label: versions.join(' + '), versions, source: 'snapshot' }
-    : null;
+  return versions.length ? { label: versions.join(' + '), versions } : null;
 }
 
 export function versionChoices(data: PlayerDataset): VersionChoice[] {
@@ -133,21 +138,44 @@ export function versionChoices(data: PlayerDataset): VersionChoice[] {
   // Splash PLUS introduced the modern rating model. CiRCLE extended New 15
   // to the immediately preceding release (including a distinct PLUS release).
   // Primary sources: https://info-maimai.sega.jp/616/ and /7725/.
-  const known = releases.slice(firstBest50Rank).map((label, index): VersionChoice => {
-    const rank = index + firstBest50Rank;
+  const known = releases.map((label, rank): VersionChoice => {
     return {
-      id: versionToken(label).toLowerCase(),
+      id: versionToken(label).toLowerCase() || 'original',
       label,
       versions: rank >= circleRank ? [releases[rank - 1], label] : [label],
       source: 'known',
+      logoVersion: label,
+      supportsBest50: rank >= firstBest50Rank,
     };
   });
-  return [...(imported ? [imported] : []), ...known.reverse()];
+  if (imported) {
+    const ranks = imported.versions.map((value) => releaseRank.get(versionToken(value)));
+    if (ranks.every((rank) => rank !== undefined)) {
+      // One chronological choice per release. Keep the report's exact New 15
+      // grouping, even when a provider uses aliases or a different regional pool.
+      const choice = known[Math.max(...(ranks as number[]))];
+      choice.versions = imported.versions;
+      choice.source = 'snapshot';
+    } else {
+      // A custom report pool has no verified chronology; place it after releases.
+      return [
+        ...known.reverse(),
+        {
+          ...imported,
+          id: 'snapshot',
+          source: 'snapshot',
+          logoVersion: null,
+          supportsBest50: true,
+        },
+      ];
+    }
+  }
+  return known.reverse();
 }
 
 /** A chart's debut alone cannot reveal which game release the player used. */
 export function detectVersion(data: PlayerDataset): string | null {
-  return importedChoice(current(data).snapshot)?.id ?? null;
+  return versionChoices(data).find((choice) => choice.source === 'snapshot')?.id ?? null;
 }
 
 export function gradeForAchievement(value: number | null): string {
@@ -286,6 +314,8 @@ export function buildBest50(
 ): Best50Export {
   const version = versionChoices(data).find((choice) => choice.id === choiceId);
   if (!version) throw Error('Choose the game version for this record.');
+  if (!version.supportsBest50)
+    throw Error('Best 50 began with Splash PLUS. Earlier rating formats are not supported.');
   const { refs, snapshot, observed } = current(data);
   const detectedVersion = detectVersion(data);
   const excluded: Best50Export['excluded'] = {

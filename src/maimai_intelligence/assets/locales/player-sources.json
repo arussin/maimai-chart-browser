@@ -1,5 +1,11 @@
 {
   "messages": {
+    "Forget player data": {
+      "zh-Hans": "删除玩家数据",
+      "ko": "플레이어 데이터 삭제",
+      "ja": "プレイヤーデータを削除",
+      "id": "Hapus data pemain"
+    },
     "Clear player data": {
       "zh-Hans": "清除玩家数据",
       "ko": "플레이어 데이터 지우기",

@@ -2,6 +2,19 @@
 
 The private product dashboard and Cloudflare traffic analytics answer different questions. Keep their units separate.
 
+Best 50 and achievement exports use six explicit counters: opening an exporter,
+changing an export option, requesting image creation, an image becoming ready,
+image creation failing, and clicking a PNG download. Creation and download details
+are limited to Best 50, personal best or recorded play; option changes report only
+version or partner. The report's image-export section displays these readable
+labels. Download clicks do not prove a file was saved. Earlier days without these
+counters are not measured zeroes.
+
+Automatic preference restoration and invalidated or closed renders do not emit
+completion or failure counts. No selected version, partner, song, player data,
+image, URL or error text is logged. Forget player data retains the single existing
+`data_action/clear` counter, labeled **Forget / clear player data** in owner reports.
+
 | Source | Meaning | Limits |
 |---|---|---|
 | Private usage aggregates | Received daily actions by finite page type, event and detail | No unique people, sessions, click sequences, selected filter values or search text; opt-outs and dropped batches are absent |

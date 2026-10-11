@@ -36,6 +36,16 @@ includes those tests. Existing owner reports and public collection are unchanged
 
 ## Local validation
 
+The shared finite contract also includes Best 50 and achievement-export actions;
+see [their counting semantics](../docs/USAGE_AND_TRAFFIC_METRICS.md). The Markdown
+report, local dashboard and hosted dashboard use the same reviewed action labels
+and dedicated image-export section. Rebuild the collector and hosted dashboard
+from the accepted source and update their code before publishing browser code
+that sends new events. An older collector rejects a batch containing unknown
+events. No D1 schema, database binding, routes, Access policy, credentials or
+logging settings change is required. Retain the separately reviewed production
+configuration and verify those settings remain unchanged during code rollout.
+
 Use tools/Test-Web.ps1 from the linked checkout. Dependencies, emitted test bundles and local D1 state belong in the disposable DevCache workspace. Tests cover the real local D1 API, concurrent increments, batch rollback, strict rejection, opt-out, no retries and daylight-saving boundaries.
 
 After building, run from the disposable usage-worker directory:

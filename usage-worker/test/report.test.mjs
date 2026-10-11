@@ -1,4 +1,17 @@
 import {test} from 'node:test';import assert from 'node:assert/strict';import {startUTC,summarize,markdown,csv,coverageCSV,queryDatabase} from '../report.mjs';
+import {DETAILS} from '../../web/src/usage-contract.ts';
+import {actionLabel} from '../action-labels.mjs';
+
+test('owner report includes readable export actions while CSV preserves finite keys',()=>{
+ const rows=Object.entries(DETAILS).filter(([event])=>event.startsWith('score_export_')).flatMap(([event,details])=>details.map(detail=>({day:'2026-10-11',version:1,event,page:'song',detail,failure:'',count:2})));
+ const report=summarize({schema_version:'usage-export-1',query_status:'ok',totals:rows,coverage:[]},{from:'2026-10-11',to:'2026-10-11',now:new Date('2026-10-13T12:00:00Z')});
+ const md=markdown(report), table=csv(report);
+ assert(md.includes('## Image exports'));assert(md.includes('do not confirm a saved file'));assert(md.includes('Earlier missing counters are not measured zero'));
+ for(const row of rows){assert(md.includes(actionLabel(row.event)));assert(md.includes(actionLabel(row.detail)));assert(table.includes(row.event));assert(table.includes(row.detail));}
+ assert.equal(report.totals.length,17);
+ const cleared={...report,totals:[{...rows[0],event:'data_action',detail:'clear'}]};
+ assert(markdown(cleared).includes('Forget / clear player data'));assert(csv(cleared).includes('"clear"'));
+});
 test('report uses completed NY days and exact DST UTC intervals',()=>{
  assert.equal(startUTC('2026-03-08'),'2026-03-08T05:00:00.000Z');assert.equal(startUTC('2026-03-09'),'2026-03-09T04:00:00.000Z');
  assert.equal(startUTC('2026-11-01'),'2026-11-01T04:00:00.000Z');assert.equal(startUTC('2026-11-02'),'2026-11-02T05:00:00.000Z');

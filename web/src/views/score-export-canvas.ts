@@ -1,4 +1,7 @@
 import type { PlayerChart, PlayerRecord } from '../domain/player-data';
+import { achievementPalette, achievementSpriteLayout, ratingTier } from './score-export-style';
+import { scoreExportPartners } from './score-export-partners';
+import { loadScoreExportPartnerArtwork } from './score-export-partner-artwork';
 import {
   gradeForAchievement,
   lampLabel,
@@ -11,6 +14,9 @@ export interface ExportCanvasOptions {
   translate(key: string, values?: readonly (string | number)[]): string;
   /** A verified public-artwork projection, never a URL from an imported player file. */
   jacketURL(chart: PlayerChart): string | undefined;
+  /** Only reviewed, packaged interface artwork; never a provider image URL. */
+  artworkURL?(key: string): string | undefined;
+  versionLogoURL?(version: string): string | undefined;
   regionLabel?: string;
 }
 export interface AchievementExport {
@@ -20,6 +26,8 @@ export interface AchievementExport {
   recordKind: 'pb' | 'play';
   versionLabel?: string;
   regionLabel?: string;
+  /** Explicit decorative artwork choice; never inferred from the retained record. */
+  partnerKey?: string;
 }
 
 type Context = CanvasRenderingContext2D;
@@ -44,8 +52,9 @@ function difficulty(chart: PlayerChart) {
     ] || '#458eab'
   );
 }
-function font(ctx: Context, size: number, weight = 700) {
-  ctx.font = `${weight} ${size}px ${fontFamily}`;
+
+function font(ctx: Context, size: number, weight = 700, family = fontFamily) {
+  ctx.font = `${weight} ${size}px ${family}`;
 }
 function text(
   ctx: Context,
@@ -57,6 +66,8 @@ function text(
   color = ink,
   align: CanvasTextAlign = 'left',
   weight = 700,
+  family = fontFamily,
+  vertical: 'baseline' | 'center' = 'baseline',
 ) {
   // Explicit clipping protects every label, including unusually long imported Unicode names.
   ctx.save();
@@ -65,13 +76,13 @@ function text(
   ctx.fillStyle = color;
   const left = align === 'center' ? x - width / 2 : align === 'right' ? x - width : x;
   ctx.beginPath();
-  ctx.rect(left, y - size * 1.25, width, size * 1.7);
+  ctx.rect(left, y - size * (vertical === 'center' ? 0.85 : 1.25), width, size * 1.7);
   ctx.clip();
   const minimum = Math.min(size, Math.max(13, size * 0.65));
-  font(ctx, size, weight);
+  font(ctx, size, weight, family);
   while (ctx.measureText(value).width > width && size > minimum) {
     size -= 1;
-    font(ctx, size, weight);
+    font(ctx, size, weight, family);
   }
   if (ctx.measureText(value).width > width) {
     const characters = Array.from(value);
@@ -79,7 +90,12 @@ function text(
       characters.pop();
     value = characters.join('') + '…';
   }
-  ctx.fillText(value, x, y);
+  const bounds = ctx.measureText(value);
+  const baseline =
+    vertical === 'center'
+      ? y + (bounds.actualBoundingBoxAscent - bounds.actualBoundingBoxDescent) / 2
+      : y;
+  ctx.fillText(value, x, baseline);
   ctx.restore();
 }
 function lines(
@@ -195,74 +211,149 @@ function jacket(
   ctx.restore();
 }
 
-/** Six same-origin public images at a time; the entire image phase has a five-second budget. */
+/** Six public images at a time; the entire image phase has a five-second budget. */
 async function jackets(
   document: Document,
   charts: readonly PlayerChart[],
   options: ExportCanvasOptions,
+  version: string,
+  rating?: number,
+  resultArtwork = false,
+  partnerKey?: string,
 ) {
   const view = document.defaultView;
   const loaded = new Map<string, HTMLImageElement>();
   if (!view) return loaded;
   const window = view;
-  const queue = [...new Map(charts.map((chart) => [chart.chartID, chart])).values()];
   const deadline = Date.now() + 5000;
-  async function load(chart: PlayerChart) {
+  const queue: { key: string; source: string | undefined; embedded: boolean }[] = [];
+  let timer = 0;
+  try {
+    const artwork = await Promise.race([
+      Promise.all([
+        import('./score-export-artwork.json').then((module) => module.default),
+        resultArtwork
+          ? import('./score-export-result-artwork.json').then((module) => module.default)
+          : Promise.resolve({}),
+        resultArtwork ? loadScoreExportPartnerArtwork(partnerKey) : Promise.resolve({}),
+      ]).then(([common, result, partner]) => ({ ...common, ...result, ...partner })),
+      new Promise<undefined>((resolve) => {
+        timer = window.setTimeout(() => resolve(undefined), 5000);
+      }),
+    ]);
+    const selectedPartner = scoreExportPartners.some((choice) => choice.key === partnerKey)
+      ? 'partner:' + partnerKey
+      : undefined;
+    if (artwork)
+      for (const [key, source] of Object.entries(artwork)) {
+        if (key.startsWith('partner:') && key !== selectedPartner) continue;
+        queue.push({ key: 'art:' + key, source, embedded: true });
+      }
+  } catch {
+    /* The original canvas layout remains usable without decorative artwork. */
+  } finally {
+    window.clearTimeout(timer);
+  }
+  const keys = ['fc', 'fc+', 'ap', 'ap+', 'fs', 'fs+', 'fdx', 'fdx+', 'sync'].map(
+    (badge) => 'badge:' + badge,
+  );
+  if (rating !== undefined && rating >= 0 && rating <= 99999)
+    keys.push('rating:' + ratingTier(rating));
+  for (const key of keys) {
+    try {
+      queue.push({ key: 'art:' + key, source: options.artworkURL?.(key), embedded: true });
+    } catch {
+      /* The artwork projection is optional. */
+    }
+  }
+  try {
+    if (version)
+      queue.push({
+        key: 'art:version',
+        source: options.versionLogoURL?.(version),
+        embedded: false,
+      });
+  } catch {
+    /* Unknown releases retain their written version label. */
+  }
+  for (const chart of new Map(charts.map((chart) => [chart.chartID, chart])).values()) {
+    try {
+      queue.push({
+        key: 'jacket:' + chart.chartID,
+        source: options.jacketURL(chart),
+        embedded: false,
+      });
+    } catch {
+      /* Missing catalog artwork is represented by the neutral jacket. */
+    }
+  }
+  async function load(item: (typeof queue)[number]) {
     const remaining = deadline - Date.now();
     if (remaining <= 0) return;
-    let url: URL;
+    let url: URL | undefined,
+      dataURL = '';
     try {
-      const source = options.jacketURL(chart);
+      const source = item.source;
       if (!source) return;
-      url = new URL(source, document.baseURI);
       if (
-        url.origin !== window.location.origin ||
-        !/^https?:$/.test(url.protocol) ||
-        url.username ||
-        url.password ||
-        url.search ||
-        url.hash ||
-        !/\/media\/[a-f0-9]{64}\.webp$/.test(url.pathname)
+        item.embedded &&
+        source.length <= 6 * 1024 * 1024 &&
+        /^data:image\/(?:png|webp);base64,[A-Za-z0-9+/]+=*$/.test(source)
       )
-        return;
+        dataURL = source;
+      else {
+        url = new URL(source, document.baseURI);
+        if (
+          url.origin !== window.location.origin ||
+          !/^https?:$/.test(url.protocol) ||
+          url.username ||
+          url.password ||
+          url.search ||
+          url.hash ||
+          !/\/media\/[a-f0-9]{64}\.webp$/.test(url.pathname)
+        )
+          return;
+      }
     } catch {
       return;
     }
     const controller = new AbortController();
     const timeout = window.setTimeout(() => controller.abort(), remaining);
     try {
-      const response = await window.fetch(url, {
-        credentials: 'omit',
-        mode: 'same-origin',
-        redirect: 'error',
-        referrerPolicy: 'no-referrer',
-        signal: controller.signal,
-      });
-      if (!response.ok) return;
-      const blob = await response.blob();
-      if (!blob.type.startsWith('image/') || blob.size > 4 * 1024 * 1024) return;
-      // The hosted image policy allows self/data, not blob URLs. Only bytes from
-      // the verified public artwork request reach this local decoder.
-      const dataURL = await new Promise<string>((resolve) => {
-        const reader = new FileReader();
-        const finish = (result: string) => {
-          reader.onload = null;
-          reader.onerror = null;
-          reader.onabort = null;
-          controller.signal.removeEventListener('abort', abort);
-          resolve(result);
-        };
-        const abort = () => {
-          reader.abort();
-          finish('');
-        };
-        reader.onload = () => finish(typeof reader.result === 'string' ? reader.result : '');
-        reader.onerror = () => finish('');
-        reader.onabort = () => finish('');
-        controller.signal.addEventListener('abort', abort, { once: true });
-        if (controller.signal.aborted) abort();
-        else reader.readAsDataURL(blob);
-      });
+      if (url) {
+        const response = await window.fetch(url, {
+          credentials: 'omit',
+          mode: 'same-origin',
+          redirect: 'error',
+          referrerPolicy: 'no-referrer',
+          signal: controller.signal,
+        });
+        if (!response.ok) return;
+        const blob = await response.blob();
+        if (!blob.type.startsWith('image/') || blob.size > 4 * 1024 * 1024) return;
+        // The hosted image policy allows self/data, not blob URLs. Only bytes from
+        // the verified public artwork request reach this local decoder.
+        dataURL = await new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          const finish = (result: string) => {
+            reader.onload = null;
+            reader.onerror = null;
+            reader.onabort = null;
+            controller.signal.removeEventListener('abort', abort);
+            resolve(result);
+          };
+          const abort = () => {
+            reader.abort();
+            finish('');
+          };
+          reader.onload = () => finish(typeof reader.result === 'string' ? reader.result : '');
+          reader.onerror = () => finish('');
+          reader.onabort = () => finish('');
+          controller.signal.addEventListener('abort', abort, { once: true });
+          if (controller.signal.aborted) abort();
+          else reader.readAsDataURL(blob);
+        });
+      }
       if (!dataURL) return;
       const image = document.createElement('img');
       image.decoding = 'async';
@@ -284,7 +375,7 @@ async function jackets(
         if (controller.signal.aborted) abort();
         else image.src = dataURL;
       });
-      if (decoded) loaded.set(chart.chartID, image);
+      if (decoded) loaded.set(item.key, image);
     } catch {
       /* Artwork failure cannot prevent a score export. */
     } finally {
@@ -293,8 +384,8 @@ async function jackets(
   }
   await Promise.all(
     Array.from({ length: Math.min(6, queue.length) }, async () => {
-      let chart: PlayerChart | undefined;
-      while ((chart = queue.shift())) await load(chart);
+      let item: (typeof queue)[number] | undefined;
+      while ((item = queue.shift())) await load(item);
     }),
   );
   return loaded;
@@ -302,6 +393,155 @@ async function jackets(
 
 function badges(record: PlayerRecord) {
   return [lampLabel(record.lamp), syncLabel(record.sync)].filter(Boolean);
+}
+function art(
+  ctx: Context,
+  images: Map<string, HTMLImageElement>,
+  key: string,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+) {
+  const image = images.get('art:' + key);
+  if (!image) return false;
+  const scale = Math.min(width / image.naturalWidth, height / image.naturalHeight);
+  const w = image.naturalWidth * scale,
+    h = image.naturalHeight * scale;
+  ctx.drawImage(image, x + (width - w) / 2, y + (height - h) / 2, w, h);
+  return true;
+}
+function badgeArt(
+  ctx: Context,
+  images: Map<string, HTMLImageElement>,
+  label: string,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+) {
+  const key = label.toLowerCase().replace(/^fsd/, 'fdx');
+  return art(ctx, images, 'badge:' + key, x, y, width, height);
+}
+function officialBackground(
+  ctx: Context,
+  images: Map<string, HTMLImageElement>,
+  width: number,
+  height: number,
+) {
+  const image = images.get('art:background');
+  if (!image) return;
+  const scale = Math.max(width / image.naturalWidth, height / image.naturalHeight);
+  const w = image.naturalWidth * scale,
+    h = image.naturalHeight * scale;
+  ctx.drawImage(image, (width - w) / 2, (height - h) / 2, w, h);
+}
+function playerName(
+  ctx: Context,
+  images: Map<string, HTMLImageElement>,
+  name: string,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+) {
+  if (!art(ctx, images, 'nameplate', x, y, width, height))
+    box(ctx, x, y, width, height, '#fff', height / 2);
+  text(ctx, name, x + width / 2, y + height * 0.71, width - 42, height * 0.53, ink, 'center', 900);
+}
+function playerRating(
+  ctx: Context,
+  images: Map<string, HTMLImageElement>,
+  rating: number,
+  x: number,
+  y: number,
+  width: number,
+) {
+  const height = (width * 86) / 296;
+  if (
+    rating < 0 ||
+    rating > 99999 ||
+    !art(ctx, images, 'rating:' + ratingTier(rating), x, y, width, height)
+  ) {
+    box(ctx, x, y, width, height, '#fff', 20);
+    text(
+      ctx,
+      String(rating),
+      x + width / 2,
+      y + height * 0.73,
+      width - 40,
+      height * 0.66,
+      ink,
+      'center',
+      900,
+    );
+    return;
+  }
+  // The same five digit windows and gold typography as the existing profile placard.
+  const digitWidth = width * 0.1069;
+  for (const [index, digit] of String(rating).padStart(5, ' ').split('').entries()) {
+    ctx.save();
+    ctx.shadowColor = '#291800';
+    ctx.shadowBlur = 2;
+    ctx.shadowOffsetY = 2;
+    text(
+      ctx,
+      digit,
+      x + width * 0.4155 + digitWidth * (index + 0.5),
+      y + height * 0.722,
+      digitWidth,
+      width * 0.125,
+      '#ffe352',
+      'center',
+      900,
+      '"Arial Black", Arial, sans-serif',
+    );
+    ctx.restore();
+  }
+}
+function achievementArt(
+  ctx: Context,
+  images: Map<string, HTMLImageElement>,
+  value: number,
+  center: number,
+  baseline: number,
+  maximum: number,
+) {
+  const palette = achievementPalette(value);
+  const atlas = images.get('art:digits-' + palette),
+    percent = images.get('art:percent-' + palette);
+  if (!atlas || !percent) return false;
+  let fractional = false;
+  const glyphs = achievementSpriteLayout(value).map((glyph) => {
+    if (glyph.character === '.') fractional = true;
+    const height = fractional ? 112 : 164;
+    return { ...glyph, height, width: glyph.character === '.' ? 36 : (height * 86) / 118 };
+  });
+  const total = glyphs.reduce((sum, glyph) => sum + glyph.width, 0) + 80;
+  const scale = Math.min(1, maximum / total);
+  let x = center - (total * scale) / 2;
+  for (const glyph of glyphs) {
+    const cellWidth = atlas.naturalWidth / 4,
+      cellHeight = atlas.naturalHeight / 4;
+    // Crop the decimal glyph's transparent side bearings, without altering artwork pixels.
+    const decimal = glyph.character === '.',
+      cropX = decimal ? 18 : 0,
+      cropWidth = decimal ? 50 : cellWidth;
+    ctx.drawImage(
+      atlas,
+      glyph.column * cellWidth + cropX,
+      glyph.row * cellHeight,
+      cropWidth,
+      cellHeight,
+      x,
+      baseline - glyph.height * scale,
+      glyph.width * scale,
+      glyph.height * scale,
+    );
+    x += glyph.width * scale;
+  }
+  ctx.drawImage(percent, x, baseline - 80 * scale, 80 * scale, 80 * scale);
+  return true;
 }
 function grade(ctx: Context, value: string, x: number, y: number, width: number, size: number) {
   ctx.save();
@@ -365,19 +605,22 @@ function best50Card(
   }
   const { chart, record, rating } = entry,
     accent = difficulty(chart);
-  box(ctx, x, y + 3, width, height, '#dfe6ef');
+  box(ctx, x - 2, y - 2, width + 4, height + 6, accent);
   box(ctx, x, y, width, height, '#fff');
   box(ctx, x, y, width, 30, accent, [18, 18, 0, 0]);
   text(ctx, '#' + String(rank).padStart(2, '0'), x + 13, y + 21, 36, 15, '#fff');
   text(ctx, chart.difficulty.toUpperCase(), x + 55, y + 21, 141, 16, '#fff');
   text(ctx, chart.level || '—', x + width - 13, y + 21, 67, 17, '#fff', 'right');
-  jacket(ctx, images.get(chart.chartID), x + 12, y + 42, 86, accent);
+  jacket(ctx, images.get('jacket:' + chart.chartID), x + 12, y + 42, 86, accent);
   text(ctx, achievement(record.achievement), x + 110, y + 64, 166, 26);
   grade(ctx, gradeForAchievement(record.achievement), x + 145, y + 98, 70, 30);
   text(ctx, String(rating), x + width - 13, y + 101, 80, 31, accent, 'right', 900);
   text(ctx, 'RT', x + width - 13, y + 122, 44, 12, muted, 'right');
   const icons = badges(record);
-  text(ctx, icons.join(' · '), x + 110, y + 124, 115, 13, muted);
+  icons.forEach((badge, index) => {
+    if (!badgeArt(ctx, images, badge, x + 112 + index * 34, y + 98, 29, 33))
+      text(ctx, badge, x + 112 + index * 44, y + 124, 43, 13, muted);
+  });
   text(ctx, chart.title, x + 12, y + 152, width - 24, 21);
   const constant = record.constant;
   text(
@@ -408,6 +651,8 @@ export async function renderBest50(
     document,
     [...model.old, ...model.new].map((entry) => entry.chart),
     options,
+    model.version.label,
+    model.totalRating,
   );
   const t = options.translate;
   const notices = [
@@ -419,63 +664,60 @@ export async function renderBest50(
       .join(' · '),
     ...model.warnings.map((warning) => t(warning)),
   ].filter(Boolean);
-  const footerTop = 2460;
+  const footerTop = 2520;
   const { canvas, ctx } = surface(document, 1600, footerTop + notices.length * 48 + 78);
   ctx.fillStyle = '#f0f4f9';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
-  const header = ctx.createLinearGradient(0, 0, 1600, 315);
-  header.addColorStop(0, '#293552');
-  header.addColorStop(0.55, '#443365');
-  header.addColorStop(1, '#225e75');
-  ctx.fillStyle = header;
-  ctx.fillRect(0, 0, 1600, 302);
+  officialBackground(ctx, images, canvas.width, canvas.height);
   ctx.save();
-  ctx.strokeStyle = '#ffffff';
-  ctx.globalAlpha = 0.055;
-  ctx.lineWidth = 32;
-  for (let radius = 140; radius < 1050; radius += 90) {
-    ctx.beginPath();
-    ctx.arc(1310, 50, radius, 0, Math.PI * 2);
-    ctx.stroke();
-  }
+  ctx.beginPath();
+  ctx.rect(0, 0, 1600, 364);
+  ctx.clip();
+  art(ctx, images, 'character', 985, -50, 640, 380);
   ctx.restore();
-  pill(ctx, 'maimai.party', 48, 32, 176, '#617184', 19);
-  text(ctx, t('Best 50'), 48, 156, 920, 91, '#fff', 'left', 900);
-  text(
+  const shade = ctx.createLinearGradient(0, 0, 1600, 0);
+  shade.addColorStop(0, '#ffffffdd');
+  shade.addColorStop(0.6, '#ffffffaa');
+  shade.addColorStop(1, '#ffffff00');
+  ctx.fillStyle = shade;
+  ctx.fillRect(0, 0, 1600, 364);
+  playerName(
     ctx,
+    images,
     model.player.displayName || model.player.username || t('Player'),
-    52,
-    216,
-    950,
-    36,
-    '#fff',
+    58,
+    43,
+    686,
+    64,
   );
-  text(
-    ctx,
-    [model.version.label, options.regionLabel].filter(Boolean).join(' · '),
-    52,
-    263,
-    950,
-    25,
-    '#d3d9ed',
-    'left',
-    500,
-  );
-  box(ctx, 1130, 77, 422, 170, '#ffffff');
+  playerRating(ctx, images, model.totalRating, 72, 129, 540);
   text(
     ctx,
     t(model.coverage === 'partial' ? 'Rating estimate' : 'Rating total'),
-    1341,
-    118,
-    375,
-    22,
+    78,
+    313,
+    540,
+    23,
     muted,
-    'center',
   );
-  text(ctx, String(model.totalRating), 1341, 198, 370, 74, ink, 'center', 900);
+  text(ctx, t('Best 50'), 687, 170, 650, 70, '#693e9e', 'left', 900);
+  art(ctx, images, 'version', 1030, 186, 520, 148);
+  text(
+    ctx,
+    [model.version.label, options.regionLabel].filter(Boolean).join(' · '),
+    692,
+    233,
+    326,
+    25,
+    ink,
+    'left',
+    500,
+  );
+  pill(ctx, 'maimai.party', 696, 278, 182, '#8154ad', 19);
+  box(ctx, 28, 375, 1544, 2107, '#ffffffb8', 24);
   const sections = [
     {
-      y: 340,
+      y: 400,
       entries: model.old,
       total: model.oldTotal,
       maximum: 35,
@@ -483,7 +725,7 @@ export async function renderBest50(
       accent: '#8456cf',
     },
     {
-      y: 1788,
+      y: 1848,
       entries: model.new,
       total: model.newTotal,
       maximum: 15,
@@ -516,6 +758,7 @@ export async function renderBest50(
       );
   }
   const footerY = canvas.height - 28;
+  box(ctx, 28, footerTop - 18, 1544, canvas.height - footerTop + 10, '#ffffffed', 20);
   rule(ctx, 48, footerTop, 1504);
   const stamp = date(model.capturedAt);
   text(
@@ -546,199 +789,612 @@ export async function renderBest50(
   return canvas;
 }
 
-function resultRim(ctx: Context, accent: string) {
-  const background = ctx.createLinearGradient(0, 0, 1200, 1200);
-  background.addColorStop(0, '#e4f9ff');
-  background.addColorStop(0.47, '#fffafc');
-  background.addColorStop(1, '#f4eafa');
-  ctx.fillStyle = background;
+/** The artwork fills the display itself; the physical cabinet is not part of the export. */
+function resultScreen(ctx: Context, images: Map<string, HTMLImageElement>) {
+  ctx.fillStyle = '#edf1f8';
   ctx.fillRect(0, 0, 1200, 1200);
-  const ring = ctx.createLinearGradient(80, 80, 1120, 1120);
-  ring.addColorStop(0, '#68d4ed');
-  ring.addColorStop(0.3, '#aa8ddc');
-  ring.addColorStop(0.62, '#f387bc');
-  ring.addColorStop(1, '#f3d569');
-  ctx.beginPath();
-  ctx.arc(600, 600, 568, 0, Math.PI * 2);
-  ctx.strokeStyle = ring;
-  ctx.lineWidth = 31;
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.arc(600, 600, 535, 0, Math.PI * 2);
-  ctx.strokeStyle = '#ffffff';
-  ctx.lineWidth = 11;
-  ctx.stroke();
-  for (let index = 0; index < 8; index++) {
-    const angle = (index * Math.PI) / 4 + Math.PI / 8;
-    ctx.save();
-    ctx.translate(600 + Math.cos(angle) * 568, 600 + Math.sin(angle) * 568);
-    ctx.rotate(angle + Math.PI / 2);
-    box(ctx, -29, -11, 58, 22, '#fff', 11);
-    ctx.restore();
-  }
   ctx.save();
-  ctx.globalAlpha = 0.1;
-  ctx.fillStyle = accent;
-  for (let index = 0; index < 11; index++) {
-    const x = 70 + index * 111,
-      y = 105 + ((index * 71) % 975);
-    ctx.beginPath();
-    ctx.moveTo(x, y - 13);
-    ctx.lineTo(x + 13, y);
-    ctx.lineTo(x, y + 13);
-    ctx.lineTo(x - 13, y);
-    ctx.closePath();
-    ctx.fill();
+  ctx.beginPath();
+  ctx.arc(600, 582, 574, 0, Math.PI * 2);
+  ctx.clip();
+  officialBackground(ctx, images, 1200, 1160);
+  ctx.fillStyle = '#ffffff64';
+  ctx.fillRect(0, 0, 1200, 1160);
+  ctx.translate(600, 580);
+  ctx.rotate(-Math.PI / 7);
+  for (let y = -900; y < 900; y += 115) {
+    ctx.fillStyle = y % 230 === 0 ? '#ffffff64' : '#b6f7ef40';
+    ctx.fillRect(-1000, y, 2000, 38);
+  }
+  ctx.restore();
+  ctx.beginPath();
+  ctx.arc(600, 582, 574, 0, Math.PI * 2);
+  ctx.strokeStyle = '#263246';
+  ctx.lineWidth = 5;
+  ctx.stroke();
+}
+
+function prismatic(ctx: Context, y: number, height: number) {
+  const fill = ctx.createLinearGradient(0, y, 70, y + height);
+  for (const [stop, color] of [
+    [0, '#fffcc3'],
+    [0.16, '#fddd64'],
+    [0.32, '#9df5e4'],
+    [0.5, '#81bbff'],
+    [0.65, '#e8a5f5'],
+    [0.83, '#ff859a'],
+    [1, '#ffe495'],
+  ] as const)
+    fill.addColorStop(stop, color);
+  return fill;
+}
+
+function clearLabel(ctx: Context, value: string) {
+  ctx.save();
+  ctx.font = '600 86px "Bahnschrift", "Arial Narrow", Arial, sans-serif';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'alphabetic';
+  ctx.lineJoin = 'round';
+  const characters = Array.from(value);
+  const tracking = value === 'CLEAR!' ? 20 : 3;
+  const widths = characters.map((character) => ctx.measureText(character).width);
+  const width =
+    widths.reduce((total, advance) => total + advance, 0) + tracking * (characters.length - 1);
+  const scale = Math.min(1, 720 / width);
+  ctx.translate(600 - (width * scale) / 2, 180);
+  ctx.scale(scale, scale);
+  const fill = ctx.createLinearGradient(0, -82, 0, 0);
+  fill.addColorStop(0, '#fff3aa');
+  fill.addColorStop(0.44, '#f6d667');
+  fill.addColorStop(0.61, '#fff8cc');
+  fill.addColorStop(0.78, '#bf9adc');
+  fill.addColorStop(1, '#f19abd');
+  let x = 0;
+  for (const [index, character] of characters.entries()) {
+    for (const [lineWidth, color] of [
+      [9, '#fff9d7'],
+      [6, '#45455b'],
+      [2, '#fff9df'],
+    ] as const) {
+      ctx.lineWidth = lineWidth;
+      ctx.strokeStyle = color;
+      ctx.strokeText(character, x, 0);
+    }
+    ctx.fillStyle = fill;
+    ctx.fillText(character, x, 0);
+    x += widths[index] + tracking;
   }
   ctx.restore();
 }
 
-/** A result-screen-inspired composition; only known observations are drawn. */
+/** Original vector lettering, matched to the modern cabinet's angular, italic rank. */
+function cabinetGrade(
+  ctx: Context,
+  value: string,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+) {
+  if (!/^S{2,3}\+?$/.test(value)) {
+    ctx.save();
+    const goldRank = /^S{1,2}\+?$/.test(value);
+    ctx.font = `${goldRank ? '' : 'italic '}900 ${height}px "Arial Black", Arial, sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.lineJoin = 'round';
+    for (const [lineWidth, color] of [
+      [18, '#e4bd63'],
+      [12, '#27367d'],
+      [5, '#fffde9'],
+    ] as const) {
+      ctx.lineWidth = lineWidth;
+      ctx.strokeStyle = color;
+      ctx.strokeText(value, x + width / 2, y + height * 0.84, width);
+    }
+    const gold = ctx.createLinearGradient(0, y, 0, y + height);
+    gold.addColorStop(0, '#fffbc4');
+    gold.addColorStop(0.42, '#f8e469');
+    gold.addColorStop(0.5, '#fffbcd');
+    gold.addColorStop(1, '#cc951b');
+    ctx.fillStyle = goldRank ? gold : '#416295';
+    ctx.fillText(value, x + width / 2, y + height * 0.84, width);
+    ctx.restore();
+    return;
+  }
+  const count = value.replace('+', '').length;
+  const goldRank = count === 2;
+  const units = count * 117 + (value.endsWith('+') ? 66 : 0);
+  const scale = Math.min(width / units, height / 154);
+  ctx.save();
+  ctx.translate(x + (width - units * scale) / 2 + 20 * scale, y);
+  ctx.scale(scale, scale);
+  ctx.transform(1, 0, -0.18, 1, 0, 0);
+  const sPath = () => {
+    ctx.beginPath();
+    ctx.moveTo(112, 5);
+    ctx.lineTo(34, 5);
+    ctx.quadraticCurveTo(8, 5, 8, 36);
+    ctx.lineTo(8, 58);
+    ctx.quadraticCurveTo(8, 79, 34, 79);
+    ctx.lineTo(75, 79);
+    ctx.lineTo(75, 94);
+    ctx.lineTo(11, 94);
+    ctx.lineTo(0, 142);
+    ctx.lineTo(75, 142);
+    ctx.quadraticCurveTo(105, 142, 105, 111);
+    ctx.lineTo(105, 86);
+    ctx.quadraticCurveTo(105, 58, 80, 58);
+    ctx.lineTo(39, 58);
+    ctx.lineTo(39, 44);
+    ctx.lineTo(105, 44);
+    ctx.closePath();
+  };
+  const plusPath = () => {
+    ctx.beginPath();
+    ctx.moveTo(21, 9);
+    ctx.lineTo(48, 9);
+    ctx.lineTo(48, 28);
+    ctx.lineTo(66, 28);
+    ctx.lineTo(66, 54);
+    ctx.lineTo(48, 54);
+    ctx.lineTo(48, 73);
+    ctx.lineTo(21, 73);
+    ctx.lineTo(21, 54);
+    ctx.lineTo(2, 54);
+    ctx.lineTo(2, 28);
+    ctx.lineTo(21, 28);
+    ctx.closePath();
+  };
+  for (let i = 0; i < count + Number(value.endsWith('+')); i++) {
+    ctx.save();
+    ctx.translate(i * 117, 0);
+    const path = i < count ? sPath : plusPath;
+    ctx.lineJoin = 'round';
+    for (const [lineWidth, color] of [
+      [13, '#9c526e'],
+      [10, '#f7d879'],
+      [7, '#233375'],
+      [2.7, '#ffffd7'],
+    ] as const) {
+      path();
+      ctx.strokeStyle = color;
+      ctx.lineWidth = lineWidth;
+      ctx.stroke();
+    }
+    path();
+    const gold = ctx.createLinearGradient(0, 0, 55, 145);
+    gold.addColorStop(0, '#fffcc5');
+    gold.addColorStop(0.3, '#f4cc56');
+    gold.addColorStop(0.5, '#fff9d8');
+    gold.addColorStop(0.52, '#ebca49');
+    gold.addColorStop(0.78, '#fff1a1');
+    gold.addColorStop(1, '#dea331');
+    ctx.fillStyle = goldRank ? gold : prismatic(ctx, 0, 145);
+    ctx.fill();
+    ctx.save();
+    path();
+    ctx.clip();
+    if (goldRank) {
+      for (const [color, points] of [
+        [
+          '#ffffffa6',
+          [
+            [-10, 5],
+            [57, 1],
+            [32, 51],
+          ],
+        ],
+        [
+          '#d7efbba6',
+          [
+            [57, 1],
+            [125, 21],
+            [76, 62],
+          ],
+        ],
+        [
+          '#dba44d99',
+          [
+            [32, 51],
+            [76, 62],
+            [11, 95],
+          ],
+        ],
+        [
+          '#fffde8c9',
+          [
+            [76, 62],
+            [122, 105],
+            [49, 114],
+          ],
+        ],
+        [
+          '#e5dda080',
+          [
+            [11, 95],
+            [49, 114],
+            [-8, 151],
+          ],
+        ],
+        [
+          '#f7e97fb3',
+          [
+            [49, 114],
+            [120, 135],
+            [51, 154],
+          ],
+        ],
+      ] as const) {
+        ctx.beginPath();
+        points.forEach(([x, y], index) => (index ? ctx.lineTo(x, y) : ctx.moveTo(x, y)));
+        ctx.closePath();
+        ctx.fillStyle = color;
+        ctx.fill();
+      }
+    } else {
+      ctx.fillStyle = '#ffffff4a';
+      for (let k = -1; k < 5; k++) {
+        ctx.beginPath();
+        ctx.moveTo(-15, k * 47);
+        ctx.lineTo(135, k * 47 - 45);
+        ctx.lineTo(135, k * 47 - 32);
+        ctx.lineTo(-15, k * 47 + 13);
+        ctx.fill();
+      }
+    }
+    ctx.restore();
+    ctx.restore();
+  }
+  ctx.restore();
+}
+
+function resultBadge(
+  ctx: Context,
+  images: Map<string, HTMLImageElement>,
+  label: string,
+  x: number,
+  y: number,
+) {
+  if (!label) return;
+  const key = label.toLowerCase().replace(/^fsd/, 'fdx');
+  const base =
+    key.replace('+', '') === 'ap'
+      ? 'ap'
+      : key.replace('+', '') === 'fc'
+        ? 'fc'
+        : key.replace('+', '') === 'fdx'
+          ? 'fdx'
+          : key === 'sync'
+            ? 'sync'
+            : 'fs';
+  const hasBase = art(ctx, images, 'result:' + base + '_base', x, y, 128, 128);
+  const hasText = art(ctx, images, 'result:' + key, x + 7, y + 34, 114, 67);
+  if (!hasBase || !hasText) {
+    if (!badgeArt(ctx, images, label, x + 23, y + 16, 82, 92))
+      text(ctx, label, x + 64, y + 79, 116, 29, ink, 'center', 900);
+  }
+}
+
+function resultLettering(
+  ctx: Context,
+  value: string,
+  x: number,
+  baseline: number,
+  width: number,
+  size: number,
+  edge: string,
+) {
+  ctx.save();
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'alphabetic';
+  font(ctx, size, 900);
+  while (ctx.measureText(value).width > width && size > 14) font(ctx, --size, 900);
+  const actualWidth = Math.min(width, ctx.measureText(value).width);
+  ctx.beginPath();
+  ctx.rect(x - 4, baseline - size * 1.3, width + 8, size * 1.7);
+  ctx.clip();
+  ctx.lineJoin = 'round';
+  ctx.strokeStyle = '#eee6fa';
+  ctx.lineWidth = 5;
+  ctx.strokeText(value, x, baseline, width);
+  ctx.strokeStyle = edge;
+  ctx.lineWidth = 2.5;
+  ctx.strokeText(value, x, baseline, width);
+  ctx.fillStyle = '#fff';
+  ctx.fillText(value, x, baseline, width);
+  ctx.restore();
+  return actualWidth;
+}
+
+function resultDifficulty(ctx: Context, chart: PlayerChart, key: string) {
+  const label = key === 'remaster' ? 'Re:MASTER' : chart.difficulty.toUpperCase();
+  const width = resultLettering(ctx, label, 313, 292, 278, 32, '#5c3687');
+  const start = 313 + width + 10;
+  ctx.save();
+  ctx.fillStyle = '#eee1ffa6';
+  for (let index = 0; index < 4; index++) {
+    const x = start + index * 17;
+    ctx.beginPath();
+    ctx.moveTo(x, 266);
+    ctx.lineTo(x + 8, 266);
+    ctx.lineTo(x + 18, 281);
+    ctx.lineTo(x + 8, 296);
+    ctx.lineTo(x, 296);
+    ctx.lineTo(x + 10, 281);
+    ctx.closePath();
+    ctx.fill();
+  }
+  ctx.beginPath();
+  for (let point = 0; point < 10; point++) {
+    const angle = -Math.PI / 2 + (point * Math.PI) / 5;
+    const radius = point % 2 ? 6.5 : 15;
+    const x = start + 87 + Math.cos(angle) * radius;
+    const y = 281 + Math.sin(angle) * radius;
+    if (!point) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+  ctx.closePath();
+  ctx.strokeStyle = '#eee1ffa6';
+  ctx.lineWidth = 4;
+  ctx.stroke();
+  ctx.restore();
+}
+
+function resultLevel(ctx: Context, level: string, edge: string) {
+  const value = level.trim() || '—';
+  const known = /^(\d{1,2})(\+?)$/.exec(value);
+  const digits = known?.[1] || value;
+  const plus = known?.[2] || '';
+  ctx.save();
+  font(ctx, 24, 900);
+  const prefixWidth = ctx.measureText('LV').width;
+  font(ctx, 28, 900);
+  const plusWidth = plus ? ctx.measureText(plus).width + 1 : 0;
+  const digitSpace = 120 - prefixWidth - 4 - plusWidth;
+  let size = 60;
+  font(ctx, size, 900);
+  while (ctx.measureText(digits).width > digitSpace && size > 32) font(ctx, --size, 900);
+  const digitBounds = ctx.measureText(digits);
+  const digitWidth = Math.min(digitBounds.width, digitSpace);
+  const left = 918 - (prefixWidth + 4 + digitWidth + plusWidth) / 2;
+  const baseline = 294;
+  resultLettering(ctx, 'LV', left, baseline, prefixWidth, 24, edge);
+  resultLettering(ctx, digits, left + prefixWidth + 4, baseline, digitSpace, size, edge);
+  if (plus) {
+    font(ctx, 28, 900);
+    const plusBaseline =
+      baseline -
+      digitBounds.actualBoundingBoxAscent +
+      ctx.measureText(plus).actualBoundingBoxAscent;
+    resultLettering(
+      ctx,
+      plus,
+      left + prefixWidth + 4 + digitWidth + 1,
+      plusBaseline,
+      plusWidth,
+      28,
+      edge,
+    );
+  }
+  ctx.restore();
+}
+
+/** A cabinet result composition; unavailable play observations stay unavailable. */
 export async function renderAchievement(
   document: Document,
   input: AchievementExport,
   options: ExportCanvasOptions,
 ) {
   const { chart, record } = input;
-  const images = await jackets(document, [chart], options);
+  // White rating artwork denotes an unknown total. A single-chart contribution is not a player total.
+  const images = await jackets(
+    document,
+    [chart],
+    options,
+    input.versionLabel || '',
+    0,
+    true,
+    input.partnerKey,
+  );
   const { canvas, ctx } = surface(document, 1200, 1200);
   const t = options.translate,
     accent = difficulty(chart);
-  resultRim(ctx, accent);
-  text(ctx, t('Result').toUpperCase(), 600, 128, 590, 57, accent, 'center', 900);
-  text(
+  const precise = achievement(record.achievement);
+  canvas.setAttribute('role', 'img');
+  canvas.setAttribute('aria-label', `${chart.title} · ${t('Achievement')} ${precise}`);
+  canvas.textContent = `${chart.title} · ${t('Achievement')} ${precise}`;
+  resultScreen(ctx, images);
+  clearLabel(
     ctx,
-    t(input.recordKind === 'pb' ? 'Personal best' : 'Recorded play'),
-    600,
-    165,
-    720,
-    23,
-    muted,
-    'center',
+    record.achievement !== null && record.achievement >= 800000
+      ? 'CLEAR!'
+      : t('Result').toUpperCase(),
   );
-  box(ctx, 145, 200, 910, 229, '#fff', 28);
-  jacket(ctx, images.get(chart.chartID), 166, 220, 187, accent);
-  pill(ctx, chart.difficulty.toUpperCase(), 378, 222, 295, accent, 20);
-  pill(ctx, t('Level {0}', [chart.level || '—']), 687, 222, 174, accent, 20);
-  text(ctx, chart.format.toUpperCase(), 1026, 246, 137, 18, muted, 'right');
-  lines(ctx, chart.title, 379, 301, 646, 37, 2);
-  text(ctx, chart.artist, 379, 376, 646, 21, muted, 'left', 500);
-  text(
-    ctx,
-    [
-      input.versionLabel || record.displayVersion || chart.displayVersion,
-      input.regionLabel || options.regionLabel,
-    ]
-      .filter(Boolean)
-      .join(' · '),
-    379,
-    408,
-    646,
-    18,
-    muted,
-    'left',
-    500,
-  );
-  text(ctx, t('Achievement').toUpperCase(), 600, 473, 840, 28, accent, 'center');
+
+  const difficultyKey = chart.difficulty
+    .toLowerCase()
+    .replace(/^dx\s*/, '')
+    .replace(/[^a-z]/g, '');
+  const ribbon = images.get('art:ribbon:' + difficultyKey);
+  const headerInk = difficultyKey === 'remaster' ? '#60258e' : '#fff';
+  if (ribbon) {
+    const scale = 725 / ribbon.naturalWidth;
+    // The source's difficulty label straddles the top edge of a song-list card.
+    // Reuse its clean patterned row and level surround, with a centered result label.
+    ctx.drawImage(ribbon, 350, 0, 274, 100, 279, 207, 350 * scale, 100 * scale);
+    ctx.drawImage(
+      ribbon,
+      350,
+      0,
+      ribbon.naturalWidth - 350,
+      100,
+      279 + 350 * scale,
+      207,
+      (ribbon.naturalWidth - 350) * scale,
+      100 * scale,
+    );
+    ctx.drawImage(ribbon, 0, 100, ribbon.naturalWidth, 56, 279, 207 + 100 * scale, 725, 56 * scale);
+  } else {
+    box(ctx, 280, 255, 724, 100, accent, 14);
+    box(ctx, 300, 307, 669, 41, '#173770', 10);
+  }
+  jacket(ctx, images.get('jacket:' + chart.chartID), 187, 235, 109, accent);
+  resultDifficulty(ctx, chart, difficultyKey);
+  text(ctx, chart.title, 635, 327, 638, 29, '#fff', 'center', 900, fontFamily, 'center');
+  resultLevel(ctx, chart.level || '', '#4a286d');
+  if (chart.format.toUpperCase() !== 'DX' || !art(ctx, images, 'result:chart-dx', 760, 265, 80, 32))
+    text(
+      ctx,
+      chart.format.toUpperCase() === 'DX' ? 'でらっくす' : chart.format.toUpperCase(),
+      822,
+      281,
+      91,
+      21,
+      headerInk,
+      'center',
+      900,
+      fontFamily,
+      'center',
+    );
+
+  ctx.fillStyle = '#243c85';
+  ctx.beginPath();
+  ctx.moveTo(88, 357);
+  ctx.lineTo(378, 357);
+  ctx.lineTo(404, 374);
+  ctx.lineTo(378, 391);
+  ctx.lineTo(88, 391);
+  ctx.closePath();
+  ctx.fill();
+  text(ctx, 'ACHIEVEMENT', 109, 382, 270, 25, '#fff', 'left', 900);
+  text(ctx, '›››☆', 405, 386, 126, 37, '#283f82', 'left', 900);
   if (record.achievement === null)
-    text(ctx, t('Unknown achievement'), 600, 572, 970, 64, ink, 'center', 900);
-  else {
-    const [whole, fraction] = (record.achievement / 10000).toFixed(4).split('.');
-    font(ctx, 134, 900);
-    const wholeWidth = ctx.measureText(whole).width;
-    font(ctx, 94, 900);
-    const fractionalWidth = ctx.measureText('.' + fraction).width;
-    font(ctx, 56, 700);
-    const unitWidth = ctx.measureText('%').width;
-    const left = (1200 - wholeWidth - fractionalWidth - unitWidth - 9) / 2;
-    text(ctx, whole, left, 592, wholeWidth + 2, 134, ink, 'left', 900);
-    text(ctx, '.' + fraction, left + wholeWidth, 592, fractionalWidth + 2, 94, ink, 'left', 900);
-    text(ctx, '%', left + wholeWidth + fractionalWidth + 9, 592, unitWidth + 2, 56, accent);
+    text(ctx, t('Unknown achievement'), 115, 527, 700, 61, ink, 'left', 900);
+  else if (!achievementArt(ctx, images, record.achievement, 465, 552, 770)) {
+    text(
+      ctx,
+      precise,
+      105,
+      529,
+      770,
+      117,
+      '#e4b548',
+      'left',
+      900,
+      '"Arial Black", Arial, sans-serif',
+    );
   }
-  grade(ctx, gradeForAchievement(record.achievement), 815, 735, 356, 113);
-  const observedBadges = badges(record);
-  if (observedBadges.length) {
-    observedBadges.forEach((badge, index) => {
-      const x = 180 + index * 204;
-      box(ctx, x, 639, 187, 83, '#fff', 22);
-      text(
-        ctx,
-        badge,
-        x + 93.5,
-        693,
-        165,
-        37,
-        badge.startsWith('AP') ? '#b17b10' : '#218b88',
-        'center',
-        900,
-      );
-    });
-  } else if (record.rate !== null) {
-    text(ctx, t('Chart rating'), 180, 668, 382, 22, muted);
-    text(ctx, String(record.rate), 180, 717, 382, 48, accent, 'left', 900);
+  cabinetGrade(ctx, gradeForAchievement(record.achievement), 126, 585, 670, 218);
+
+  // Only explicitly selected, verified official promotional artwork reaches this position.
+  const partner = input.partnerKey;
+  if (scoreExportPartners.some((choice) => choice.key === partner))
+    art(ctx, images, 'partner:' + partner, 850, 405, 230, 300);
+
+  if (!art(ctx, images, 'result:base', 215, 825, 384, 180)) {
+    box(ctx, 222, 947, 373, 38, '#fff', 19);
   }
-  const judgments = [
-    ['Critical perfect', record.pcrit, '#b58116'],
-    ['Perfect', record.perfect, '#b58116'],
-    ['Great', record.great, '#cf5a95'],
-    ['Good', record.good, '#478bac'],
-    ['Miss', record.miss, '#727d8a'],
-  ].filter((row) => input.recordKind === 'play' && row[1] !== null) as [string, number, string][];
-  if (judgments.length) {
-    const width = 910 / judgments.length;
-    box(ctx, 145, 775, 910, 94, '#ffffff', 22);
-    judgments.forEach(([label, value, color], index) => {
-      const x = 145 + width * (index + 0.5);
-      text(ctx, t(label), x, 805, width - 22, 19, color, 'center');
-      text(ctx, String(value), x, 850, width - 22, 38, ink, 'center', 900);
-    });
-  } else if (input.recordKind === 'play')
-    text(ctx, t('Judgment counts unavailable'), 600, 831, 860, 23, muted, 'center', 500);
-  const details: [string, string][] = [];
-  if (record.dxScore !== null)
-    details.push([
-      'DX score',
-      String(record.dxScore) + (record.maxDxScore === null ? '' : ' / ' + record.maxDxScore),
-    ]);
+  resultBadge(ctx, images, lampLabel(record.lamp), 258, 846);
+  resultBadge(ctx, images, syncLabel(record.sync), 414, 846);
+  if (art(ctx, images, 'rating:white', 324, 982, 328, 95))
+    text(ctx, '—', 553, 1046, 137, 49, '#fff7ba', 'center', 900);
+
+  const rows: [string, string, string][] = [];
   if (input.recordKind === 'play') {
-    if (record.maxCombo !== null) details.push(['Max combo', String(record.maxCombo)]);
-    if (record.fast !== null) details.push(['Fast', String(record.fast)]);
-    if (record.slow !== null) details.push(['Late', String(record.slow)]);
-  } else if (record.rate !== null && observedBadges.length)
-    details.push(['Chart rating', String(record.rate)]);
-  if (details.length) {
-    const width = 870 / details.length;
-    if (input.recordKind === 'pb') box(ctx, 145, 796, 910, 143, '#fff', 22);
-    details.forEach(([label, value], index) => {
-      const x = 165 + width * (index + 0.5);
-      text(
-        ctx,
-        t(label),
-        x,
-        input.recordKind === 'pb' ? 845 : 912,
-        width - 22,
-        19,
-        muted,
-        'center',
-      );
-      text(ctx, value, x, input.recordKind === 'pb' ? 898 : 950, width - 22, 30, ink, 'center');
-    });
+    for (const [label, value, color] of [
+      ['Critical perfect', record.pcrit, '#d8a024'],
+      ['Perfect', record.perfect, '#d8a024'],
+      ['Great', record.great, '#d267a4'],
+      ['Good', record.good, '#62adce'],
+      ['Miss', record.miss, '#8b90a2'],
+    ] as const)
+      if (value !== null) rows.push([label, String(value), color]);
   }
-  text(ctx, input.playerName || t('Player'), 600, 1013, 770, 32, accent, 'center');
+  const panelX = 694,
+    panelWidth = 282;
+  // At maximum observed detail, the last baseline is y=1007 and its right edge
+  // is x=967: both fit inside the circular display, including text descenders.
+  let rowY = 716;
+  for (const [label, value, color] of rows) {
+    box(ctx, panelX, rowY, panelWidth, 28, '#ffffffed', 4);
+    box(ctx, panelX, rowY, 177, 28, color, [4, 0, 0, 4]);
+    text(ctx, t(label).toUpperCase(), panelX + 8, rowY + 20, 160, 17, '#fff', 'left', 900);
+    text(ctx, value, panelX + panelWidth - 12, rowY + 22, 107, 23, ink, 'right', 900);
+    rowY += 30;
+  }
+  if (record.dxScore !== null) {
+    rowY += 9;
+    const dxArtwork = art(ctx, images, 'dx-score', panelX, rowY, panelWidth, 58);
+    if (!dxArtwork)
+      text(ctx, t('DX score'), panelX + 10, rowY + 17, panelWidth - 20, 19, '#254b82');
+    text(
+      ctx,
+      String(record.dxScore) + (record.maxDxScore === null ? '' : ' / ' + record.maxDxScore),
+      panelX + panelWidth / 2,
+      rowY + 51,
+      panelWidth - 20,
+      25,
+      '#243b6f',
+      'center',
+      900,
+    );
+    rowY += 63;
+  }
+  const details: [string, number][] = [];
+  if (input.recordKind === 'play') {
+    if (record.maxCombo !== null) details.push(['Max combo', record.maxCombo]);
+    if (record.fast !== null) details.push(['Fast', record.fast]);
+    if (record.slow !== null) details.push(['Late', record.slow]);
+  } else if (record.rate !== null) {
+    box(ctx, panelX, rowY + 9, panelWidth, 100, '#ffffffed', 12);
+    text(
+      ctx,
+      t('Chart rating'),
+      panelX + panelWidth / 2,
+      rowY + 34,
+      panelWidth - 28,
+      23,
+      '#334164',
+      'center',
+      700,
+      fontFamily,
+      'center',
+    );
+    text(
+      ctx,
+      String(record.rate),
+      panelX + panelWidth / 2,
+      rowY + 77,
+      panelWidth - 28,
+      44,
+      '#243b6f',
+      'center',
+      900,
+      fontFamily,
+      'center',
+    );
+  }
+  for (const [label, value] of details) {
+    text(ctx, t(label), panelX + 7, rowY + 19, 194, 18, '#334164');
+    text(ctx, String(value), panelX + panelWidth - 9, rowY + 19, 87, 22, '#243b6f', 'right', 900);
+    rowY += 25;
+  }
+  // The footer identifies this as an imported-record export, outside the cabinet composition.
   const stamp = input.recordKind === 'play' ? date(record.timeAchieved) : '';
-  if (stamp) text(ctx, t('Played {0}', [stamp]), 600, 1049, 770, 20, muted, 'center', 500);
+  text(ctx, input.playerName || t('Player'), 40, 1174, 570, 20, ink);
+  text(ctx, 'maimai.party', 1160, 1174, 235, 20, ink, 'right');
   if (input.recordKind === 'pb')
     text(
       ctx,
       t('Personal-best values may come from different plays.'),
       600,
-      1085,
-      770,
-      17,
+      1195,
+      1120,
+      16,
       muted,
       'center',
       500,
     );
-  text(ctx, 'maimai.party', 600, 1130, 460, 25, ink, 'center');
+  else if (stamp) text(ctx, t('Played {0}', [stamp]), 600, 1195, 1120, 16, muted, 'center', 500);
   return canvas;
 }

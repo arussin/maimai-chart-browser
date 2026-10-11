@@ -1,11 +1,17 @@
 import type { TextView, LocalizedText } from '../components/chart-card';
+import { createVersionPicker } from '../components/version-picker';
 import type { PlayerChart, PlayerDataset, PlayerRecord } from '../domain/player-data';
 import { buildBest50, detectVersion, versionChoices } from '../domain/score-export';
 import type { renderAchievement } from './score-export-canvas';
+import { defaultScoreExportPartner, scoreExportPartners } from './score-export-partners';
+import type { ScoreExportPreferences } from '../runtime/score-export-preferences';
+import type { ScoreExportKind, ScoreExportUsageArguments } from '../usage-contract';
 
 interface ExportPorts {
   root: HTMLElement;
   localization: TextView;
+  preferences: ScoreExportPreferences;
+  usage(...args: ScoreExportUsageArguments): void;
   dataset(): PlayerDataset | null;
   resolve(
     chart: PlayerChart,
@@ -19,6 +25,9 @@ interface ExportPorts {
       }
     | undefined;
   jacketURL(chart: PlayerChart): string | undefined;
+  versionLogo(name: string): HTMLElement | undefined;
+  versionLogoURL?(version: string): string | undefined;
+  artworkURL?(key: string): string | undefined;
 }
 
 /** Local image generation owns no player state and never writes back to an import. */
@@ -34,6 +43,7 @@ export function createScoreExporter(ports: ExportPorts) {
     imageURL: string | null = null,
     generation = 0,
     activeRevision: string | null = null;
+  let disposeFields = () => {};
   const make = <K extends keyof HTMLElementTagNameMap>(tag: K, text?: LocalizedText) => {
     const node = document.createElement(tag);
     if (text !== undefined) i18n.text(node, text);
@@ -56,13 +66,22 @@ export function createScoreExporter(ports: ExportPorts) {
   }
   dialog.addEventListener('close', () => {
     discard();
+    disposeFields();
+    disposeFields = () => {};
     activeRevision = null;
     dialog.replaceChildren();
     if (trigger?.isConnected) trigger.focus({ preventScroll: true });
     trigger = null;
   });
-  function begin(title: string, source: HTMLElement, dataset: PlayerDataset) {
+  function begin(
+    title: string,
+    source: HTMLElement,
+    dataset: PlayerDataset,
+    kind: ScoreExportKind,
+  ) {
     discard();
+    disposeFields();
+    disposeFields = () => {};
     trigger = source;
     activeRevision = dataset.revision;
     dialog.replaceChildren();
@@ -89,12 +108,17 @@ export function createScoreExporter(ports: ExportPorts) {
     const download = make('a', 'Download PNG');
     download.id = 'player-export-download';
     download.hidden = true;
+    download.onclick = () => {
+      if (!download.hidden && dialog.open && ports.dataset()?.revision === dataset.revision)
+        ports.usage('score_export_download_clicked', kind);
+    };
     const close = make('button', 'Close');
     close.type = 'button';
     close.onclick = () => dialog.close();
     actions.append(generate, download, close);
     dialog.append(fields, status, preview, actions);
     if (!dialog.open) dialog.showModal();
+    ports.usage('score_export_opened', kind);
     const invalidate = () => {
       discard();
       preview.hidden = download.hidden = true;
@@ -107,6 +131,9 @@ export function createScoreExporter(ports: ExportPorts) {
       const ticket = generation;
       generate.disabled = true;
       i18n.text(status, 'Creating image…');
+      ports.usage('score_export_started', kind);
+      const current = () =>
+        ticket === generation && dialog.open && ports.dataset()?.revision === dataset.revision;
       try {
         const canvas = await create();
         const blob = await new Promise<Blob>((resolve, reject) =>
@@ -115,8 +142,7 @@ export function createScoreExporter(ports: ExportPorts) {
             'image/png',
           ),
         );
-        if (ticket !== generation || !dialog.open || ports.dataset()?.revision !== dataset.revision)
-          return;
+        if (!current()) return;
         imageURL = URL.createObjectURL(blob);
         // Published pages already allow data images; keep their CSP unchanged.
         preview.src = canvas.toDataURL('image/png');
@@ -125,9 +151,12 @@ export function createScoreExporter(ports: ExportPorts) {
         preview.hidden = download.hidden = false;
         i18n.text(status, 'Image ready. Download it or save the preview.');
         download.focus({ preventScroll: true });
+        ports.usage('score_export_completed', kind);
       } catch {
-        if (ticket === generation)
+        if (current()) {
           i18n.text(status, 'The image could not be created. Please try again.');
+          ports.usage('score_export_failed', kind);
+        }
       } finally {
         if (ticket === generation) generate.disabled = false;
       }
@@ -137,28 +166,33 @@ export function createScoreExporter(ports: ExportPorts) {
   function best50(source: HTMLElement) {
     const dataset = ports.dataset();
     if (!dataset) return;
-    const ui = begin('Export Best 50', source, dataset),
+    const ui = begin('Export Best 50', source, dataset, 'best50'),
       choices = versionChoices(dataset),
       detected = detectVersion(dataset),
-      label = make('label', 'Record version'),
-      select = make('select');
-    select.id = 'player-export-version';
-    select.append(i18n.option('Choose the version of your record', ''));
-    for (const choice of choices)
-      select.append(i18n.option(i18n.verbatim(choice.label), choice.id));
-    select.value = detected || '';
-    label.append(select);
+      saved = ports.preferences.read().versionID,
+      selected = choices.some((choice) => choice.id === saved) ? saved : detected,
+      picker = createVersionPicker({
+        document,
+        localization: i18n,
+        choices,
+        selected,
+        logo: ports.versionLogo,
+      }),
+      select = picker.select;
+    disposeFields = picker.destroy;
     const hint = make(
       'p',
-      detected
-        ? 'Version detected from your imported report. You can change it below.'
-        : 'Your import does not identify its version. Choose the version when these scores were recorded.',
+      saved && selected === saved
+        ? 'Using your saved version choice. Check that it matches this record.'
+        : detected
+          ? 'Version detected from your imported report. You can change it below.'
+          : 'Your import does not identify its version. Choose the version when these scores were recorded.',
     );
     const summary = make('div');
     summary.id = 'player-export-summary';
     ui.fields.append(
       hint,
-      label,
+      picker.root,
       make(
         'p',
         'Version selects the New 15 pool. Imported ratings and constants are kept; choosing a different version does not recreate historical scores.',
@@ -170,6 +204,13 @@ export function createScoreExporter(ports: ExportPorts) {
       summary.replaceChildren();
       ui.generate.disabled = !select.value;
       if (!select.value) return;
+      if (!choices.find((choice) => choice.id === select.value)?.supportsBest50) {
+        summary.append(
+          make('p', 'Best 50 began with Splash PLUS. Earlier rating formats are not supported.'),
+        );
+        ui.generate.disabled = true;
+        return;
+      }
       const model = buildBest50(dataset!, select.value, ports.resolve);
       summary.append(
         make(
@@ -194,17 +235,35 @@ export function createScoreExporter(ports: ExportPorts) {
         );
       ui.generate.disabled = model.old.length + model.new.length === 0;
     }
-    select.onchange = update;
+    let previousVersion = select.value;
+    select.onchange = () => {
+      if (select.value === previousVersion) return;
+      previousVersion = select.value;
+      ports.preferences.setVersion(select.value);
+      ports.usage('score_export_option_changed', 'version');
+      i18n.text(
+        hint,
+        ports.preferences.read().versionID === select.value
+          ? 'Using your saved version choice. Check that it matches this record.'
+          : 'The game version was selected manually.',
+      );
+      update();
+    };
     ui.generate.onclick = () => {
-      if (!select.value) return;
+      if (!choices.find((choice) => choice.id === select.value)?.supportsBest50) return;
       const model = buildBest50(dataset, select.value, ports.resolve);
       void ui.render(async () => {
         const renderer = await import('./score-export-canvas');
-        return renderer.renderBest50(document, model, { translate, jacketURL: ports.jacketURL });
+        return renderer.renderBest50(document, model, {
+          translate,
+          jacketURL: ports.jacketURL,
+          versionLogoURL: ports.versionLogoURL,
+          artworkURL: ports.artworkURL,
+        });
       }, 'maimai-best50.png');
     };
     update();
-    select.focus();
+    picker.button.focus();
   }
   function achievement(
     source: HTMLElement,
@@ -214,7 +273,12 @@ export function createScoreExporter(ports: ExportPorts) {
   ) {
     const dataset = ports.dataset();
     if (!dataset) return;
-    const ui = begin('Export achievement', source, dataset);
+    const ui = begin(
+      'Export achievement',
+      source,
+      dataset,
+      recordKind === 'pb' ? 'achievement_pb' : 'achievement_play',
+    );
     ui.fields.append(
       make('p', i18n.verbatim(chart.title)),
       make(
@@ -229,14 +293,37 @@ export function createScoreExporter(ports: ExportPorts) {
       record,
       playerName: dataset.player.displayName,
       recordKind,
+      partnerKey: ports.preferences.read().partnerKey,
     };
-    ui.generate.onclick = () =>
+    const partnerLabel = make('label', 'Partner illustration'),
+      partner = make('select');
+    partner.id = 'player-export-partner';
+    partnerLabel.htmlFor = partner.id;
+    partner.append(i18n.option('None', 'none'));
+    for (const choice of scoreExportPartners)
+      partner.append(i18n.option(i18n.verbatim(choice.name), choice.key));
+    partner.value = input.partnerKey ?? defaultScoreExportPartner;
+    partner.onchange = () => {
+      const next =
+        scoreExportPartners.find((choice) => choice.key === partner.value)?.key ?? 'none';
+      if (next === input.partnerKey) return;
+      input.partnerKey = next;
+      ports.preferences.setPartner(input.partnerKey);
+      ports.usage('score_export_option_changed', 'partner');
+      ui.invalidate();
+      ui.generate.disabled = false;
+    };
+    ui.fields.append(partnerLabel, partner);
+    ui.generate.onclick = () => {
+      const selectedInput = { ...input };
       void ui.render(
         async () => {
           const renderer = await import('./score-export-canvas');
-          return renderer.renderAchievement(document, input, {
+          return renderer.renderAchievement(document, selectedInput, {
             translate,
             jacketURL: ports.jacketURL,
+            versionLogoURL: ports.versionLogoURL,
+            artworkURL: ports.artworkURL,
           });
         },
         'maimai-' +
@@ -246,6 +333,7 @@ export function createScoreExporter(ports: ExportPorts) {
             .trim() +
           '-achievement.png',
       );
+    };
     ui.generate.focus();
   }
   return {

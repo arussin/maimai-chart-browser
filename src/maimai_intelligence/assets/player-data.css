@@ -94,6 +94,23 @@
 #player-export-preview[hidden],#player-export-download[hidden],.player-export-primary[hidden]{display:none}
 .player-export-actions :focus-visible{outline:3px solid #007887;outline-offset:3px}
 @media(max-width:400px){.player-dialog.player-export-dialog{padding:16px}.player-export-actions{align-items:stretch;flex-direction:column}.player-export-fields select{font-size:12px}.catalog-heading-actions{gap:8px}}
+/* Official release logos remain visible in an accessible, scrollable picker. */
+.player-version-picker{display:grid;gap:6px;position:relative;min-width:0;width:100%}
+#player-export-version-label{font-size:14px;font-weight:650}
+.player-export-dialog .player-version-button{display:flex;align-items:center;justify-content:space-between;gap:12px;box-sizing:border-box;width:100%;min-width:0;min-height:64px;padding:10px 14px;border:1px solid #a8c8d1;border-radius:10px;background:linear-gradient(135deg,#fff,#f2fafc);text-align:left;box-shadow:inset 0 1px #fff,0 2px 5px #183b4308}
+.player-version-button:after{content:'';flex:none;width:8px;height:8px;margin:0 3px 4px;border-right:2px solid #39717a;border-bottom:2px solid #39717a;transform:rotate(45deg)}
+.player-version-button[aria-expanded=true]:after{transform:rotate(225deg);margin-top:7px}
+.player-version-value,.player-version-option{display:flex;align-items:center;gap:14px;min-width:0;overflow-wrap:anywhere;white-space:normal;font-size:14px;line-height:1.45}
+.player-version-value>span:last-child,.player-version-option>span:last-child{min-width:0}
+.player-version-picker .version-logo{display:inline-flex;align-items:center;justify-content:center;flex:0 0 104px;width:104px;height:46px;max-width:104px;overflow:hidden}
+.player-version-picker .version-logo img{display:block;width:100%;height:100%;object-fit:contain}
+.player-version-picker .version-logo.artwork-missing{border:0;background:transparent}
+.player-version-menu{position:relative;z-index:2;box-sizing:border-box;width:100%;max-height:min(360px,42dvh);overflow:auto;overscroll-behavior:contain;margin:6px 0 0;padding:5px;border:1px solid #a8c8d1;border-radius:10px;background:#fff;box-shadow:0 5px 16px #15283b18;scrollbar-gutter:stable}
+.player-version-menu[hidden],.player-version-picker select[hidden]{display:none}
+.player-export-dialog .player-version-option{box-sizing:border-box;width:100%;min-height:64px;padding:8px 10px;border:1px solid transparent;border-radius:7px;background:#fff;color:#183b43;text-align:left;cursor:pointer}
+.player-export-dialog .player-version-option[aria-selected=true]{border-color:#8bc9d2;background:#eaf8fa;font-weight:700}
+.player-export-dialog .player-version-option:hover,.player-export-dialog .player-version-option:focus-visible{background:#edf8fb;outline:2px solid #007887;outline-offset:-2px}
+@media(max-width:400px){.player-version-picker .version-logo{flex-basis:72px;width:72px;max-width:72px;height:40px}.player-version-value,.player-version-option{gap:8px;font-size:12px}.player-export-dialog .player-version-button{gap:7px;padding:8px}.player-export-dialog .player-version-option{padding:7px;min-height:58px}}
 
 /* Local range-control proposal; no production stylesheet includes this file. */
 .personal-range-sections{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;flex-basis:100%;min-width:0}

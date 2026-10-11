@@ -28,6 +28,14 @@ Before production acceptance, verify signed-out and forged-token denial, the own
 
 ## What the report measures
 
+The image-export section shows explicit Best 50, personal-best and recorded-play
+image actions, including option changes, generation outcomes and download clicks.
+It reports only finite action types, never selected versions or partners, imported
+data or errors. Download clicks do not prove a file was saved. Rebuild this Worker
+with the updated shared contract and report model when adding event types; an
+older bundle cannot display unknown events. This code update does not require
+changing the existing Access policy, bindings, routes or logging settings.
+
 The maintained finite contract reports daily received page-type views, filter-type first-use counts, search use, chart/detail expansion, comparison/similar requests, import methods/outcomes/failure categories, sharing destinations/results, resource links and data controls. First filter use is deduplicated by filter type within one page's in-memory collector lifetime.
 
 It does not retain selected filter values, search text, individual song/chart URLs or IDs, people, sessions, sequential click paths, funnels, IPs or referrers. Opt-outs and dropped batches are not measurable. An empty row set is not proof of no activity. Coverage remains explicitly owner-maintained; today's data is incomplete.

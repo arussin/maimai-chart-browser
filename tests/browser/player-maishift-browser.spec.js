@@ -112,7 +112,7 @@ test('Last Updated tracks committed imports and successful refreshes across relo
   // Older connections already record a local success time; source dates are never a fallback.
   await page.evaluate(async()=>{const s=await maimaiPlayerStorage.read();delete s.active.lastImportedAt;await maimaiPlayerStorage.save(s.active,s.token);});
   await page.reload();await expect.poll(()=>page.evaluate(()=>!!window.maimaiPersonal)).toBe(true);await page.evaluate(()=>maimaiPersonal.ready);await expect(updatedLabel(page)).toHaveText(await localUpdateText(page,refreshed));
-  await menu(page,'player-forget');await expect(updatedLabel(page)).toHaveText(await localUpdateText(page,refreshed));
+  await menu(page,'player-forget');await expect(updatedLabel(page)).toHaveCount(0);await expect(page.locator('#player-status')).toBeHidden();
 });
 
 test('derived grades restore without reimport and drive list, sorting and filters without fabricating play history',async({page,context},testInfo)=>{
@@ -249,8 +249,8 @@ for(const locale of ['en','zh-Hans','ko','ja','id'])test(`browser pilot ${locale
   await expect(page.locator('#player-status>small')).toHaveCount(1);await expect(page.locator('#player-status .player-profile-link')).toHaveCount(1);
   await expect(page.locator('#player-status .player-profile-link')).toHaveAttribute('href','https://maimai.shiftpsh.com/en@intl/profile/fictional-player/home');
   await page.screenshot({path:testInfo.outputPath('profile-settings-'+locale+'.png')});await page.locator('#settings-toggle').click();
-  const clearLabels={en:'Clear player data','zh-Hans':'清除玩家数据',ko:'플레이어 데이터 지우기',ja:'プレイヤーデータを消去',id:'Hapus data pemain'};
-  await expect(page.locator('#player-clear')).toHaveText(clearLabels[locale]);
+  const forgetLabels={en:'Forget player data','zh-Hans':'删除玩家数据',ko:'플레이어 데이터 삭제',ja:'プレイヤーデータを削除',id:'Hapus data pemain'};
+  await expect(page.locator('#player-forget')).toHaveText(forgetLabels[locale]);await expect(page.locator('#player-clear')).toHaveCount(0);
   await menu(page,'player-import');await expect(page.locator('input[value=maishift]')).toBeChecked();
   const warning=page.locator('.player-import-replace-warning');await expect(warning).toBeVisible();
   const overwrite={en:'Importing will overwrite data from the currently imported account.','zh-Hans':'导入将覆盖当前已导入账号的数据。',ko:'가져오면 현재 가져온 계정의 데이터를 덮어씁니다.',ja:'読み込むと、現在読み込み済みのアカウントのデータが上書きされます。',id:'Impor akan menimpa data dari akun yang saat ini diimpor.'};
@@ -260,25 +260,26 @@ for(const locale of ['en','zh-Hans','ko','ja','id'])test(`browser pilot ${locale
   await page.keyboard.press('Escape');await expect(page.locator('#player-import-dialog')).not.toBeVisible();
 });
 
-test('Clear removes a hidden temporary import and its reload cache without touching preferences',async({page,context})=>{
+test('Forget removes a hidden temporary import and its reload cache without touching preferences',async({page,context})=>{
   const state=await setup(page,context);await importData(page,false);
   await expect(page.locator('#player-import-primary')).toBeVisible();
   await page.evaluate(()=>localStorage.setItem('maimai-announcement:player-import-sources-v1','preserve'));
-  await menu(page,'player-toggle');await expect(page.locator('#player-import-primary')).toBeVisible();await page.locator('#settings-toggle').click();await expect(page.locator('#player-forget')).toBeHidden();
-  await page.locator('#player-clear').focus();await page.keyboard.press('Enter');
+  await menu(page,'player-toggle');await expect(page.locator('#player-import-primary')).toBeVisible();await page.locator('#settings-toggle').click();await expect(page.locator('#player-forget')).toBeVisible();await expect(page.locator('#player-clear')).toHaveCount(0);
+  await page.locator('#player-forget').focus();await page.keyboard.press('Enter');
   await expect(page.getByRole('heading',{name:'Player data cleared',exact:true})).toBeVisible();await page.getByRole('button',{name:'Okay!',exact:true}).click();
   expect(await record(page,state.chart)).toBeNull();expect(await page.locator('.player-achievement').evaluateAll(nodes=>nodes.every(n=>n.hidden))).toBe(true);await expect(page.locator('#player-status')).toBeHidden();
+  await expect(page.locator('#player-forget')).toHaveJSProperty('hidden',true);
   expect(await page.evaluate(()=>sessionStorage.getItem('maimai-pilot-maishift-v1:maimai-player-session'))).toBeNull();
   expect(await page.evaluate(()=>localStorage.getItem('maimai-announcement:player-import-sources-v1'))).toBe('preserve');
   await page.reload();await expect.poll(()=>page.evaluate(()=>!!window.maimaiPersonal)).toBe(true);await page.evaluate(()=>maimaiPersonal.ready);expect(await page.evaluate(()=>maimaiPersonal.enabled())).toBe(false);
   await page.locator('#player-import-primary').click();await expect(page.locator('.player-import-replace-warning')).toHaveCount(0);expect(state.calls).toBe(1);
 });
 
-test('Clear reaches other tabs, cancels refresh, and is caught after missed notifications',async({page,context})=>{
+test('Forget reaches other tabs, cancels refresh, and is caught after missed notifications',async({page,context})=>{
   const state=await setup(page,context);await importData(page);const other=await context.newPage();await boot(other);
   const stale=await context.newPage();await stale.addInitScript(()=>{window.BroadcastChannel=class{postMessage(){}};window.addEventListener('storage',e=>e.stopImmediatePropagation(),true);});await boot(stale);
   await page.clock.fastForward(31000);let release;state.hold=new Promise(resolve=>release=resolve);await menu(page,'player-refresh');await expect.poll(()=>state.calls).toBe(2);
-  await menu(other,'player-clear');await expect(other.getByRole('heading',{name:'Player data cleared',exact:true})).toBeVisible();
+  await menu(other,'player-forget');await expect(other.getByRole('heading',{name:'Player data cleared',exact:true})).toBeVisible();
   await expect.poll(()=>page.evaluate(()=>maimaiPersonal.enabled())).toBe(false);release();
   expect((await saved(page)).active).toBeNull();await expect(page.locator('#player-refresh')).toBeHidden();
   // This tab intentionally missed both notification transports. The durable clear
@@ -287,25 +288,25 @@ test('Clear reaches other tabs, cancels refresh, and is caught after missed noti
   await page.reload();await expect.poll(()=>page.evaluate(()=>!!window.maimaiPersonal)).toBe(true);await page.evaluate(()=>maimaiPersonal.ready);expect(await page.evaluate(()=>maimaiPersonal.enabled())).toBe(false);expect(state.calls).toBe(2);
 });
 
-test('Clear wins over a consented import still preparing its commit',async({page,context})=>{
+test('Forget wins over a consented import still preparing its commit',async({page,context})=>{
   await setup(page,context);await importData(page);const other=await context.newPage();await boot(other);
   const data=await page.evaluate(async()=>maimaiPlayerData.decode((await maimaiPlayerStorage.read()).active.bytes));
   await page.locator('input[type=file]').setInputFiles({name:'fictional.gz',mimeType:'application/gzip',buffer:gzipSync(Buffer.from(JSON.stringify(data)))});
   await expect(page.getByRole('heading',{name:'Import this profile?',exact:true})).toBeVisible();await page.locator('.player-remember input').check();
   await page.evaluate(()=>{const digest=crypto.subtle.digest.bind(crypto.subtle);let held=true;crypto.subtle.digest=async(...args)=>{if(held){held=false;window.commitWaiting=true;await new Promise(resolve=>window.releaseCommit=resolve);}return digest(...args);};});
   await page.getByRole('button',{name:'Import data',exact:true}).click();await page.waitForFunction(()=>window.commitWaiting);
-  await menu(other,'player-clear');await expect.poll(async()=>(await saved(other)).active).toBeNull();
+  await menu(other,'player-forget');await expect.poll(async()=>(await saved(other)).active).toBeNull();
   await page.evaluate(()=>window.releaseCommit());await expect.poll(()=>page.evaluate(()=>maimaiPersonal.enabled())).toBe(false);
   await page.reload();await expect.poll(()=>page.evaluate(()=>!!window.maimaiPersonal)).toBe(true);await page.evaluate(()=>maimaiPersonal.ready);expect(await page.evaluate(()=>maimaiPersonal.enabled())).toBe(false);expect((await saved(page)).active).toBeNull();
 });
 
-test('failed Clear preserves loaded scores and saved data; retry clears stale write tokens',async({page,context})=>{
+test('failed Forget preserves loaded scores and saved data; retry clears stale write tokens',async({page,context})=>{
   const state=await setup(page,context);await importData(page);const before=await saved(page);
   await page.evaluate(()=>{window.originalTransaction=IDBDatabase.prototype.transaction;IDBDatabase.prototype.transaction=function(...args){if(args[1]==='readwrite')throw new DOMException('Synthetic quota failure','QuotaExceededError');return window.originalTransaction.apply(this,args);};});
-  await menu(page,'player-clear');await expect(page.getByRole('heading',{name:'Could not clear player data',exact:true})).toBeVisible();
+  await menu(page,'player-forget');await expect(page.getByRole('heading',{name:'Could not clear player data',exact:true})).toBeVisible();
   expect((await saved(page)).active.revision).toBe(before.active.revision);expect((await record(page,state.chart)).achievement).toBe(987654);
   await page.getByRole('button',{name:'Close',exact:true}).click();await page.evaluate(()=>IDBDatabase.prototype.transaction=window.originalTransaction);
-  await menu(page,'player-clear');await expect(page.getByRole('heading',{name:'Player data cleared',exact:true})).toBeVisible();
+  await menu(page,'player-forget');await expect(page.getByRole('heading',{name:'Player data cleared',exact:true})).toBeVisible();
   expect(await page.evaluate(async token=>{try{await maimaiPlayerStorage.save({revision:'stale'},token);return false;}catch{return true;}},before.token)).toBe(true);
 });
 

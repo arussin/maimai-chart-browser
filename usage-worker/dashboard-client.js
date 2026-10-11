@@ -2,7 +2,7 @@
 'use strict';
 const data=JSON.parse(document.getElementById('dashboard-data').textContent);
 const el=id=>document.getElementById(id), number=value=>value===null?'—':value.toLocaleString('en-US');
-const label=value=>value ? value.replaceAll('_',' ').replace(/^./,c=>c.toUpperCase()) : '—';
+const label=value=>data.action_labels?.[value] || (value ? value.replaceAll('_',' ').replace(/^./,c=>c.toUpperCase()) : '—');
 const dayKey=date=>new Intl.DateTimeFormat('en-CA',{timeZone:data.timezone,year:'numeric',month:'2-digit',day:'2-digit'}).format(date);
 const addDay=(day,n)=>new Date(Date.parse(day+'T12:00:00Z')+n*86400000).toISOString().slice(0,10);
 const today=dayKey(new Date()), captureDay=dayKey(new Date(data.captured_at));
@@ -60,6 +60,10 @@ function render(){
  visibleRows=[...groups.values()].sort((a,b)=>b.count-a.count||a.event.localeCompare(b.event));
  el('actions').replaceChildren();
  visibleRows.forEach(r=>el('actions').append(row([label(r.event),label(r.page),label(r.detail),label(r.failure),cell(number(r.count),'number')])));
+ const exports=visibleRows.filter(r=>r.event.startsWith('score_export_'));
+ el('score-exports').replaceChildren();
+ exports.forEach(r=>el('score-exports').append(row([label(r.event),label(r.page),label(r.detail),cell(number(r.count),'number')])));
+ el('score-exports-empty').hidden=exports.length>0;
  el('row-count').textContent=visibleRows.length+' action combinations';el('empty').hidden=visibleRows.length>0;
  el('coverage').replaceChildren();[...daily].reverse().forEach(d=>el('coverage').append(row([d.day,cell(d.status,'status '+(d.status==='Complete'?'good':'')),cell(number(d.count),'number')])));
 }

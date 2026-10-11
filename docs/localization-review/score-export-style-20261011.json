@@ -1,0 +1,20 @@
+{
+  "reviewer": "Codex",
+  "date": "2026-10-11",
+  "method": "AI contextual translation review by the primary agent and independent review by the version-picker agent; not native-speaker certification.",
+  "locales": ["en", "zh-Hans", "ko", "ja", "id"],
+  "entries": 3,
+  "scope": [
+    "Imported version: {0}",
+    "Best 50 began with Splash PLUS. Earlier rating formats are not supported.",
+    "Forget player data"
+  ],
+  "checks": [
+    "The imported-version label preserves the literal provider version and its placeholder.",
+    "The earlier-version notice explains the unsupported historical rating model without claiming historical scores can be reconstructed.",
+    "Forget wording describes removal of the browser's player data, covering both temporary scores and saved connections.",
+    "Official release names, Best 50 and Rating terminology remain consistent with the existing catalog."
+  ],
+  "corrections": [],
+  "visual_validation": "Localized closed and open version controls are covered at 640, 320 and 280 CSS pixels. This review record does not itself assert those browser checks passed."
+}

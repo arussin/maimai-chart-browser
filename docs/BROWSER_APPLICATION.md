@@ -14,6 +14,7 @@ and report generation do not need Node. Build output is enumerated in
 | `runtime/browser-state.ts` | Browser filters, sorting, comparison and restoration |
 | `runtime/catalog.ts` / `runtime/song-catalog.ts` | Bounded verified public data and historical format adaptation |
 | `views/player-data.ts` | One player session, import transactions, readiness, refresh and Forget |
+| `runtime/score-export-preferences.ts` | Validated local presentation choices for export version and partner artwork |
 | `components/chart-card.ts` | Chart presentation shared by browser and song views |
 | `components/song-view.ts` | Song component composition, independent of browser filters |
 | `usage.ts` | Finite events from committed actions; no player data or operational error payloads |
@@ -23,6 +24,14 @@ song arrival loads its small song projection before constructing a full browser.
 Comparison, browser tabs, dictionary use or returning to results requests the full
 catalog on demand. The full browser controller is initialized once. Existing
 browser-to-song navigation reuses the already loaded catalog.
+
+Export release logos use the bundled version-artwork manifest as a separate
+display source, so a direct song page can offer all releases without loading the
+full catalog or expanding its song projection. Artwork preparation includes all
+28 bundled logo files even for restricted or inventory-only catalogs, preserving
+any supplied catalog logo overrides. The picker and canvas resolve only accepted
+same-site media paths; this display metadata never participates in chart identity
+or release-pool matching.
 
 The navigation coordinator owns the permission to commit after either request.
 A superseded request may finish, but cannot mount a song, change the selected tab,
