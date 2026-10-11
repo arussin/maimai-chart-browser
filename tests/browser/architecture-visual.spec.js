@@ -36,10 +36,10 @@ for(const locale of ['en','ja','ko','zh-Hans'])for(const width of [320,768,1280]
   await decodedImages(page);await expect(page).toHaveScreenshot(locale+'-'+width+'-expanded.png',{fullPage:true});
   const bytes=gzipSync(Buffer.from(await readFile(new URL('../../output/reconciliation-fixture.json',import.meta.url))));
   await page.locator('input[type=file]').setInputFiles({name:'fictional-profile.gz',mimeType:'application/gzip',buffer:bytes});
-  await expect(page.locator('.player-dialog')).toBeVisible();
+  await expect(page.locator('#player-import-dialog')).toBeVisible();
   await decodedImages(page);await expect(page).toHaveScreenshot(locale+'-'+width+'-import-dialog.png');
   await page.locator('.player-remember input').uncheck();await page.locator('.player-dialog .player-actions button').first().click();
-  await expect(page.locator('.player-dialog')).not.toBeVisible();await expect(page.locator('.player-filters')).toBeVisible();
+  await expect(page.locator('#player-import-dialog')).not.toBeVisible();await expect(page.locator('.player-filters')).toBeVisible();
   await decodedImages(page);await expect(page).toHaveScreenshot(locale+'-'+width+'-personal.png',{fullPage:true});
   const link=page.locator('#songs a[data-song-page]').first();await expect(link).toBeVisible();await link.focus();
   await link.click();await expect(page.locator('#seo-route-view')).toBeVisible();await page.locator('#seo-route-view [data-back-results]').click();

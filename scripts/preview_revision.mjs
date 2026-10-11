@@ -85,11 +85,11 @@ try{
     const sourceKey=await page.evaluate(async({entry,origin})=>{const {loadApplication}=await import(entry);return (await (await loadApplication()).services.playerSources.readReport(origin+'/fixture/')).data.player.key;},{entry,origin:report});
     expect(sourceKey).toBe('kamaitachi:maimaidx:fixture');
     await page.locator('input[type=file]').setInputFiles({name:'fictional-player.gz',mimeType:'application/gzip',buffer:bytes});
-    await expect(page.locator('.player-dialog')).toContainText('Fixture');
+    await expect(page.locator('#player-import-dialog')).toContainText('Fixture');
     await page.locator('.player-dialog .player-actions button').first().click();
-    await expect(page.locator('.player-dialog')).not.toBeVisible();
+    await expect(page.locator('#player-import-dialog')).not.toBeVisible();
     const popup=run.context.waitForEvent('page');await panel.locator('#handoff').click();const recipient=await popup;
-    await expect(recipient.locator('.player-dialog')).toContainText('Fixture');
+    await expect(recipient.locator('#player-import-dialog')).toContainText('Fixture');
     await recipient.locator('.player-dialog .player-actions button').first().click();
     const recipientEntry=await applicationEntry(recipient);
     await expect.poll(()=>recipient.evaluate(async entry=>{const {loadApplication}=await import(entry);return (await loadApplication()).services.personal.enabled();},recipientEntry)).toBe(true);

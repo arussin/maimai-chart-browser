@@ -28,6 +28,7 @@ FEATURES = {
     "about": "About and credits",
     "maishift-pilot": "Opt-in Maishift pilot",
     "card-history": "Chart card and play history",
+    "score-export": "Best 50 and achievement image exports",
 }
 
 

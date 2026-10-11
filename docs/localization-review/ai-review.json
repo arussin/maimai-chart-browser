@@ -53,7 +53,8 @@
     "src/maimai_intelligence/assets/locales/card-history.json": "0d706787dad9dbbce0a748b55fe2a89a86661ae0f6cca95fe97c408912ccad36",
     "README.id.md": "f95b7c38bbcec394c785fa97ae4f6168eb9bb01b8516ffa6d194138a6a8e4708",
     "src/maimai_intelligence/assets/import-help/README.id.md": "0fc0a02bec2f1492a058dd86e6364e647d16b88655c5c532980199e2201e064b",
-    "src/maimai_intelligence/assets/locales/bpm-filter.json": "de56afac29a72d7fcd7b55e74215fab9a34bb5ae16300984f692846866b71034"
+    "src/maimai_intelligence/assets/locales/bpm-filter.json": "de56afac29a72d7fcd7b55e74215fab9a34bb5ae16300984f692846866b71034",
+    "src/maimai_intelligence/assets/locales/score-export.json": "8a5dd5d0314110e331c79a1014c2d7616137122d56751a006ef91e131d3b2255"
   },
   "documentation": {
     "source": "README.md",
@@ -242,6 +243,11 @@
       "date": "2026-10-04",
       "record": "docs/localization-review/card-history-20261004.json",
       "scope": "Seven card/history controls reviewed in context; no existing translations changed."
+    },
+    {
+      "date": "2026-10-11",
+      "record": "docs/localization-review/score-export-20261011.json",
+      "scope": "57 Best 50 and achievement-export strings reviewed in context in Simplified Chinese, Korean, Japanese and Indonesian, including rating-estimate and community-metadata regional uncertainty; existing translations unchanged."
     }
   ]
 }

@@ -45,7 +45,7 @@ async function importOffscreenPBs(page){
   },template);
   await page.locator('input[type=file]').setInputFiles({name:'fictional-player.gz',mimeType:'application/gzip',buffer:gzipSync(Buffer.from(JSON.stringify(dataset)))});
   await page.getByRole('button',{name:'Import data',exact:true}).click();
-  await expect(page.locator('.player-dialog')).toBeHidden();
+  await expect(page.locator('#player-import-dialog')).toBeHidden();
   await expect(page.locator('#songs .song-row').first()).toHaveAttribute('data-title','Capacity study 0000');
   return page.getByRole('group',{name:'Personal chart scope',exact:true});
 }

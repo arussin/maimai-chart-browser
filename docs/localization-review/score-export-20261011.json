@@ -1,0 +1,30 @@
+{
+  "reviewer": "Codex",
+  "date": "2026-10-11",
+  "method": "AI contextual translation and independent AI linguistic review by the achievement renderer agent (initial 55 strings) and rating-domain agent (two regional-correctness additions); not native-speaker certification.",
+  "locales": [
+    "en",
+    "zh-Hans",
+    "ko",
+    "ja",
+    "id"
+  ],
+  "entries": 57,
+  "scope": "Best 50 and single-chart achievement image export controls, export status, record-version selection, partial-data qualifications, PB-versus-play labels and canvas labels. Existing global translations are reused.",
+  "checks": [
+    "Compared each translation with its English source, renderer or dialog use, and maintained maimai terminology.",
+    "Verified all four translations and exact placeholder multiplicities for every new source; checked no duplicate source keys across locale catalogs.",
+    "Preserved canonical chart, version, rank and judgment identifiers, including FAST/LATE and CRITICAL PERFECT.",
+    "Preserved manual version selection as regrouping of imported observations, without asserting historical-rating reconstruction or full PB coverage.",
+    "Preserved the distinction between a personal best compiled across plays and one recorded play; missing counts are unavailable, not zero.",
+    "Reviewed Rating estimate and the community-metadata regional-variation warning in all four translated languages; wording retains an estimate rather than a confirmed complete rating and qualifies chart grouping by region."
+  ],
+  "corrections": [
+    "Replaced Current version / Best 15 with New charts / Best 15 because CiRCLE and later can group two releases.",
+    "Replaced No play details recorded with Judgment counts unavailable because DX score and timing details may still be known."
+  ],
+  "fingerprints": {
+    "src/maimai_intelligence/assets/locales/score-export.json": "8a5dd5d0314110e331c79a1014c2d7616137122d56751a006ef91e131d3b2255"
+  },
+  "visual_validation": "The browser suite checks controls and image previews in all five locales at 640, 320 and 280 CSS pixels. This linguistic receipt does not itself assert those browser checks passed."
+}

@@ -60,7 +60,7 @@ test('share is the final settings action above the imported player badge, with a
   const external = await hosted(context); await ready(page, '/lab/');
   await page.locator('input[type=file]').setInputFiles(fileURLToPath(new URL('../../output/player-accessibility.gz', import.meta.url)));
   await page.getByRole('button', {name:'Import data', exact:true}).click();
-  await expect(page.locator('.player-dialog')).toBeHidden();
+  await expect(page.locator('#player-import-dialog')).toBeHidden();
   await page.locator('#settings-toggle').click();
   await expect(page.locator('#settings-actions [role=menuitem]').last()).toHaveAttribute('id','site-share');
   await expect(page.locator('#site-share svg')).toBeVisible();
