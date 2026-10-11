@@ -35,6 +35,7 @@ const pureDomains = new Set([
   'src/domain/analysis-model.ts',
   'src/domain/artwork.ts',
   'src/domain/song-model.ts',
+  'src/domain/score-export.ts',
   'src/domain/catalog-genres.ts',
   'src/domain/catalog-row-selection.ts',
   'src/catalog-query.ts',

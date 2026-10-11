@@ -12,6 +12,7 @@ export interface ProviderRow {
   difficulty?: string;
   acceptance_basis?: string;
   aliasOf?: string;
+  displayVersion?: string;
   expected_source?: Record<string, unknown>;
 }
 export interface ProviderMapping {

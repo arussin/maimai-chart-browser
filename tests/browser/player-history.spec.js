@@ -90,7 +90,7 @@ for(const locale of ['en','zh-Hans','ko','ja','id'])test('bounded real imported 
   await history.screenshot({path:testInfo.outputPath('history-three-'+locale+'.png')});
   await more.focus();await page.keyboard.press('Enter');await expect(rows).toHaveCount(23);await expect(rows.nth(3)).toBeFocused();
   expect(await rows.nth(3).evaluate(n=>{const r=n.getBoundingClientRect();return r.top>=0&&r.top<innerHeight;})).toBe(true);
-  await page.keyboard.press('Tab');await expect(more).toBeFocused();await page.keyboard.press('Space');await expect(rows).toHaveCount(43);await expect(rows.nth(23)).toBeFocused();await historyFits(page);
+  await page.keyboard.press('Tab');await expect(rows.nth(3).locator('.player-export-play')).toBeFocused();await more.focus();await page.keyboard.press('Space');await expect(rows).toHaveCount(43);await expect(rows.nth(23)).toBeFocused();await historyFits(page);
   let shown=43;while(shown<243){await more.click();shown=Math.min(243,shown+20);await expect(rows).toHaveCount(shown);}
   await expect(more).toBeHidden();await expect(count).toContainText('243');await historyFits(page);expect(await history.locator('svg polyline').getAttribute('points')).toBe(graph);
   const expected=await page.evaluate(data=>maimaiPlayerData.chartHistory(data,['chart']).plays.map(e=>e.r.achievement==null?null:(e.r.achievement/10000).toFixed(4)+'%'),data);
@@ -100,7 +100,7 @@ for(const locale of ['en','zh-Hans','ko','ja','id'])test('bounded real imported 
   expect(await page.evaluate(data=>maimaiPlayerData.chartHistory(data,['chart']).plays.length,data)).toBe(243);
   await less.focus();await page.keyboard.press('Enter');await expect(rows).toHaveCount(3);await expect(history.locator('.player-history-title')).toBeFocused();
   expect(await history.locator('.player-history-title').evaluate(n=>{const r=n.getBoundingClientRect();return r.top>=0&&r.top<innerHeight;})).toBe(true);
-  await page.keyboard.press('Tab');await expect(more).toBeFocused();await historyFits(page);
+  await page.keyboard.press('Tab');await expect(rows.first().locator('.player-export-play')).toBeFocused();await historyFits(page);
   // Filter/sort redraw and a public navigation snapshot preserve the selected count.
   await more.click();const snap=await page.evaluate(()=>maimaiBrowserState.capture());await page.locator('[data-sort-key=bpm]').click();await expect(rows).toHaveCount(23);
   await page.evaluate(snap=>maimaiBrowserState.restore(snap),snap);await expect(rows).toHaveCount(23);

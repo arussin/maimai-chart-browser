@@ -1,4 +1,6 @@
 import { ImportCoordinator } from '../runtime/import-coordinator';
+import { createScoreExporter } from './score-export';
+import { createArtworkModel } from '../domain/artwork';
 import { createSessionBrowser } from '../runtime/player-session-browser';
 import type { TextView, LocalizedText } from '../components/chart-card';
 import type { createChartSections } from '../components/chart-sections';
@@ -6,7 +8,7 @@ import type { BrowserState, PersonalFilters } from '../runtime/browser-state';
 import type { HistoryPort } from '../runtime/history';
 import type { NavigationCoordinator } from '../runtime/navigation';
 import type { CatalogChart, PublicCatalog } from '../runtime/catalog';
-import type { PlayerDataset, PlayerRecord } from '../domain/player-data';
+import type { PlayerChart, PlayerDataset, PlayerRecord } from '../domain/player-data';
 import type { PlayerOffer, Consent, ConsentOptions } from '../runtime/player-session-contracts';
 import { errorMessage } from '../runtime/player-session-contracts';
 import type * as PlayerDomain from '../player-session';
@@ -86,6 +88,7 @@ export function createPlayerData(ports: PersonalPorts) {
     pbDates = new Map<string, number>();
   let catalog: PublicCatalog | null = null,
     mapping: ProviderMapping | null = null;
+  let exportArtwork: ReturnType<typeof createArtworkModel> | undefined;
   let reverse = new Map<string, string[]>(),
     lastTimes = new Map<string, number>();
   let maishiftMapping: ProviderMapping | undefined,
@@ -189,6 +192,46 @@ export function createPlayerData(ports: PersonalPorts) {
   const importButton = menuItem('player-import', 'Import player data', () => {
     if (!player.busy) selectSource();
   });
+  const exporter = createScoreExporter({
+    root,
+    localization: i18n,
+    dataset: () => (visible ? player.active : null),
+    resolve: exportIdentity,
+    jacketURL: (chart) => {
+      if (!catalog) return;
+      const id = exportIdentity(chart)?.canonicalChartID,
+        canonical = id ? catalogByID.get(id) : undefined;
+      if (!canonical) return;
+      const accountRegion =
+          player.active?.player.provider === 'maishift'
+            ? player.active.player.key.split(':')[2]
+            : undefined,
+        region =
+          accountRegion === 'intl' || accountRegion === 'jp'
+            ? accountRegion.toUpperCase()
+            : ports.browserState.region.international
+              ? 'INTL'
+              : 'JP',
+        art = exportArtwork!,
+        path = art.jacket({ ...canonical, view_region: region });
+      return art.accepted(path) ? ports.songPages.asset(path) : undefined;
+    },
+  });
+  const exportMenu = menuItem('player-export-menu', 'Export Best 50', () =>
+    exporter.best50(find('settings-toggle')!),
+  );
+  exportMenu.hidden = true;
+  const exportButton = make(
+    'button',
+    'Export Best 50',
+    'player-import-primary player-export-primary',
+  );
+  exportButton.id = 'player-export-best50';
+  exportButton.type = 'button';
+  exportButton.hidden = true;
+  exportButton.setAttribute('aria-haspopup', 'dialog');
+  exportButton.setAttribute('aria-controls', 'player-export-dialog');
+  exportButton.onclick = () => exporter.best50(exportButton);
   const header = root.querySelector('.catalog-heading-actions');
   if (header) {
     const launch = make('button', undefined, 'player-import-primary');
@@ -206,7 +249,7 @@ export function createPlayerData(ports: PersonalPorts) {
         selectSource();
       }
     };
-    header.append(launch);
+    header.append(launch, exportButton);
   }
   function helpLink(section: string, label: string) {
     const link = external('?', '');
@@ -254,6 +297,8 @@ export function createPlayerData(ports: PersonalPorts) {
           lastTimes.set(r.chartID, Math.max(lastTimes.get(r.chartID) || 0, r.timeAchieved));
       }
     hideButton.hidden = !player.active;
+    exportButton.hidden = exportMenu.hidden = !player.active || !visible;
+    exporter.changed();
     forgetButton.hidden = !player.storedRevision;
     i18n.text(hideButton, visible ? 'Hide player data' : 'Show player data');
     clearButton.hidden = !player.active && !player.storedRevision;
@@ -697,6 +742,7 @@ export function createPlayerData(ports: PersonalPorts) {
 
   function configure(data: PublicCatalog, providerMapping?: ProviderMapping) {
     catalog = data;
+    exportArtwork = createArtworkModel(data);
     mapping = providerMapping || data.provider_mapping || null;
     const index = session.providerIndex(data, mapping);
     reverse = index.kamaitachi;
@@ -721,6 +767,32 @@ export function createPlayerData(ports: PersonalPorts) {
   }
   function providerID(c: CatalogChart) {
     return session.preferredProviderID(providerIDs(c), pbs, pbDates, mapping);
+  }
+
+  function exportIdentity(chart: PlayerChart) {
+    if (!player.active || !catalog) return;
+    let canonicalChartID: string | undefined;
+    if (player.active.player.provider === 'maishift') {
+      if (maishiftMatch(player.active, chart.chartID))
+        canonicalChartID = maishiftMapping?.charts[chart.chartID]?.chart_id;
+    } else {
+      const row = mapping?.charts[chart.chartID];
+      if (row && reverse.get(row.chart_id)?.includes(chart.chartID))
+        canonicalChartID = row.chart_id;
+    }
+    if (!canonicalChartID) return;
+    // Only reviewed chart-specific metadata may fill a missing introduction.
+    // The navigation folder is song-scoped and can misclassify later charts.
+    const rows = (reverse.get(canonicalChartID) || []).map((id) => mapping?.charts[id]);
+    const versions = new Set(
+      rows.flatMap((row) => (row?.displayVersion ? [row.displayVersion] : [])),
+    );
+    return {
+      canonicalChartID,
+      displayVersion: versions.size === 1 ? [...versions][0] : undefined,
+      versionEvidence: 'unqualified' as const,
+      alias: !!mapping?.charts[chart.chartID]?.aliasOf,
+    };
   }
 
   function displayRecord(r: PlayerRecord | undefined) {
@@ -860,6 +932,17 @@ export function createPlayerData(ports: PersonalPorts) {
       root.append(rating);
     }
     root.append(badges(r));
+    const chart = player.active?.charts[r.chartID];
+    if (chart) {
+      const exportAction = make('button', 'Export achievement', 'player-export-achievement');
+      exportAction.type = 'button';
+      exportAction.setAttribute('aria-haspopup', 'dialog');
+      exportAction.onclick = (event) => {
+        event.stopPropagation();
+        exporter.achievement(exportAction, chart, r, 'pb');
+      };
+      root.append(exportAction);
+    }
     return root;
   }
   function details(c: CatalogChart) {
@@ -927,7 +1010,7 @@ export function createPlayerData(ports: PersonalPorts) {
       thead = make('thead'),
       head = make('tr'),
       tbody = make('tbody'),
-      labels = ['Played on', 'Achievement', 'Grade', 'Chart rating', 'Badges'];
+      labels = ['Played on', 'Achievement', 'Grade', 'Chart rating', 'Badges', 'Export'];
     table.setAttribute('role', 'table');
     table.setAttribute('aria-labelledby', title.id);
     table.setAttribute('aria-describedby', count.id);
@@ -985,6 +1068,13 @@ export function createPlayerData(ports: PersonalPorts) {
         row.id = prefix + '-row-' + i;
         row.tabIndex = -1;
         row.setAttribute('role', 'row');
+        const exportAction = make('button', 'Export this play', 'player-export-play');
+        exportAction.type = 'button';
+        exportAction.setAttribute('aria-haspopup', 'dialog');
+        exportAction.onclick = () => {
+          const chart = player.active?.charts[e.r.chartID];
+          if (chart) exporter.achievement(exportAction, chart, e.r, 'play');
+        };
         const values: (LocalizedText | Node)[] = [
           date(e.time),
           e.r.achievement == null
@@ -993,6 +1083,7 @@ export function createPlayerData(ports: PersonalPorts) {
           gradeNode(displayRecord(e.r)!.grade),
           i18n.verbatim(e.r.rate ?? '—'),
           badges(e.r),
+          exportAction,
         ];
         values.forEach((value, index) => {
           const cell = make('td'),

@@ -1,0 +1,346 @@
+{
+  "messages": {
+    "Best 50": {
+      "zh-Hans": "Best 50",
+      "ko": "Best 50",
+      "ja": "Best 50",
+      "id": "Best 50"
+    },
+    "Older charts · Best 35": {
+      "zh-Hans": "旧版本谱面 · Best 35",
+      "ko": "이전 버전 채보 · Best 35",
+      "ja": "旧バージョンの譜面 · Best 35",
+      "id": "Chart versi lama · Best 35"
+    },
+    "New charts · Best 15": {
+      "zh-Hans": "新版本谱面 · Best 15",
+      "ko": "신곡 채보 · Best 15",
+      "ja": "新曲枠の譜面 · Best 15",
+      "id": "Chart baru · Best 15"
+    },
+    "{0} / {1} charts": {
+      "zh-Hans": "{0} / {1} 个谱面",
+      "ko": "채보 {0} / {1}개",
+      "ja": "譜面 {0} / {1} 件",
+      "id": "{0} / {1} chart"
+    },
+    "Rating total": {
+      "zh-Hans": "Rating 合计",
+      "ko": "레이팅 합계",
+      "ja": "レーティング合計",
+      "id": "Total rating"
+    },
+    "Partial report": {
+      "zh-Hans": "不完整的报告",
+      "ko": "불완전한 리포트",
+      "ja": "一部の記録によるレポート",
+      "id": "Laporan tidak lengkap"
+    },
+    "Personal best": {
+      "zh-Hans": "个人最佳",
+      "ko": "개인 최고 기록",
+      "ja": "自己ベスト",
+      "id": "Rekor pribadi"
+    },
+    "Recorded play": {
+      "zh-Hans": "单次游玩记录",
+      "ko": "저장된 플레이 기록",
+      "ja": "保存されたプレイ記録",
+      "id": "Catatan permainan"
+    },
+    "Result": {
+      "zh-Hans": "成绩",
+      "ko": "결과",
+      "ja": "リザルト",
+      "id": "Hasil"
+    },
+    "DX score": {
+      "zh-Hans": "DX 分数",
+      "ko": "DX 스코어",
+      "ja": "でらっくスコア",
+      "id": "Skor DX"
+    },
+    "Max combo": {
+      "zh-Hans": "最大连击",
+      "ko": "최대 콤보",
+      "ja": "最大コンボ",
+      "id": "Combo maksimum"
+    },
+    "Fast": {
+      "zh-Hans": "FAST",
+      "ko": "FAST",
+      "ja": "FAST",
+      "id": "FAST"
+    },
+    "Late": {
+      "zh-Hans": "LATE",
+      "ko": "LATE",
+      "ja": "LATE",
+      "id": "LATE"
+    },
+    "Critical perfect": {
+      "zh-Hans": "CRITICAL PERFECT",
+      "ko": "CRITICAL PERFECT",
+      "ja": "CRITICAL PERFECT",
+      "id": "CRITICAL PERFECT"
+    },
+    "Perfect": {
+      "zh-Hans": "PERFECT",
+      "ko": "PERFECT",
+      "ja": "PERFECT",
+      "id": "PERFECT"
+    },
+    "Great": {
+      "zh-Hans": "GREAT",
+      "ko": "GREAT",
+      "ja": "GREAT",
+      "id": "GREAT"
+    },
+    "Good": {
+      "zh-Hans": "GOOD",
+      "ko": "GOOD",
+      "ja": "GOOD",
+      "id": "GOOD"
+    },
+    "Miss": {
+      "zh-Hans": "MISS",
+      "ko": "MISS",
+      "ja": "MISS",
+      "id": "MISS"
+    },
+    "Played {0}": {
+      "zh-Hans": "游玩时间 {0}",
+      "ko": "플레이 일시 {0}",
+      "ja": "プレイ日時 {0}",
+      "id": "Dimainkan {0}"
+    },
+    "Unknown achievement": {
+      "zh-Hans": "达成率未知",
+      "ko": "달성률 알 수 없음",
+      "ja": "達成率不明",
+      "id": "Achievement tidak diketahui"
+    },
+    "Constant {0}": {
+      "zh-Hans": "定数 {0}",
+      "ko": "상수 {0}",
+      "ja": "定数 {0}",
+      "id": "Konstanta {0}"
+    },
+    "Personal-best values may come from different plays.": {
+      "zh-Hans": "个人最佳的各项数据可能来自不同次游玩。",
+      "ko": "개인 최고 기록의 각 수치는 서로 다른 플레이에서 나온 값일 수 있습니다.",
+      "ja": "自己ベストの各数値は、異なるプレイの記録に基づく場合があります。",
+      "id": "Nilai rekor pribadi bisa berasal dari permainan yang berbeda."
+    },
+    "Created from imported records": {
+      "zh-Hans": "根据导入的记录生成",
+      "ko": "가져온 기록으로 생성됨",
+      "ja": "読み込んだ記録から作成",
+      "id": "Dibuat dari catatan yang diimpor"
+    },
+    "No eligible record": {
+      "zh-Hans": "没有符合条件的记录",
+      "ko": "조건에 맞는 기록 없음",
+      "ja": "対象の記録がありません",
+      "id": "Tidak ada catatan yang memenuhi syarat"
+    },
+    "Player": {
+      "zh-Hans": "玩家",
+      "ko": "플레이어",
+      "ja": "プレイヤー",
+      "id": "Pemain"
+    },
+    "{0} excluded records": {
+      "zh-Hans": "已排除 {0} 条记录",
+      "ko": "기록 {0}개 제외됨",
+      "ja": "{0} 件の記録を除外",
+      "id": "{0} catatan dikecualikan"
+    },
+    "Export Best 50": {
+      "zh-Hans": "导出 Best 50",
+      "ko": "Best 50 내보내기",
+      "ja": "Best 50 を書き出す",
+      "id": "Ekspor Best 50"
+    },
+    "Export achievement": {
+      "zh-Hans": "导出成绩",
+      "ko": "성적 내보내기",
+      "ja": "リザルトを書き出す",
+      "id": "Ekspor pencapaian"
+    },
+    "Export this play": {
+      "zh-Hans": "导出本次游玩",
+      "ko": "이 플레이 내보내기",
+      "ja": "このプレイを書き出す",
+      "id": "Ekspor permainan ini"
+    },
+    "Export": {
+      "zh-Hans": "导出",
+      "ko": "내보내기",
+      "ja": "書き出し",
+      "id": "Ekspor"
+    },
+    "Create an image on this device to save or share.": {
+      "zh-Hans": "在此设备上生成图片，以便保存或分享。",
+      "ko": "이 기기에서 이미지를 만들어 저장하거나 공유하세요.",
+      "ja": "このデバイス上で、保存・共有できる画像を作成します。",
+      "id": "Buat gambar di perangkat ini untuk disimpan atau dibagikan."
+    },
+    "Export image preview": {
+      "zh-Hans": "导出图片预览",
+      "ko": "내보낼 이미지 미리보기",
+      "ja": "書き出す画像のプレビュー",
+      "id": "Pratinjau gambar ekspor"
+    },
+    "Create image": {
+      "zh-Hans": "生成图片",
+      "ko": "이미지 만들기",
+      "ja": "画像を作成",
+      "id": "Buat gambar"
+    },
+    "Download PNG": {
+      "zh-Hans": "下载 PNG",
+      "ko": "PNG 다운로드",
+      "ja": "PNG をダウンロード",
+      "id": "Unduh PNG"
+    },
+    "Creating image…": {
+      "zh-Hans": "正在生成图片…",
+      "ko": "이미지 만드는 중…",
+      "ja": "画像を作成中…",
+      "id": "Membuat gambar…"
+    },
+    "Image ready. Download it or save the preview.": {
+      "zh-Hans": "图片已生成。可以下载或保存预览图。",
+      "ko": "이미지가 준비되었습니다. 다운로드하거나 미리보기를 저장하세요.",
+      "ja": "画像を作成しました。ダウンロードするか、プレビューを保存してください。",
+      "id": "Gambar siap. Unduh atau simpan pratinjaunya."
+    },
+    "The image could not be created. Please try again.": {
+      "zh-Hans": "无法生成图片，请重试。",
+      "ko": "이미지를 만들 수 없습니다. 다시 시도해 주세요.",
+      "ja": "画像を作成できませんでした。もう一度お試しください。",
+      "id": "Gambar tidak dapat dibuat. Silakan coba lagi."
+    },
+    "Record version": {
+      "zh-Hans": "记录所属版本",
+      "ko": "기록의 게임 버전",
+      "ja": "記録時のゲームバージョン",
+      "id": "Versi game pada catatan"
+    },
+    "Choose the version of your record": {
+      "zh-Hans": "选择记录所属版本",
+      "ko": "기록의 게임 버전 선택",
+      "ja": "記録時のバージョンを選択",
+      "id": "Pilih versi game pada catatan"
+    },
+    "Version detected from your imported report. You can change it below.": {
+      "zh-Hans": "已从导入的报告中识别版本，可在下方更改。",
+      "ko": "가져온 리포트에서 버전을 확인했습니다. 아래에서 변경할 수 있습니다.",
+      "ja": "読み込んだレポートからバージョンを検出しました。下で変更できます。",
+      "id": "Versi terdeteksi dari laporan yang diimpor. Anda bisa mengubahnya di bawah."
+    },
+    "Your import does not identify its version. Choose the version when these scores were recorded.": {
+      "zh-Hans": "导入的数据未标明版本。请选择记录这些成绩时的游戏版本。",
+      "ko": "가져온 데이터에 버전 정보가 없습니다. 이 성적을 기록했을 때의 게임 버전을 선택하세요.",
+      "ja": "読み込んだデータにバージョン情報がありません。これらの成績を記録した時のゲームバージョンを選択してください。",
+      "id": "Data impor tidak mencantumkan versinya. Pilih versi game saat skor ini dicatat."
+    },
+    "Version selects the New 15 pool. Imported ratings and constants are kept; choosing a different version does not recreate historical scores.": {
+      "zh-Hans": "所选版本决定 New 15 的候选谱面。导入的 Rating 和定数保持不变；选择其他版本不会还原历史成绩。",
+      "ko": "선택한 버전으로 New 15 대상 채보를 정합니다. 가져온 레이팅과 상수는 유지되며, 다른 버전을 선택해도 과거 성적이 복원되지는 않습니다.",
+      "ja": "選択したバージョンで New 15 の対象譜面を決めます。読み込んだレーティングと定数は維持され、別のバージョンを選んでも過去の成績は再現されません。",
+      "id": "Versi menentukan kelompok New 15. Rating dan konstanta impor tetap digunakan; memilih versi lain tidak merekonstruksi skor historis."
+    },
+    "Old 35: {0}/35 · New 15: {1}/15 · Rating: {2}": {
+      "zh-Hans": "Old 35：{0}/35 · New 15：{1}/15 · Rating：{2}",
+      "ko": "Old 35: {0}/35 · New 15: {1}/15 · 레이팅: {2}",
+      "ja": "Old 35: {0}/35 · New 15: {1}/15 · レーティング: {2}",
+      "id": "Old 35: {0}/35 · New 15: {1}/15 · Rating: {2}"
+    },
+    "{0} records excluded because their data cannot be used for this version.": {
+      "zh-Hans": "{0} 条记录的数据无法用于此版本，已排除。",
+      "ko": "이 버전에 사용할 수 없는 데이터가 있어 기록 {0}개를 제외했습니다.",
+      "ja": "このバージョンで使用できないデータのため、{0} 件の記録を除外しました。",
+      "id": "{0} catatan dikecualikan karena datanya tidak dapat digunakan untuk versi ini."
+    },
+    "Personal bests can combine achievements from different plays.": {
+      "zh-Hans": "个人最佳可能合并了不同次游玩的各项成绩。",
+      "ko": "개인 최고 기록에는 서로 다른 플레이의 성적이 함께 포함될 수 있습니다.",
+      "ja": "自己ベストには、異なるプレイで達成した記録が含まれる場合があります。",
+      "id": "Rekor pribadi bisa menggabungkan pencapaian dari permainan yang berbeda."
+    },
+    "This image uses one recorded play.": {
+      "zh-Hans": "此图片使用单次游玩的记录。",
+      "ko": "이 이미지는 한 번의 플레이 기록을 사용합니다.",
+      "ja": "この画像は1回のプレイ記録に基づいています。",
+      "id": "Gambar ini menggunakan satu catatan permainan."
+    },
+    "Ratings and constants come from the imported record.": {
+      "zh-Hans": "Rating 和定数来自导入的记录。",
+      "ko": "레이팅과 상수는 가져온 기록의 값입니다.",
+      "ja": "レーティングと定数は、読み込んだ記録の値です。",
+      "id": "Rating dan konstanta berasal dari catatan yang diimpor."
+    },
+    "The imported record may not contain every personal best.": {
+      "zh-Hans": "导入的记录可能未包含全部个人最佳成绩。",
+      "ko": "가져온 기록에 모든 개인 최고 성적이 포함되어 있지 않을 수 있습니다.",
+      "ja": "読み込んだ記録に、すべての自己ベストが含まれているとは限りません。",
+      "id": "Catatan yang diimpor mungkin tidak memuat semua rekor pribadi."
+    },
+    "The game version was selected manually.": {
+      "zh-Hans": "游戏版本由手动选择。",
+      "ko": "게임 버전을 수동으로 선택했습니다.",
+      "ja": "ゲームバージョンは手動で選択されています。",
+      "id": "Versi game dipilih secara manual."
+    },
+    "Changing the version groups scores only; historical ratings are not recalculated.": {
+      "zh-Hans": "更改版本只会重新分组成绩，不会重新计算历史 Rating。",
+      "ko": "버전을 바꾸면 성적 분류만 변경됩니다. 과거 레이팅은 다시 계산하지 않습니다.",
+      "ja": "バージョンの変更は成績の分類のみに適用され、過去のレーティングは再計算されません。",
+      "id": "Mengubah versi hanya mengelompokkan skor; rating historis tidak dihitung ulang."
+    },
+    "Some records could not be included in this rating estimate.": {
+      "zh-Hans": "部分记录无法计入此 Rating 估算。",
+      "ko": "일부 기록은 이 예상 레이팅에 포함할 수 없습니다.",
+      "ja": "一部の記録は、このレーティングの推定に含められませんでした。",
+      "id": "Beberapa catatan tidak dapat dimasukkan dalam perkiraan rating ini."
+    },
+    "There are not enough eligible records to fill all 50 slots.": {
+      "zh-Hans": "符合条件的记录不足，无法填满 50 个位置。",
+      "ko": "조건에 맞는 기록이 부족하여 50개 자리를 모두 채울 수 없습니다.",
+      "ja": "対象となる記録が不足しているため、50枠すべてを埋められません。",
+      "id": "Catatan yang memenuhi syarat tidak cukup untuk mengisi semua 50 slot."
+    },
+    "Duplicate chart identities were counted once.": {
+      "zh-Hans": "重复的谱面仅计入一次。",
+      "ko": "동일한 채보의 중복 기록은 한 번만 계산했습니다.",
+      "ja": "同一譜面の重複は1件として数えています。",
+      "id": "Identitas chart yang sama hanya dihitung sekali."
+    },
+    "Missing chart ratings were calculated from imported constants and achievement.": {
+      "zh-Hans": "缺失的单谱 Rating 根据导入的定数和达成率计算。",
+      "ko": "누락된 채보 레이팅은 가져온 상수와 달성률로 계산했습니다.",
+      "ja": "不足している譜面レーティングは、読み込んだ定数と達成率から計算しました。",
+      "id": "Rating chart yang tidak tersedia dihitung dari konstanta dan achievement impor."
+    },
+    "Judgment counts unavailable": {
+      "zh-Hans": "判定数量不可用",
+      "ko": "판정별 개수 정보 없음",
+      "ja": "判定数の記録がありません",
+      "id": "Jumlah penilaian tidak tersedia"
+    },
+    "Rating estimate": {
+      "zh-Hans": "Rating 估算",
+      "ko": "추정 레이팅",
+      "ja": "レーティング推定値",
+      "id": "Perkiraan rating"
+    },
+    "Chart release groups use community metadata and may differ by region.": {
+      "zh-Hans": "谱面的版本分组采用社区元数据，可能因地区而异。",
+      "ko": "채보의 버전 분류에는 커뮤니티 메타데이터가 사용되며, 지역에 따라 다를 수 있습니다.",
+      "ja": "譜面のバージョン分類にはコミュニティのメタデータを使用しており、地域によって異なる場合があります。",
+      "id": "Pengelompokan chart berdasarkan versi menggunakan metadata komunitas dan mungkin berbeda antarwilayah."
+    }
+  }
+}
