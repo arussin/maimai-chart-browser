@@ -480,7 +480,8 @@ function playerRating(
     );
     return;
   }
-  // Center the numeral ink in the profile placard's 18.6%–76.75% digit window.
+  // All 296×86 frames have an inner gray digit face from y=24 through y=65.
+  // Center its ink at y=45, below the thicker upper bevel of the dark surround.
   // A shared measured baseline keeps different digits aligned in every font fallback.
   const digitWidth = width * 0.1069;
   ctx.save();
@@ -490,7 +491,7 @@ function playerRating(
   const numerals = ctx.measureText('0123456789');
   const baseline =
     y +
-    height * ((0.186 + 0.7675) / 2) +
+    height * (45 / 86) +
     (numerals.actualBoundingBoxAscent - numerals.actualBoundingBoxDescent) / 2;
   ctx.fillStyle = '#ffe352';
   ctx.shadowColor = '#291800';

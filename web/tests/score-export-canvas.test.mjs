@@ -126,8 +126,8 @@ test('Best 50 rating numerals share a baseline and center in the official digit 
         assert.ok(inkLeft > center - cellWidth / 2 && inkRight < center + cellWidth / 2);
         const top = d.baseline - d.bounds.actualBoundingBoxAscent,
           bottom = d.baseline + d.bounds.actualBoundingBoxDescent;
-        assert.ok(Math.abs((top + bottom) / 2 - (y + (height * (0.186 + 0.7675)) / 2)) < 1e-8);
-        assert.ok(top > y + height * 0.186 && bottom < y + height * 0.7675);
+        assert.ok(Math.abs((top + bottom) / 2 - (y + (height * 45) / 86)) < 1e-8);
+        assert.ok(top > y + (height * 24) / 86 && bottom < y + (height * 66) / 86);
       }
       assert.equal(ctx.textAlign, 'right');
       assert.equal(ctx.textBaseline, 'top');
