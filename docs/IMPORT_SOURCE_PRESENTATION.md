@@ -190,15 +190,16 @@ Fictional screenshots are retained under the final delivery workspace's
 
 ## Clear and replacement follow-up
 
-Settings includes **Clear player data** whenever a temporary or saved profile
-exists, including when scores are hidden. Clear removes the current scores, tab
+Settings includes one **Forget player data** action whenever a temporary or saved
+profile exists, including when scores are hidden. It removes the current scores, tab
 cache, saved dataset and refresh connection. The transactional invalidation epoch
 also records a clear marker, so other tabs discard scores and a tab that missed
 notifications catches up when focused. Requests and pending commits from the old
 generation cannot restore the cleared profile. Storage failures preserve the
 working data and offer a normal retry. Announcement and site preferences remain
-separate. **Forget remembered player data** retains its existing narrower behavior:
-stop persistence/refresh while keeping the current scores visible in that tab.
+separate. The former separate **Clear player data** and **Forget remembered player
+data** controls are combined into this full-removal action. **Hide player data**
+still changes visibility without removing scores.
 
 When scores are already loaded, the source picker shows one short red notice.
 The existing profile confirmation identifies an update for the same player or
@@ -304,8 +305,8 @@ time show the localized Date unknown until imported again.
 A successful unchanged refresh updates this metadata atomically with the saved
 connection and notifies other remembered tabs. The portable bytes/revision and
 observation history stay unchanged. Failed reads, rejected older responses and
-failed local commits preserve the previous time. Forget retains the timestamp
-with the still-visible in-memory scores; Clear removes it with those scores.
+failed local commits preserve the previous time. **Forget player data** removes
+the local timestamp together with the scores and saved refresh connection.
 Refresh attempt timestamps and cooldowns remain intact.
 
 The documented browser wrapper passed 453 checks in

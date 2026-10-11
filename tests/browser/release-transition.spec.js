@@ -258,11 +258,12 @@ test('old-tab Forget wins over a paused new-tab import and remains forgotten aft
   await page.getByRole('button', {name: 'Okay!', exact: true}).click();
   await expect.poll(async () => (await stored(page)).revision).toBeNull();
   expect((await stored(page)).epoch).toBeGreaterThan(before.epoch);
-  // Forget intentionally permits viewing in-memory scores in open tabs. It
-  // removes persistence/automatic refresh; do not assert Clear semantics here.
+  // The legacy tab still uses its historical Forget action, which retains
+  // in-memory scores. The current tab keeps its single full-Forget action
+  // available until those scores are removed, even without saved data.
   await importing.evaluate(() => globalThis.releaseRollbackImport());
   await importing.waitForFunction(() => globalThis.rollbackImportSettled);
-  await expect.poll(() => importing.locator('#player-forget').evaluate(button => button.hidden)).toBe(true);
+  await expect.poll(() => importing.locator('#player-forget').evaluate(button => button.hidden)).toBe(false);
   expect(await importing.evaluate(async () => {
     const state = globalThis.rollbackStaleCommit;
     try {

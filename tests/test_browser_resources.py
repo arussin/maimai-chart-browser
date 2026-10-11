@@ -78,6 +78,64 @@ class BrowserResourceTests(unittest.TestCase):
         assets["browser-assets.json"] = canonical(graph)
         return assets
 
+    def test_artwork_size_allowance_is_only_for_the_self_contained_offline_entry(self):
+        for kind, size, valid in (
+            ("hosted", 2 * 1024 * 1024, True),
+            ("hosted", 2 * 1024 * 1024 + 1, False),
+            ("offline", 8 * 1024 * 1024, True),
+            ("offline", 8 * 1024 * 1024 + 1, False),
+            ("chunk", 2 * 1024 * 1024 + 1, False),
+            ("renamed_offline", 2 * 1024 * 1024 + 1, False),
+        ):
+            values = dict(self.assets)
+            graph = json.loads(values["browser-assets.json"])
+            if kind in ("hosted", "offline"):
+                path = graph["entries"][kind]
+            else:
+                path = "browser/artwork-FIXTURE.js"
+                if kind == "renamed_offline":
+                    graph["entries"]["offline"] = path
+            body = b" " * size
+            values[path] = body
+            graph["assets"][path] = {"bytes": size, "sha256": hashlib.sha256(body).hexdigest()}
+            values["browser-assets.json"] = canonical(graph)
+            limits = {}
+
+            def read(name, limit, values=values, limits=limits):
+                limits[name] = limit
+                return values[name]
+
+            with self.subTest(kind=kind, size=size):
+                if valid:
+                    read_browser_assets(read)
+                    self.assertEqual(limits[path], size)
+                    values[path] = b"tampered"
+                    with self.assertRaisesRegex(ValueError, "integrity"):
+                        read_browser_assets(read)
+                else:
+                    with self.assertRaisesRegex(ValueError, "Invalid generated"):
+                        read_browser_assets(read)
+
+        graph["entries"]["hosted"] = graph["entries"]["offline"]
+        values["browser-assets.json"] = canonical(graph)
+        with self.assertRaisesRegex(ValueError, "dependency manifest"):
+            read_browser_assets(read)
+
+    def test_generated_graph_has_an_aggregate_size_bound(self):
+        values = dict(self.assets)
+        graph = json.loads(values["browser-assets.json"])
+        chunk = b" " * (2 * 1024 * 1024)
+        for index in range(8):
+            path = f"browser/partner-{index}.js"
+            values[path] = chunk
+            graph["assets"][path] = {
+                "bytes": len(chunk),
+                "sha256": hashlib.sha256(chunk).hexdigest(),
+            }
+        values["browser-assets.json"] = canonical(graph)
+        with self.assertRaisesRegex(ValueError, "graph exceeds its size limit"):
+            read_browser_assets(lambda name, _limit: values[name])
+
     def pagination_assets(self):
         assets = self.preload_assets()
         graph = json.loads(assets["browser-assets.json"])

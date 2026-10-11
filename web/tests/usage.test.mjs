@@ -5,6 +5,7 @@ import { moduleSource, evaluateModule } from './module.mjs';
 import { gzipSync } from 'node:zlib';
 const source = await moduleSource('usage');
 const stagingSource = await moduleSource('usage-staging', { staging: true });
+import { DETAILS, validateRow } from '../src/usage-contract.ts';
 function fixture({
   host = 'maimai.party',
   module = source,
@@ -88,6 +89,51 @@ test('restore is suppressed; failures drop without retry and disable clears buff
   await api.flush();
   assert.equal(requests.length, 1);
 });
+test('export counters accept only finite action kinds and never transmit saved choices or errors', async () => {
+  const { api, requests } = fixture();
+  for (const [event, details] of Object.entries(DETAILS).filter(([event]) =>
+    event.startsWith('score_export_'),
+  )) {
+    for (const detail of details) {
+      assert.ok(validateRow({ event, page: 'song', detail, failure: '', count: 1 }));
+      api.emit(event, 'song', detail);
+    }
+    for (const detail of [
+      'PRIVATE-SENTINEL',
+      'prismplus',
+      'kanadera-magical',
+      'https://private.invalid/song',
+    ]) {
+      assert.equal(validateRow({ event, page: 'song', detail, failure: '', count: 1 }), null);
+      api.emit(event, 'song', detail);
+    }
+    assert.equal(
+      validateRow({
+        event,
+        page: 'song',
+        detail: details[0],
+        failure: 'PRIVATE-SENTINEL',
+        count: 1,
+      }),
+      null,
+    );
+    await api.flush();
+  }
+  const rows = requests.flatMap((request) => JSON.parse(request.options.body).events);
+  assert.equal(rows.length, 17);
+  assert.ok(
+    rows.every((row) => Object.keys(row).sort().join(',') === 'count,detail,event,failure,page'),
+  );
+  assert.doesNotMatch(
+    JSON.stringify(requests),
+    /PRIVATE-SENTINEL|prismplus|kanadera-magical|private\.invalid/,
+  );
+  const before = requests.length;
+  api.suspend(() => api.emit('score_export_option_changed', 'song', 'partner'));
+  await api.flush();
+  assert.equal(requests.length, before);
+});
+
 test('same broad page category counts each committed navigation but no automatic page view', async () => {
   const { api, requests, listeners } = fixture();
   await api.flush();

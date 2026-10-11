@@ -4,6 +4,7 @@ import {readFile} from 'node:fs/promises';
 import {Miniflare,convertV4MiniflareOptions} from 'miniflare';
 import worker,{dayKey} from '../worker.mjs';
 import staging from '../staging.mjs';
+import {DETAILS} from '../../web/src/usage-contract.ts';
 let mf,db,stageDB;
 before(async()=>{
  mf=new Miniflare(convertV4MiniflareOptions({modules:true,script:'export default {fetch(){return new Response("local fixture")}}',compatibilityDate:'2026-09-22',d1Databases:['USAGE_DB','STAGING_DB'],outboundService:()=>{throw Error('No external requests allowed')}}));
@@ -28,6 +29,17 @@ test('invalid batch is rejected whole; private sentinel never reaches D1',async(
  }
  assert.deepEqual(await db.prepare('SELECT SUM(count) AS n FROM usage_daily').first(),count);
 });
+test('export actions reach D1 only as the maintained finite categories',async()=>{
+ const rows=Object.entries(DETAILS).filter(([event])=>event.startsWith('score_export_')).flatMap(([event,details])=>details.map(detail=>({event,page:'song',detail,failure:'',count:1})));
+ for(let offset=0;offset<rows.length;offset+=16)assert.equal((await call(req({version:1,events:rows.slice(offset,offset+16)}))).status,204);
+ const before=await db.prepare("SELECT * FROM usage_daily WHERE event LIKE 'score_export_%' ORDER BY event,detail").all();
+ assert.equal(before.results.length,17);assert(before.results.every(row=>row.count===1));
+ for(const change of [{detail:'kanadera-magical'},{detail:'prismplus'},{detail:'PRIVATE-SENTINEL'},{failure:'PRIVATE-SENTINEL'},{song:'PRIVATE-SENTINEL'}])assert.equal((await call(req({version:1,events:[{...rows[0],...change}]}))).status,400);
+ const after=await db.prepare("SELECT * FROM usage_daily WHERE event LIKE 'score_export_%' ORDER BY event,detail").all();
+ assert.deepEqual(after.results,before.results);
+ assert(!JSON.stringify(before).includes('PRIVATE-SENTINEL'));
+});
+
 test('exact route, origin, method, type and opt-out controls fail closed',async()=>{
  for(const url of ['https://preview.invalid/__usage','https://maimai.party/__usage?x=1','https://maimai.party/__usage/','https://maimai.party/__usage%2f','https://maimai.party/api/support/checkout'])assert.equal((await call(req(undefined,{url}))).status,404);
  assert.equal((await call(req(undefined,{method:'GET'}))).status,405);

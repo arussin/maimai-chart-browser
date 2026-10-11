@@ -1,6 +1,10 @@
 import { ImportCoordinator } from '../runtime/import-coordinator';
 import { createScoreExporter } from './score-export';
+import { createScoreExportPreferences } from '../runtime/score-export-preferences';
+import { knownScoreExportVersionIDs } from '../domain/score-export';
+import { defaultScoreExportPartner, scoreExportPartners } from './score-export-partners';
 import { createArtworkModel } from '../domain/artwork';
+import { createScoreExportLogos } from './score-export-logos';
 import { createSessionBrowser } from '../runtime/player-session-browser';
 import type { TextView, LocalizedText } from '../components/chart-card';
 import type { createChartSections } from '../components/chart-sections';
@@ -160,9 +164,7 @@ export function createPlayerData(ports: PersonalPorts) {
   input.accept = '.gz,application/gzip';
   input.hidden = true;
   root.append(input);
-  let hideButton: HTMLButtonElement,
-    forgetButton: HTMLButtonElement,
-    clearButton: HTMLButtonElement;
+  let hideButton: HTMLButtonElement, forgetButton: HTMLButtonElement;
   const menu = find('settings-actions');
   find('settings-menu')?.append(status);
   function menuItem(id: string, label: string, run: () => unknown) {
@@ -179,8 +181,7 @@ export function createPlayerData(ports: PersonalPorts) {
     menu?.prepend(b);
     return b;
   }
-  clearButton = menuItem('player-clear', 'Clear player data', () => player.clear());
-  forgetButton = menuItem('player-forget', 'Forget remembered player data', () => player.forget());
+  forgetButton = menuItem('player-forget', 'Forget player data', () => player.clear());
   hideButton = menuItem('player-toggle', 'Hide player data', () => {
     visible = !visible;
     saveVisibility();
@@ -192,11 +193,61 @@ export function createPlayerData(ports: PersonalPorts) {
   const importButton = menuItem('player-import', 'Import player data', () => {
     if (!player.busy) selectSource();
   });
+  const exportLogos = createScoreExportLogos({
+    localization: i18n,
+    asset: (path) => ports.songPages.asset(path),
+  });
   const exporter = createScoreExporter({
     root,
     localization: i18n,
+    preferences: createScoreExportPreferences({
+      versionIDs: knownScoreExportVersionIDs(),
+      partnerKeys: [
+        defaultScoreExportPartner,
+        ...scoreExportPartners.map((partner) => partner.key),
+      ],
+    }),
+    usage: (...args) => usage(...args),
     dataset: () => (visible ? player.active : null),
     resolve: exportIdentity,
+    versionLogo: (name) => exportLogos.version(name),
+    versionLogoURL: (name) => exportLogos.url(name),
+    artworkURL: (key) => {
+      const [kind, name, extra] = key.split(':');
+      if (extra !== undefined) return;
+      const rating =
+          kind === 'rating' &&
+          [
+            'white',
+            'blue',
+            'green',
+            'yellow',
+            'red',
+            'purple',
+            'bronze',
+            'silver',
+            'gold',
+            'platinum',
+            'rainbow',
+            'rainbow-ex',
+          ].includes(name),
+        badge =
+          kind === 'badge' &&
+          ['fc', 'fc+', 'ap', 'ap+', 'fs', 'fs+', 'fdx', 'fdx+', 'sync'].includes(name);
+      if (!rating && !badge) return;
+      const sample = make('span');
+      sample.hidden = true;
+      sample.className = rating ? 'player-rating' : 'player-icon';
+      if (rating) sample.dataset.tier = name;
+      else sample.dataset.icon = name;
+      root.append(sample);
+      const value = window.getComputedStyle(sample).backgroundImage;
+      sample.remove();
+      const url = /^url\(["']?(data:image\/(?:png|webp);base64,[a-zA-Z0-9+/=]+)["']?\)$/.exec(
+        value,
+      )?.[1];
+      return url && url.length <= 2 * 1024 * 1024 ? url : undefined;
+    },
     jacketURL: (chart) => {
       if (!catalog) return;
       const id = exportIdentity(chart)?.canonicalChartID,
@@ -299,9 +350,8 @@ export function createPlayerData(ports: PersonalPorts) {
     hideButton.hidden = !player.active;
     exportButton.hidden = exportMenu.hidden = !player.active || !visible;
     exporter.changed();
-    forgetButton.hidden = !player.storedRevision;
+    forgetButton.hidden = !player.active && !player.storedRevision;
     i18n.text(hideButton, visible ? 'Hide player data' : 'Show player data');
-    clearButton.hidden = !player.active && !player.storedRevision;
     status.hidden = !player.active;
     if (player.active) {
       const o = core.offer(player.active);

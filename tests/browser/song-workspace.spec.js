@@ -439,6 +439,8 @@ test('song import, lazy comparison and Forget share one player session',async({p
  const map=await(await request.get('/registry/permalinks.json')).json();
  const slug=Object.values(map.songs).find(value=>value.includes('ソテリア'));
  const data=JSON.parse(await readFile(new URL('../../output/reconciliation-fixture.json',import.meta.url),'utf8'));
+ let catalogRequests=0;
+ await page.route(await browserResourceURL('catalog'),async route=>{catalogRequests++;await route.fallback();});
  await page.goto('/en/songs/'+encodeURIComponent(slug)+'/');
  await expect(page.locator('#seo-route-view .song-workspace')).toBeVisible();
  await page.locator('#seo-route-view .song-row .chart-row').first().click();
@@ -448,13 +450,34 @@ test('song import, lazy comparison and Forget share one player session',async({p
  await page.getByRole('button',{name:'Import data',exact:true}).click();
  await expect.poll(()=>page.evaluate(()=>maimaiPersonal.enabled())).toBe(true);
  const revision=await page.evaluate(async()=>(await maimaiPlayerStorage.read()).active.revision);
+ await page.reload();
+ await expect(page.locator('#seo-route-view .song-workspace')).toBeVisible();
+ await expect.poll(()=>page.evaluate(()=>maimaiPersonal?.enabled())).toBe(true);
+ await page.evaluate(()=>{window.fixtureSongPlayer=maimaiPersonal;});
+ await page.locator('#settings-toggle').click();await page.locator('#player-export-menu').click();
+ await page.locator('#player-export-version-button').click();
+ const exportOptions=page.locator('#player-export-version-choices').getByRole('option');
+ await expect(exportOptions).toHaveCount(29);
+ await expect(page.locator('#player-export-version-choices [data-value="snapshot"]')).toContainText('Imported version:');
+ const releaseOptions=page.locator('#player-export-version-choices [role="option"]:not([data-value="snapshot"])');
+ await expect(releaseOptions).toHaveCount(28);
+ await expect(releaseOptions.locator('.version-logo img')).toHaveCount(28);
+ for(const option of [releaseOptions.first(),releaseOptions.last()]){
+  await option.scrollIntoViewIfNeeded();
+  await expect.poll(()=>option.locator('img').evaluate(img=>img.complete&&img.naturalWidth>0)).toBe(true);
+ }
+ expect(catalogRequests).toBe(0);
+ await page.keyboard.press('Escape');await page.keyboard.press('Escape');
+ await expect(page.locator('#player-export-dialog')).not.toBeVisible();
+ const songRow=page.locator('#seo-route-view .song-row .chart-row').first();
+ if(await songRow.getAttribute('aria-expanded')!=='true')await songRow.click();
  await page.locator('#seo-route-view .chart-detail-actions button').first().click();
  await expect(page.locator('#compare')).toBeVisible();
  expect(await page.evaluate(()=>fixtureSongPlayer===maimaiPersonal)).toBe(true);
  expect(await page.evaluate(async()=>(await maimaiPlayerStorage.read()).active.revision)).toBe(revision);
  await page.locator('#settings-toggle').click();await page.locator('#player-forget').click();
  await expect.poll(()=>page.evaluate(async()=>(await maimaiPlayerStorage.read()).active)).toBeNull();
- expect(await page.evaluate(()=>maimaiPersonal.enabled())).toBe(true);
+ await expect.poll(()=>page.evaluate(()=>maimaiPersonal.enabled())).toBe(false);
 });
 test('tampered song data preserves readable public information and reports failure',async({page,request})=>{
  const map=await(await request.get('/registry/permalinks.json')).json();

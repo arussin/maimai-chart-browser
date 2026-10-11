@@ -73,22 +73,24 @@ temporary lease ID/deadline. The clear epoch contains no player information.
 Dataset and descriptor writes share a transaction and compare epoch, version,
 revision and the refresh lease. A manual import invalidates outstanding leases.
 
-Forget aborts local work, deletes the remembered dataset and source, increments
-the source-free epoch and notifies other tabs. Tab caches carry the epoch and
-are discarded after Forget, including on reload of a formerly suspended tab.
-Legacy tab caches are accepted only before an epoch change. In-memory scores may
-remain viewable until reload; refresh stops. Notifications contain no identity,
-source URL or scores. BroadcastChannel uses a source-free storage-event fallback.
+Settings exposes one **Forget player data** action for temporary or saved data,
+including when scores are hidden. It uses the full-clear transaction: abort local
+work, remove current scores and tab caches, delete the remembered dataset and
+refresh connection, and notify other tabs. The source-free epoch and durable
+clear marker prevent old requests or pending commits from restoring the profile.
 
-Clear player data additionally removes in-memory scores in the current and other
-open tabs, and is available for temporary imports too. Its durable clear epoch is
-checked on focus/visibility/online recovery, so missed notifications do not leave
-an old tab able to restore scores. A Clear failure keeps the working state and
-reports the error; it does not claim that device data was removed.
+Open tabs discard their in-memory scores too. The clear epoch is checked on
+focus/visibility/online recovery, so a tab that missed notifications still catches
+up. Tab caches carry the epoch; legacy caches are accepted only before an epoch
+change. Notifications contain no identity, source URL or scores. BroadcastChannel
+uses a source-free storage-event fallback. A failed storage transaction preserves
+the working data and reports the error without claiming that removal succeeded.
+The narrower internal forget operation remains for compatibility; it is no
+longer a separate Settings action.
 
 Storage denial/quota failures preserve the current usable view. Tab-only imports
 remain possible when device storage is unavailable. Announcement seen-state is
-stored separately and is unaffected by Forget or Clear.
+stored separately and is unaffected by Forget player data.
 
 ## Release checklist
 

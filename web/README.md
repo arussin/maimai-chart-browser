@@ -41,6 +41,12 @@ factories; they are not a second maintained implementation. `browser-assets.json
 records the exact module closure, hashes and retired application filenames. The Python
 builder and publisher use the same validator for that closure.
 
+Hosted modules remain bounded to 2 MiB each. The self-contained offline entry
+has an 8 MiB limit because it includes every optional export illustration without
+network requests; the complete generated graph is bounded to 16 MiB. Hosted
+partner artwork is split into individual modules and requested only for the
+selected partner when an image is generated.
+
 Do not edit generated JavaScript. Do not restore retired application scripts to satisfy
 an old test. Update a test to the real module interface, or use a documented external
 compatibility entry when the external contract is what the test verifies.

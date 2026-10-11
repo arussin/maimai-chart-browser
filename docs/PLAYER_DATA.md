@@ -30,15 +30,52 @@ The limits are 32 MiB compressed, 128 MiB expanded, and one million entries per 
 
 ## Personal browsing
 
-Settings contains Import player data, Hide/Show player data, and Forget remembered player data. The import dialog identifies the player and date. Same-player imports retain both histories; a different player replaces the active selection without merging records.
+Settings contains Import player data, Hide/Show player data, Export Best 50, and Forget player data. The import dialog identifies the player and date. Same-player imports retain both histories; a different player replaces the active selection without merging records.
 
 Your results has an always-visible chart scope: All charts, My PBs, or No PB yet. It combines with the other chart and personal filters. Personal sorts start highest/latest first and choose the relevant difficulty from every matching chart before grouping songs and showing the first page; missing values stay last in either direction. A new personal sort resets manual difficulty choices so an unplayed variant cannot hide another variant's PB. Without a personal sort, songs prefer a difficulty with a PB unless the user explicitly selects another one. Sorting and PB filtering use the complete startup index and imported profile, without waiting for chart-detail downloads or scrolling.
 
 Expanded cards keep chart measurements and pattern activity together, followed by player achievements and history. The two section controls share their expanded/collapsed preferences across songs, tabs and visits. These presentation preferences store only two booleans, independently of the choice to remember player records. Comparison actions and version artwork stay in the primary card.
 
-Remember on this device is explicit and uses IndexedDB. Otherwise the compressed dataset is stored for the tab session, including reloads, in sessionStorage. Browser quota or storage denial produces an explicit error before replacement. Remembered imports use a transactional revision check so a stale tab cannot overwrite another tab's update. Forget removes the remembered copy; the current in-memory view remains until the tab closes or reloads.
+Remember on this device is explicit and uses IndexedDB. Otherwise the compressed dataset is stored for the tab session, including reloads, in sessionStorage. Browser quota or storage denial produces an explicit error before replacement. Remembered imports use a transactional revision check so a stale tab cannot overwrite another tab's update. Forget player data removes current scores, the tab cache, the saved copy and the refresh connection, including for temporary imports. Other tabs discard scores through notifications or the durable clear marker when they resume. Hide/Show changes visibility without removing data.
 
 The status strip reports identity, capture date and retained-only coverage. Personal filters evaluate exact chart variants before grouping songs. Sorting and displayed achievements use the selected difficulty and STD/DX variant; absent records remain unknown. Chart details distinguish individual plays from before/after PB observations and show retained achievement progress. No session dashboard is introduced.
+
+## Image exports
+
+Best 50 uses the imported personal bests and an editable record-version picker.
+All 28 known releases, from maimai through maimai DX MAGiCAL, appear newest first
+with their bundled official logos. Detected versions stay in chronological order
+without a duplicate entry; detection preserves the report's exact New 15 release
+pool, including aliases and multiple releases. Unknown imported pools appear
+after the known releases and are explicitly labeled. Imports without version
+evidence require a selection unless the user has saved a manual version choice.
+Releases before Splash PLUS remain selectable and
+explain that their earlier rating formats are unsupported; they cannot generate
+a Best 50 image.
+
+Selecting a version groups the Old 35 and New 15 pools. It preserves imported
+ratings and constants rather than reconstructing historical scores from the
+current catalog. Missing ratings can be calculated only from imported constants
+and achievement, with an explicit note; missing records and uncertain regional
+release metadata produce a qualified estimate. Achievement export creates one
+PNG from a selected personal best or recorded play and distinguishes those two
+sources. Both exports generate previews and downloadable images locally, retain
+data limitations on the image, and discard the preview when the dialog closes or
+the player data changes.
+
+Manual version and partner-illustration choices are remembered between exports
+and reloads. A saved version takes precedence over import detection, with a notice
+asking the user to check it against the current record. Only canonical release
+IDs are saved; a custom imported pool is not reused for a different import.
+Partner artwork is optional and defaults to None. Choices come from the reviewed
+[artwork inventory](SCORE_EXPORT_ARTWORK.md); no partner is inferred from a score.
+
+The versioned `maimai-score-export-preferences-v1` localStorage entry contains only
+the selected release ID and partner key. It never contains a name, account,
+record, or image. Values are validated against the current bundled lists; denied
+or full storage falls back to this page's memory. Forget removes player data and
+connections while retaining these presentation preferences. Changing either
+choice invalidates the current image and rejects any late PNG completion.
 
 ## Public mapping and matching API
 

@@ -11,6 +11,7 @@ import json
 import re
 import unicodedata
 from copy import deepcopy
+from functools import cache
 from importlib.resources import files
 from pathlib import Path
 
@@ -19,6 +20,12 @@ IMAGE_NAME = re.compile(r"[A-Za-z0-9_-]+\.(?:png|jpg|jpeg)", re.IGNORECASE)
 MEDIA_PATH = re.compile(r"media/[a-f0-9]{64}\.webp")
 CATALOGUE_URL = "https://maimai.sega.jp/data/maimai_songs.json"
 JACKET_BASE = "https://maimaidx-eng.com/maimai-mobile/img/Music/"
+
+
+@cache
+def bundled_version_names():
+    manifest = files("maimai_intelligence.assets").joinpath("version-artwork", "manifest.json")
+    return frozenset(json.loads(manifest.read_text("utf-8"))["versions"])
 
 
 def normalize(value):
@@ -86,8 +93,11 @@ def validate_artwork(value, catalog, versions):
             }
             if regional != {(selection.get("title"), selection.get("artist"))}:
                 raise ValueError("Regional artwork identity differs from catalog")
+    # Export choices span releases absent from a particular chart catalog. These
+    # display assets do not add chart membership or change navigation filters.
+    allowed_versions = set(versions) | bundled_version_names()
     for version, path in value["versions"].items():
-        if version not in versions or path not in assets:
+        if version not in allowed_versions or path not in assets:
             raise ValueError("Invalid version artwork mapping")
     return value
 
@@ -138,17 +148,10 @@ def prepare_artwork(value, source, output, catalog, versions):
     copy_artwork(value, source, output)
     bundled = files("maimai_intelligence.assets").joinpath("version-artwork")
     logos = json.loads(bundled.joinpath("manifest.json").read_text("utf-8"))
-    # A retained package can supply newer artwork. The bundled collection fills
-    # missing versions, including inventory-only builds, without UI exceptions.
-    logos["versions"] = {
-        name: path
-        for name, path in logos["versions"].items()
-        if name in versions and name not in value["versions"]
-    }
-    used = set(logos["versions"].values())
-    logos["assets"] = {path: record for path, record in logos["assets"].items() if path in used}
+    # Global export controls use these files independently from catalog navigation.
+    # Keep the bundled originals even when a retained package supplies an override.
     validate_artwork(logos, catalog, versions)
     copy_artwork(logos, bundled, output)
     value["assets"].update(logos["assets"])
-    value["versions"].update(logos["versions"])
+    value["versions"] = {**logos["versions"], **value["versions"]}
     return validate_artwork(value, catalog, versions)

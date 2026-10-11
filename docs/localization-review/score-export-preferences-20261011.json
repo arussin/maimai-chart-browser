@@ -1,0 +1,20 @@
+{
+  "reviewer": "Codex",
+  "date": "2026-10-11",
+  "method": "AI contextual translation review by the primary agent and independent review by the version-picker agent; not native-speaker certification.",
+  "locales": ["en", "zh-Hans", "ko", "ja", "id"],
+  "entries": 3,
+  "scope": [
+    "Partner illustration",
+    "None",
+    "Using your saved version choice. Check that it matches this record."
+  ],
+  "checks": [
+    "Partner illustration identifies authentic decorative character artwork without claiming an exact in-game pose.",
+    "None describes the explicit choice to omit partner artwork.",
+    "The saved-version notice asks users to verify that their remembered manual selection matches the current imported record.",
+    "All four translations preserve these meanings; official character names remain verbatim."
+  ],
+  "corrections": [],
+  "visual_validation": "The exporter browser suite covers localized controls at 640, 320 and 280 CSS pixels. This review record does not itself assert browser checks passed."
+}

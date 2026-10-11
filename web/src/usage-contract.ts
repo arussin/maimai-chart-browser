@@ -3,6 +3,8 @@ export const VERSION = 1;
 export const PAGES = ['charts', 'patterns', 'compare', 'about', 'song', 'version'] as const;
 export type Page = (typeof PAGES)[number];
 const methods = ['file', 'report', 'maishift'] as const;
+export const SCORE_EXPORT_KINDS = ['best50', 'achievement_pb', 'achievement_play'] as const;
+export type ScoreExportKind = (typeof SCORE_EXPORT_KINDS)[number];
 export const DETAILS = {
   page_view: [''],
   settings_opened: [''],
@@ -40,6 +42,12 @@ export const DETAILS = {
   import_failed: methods,
   import_cancelled: methods,
   data_action: ['show', 'hide', 'forget', 'clear'],
+  score_export_opened: SCORE_EXPORT_KINDS,
+  score_export_option_changed: ['version', 'partner'],
+  score_export_started: SCORE_EXPORT_KINDS,
+  score_export_completed: SCORE_EXPORT_KINDS,
+  score_export_failed: SCORE_EXPORT_KINDS,
+  score_export_download_clicked: SCORE_EXPORT_KINDS,
   share_opened: [''],
   share_destination_clicked: [
     'facebook',
@@ -63,6 +71,10 @@ export const DETAILS = {
 } as const satisfies Readonly<Record<string, readonly string[]>>;
 export type EventName = keyof typeof DETAILS;
 export type EventDetail<E extends EventName> = (typeof DETAILS)[E][number];
+type ScoreExportEvent = Extract<EventName, `score_export_${string}`>;
+export type ScoreExportUsageArguments = {
+  [E in ScoreExportEvent]: [event: E, detail: EventDetail<E>];
+}[ScoreExportEvent];
 export type Failure = 'invalid' | 'unavailable' | 'storage' | 'unknown';
 export type UsageRow = {
   [E in EventName]: {

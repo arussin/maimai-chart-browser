@@ -72,8 +72,10 @@ function add(data, id, version = 'PRiSM', rate = 300, extra = {}) {
 test('snapshot aliases are detected exactly; chart debut never infers record version', () => {
   const data = dataset();
   add(data, 'a', 'CiRCLE');
-  assert.equal(detectVersion(data), 'snapshot');
-  assert.deepEqual(versionChoices(data)[0].versions, ['maimaiでらっくす PRiSM PLUS']);
+  assert.equal(detectVersion(data), 'prismplus');
+  assert.deepEqual(versionChoices(data).find((choice) => choice.id === 'prismplus').versions, [
+    'maimaiでらっくす PRiSM PLUS',
+  ]);
   data.snapshots.latest.versions = [];
   assert.equal(detectVersion(data), null);
   assert.equal(
@@ -114,12 +116,75 @@ test('each base and PLUS release has a distinct pool; CiRCLE includes one previo
   assert.equal(result.excluded.futureVersion, 1);
 });
 
+test('all release choices stay newest first with the detected version in chronological order', () => {
+  const data = dataset(['PRiSM+', 'maimaiでらっくす PRiSM PLUS']);
+  const original = structuredClone(data);
+  const choices = versionChoices(data);
+  assert.equal(choices.length, 28);
+  assert.deepEqual(
+    choices.slice(0, 5).map((choice) => choice.id),
+    ['magical', 'circleplus', 'circle', 'prismplus', 'prism'],
+  );
+  assert.equal(choices.at(-1).id, 'original');
+  assert.equal(choices.at(-1).label, 'maimai');
+  assert.ok(choices.every((choice) => choice.id));
+  assert.equal(new Set(choices.map((choice) => choice.id)).size, choices.length);
+  assert.equal(choices.filter((choice) => choice.label === 'maimai DX PRiSM PLUS').length, 1);
+  assert.equal(detectVersion(data), 'prismplus');
+  assert.deepEqual(choices[3].versions, ['PRiSM+', 'maimaiでらっくす PRiSM PLUS']);
+  assert.equal(choices[3].logoVersion, 'maimai DX PRiSM PLUS');
+  assert.deepEqual(data, original);
+});
+
+test('detected multi-release and custom pools retain exact imported grouping without duplicate choices', () => {
+  const data = dataset(['PRiSM+', 'CiRCLE']);
+  assert.equal(detectVersion(data), 'circle');
+  const circle = versionChoices(data).find((choice) => choice.id === 'circle');
+  assert.deepEqual(circle.versions, ['CiRCLE', 'PRiSM+']);
+  assert.equal(circle.logoVersion, 'maimai DX CiRCLE');
+  add(data, 'old', 'PRiSM');
+  add(data, 'previous', 'PRiSM PLUS');
+  add(data, 'current', 'CiRCLE');
+  add(data, 'future', 'CiRCLE PLUS');
+  const report = buildBest50(data, detectVersion(data));
+  assert.deepEqual(report.new.map((entry) => entry.chart.chartID).sort(), ['current', 'previous']);
+  assert.deepEqual(
+    report.old.map((entry) => entry.chart.chartID),
+    ['old'],
+  );
+  assert.equal(report.excluded.futureVersion, 1);
+  data.snapshots.latest.versions = ['CiRCLE'];
+  assert.deepEqual(versionChoices(data).find((choice) => choice.id === 'circle').versions, [
+    'CiRCLE',
+  ]);
+  data.snapshots.latest.versions = ['Unlisted provider pool'];
+  const choices = versionChoices(data);
+  assert.equal(choices[0].id, 'magical');
+  assert.equal(choices.at(-1).id, 'snapshot');
+  assert.equal(choices.at(-1).logoVersion, null);
+  assert.deepEqual(choices.at(-1).versions, ['Unlisted provider pool']);
+  assert.equal(detectVersion(data), 'snapshot');
+});
+
+test('pre-Best-50 releases are selectable without inventing their historical rating formulas', () => {
+  const data = dataset(['maimai DX Splash']);
+  add(data, 'old', 'maimai DX', 123);
+  assert.equal(detectVersion(data), 'splash');
+  const choices = versionChoices(data);
+  assert.equal(choices.find((choice) => choice.id === 'splash').supportsBest50, false);
+  assert.equal(choices.find((choice) => choice.id === 'splashplus').supportsBest50, true);
+  for (const choice of choices.filter((choice) => !choice.supportsBest50)) {
+    assert.throws(() => buildBest50(data, choice.id), /Best 50 began with Splash PLUS/);
+  }
+  assert.equal(data.records.old.rate, 123);
+});
+
 test('Best 50 is Old 35 plus New 15, never the unrestricted highest 50', () => {
   const data = dataset();
   for (let i = 0; i < 40; i++) add(data, 'old-' + i, 'PRiSM', 400 - i);
   for (let i = 0; i < 20; i++) add(data, 'new-' + i, 'PRiSM PLUS', 200 - i);
   const original = structuredClone(data);
-  const result = buildBest50(data, 'snapshot');
+  const result = buildBest50(data, detectVersion(data));
   assert.equal(result.old.length, 35);
   assert.equal(result.new.length, 15);
   assert.equal(result.oldTotal, ((400 + 366) * 35) / 2);
@@ -155,7 +220,7 @@ test('reviewed canonical aliases count once, prefer newest observation then non-
   add(data, 'alias', 'PRiSM', 999);
   add(data, 'canonical', 'PRiSM', 100);
   const resolver = (chart) => ({ canonicalChartID: 'shared', alias: chart.chartID === 'alias' });
-  let result = buildBest50(data, 'snapshot', resolver);
+  let result = buildBest50(data, detectVersion(data), resolver);
   assert.equal(result.old.length, 1);
   assert.equal(result.old[0].rating, 100);
   assert.equal(result.excluded.duplicate, 1);
@@ -166,7 +231,7 @@ test('reviewed canonical aliases count once, prefer newest observation then non-
     versions: ['PRiSM PLUS'],
     pbs: { alias: 'alias' },
   };
-  result = buildBest50(data, 'snapshot', resolver);
+  result = buildBest50(data, detectVersion(data), resolver);
   assert.equal(result.old[0].rating, 999);
   assert.equal(result.coverage, 'partial');
 });
@@ -189,7 +254,7 @@ test('latest complete snapshot clears older PBs; same-time after wins over befor
     versions: ['PRiSM'],
     pbs: { obsolete: 'obsolete' },
   };
-  const result = buildBest50(data, 'snapshot');
+  const result = buildBest50(data, detectVersion(data));
   assert.deepEqual(
     result.old.map((row) => row.chart.chartID),
     ['kept'],
@@ -204,7 +269,7 @@ test('canonical duplicate ties use ascending provider ID regardless of insertion
   ]) {
     const data = dataset();
     for (const id of ids) add(data, id, 'PRiSM', id === 'a' ? 100 : 999);
-    const result = buildBest50(data, 'snapshot', () => ({ canonicalChartID: 'same' }));
+    const result = buildBest50(data, detectVersion(data), () => ({ canonicalChartID: 'same' }));
     assert.equal(result.old[0].chart.chartID, 'a');
     assert.equal(result.old[0].rating, 100);
   }
@@ -214,7 +279,7 @@ test('source-only charts remain usable and exact custom report pool aliases are 
   const data = dataset(['Current custom release']);
   add(data, 'new', 'Current custom release');
   add(data, 'old', 'Older custom release');
-  const result = buildBest50(data, 'snapshot');
+  const result = buildBest50(data, detectVersion(data));
   assert.equal(result.new.length, 1);
   assert.equal(result.old.length, 1);
   assert.equal(result.new[0].canonicalChartID, null);
@@ -252,7 +317,7 @@ test('integer rating boundaries, achievement cap, and contradictory AP flags', (
       lamp: achievement === 1010000 ? 'ALL PERFECT+' : '',
     });
   add(data, 'invalid', 'CiRCLE', null, { achievement: 999999, lamp: 'ALL PERFECT' });
-  const result = buildBest50(data, 'snapshot');
+  const result = buildBest50(data, detectVersion(data));
   const rates = Object.fromEntries(result.new.map((row) => [row.chart.chartID, row.rating]));
   assert.deepEqual(rates, { 999999: 299, 1000000: 302, 1004999: 312, 1005000: 315, 1010000: 316 });
   assert.equal(result.excluded.missingRating, 1);
@@ -263,7 +328,7 @@ test('contradictory clear flags cannot supply a calculated rating', () => {
   add(data, 'failed', 'CiRCLE', null, { achievement: 800000, lamp: 'FAILED' });
   add(data, 'clear', 'CiRCLE', null, { achievement: 799999, lamp: 'CLEAR' });
   add(data, 'valid', 'CiRCLE', null, { achievement: 800000, lamp: 'CLEAR' });
-  const result = buildBest50(data, 'snapshot');
+  const result = buildBest50(data, detectVersion(data));
   assert.equal(result.excluded.missingRating, 2);
   assert.deepEqual(
     result.new.map((row) => row.chart.chartID),
@@ -276,12 +341,12 @@ test('unqualified regional debut fallback is counted only when used and forces p
   for (let i = 0; i < 35; i++) add(data, 'old-' + i, 'PRiSM');
   for (let i = 0; i < 15; i++) add(data, 'new-' + i, 'PRiSM PLUS');
   const resolve = () => ({ displayVersion: 'PRiSM', versionEvidence: 'unqualified' });
-  const authoritative = buildBest50(data, 'snapshot', resolve);
+  const authoritative = buildBest50(data, detectVersion(data), resolve);
   assert.equal(authoritative.coverage, 'complete');
   assert.equal(authoritative.unqualifiedVersions, 0);
   data.records['old-0'].displayVersion = '';
   data.charts['old-0'].displayVersion = '';
-  const estimated = buildBest50(data, 'snapshot', resolve);
+  const estimated = buildBest50(data, detectVersion(data), resolve);
   assert.equal(estimated.unqualifiedVersions, 1);
   assert.equal(estimated.coverage, 'partial');
   assert.ok(
@@ -291,7 +356,7 @@ test('unqualified regional debut fallback is counted only when used and forces p
   );
   data.records['old-0'].rate = null;
   data.records['old-0'].constant = null;
-  const excluded = buildBest50(data, 'snapshot', resolve);
+  const excluded = buildBest50(data, detectVersion(data), resolve);
   assert.equal(excluded.unqualifiedVersions, 0);
   assert.equal(excluded.excluded.missingRating, 1);
 });

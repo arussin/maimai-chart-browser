@@ -8,6 +8,12 @@ the MIT software license. [Provenance, hashes and ownership notes](docs/PLAYER_A
 describe the source and exact lossless conversion. No score data or images are
 sent to Tomomai or SEGA when displaying these locally packaged assets.
 
+The downloadable score images also reuse the collection's decorative background,
+character illustration, normal banner, result labels and achievement digit atlases.
+[Export artwork provenance](docs/SCORE_EXPORT_ARTWORK.md) describes the original
+hashes, lazy packaging, lossless conversions and quality-90 background conversion.
+These game graphics retain the same ownership and software-license exclusions.
+
 ## Source and data boundaries
 
 The analyzer, recommendation engine, catalog explorer, Challenge Lab, supporting
@@ -161,3 +167,28 @@ No Simple Icons, AddToAny, or social-provider request is made to render these ic
 ### MAGiCAL version logo
 
 The bundled MAGiCAL logo comes from [SEGA’s official maimai site](https://maimai.sega.jp/storage/root/logo.png), retrieved September 21, 2026. The PNG SHA-256 is `9f659f914d7d8c7fea2a49331166748ade47dfc0f194e9d8c54e9878878966d7`. The original PNG is retained for provenance. Its lossless WebP copy has identical RGBA pixels and is served through the same verified manifest and fallback as every other version logo. The manifest records both hashes. Ownership remains with SEGA and the respective rights holders; this artwork does not establish chart identity.
+
+
+### Achievement result artwork
+
+The optional MAGiCAL でらっくま and カナデラ illustrations are unchanged public
+promotional WebPs from [SEGA's official maimai site](https://maimai.sega.jp/).
+Official result badge components and difficulty ribbons are retained from the
+same pinned Tomomai asset source described in [score export artwork](docs/SCORE_EXPORT_ARTWORK.md).
+The rainbow Japanese 「でらっくす」 chart badge is the unchanged PNG embedded in
+[SEGA's official song stylesheet](https://maimai.sega.jp/song/song.css?20260916).
+The [result asset inventory](docs/score-export-result-artwork-provenance.json)
+records all source URLs, hashes and dimensions. These game assets remain owned by
+SEGA and the respective rights holders and are excluded from the project's MIT
+license; no separate redistribution grant or endorsement is claimed. The canvas
+composition and vector rank lettering are original project code, without upstream
+renderer code.
+
+
+The expanded partner roster also includes illustrations from SEGA's official
+[popularity poll](https://maimai.sega.jp/popularity-poll/) and seasonal illustrations
+preserved by [maimai Wiki](https://maimai.fandom.com/), whose individual file pages
+cite official sources. The result inventory records those file-page citations
+without implying that archived original bytes or separate image licensing were
+independently verified. Wiki prose and renderer code are not bundled. Artwork
+ownership and the MIT exclusion above continue to apply.

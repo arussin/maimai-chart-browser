@@ -1,0 +1,116 @@
+{
+  "source": "https://github.com/shedaniel/tomomai",
+  "revision": "7608b9c250f4a8778cdfd4768cdecb7628cd5889",
+  "files": [
+    {
+      "key": "background",
+      "source": "apps/render/public/res/bg/13.png",
+      "source_sha256": "f3ea0b322f95466728b0e1228ca05af1b1144f843b467f7f90a50843833cfcb3",
+      "packaged_sha256": "f97f43f1e9f3c43bdb4171938346b6ec1567df086aa4a6d025cb95e51ca8a895",
+      "width": 2400,
+      "height": 4200,
+      "encoding": "WebP quality 90; original dimensions",
+      "packaged_bytes": 478646
+    },
+    {
+      "key": "character",
+      "source": "apps/render/public/res/character/13.png",
+      "source_sha256": "7bb5a02474158b04a4c229340b43af5507456946a3e0d670001ef4538a63149f",
+      "packaged_sha256": "b13aac3430474fea921b1b6fcd8e8fb6accd6e2f1e6ded4b94d40fc680e8fe16",
+      "width": 936,
+      "height": 553,
+      "encoding": "lossless WebP; exact RGBA verified",
+      "packaged_bytes": 589872
+    },
+    {
+      "key": "nameplate",
+      "source": "apps/render/public/res/trophy/normal.png",
+      "source_sha256": "2efe9404fac3df1e4bded7a63cd35fe76aa33e529bb5aa9c759cfc50b53818d1",
+      "packaged_sha256": "48969a2c0d47abcf3ef3ca8ec592051d6d9d8c6eae2cbd981b69517c31e36098",
+      "width": 268,
+      "height": 25,
+      "encoding": "lossless WebP; exact RGBA verified",
+      "packaged_bytes": 530
+    },
+    {
+      "key": "achievement",
+      "source": "apps/render/public/res/songs/achievement_text.png",
+      "source_sha256": "3b3edc1e4f4f2dac58a224355616c0b7895687b6810f5fa3bd6943f5a0cf235e",
+      "packaged_sha256": "7f005012cb51b1bd2d4d4f15e29d5d656b6f8da8b31a672808222568472aaefe",
+      "width": 128,
+      "height": 20,
+      "encoding": "lossless WebP; exact RGBA verified",
+      "packaged_bytes": 856
+    },
+    {
+      "key": "dx-score",
+      "source": "apps/render/public/res/songs/dxscore.png",
+      "source_sha256": "7129a02dd22b36402ced780d6ab6f516b73ac000a598ab2c50ea347bfaa0090a",
+      "packaged_sha256": "49bc047d162b6dae9dacc67a3e7f4f2cd1f5f6a757e03c42d3b6d31b7b60ab83",
+      "width": 226,
+      "height": 54,
+      "encoding": "lossless WebP; exact RGBA verified",
+      "packaged_bytes": 772
+    },
+    {
+      "key": "digits-gold",
+      "source": "apps/render/public/res/numbers/score_big_gold.png",
+      "source_sha256": "fa5b6c0bd8a91e9309cf84ed2f49eada6e1f356df123bf1b1da53ce085e403e1",
+      "packaged_sha256": "3b07163aec47f612f1c1b7e5f783eeb04af74729c9702b647e09ff10ec27dd34",
+      "width": 344,
+      "height": 472,
+      "encoding": "lossless WebP; exact RGBA verified",
+      "packaged_bytes": 56308
+    },
+    {
+      "key": "percent-gold",
+      "source": "apps/render/public/res/numbers/percentage_gold.png",
+      "source_sha256": "a56125f1b6f09354db9380f29be3527347581a75fc291d4ab93ea7f1477e90e7",
+      "packaged_sha256": "2b59f9f26e20de39dc194009f9e8f418b3edd96e1c17485b9fc0e4f39cdbc923",
+      "width": 80,
+      "height": 80,
+      "encoding": "lossless WebP; exact RGBA verified",
+      "packaged_bytes": 4052
+    },
+    {
+      "key": "digits-blue",
+      "source": "apps/render/public/res/numbers/score_big_blue.png",
+      "source_sha256": "d5f36ad6c8023662da1c158202fb88764676fc57ec4d254143456e43e0a7b35b",
+      "packaged_sha256": "0103dba8185ede3da5c51f6ba0a12021368a98046f63c16c098f51fead7621de",
+      "width": 344,
+      "height": 472,
+      "encoding": "lossless WebP; exact RGBA verified",
+      "packaged_bytes": 24286
+    },
+    {
+      "key": "percent-blue",
+      "source": "apps/render/public/res/numbers/percentage_blue.png",
+      "source_sha256": "0fb1a89223f5f3843a3541587690bb7389bd8bf867c1a02836e1a00d8d04efab",
+      "packaged_sha256": "0df727e5d92156ffbe4d9ff98e4fa88a7fbd25b049136baa65ae7c41d399b86a",
+      "width": 80,
+      "height": 80,
+      "encoding": "lossless WebP; exact RGBA verified",
+      "packaged_bytes": 3254
+    },
+    {
+      "key": "digits-red",
+      "source": "apps/render/public/res/numbers/score_big_red.png",
+      "source_sha256": "b90e287c797a41d775e14570ab0ebf06b05a4522a9f950e4a74f345e562bb335",
+      "packaged_sha256": "35ec41984913179921955d02c6f82f5624a79b950fd2f475fa450efdb57be5d5",
+      "width": 344,
+      "height": 472,
+      "encoding": "lossless WebP; exact RGBA verified",
+      "packaged_bytes": 41506
+    },
+    {
+      "key": "percent-red",
+      "source": "apps/render/public/res/numbers/percentage_red.png",
+      "source_sha256": "7204753e5d83ac5c76fb9fd0710775a52da81027af5f05c5eaf798f8477c4444",
+      "packaged_sha256": "26a628c8ddebfd74a4acd5f5c5262c28714bfb6b1566f8376169f47e300a6dae",
+      "width": 80,
+      "height": 80,
+      "encoding": "lossless WebP; exact RGBA verified",
+      "packaged_bytes": 3346
+    }
+  ]
+}

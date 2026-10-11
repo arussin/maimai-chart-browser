@@ -1,5 +1,6 @@
 /** Private read-only presentation of the maintained finite usage contract. */
 import {VERSION, validateRow} from '../web/src/usage-contract.ts';
+import {actionLabels} from './action-labels.mjs';
 export const TIMEZONE = 'America/New_York';
 export const dayKey = date => new Intl.DateTimeFormat('en-CA', {timeZone: TIMEZONE, year:'numeric', month:'2-digit', day:'2-digit'}).format(date);
 export const addDay = (day, amount) => new Date(Date.parse(day+'T12:00:00Z')+amount*86400000).toISOString().slice(0,10);
@@ -28,6 +29,6 @@ export function validateExport(input, now=new Date()) {
 export function makeDashboardData(input,{capturedAt,now=new Date()}={}) {
   if (!capturedAt || !Number.isFinite(Date.parse(capturedAt)) || new Date(capturedAt).getTime()>now.getTime()+60000) throw Error('A valid capture timestamp is required.');
   const exportData=validateExport(input,now),today=dayKey(now);
-  return {...exportData,schema_version:'usage-dashboard-1',timezone:TIMEZONE,today,captured_at:new Date(capturedAt).toISOString(),
+  return {...exportData,schema_version:'usage-dashboard-1',timezone:TIMEZONE,today,captured_at:new Date(capturedAt).toISOString(),action_labels:actionLabels,
     limitations:['Received counts are actions, not unique people or sessions.','Launch-day totals include acceptance checks and one synthetic canary.','Missing coverage is unknown; only a completed day marked complete establishes measured zero.','Owner activity, blocked requests and dropped batches cannot be separated.']};
 }
