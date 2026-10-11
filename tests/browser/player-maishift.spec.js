@@ -51,7 +51,7 @@ async function mappedFixture(page){await page.waitForFunction(()=>!!window.maima
 
 test('reviewed mappings show exact PBs without invented plays or empty history',async({page,context})=>{
   await prepare(context);await boot(page);const ids=await mappedFixture(page);await preview(page);
-  await expect(page.locator('.player-dialog')).not.toContainText('Unmatched PB charts');
+  await expect(page.locator('#player-import-dialog')).not.toContainText('Unmatched PB charts');
   await page.getByRole('button',{name:'Import & remember',exact:true}).click();
   await expect.poll(()=>page.evaluate(()=>maimaiPersonal.enabled())).toBe(true);
   const records=await page.evaluate(ids=>ids.map(id=>{const c=maimaiResearchCatalog.catalog.find(c=>c.chart_id===id),details=maimaiPersonal.details(c);return {record:maimaiPersonal.record(c),lastPlayed:maimaiPersonal.lastPlayed(c),summary:maimaiPersonal.summary(c).textContent,historyHidden:details.hidden,playRows:details.querySelectorAll('tbody tr').length,duplicateSummary:details.querySelectorAll('.player-achievement').length};}),ids);
@@ -64,7 +64,7 @@ test('reviewed mappings show exact PBs without invented plays or empty history',
 
 test('changed metadata and colliding regional targets stay unmatched without losing portable PBs',async({page,context})=>{
   const state=await prepare(context);await boot(page);const ids=await mappedFixture(page);state.tracks.songs[0].artist='Changed artist';await preview(page);
-  await expect(page.locator('.player-dialog')).toContainText('Unmatched PB charts: 2');await page.getByRole('button',{name:'Import & remember',exact:true}).click();await expect.poll(()=>page.evaluate(()=>maimaiPersonal.enabled())).toBe(true);
+  await expect(page.locator('#player-import-dialog')).toContainText('Unmatched PB charts: 2');await page.getByRole('button',{name:'Import & remember',exact:true}).click();await expect.poll(()=>page.evaluate(()=>maimaiPersonal.enabled())).toBe(true);
   expect(await page.evaluate(ids=>ids.map(id=>maimaiPersonal.record(maimaiResearchCatalog.catalog.find(c=>c.chart_id===id))?.achievement??null),ids)).toEqual([null,null,null]);
   expect(await page.evaluate(id=>maimaiPersonal.record(maimaiResearchCatalog.catalog.find(c=>c.chart_id===id))!==null,ids[2])).toBe(true);
   const count=await page.evaluate(async()=>{const s=await maimaiPlayerStorage.read();return maimaiPlayerData.current(await maimaiPlayerData.decode(s.active.bytes)).pbs.size;});expect(count).toBe(3);
@@ -78,7 +78,7 @@ test('proxy preview has explicit consent, region, precision and unmatched covera
   await open(page);await page.locator('input[value=maishift]').check();expect(state.calls).toBe(0);
   await expect(page.getByLabel('Remember and refresh')).toBeChecked();
   await page.locator('#player-maishift-url').fill('fictional-player');await page.getByRole('button',{name:'Continue',exact:true}).click();
-  await expect(page.locator('.player-dialog')).toContainText('3 PBs');await expect(page.locator('.player-dialog')).toContainText('Unmatched PB charts: 3');
+  await expect(page.locator('#player-import-dialog')).toContainText('3 PBs');await expect(page.locator('#player-import-dialog')).toContainText('Unmatched PB charts: 3');
   await expect(page.getByRole('button',{name:'Import & remember',exact:true})).toBeVisible();expect((await saved(page)).active).toBeNull();
   await expect(page.locator('.player-import-details')).toHaveCount(0);await page.screenshot({path:testInfo.outputPath('maishift-fictional-preview.png')});
   await page.getByRole('button',{name:'Import & remember',exact:true}).click();await expect.poll(async()=>!!(await saved(page)).active).toBe(true);
@@ -141,5 +141,5 @@ test('newer file import invalidates an outstanding proxy refresh',async({page,co
   await page.locator('input[type=file]').setInputFiles({name:'fictional.gz',mimeType:'application/gzip',buffer:bytes});await expect(page.getByRole('heading',{name:'Import this profile?',exact:true})).toBeVisible();await page.getByRole('button',{name:'Import data',exact:true}).click();release();await expect(page.locator('#player-refresh')).toBeHidden();await expect(page.locator('#player-status')).not.toContainText('Fictional Player');
 });
 for(const [locale,region,excluded] of [['en','3 PBs','Records excluded for missing chart identity: 1'],['zh-Hans','3 项个人最佳成绩','因缺少谱面标识而排除的记录：1'],['ko','개인 최고 기록 3개','채보 식별 정보가 없어 제외된 기록: 1'],['ja','自己ベスト 3件','譜面の識別情報がないため除外された記録：1'],['id','3 PB','Catatan yang dikecualikan karena tidak memiliki identitas chart: 1']])test(`localized Maishift preview ${locale} fits narrow screens and supports keyboard cancellation`,async({page,context})=>{
-  const state=await prepare(context,{locale});state.tracks.tracks.push({s:9000,r:{a:987654}});await boot(page);await preview(page);await expect(page.locator('.player-dialog')).toContainText(region);await expect(page.locator('.player-dialog')).toContainText(excluded);expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);await page.keyboard.press('Escape');await expect(page.locator('.player-dialog')).not.toBeVisible();expect((await saved(page)).active).toBeNull();
+  const state=await prepare(context,{locale});state.tracks.tracks.push({s:9000,r:{a:987654}});await boot(page);await preview(page);await expect(page.locator('#player-import-dialog')).toContainText(region);await expect(page.locator('#player-import-dialog')).toContainText(excluded);expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);await page.keyboard.press('Escape');await expect(page.locator('#player-import-dialog')).not.toBeVisible();expect((await saved(page)).active).toBeNull();
 });

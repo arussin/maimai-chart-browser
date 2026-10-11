@@ -24,7 +24,7 @@ test('source selection makes no requests; blocked Maishift and announcement tell
   await boot(page);let requests=0;page.on('request',r=>{if(r.url().includes('shiftpsh')||r.url().includes('public-report'))requests++;});await openImport(page);
   await expect(page.getByRole('radio')).toHaveCount(3);await expect(page.getByLabel('Upload a file',{exact:true})).toBeChecked();
   await page.getByLabel('Upload a file',{exact:true}).focus();await page.keyboard.press('ArrowDown');await expect(page.getByLabel('Hosted Session Report',{exact:true})).toBeChecked();
-  await page.getByLabel('Maishift',{exact:true}).check();await expect(page.getByRole('button',{name:'Continue',exact:true})).toBeDisabled();await expect(page.locator('.player-dialog')).toContainText('not available yet');expect(requests).toBe(0);
+  await page.getByLabel('Maishift',{exact:true}).check();await expect(page.getByRole('button',{name:'Continue',exact:true})).toBeDisabled();await expect(page.locator('#player-import-dialog')).toContainText('not available yet');expect(requests).toBe(0);
   await expect(page.locator('.feature-announcement')).toBeHidden();await expect(page.locator('#feature-announcement-replay')).toBeHidden();
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
   await page.getByLabel('Hosted Session Report',{exact:true}).check();await page.screenshot({path:testInfo.outputPath('import-sources.png')});
@@ -63,7 +63,7 @@ for(const locale of ['en','zh-Hans','ko','ja','id'])test('report recovery action
     expect(layout.separated).toBe(true);expect(layout.targets).toBe(true);expect(layout.contained).toBe(true);expect(layout.clipped).toBe(false);expect(layout.overflow).toBe(false);if(locale!=='en')expect(layout.labels).not.toContain('Open report');
     await expect(actions.locator('button')).toBeFocused();await page.keyboard.press('Shift+Tab');await expect(actions.locator('a')).toBeFocused();
     if(width===430)await page.screenshot({path:testInfo.outputPath('report-recovery-'+locale+'.png')});
-    await page.keyboard.press('Escape');await expect(page.locator('.player-dialog')).not.toBeVisible();
+    await page.keyboard.press('Escape');await expect(page.locator('#player-import-dialog')).not.toBeVisible();
   }
 });
 
@@ -76,7 +76,7 @@ test('unchanged refresh preserves hidden results and dataset history',async({pag
 
 test('a login response preserves saved scores and offers report recovery',async({page,context})=>{
   await boot(page);const data=await fixture(page);await mock(context,page,data);await importReport(page);const before=(await saved(page)).active.revision;await context.unroute('https://public-report.example/**');await mock(context,page,data,{html:true});await age(page);await page.reload();await expect.poll(()=>page.evaluate(()=>!!window.maimaiPersonal)).toBe(true);await page.evaluate(()=>maimaiPersonal.ready);
-  await expect.poll(()=>page.locator('#player-status').textContent()).toContain('Could not refresh');expect((await saved(page)).active.revision).toBe(before);await expect(page.locator('.player-dialog')).not.toBeVisible();
+  await expect.poll(()=>page.locator('#player-status').textContent()).toContain('Could not refresh');expect((await saved(page)).active.revision).toBe(before);await expect(page.locator('#player-import-dialog')).not.toBeVisible();
 });
 
 test('Forget aborts a pending refresh and prevents resurrection across tabs',async({page,context})=>{
@@ -247,7 +247,7 @@ test('real popup handoff imports, reuses and declines without returning private 
   const reused=await open(offer);
   await expect.poll(()=>page.evaluate(()=>handoffReplies)).toEqual([{type:'reused'}]);
   expect(await page.evaluate(()=>handoffSentBytes)).toBe(0);
-  await expect(reused.locator('.player-dialog')).not.toBeVisible();
+  await expect(reused.locator('#player-import-dialog')).not.toBeVisible();
   await reused.close();
   const declined=await open({...offer,player:{...offer.player,key:'kamaitachi:maimaidx:another-fixture',username:'another-fixture',displayName:'Another fictional player'}});
   await declined.getByRole('button',{name:'Not now',exact:true}).click();

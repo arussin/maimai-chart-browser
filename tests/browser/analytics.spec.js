@@ -202,7 +202,7 @@ test('imported player card remains accessible outside the Settings action menu',
   await hosted(context);await ready(page);
   await page.locator('input[type=file]').setInputFiles(fileURLToPath(new URL('../../output/player-accessibility.gz',import.meta.url)));
   await page.getByRole('button',{name:'Import data',exact:true}).click();
-  await expect(page.locator('.player-dialog')).toBeHidden();
+  await expect(page.locator('#player-import-dialog')).toBeHidden();
   await page.locator('#settings-toggle').click();
   await expect(page.locator('#player-status')).toBeVisible();
   await expect(page.getByRole('menu',{name:'Settings'})).toBeVisible();

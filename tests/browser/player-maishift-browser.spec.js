@@ -233,7 +233,7 @@ for(const locale of ['en','zh-Hans','ko','ja','id'])test(`browser pilot ${locale
   const badge=page.locator('.player-dialog .player-rating');
   await expect(badge).toBeVisible();await expect(badge).toHaveAttribute('data-tier','rainbow');
   expect(await badge.evaluate(node=>getComputedStyle(node).backgroundImage.startsWith('url("data:image/webp;base64,'))).toBe(true);
-  expect(await page.locator('.player-dialog').evaluate(node=>node.scrollWidth<=node.clientWidth+1)).toBe(true);
+  expect(await page.locator('#player-import-dialog').evaluate(node=>node.scrollWidth<=node.clientWidth+1)).toBe(true);
   expect(await badge.evaluate(node=>{const card=node.parentElement,style=getComputedStyle(card),a=card.getBoundingClientRect(),b=node.getBoundingClientRect();return b.left>=a.left+parseFloat(style.paddingLeft)-1&&b.right<=a.right-parseFloat(style.paddingRight)+1;})).toBe(true);
   await expect(page.locator('.player-dialog .player-profile-link')).toHaveText('fictional-player');
   await expect(page.locator('.player-dialog .player-profile-link')).toHaveAttribute('href','https://maimai.shiftpsh.com/en@intl/profile/fictional-player/home');
@@ -257,7 +257,7 @@ for(const locale of ['en','zh-Hans','ko','ja','id'])test(`browser pilot ${locale
   await expect(warning).toHaveText(overwrite[locale]);
   expect(await warning.evaluate(node=>{const d=node.closest('dialog').getBoundingClientRect(),r=node.getBoundingClientRect();return r.left>=d.left&&r.right<=d.right&&getComputedStyle(node).color==='rgb(163, 36, 50)';})).toBe(true);
   await page.screenshot({path:testInfo.outputPath('import-replacement-'+locale+'.png')});
-  await page.keyboard.press('Escape');await expect(page.locator('.player-dialog')).not.toBeVisible();
+  await page.keyboard.press('Escape');await expect(page.locator('#player-import-dialog')).not.toBeVisible();
 });
 
 test('Clear removes a hidden temporary import and its reload cache without touching preferences',async({page,context})=>{
@@ -320,7 +320,7 @@ test('only new imports into a loaded account warn; cancel and refresh preserve d
   await page.locator('input[type=file]').setInputFiles({name:'fictional.gz',mimeType:'application/gzip',buffer:gzipSync(Buffer.from(JSON.stringify(data)))});
   await expect(page.locator('.player-import-replace-warning')).toHaveText('Importing will overwrite data from the currently imported account.');
   await page.getByRole('button',{name:'Cancel',exact:true}).click();expect((await saved(page)).active.revision).toBe(before);expect((await record(page,state.chart)).achievement).toBe(987654);
-  await page.clock.fastForward(31000);await refreshAndWait(page);await expect(page.locator('.player-import-replace-warning')).not.toBeVisible();await expect(page.locator('.player-dialog')).not.toBeVisible();
+  await page.clock.fastForward(31000);await refreshAndWait(page);await expect(page.locator('.player-import-replace-warning')).not.toBeVisible();await expect(page.locator('#player-import-dialog')).not.toBeVisible();
 });
 
 test('reported rating survives a temporary reload and missing rating stays unknown',async({page,context})=>{
@@ -344,7 +344,7 @@ test('automatic region is resolved and remembered explicitly; a regional link sw
   expect(state.requests[0].region).toBe('auto');let s=(await saved(page)).active.source;expect(s.region).toBe('jp');expect(s.playerKey).toBe('maishift:maimaidx:jp:fictional-player');expect(s.url).toContain('/en@jp/');
   await page.clock.fastForward(31000);await refreshAndWait(page);expect(state.requests.length).toBe(2);expect(state.requests[1].region).toBe('jp');
   state.profile.region='ASIA';await menu(page,'player-import');await page.locator('#player-maishift-url').fill('https://maimai.shiftpsh.com/en@intl/profile/fictional-player');await page.locator('.player-actions button').first().click();
-  await expect(page.locator('.player-dialog')).toContainText('1 PBs');await expect(page.locator('.player-dialog')).toContainText('Importing will overwrite data from the currently imported account.');
+  await expect(page.locator('#player-import-dialog')).toContainText('1 PBs');await expect(page.locator('#player-import-dialog')).toContainText('Importing will overwrite data from the currently imported account.');
   await page.locator('.player-dialog .player-actions button').first().click();await expect.poll(async()=>(await saved(page)).active.source.region).toBe('intl');
   expect(await page.evaluate(async()=>{const d=await maimaiPlayerData.decode((await maimaiPlayerStorage.read()).active.bytes);return Object.keys(d.charts).every(id=>id.startsWith('maishift:intl:'));})).toBe(true);
 });
