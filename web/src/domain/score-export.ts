@@ -6,6 +6,12 @@ import type {
   PlayerSnapshot,
 } from './player-data';
 
+/** Current imported profile total, independent from a chart's contribution or play-time total. */
+export interface ExportPlayerRating {
+  value: number;
+  source: 'maishift' | 'reconstructed';
+}
+
 export interface VersionChoice {
   id: string;
   label: string;

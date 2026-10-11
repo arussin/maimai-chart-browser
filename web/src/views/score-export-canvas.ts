@@ -8,6 +8,7 @@ import {
   syncLabel,
   type Best50Export,
   type ExportEntry,
+  type ExportPlayerRating,
 } from '../domain/score-export';
 
 export interface ExportCanvasOptions {
@@ -24,6 +25,8 @@ export interface AchievementExport {
   record: PlayerRecord;
   playerName: string;
   recordKind: 'pb' | 'play';
+  /** Current profile rating, not the player's rating at the time of a historical play. */
+  playerRating?: ExportPlayerRating | null;
   versionLabel?: string;
   regionLabel?: string;
   /** Explicit decorative artwork choice; never inferred from the retained record. */
@@ -477,27 +480,36 @@ function playerRating(
     );
     return;
   }
-  // The same five digit windows and gold typography as the existing profile placard.
+  // All 296×86 frames have an inner gray digit face from y=24 through y=65.
+  // Center its ink at y=45, below the thicker upper bevel of the dark surround.
+  // A shared measured baseline keeps different digits aligned in every font fallback.
   const digitWidth = width * 0.1069;
+  ctx.save();
+  font(ctx, width * 0.125, 900, '"Arial Black", Arial, sans-serif');
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'alphabetic';
+  const numerals = ctx.measureText('0123456789');
+  const baseline =
+    y +
+    height * (45 / 86) +
+    (numerals.actualBoundingBoxAscent - numerals.actualBoundingBoxDescent) / 2;
+  ctx.fillStyle = '#ffe352';
+  ctx.shadowColor = '#291800';
+  ctx.shadowBlur = 2;
+  ctx.shadowOffsetY = 2;
   for (const [index, digit] of String(rating).padStart(5, ' ').split('').entries()) {
-    ctx.save();
-    ctx.shadowColor = '#291800';
-    ctx.shadowBlur = 2;
-    ctx.shadowOffsetY = 2;
-    text(
-      ctx,
+    if (digit === ' ') continue;
+    const bounds = ctx.measureText(digit);
+    ctx.fillText(
       digit,
-      x + width * 0.4155 + digitWidth * (index + 0.5),
-      y + height * 0.722,
-      digitWidth,
-      width * 0.125,
-      '#ffe352',
-      'center',
-      900,
-      '"Arial Black", Arial, sans-serif',
+      x +
+        width * 0.4155 +
+        digitWidth * (index + 0.5) +
+        (bounds.actualBoundingBoxLeft - bounds.actualBoundingBoxRight) / 2,
+      baseline,
     );
-    ctx.restore();
   }
+  ctx.restore();
 }
 function achievementArt(
   ctx: Context,
@@ -1186,13 +1198,19 @@ export async function renderAchievement(
   options: ExportCanvasOptions,
 ) {
   const { chart, record } = input;
-  // White rating artwork denotes an unknown total. A single-chart contribution is not a player total.
+  const profileRating =
+    input.playerRating &&
+    Number.isSafeInteger(input.playerRating.value) &&
+    input.playerRating.value >= 0
+      ? input.playerRating
+      : null;
+  // A single-chart contribution is never substituted for the current player total.
   const images = await jackets(
     document,
     [chart],
     options,
     input.versionLabel || '',
-    0,
+    profileRating?.value ?? 0,
     true,
     input.partnerKey,
   );
@@ -1200,9 +1218,19 @@ export async function renderAchievement(
   const t = options.translate,
     accent = difficulty(chart);
   const precise = achievement(record.achievement);
+  const profileCaption = profileRating
+    ? t(
+        profileRating.source === 'maishift'
+          ? 'Current imported rating'
+          : 'Current reconstructed rating',
+      )
+    : '';
+  const description = `${chart.title} · ${t('Achievement')} ${precise}${
+    profileRating ? ` · ${profileCaption} ${profileRating.value}` : ''
+  }`;
   canvas.setAttribute('role', 'img');
-  canvas.setAttribute('aria-label', `${chart.title} · ${t('Achievement')} ${precise}`);
-  canvas.textContent = `${chart.title} · ${t('Achievement')} ${precise}`;
+  canvas.setAttribute('aria-label', description);
+  canvas.textContent = description;
   resultScreen(ctx, images);
   clearLabel(
     ctx,
@@ -1296,8 +1324,29 @@ export async function renderAchievement(
   }
   resultBadge(ctx, images, lampLabel(record.lamp), 258, 846);
   resultBadge(ctx, images, syncLabel(record.sync), 414, 846);
-  if (art(ctx, images, 'rating:white', 324, 982, 328, 95))
-    text(ctx, '—', 553, 1046, 137, 49, '#fff7ba', 'center', 900);
+  if (profileRating) {
+    playerRating(ctx, images, profileRating.value, 324, 982, 328);
+    text(ctx, profileCaption, 488, 1094, 280, 15, ink, 'center', 700);
+  }
+  // Keep the contribution visible for both best records and individual plays,
+  // below the timing rows even when all five judgment counts are available.
+  if (record.rate !== null) {
+    box(ctx, 666, 1017, 185, 70, '#ffffffed', 10);
+    text(ctx, t('Chart rating'), 758.5, 1035, 165, 18, '#334164', 'center', 700);
+    text(
+      ctx,
+      String(record.rate),
+      758.5,
+      1060,
+      165,
+      42,
+      '#243b6f',
+      'center',
+      900,
+      fontFamily,
+      'center',
+    );
+  }
 
   const rows: [string, string, string][] = [];
   if (input.recordKind === 'play') {
@@ -1345,34 +1394,6 @@ export async function renderAchievement(
     if (record.maxCombo !== null) details.push(['Max combo', record.maxCombo]);
     if (record.fast !== null) details.push(['Fast', record.fast]);
     if (record.slow !== null) details.push(['Late', record.slow]);
-  } else if (record.rate !== null) {
-    box(ctx, panelX, rowY + 9, panelWidth, 100, '#ffffffed', 12);
-    text(
-      ctx,
-      t('Chart rating'),
-      panelX + panelWidth / 2,
-      rowY + 34,
-      panelWidth - 28,
-      23,
-      '#334164',
-      'center',
-      700,
-      fontFamily,
-      'center',
-    );
-    text(
-      ctx,
-      String(record.rate),
-      panelX + panelWidth / 2,
-      rowY + 77,
-      panelWidth - 28,
-      44,
-      '#243b6f',
-      'center',
-      900,
-      fontFamily,
-      'center',
-    );
   }
   for (const [label, value] of details) {
     text(ctx, t(label), panelX + 7, rowY + 19, 194, 18, '#334164');

@@ -1,0 +1,15 @@
+{
+  "reviewer": "Codex",
+  "date": "2026-10-11",
+  "method": "AI contextual translation review by the implementation agent and independent review by integration_research; not native-speaker certification.",
+  "locales": ["en", "zh-Hans", "ko", "ja", "id"],
+  "entries": 2,
+  "scope": ["Current imported rating", "Current reconstructed rating"],
+  "checks": [
+    "Both captions identify the current imported profile total, distinct from a chart contribution and from the player's total at the time of an older recorded play.",
+    "Imported describes the known source profile value; reconstructed describes the total reconstructed from the current imported personal bests.",
+    "All four translations retain the current scope and the imported versus reconstructed distinction. No caption claims an official historical play-time total."
+  ],
+  "corrections": [],
+  "visual_validation": "The existing five-language exporter matrix covers the rendered caption. This review records wording only and does not itself assert that browser checks passed."
+}

@@ -1,5 +1,17 @@
 {
   "messages": {
+    "Current imported rating": {
+      "zh-Hans": "当前导入的 Rating",
+      "ko": "현재 가져온 레이팅",
+      "ja": "現在の読み込み済みレーティング",
+      "id": "Rating impor saat ini"
+    },
+    "Current reconstructed rating": {
+      "zh-Hans": "当前重建的 Rating",
+      "ko": "현재 재구성한 레이팅",
+      "ja": "現在の再計算レーティング",
+      "id": "Rating hasil rekonstruksi saat ini"
+    },
     "Partner illustration": {
       "zh-Hans": "伙伴插画",
       "ko": "파트너 일러스트",

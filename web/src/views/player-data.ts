@@ -1,7 +1,7 @@
 import { ImportCoordinator } from '../runtime/import-coordinator';
 import { createScoreExporter } from './score-export';
 import { createScoreExportPreferences } from '../runtime/score-export-preferences';
-import { knownScoreExportVersionIDs } from '../domain/score-export';
+import { knownScoreExportVersionIDs, type ExportPlayerRating } from '../domain/score-export';
 import { defaultScoreExportPartner, scoreExportPartners } from './score-export-partners';
 import { createArtworkModel } from '../domain/artwork';
 import { createScoreExportLogos } from './score-export-logos';
@@ -209,6 +209,10 @@ export function createPlayerData(ports: PersonalPorts) {
     }),
     usage: (...args) => usage(...args),
     dataset: () => (visible ? player.active : null),
+    playerRating: () => {
+      const data = visible ? player.active : null;
+      return data ? profileRating(core.offer(data), player.sourceRating) : null;
+    },
     resolve: exportIdentity,
     versionLogo: (name) => exportLogos.version(name),
     versionLogoURL: (name) => exportLogos.url(name),
@@ -404,12 +408,24 @@ export function createPlayerData(ports: PersonalPorts) {
     if (!dialog.open) dialog.showModal();
     close.focus();
   }
+  function profileRating(
+    offer: PlayerOffer,
+    reportedRating: number | null = null,
+  ): ExportPlayerRating | null {
+    const valid = (value: number | null | undefined): value is number =>
+      typeof value === 'number' && Number.isSafeInteger(value) && value >= 0;
+    if (offer.player.provider === 'maishift' && valid(reportedRating))
+      return { value: reportedRating, source: 'maishift' };
+    const reconstructed = offer.profile?.rating;
+    return valid(reconstructed) ? { value: reconstructed, source: 'reconstructed' } : null;
+  }
   function profileCard(offer: PlayerOffer, reportedRating: number | null = null) {
     const card = make('div', undefined, 'player-profile'),
       name = make('strong', i18n.verbatim(offer.player.displayName), 'player-profile-name');
     card.append(name);
-    const reported = offer.player.provider === 'maishift' && reportedRating != null,
-      rating = reported ? reportedRating : offer.profile?.rating,
+    const profile = profileRating(offer, reportedRating),
+      reported = profile?.source === 'maishift',
+      rating = profile?.value,
       label = reported
         ? 'Maishift rating'
         : rating == null

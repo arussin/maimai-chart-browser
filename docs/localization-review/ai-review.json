@@ -54,7 +54,7 @@
     "README.id.md": "f95b7c38bbcec394c785fa97ae4f6168eb9bb01b8516ffa6d194138a6a8e4708",
     "src/maimai_intelligence/assets/import-help/README.id.md": "0fc0a02bec2f1492a058dd86e6364e647d16b88655c5c532980199e2201e064b",
     "src/maimai_intelligence/assets/locales/bpm-filter.json": "de56afac29a72d7fcd7b55e74215fab9a34bb5ae16300984f692846866b71034",
-    "src/maimai_intelligence/assets/locales/score-export.json": "a14db896e44cedf0cb5e687e89b96673977e1ac22de1f875bcc0f32da66c4743"
+    "src/maimai_intelligence/assets/locales/score-export.json": "000b7c21da92324d2c2a28f8521bff66ec77f4a37c3785487c29556763984690"
   },
   "documentation": {
     "source": "README.md",
@@ -258,6 +258,11 @@
       "date": "2026-10-11",
       "record": "docs/localization-review/score-export-preferences-20261011.json",
       "scope": "Three export preference labels reviewed in Simplified Chinese, Korean, Japanese and Indonesian; official character names remain verbatim."
+    },
+    {
+      "date": "2026-10-11",
+      "record": "docs/localization-review/score-export-rating-20261011.json",
+      "scope": "Two current profile rating captions independently reviewed in Simplified Chinese, Korean, Japanese and Indonesian; preserves imported versus reconstructed totals and distinguishes both from historical play-time ratings."
     }
   ]
 }
