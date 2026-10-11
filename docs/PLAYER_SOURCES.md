@@ -89,8 +89,10 @@ The narrower internal forget operation remains for compatibility; it is no
 longer a separate Settings action.
 
 Storage denial/quota failures preserve the current usable view. Tab-only imports
-remain possible when device storage is unavailable. Announcement seen-state is
-stored separately and is unaffected by Forget player data.
+remain possible when device storage is unavailable. Site preferences remain
+separate from player data. The former **What’s new** announcement and Settings
+replay item are removed. Legacy announcement keys are left untouched and are
+neither read nor written.
 
 ## Release checklist
 

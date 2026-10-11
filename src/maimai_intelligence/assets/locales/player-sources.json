@@ -240,30 +240,6 @@
       "ja": "読み込み元のプレイヤーが変わりました。再度読み込んで切り替えを確認してください。",
       "id": "Sumber kini menunjukkan pemain yang berbeda. Impor kembali untuk mengonfirmasi pergantian."
     },
-    "Bring your scores to maimai.party": {
-      "zh-Hans": "将你的成绩带到 maimai.party",
-      "ko": "maimai.party로 점수를 가져오세요",
-      "ja": "スコアを maimai.party へ",
-      "id": "Bawa skor Anda ke maimai.party"
-    },
-    "Got it": {
-      "zh-Hans": "知道了",
-      "ko": "확인",
-      "ja": "了解",
-      "id": "Mengerti"
-    },
-    "Session Report on GitHub": {
-      "zh-Hans": "GitHub 上的 Session Report",
-      "ko": "GitHub의 Session Report",
-      "ja": "GitHub の Session Report",
-      "id": "Session Report di GitHub"
-    },
-    "What’s new": {
-      "zh-Hans": "新功能",
-      "ko": "새로운 기능",
-      "ja": "新機能",
-      "id": "Yang baru"
-    },
     "Earlier history may be missing": {
       "zh-Hans": "可能缺少早期历史记录",
       "ko": "이전 기록이 없을 수 있습니다",
@@ -312,12 +288,6 @@
       "ja": "自己ベスト {0}件",
       "id": "{0} PB"
     },
-    "Bring your Session Report or public Maishift scores into the chart browser. Choose Import player data to get started.": {
-      "zh-Hans": "将 Session Report 或公开 Maishift 个人主页中的成绩导入谱面浏览器。选择“导入玩家数据”即可开始。",
-      "ko": "Session Report 또는 공개 Maishift 프로필의 성적을 채보 브라우저로 가져오세요. “플레이어 데이터 가져오기”를 선택하면 시작할 수 있습니다.",
-      "ja": "Session Report または公開 Maishift プロフィールの成績を譜面ブラウザーに読み込めます。「プレイヤーデータを読み込む」から始めましょう。",
-      "id": "Bawa skor dari Session Report atau profil Maishift publik Anda ke browser chart. Pilih Impor data pemain untuk memulai."
-    },
     "Drag by grade or enter an exact %.": {
       "zh-Hans": "按评级拖动，或输入精确百分比。",
       "ko": "등급별로 드래그하거나 정확한 %를 입력하세요.",
@@ -363,10 +333,9 @@
       ]
     },
     "Maishift": {
-      "reason": "Provider brand name; integration is disabled pending verified full PB access.",
+      "reason": "Provider brand name.",
       "sources": [
-        "src/maimai_intelligence/assets/player-data.js",
-        "src/maimai_intelligence/assets/feature-announcements.js"
+        "src/maimai_intelligence/assets/player-data.js"
       ]
     },
     "Session Report": {

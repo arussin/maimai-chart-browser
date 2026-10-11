@@ -40,8 +40,9 @@ chart notation, music or artwork. The exact mapping remains separate from
 personalized report recommendations.
 
 Optional, separately prepared public artwork uses SEGA's maimai song metadata
-and static jackets. Version logos are retained from Matsuk1/JiETNG-maimai-dx-bot,
-revision `f6eb5ebc6e1f3200b9769060a34325b2ea4e1eb7`. Jackets and logos belong to
+and static jackets. Historical version thumbnails are retained from
+Matsuk1/JiETNG-maimai-dx-bot, revision
+`f6eb5ebc6e1f3200b9769060a34325b2ea4e1eb7`. Jackets and logos belong to
 SEGA and their respective rights holders; they are not covered by this code's
 MIT license. The generated artwork manifest records every source URL and hash.
 The retained version logos are bundled under `assets/version-artwork`, with
@@ -49,6 +50,35 @@ source URLs, original hashes and provenance in its manifest. No code from that
 logo repository is included. Jackets remain separately prepared. Exact
 title/artist matching follows arussin/maimai-session-report's
 artwork helper, without taking a runtime dependency on the report library.
+
+The bundled PRiSM (748×350), PRiSM PLUS (800×315) and CiRCLE (799×357)
+logos use the larger originals retained in
+[Tomomai's pinned logo collection](https://github.com/shedaniel/tomomai/tree/7608b9c250f4a8778cdfd4768cdecb7628cd5889/apps/render/public/res/logo).
+CiRCLE PLUS (801×375) uses the logo linked by
+[SEGA's official international website](https://maimai.sega.com/assets/img/circle/top/kv_logo.png).
+Their lossless WebP copies preserve original dimensions and identical RGBA pixels;
+the bundled manifest records source URLs, original hashes and packaged hashes.
+The previous thumbnails remain available for existing immutable references.
+These third-party logos are not relicensed by Tomomai's software license.
+
+The remaining release mappings also use larger genuine originals. PiNK,
+MURASAKi, MiLK, DX, Splash and UNiVERSE use exact alpha-bound crops from
+[SEGA's official tenth-anniversary logo sprite](https://maimai.sega.jp/10th/storage/site-titlelogos/splite-titlelogo.png?202206201502),
+whose release cells are identified by the site's published stylesheet.
+FiNALE and MiLK PLUS use standalone artwork from SEGA's archived FiNALE site.
+Original maimai, GreeN PLUS and ORANGE PLUS use the native PNGs at the same
+pinned Matsuk1 source revision, verified against the previously retained source
+hashes. GreeN PLUS preserves its intentional opaque backing.
+GreeN and ORANGE use original-size images linked by
+[Logopedia](https://logos.fandom.com/wiki/Maimai_(video_game)); other PLUS and
+early DX originals come from [Maimai Wiki](https://maimai.fandom.com/).
+These community file pages do not provide independently verified upstream
+publisher provenance or a separate artwork license. Every source URL, hash,
+dimension and crop is recorded in the bundled manifest. Except for a documented
+BUDDiES downsample from 1054×603 to 800×458, the lossless WebP images preserve
+the original RGBA pixels of their complete logo or exact crop. No image is
+redrawn or AI-upscaled. The preceding ownership and software-license exclusions
+apply to the entire set.
 
 ## Website identity and visible credits
 
@@ -166,7 +196,16 @@ No Simple Icons, AddToAny, or social-provider request is made to render these ic
 
 ### MAGiCAL version logo
 
-The bundled MAGiCAL logo comes from [SEGA’s official maimai site](https://maimai.sega.jp/storage/root/logo.png), retrieved September 21, 2026. The PNG SHA-256 is `9f659f914d7d8c7fea2a49331166748ade47dfc0f194e9d8c54e9878878966d7`. The original PNG is retained for provenance. Its lossless WebP copy has identical RGBA pixels and is served through the same verified manifest and fallback as every other version logo. The manifest records both hashes. Ownership remains with SEGA and the respective rights holders; this artwork does not establish chart identity.
+The selected MAGiCAL logo is the native 558×341 PC logo from
+[SEGA's official maimai site](https://maimai.sega.jp/storage/root/logo_pc.png),
+retrieved October 11, 2026. Its PNG SHA-256 is
+`e337075d15247d41c9d74a3f3b1e2a053787234bff974efeaf5294ff4f972c5e`.
+The lossless WebP preserves identical RGBA pixels; the manifest records both
+hashes and the source page. The earlier smaller logo retrieved September 21,
+2026 (source PNG SHA-256
+`9f659f914d7d8c7fea2a49331166748ade47dfc0f194e9d8c54e9878878966d7`)
+remains retained for immutable references. Ownership remains with SEGA and the
+respective rights holders; this artwork does not establish chart identity.
 
 
 ### Achievement result artwork

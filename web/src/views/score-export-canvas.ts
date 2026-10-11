@@ -101,31 +101,6 @@ function text(
   ctx.fillText(value, x, baseline);
   ctx.restore();
 }
-function lines(
-  ctx: Context,
-  value: string,
-  x: number,
-  y: number,
-  width: number,
-  size: number,
-  count: number,
-  color = ink,
-  weight = 700,
-) {
-  font(ctx, size, weight);
-  const characters = Array.from(value);
-  for (let row = 0; row < count && characters.length; row++) {
-    if (row === count - 1) {
-      text(ctx, characters.join(''), x, y + row * size * 1.28, width, size, color, 'left', weight);
-      break;
-    }
-    let part = '';
-    while (characters.length && ctx.measureText(part + characters[0]).width <= width)
-      part += characters.shift();
-    if (!part) part = characters.shift() || '';
-    text(ctx, part, x, y + row * size * 1.28, width, size, color, 'left', weight);
-  }
-}
 function box(
   ctx: Context,
   x: number,
@@ -140,21 +115,39 @@ function box(
   ctx.roundRect(x, y, width, height, radius);
   ctx.fill();
 }
-function rule(ctx: Context, x: number, y: number, width: number, color = '#e1e7ed') {
-  ctx.fillStyle = color;
-  ctx.fillRect(x, y, width, 1);
-}
-function pill(
+/** The actual site-brand.html/css wordmark, including its font, tracking and letter colors. */
+function siteBrand(
   ctx: Context,
-  value: string,
   x: number,
-  y: number,
+  baseline: number,
   width: number,
-  color: string,
-  size = 17,
+  size: number,
+  align: 'left' | 'center' = 'left',
 ) {
-  box(ctx, x, y, width, 31, color, 15);
-  text(ctx, value, x + width / 2, y + 22, width - 18, size, '#fff', 'center');
+  ctx.save();
+  ctx.font = `italic 850 ${size}px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'alphabetic';
+  const colors = ['#ed5053', '#f39835', '#f2c62e', '#8aba3d', '#27a9e0'];
+  let cursor = 0,
+    left = Infinity,
+    right = -Infinity;
+  const glyphs = Array.from('maimai.party').map((character, index) => {
+    const bounds = ctx.measureText(character),
+      position = cursor;
+    left = Math.min(left, position - bounds.actualBoundingBoxLeft);
+    right = Math.max(right, position + bounds.actualBoundingBoxRight);
+    cursor += bounds.width - ((index < 6 ? 1.3 : 1) * size) / 30;
+    return { character, position, color: index < 7 ? '#007887' : colors[index - 7] };
+  });
+  const scale = Math.min(1, width / (right - left));
+  ctx.translate(x - (align === 'center' ? (left + right) / 2 : left) * scale, baseline);
+  ctx.scale(scale, scale);
+  for (const glyph of glyphs) {
+    ctx.fillStyle = glyph.color;
+    ctx.fillText(glyph.character, glyph.position, 0);
+  }
+  ctx.restore();
 }
 function achievement(value: number | null) {
   return value === null ? '—' : (value / 10000).toFixed(4) + '%';
@@ -250,6 +243,7 @@ async function jackets(
     if (artwork)
       for (const [key, source] of Object.entries(artwork)) {
         if (key.startsWith('partner:') && key !== selectedPartner) continue;
+        if (!resultArtwork && key === 'character') continue;
         queue.push({ key: 'art:' + key, source, embedded: true });
       }
   } catch {
@@ -622,35 +616,29 @@ function best50Card(
   box(ctx, x, y, width, 30, accent, [18, 18, 0, 0]);
   text(ctx, '#' + String(rank).padStart(2, '0'), x + 13, y + 21, 36, 15, '#fff');
   text(ctx, chart.difficulty.toUpperCase(), x + 55, y + 21, 141, 16, '#fff');
-  text(ctx, chart.level || '—', x + width - 13, y + 21, 67, 17, '#fff', 'right');
-  jacket(ctx, images.get('jacket:' + chart.chartID), x + 12, y + 42, 86, accent);
-  text(ctx, achievement(record.achievement), x + 110, y + 64, 166, 26);
-  grade(ctx, gradeForAchievement(record.achievement), x + 145, y + 98, 70, 30);
-  text(ctx, String(rating), x + width - 13, y + 101, 80, 31, accent, 'right', 900);
-  text(ctx, 'RT', x + width - 13, y + 122, 44, 12, muted, 'right');
-  const icons = badges(record);
-  icons.forEach((badge, index) => {
-    if (!badgeArt(ctx, images, badge, x + 112 + index * 34, y + 98, 29, 33))
-      text(ctx, badge, x + 112 + index * 44, y + 124, 43, 13, muted);
-  });
-  text(ctx, chart.title, x + 12, y + 152, width - 24, 21);
-  const constant = record.constant;
   text(
     ctx,
-    [
-      chart.format.toUpperCase(),
-      constant === null ? '' : options.translate('Constant {0}', [(constant / 10).toFixed(1)]),
-    ]
-      .filter(Boolean)
-      .join(' · '),
-    x + 12,
-    y + 174,
-    width - 24,
-    14,
-    muted,
-    'left',
-    500,
+    record.constant === null ? '—' : (record.constant / 10).toFixed(1),
+    x + width - 13,
+    y + 21,
+    67,
+    17,
+    '#fff',
+    'right',
   );
+  jacket(ctx, images.get('jacket:' + chart.chartID), x + 12, y + 41, 106, accent);
+  text(ctx, achievement(record.achievement), x + 128, y + 65, 148, 25);
+  grade(ctx, gradeForAchievement(record.achievement), x + 164, y + 102, 72, 29);
+  text(ctx, String(rating), x + width - 13, y + 103, 73, 31, accent, 'right', 900);
+  text(ctx, 'RT', x + width - 13, y + 128, 44, 12, muted, 'right');
+  const icons = badges(record);
+  icons.forEach((badge, index) => {
+    if (!badgeArt(ctx, images, badge, x + 128 + index * 38, y + 113, 33, 34))
+      text(ctx, badge, x + 128 + index * 38, y + 140, 36, 12, muted);
+  });
+  // Reserve the format suffix even when a long imported title must be shortened.
+  text(ctx, chart.title, x + 12, y + 173, 224, 21);
+  text(ctx, chart.format.toUpperCase() || '—', x + width - 12, y + 173, 34, 14, muted, 'right');
 }
 
 /** Native canvas export: player observations remain in memory and never enter image URLs. */
@@ -676,60 +664,40 @@ export async function renderBest50(
       .join(' · '),
     ...model.warnings.map((warning) => t(warning)),
   ].filter(Boolean);
-  const footerTop = 2520;
-  const { canvas, ctx } = surface(document, 1600, footerTop + notices.length * 48 + 78);
+  const { canvas, ctx } = surface(document, 1600, 2369);
+  const description = [
+    t('Best 50'),
+    model.player.displayName || model.player.username || t('Player'),
+    model.version.label,
+    t(model.coverage === 'partial' ? 'Rating estimate' : 'Rating total') + ' ' + model.totalRating,
+    ...notices,
+  ].join(' · ');
+  canvas.setAttribute('role', 'img');
+  canvas.setAttribute('aria-label', description);
+  canvas.textContent = description;
   ctx.fillStyle = '#f0f4f9';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   officialBackground(ctx, images, canvas.width, canvas.height);
-  ctx.save();
-  ctx.beginPath();
-  ctx.rect(0, 0, 1600, 364);
-  ctx.clip();
-  art(ctx, images, 'character', 985, -50, 640, 380);
-  ctx.restore();
-  const shade = ctx.createLinearGradient(0, 0, 1600, 0);
-  shade.addColorStop(0, '#ffffffdd');
-  shade.addColorStop(0.6, '#ffffffaa');
-  shade.addColorStop(1, '#ffffff00');
-  ctx.fillStyle = shade;
-  ctx.fillRect(0, 0, 1600, 364);
+  box(ctx, 28, 20, 1544, canvas.height - 32, '#ffffffd6', 24);
   playerName(
     ctx,
     images,
     model.player.displayName || model.player.username || t('Player'),
-    58,
-    43,
-    686,
-    64,
+    48,
+    35,
+    480,
+    54,
   );
-  playerRating(ctx, images, model.totalRating, 72, 129, 540);
-  text(
-    ctx,
-    t(model.coverage === 'partial' ? 'Rating estimate' : 'Rating total'),
-    78,
-    313,
-    540,
-    23,
-    muted,
-  );
-  text(ctx, t('Best 50'), 687, 170, 650, 70, '#693e9e', 'left', 900);
-  art(ctx, images, 'version', 1030, 186, 520, 148);
-  text(
-    ctx,
-    [model.version.label, options.regionLabel].filter(Boolean).join(' · '),
-    692,
-    233,
-    326,
-    25,
-    ink,
-    'left',
-    500,
-  );
-  pill(ctx, 'maimai.party', 696, 278, 182, '#8154ad', 19);
-  box(ctx, 28, 375, 1544, 2107, '#ffffffb8', 24);
+  playerRating(ctx, images, model.totalRating, 48, 101, 480);
+  siteBrand(ctx, 820, 116, 300, 48, 'center');
+  text(ctx, t('Best 50'), 820, 194, 390, 66, ink, 'center', 900);
+  art(ctx, images, 'version', 1090, 79, 462, 132);
+  if (options.regionLabel) text(ctx, options.regionLabel, 820, 238, 330, 20, ink, 'center', 500);
+  ctx.fillStyle = '#d4dce6';
+  ctx.fillRect(48, 266, 1504, 1);
   const sections = [
     {
-      y: 400,
+      y: 285,
       entries: model.old,
       total: model.oldTotal,
       maximum: 35,
@@ -737,7 +705,7 @@ export async function renderBest50(
       accent: '#8456cf',
     },
     {
-      y: 1848,
+      y: 1723,
       entries: model.new,
       total: model.newTotal,
       maximum: 15,
@@ -764,40 +732,11 @@ export async function renderBest50(
         section.entries[index],
         index + 1,
         48 + (index % 5) * 304,
-        section.y + 65 + Math.floor(index / 5) * 196,
+        section.y + 55 + Math.floor(index / 5) * 196,
         images,
         options,
       );
   }
-  const footerY = canvas.height - 28;
-  box(ctx, 28, footerTop - 18, 1544, canvas.height - footerTop + 10, '#ffffffed', 20);
-  rule(ctx, 48, footerTop, 1504);
-  const stamp = date(model.capturedAt);
-  text(
-    ctx,
-    ['maimai.party', stamp ? t('Captured {0}', [stamp]) : ''].filter(Boolean).join(' · '),
-    48,
-    footerY,
-    810,
-    18,
-    muted,
-    'left',
-    500,
-  );
-  text(ctx, t('Created from imported records'), 1552, footerY, 650, 18, muted, 'right', 500);
-  notices.forEach((notice, index) =>
-    lines(
-      ctx,
-      notice,
-      48,
-      footerTop + 31 + index * 48,
-      1504,
-      18,
-      2,
-      model.coverage === 'partial' ? '#875321' : muted,
-      500,
-    ),
-  );
   return canvas;
 }
 
@@ -810,12 +749,12 @@ function resultScreen(ctx: Context, images: Map<string, HTMLImageElement>) {
   ctx.arc(600, 582, 574, 0, Math.PI * 2);
   ctx.clip();
   officialBackground(ctx, images, 1200, 1160);
-  ctx.fillStyle = '#ffffff64';
+  ctx.fillStyle = '#ffffff24';
   ctx.fillRect(0, 0, 1200, 1160);
   ctx.translate(600, 580);
   ctx.rotate(-Math.PI / 7);
   for (let y = -900; y < 900; y += 115) {
-    ctx.fillStyle = y % 230 === 0 ? '#ffffff64' : '#b6f7ef40';
+    ctx.fillStyle = y % 230 === 0 ? '#ffffff35' : '#61eed12b';
     ctx.fillRect(-1000, y, 2000, 38);
   }
   ctx.restore();
@@ -843,30 +782,31 @@ function prismatic(ctx: Context, y: number, height: number) {
 
 function clearLabel(ctx: Context, value: string) {
   ctx.save();
-  ctx.font = '600 86px "Bahnschrift", "Arial Narrow", Arial, sans-serif';
+  ctx.font = 'italic 900 104px "Arial Black", Arial, sans-serif';
   ctx.textAlign = 'left';
   ctx.textBaseline = 'alphabetic';
   ctx.lineJoin = 'round';
   const characters = Array.from(value);
-  const tracking = value === 'CLEAR!' ? 20 : 3;
+  const tracking = 3;
   const widths = characters.map((character) => ctx.measureText(character).width);
   const width =
     widths.reduce((total, advance) => total + advance, 0) + tracking * (characters.length - 1);
   const scale = Math.min(1, 720 / width);
-  ctx.translate(600 - (width * scale) / 2, 180);
+  ctx.translate(600 - (width * scale) / 2, 177);
   ctx.scale(scale, scale);
-  const fill = ctx.createLinearGradient(0, -82, 0, 0);
-  fill.addColorStop(0, '#fff3aa');
-  fill.addColorStop(0.44, '#f6d667');
-  fill.addColorStop(0.61, '#fff8cc');
-  fill.addColorStop(0.78, '#bf9adc');
-  fill.addColorStop(1, '#f19abd');
+  const fill = ctx.createLinearGradient(0, -83, 0, 0);
+  fill.addColorStop(0, '#ffffdb');
+  fill.addColorStop(0.38, '#ffe55b');
+  fill.addColorStop(0.49, '#fff9be');
+  fill.addColorStop(0.5, '#ffb937');
+  fill.addColorStop(0.78, '#fc7f73');
+  fill.addColorStop(1, '#f257b4');
   let x = 0;
   for (const [index, character] of characters.entries()) {
     for (const [lineWidth, color] of [
-      [9, '#fff9d7'],
-      [6, '#45455b'],
-      [2, '#fff9df'],
+      [15, '#fff9e6'],
+      [10, '#293f88'],
+      [3, '#fff8c8'],
     ] as const) {
       ctx.lineWidth = lineWidth;
       ctx.strokeStyle = color;
@@ -1403,7 +1343,7 @@ export async function renderAchievement(
   // The footer identifies this as an imported-record export, outside the cabinet composition.
   const stamp = input.recordKind === 'play' ? date(record.timeAchieved) : '';
   text(ctx, input.playerName || t('Player'), 40, 1174, 570, 20, ink);
-  text(ctx, 'maimai.party', 1160, 1174, 235, 20, ink, 'right');
+  siteBrand(ctx, 925, 1175, 235, 34);
   if (input.recordKind === 'pb')
     text(
       ctx,

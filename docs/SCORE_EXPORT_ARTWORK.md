@@ -15,13 +15,26 @@ WebP quality 90 at its original dimensions; the other images use lossless WebP
 with exact RGBA verification. It is dynamically imported only when generating
 an export. The shared embedded [rating frames and result badges](PLAYER_ARTWORK.md)
 are reused from the existing public stylesheet. Selected-version logos come
-from the existing verified catalog-artwork projection.
+from the verified global `version-artwork/manifest.json` bundle, so a restricted
+song catalog does not restrict the exporter's 28 release choices. All 28 logos use
+larger genuine artwork: official SEGA pages and anniversary sprite crops, plus
+originals mirrored by Logopedia, Maimai Wiki and the pinned asset repositories.
+The manifest records each source hash, original dimensions and conversion.
+Native originals and exact sprite crops preserve their RGBA pixels; BUDDiES alone
+is reduced from 1054×603 to 800×458 to stay within the 256 KiB asset limit.
+GreeN PLUS retains its original opaque branded backing. PiNK's 416-pixel-wide
+official crop needs a modest 1.11× enlargement in the 462×132 header box; all other
+selected logos have sufficient native pixels for that box. No logo is redrawn or
+AI-upscaled, and old thumbnails remain available for immutable references.
+Retained catalogs keep their own artwork references and chart identities.
 
 The decorative theme does not establish the record's release. The user's chosen
-release is written explicitly, and an available logo is selected for that release.
+release controls the rating split and selects its logo. The dialog and accessible
+canvas description retain the release name without duplicating it on the image.
 The header uses only the imported player name and the report's computed total;
 it does not invent titles, avatars, course ranks or play counts. Partial reports
-retain their rating-estimate label. PB exports retain their composite-record
+retain their rating-estimate notice in the dialog and accessible description.
+The image omits the redundant rating caption and footer. PB exports retain their composite-record
 notice and omit individual-play judgments and timing.
 
 The existing ownership and license exclusions apply: game artwork remains owned
@@ -39,15 +52,18 @@ and reviewed modern cabinet photographs: CLEAR heading, slim song ribbon, large
 left-aligned achievement, monumental rank, two-circle badge plinth, and compact
 known result statistics. It does not include a physical cabinet bezel. The modern
 angular rank and outlined CLEAR lettering are original canvas drawing, not claimed
-to be extracted game textures. Best 50 retains its existing layout.
+to be extracted game textures. Best 50 uses a compact shared header and five-column
+grid, larger jackets, imported constants at the top right and format suffixes
+beside song titles.
 
 A second, achievement-only lazy module supplies the larger official badge base/text
 components and difficulty ribbons from the same pinned Tomomai asset inventory.
 It reuses the 114-pixel badge bases instead of enlarging the small profile badges.
 [The result inventory](score-export-result-artwork-provenance.json) records exact
 source URLs, original and packaged hashes, dimensions and conversions. The current
-record's single-chart rating is never substituted for the unavailable player DX
-rating: its neutral white frame displays an em dash.
+record's single-chart rating is never substituted for an unavailable player DX
+rating. Known chart ratings remain visible for personal bests and retained plays;
+unknown player totals are omitted.
 
 DX charts use SEGA's rainbow Japanese 「でらっくす」 chart-format badge, extracted
 unchanged from the PNG data URI in the [official song stylesheet](https://maimai.sega.jp/song/song.css?20260916).

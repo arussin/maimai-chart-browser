@@ -37,7 +37,6 @@ const test = base.extend({
       // Limit fixture preferences to the exact allocated site, not other frames.
       if (location.origin !== origin) return;
       localStorage.setItem('maimai-language-v1', 'en');
-      localStorage.setItem('maimai-announcement:player-import-sources-v1', 'seen');
     }, server.origin);
     try {
       await use({...server, artifacts, errors});

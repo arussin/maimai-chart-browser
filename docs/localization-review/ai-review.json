@@ -42,7 +42,7 @@
     "README.ko.md": "b155547648279fa05c43919d25d1c8f69837f166ea34561f539b0fab649d6558",
     "README.ja.md": "f79ffc1fa7e05fab0b52e15607da6669c9c19b8bf707497f8d469535228a2233",
     "src/maimai_intelligence/assets/locales/share.json": "fd719ebe84e47c7b1bf02ae7d760cc3ac97001950e890bc3f2acf370a9ea9cae",
-    "src/maimai_intelligence/assets/locales/player-sources.json": "c58e424e0dab3089c9af72018a250f053bf7a5711690d9ec4eb7fe374c660591",
+    "src/maimai_intelligence/assets/locales/player-sources.json": "05867d0353294479696a09fc05457596d9bdb8ce00dbf5113d9dcdc0cc5c8f70",
     "src/maimai_intelligence/assets/locales/player-maishift.json": "e1dd639655b9916aa5c8fe51dd4526aedca1cb347ec430291034a15e99bea277",
     "src/maimai_intelligence/assets/locales/maishift-pilot.json": "a8bf4dd18c54c7898241462e7cbc5272d360aa645d9c989c92ef8aca26b695d3",
     "src/maimai_intelligence/assets/import-help/README.ja.md": "793eedaee7afbc4b2464e5ad33a35e6aa9f788a66afebeb7ca4c6f23dfa5dcd3",
@@ -263,6 +263,11 @@
       "date": "2026-10-11",
       "record": "docs/localization-review/score-export-rating-20261011.json",
       "scope": "Two current profile rating captions independently reviewed in Simplified Chinese, Korean, Japanese and Indonesian; preserves imported versus reconstructed totals and distinguishes both from historical play-time ratings."
+    },
+    {
+      "date": "2026-10-11",
+      "record": "docs/localization-review/remove-whats-new-20261011.json",
+      "scope": "Five unused announcement/replay labels and all twenty translated values removed after source-consumer review; remaining UI translations unchanged."
     }
   ]
 }

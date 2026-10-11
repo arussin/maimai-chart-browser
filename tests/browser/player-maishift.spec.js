@@ -7,7 +7,7 @@ import {tracks,publicProfile,wire} from '../../player-import-worker/fixtures.mjs
 const saved=page=>page.evaluate(()=>maimaiPlayerStorage.read());
 async function boot(page){await page.goto('/lab/');await expect.poll(()=>page.evaluate(()=>!!window.maimaiPersonal)).toBe(true);await page.evaluate(()=>maimaiPersonal.ready);}
 async function prepare(context,{locale='en'}={}){
-  await context.addInitScript(locale=>{localStorage.setItem('maimai-language-v1',locale);sessionStorage.setItem('maimai-announcement:player-import-sources-v1','seen');},locale);
+  await context.addInitScript(locale=>localStorage.setItem('maimai-language-v1',locale),locale);
   // The public asset is disabled. Only this synthetic harness enables it.
   await mockBrowserConfiguration(context,configuration=>({...configuration,features:{...configuration.features,maishift:true}}));
   const state={calls:0,delay:null,profile:publicProfile(),tracks:tracks(),status:200,html:false};

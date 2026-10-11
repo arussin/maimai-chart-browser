@@ -71,6 +71,50 @@ class ArtworkTests(unittest.TestCase):
             for path in artwork["versions"].values():
                 self.assertTrue((root / path).is_file())
                 self.assertEqual((root / path).stat().st_size, artwork["assets"][path]["bytes"])
+            # Lock the reviewed larger originals/crops, including the bounded BUDDiES resize.
+            expected_sizes = {
+                "maimai": (499, 69),
+                "maimai PLUS": (500, 91),
+                "maimai GreeN": (640, 150),
+                "maimai GreeN PLUS": (640, 135),
+                "maimai ORANGE": (747, 200),
+                "maimai ORANGE PLUS": (747, 219),
+                "maimai PiNK": (416, 117),
+                "maimai PiNK PLUS": (500, 133),
+                "maimai MURASAKi": (405, 174),
+                "maimai MURASAKi PLUS": (576, 215),
+                "maimai MiLK": (354, 320),
+                "maimai MiLK PLUS": (400, 301),
+                "maimai FiNALE": (552, 224),
+                "maimai DX": (398, 147),
+                "maimai DX PLUS": (450, 177),
+                "maimai DX Splash": (420, 166),
+                "maimai DX Splash PLUS": (621, 247),
+                "maimai DX UNiVERSE": (416, 196),
+                "maimai DX UNiVERSE PLUS": (512, 260),
+                "maimai DX FESTiVAL": (689, 301),
+                "maimai DX FESTiVAL PLUS": (973, 475),
+                "maimai DX BUDDiES": (800, 458),
+                "maimai DX BUDDiES PLUS": (858, 433),
+                "maimai DX PRiSM": (748, 350),
+                "maimai DX PRiSM PLUS": (800, 315),
+                "maimai DX CiRCLE": (799, 357),
+                "maimai DX CiRCLE PLUS": (801, 375),
+                "maimai DX MAGiCAL": (558, 341),
+            }
+            self.assertEqual(set(expected_sizes), set(artwork["versions"]))
+            for version, dimensions in expected_sizes.items():
+                path = artwork["versions"][version]
+                asset = artwork["assets"][path]
+                raw = (root / path).read_bytes()
+                self.assertEqual(raw[12:16], b"VP8L")
+                self.assertEqual(raw[20], 0x2F)
+                # The lossless WebP header stores each dimension minus one in 14 bits.
+                bits = int.from_bytes(raw[21:25], "little")
+                self.assertEqual((1 + (bits & 0x3FFF), 1 + ((bits >> 14) & 0x3FFF)), dimensions)
+                self.assertEqual((asset["width"], asset["height"]), dimensions)
+                # GreeN PLUS intentionally retains its original opaque branded backing.
+                self.assertEqual((bits >> 28) & 1, int(version != "maimai GreeN PLUS"))
             validate_artwork(artwork, [], [])
 
     def test_all_release_logos_preserve_supplied_artwork_and_catalog_metadata(self):

@@ -12,7 +12,6 @@ import { createPlayerMaishift } from './views/player-maishift.js';
 import { createPlayerSources } from './views/player-sources.js';
 import { createPlayerStorage } from './views/player-storage.js';
 import { createPlayerData } from './views/player-data.js';
-import { createFeatureAnnouncements } from './views/feature-announcements.js';
 import { createSupportClient } from './views/support-client.js';
 import { createSupportStripe } from './views/support-stripe.js';
 import { createChartVisuals, type ChartTheme } from './views/chart-visuals.js';
@@ -230,7 +229,6 @@ export async function createApplication(options: ApplicationOptions) {
     historyPort,
   });
   if (!configuration.pilot) {
-    createFeatureAnnouncements({ root: document.body, localization, playerSources, settings });
     const supportClient = createSupportClient({ supportConfig: configuration.support });
     createSupportStripe({ root: document.body, localization, supportClient, historyPort });
     createAnalytics({ root: document.body, localization, settings, historyPort });
