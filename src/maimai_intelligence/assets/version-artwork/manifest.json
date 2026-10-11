@@ -2,34 +2,34 @@
   "version": "public-artwork-1",
   "songs": {},
   "versions": {
-    "maimai": "media/dfe3901103f50106bc7194571b3a8731946330a1baa2d0621bbb51d7f5f8f2c3.webp",
-    "maimai DX": "media/e20aa76ef19e5435f8698c152980b6ec3292685b796fc735c37b7181e9b9608e.webp",
-    "maimai DX BUDDiES": "media/d3f93cb44c8bb47cdbddea8f3ea8117866d9f82391bbaafc752191a438d1e0ee.webp",
-    "maimai DX BUDDiES PLUS": "media/56b2ad073957e757d7b07eb54151f326bec4135b850784795c8d0446ddf898a4.webp",
-    "maimai DX CiRCLE": "media/41070c10c8cc13635cc9f9eb19accb40ee6798faee56039e31a7191f4c2ecafe.webp",
-    "maimai DX CiRCLE PLUS": "media/0c805f8724dbd834bc8d13726f55eec8b3d0c0c28acc12e72704f91edda7a563.webp",
-    "maimai DX FESTiVAL": "media/70e12995ae975ede14e67a54b10cda134e056bcf5d4b5009de5a1c08b9963083.webp",
-    "maimai DX FESTiVAL PLUS": "media/1ebed04a77d32821ccc34f081126a9a2c8bee595cbd925d9abc516761e7e1df0.webp",
-    "maimai DX PLUS": "media/e47e208e903b8c8ec448bb9d30e4bbbbf2dd85ef12aceea008522a9235f55f03.webp",
-    "maimai DX PRiSM": "media/08a2a792609800bdc0ed91ed6e28f4b5ea5e629559b2c1d516ff830b465c1d30.webp",
-    "maimai DX PRiSM PLUS": "media/5a985390527b9955191b5155886c0ee894099b642afa96ca5291e65ffbacbd42.webp",
-    "maimai DX Splash": "media/d169399add5f858da28b7824e42014b8caa851e5bdf57eae0ba720399de278ca.webp",
-    "maimai DX Splash PLUS": "media/d38fa8b5f047c169d55edce1257f5743620fed03acfb242b5ad87c35cd09c1a5.webp",
-    "maimai DX UNiVERSE": "media/4909df17934d645812702e37f5b4dde869dee9779d64e1b375b85811aaa1d861.webp",
-    "maimai DX UNiVERSE PLUS": "media/d833e90c377d592973f3aa67831711e1ad1148d2222a1b720421689aa9d1acdd.webp",
-    "maimai FiNALE": "media/b18af6823de0e87c197d5ff2beaebf218c1344ae5e10b5e22155afb3b0c4f44c.webp",
-    "maimai GreeN": "media/15f8e10cc6b8782acbb86d536e3ff8abc3a472485f71e0ff96e9c57faeb2357a.webp",
-    "maimai GreeN PLUS": "media/3ebf345a6d03a54481c594a6942e4382efef0fc6e69ad021b12bdf65f14513c7.webp",
-    "maimai MURASAKi": "media/57ebea6b80bb79df1e2fcb77301d3cfca3a2634922c3722e6b1e0fc7ee84f956.webp",
-    "maimai MURASAKi PLUS": "media/506be500201a3b9f87759708939736ea994e19e4a70de1f4e74e62726efaf0a2.webp",
-    "maimai MiLK": "media/5af064091d539c7e6d2bb5c3757f83d2f26ce10e99373b6ab99f0b565d37f6db.webp",
-    "maimai MiLK PLUS": "media/eee59cd04ac315cf0dc01b37658fccadb49aebda35c7881c162606796089949f.webp",
-    "maimai ORANGE": "media/69ef17ced814819e1c5472d331846a03d39d3542480c8a66e010052904f1f2b8.webp",
-    "maimai ORANGE PLUS": "media/11b97ea6c2359fd9f9381dc59eb6897f1e76bfc2c85e72e4c23052f41ddcfc8a.webp",
-    "maimai PLUS": "media/f947d00d5707067c84fe0037656368a6e1cf8b08285ab1dd26aca0516cbbb58f.webp",
-    "maimai PiNK": "media/4e02a6b22a6947cabbb95a8c0964135250959ce4fb89c0ee8fd8c76ea9ab90d7.webp",
-    "maimai PiNK PLUS": "media/16c76e6e3da080038160efdc961f5fc735248cd3ff037acf7fd4a4fa7a8f63a8.webp",
-    "maimai DX MAGiCAL": "media/1c66a78dc026d731afbd40043709f3622589844739f820f6ef525180bb287e81.webp"
+    "maimai": "media/0e6b7551f7d398218d3979d82f32499eaea5b2bac242818d438a8f57b9827b07.webp",
+    "maimai DX": "media/22c7974feb3e558044c9e7580f8a7fd01c5d41b2b38ac4fcd1e094760165f0f7.webp",
+    "maimai DX BUDDiES": "media/2108cf9fab76225673a8949ca82d1050d8f7baa688e419181845ec7450c2c83a.webp",
+    "maimai DX BUDDiES PLUS": "media/310403a0915c7937fb121a5b5c4d932c1654e9f7be783e6cafa4e8fa1643f123.webp",
+    "maimai DX CiRCLE": "media/897ac3610658395594ba856a522f4efc463de1eec9dd610b51d69c136002f5df.webp",
+    "maimai DX CiRCLE PLUS": "media/5e06db62187160301ef4e602e8dc69bee5f6c9886c8c257b75f7390ddbd18c1c.webp",
+    "maimai DX FESTiVAL": "media/60c4f41ee31e7f43260f3afe6e641a02c221c04ac4ab04d5952ac2756665a265.webp",
+    "maimai DX FESTiVAL PLUS": "media/7ab8f5e4a5c54eb1f3d8cec56568afcf450e41b27334fe0b8de6272ec2dff0fc.webp",
+    "maimai DX PLUS": "media/1bdf9d9e6f7be70801a0e20de427092e28b32bfb89029feae27b22c95e2c484a.webp",
+    "maimai DX PRiSM": "media/121bf2398d27ea0c7df1c981f93004311fb7cf4c55d761c992820b1e63ab022b.webp",
+    "maimai DX PRiSM PLUS": "media/fc68512367de0f5c3f6c4e670cc1db9ad94bf86af2578e5823cc7a824c269447.webp",
+    "maimai DX Splash": "media/a625152774cc6a55bc7835ad3fccbaad2e95d30677d9b3cce42a05341dd34abc.webp",
+    "maimai DX Splash PLUS": "media/13cb1574718b6a8f128680dfb38aaa9ee3569ad77aff74f3f72ef10f373694ba.webp",
+    "maimai DX UNiVERSE": "media/fdf2ffa4442eb22e61cfc91152c5a99164f71d008bac87dd3da41ac6ed531fd3.webp",
+    "maimai DX UNiVERSE PLUS": "media/e33afb7ce8f5e5752cf41b50438bf9f99f0f807b8788f376dce9850ec6f3007a.webp",
+    "maimai FiNALE": "media/244ee817416ab168b4481bfd80d1bdc7f6d6d524c43cc73abda432dedbdd063b.webp",
+    "maimai GreeN": "media/7504e93a2b99d604b5911cd0a28d92abbe8fb7d187db5991898b3f8be01ac263.webp",
+    "maimai GreeN PLUS": "media/e7d40ead6844e32b0ebb97488372a8c0f75250a4b73611d32a715a0c29212d10.webp",
+    "maimai MURASAKi": "media/9f6cfff89222aca697964d8dd9f0191b186e326955a006f03cb336794c60368e.webp",
+    "maimai MURASAKi PLUS": "media/2bedf49c21eb10708cfd14d9c91970bfb05c2c96218f2e435c34f6340488b74e.webp",
+    "maimai MiLK": "media/687db21d780ca089643aae4e0fef920352c8d782710b2939f7294b513e9d8bfd.webp",
+    "maimai MiLK PLUS": "media/dd066ac76c24464e2b3270cc92ae5d4fa81bf1117a098456fa3fff8ae9c7c33b.webp",
+    "maimai ORANGE": "media/54f8e530a61e05faae5792d7531a64d690c60cd6d39449b02867bafcf90fa95e.webp",
+    "maimai ORANGE PLUS": "media/4bf0625620df5e60b82e2bbf3a14103026288e88a712a4f02adfc06055cf56f4.webp",
+    "maimai PLUS": "media/98f989efa314c9f385b6f62d42f5ba39ef6b709aaf30108c8752c1214486744f.webp",
+    "maimai PiNK": "media/df52e0a6f224302f65963eb05b680c198a584dd556af34b2945fc8edd9dd48f0.webp",
+    "maimai PiNK PLUS": "media/2d08e82fa557e01ad0d12deb1bc50d4f155c2bb4287c41fd82a92bf9a33e958c.webp",
+    "maimai DX MAGiCAL": "media/d9e084dcc241eccb809e26275645f6d3e21af1ae2a288a48e1d81765a1dd306a.webp"
   },
   "assets": {
     "media/08a2a792609800bdc0ed91ed6e28f4b5ea5e629559b2c1d516ff830b465c1d30.webp": {
@@ -200,9 +200,479 @@
       "source": "Existing reviewed version-magical.png from f9dd8a9",
       "source_sha256": "9f659f914d7d8c7fea2a49331166748ade47dfc0f194e9d8c54e9878878966d7",
       "conversion": "Lossless WebP; RGBA pixels verified identical"
+    },
+    "media/121bf2398d27ea0c7df1c981f93004311fb7cf4c55d761c992820b1e63ab022b.webp": {
+      "bytes": 69344,
+      "sha256": "121bf2398d27ea0c7df1c981f93004311fb7cf4c55d761c992820b1e63ab022b",
+      "source": "https://raw.githubusercontent.com/shedaniel/tomomai/7608b9c250f4a8778cdfd4768cdecb7628cd5889/apps/render/public/res/logo/10.png",
+      "source_sha256": "4affe7b324c54312ca8fd287149d83ee5a99efa23cace0afaed557f0b4ce8a3d",
+      "width": 748,
+      "height": 350,
+      "conversion": "Lossless WebP at original dimensions; RGBA pixels verified identical",
+      "source_page": "https://github.com/shedaniel/tomomai/tree/7608b9c250f4a8778cdfd4768cdecb7628cd5889/apps/render/public/res/logo"
+    },
+    "media/fc68512367de0f5c3f6c4e670cc1db9ad94bf86af2578e5823cc7a824c269447.webp": {
+      "bytes": 79414,
+      "sha256": "fc68512367de0f5c3f6c4e670cc1db9ad94bf86af2578e5823cc7a824c269447",
+      "source": "https://raw.githubusercontent.com/shedaniel/tomomai/7608b9c250f4a8778cdfd4768cdecb7628cd5889/apps/render/public/res/logo/11.png",
+      "source_sha256": "d2f0c436007a1bd33e2f3c57309a12e751c563c0dfed1bbfcefe2b132eeccd54",
+      "width": 800,
+      "height": 315,
+      "conversion": "Lossless WebP at original dimensions; RGBA pixels verified identical",
+      "source_page": "https://github.com/shedaniel/tomomai/tree/7608b9c250f4a8778cdfd4768cdecb7628cd5889/apps/render/public/res/logo"
+    },
+    "media/897ac3610658395594ba856a522f4efc463de1eec9dd610b51d69c136002f5df.webp": {
+      "bytes": 244126,
+      "sha256": "897ac3610658395594ba856a522f4efc463de1eec9dd610b51d69c136002f5df",
+      "source": "https://raw.githubusercontent.com/shedaniel/tomomai/7608b9c250f4a8778cdfd4768cdecb7628cd5889/apps/render/public/res/logo/12.png",
+      "source_sha256": "f2f41a0419c9d03b4905c135df18f0e6841beea0f68f91aacf7e1ad203116605",
+      "width": 799,
+      "height": 357,
+      "conversion": "Lossless WebP at original dimensions; RGBA pixels verified identical",
+      "source_page": "https://github.com/shedaniel/tomomai/tree/7608b9c250f4a8778cdfd4768cdecb7628cd5889/apps/render/public/res/logo"
+    },
+    "media/5e06db62187160301ef4e602e8dc69bee5f6c9886c8c257b75f7390ddbd18c1c.webp": {
+      "bytes": 76104,
+      "sha256": "5e06db62187160301ef4e602e8dc69bee5f6c9886c8c257b75f7390ddbd18c1c",
+      "source": "https://maimai.sega.com/assets/img/circle/top/kv_logo.png",
+      "source_sha256": "e20d5acdcd4e64326dccdab5f286bded045d7442e832c391548e4d1a42c4905b",
+      "width": 801,
+      "height": 375,
+      "conversion": "Lossless WebP at original dimensions; RGBA pixels verified identical",
+      "source_page": "https://maimai.sega.com/"
+    },
+    "media/df52e0a6f224302f65963eb05b680c198a584dd556af34b2945fc8edd9dd48f0.webp": {
+      "bytes": 8392,
+      "sha256": "df52e0a6f224302f65963eb05b680c198a584dd556af34b2945fc8edd9dd48f0",
+      "source": "https://maimai.sega.jp/10th/storage/site-titlelogos/splite-titlelogo.png?202206201502",
+      "source_sha256": "6ee72e757ec7ae585b4931166e539faa64b809257f68fec0c032376038b289fb",
+      "width": 416,
+      "height": 117,
+      "conversion": "Exact integer crop, preserving original RGBA pixels; lossless WebP; no resize",
+      "source_page": "https://maimai.sega.jp/10th/history/",
+      "source_dimensions": [
+        2000,
+        1500
+      ],
+      "provenance": "SEGA official 10th-anniversary sprite; version-specific cell mapped by its published CSS; entire alpha-bearing region preserved",
+      "has_transparency": true,
+      "crop_box": [
+        42,
+        692,
+        458,
+        809
+      ]
+    },
+    "media/9f6cfff89222aca697964d8dd9f0191b186e326955a006f03cb336794c60368e.webp": {
+      "bytes": 21352,
+      "sha256": "9f6cfff89222aca697964d8dd9f0191b186e326955a006f03cb336794c60368e",
+      "source": "https://maimai.sega.jp/10th/storage/site-titlelogos/splite-titlelogo.png?202206201502",
+      "source_sha256": "6ee72e757ec7ae585b4931166e539faa64b809257f68fec0c032376038b289fb",
+      "width": 405,
+      "height": 174,
+      "conversion": "Exact integer crop, preserving original RGBA pixels; lossless WebP; no resize",
+      "source_page": "https://maimai.sega.jp/10th/history/",
+      "source_dimensions": [
+        2000,
+        1500
+      ],
+      "provenance": "SEGA official 10th-anniversary sprite; version-specific cell mapped by its published CSS; entire alpha-bearing region preserved",
+      "has_transparency": true,
+      "crop_box": [
+        548,
+        663,
+        953,
+        837
+      ]
+    },
+    "media/687db21d780ca089643aae4e0fef920352c8d782710b2939f7294b513e9d8bfd.webp": {
+      "bytes": 15940,
+      "sha256": "687db21d780ca089643aae4e0fef920352c8d782710b2939f7294b513e9d8bfd",
+      "source": "https://maimai.sega.jp/10th/storage/site-titlelogos/splite-titlelogo.png?202206201502",
+      "source_sha256": "6ee72e757ec7ae585b4931166e539faa64b809257f68fec0c032376038b289fb",
+      "width": 354,
+      "height": 320,
+      "conversion": "Exact integer crop, preserving original RGBA pixels; lossless WebP; no resize",
+      "source_page": "https://maimai.sega.jp/10th/history/",
+      "source_dimensions": [
+        2000,
+        1500
+      ],
+      "provenance": "SEGA official 10th-anniversary sprite; version-specific cell mapped by its published CSS; entire alpha-bearing region preserved",
+      "has_transparency": true,
+      "crop_box": [
+        1073,
+        591,
+        1427,
+        911
+      ]
+    },
+    "media/22c7974feb3e558044c9e7580f8a7fd01c5d41b2b38ac4fcd1e094760165f0f7.webp": {
+      "bytes": 13644,
+      "sha256": "22c7974feb3e558044c9e7580f8a7fd01c5d41b2b38ac4fcd1e094760165f0f7",
+      "source": "https://maimai.sega.jp/10th/storage/site-titlelogos/splite-titlelogo.png?202206201502",
+      "source_sha256": "6ee72e757ec7ae585b4931166e539faa64b809257f68fec0c032376038b289fb",
+      "width": 398,
+      "height": 147,
+      "conversion": "Exact integer crop, preserving original RGBA pixels; lossless WebP; no resize",
+      "source_page": "https://maimai.sega.jp/10th/history/",
+      "source_dimensions": [
+        2000,
+        1500
+      ],
+      "provenance": "SEGA official 10th-anniversary sprite; version-specific cell mapped by its published CSS; entire alpha-bearing region preserved",
+      "has_transparency": true,
+      "crop_box": [
+        41,
+        1177,
+        439,
+        1324
+      ]
+    },
+    "media/a625152774cc6a55bc7835ad3fccbaad2e95d30677d9b3cce42a05341dd34abc.webp": {
+      "bytes": 15344,
+      "sha256": "a625152774cc6a55bc7835ad3fccbaad2e95d30677d9b3cce42a05341dd34abc",
+      "source": "https://maimai.sega.jp/10th/storage/site-titlelogos/splite-titlelogo.png?202206201502",
+      "source_sha256": "6ee72e757ec7ae585b4931166e539faa64b809257f68fec0c032376038b289fb",
+      "width": 420,
+      "height": 166,
+      "conversion": "Exact integer crop, preserving original RGBA pixels; lossless WebP; no resize",
+      "source_page": "https://maimai.sega.jp/10th/history/",
+      "source_dimensions": [
+        2000,
+        1500
+      ],
+      "provenance": "SEGA official 10th-anniversary sprite; version-specific cell mapped by its published CSS; entire alpha-bearing region preserved",
+      "has_transparency": true,
+      "crop_box": [
+        530,
+        1167,
+        950,
+        1333
+      ]
+    },
+    "media/fdf2ffa4442eb22e61cfc91152c5a99164f71d008bac87dd3da41ac6ed531fd3.webp": {
+      "bytes": 21004,
+      "sha256": "fdf2ffa4442eb22e61cfc91152c5a99164f71d008bac87dd3da41ac6ed531fd3",
+      "source": "https://maimai.sega.jp/10th/storage/site-titlelogos/splite-titlelogo.png?202206201502",
+      "source_sha256": "6ee72e757ec7ae585b4931166e539faa64b809257f68fec0c032376038b289fb",
+      "width": 416,
+      "height": 196,
+      "conversion": "Exact integer crop, preserving original RGBA pixels; lossless WebP; no resize",
+      "source_page": "https://maimai.sega.jp/10th/history/",
+      "source_dimensions": [
+        2000,
+        1500
+      ],
+      "provenance": "SEGA official 10th-anniversary sprite; version-specific cell mapped by its published CSS; entire alpha-bearing region preserved",
+      "has_transparency": true,
+      "crop_box": [
+        1042,
+        1152,
+        1458,
+        1348
+      ]
+    },
+    "media/7504e93a2b99d604b5911cd0a28d92abbe8fb7d187db5991898b3f8be01ac263.webp": {
+      "bytes": 123734,
+      "sha256": "7504e93a2b99d604b5911cd0a28d92abbe8fb7d187db5991898b3f8be01ac263",
+      "source": "https://static.wikia.nocookie.net/logopedia/images/1/11/Maimaig_logo.png/revision/latest?cb=20180312095714",
+      "source_sha256": "4b74a9b1064970bb58c3af10093eeb0c175098aec5f8d63e25f8605fd9c487b2",
+      "width": 640,
+      "height": 150,
+      "conversion": "Native dimensions and original RGBA preserved; lossless WebP; no resize",
+      "source_page": "https://logos.fandom.com/wiki/Maimai_(video_game)",
+      "source_dimensions": [
+        640,
+        150
+      ],
+      "provenance": "Logopedia-hosted SEGA logo artwork; larger original URL observed from article; file-page upstream attribution unavailable",
+      "has_transparency": true
+    },
+    "media/54f8e530a61e05faae5792d7531a64d690c60cd6d39449b02867bafcf90fa95e.webp": {
+      "bytes": 97126,
+      "sha256": "54f8e530a61e05faae5792d7531a64d690c60cd6d39449b02867bafcf90fa95e",
+      "source": "https://static.wikia.nocookie.net/logopedia/images/8/8e/Maimaio_logo.png/revision/latest?cb=20180312095732",
+      "source_sha256": "a2082b5d7296685a02da104bf61a12411499549a00097499d060e926e8afd774",
+      "width": 747,
+      "height": 200,
+      "conversion": "Native dimensions and original RGBA preserved; lossless WebP; no resize",
+      "source_page": "https://logos.fandom.com/wiki/Maimai_(video_game)",
+      "source_dimensions": [
+        747,
+        200
+      ],
+      "provenance": "Logopedia-hosted SEGA logo artwork; larger original URL observed from article; file-page upstream attribution unavailable",
+      "has_transparency": true
+    },
+    "media/244ee817416ab168b4481bfd80d1bdc7f6d6d524c43cc73abda432dedbdd063b.webp": {
+      "bytes": 164060,
+      "sha256": "244ee817416ab168b4481bfd80d1bdc7f6d6d524c43cc73abda432dedbdd063b",
+      "source": "https://maimai.sega.jp/maimai_finale/root/assets/top/sp/logo.png",
+      "source_sha256": "8c88b6584fc63015584cf7f0a9bb9ddfce994ebd819b63d4e863890b95230861",
+      "width": 552,
+      "height": 224,
+      "conversion": "Exact integer crop, preserving original RGBA pixels; lossless WebP; no resize",
+      "source_page": "https://maimai.sega.jp/maimai_finale/",
+      "source_dimensions": [
+        556,
+        371
+      ],
+      "provenance": "SEGA official FiNALE archived homepage; root stylesheet explicitly references logo",
+      "has_transparency": true,
+      "crop_box": [
+        2,
+        74,
+        554,
+        298
+      ]
+    },
+    "media/1bdf9d9e6f7be70801a0e20de427092e28b32bfb89029feae27b22c95e2c484a.webp": {
+      "bytes": 67146,
+      "sha256": "1bdf9d9e6f7be70801a0e20de427092e28b32bfb89029feae27b22c95e2c484a",
+      "source": "https://static.wikia.nocookie.net/maimai/images/f/fc/Maimai_DX_PLUS_logo.png/revision/latest?cb=20250524035103&format=original",
+      "source_sha256": "ead92a8d3a85af5b22f435967470b75d778d4a8dbbdbc56926d3c224cb1b06e8",
+      "width": 450,
+      "height": 177,
+      "conversion": "Native dimensions and original RGBA preserved; lossless WebP; no resize",
+      "source_page": "https://maimai.fandom.com/wiki/File:Maimai_DX_PLUS_logo.png",
+      "source_dimensions": [
+        450,
+        177
+      ],
+      "provenance": "Original-size PNG mirrored by Maimai Wiki; file page has no explicit upstream source attribution. SEGA logo artwork; no redraw/upscale applied.",
+      "has_transparency": true
+    },
+    "media/13cb1574718b6a8f128680dfb38aaa9ee3569ad77aff74f3f72ef10f373694ba.webp": {
+      "bytes": 123940,
+      "sha256": "13cb1574718b6a8f128680dfb38aaa9ee3569ad77aff74f3f72ef10f373694ba",
+      "source": "https://static.wikia.nocookie.net/maimai/images/8/87/Maimai_DX_Splash_PLUS_logo.png/revision/latest?cb=20250524035102&format=original",
+      "source_sha256": "1b03c8d1bcec435ba14e02343ede457617d73ad0c963e9e9671296e068993ed7",
+      "width": 621,
+      "height": 247,
+      "conversion": "Native dimensions and original RGBA preserved; lossless WebP; no resize",
+      "source_page": "https://maimai.fandom.com/wiki/File:Maimai_DX_Splash_PLUS_logo.png",
+      "source_dimensions": [
+        621,
+        247
+      ],
+      "provenance": "Original-size PNG mirrored by Maimai Wiki; file page has no explicit upstream source attribution. SEGA logo artwork; no redraw/upscale applied.",
+      "has_transparency": true
+    },
+    "media/e33afb7ce8f5e5752cf41b50438bf9f99f0f807b8788f376dce9850ec6f3007a.webp": {
+      "bytes": 104952,
+      "sha256": "e33afb7ce8f5e5752cf41b50438bf9f99f0f807b8788f376dce9850ec6f3007a",
+      "source": "https://static.wikia.nocookie.net/maimai/images/f/f7/Maimai_DX_UNiVERSE_PLUS_logo.png/revision/latest?cb=20250524042226&format=original",
+      "source_sha256": "faaabb5af5438719c374454649aaf02c6d67a43c3ab0c5eeec82dd22827ebda4",
+      "width": 512,
+      "height": 260,
+      "conversion": "Native dimensions and original RGBA preserved; lossless WebP; no resize",
+      "source_page": "https://maimai.fandom.com/wiki/File:Maimai_DX_UNiVERSE_PLUS_logo.png",
+      "source_dimensions": [
+        512,
+        260
+      ],
+      "provenance": "Original-size PNG mirrored by Maimai Wiki; file page has no explicit upstream source attribution. SEGA logo artwork; no redraw/upscale applied.",
+      "has_transparency": true
+    },
+    "media/60c4f41ee31e7f43260f3afe6e641a02c221c04ac4ab04d5952ac2756665a265.webp": {
+      "bytes": 52514,
+      "sha256": "60c4f41ee31e7f43260f3afe6e641a02c221c04ac4ab04d5952ac2756665a265",
+      "source": "https://static.wikia.nocookie.net/maimai/images/4/4d/Maimai_DX_FESTiVAL_logo.png/revision/latest?cb=20250524042226&format=original",
+      "source_sha256": "8bab75363bbcdbb73589aae9f8aa560e355367cd90e54fdcb9c4beb849bdc5cd",
+      "width": 689,
+      "height": 301,
+      "conversion": "Native dimensions and original RGBA preserved; lossless WebP; no resize",
+      "source_page": "https://maimai.fandom.com/wiki/File:Maimai_DX_FESTiVAL_logo.png",
+      "source_dimensions": [
+        689,
+        301
+      ],
+      "provenance": "Original-size PNG mirrored by Maimai Wiki; file page has no explicit upstream source attribution. SEGA logo artwork; no redraw/upscale applied.",
+      "has_transparency": true
+    },
+    "media/7ab8f5e4a5c54eb1f3d8cec56568afcf450e41b27334fe0b8de6272ec2dff0fc.webp": {
+      "bytes": 252884,
+      "sha256": "7ab8f5e4a5c54eb1f3d8cec56568afcf450e41b27334fe0b8de6272ec2dff0fc",
+      "source": "https://static.wikia.nocookie.net/maimai/images/d/d5/Maimai_DX_FESTiVAL_PLUS_logo.png/revision/latest?cb=20250524042226&format=original",
+      "source_sha256": "050b999ad6d940033fdbabce268dd0b5f6244b94e67360116f11aa6e30a475aa",
+      "width": 973,
+      "height": 475,
+      "conversion": "Native dimensions and original RGBA preserved; lossless WebP; no resize",
+      "source_page": "https://maimai.fandom.com/wiki/File:Maimai_DX_FESTiVAL_PLUS_logo.png",
+      "source_dimensions": [
+        973,
+        475
+      ],
+      "provenance": "Original-size PNG mirrored by Maimai Wiki; file page has no explicit upstream source attribution. SEGA logo artwork; no redraw/upscale applied.",
+      "has_transparency": true
+    },
+    "media/2108cf9fab76225673a8949ca82d1050d8f7baa688e419181845ec7450c2c83a.webp": {
+      "bytes": 246652,
+      "sha256": "2108cf9fab76225673a8949ca82d1050d8f7baa688e419181845ec7450c2c83a",
+      "source": "https://static.wikia.nocookie.net/maimai/images/8/83/Maimai_DX_BUDDiES_logo.png/revision/latest?cb=20250524042226&format=original",
+      "source_sha256": "c0cca678a9992c01df2cd597b7327fe3cde598dff0ca043eac07f99501feb905",
+      "width": 800,
+      "height": 458,
+      "conversion": "LANCZOS downsample preserving alpha, then lossless WebP; not original-RGBA identical",
+      "source_page": "https://maimai.fandom.com/wiki/File:Maimai_DX_BUDDiES_logo.png",
+      "source_dimensions": [
+        1054,
+        603
+      ],
+      "provenance": "Original-size PNG mirrored by Maimai Wiki; file page has no explicit upstream source attribution. SEGA logo artwork; no redraw/upscale applied.",
+      "has_transparency": true,
+      "resize": [
+        800,
+        458
+      ]
+    },
+    "media/310403a0915c7937fb121a5b5c4d932c1654e9f7be783e6cafa4e8fa1643f123.webp": {
+      "bytes": 237316,
+      "sha256": "310403a0915c7937fb121a5b5c4d932c1654e9f7be783e6cafa4e8fa1643f123",
+      "source": "https://static.wikia.nocookie.net/maimai/images/f/f4/Maimai_DX_BUDDiES_PLUS_logo.png/revision/latest?cb=20250524042224&format=original",
+      "source_sha256": "f70791ed20b6962027f99bb34419cfcd9255e795d3f0b44a2d2ca36aed1bdf7c",
+      "width": 858,
+      "height": 433,
+      "conversion": "Native dimensions and original RGBA preserved; lossless WebP; no resize",
+      "source_page": "https://maimai.fandom.com/wiki/File:Maimai_DX_BUDDiES_PLUS_logo.png",
+      "source_dimensions": [
+        858,
+        433
+      ],
+      "provenance": "Original-size PNG mirrored by Maimai Wiki; file page has no explicit upstream source attribution. SEGA logo artwork; no redraw/upscale applied.",
+      "has_transparency": true
+    },
+    "media/d9e084dcc241eccb809e26275645f6d3e21af1ae2a288a48e1d81765a1dd306a.webp": {
+      "bytes": 186428,
+      "sha256": "d9e084dcc241eccb809e26275645f6d3e21af1ae2a288a48e1d81765a1dd306a",
+      "source": "https://maimai.sega.jp/storage/root/logo_pc.png",
+      "source_sha256": "e337075d15247d41c9d74a3f3b1e2a053787234bff974efeaf5294ff4f972c5e",
+      "width": 558,
+      "height": 341,
+      "conversion": "Native dimensions and original RGBA preserved; lossless WebP; no resize",
+      "source_page": "https://maimai.sega.jp/",
+      "source_dimensions": [
+        558,
+        341
+      ],
+      "provenance": "SEGA official MAGiCAL homepage native PC logo; referenced by root JavaScript",
+      "has_transparency": true
+    },
+    "media/dd066ac76c24464e2b3270cc92ae5d4fa81bf1117a098456fa3fff8ae9c7c33b.webp": {
+      "bytes": 107132,
+      "sha256": "dd066ac76c24464e2b3270cc92ae5d4fa81bf1117a098456fa3fff8ae9c7c33b",
+      "source": "https://maimai.sega.jp/maimai_finale/news/2018-06-12/img1.png",
+      "source_sha256": "5450cc674e41ee471b9d871372f016a6bcb65bec14a5d3826212363cc54d2d33",
+      "width": 400,
+      "height": 301,
+      "conversion": "Native dimensions and original RGBA preserved; lossless WebP; no resize",
+      "source_page": "https://maimai.sega.jp/maimai_finale/news/2018-06-12/",
+      "source_dimensions": [
+        400,
+        301
+      ],
+      "provenance": "SEGA official MiLK PLUS announcement standalone transparent logo; visually verified by research agent",
+      "has_transparency": true
+    },
+    "media/98f989efa314c9f385b6f62d42f5ba39ef6b709aaf30108c8752c1214486744f.webp": {
+      "bytes": 17022,
+      "sha256": "98f989efa314c9f385b6f62d42f5ba39ef6b709aaf30108c8752c1214486744f",
+      "source": "https://static.wikia.nocookie.net/maimai/images/2/23/Maimai_PLUS_logo.png/revision/latest?cb=20250524035120&format=original",
+      "source_sha256": "f2e3596fe2295713187d5e056ff5ba34de0485c9f9689a9ebe58ca800f8d2d02",
+      "width": 500,
+      "height": 91,
+      "conversion": "Native dimensions and original RGBA preserved; lossless WebP; no resize",
+      "source_page": "https://maimai.fandom.com/wiki/File:Maimai_PLUS_logo.png",
+      "source_dimensions": [
+        500,
+        91
+      ],
+      "provenance": "Original-size PNG mirrored by Maimai Wiki; file page has no explicit upstream publisher attribution. SEGA logo artwork; no redraw or upscale applied.",
+      "has_transparency": true
+    },
+    "media/2d08e82fa557e01ad0d12deb1bc50d4f155c2bb4287c41fd82a92bf9a33e958c.webp": {
+      "bytes": 73298,
+      "sha256": "2d08e82fa557e01ad0d12deb1bc50d4f155c2bb4287c41fd82a92bf9a33e958c",
+      "source": "https://static.wikia.nocookie.net/maimai/images/2/22/Maimai_PiNK_PLUS_logo.png/revision/latest?cb=20250524035119&format=original",
+      "source_sha256": "ed5c031b291d74d150b238186f8d84cff8bbdcdaf487d6e66d235c5d37705e80",
+      "width": 500,
+      "height": 133,
+      "conversion": "Native dimensions and original RGBA preserved; lossless WebP; no resize",
+      "source_page": "https://maimai.fandom.com/wiki/File:Maimai_PiNK_PLUS_logo.png",
+      "source_dimensions": [
+        500,
+        133
+      ],
+      "provenance": "Original-size PNG mirrored by Maimai Wiki; file page has no explicit upstream publisher attribution. SEGA logo artwork; no redraw or upscale applied.",
+      "has_transparency": true
+    },
+    "media/2bedf49c21eb10708cfd14d9c91970bfb05c2c96218f2e435c34f6340488b74e.webp": {
+      "bytes": 136608,
+      "sha256": "2bedf49c21eb10708cfd14d9c91970bfb05c2c96218f2e435c34f6340488b74e",
+      "source": "https://static.wikia.nocookie.net/maimai/images/d/d0/Maimai_MURASAKi_PLUS_logo.png/revision/latest?cb=20250524035104&format=original",
+      "source_sha256": "39b282e5b055b058b4090f9e3de3b12b6db3f72b568ae92aadb905523757c59a",
+      "width": 576,
+      "height": 215,
+      "conversion": "Native dimensions and original RGBA preserved; lossless WebP; no resize",
+      "source_page": "https://maimai.fandom.com/wiki/File:Maimai_MURASAKi_PLUS_logo.png",
+      "source_dimensions": [
+        576,
+        215
+      ],
+      "provenance": "Original-size PNG mirrored by Maimai Wiki; file page has no explicit upstream publisher attribution. SEGA logo artwork; no redraw or upscale applied.",
+      "has_transparency": true
+    },
+    "media/e7d40ead6844e32b0ebb97488372a8c0f75250a4b73611d32a715a0c29212d10.webp": {
+      "bytes": 116868,
+      "sha256": "e7d40ead6844e32b0ebb97488372a8c0f75250a4b73611d32a715a0c29212d10",
+      "source": "https://raw.githubusercontent.com/Matsuk1/JiETNG-maimai-dx-bot/f6eb5ebc6e1f3200b9769060a34325b2ea4e1eb7/assets/versions/green_plus.png",
+      "source_sha256": "0044b599e7b1cfba72e2642a4915bd7dd6f79ec7819d33ccbfb4b555205678af",
+      "width": 640,
+      "height": 135,
+      "conversion": "Native dimensions and original RGBA preserved; lossless WebP; no resize",
+      "source_page": "https://github.com/Matsuk1/JiETNG-maimai-dx-bot/blob/f6eb5ebc6e1f3200b9769060a34325b2ea4e1eb7/assets/versions/green_plus.png",
+      "source_dimensions": [
+        640,
+        135
+      ],
+      "provenance": "Existing pinned Matsuk1 repository original, verified against the previously retained source hash; complete pink plus mark and original opaque backing preserved. SEGA artwork; no transparency reconstructed.",
+      "has_transparency": false
+    },
+    "media/4bf0625620df5e60b82e2bbf3a14103026288e88a712a4f02adfc06055cf56f4.webp": {
+      "bytes": 76284,
+      "sha256": "4bf0625620df5e60b82e2bbf3a14103026288e88a712a4f02adfc06055cf56f4",
+      "source": "https://raw.githubusercontent.com/Matsuk1/JiETNG-maimai-dx-bot/f6eb5ebc6e1f3200b9769060a34325b2ea4e1eb7/assets/versions/orange_plus.png",
+      "source_sha256": "2579f2ca47921912409fb29f08ccff404d1882ed2153d91bcdd515dcda22e298",
+      "width": 747,
+      "height": 219,
+      "conversion": "Native dimensions and original RGBA preserved; lossless WebP; no resize",
+      "source_page": "https://github.com/Matsuk1/JiETNG-maimai-dx-bot/blob/f6eb5ebc6e1f3200b9769060a34325b2ea4e1eb7/assets/versions/orange_plus.png",
+      "source_dimensions": [
+        747,
+        219
+      ],
+      "provenance": "Existing pinned Matsuk1 repository original, verified against the previously retained source hash; complete original transparency and outline preserved. SEGA artwork; no redraw or upscale.",
+      "has_transparency": true
+    },
+    "media/0e6b7551f7d398218d3979d82f32499eaea5b2bac242818d438a8f57b9827b07.webp": {
+      "bytes": 14150,
+      "sha256": "0e6b7551f7d398218d3979d82f32499eaea5b2bac242818d438a8f57b9827b07",
+      "source": "https://raw.githubusercontent.com/Matsuk1/JiETNG-maimai-dx-bot/f6eb5ebc6e1f3200b9769060a34325b2ea4e1eb7/assets/versions/maimai.png",
+      "source_sha256": "ae6b2b361c5fe703c37bad7ed18f3a172c6c3fb68c83d89f8c14164f04830cbb",
+      "width": 499,
+      "height": 69,
+      "conversion": "Native dimensions and original RGBA preserved; lossless WebP; no resize",
+      "source_page": "https://github.com/Matsuk1/JiETNG-maimai-dx-bot/blob/f6eb5ebc6e1f3200b9769060a34325b2ea4e1eb7/assets/versions/maimai.png",
+      "source_dimensions": [
+        499,
+        69
+      ],
+      "provenance": "Existing pinned Matsuk1 repository original, verified against the previously retained source hash; SEGA artwork at native dimensions, with original transparency.",
+      "has_transparency": true
     }
   },
-  "credit": "Jackets and maimai logos belong to SEGA and their respective rights holders. Version logos retained from Matsuk1/JiETNG-maimai-dx-bot.",
+  "credit": "Jackets and maimai logos belong to SEGA and their respective rights holders. Version logos use SEGA's official sites and original artwork mirrored by Logopedia, Maimai Wiki, pinned Matsuk1/JiETNG-maimai-dx-bot and Tomomai assets; per-asset provenance records source hashes and exact crops or downsampling. Previous thumbnails remain retained for immutable references.",
   "logo_source": {
     "repository": "Matsuk1/JiETNG-maimai-dx-bot",
     "revision": "f6eb5ebc6e1f3200b9769060a34325b2ea4e1eb7"

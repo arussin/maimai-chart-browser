@@ -2,8 +2,8 @@
   "version": 1,
   "tool": "esbuild-0.28.2",
   "entries": {
-    "hosted": "browser/browser-entry-5YV2WMMS.js",
-    "offline": "browser/browser-offline-COEI73C3.js"
+    "hosted": "browser/browser-entry-JD3RZZ3L.js",
+    "offline": "browser/browser-offline-UQKO3BKN.js"
   },
   "assets": {
     "browser/score-export-partner-otohime-buddies-FFTETS4W.js": {
@@ -22,13 +22,13 @@
       "sha256": "067738c39f4e09f707b43c2028d873a12f3dc814b02fd3d85fe09c266d102f56",
       "bytes": 388361
     },
-    "browser/score-export-canvas-52UTTQ3X.js": {
-      "sha256": "0a6996d1319da89e788a03175bda7456b23cb9ffca65136038abc47c2bf02e99",
-      "bytes": 22255
+    "browser/score-export-canvas-VLFPK4RU.js": {
+      "sha256": "9e32462f478fca9cf847c9e37306db19873899c1278e7379188f30cec523b012",
+      "bytes": 21939
     },
-    "browser/application-NYTF6Q5S.js": {
-      "sha256": "9158c90acb3d4c0b856b25989101f5eb6c3c039346997bcb8aa71865d9b54575",
-      "bytes": 256994
+    "browser/application-QMMHUN26.js": {
+      "sha256": "dc7ffe03eac09ad7ed621934d6ee8f0d803fa527582d0bcb87a07660a3130c33",
+      "bytes": 274415
     },
     "browser/chunk-DXPPFQ5S.js": {
       "sha256": "f7fbea75cb876df33c7b0770e6eeb0c6c6ebd148ca19ef44868e4a08f166835c",
@@ -98,8 +98,8 @@
       "sha256": "1bce3e8f658b1167543cdb9dd631c36f4cd5fc4cf68cf995c4080f2a56d27265",
       "bytes": 75458
     },
-    "browser/browser-entry-5YV2WMMS.js": {
-      "sha256": "10fd0a6812be6eab4690e220c83c9da075e7dcce27b5a515d1b308c4335f3a79",
+    "browser/browser-entry-JD3RZZ3L.js": {
+      "sha256": "0cd32c06092d59e784e06ad37d3a0a2f7d6c0aff34f8d19b1062e7e0d7d4977a",
       "bytes": 22238
     },
     "browser/chunk-XTUOD3PW.js": {
@@ -138,9 +138,9 @@
       "sha256": "ff9e0dca4365b7b1581e7275f3c6dbcf1474ffb874d81a3375ecf7a835dbaa6f",
       "bytes": 106
     },
-    "browser/browser-offline-COEI73C3.js": {
-      "sha256": "a931204b43554422599620064ad15c003e9f0061d029edce362c93909e14f54b",
-      "bytes": 6466104
+    "browser/browser-offline-UQKO3BKN.js": {
+      "sha256": "cf1af52496cdcbc9f0da8c56068da5a1879bd11d174a8be3898d594cf8b5e579",
+      "bytes": 6483193
     },
     "browser/recovery-pagination-c898b2432a221525.js": {
       "sha256": "c898b2432a221525bd523d99a8666f562002886ac907d715f3d1687e07c366b6",
@@ -167,7 +167,7 @@
     "lab-loader.js"
   ],
   "preloads": [
-    "browser/application-NYTF6Q5S.js",
+    "browser/application-QMMHUN26.js",
     "browser/chunk-DXPPFQ5S.js",
     "browser/chunk-WOT6VMZA.js",
     "browser/chunk-XTUOD3PW.js"

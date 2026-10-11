@@ -196,8 +196,9 @@ cache, saved dataset and refresh connection. The transactional invalidation epoc
 also records a clear marker, so other tabs discard scores and a tab that missed
 notifications catches up when focused. Requests and pending commits from the old
 generation cannot restore the cleared profile. Storage failures preserve the
-working data and offer a normal retry. Announcement and site preferences remain
-separate. The former separate **Clear player data** and **Forget remembered player
+working data and offer a normal retry. Site preferences and legacy announcement
+keys remain separate; the removed announcement UI no longer reads or writes those
+keys. The former separate **Clear player data** and **Forget remembered player
 data** controls are combined into this full-removal action. **Hide player data**
 still changes visibility without removing scores.
 

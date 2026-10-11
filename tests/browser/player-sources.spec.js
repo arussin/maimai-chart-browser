@@ -1,4 +1,5 @@
 import {mockBrowserConfiguration} from './browser-configuration-fixture.mjs';
+import {observeRetiredAnnouncements,retiredAnnouncementState} from './removed-announcement-fixture.mjs';
 import {test,expect} from './fixtures.js';
 test.beforeEach(async({fixtureOrigins})=>{for(const origin of ["https://public-report.example"])fixtureOrigins.synthetic(origin);});
 import {readFile} from 'node:fs/promises';
@@ -20,12 +21,12 @@ async function importReport(page,remember=true){await openImport(page);await pag
 async function saved(page){return page.evaluate(()=>maimaiPlayerStorage.read());}
 async function age(page){await page.evaluate(async()=>{const db=await new Promise(resolve=>{const q=indexedDB.open('maimai-player-data',2);q.onsuccess=()=>resolve(q.result);});await new Promise((resolve,reject)=>{const t=db.transaction('datasets','readwrite'),s=t.objectStore('datasets'),q=s.get('active');q.onsuccess=()=>s.put({...q.result,source:{...q.result.source,lastAttempt:0}},'active');t.oncomplete=resolve;t.onabort=reject;});db.close();});}
 
-test('source selection makes no requests; blocked Maishift and announcement tell the truth',async({page},testInfo)=>{
+test('source selection makes no requests and blocked Maishift tells the truth',async({page},testInfo)=>{
   await boot(page);let requests=0;page.on('request',r=>{if(r.url().includes('shiftpsh')||r.url().includes('public-report'))requests++;});await openImport(page);
   await expect(page.getByRole('radio')).toHaveCount(3);await expect(page.getByLabel('Upload a file',{exact:true})).toBeChecked();
   await page.getByLabel('Upload a file',{exact:true}).focus();await page.keyboard.press('ArrowDown');await expect(page.getByLabel('Hosted Session Report',{exact:true})).toBeChecked();
   await page.getByLabel('Maishift',{exact:true}).check();await expect(page.getByRole('button',{name:'Continue',exact:true})).toBeDisabled();await expect(page.locator('#player-import-dialog')).toContainText('not available yet');expect(requests).toBe(0);
-  await expect(page.locator('.feature-announcement')).toBeHidden();await expect(page.locator('#feature-announcement-replay')).toBeHidden();
+  await expect(page.locator('.feature-announcement,#feature-announcement-replay')).toHaveCount(0);
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
   await page.getByLabel('Hosted Session Report',{exact:true}).check();await page.screenshot({path:testInfo.outputPath('import-sources.png')});
 });
@@ -130,15 +131,35 @@ test('upstream throttling records backoff without replacing scores',async({page,
   await expect.poll(async()=>(await saved(page)).active.source.retryAt??0).toBeGreaterThan(Date.now()+60000);expect((await saved(page)).active.revision).toBe(before);
 });
 
-test('announcement waits for a modal, shows once, replays, and survives Forget',async({page,context})=>{
-  // Enable only the capability fixture. No production/debug switch is shipped.
+for(const seen of [false,true])test('removed announcements leave Settings usable without storage writes ('+(seen?'seen':'fresh')+')',async({page,context})=>{
+  // Enable the capability that formerly launched the announcement.
   await mockBrowserConfiguration(context,configuration=>({...configuration,features:{...configuration.features,maishift:true}}));
-  await page.addInitScript(()=>document.addEventListener('DOMContentLoaded',()=>{const d=document.createElement('dialog');d.id='blocking-fixture';d.textContent='Fixture';document.body.append(d);d.showModal();},{once:true}));
-  await boot(page);await expect(page.locator('.feature-announcement')).toBeHidden();expect(await page.evaluate(()=>localStorage.getItem('maimai-announcement:player-import-sources-v1'))).toBeNull();
-  await page.evaluate(()=>document.getElementById('blocking-fixture').close());await expect(page.locator('.feature-announcement')).toBeVisible();expect(await page.evaluate(()=>document.activeElement.closest('.feature-announcement')===null)).toBe(true);
-  await expect.poll(()=>page.evaluate(()=>localStorage.getItem('maimai-announcement:player-import-sources-v1'))).toBe('seen');
-  await page.getByRole('button',{name:'Got it',exact:true}).click();await page.evaluate(()=>maimaiPlayerStorage.forget());await page.reload();await expect.poll(()=>page.evaluate(()=>!!window.maimaiPersonal)).toBe(true);await page.evaluate(()=>maimaiPersonal.ready);await page.evaluate(()=>document.getElementById('blocking-fixture').close());await expect(page.locator('.feature-announcement')).toBeHidden();
-  await page.locator('#settings-toggle').click();await page.locator('#feature-announcement-replay').click();await expect(page.locator('.feature-announcement')).toBeVisible();await page.keyboard.press('Escape');await expect(page.locator('#settings-toggle')).toBeFocused();
+  await observeRetiredAnnouncements(page,{seen,modal:true});
+  await boot(page);await expect(page.locator('.feature-announcement,#feature-announcement-replay')).toHaveCount(0);
+  await page.evaluate(()=>document.getElementById('blocking-fixture').close());
+  const data=await fixture(page);
+  await page.locator('input[type=file]').setInputFiles({name:'announcement-regression.gz',mimeType:'application/gzip',buffer:gzipSync(Buffer.from(JSON.stringify(data)))});
+  await page.locator('#player-import-dialog .player-remember input').check();
+  await page.getByRole('button',{name:'Import data',exact:true}).click();
+  await expect.poll(()=>page.evaluate(()=>maimaiPersonal.enabled())).toBe(true);
+  for(const locale of ['en','zh-Hans','ko','ja','id'])for(const width of [1280,280]){
+    await page.setViewportSize({width,height:932});await page.evaluate(locale=>maimaiI18n.setLocale(locale),locale);
+    await page.locator('#settings-toggle').click();await expect(page.locator('#settings-menu')).toBeVisible();
+    for(const id of ['player-import','player-forget','site-share','report-issue'])await expect(page.locator('#'+id)).toBeVisible();
+    await expect(page.locator('.feature-announcement,#feature-announcement-replay')).toHaveCount(0);
+    expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
+    await page.keyboard.press('Escape');await expect(page.locator('#settings-toggle')).toBeFocused();
+  }
+  await page.locator('#settings-toggle').click();await page.locator('#player-forget').click();
+  await expect.poll(()=>page.evaluate(()=>maimaiPersonal.enabled())).toBe(false);
+  const expected={accesses:[],local:seen?'seen':null,session:seen?'seen':null};
+  expect(await retiredAnnouncementState(page)).toEqual(expected);
+  await page.reload();await expect.poll(()=>page.evaluate(()=>!!window.maimaiPersonal)).toBe(true);await page.evaluate(()=>maimaiPersonal.ready);
+  await page.evaluate(()=>document.getElementById('blocking-fixture').close());
+  await page.locator('#settings-toggle').click();await expect(page.locator('#player-import')).toBeVisible();
+  await expect(page.locator('#player-forget')).toBeHidden();
+  await expect(page.locator('.feature-announcement,#feature-announcement-replay')).toHaveCount(0);
+  expect(await retiredAnnouncementState(page)).toEqual(expected);
 });
 
 test('source selection remains localized and usable in all five languages',async({page})=>{
@@ -169,10 +190,13 @@ test('cancelled reads cannot clear the busy state of a newer import',async({page
   await page.getByRole('button',{name:'Import data',exact:true}).click();await expect.poll(()=>page.evaluate(()=>maimaiPersonal.enabled())).toBe(true);expect((await saved(page)).active).toBeNull();
 });
 
-test('announcement suppression falls back to the tab session when device preferences fail',async({page,context})=>{
+test('removed announcements do not access unavailable legacy storage',async({page,context})=>{
   await mockBrowserConfiguration(context,configuration=>({...configuration,features:{...configuration.features,maishift:true}}));
-  await page.addInitScript(()=>{const set=Storage.prototype.setItem;Storage.prototype.setItem=function(key,value){if(this===localStorage&&key.startsWith('maimai-announcement:'))throw new DOMException('Storage unavailable','QuotaExceededError');return set.call(this,key,value);};});
-  await boot(page);await expect(page.locator('.feature-announcement')).toBeVisible();await expect.poll(()=>page.evaluate(()=>sessionStorage.getItem('maimai-announcement:player-import-sources-v1'))).toBe('seen');await page.reload();await expect.poll(()=>page.evaluate(()=>!!window.maimaiPersonal)).toBe(true);await page.evaluate(()=>maimaiPersonal.ready);await expect(page.locator('.feature-announcement')).toBeHidden();
+  await observeRetiredAnnouncements(page,{deny:true});
+  await boot(page);await page.locator('#settings-toggle').click();await expect(page.locator('#player-import')).toBeVisible();
+  await expect(page.locator('.feature-announcement,#feature-announcement-replay')).toHaveCount(0);
+  expect(await retiredAnnouncementState(page)).toEqual({accesses:[],local:null,session:null});
+  await page.keyboard.press('Escape');await expect(page.locator('#settings-toggle')).toBeFocused();
 });
 
 test('Forget invalidates a pending commit before compression and storage complete',async({page,context})=>{

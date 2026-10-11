@@ -1,6 +1,7 @@
 import {browserResourceURL} from './browser-configuration-fixture.mjs';
 import {test,expect} from './fixtures.js';
 import {mountRegistryPage} from './registry-page-mount.mjs';
+import {observeRetiredAnnouncements,retiredAnnouncementState} from './removed-announcement-fixture.mjs';
 import {readFile} from 'node:fs/promises';
 import {gzipSync} from 'node:zlib';
 
@@ -80,6 +81,23 @@ for(const locale of ['en','ja','ko','zh-hans','id'])for(const width of [320,768,
   expect(errors).toEqual([]);
  });
 }
+for(const seen of [false,true])test('removed announcements stay absent on direct song pages ('+(seen?'seen':'fresh')+')',async({page,request})=>{
+ await observeRetiredAnnouncements(page,{seen});
+ const map=await(await request.get('/registry/permalinks.json')).json();
+ const slug=Object.values(map.songs).find(value=>value.includes('ソテリア'))||Object.values(map.songs)[0];
+ await page.goto('/en/songs/'+encodeURIComponent(slug)+'/');
+ for(const reload of [false,true]){
+  if(reload)await page.reload();
+  await expect(page.locator('#seo-route-view .song-workspace .song-row').first()).toBeVisible();
+  await expect.poll(()=>page.evaluate(()=>!!window.maimaiPersonal)).toBe(true);await page.evaluate(()=>maimaiPersonal.ready);
+  await page.locator('#settings-toggle').click();
+  for(const id of ['player-import','site-share','report-issue'])await expect(page.locator('#'+id)).toBeVisible();
+  await expect(page.locator('.feature-announcement,#feature-announcement-replay')).toHaveCount(0);
+  await page.keyboard.press('Escape');await expect(page.locator('#settings-toggle')).toBeFocused();
+  expect(await retiredAnnouncementState(page)).toEqual({accesses:[],local:seen?'seen':null,session:seen?'seen':null});
+ }
+});
+
 test('song choices cannot overwrite browser filters and personal sort intent',async({page})=>{
  await page.goto('/');await expect(page.locator('#catalog-count')).toHaveText('26 charts');
  await page.locator('#search').fill('ソテリア');

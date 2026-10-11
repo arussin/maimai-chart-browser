@@ -179,6 +179,262 @@ test('rating artwork failure and totals beyond five digits retain a readable num
   }
 });
 
+test('Best 50 cards show imported constants, larger jackets and an independent format suffix', () => {
+  const source = readFileSync(
+    new URL('../src/views/score-export-canvas.ts', import.meta.url),
+    'utf8',
+  );
+  const paints = [],
+    jackets = [];
+  const draw = runInNewContext(
+    '(' +
+      stripTypeScriptTypes(
+        source.slice(
+          source.indexOf('function best50Card('),
+          source.indexOf('/** Native canvas export:'),
+        ),
+      ) +
+      ')',
+    {
+      difficulty: () => '#8456cf',
+      box() {},
+      text: (...args) => paints.push(args),
+      jacket: (...args) => jackets.push(args),
+      grade() {},
+      gradeForAchievement: () => 'SSS+',
+      achievement: () => '100.5000%',
+      badges: () => [],
+      muted: '#667487',
+    },
+  );
+  for (const constant of [149, null, 0])
+    for (const format of ['DX', 'STD']) {
+      paints.length = jackets.length = 0;
+      draw(
+        {},
+        {
+          chart: {
+            chartID: 'synthetic',
+            title: 'Long imported title '.repeat(10),
+            level: '14+',
+            constant: 150,
+            format,
+            difficulty: 'MASTER',
+          },
+          record: { constant, achievement: 1005000 },
+          rating: 335,
+        },
+        1,
+        48,
+        465,
+        new Map(),
+        { translate: (key) => key },
+      );
+      const constantPaint = paints.find(([, , x, y]) => x === 323 && y === 486);
+      assert.equal(constantPaint[1], constant === null ? '—' : (constant / 10).toFixed(1));
+      assert.ok(
+        !paints.some(
+          ([, value]) => value === '14+' || value === '15.0' || value.startsWith('Constant'),
+        ),
+      );
+      assert.equal(jackets[0][4], 106);
+      const title = paints.find(([, value]) => value.startsWith('Long imported title'));
+      const suffix = paints.find(([, value]) => value === format);
+      assert.equal(title[3], suffix[3]);
+      assert.ok(title[2] + title[4] < suffix[2] - suffix[4], 'Long title cannot cover format');
+      assert.ok(jackets[0][3] + jackets[0][4] < title[3] - 21);
+    }
+});
+
+test('Best 50 has fifty bounded cards, matched name and rating widths, and no painted footer', async () => {
+  const source = readFileSync(
+    new URL('../src/views/score-export-canvas.ts', import.meta.url),
+    'utf8',
+  );
+  const paints = [],
+    cards = [],
+    names = [],
+    ratings = [],
+    brands = [],
+    artwork = [],
+    boxes = [],
+    attributes = {};
+  const ctx = {
+    fillRect() {},
+    save() {},
+    beginPath() {},
+    rect() {},
+    clip() {},
+    restore() {},
+    createLinearGradient() {
+      return { addColorStop() {} };
+    },
+  };
+  const canvas = {
+    setAttribute(key, value) {
+      attributes[key] = value;
+    },
+  };
+  const draw = runInNewContext(
+    '(' +
+      stripTypeScriptTypes(
+        source.slice(
+          source.indexOf('export async function renderBest50('),
+          source.indexOf('/** The artwork fills'),
+        ),
+      ).replace(/^export /, '') +
+      ')',
+    {
+      jackets: async () => new Map(),
+      surface: (_, width, height) => {
+        Object.assign(canvas, { width, height });
+        return { canvas, ctx };
+      },
+      officialBackground() {},
+      art: (...args) => artwork.push(args),
+      box: (...args) => boxes.push(args),
+      siteBrand: (...args) => brands.push(args),
+      muted: '#667487',
+      ink: '#243348',
+      text: (...args) => paints.push(args),
+      best50Card: (...args) => cards.push(args),
+      playerName: (...args) => names.push(args),
+      playerRating: (...args) => ratings.push(args),
+    },
+  );
+  const warning = 'Imported observation warning';
+  const model = {
+    old: [],
+    new: [],
+    totalRating: 0,
+    oldTotal: 0,
+    newTotal: 0,
+    player: { displayName: 'Synthetic' },
+    version: { label: 'PRiSM PLUS' },
+    coverage: 'partial',
+    excluded: { total: 2 },
+    warnings: [warning],
+  };
+  await draw({}, model, { translate: (key) => key, regionLabel: 'Japan' });
+  assert.equal(canvas.width, 1600);
+  assert.equal(canvas.height, 2369);
+  assert.equal(cards.length, 50);
+  assert.equal(new Set(cards.map((c) => c[3])).size, 5);
+  for (const card of cards) assert.ok(card[4] + 186 < canvas.height);
+  assert.equal(cards[0][4], 340);
+  assert.equal(cards[35][4], 1778);
+  assert.equal(cards.at(-1)[4] + 186, 2356);
+  assert.deepEqual(boxes[0].slice(1), [28, 20, 1544, 2337, '#ffffffd6', 24]);
+  assert.ok(artwork.every(([, , key]) => key !== 'character'));
+  assert.deepEqual(artwork.find(([, , key]) => key === 'version').slice(3), [1090, 79, 462, 132]);
+  assert.equal(names[0][3], ratings[0][3]);
+  assert.equal(names[0][5], ratings[0][5]);
+  assert.equal(names[0][3], cards[0][3], 'Player block aligns with chart grid');
+  assert.equal(names[0][5], 480);
+  assert.ok(names[0][6] >= (names[0][5] * 25) / 268, 'Nameplate art can occupy its entire width');
+  assert.ok(
+    paints.every(
+      ([, value, , y]) =>
+        y < canvas.height &&
+        value !== warning &&
+        value !== model.version.label &&
+        value !== 'Rating total' &&
+        value !== 'Rating estimate' &&
+        !value.startsWith('Captured') &&
+        value !== 'Created from imported records',
+    ),
+  );
+  assert.match(attributes['aria-label'], /Imported observation warning/);
+  assert.match(attributes['aria-label'], /Rating estimate 0/);
+  assert.match(attributes['aria-label'], /PRiSM PLUS/);
+  assert.deepEqual(brands[0].slice(1), [820, 116, 300, 48, 'center']);
+  const heading = paints.find(([, value]) => value === 'Best 50');
+  assert.deepEqual(heading.slice(2, 6), [820, 194, 390, 66]);
+  assert.equal(heading[6], '#243348');
+  assert.equal(heading[7], 'center');
+  assert.ok(brands[0][2] < heading[3] - heading[5], 'Wordmark sits above Best 50');
+  const region = paints.find(([, value]) => value === 'Japan');
+  assert.deepEqual(region.slice(2, 6), [820, 238, 330, 20]);
+  assert.equal(region[7], 'center');
+  paints.length = 0;
+  await draw({}, { ...model, coverage: 'complete' }, { translate: (key) => key });
+  assert.ok(
+    paints.every(
+      ([, value]) =>
+        value !== model.version.label && value !== 'Rating total' && value !== 'Rating estimate',
+    ),
+  );
+  assert.ok(!paints.some(([, , , y]) => y === 238), 'No empty regional caption is painted');
+  assert.match(attributes['aria-label'], /Rating total 0/);
+});
+
+test('canvas branding retains the actual site wordmark colors and type treatment', () => {
+  const source = readFileSync(
+    new URL('../src/views/score-export-canvas.ts', import.meta.url),
+    'utf8',
+  );
+  const css = readFileSync(
+    new URL('../../src/maimai_intelligence/assets/site-brand.css', import.meta.url),
+    'utf8',
+  );
+  const paints = [];
+  let offset = 0,
+    scale = 1;
+  const ctx = {
+    save() {},
+    restore() {},
+    translate(x) {
+      offset = x;
+    },
+    scale(x) {
+      scale = x;
+    },
+    measureText(value) {
+      return value === 'm'
+        ? { width: 34, actualBoundingBoxLeft: -4, actualBoundingBoxRight: 31 }
+        : { width: 24, actualBoundingBoxLeft: 3, actualBoundingBoxRight: 28 };
+    },
+    fillText(value, x) {
+      const bounds = this.measureText(value);
+      paints.push({
+        value,
+        color: this.fillStyle,
+        font: this.font,
+        left: offset + (x - bounds.actualBoundingBoxLeft) * scale,
+        right: offset + (x + bounds.actualBoundingBoxRight) * scale,
+      });
+    },
+  };
+  const draw = runInNewContext(
+    '(' +
+      stripTypeScriptTypes(
+        source.slice(
+          source.indexOf('function siteBrand('),
+          source.indexOf('function achievement('),
+        ),
+      ) +
+      ')',
+  );
+  draw(ctx, 0, 0, 326, 52);
+  assert.equal(paints.map((p) => p.value).join(''), 'maimai.party');
+  for (const paint of paints) assert.match(paint.font, /italic 850 52px system-ui/);
+  for (const paint of paints.slice(0, 7)) assert.equal(paint.color, '#007887');
+  for (const [index, name] of ['red', 'orange', 'yellow', 'green', 'blue'].entries())
+    assert.equal(
+      paints[index + 7].color,
+      new RegExp('\\.party-' + name + '\\{color:(#[a-f0-9]+)\\}').exec(css)[1],
+    );
+  assert.equal(Math.min(...paints.map((paint) => paint.left)), 0, 'Default stays left anchored');
+  for (const width of [326, 72]) {
+    paints.length = 0;
+    draw(ctx, 830, 154, width, 52, 'center');
+    const left = Math.min(...paints.map((paint) => paint.left));
+    const right = Math.max(...paints.map((paint) => paint.right));
+    assert.ok(Math.abs((left + right) / 2 - 830) < 1e-9, 'Actual glyph ink is centered');
+    assert.ok(right - left <= width + 1e-9, 'Centered wordmark stays within its allocated width');
+  }
+});
+
 test('every selectable partner has one reviewed local artwork with matching provenance', () => {
   const assets = JSON.parse(
     readFileSync(new URL('../src/views/score-export-result-artwork.json', import.meta.url), 'utf8'),

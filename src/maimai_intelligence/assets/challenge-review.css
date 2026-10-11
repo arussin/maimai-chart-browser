@@ -50,13 +50,5 @@ details summary{cursor:pointer;min-height:44px;padding:12px 0}.sources{border-to
 .player-source-fields p {margin:0}
 .player-status small {display:block;overflow-wrap:anywhere}
 .player-dialog a {overflow-wrap:anywhere}
-.feature-announcement {position:fixed;z-index:110;width:min(340px,calc(100vw - 32px));box-sizing:border-box;padding:1rem;border:1px solid var(--line,#556);border-radius:14px;background:var(--paper,#fff);color:var(--ink,#183b43);box-shadow:0 8px 32px #0005;overflow:auto}
-.feature-announcement[hidden] {display:none}
-.feature-announcement h2 {font-size:1.05rem;margin:0 0 .6rem}
-.feature-announcement p {line-height:1.5}
-.feature-announcement div {display:flex;flex-wrap:wrap;gap:.6rem}
-.feature-announcement button {padding:.5rem .8rem;cursor:pointer}
-.feature-announcement a {color:var(--aqua,#007887);font-size:.85rem}
-.feature-announcement::before {content:"";position:absolute;top:0;right:14px;border-left:7px solid transparent;border-right:7px solid transparent;border-bottom:7px solid var(--aqua,#007887)}
 
 .chart-song-page[hidden]{display:none}

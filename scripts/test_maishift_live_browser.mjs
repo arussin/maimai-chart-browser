@@ -49,7 +49,7 @@ try{
     try{
       const context=await browser.newContext({viewport}),page=await context.newPage();page.setDefaultTimeout(90000);let requests=0,pageErrors=0,unexpectedExternal=0;
       page.on('pageerror',()=>pageErrors++);
-      await context.addInitScript(()=>{localStorage.setItem('maimai-language-v1','en');sessionStorage.setItem('maimai-announcement:player-import-sources-v1','seen');});
+      await context.addInitScript(()=>localStorage.setItem('maimai-language-v1','en'));
       if(synthetic)await context.addInitScript(()=>{globalThis.testDigestCalls=0;const original=crypto.subtle.digest.bind(crypto.subtle);crypto.subtle.digest=(...args)=>{testDigestCalls++;return original(...args);};});
       await context.route('**/*',async route=>{
         const request=route.request(),url=new URL(request.url());

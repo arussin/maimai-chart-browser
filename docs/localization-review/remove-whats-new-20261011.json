@@ -1,0 +1,27 @@
+{
+  "reviewer": "Codex",
+  "date": "2026-10-11",
+  "method": "Source-consumer and deletion review across the canonical typed application and all five locale catalogs. No new or revised translated prose; not native-speaker certification.",
+  "locales": [
+    "en",
+    "zh-Hans",
+    "ko",
+    "ja",
+    "id"
+  ],
+  "removed_entries": 5,
+  "scope": [
+    "Bring your scores to maimai.party",
+    "Got it",
+    "Session Report on GitHub",
+    "What’s new",
+    "Bring your Session Report or public Maishift scores into the chart browser. Choose Import player data to get started."
+  ],
+  "checks": [
+    "All five strings belonged only to the removed announcement bubble and its Settings replay item. Their twenty translated values are removed together.",
+    "Remaining Settings, Import player data, Forget player data, Support and privacy labels retain their existing translations.",
+    "The Maishift invariant retains its remaining player-data source and uses a provider-brand reason; the removed announcement source is no longer listed.",
+    "Historical language review and release records are preserved. This record describes removal review and does not assert browser or production verification."
+  ],
+  "corrections": []
+}
