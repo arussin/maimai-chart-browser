@@ -22,15 +22,15 @@ async function boot(page){
   await expect(page.locator('#catalog-count strong')).toHaveText('6');
 }
 
-async function fixture(page,{version=true,missingAchievement=false}={}){
-  return page.evaluate(async({version,missingAchievement,privateName})=>{
+async function fixture(page,{version=true,missingAchievement=false,zeroRating=false}={}){
+  return page.evaluate(async({version,missingAchievement,zeroRating,privateName})=>{
     const core=maimaiPlayerData,catalog=maimaiResearchCatalog,first=catalog.catalog[0];
     const body={format:'maimai-player-data',schemaVersion:1,player:{key:'kamaitachi:maimaidx:private_export_sentinel',provider:'kamaitachi',game:'maimaidx',username:'PRIVATE_EXPORT_SENTINEL',displayName:privateName},charts:{},records:{},plays:{},snapshots:{},captures:{}};
     const pbs={};
     for(let i=0;i<52;i++){
       const chartID='export-chart-'+i,displayVersion=i<36?'maimaiでらっくす PRiSM':'maimaiでらっくす PRiSM PLUS';
       body.charts[chartID]={chartID,songID:'export-song-'+i,title:i===0?first.title:'Fictional song '+i,artist:i===0?first.artist:'Fictional artist',format:i===0?first.format:'DX',difficulty:i===0?first.difficulty:'MASTER',level:'14',constant:140,displayVersion,inGameID:null};
-      const record={chartID,achievement:missingAchievement?null:1005000-i,grade:missingAchievement?'':'SSS+',rate:missingAchievement?null:315-i,lamp:i===0?'ALL PERFECT':'FULL COMBO',sync:i===0?'FSD+':'',constant:140,displayVersion,timeAchieved:null,dxScore:null,maxDxScore:null,maxCombo:500,fast:0,slow:0,miss:0,good:0,great:2,perfect:12,pcrit:480};
+      const record={chartID,achievement:missingAchievement?null:1005000-i,grade:missingAchievement?'':'SSS+',rate:missingAchievement?null:zeroRating?0:315-i,lamp:i===0?'ALL PERFECT':'FULL COMBO',sync:i===0?'FSD+':'',constant:140,displayVersion,timeAchieved:null,dxScore:null,maxDxScore:null,maxCombo:500,fast:0,slow:0,miss:0,good:0,great:2,perfect:12,pcrit:480};
       const ref=await core.digest(record);body.records[ref]=record;pbs[chartID]=ref;
     }
     const played={...body.records[pbs['export-chart-0']],achievement:970000,grade:'S',rate:280,lamp:'CLEAR',sync:'',timeAchieved:Date.UTC(2026,8,12,17),dxScore:2300,maxDxScore:2500,maxCombo:112,fast:4,slow:7,miss:2,good:3,great:10,perfect:23,pcrit:400};
@@ -44,7 +44,7 @@ async function fixture(page,{version=true,missingAchievement=false}={}){
     maimaiPersonal.configure(catalog,{schema_version:'provider-mapping-1',charts:{'export-chart-0':{chart_id:first.chart_id,source_hash:first.source_hash}}});
     const url=new URL(location.href);url.searchParams.set('chart',first.chart_id);history.replaceState(null,'',url);dispatchEvent(new PopStateEvent('popstate'));
     return data;
-  },{version,missingAchievement,privateName});
+  },{version,missingAchievement,zeroRating,privateName});
 }
 
 async function importData(page,data){
@@ -170,10 +170,25 @@ test('achievement export distinguishes a PB from a recorded play and does not in
   await downloadedPNG(page,await generate(page),testInfo,'achievement-pb.png');
   let text=await page.evaluate(()=>[...exportPaintText,...exportCanvasLabels].join(''));
   expect(text).toMatch(/100\.5000/);expect(text).not.toMatch(/97\.0000/);expect(text).not.toMatch(/critical perfect/i);expect(await page.evaluate(()=>exportPaintText)).not.toContain('480');
+  expect(text).toContain('Current reconstructed rating');expect(text).toContain('14510');expect(await page.evaluate(()=>exportPaintText)).toContain('315');
   await page.keyboard.press('Escape');await page.locator('.player-export-play').first().click();
   await downloadedPNG(page,await generate(page),testInfo,'achievement-play.png');
   text=await page.evaluate(()=>[...exportPaintText,...exportCanvasLabels].join(''));
   expect(text).toMatch(/97\.0000/);expect(text).not.toMatch(/100\.5000/);expect(text).toContain('2300');expect(text).toMatch(/critical perfect/i);expect(await page.evaluate(()=>exportPaintText)).toContain('400');
+  expect(text).toContain('Current reconstructed rating');expect(text).toContain('14510');expect(await page.evaluate(()=>exportPaintText)).toContain('280');
+});
+
+test('achievement profile rating preserves a real zero and a later unknown profile does not reuse it',async({page})=>{
+  await boot(page);await importData(page,await fixture(page,{zeroRating:true}));
+  await expect(page.locator('#player-status .player-rating')).toHaveAttribute('aria-label','Reconstructed rating 0');
+  await page.locator('.player-export-achievement').first().click();await generate(page);
+  let text=await page.evaluate(()=>[...exportPaintText,...exportCanvasLabels].join(''));
+  expect(text).toContain('Current reconstructed rating');expect(text).toMatch(/Current reconstructed rating\s*0/);expect(await page.evaluate(()=>exportPaintText)).toContain('0');
+  await page.keyboard.press('Escape');await importData(page,await fixture(page,{version:false}));
+  await expect(page.locator('#player-status .player-rating')).toHaveAttribute('aria-label','Rating unknown');
+  await page.locator('.player-export-achievement').first().click();await generate(page);
+  text=await page.evaluate(()=>[...exportPaintText,...exportCanvasLabels].join(''));
+  expect(text).not.toContain('Current reconstructed rating');expect(text).not.toContain('Current imported rating');expect(await page.evaluate(()=>exportPaintText)).toContain('315');
 });
 
 test('manual version and verified partner choices survive exports and reload without storing player data',async({page},testInfo)=>{
@@ -300,4 +315,6 @@ for(const locale of ['en','zh-Hans','ko','ja','id'])test('export controls fit at
   await page.keyboard.press('Escape');await page.locator('.player-export-achievement').first().click();await fits(page);
   await page.locator('#player-export-partner').selectOption('kanadera-magical');await fits(page);
   await generate(page);await fits(page);await dialog(page).screenshot({path:testInfo.outputPath('achievement-'+locale+'-280.png')});
+  const captions={en:'Current reconstructed rating','zh-Hans':'当前重建的 Rating',ko:'현재 재구성한 레이팅',ja:'現在の再計算レーティング',id:'Rating hasil rekonstruksi saat ini'};
+  expect(await page.evaluate(()=>[...exportPaintText,...exportCanvasLabels].join(''))).toContain(captions[locale]);
 });

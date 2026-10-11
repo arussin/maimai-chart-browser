@@ -325,12 +325,35 @@ test('only new imports into a loaded account warn; cancel and refresh preserve d
 });
 
 test('reported rating survives a temporary reload and missing rating stays unknown',async({page,context})=>{
+  await page.addInitScript(()=>{
+    const paint=CanvasRenderingContext2D.prototype.fillText,encode=HTMLCanvasElement.prototype.toBlob;
+    window.exportRatingPaint=[];window.exportRatingLabels=[];
+    CanvasRenderingContext2D.prototype.fillText=function(text,...args){window.exportRatingPaint.push(String(text));return paint.call(this,text,...args);};
+    HTMLCanvasElement.prototype.toBlob=function(...args){window.exportRatingLabels.push(this.getAttribute('aria-label')||'');return encode.apply(this,args);};
+  });
   const state=await setup(page,context);await importData(page,false);await page.reload();await expect.poll(()=>page.evaluate(()=>!!window.maimaiPersonal)).toBe(true);await page.evaluate(()=>maimaiPersonal.ready);
+  async function exportRating(){
+    const pbs=page.getByRole('button',{name:'My PBs',exact:true});
+    if(await pbs.getAttribute('aria-pressed')!=='true')await pbs.click();
+    const chart=page.locator('#songs .song-row[data-chart-id="'+state.chart+'"]');
+    await expect(chart).toBeVisible();
+    const summary=chart.locator('.chart-row');
+    if(await summary.getAttribute('aria-expanded')!=='true')await summary.click();
+    await page.locator('.player-export-achievement').first().click();
+    await page.evaluate(()=>{window.exportRatingPaint=[];window.exportRatingLabels=[];});
+    await page.locator('#player-export-generate').click();await expect(page.locator('#player-export-download')).toBeVisible();
+    const result=await page.evaluate(()=>({text:[...exportRatingPaint,...exportRatingLabels].join(''),paint:exportRatingPaint}));
+    await page.keyboard.press('Escape');return result;
+  }
   await expect(page.locator('#lab-status')).toBeHidden();
   await expect(page.locator('#player-status .player-rating')).toHaveAttribute('aria-label','Maishift rating 15432');
   await expect(page.locator('#player-status .player-profile-link')).toHaveAttribute('href','https://maimai.shiftpsh.com/en@intl/profile/fictional-player/home');
+  let image=await exportRating();expect(image.text).toContain('Current imported rating');expect(image.text).toContain('15432');expect(image.paint).toContain('315');
   expect((await saved(page)).active).toBeNull();delete state.profile.userRecord.profile.rating;
   await importData(page,false,null);await expect(page.locator('#player-status .player-rating-unknown')).not.toHaveAttribute('data-tier');
+  image=await exportRating();expect(image.text).not.toContain('Current imported rating');expect(image.text).not.toContain('Current reconstructed rating');expect(image.text).not.toContain('15432');expect(image.paint).toContain('315');
+  state.profile.userRecord.profile.rating=0;await importData(page,false,0);
+  image=await exportRating();expect(image.text).toMatch(/Current imported rating\s*0/);expect(image.paint).toContain('315');
 });
 
 test('pasted explicit regional URL selects its record region without a read',async({page,context})=>{

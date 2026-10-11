@@ -1,7 +1,12 @@
 import type { TextView, LocalizedText } from '../components/chart-card';
 import { createVersionPicker } from '../components/version-picker';
 import type { PlayerChart, PlayerDataset, PlayerRecord } from '../domain/player-data';
-import { buildBest50, detectVersion, versionChoices } from '../domain/score-export';
+import {
+  buildBest50,
+  detectVersion,
+  versionChoices,
+  type ExportPlayerRating,
+} from '../domain/score-export';
 import type { renderAchievement } from './score-export-canvas';
 import { defaultScoreExportPartner, scoreExportPartners } from './score-export-partners';
 import type { ScoreExportPreferences } from '../runtime/score-export-preferences';
@@ -13,6 +18,7 @@ interface ExportPorts {
   preferences: ScoreExportPreferences;
   usage(...args: ScoreExportUsageArguments): void;
   dataset(): PlayerDataset | null;
+  playerRating?(): ExportPlayerRating | null;
   resolve(
     chart: PlayerChart,
     record: PlayerRecord,
@@ -293,6 +299,7 @@ export function createScoreExporter(ports: ExportPorts) {
       record,
       playerName: dataset.player.displayName,
       recordKind,
+      playerRating: ports.playerRating?.() ?? null,
       partnerKey: ports.preferences.read().partnerKey,
     };
     const partnerLabel = make('label', 'Partner illustration'),
