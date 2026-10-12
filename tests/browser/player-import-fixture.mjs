@@ -5,5 +5,6 @@ export async function selectImportMethod(page, method) {
     : method.startsWith('file:') ? method.slice(5) : method;
   const toggle = page.locator(`#player-import-dialog [data-service-toggle="${service}"]`);
   if (await toggle.getAttribute('aria-expanded') !== 'true') await toggle.click();
-  await page.locator(`#player-import-dialog input[data-import-method="${method}"]`).check();
+  const radio = page.locator(`#player-import-dialog input[data-import-method="${method}"]`);
+  if (await radio.count()) await radio.check();
 }

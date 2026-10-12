@@ -87,7 +87,7 @@ test('proxy preview has explicit consent, region, precision and unmatched covera
   const options=await page.evaluate(()=>requests[0]);expect(options.url).toBe(PATH);expect(options.credentials).toBe('omit');expect(options.referrerPolicy).toBe('no-referrer');expect(page.url()).not.toContain('fictional-player');
   const result=await page.evaluate(async()=>{const state=await maimaiPlayerStorage.read(),data=await maimaiPlayerData.decode(state.active.bytes);return {achievements:Object.values(data.records).map(r=>r.achievement),plays:Object.keys(data.plays),counts:Object.keys(data.charts).length,portable:JSON.stringify(data)};});
   expect(result.achievements).toContain(987654);expect(result.plays).toHaveLength(0);expect(result.counts).toBe(3);expect(result.portable).not.toContain('profileCreatedAt');
-  await open(page);await expect(page.locator('input[value=maishift]')).toBeChecked();
+  await open(page);await expect(page.locator('[data-service-toggle=maishift]')).toHaveAttribute('aria-expanded','true');
 });
 test('Import once stores no refresh connection and remains available in this tab',async({page,context})=>{
   const state=await prepare(context);await boot(page);await commit(page,false);expect((await saved(page)).active).toBeNull();await page.reload();await expect.poll(()=>page.evaluate(()=>!!window.maimaiPersonal)).toBe(true);await page.evaluate(()=>maimaiPersonal.ready);expect(await page.evaluate(()=>maimaiPersonal.enabled())).toBe(true);expect(state.calls).toBe(1);await expect(page.locator('#player-refresh')).toBeHidden();

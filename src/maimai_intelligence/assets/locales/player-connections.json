@@ -359,6 +359,48 @@
       "ko": "Diving-Fish 또는 LXNS에 연결하면 Party 연결 서비스가 성적을 읽고 새로고침을 위해 암호화된 접근 권한과 계정 이름을 보관합니다. 성적은 서버에 저장하지 않습니다. 연결을 해제하면 Party의 접근 권한이 삭제됩니다. 서비스 설정에서도 권한을 취소할 수 있습니다.",
       "ja": "Diving-Fish または LXNS に接続すると、Party の接続サービスは成績を読み取り、更新用に暗号化したアクセス許可とアカウント名を保持します。成績は保存しません。切断すると Party 側のアクセス許可を削除します。サービス側の設定でも許可を取り消せます。",
       "id": "Jika Anda menghubungkan Diving-Fish atau LXNS, layanan koneksi Party membaca skor dan menyimpan izin akses terenkripsi serta nama akun untuk penyegaran. Layanan ini tidak menyimpan skor. Memutuskan koneksi menghapus izin dari Party; Anda juga dapat mencabut akses di pengaturan penyedia."
+    },
+    "My scores are updated.": {
+      "zh-Hans": "我的成绩已更新。",
+      "ko": "성적을 갱신했습니다.",
+      "ja": "成績を更新しました。",
+      "id": "Skor saya sudah diperbarui."
+    },
+    "Score masking is off.": {
+      "zh-Hans": "成绩掩码已关闭。",
+      "ko": "성적 마스킹을 껐습니다.",
+      "ja": "成績のマスクを無効にしました。",
+      "id": "Penyamaran skor sudah dimatikan."
+    },
+    "Why update scores first?": {
+      "zh-Hans": "为什么要先更新成绩？",
+      "ko": "왜 성적을 먼저 갱신해야 하나요?",
+      "ja": "先に成績を更新する理由",
+      "id": "Mengapa skor perlu diperbarui dahulu?"
+    },
+    "About score masking": {
+      "zh-Hans": "关于成绩掩码",
+      "ko": "성적 마스킹 안내",
+      "ja": "成績のマスクについて",
+      "id": "Tentang penyamaran skor"
+    },
+    "Update your China-region scores in Diving-Fish and accept its tracker agreement. Connect asks for read-only access; you can review the scores before importing.": {
+      "zh-Hans": "请先在水鱼查分器更新国服成绩并接受查分器协议。连接时只需授予读取权限；导入前可以预览成绩。",
+      "ko": "먼저 Diving-Fish에서 중국 지역 성적을 갱신하고 조회 서비스 약관에 동의하세요. 연결 시 읽기 전용 권한을 요청하며, 가져오기 전에 성적을 확인할 수 있습니다.",
+      "ja": "先に Diving-Fish で中国版の成績を更新し、利用規約に同意してください。接続時に読み取り専用の権限を求めます。読み込む前に成績を確認できます。",
+      "id": "Perbarui skor wilayah Tiongkok Anda di Diving-Fish dan setujui perjanjian pelacaknya. Koneksi meminta izin baca saja; Anda dapat meninjau skor sebelum mengimpor."
+    },
+    "Sync your China-region maimai DX scores in LXNS first. Connect asks for read-only access; you can review the scores before importing.": {
+      "zh-Hans": "请先在 LXNS 同步国服舞萌 DX 成绩。连接时只需授予读取权限；导入前可以预览成绩。",
+      "ko": "먼저 LXNS에서 중국 지역 maimai DX 성적을 동기화하세요. 연결 시 읽기 전용 권한을 요청하며, 가져오기 전에 성적을 확인할 수 있습니다.",
+      "ja": "先に LXNS で中国版 maimai DX の成績を同期してください。接続時に読み取り専用の権限を求めます。読み込む前に成績を確認できます。",
+      "id": "Sinkronkan skor maimai DX wilayah Tiongkok Anda di LXNS dahulu. Koneksi meminta izin baca saja; Anda dapat meninjau skor sebelum mengimpor."
+    },
+    "Choose a service.": {
+      "zh-Hans": "请选择服务。",
+      "ko": "서비스를 선택하세요.",
+      "ja": "サービスを選んでください。",
+      "id": "Pilih layanan."
     }
   }
 }

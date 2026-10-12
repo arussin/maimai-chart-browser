@@ -34,6 +34,12 @@ LXNS's own score-sync setup and confirm that their scores are visible there firs
 The Party connection needs no personal API key, friend code, QQ number, or public
 profile setting. Its read-only permission applies to the signed-in player.
 
+The connection panel uses a short prerequisite checklist: scores updated for both
+trackers, plus score masking off for Fish. Explanations sit behind question-mark
+buttons. The tracker link opens the service for setup; **Connect** opens its own
+sign-in and approval page, then returns to Party's score preview. Confirmations
+are required for a new account connection, not for previewing an existing grant.
+
 No manual Fish or LXNS API-response upload is offered. Ordinary file upload
 remains under Session Report. Never ask
 players for provider API keys, application secrets, or passwords inside Party.
@@ -49,6 +55,15 @@ before connecting again.
 PBs are not invented plays. Missing charts do not erase retained PBs. Unmatched
 and unsupported chart counts remain visible. The last-imported date records
 Party's retrieval, not the last arcade play or tracker synchronization.
+
+China-region imports do not imply a complete China-version catalog or verified
+China Best 50 reconstruction. Fish constants and LXNS rating contributions are
+preserved only when supplied; missing values are not filled from Japanese catalog
+constants. Unknown/China-only records remain unmatched. Matching cannot detect a
+regional chart revision with identical title, artist, format and difficulty.
+The existing export version pools are not a verified China release model, so do
+not present their Best 50 output as an exact China B35/B15 result. Regional chart
+equivalence and China release/rating policies remain separate acceptance work.
 
 ## Operator setup and activation gates
 

@@ -834,8 +834,8 @@ export function createPlayerData(ports: PersonalPorts) {
       };
       title.append(toggle);
       header.append(title, helpLink(service.help, service.helpLabel));
-      methods.append(make('legend', 'Import method'));
-      for (const method of service.methods) {
+      if (service.methods.length > 1) methods.append(make('legend', 'Import method'));
+      for (const method of service.methods.length > 1 ? service.methods : []) {
         const row = make('label'),
           radio = make('input');
         radio.type = 'radio';
@@ -847,7 +847,7 @@ export function createPlayerData(ports: PersonalPorts) {
         row.append(radio, make('span', method.label));
         methods.append(row);
       }
-      body.append(methods);
+      if (service.methods.length > 1) body.append(methods);
       section.append(header, body);
       group.append(section);
       sections.set(service.id, { toggle, body });
@@ -863,7 +863,8 @@ export function createPlayerData(ports: PersonalPorts) {
       selected = value;
       openService = importServiceForMethod(value).id;
       lastMethods.set(openService, value);
-      group.querySelector<HTMLInputElement>(`input[data-import-method="${value}"]`)!.checked = true;
+      for (const radio of group.querySelectorAll<HTMLInputElement>('input[data-import-method]'))
+        radio.checked = radio.value === value;
       if (unchanged) updateSections();
       else render();
     }
@@ -912,26 +913,6 @@ export function createPlayerData(ports: PersonalPorts) {
       } else if (isOAuthProvider(selected)) {
         const provider = selected;
         const saved = player.source?.type === provider ? player.source : null;
-        fields.append(
-          make(
-            'p',
-            provider === 'diving-fish'
-              ? 'For players whose China-region scores are already visible in Diving-Fish.'
-              : 'For players whose China-region maimai DX scores are already visible in LXNS.',
-          ),
-          make(
-            'p',
-            provider === 'diving-fish'
-              ? 'Open Diving-Fish first, accept its tracker agreement, and check your scores. Creating an account does not add arcade scores.'
-              : 'Open LXNS first and sync your scores to your account. Creating an account does not add arcade scores.',
-          ),
-          provider === 'diving-fish'
-            ? external('Open Diving-Fish', 'https://maimai.diving-fish.com/')
-            : external('Open LXNS', 'https://maimai.lxns.net/'),
-          provider === 'diving-fish'
-            ? helpLink('diving-fish', 'About Diving-Fish imports')
-            : helpLink('lxns', 'About LXNS imports'),
-        );
         if (!directAvailable) {
           next.disabled = true;
           fields.append(make('p', 'Checking connection availability…'));
@@ -965,33 +946,72 @@ export function createPlayerData(ports: PersonalPorts) {
           showOtherConnections();
           return;
         }
-        fields.append(
-          make(
-            'p',
-            provider === 'diving-fish'
-              ? 'Sign in to Diving-Fish and allow maimai.party to read your profile name and scores. You will preview them before importing.'
-              : 'Sign in to LXNS and allow maimai.party to read your player name and scores. No personal API key is needed. You will preview them before importing.',
-          ),
-        );
-        let masking: HTMLInputElement | undefined;
-        if (provider === 'diving-fish') {
-          fields.append(
-            make(
-              'p',
-              'In Diving-Fish, open Edit profile (编辑个人资料) and turn off score masking (对非网页查询的成绩使用掩码). Keep public-query privacy on if you prefer. Party cannot verify masking for you.',
-            ),
-          );
-          const label = make('label', undefined, 'player-remember');
-          masking = make('input');
-          masking.id = 'player-fish-masking';
-          masking.type = 'checkbox';
-          label.append(masking, make('span', 'I have disabled score masking in Diving-Fish.'));
-          fields.append(label);
+        function setupStep(
+          id: string,
+          label: string,
+          helpLabel: string,
+          helpText: string,
+          tracker?: HTMLAnchorElement,
+        ) {
+          const step = make('div', undefined, 'player-setup-step'),
+            caption = make('label', undefined, 'player-remember'),
+            checkbox = make('input'),
+            help = make('button', i18n.verbatim('?'), 'player-source-help player-setup-help'),
+            explanation = make('p', helpText, 'player-setup-explanation');
+          checkbox.type = 'checkbox';
+          checkbox.id = id;
+          caption.append(checkbox, make('span', label));
+          help.type = 'button';
+          i18n.attribute(help, 'aria-label', helpLabel);
+          i18n.attribute(help, 'title', helpLabel);
+          help.setAttribute('aria-expanded', 'false');
+          explanation.id = id + '-help';
+          explanation.hidden = true;
+          help.setAttribute('aria-controls', explanation.id);
+          help.onclick = () => {
+            explanation.hidden = !explanation.hidden;
+            help.setAttribute('aria-expanded', String(!explanation.hidden));
+            if (!explanation.hidden) usage('resource_opened', 'import_help');
+          };
+          step.append(caption);
+          if (tracker) step.append(tracker);
+          step.append(help, explanation);
+          fields.append(step);
+          return checkbox;
         }
+        const trackerLabel = provider === 'diving-fish' ? 'Open Diving-Fish' : 'Open LXNS';
+        const tracker = external(
+          trackerLabel,
+          provider === 'diving-fish'
+            ? 'https://maimai.diving-fish.com/'
+            : 'https://maimai.lxns.net/',
+        );
+        tracker.className = 'player-setup-tracker';
+        i18n.attribute(tracker, 'aria-label', trackerLabel);
+        i18n.attribute(tracker, 'title', trackerLabel);
+        i18n.text(tracker, i18n.verbatim('↗'));
+        const updated = setupStep(
+          'player-provider-updated',
+          'My scores are updated.',
+          'Why update scores first?',
+          provider === 'diving-fish'
+            ? 'Update your China-region scores in Diving-Fish and accept its tracker agreement. Connect asks for read-only access; you can review the scores before importing.'
+            : 'Sync your China-region maimai DX scores in LXNS first. Connect asks for read-only access; you can review the scores before importing.',
+          tracker,
+        );
+        const masking =
+          provider === 'diving-fish'
+            ? setupStep(
+                'player-fish-masking',
+                'Score masking is off.',
+                'About score masking',
+                'In Diving-Fish, open Edit profile (编辑个人资料) and turn off score masking (对非网页查询的成绩使用掩码). Keep public-query privacy on if you prefer. Party cannot verify masking for you.',
+              )
+            : undefined;
         const connect = () => {
           if (player.busy) return;
-          if (masking && !masking.checked) {
-            masking.focus();
+          if (!updated.checked || (masking && !masking.checked)) {
+            (!updated.checked ? updated : masking!).focus();
             return;
           }
           const popup = openProviderPopup(window, provider, usage);
@@ -1019,22 +1039,25 @@ export function createPlayerData(ports: PersonalPorts) {
             ),
           );
         };
+        let connectButton = next;
         if (saved) {
           i18n.text(next, 'Preview connected scores');
           next.onclick = () => void player.importSource(saved, rememberChoice);
           const another = make('button', 'Connect another account');
           another.type = 'button';
           another.onclick = connect;
+          connectButton = another;
           fields.append(another);
         } else {
           i18n.text(next, provider === 'diving-fish' ? 'Connect Diving-Fish' : 'Connect LXNS');
-          next.disabled = !!masking && !masking.checked;
-          if (masking)
-            masking.onchange = () => {
-              next.disabled = !masking!.checked;
-            };
           next.onclick = connect;
         }
+        const updateReady = () => {
+          connectButton.disabled = !updated.checked || !!(masking && !masking.checked);
+        };
+        updated.onchange = updateReady;
+        if (masking) masking.onchange = updateReady;
+        updateReady();
         showOtherConnections();
         function showOtherConnections() {
           const otherConnections = make('div', undefined, 'player-provider-connections');
@@ -1149,7 +1172,7 @@ export function createPlayerData(ports: PersonalPorts) {
     actions.append(next);
     const footer = make('div', undefined, 'player-actions player-source-footer');
     footer.append(cancel);
-    dialog.append(heading, make('p', 'Choose a service and an import method.'));
+    dialog.append(heading, make('p', 'Choose a service.'));
     if (sources.pendingCleanup()) {
       const retry = make('button', 'Retry connection cleanup'),
         cleanupNote = make('p', 'A provider connection still needs cleanup.');
@@ -1193,7 +1216,10 @@ export function createPlayerData(ports: PersonalPorts) {
     dialog.append(group, footer);
     render();
     if (!dialog.open) dialog.showModal();
-    group.querySelector<HTMLInputElement>(':checked')?.focus();
+    (
+      group.querySelector<HTMLInputElement>('input[data-import-method]:checked') ??
+      sections.get(openService!)?.toggle
+    )?.focus();
   }
   function importReport(
     value: string | ReturnType<PersonalPorts['maishift']['location']>,

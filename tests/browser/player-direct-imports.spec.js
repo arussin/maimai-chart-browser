@@ -319,6 +319,7 @@ async function mockOAuth(context, { enabled = true } = {}) {
 }
 async function connect(page, provider) {
   await openImport(page, provider);
+  await page.locator("#player-provider-updated").check();
   if (provider === "diving-fish")
     await page.locator("#player-fish-masking").check();
   await page.locator("#player-import-dialog .player-actions button").first().click();
@@ -434,7 +435,7 @@ test('five service sections expose six methods, local marks, and keyboard contro
   await openImport(page);
   const dialog = page.locator('#player-import-dialog');
   await expect(dialog.locator('[data-import-service]')).toHaveCount(5);
-  await expect(dialog.locator('input[name=player-source]')).toHaveCount(6);
+  await expect(dialog.locator('input[name=player-source]')).toHaveCount(2);
   expect(await dialog.locator('[data-import-service]').evaluateAll(nodes => nodes.map(node => node.dataset.importService))).toEqual(['kamaitachi', 'diving-fish', 'lxns', 'maishift', 'session-report']);
   await expect(dialog.locator('.player-service-body:visible')).toHaveCount(1);
   await expect(dialog.locator('[data-service-toggle="session-report"]')).toHaveAttribute('aria-expanded', 'true');
@@ -453,7 +454,7 @@ test('five service sections expose six methods, local marks, and keyboard contro
   await expect(kamaitachi).toBeFocused();
   await expect(kamaitachi).toHaveAttribute('aria-expanded', 'true');
   await expect(dialog.locator('.player-service-body:visible')).toHaveCount(1);
-  await expect(dialog).toContainText('Import by username');
+  await expect(dialog.getByRole('radio')).toHaveCount(0);
   await expect(dialog.getByRole('button', { name: 'Preview scores', exact: true })).toBeVisible();
   await page.locator('#player-kamaitachi-account').fill('UnsubmittedDraft');
   await kamaitachi.focus();
@@ -463,7 +464,7 @@ test('five service sections expose six methods, local marks, and keyboard contro
   await page.keyboard.press('Enter');
   await expect(page.locator('#player-kamaitachi-account')).toHaveValue('UnsubmittedDraft');
   await selectImportMethod(page, 'diving-fish');
-  await expect(dialog.getByRole('radio')).toHaveCount(1);
+  await expect(dialog.getByRole('radio')).toHaveCount(0);
   await expect(dialog.locator('.player-file-fallback')).toHaveCount(0);
   await expect(dialog.locator('input[data-import-method^="file:"]')).toHaveCount(0);
   await expect(dialog.locator('#player-file-account')).toHaveCount(0);
@@ -587,6 +588,10 @@ for (const provider of ['diving-fish', 'lxns']) test(provider + " previews befor
   const first = await saved(page),
     original = first.source.connectionID;
   await openImport(page, provider);
+  await expect(page.locator('#player-provider-updated')).not.toBeChecked();
+  await expect(page.getByRole('button', { name: 'Preview connected scores', exact: true })).toBeEnabled();
+  await expect(page.getByRole('button', { name: 'Connect another account', exact: true })).toBeDisabled();
+  await page.locator('#player-provider-updated').check();
   if (provider === 'diving-fish') await page.locator('#player-fish-masking').check();
   await page
     .getByRole("button", { name: "Connect another account", exact: true })
@@ -641,6 +646,46 @@ for (const provider of ['diving-fish', 'lxns']) test(provider + " previews befor
   )).toBeNull();
 });
 
+for (const provider of ['diving-fish', 'lxns']) test(provider + ' uses required checklist steps with accessible optional help', async ({ page, context }) => {
+  const state = await mockOAuth(context);
+  await boot(page);
+  await openImport(page, provider);
+  const dialog = page.locator('#player-import-dialog'),
+    updated = page.getByRole('checkbox', { name: 'My scores are updated.', exact: true }),
+    connect = dialog.getByRole('button', { name: provider === 'lxns' ? 'Connect LXNS' : 'Connect Diving-Fish', exact: true }),
+    help = dialog.getByRole('button', { name: 'Why update scores first?', exact: true }),
+    link = dialog.getByRole('link', { name: provider === 'lxns' ? 'Open LXNS' : 'Open Diving-Fish', exact: true });
+  await expect(updated).not.toBeChecked();
+  await expect(connect).toBeDisabled();
+  await expect(page.locator('#player-provider-updated-help')).toBeHidden();
+  await expect(help).toHaveAttribute('aria-controls', 'player-provider-updated-help');
+  await help.focus();
+  await page.keyboard.press('Enter');
+  await expect(help).toHaveAttribute('aria-expanded', 'true');
+  await expect(page.locator('#player-provider-updated-help')).toBeVisible();
+  await page.keyboard.press('Enter');
+  await expect(help).toHaveAttribute('aria-expanded', 'false');
+  await expect(link).toHaveAttribute('href', provider === 'lxns' ? 'https://maimai.lxns.net/' : 'https://maimai.diving-fish.com/');
+  await expect(link).toHaveAttribute('target', '_blank');
+  await link.evaluate(node => node.addEventListener('click', event => event.preventDefault(), { once: true }));
+  await link.click();
+  await expect(updated).not.toBeChecked(); // Opening a tracker is not an acknowledgement.
+  await updated.check();
+  if (provider === 'diving-fish') {
+    await expect(connect).toBeDisabled();
+    const maskHelp = dialog.getByRole('button', { name: 'About score masking', exact: true });
+    await expect(page.locator('#player-fish-masking-help')).toBeHidden();
+    await maskHelp.click();
+    await expect(page.locator('#player-fish-masking-help')).toContainText('对非网页查询的成绩使用掩码');
+    await page.getByRole('checkbox', { name: 'Score masking is off.', exact: true }).check();
+  }
+  await expect(connect).toBeEnabled();
+  await updated.uncheck();
+  await expect(connect).toBeDisabled();
+  expect(state.calls.every(call => ['capabilities', 'status'].includes(call.path))).toBe(true);
+  expect(state.grants).toEqual([]);
+});
+
 test("Diving-Fish requires masking acknowledgement and one-time consent removes the grant", async ({
   page,
   context,
@@ -652,6 +697,12 @@ test("Diving-Fish requires masking acknowledgement and one-time consent removes 
   await expect(page.locator("#player-fish-masking")).toBeVisible();
   await expect(next).toBeDisabled();
   await page.locator("#player-fish-masking").check();
+  await expect(next).toBeDisabled();
+  await page.locator("#player-provider-updated").check();
+  await expect(next).toBeEnabled();
+  await page.locator("#player-provider-updated").uncheck();
+  await expect(next).toBeDisabled();
+  await page.locator("#player-provider-updated").check();
   await next.click();
   await expect(page.getByRole('heading', { name: 'Import this profile?', exact: true })).toBeVisible();
   await expect(page.locator("#player-import-dialog")).toContainText(
@@ -687,6 +738,7 @@ test('Fish agreement and empty-account failures preserve local data, clean up th
   ]) {
     fish[flag] = true;
     await openImport(page, 'diving-fish');
+    await page.locator('#player-provider-updated').check();
     await page.locator('#player-fish-masking').check();
     await page.getByRole('button', { name: 'Connect Diving-Fish', exact: true }).click();
     await expect(page.locator('#player-import-dialog')).toContainText(message);
@@ -734,7 +786,7 @@ async function unclipped(page) {
     const bounds = dialog.getBoundingClientRect();
     const controls = [
       ...dialog.querySelectorAll(
-        "input:not([type=radio]):not([type=checkbox]), button, a",
+        "input:not([type=radio]):not([type=checkbox]), button, a, .player-setup-step .player-remember span",
       ),
     ].filter((node) => node.getClientRects().length);
     return {
@@ -761,7 +813,7 @@ for (const locale of ["en", "zh-Hans", "ko", "ja", "id"]) {
         await page.setViewportSize({ width, height: 1000 });
         await openImport(page, "kamaitachi");
         await expect(page.locator("#player-import-dialog")).toContainText(
-          translated("Choose a service and an import method.", locale),
+          translated("Choose a service.", locale),
         );
         await expect(page.locator("#player-import-dialog")).toContainText(
           translated("Kamaitachi username or profile URL", locale),
@@ -772,10 +824,15 @@ for (const locale of ["en", "zh-Hans", "ko", "ja", "id"]) {
         await selectImportMethod(page, 'diving-fish');
         await expect(page.locator("#player-fish-masking")).toBeVisible();
         await expect(page.locator("#player-import-dialog")).toContainText(
-          translated("I have disabled score masking in Diving-Fish.", locale),
+          translated("Score masking is off.", locale),
         );
         await expect(page.getByRole('button', { name: translated('Connect Diving-Fish', locale), exact: true })).toBeDisabled();
         await unclipped(page);
+        const maskHelp = page.getByRole('button', { name: translated('About score masking', locale), exact: true });
+        await maskHelp.click();
+        await expect(page.locator('#player-fish-masking-help')).toBeVisible();
+        await unclipped(page);
+        await maskHelp.click();
         if (locale === "en" && width === 1280)
           await page.screenshot({ path: testInfo.outputPath("diving-fish-desktop.png") });
         if (width === 280 || width === 320)
@@ -784,10 +841,21 @@ for (const locale of ["en", "zh-Hans", "ko", "ja", "id"]) {
           });
         await selectImportMethod(page, 'lxns');
         await expect(page.locator('#player-fish-masking')).toHaveCount(0);
-        await expect(page.getByRole('button', { name: translated('Connect LXNS', locale), exact: true })).toBeEnabled();
-        await expect(page.locator('#player-import-dialog')).toContainText(translated('Sign in to LXNS and allow maimai.party to read your player name and scores. No personal API key is needed. You will preview them before importing.', locale));
+        const lxnsConnect = page.getByRole('button', { name: translated('Connect LXNS', locale), exact: true });
+        await expect(lxnsConnect).toBeDisabled();
+        await expect(page.locator('#player-import-dialog')).toContainText(translated('My scores are updated.', locale));
+        const help = page.getByRole('button', { name: translated('Why update scores first?', locale), exact: true });
+        await expect(help).toHaveAttribute('aria-expanded', 'false');
+        await expect(page.locator('#player-provider-updated-help')).toBeHidden();
+        await help.click();
+        await expect(help).toHaveAttribute('aria-expanded', 'true');
+        await expect(page.locator('#player-provider-updated-help')).toBeVisible();
+        await unclipped(page);
+        await help.click();
+        await page.locator('#player-provider-updated').check();
+        await expect(lxnsConnect).toBeEnabled();
         const lxnsHelp = page.locator('[data-import-help=lxns]');
-        await expect(lxnsHelp).toHaveCount(2);
+        await expect(lxnsHelp).toHaveCount(1);
         for (const link of await lxnsHelp.all())
           await expect(link).toHaveAttribute('href', 'player-import-help.' + locale + '.html#lxns');
         await unclipped(page);
@@ -813,6 +881,8 @@ test('LXNS needs no API key or Fish masking acknowledgement, and one-time import
   const dialog = page.locator('#player-import-dialog');
   await expect(dialog.locator('#player-fish-masking, input[type=file], input[type=password]')).toHaveCount(0);
   await expect(dialog.getByRole('link', { name: 'Open LXNS', exact: true })).toHaveAttribute('href', 'https://maimai.lxns.net/');
+  await expect(dialog.getByRole('button', { name: 'Connect LXNS', exact: true })).toBeDisabled();
+  await page.locator('#player-provider-updated').check();
   await expect(dialog.getByRole('button', { name: 'Connect LXNS', exact: true })).toBeEnabled();
   await dialog.getByRole('button', { name: 'Connect LXNS', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Import this profile?', exact: true })).toBeVisible();
@@ -840,6 +910,7 @@ for (const failure of ['empty', 'playerMissing']) test('LXNS ' + failure + ' pre
   const first = await saved(page);
   lxns[failure] = true;
   await openImport(page, 'lxns');
+  await page.locator('#player-provider-updated').check();
   await page.getByRole('button', { name: 'Connect LXNS', exact: true }).click();
   await expect(page.locator('#player-import-dialog')).toContainText('No supported scores were found in LXNS. Sync your maimai DX scores to LXNS first, then try again.');
   await expect.poll(() => lxns.grants.length).toBe(0);

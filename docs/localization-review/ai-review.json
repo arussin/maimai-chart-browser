@@ -45,17 +45,17 @@
     "src/maimai_intelligence/assets/locales/player-sources.json": "05867d0353294479696a09fc05457596d9bdb8ce00dbf5113d9dcdc0cc5c8f70",
     "src/maimai_intelligence/assets/locales/player-maishift.json": "e1dd639655b9916aa5c8fe51dd4526aedca1cb347ec430291034a15e99bea277",
     "src/maimai_intelligence/assets/locales/maishift-pilot.json": "a8bf4dd18c54c7898241462e7cbc5272d360aa645d9c989c92ef8aca26b695d3",
-    "src/maimai_intelligence/assets/import-help/README.ja.md": "8986eeb1bec391c248b315eff61d03d70a5a6609df921af84ac2935fed1ed91c",
-    "src/maimai_intelligence/assets/import-help/README.ko.md": "079917bf4afb0efdf8758f1bad99840b07de27c5b5c92031a0c955b49f5bec7b",
-    "src/maimai_intelligence/assets/import-help/README.md": "612f993830d397fafa0e4c413dd6b26831e74c84c141bee42058eca954b38675",
-    "src/maimai_intelligence/assets/import-help/README.zh-Hans.md": "04055be852c59cff01f987c48a86a855c71aa11b9b5c641e5dc0794d5a6bfbd4",
+    "src/maimai_intelligence/assets/import-help/README.ja.md": "7e38a69363cd2f2ae7a7490c7ff00e610495d933d0824b200f7cb01bb25a6bbc",
+    "src/maimai_intelligence/assets/import-help/README.ko.md": "518792009898657f1d166d3d25b490498946c087e43b1359b64a8c958272fe8b",
+    "src/maimai_intelligence/assets/import-help/README.md": "a24b2158854f14fbc182623a98f75942e339a9f46d1e34bccc32cb0b75618759",
+    "src/maimai_intelligence/assets/import-help/README.zh-Hans.md": "cd55ff6ab437ac7e92e92eb89b0012924af0e1a3dbc067f6398243e29bed97a9",
     "src/maimai_intelligence/assets/song-display-readings.json": "94d944ed0f56d8a36d5565af9893f6701b99666b224a1f7db6e767413b67973c",
     "src/maimai_intelligence/assets/locales/card-history.json": "0d706787dad9dbbce0a748b55fe2a89a86661ae0f6cca95fe97c408912ccad36",
     "README.id.md": "f95b7c38bbcec394c785fa97ae4f6168eb9bb01b8516ffa6d194138a6a8e4708",
-    "src/maimai_intelligence/assets/import-help/README.id.md": "78ace00db17081dfaa5e223dbda4696a6519ec66883d85282fa872296d6f8927",
+    "src/maimai_intelligence/assets/import-help/README.id.md": "82a1c5e8ca3c032b4508afbf7b094449996c7b16dca0bc8f5a25f6d7a4f875b8",
     "src/maimai_intelligence/assets/locales/bpm-filter.json": "de56afac29a72d7fcd7b55e74215fab9a34bb5ae16300984f692846866b71034",
     "src/maimai_intelligence/assets/locales/score-export.json": "000b7c21da92324d2c2a28f8521bff66ec77f4a37c3785487c29556763984690",
-    "src/maimai_intelligence/assets/locales/player-connections.json": "5af99abbf51957fc34901b743e71ebcf43a118a2d9f213993a4bd35c71aea50a",
+    "src/maimai_intelligence/assets/locales/player-connections.json": "85a2f7e1798a718145dd149ea539e0404de58634a9af8c94544a45a2442f05ae",
     "src/maimai_intelligence/assets/locales/player-file-imports.json": "d69defaa36b10bd2c9e9dde07ebb72d56a309f51776d3aa344970fc9319e51b4",
     "src/maimai_intelligence/assets/support-footer.html": "90258419b15f9281e37a82478da07a53f20e3d58c24cbbe697af3c94f48b94c8"
   },
@@ -137,6 +137,11 @@
       "date": "2026-10-11",
       "record": "docs/localization-review/lxns-imports-20261011.json",
       "scope": "LXNS direct-connection service, eleven new interface messages, privacy copy including daily aggregate receipt times, and five localized setup/revocation walkthroughs; existing imports retained; independent contextual AI review and corrections recorded."
+    },
+    {
+      "date": "2026-10-12",
+      "record": "docs/localization-review/import-checklist-20261012.json",
+      "scope": "Seven short provider checklist and disclosure messages, service-only introduction, and five localized setup walkthroughs; independent contextual AI review and corrections recorded."
     }
   ],
   "player_sources_review": {

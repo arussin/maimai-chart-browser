@@ -51,3 +51,6 @@ details summary{cursor:pointer;min-height:44px;padding:12px 0}.sources{border-to
 .player-dialog a {overflow-wrap:anywhere}
 
 .chart-song-page[hidden]{display:none}
+
+/* Compact provider prerequisites; help expands in normal flow at narrow widths. */
+.player-setup-step{display:grid;grid-template-columns:minmax(0,1fr) 36px 36px;align-items:start;gap:0;min-width:0}.player-source-fields .player-setup-step .player-remember{grid-column:1;justify-content:flex-start;align-items:center;min-height:44px;margin:0;padding:4px 0;min-width:0}.player-setup-step .player-remember span{min-width:0;overflow-wrap:anywhere}.player-setup-tracker{grid-column:2;display:grid;place-items:center;min-height:44px;width:36px;font-size:18px;text-decoration:none}.player-dialog .player-setup-help{grid-column:3;border:0;padding:0;min-height:44px;width:36px;background:transparent}.player-setup-explanation{grid-column:1/-1;padding:6px 0 2px;color:var(--muted);font-size:12px}

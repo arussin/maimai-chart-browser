@@ -255,7 +255,7 @@ for(const locale of ['en','zh-Hans','ko','ja','id'])test(`browser pilot ${locale
   await page.screenshot({path:testInfo.outputPath('profile-settings-'+locale+'.png')});await page.locator('#settings-toggle').click();
   const forgetLabels={en:'Forget player data','zh-Hans':'删除玩家数据',ko:'플레이어 데이터 삭제',ja:'プレイヤーデータを削除',id:'Hapus data pemain'};
   await expect(page.locator('#player-forget')).toHaveText(forgetLabels[locale]);await expect(page.locator('#player-clear')).toHaveCount(0);
-  await menu(page,'player-import');await expect(page.locator('input[value=maishift]')).toBeChecked();
+  await menu(page,'player-import');await expect(page.locator('[data-service-toggle=maishift]')).toHaveAttribute('aria-expanded','true');
   const warning=page.locator('.player-import-replace-warning');await expect(warning).toBeVisible();
   const overwrite={en:'Importing will overwrite data from the currently imported account.','zh-Hans':'导入将覆盖当前已导入账号的数据。',ko:'가져오면 현재 가져온 계정의 데이터를 덮어씁니다.',ja:'読み込むと、現在読み込み済みのアカウントのデータが上書きされます。',id:'Impor akan menimpa data dari akun yang saat ini diimpor.'};
   await expect(warning).toHaveText(overwrite[locale]);
