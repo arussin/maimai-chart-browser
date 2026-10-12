@@ -6,6 +6,52 @@ The Worker accepts only POST https://maimai.party/__usage with the production Or
 
 Days use America/New_York. Totals are retained indefinitely. The optional owner-maintained usage_coverage ledger records complete/partial/off by day and instrumentation version. Missing ledger rows mean unknown coverage, even when counts exist; zero is measurable only for a day the owner has confirmed complete. Never infer exact unobserved drop counts, users, sessions, funnels, retention, geography or owner exclusion.
 
+## Import and provider actions
+
+The maintained contract adds these finite counters. They describe explicit actions
+and stages, with no account names, account/grant IDs, filenames, source URLs,
+tokens, score values, source timestamps or raw errors. All `*_failed` events use
+only `invalid`, `unavailable`, `storage` or `unknown`; other events have an empty
+failure value. No provider response is passed to usage reporting.
+
+| Event family | Detail values | Meaning |
+|---|---|---|
+| `import_{started,completed,cancelled,failed}` | file, report, maishift, kamaitachi, diving-fish | Existing overall import attempt and browser commit/terminal outcome |
+| `provider_connect_{started,completed,cancelled,failed}` | diving-fish | Explicit provider authorization; completed means the browser obtained a connection, before data-import consent |
+| `provider_read_{started,completed,cancelled,failed}` | kamaitachi, diving-fish | Initial direct read; completed means the returned dataset was validated, before import consent |
+| `provider_refresh_{started,completed,cancelled,failed}` | report, maishift, kamaitachi, diving-fish | Explicit manual refresh; completed includes a successful unchanged-data check |
+| `provider_disconnect_{started,completed,failed}` | diving-fish | Explicit disconnect or release caused by the user's cancel/import-once/replacement/forget choice |
+| `provider_cleanup_{started,completed,failed}` | diving-fish | Explicit retry-cleanup action, counted per affected provider, not per grant |
+| `resource_opened` | diving_fish | User deliberately opens the Diving-Fish tracker link; the target URL is never sent |
+
+Automatic refresh, restored state, capability/status checks, popup status polling,
+and background cleanup do not emit these counters. GPC/DNT, both kill switches,
+preview/offline suppression, bounded batching and drop-without-retry still apply.
+Disconnect success means the browser's targeted connection is removed or no
+longer accessible; it does **not** establish provider-side revocation.
+
+Do not add these stage counters together as distinct imports, people, grants or
+a linked funnel. Overall `import_*` and provider-stage counters describe overlapping
+attempts. Portable files retain their existing `import_*/file` counters; there are
+no provider-file or file-fallback events. Cancellation and a failed subsequent grant cleanup are separate
+outcomes. Received starts/terminals need not balance because the collector drops
+blocked or failed batches and a tab can close before completing an action.
+
+The browser and collector compile the same `web/src/usage-contract.ts` whitelist.
+The owner Markdown/CSV report imports that compiled collector validator; the
+offline dashboard imports the maintained TypeScript contract directly. Both
+render every accepted event/detail/failure row without a separate hardcoded
+feature list, and reject extra private aggregate fields. Release the updated
+collector and owner report before the browser emits these additive v1 values: an old collector rejects an
+entire batch containing an unknown new event. No database schema change or new
+logging sink is required. Retain the actual activation date of the new counters;
+older complete coverage does not prove that these features were instrumented.
+Local fixtures verify all allowed lifecycle combinations, D1 writes, report
+rendering, opt-outs and private-field rejection; they do not prove hosted
+collection. The existing deployed collector is unchanged by this source work;
+hosted acceptance of the new counters remains unverified. Production
+configuration and activation are unchanged.
+
 ## Private local dashboard
 
 `dashboard.mjs` renders a self-contained HTML dashboard from a successful

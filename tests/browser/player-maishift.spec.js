@@ -1,3 +1,4 @@
+import { selectImportMethod } from './player-import-fixture.mjs';
 import {mockBrowserConfiguration} from './browser-configuration-fixture.mjs';
 import {test,expect} from './fixtures.js';
 import {readFile} from 'node:fs/promises';
@@ -23,8 +24,8 @@ async function prepare(context,{locale='en'}={}){
   return state;
 }
 async function open(page){await page.locator('#settings-toggle').click();await page.locator('#player-import').click();}
-async function preview(page){await open(page);await page.locator('input[value=maishift]').check();await page.locator('#player-maishift-url').fill('fictional-player');await page.locator('.player-actions button').first().click();await expect(page.locator('.player-profile-name').last()).toHaveText('Fictional Player');}
-async function commit(page,remember=true){await preview(page);await page.locator('.player-dialog .player-remember input').setChecked(remember);await page.locator('.player-dialog .player-actions button').first().click();await expect.poll(()=>page.evaluate(()=>maimaiPersonal.enabled())).toBe(true);}
+async function preview(page){await open(page);await selectImportMethod(page,'maishift');await page.locator('#player-maishift-url').fill('fictional-player');await page.locator('.player-actions button').first().click();await expect(page.locator('.player-profile-name').last()).toHaveText('Fictional Player');}
+async function commit(page,remember=true){await preview(page);await page.locator('#player-import-dialog .player-remember input').setChecked(remember);await page.locator('#player-import-dialog .player-actions button').first().click();await expect.poll(()=>page.evaluate(()=>maimaiPersonal.enabled())).toBe(true);}
 async function age(page){await page.evaluate(async()=>{const db=await new Promise(resolve=>{const q=indexedDB.open('maimai-player-data',2);q.onsuccess=()=>resolve(q.result);});await new Promise((resolve,reject)=>{const t=db.transaction('datasets','readwrite'),s=t.objectStore('datasets'),q=s.get('active');q.onsuccess=()=>s.put({...q.result,source:{...q.result.source,lastAttempt:0}},'active');t.oncomplete=resolve;t.onabort=reject;});db.close();});}
 async function refresh(page){await page.locator('#settings-toggle').click();await page.locator('#player-refresh').click();}
 
@@ -75,7 +76,7 @@ test('changed metadata and colliding regional targets stay unmatched without los
 test('proxy preview has explicit consent, region, precision and unmatched coverage; POST leaks no profile URL',async({page,context},testInfo)=>{
   const state=await prepare(context);await boot(page);
   await page.evaluate(()=>{window.requests=[];const original=fetch;window.fetch=(url,options)=>{if(String(url).includes('/api/player-import/'))requests.push({url:String(url),...options});return original(url,options);};});
-  await open(page);await page.locator('input[value=maishift]').check();expect(state.calls).toBe(0);
+  await open(page);await selectImportMethod(page,'maishift');expect(state.calls).toBe(0);
   await expect(page.getByLabel('Remember and refresh')).toBeChecked();
   await page.locator('#player-maishift-url').fill('fictional-player');await page.getByRole('button',{name:'Continue',exact:true}).click();
   await expect(page.locator('#player-import-dialog')).toContainText('3 PBs');await expect(page.locator('#player-import-dialog')).toContainText('Unmatched PB charts: 3');

@@ -1,6 +1,23 @@
 import {test} from 'node:test';import assert from 'node:assert/strict';import {startUTC,summarize,markdown,csv,coverageCSV,queryDatabase} from '../report.mjs';
+import {providerUsageRows} from './provider-usage-fixture.mjs';
 import {DETAILS} from '../../web/src/usage-contract.ts';
 import {actionLabel} from '../action-labels.mjs';
+
+test('owner JSON Markdown and CSV preserve all finite provider lifecycle and tracker-link counters',()=>{
+ const totals=providerUsageRows.map(row=>({...row,day:'2026-10-11',version:1}));
+ const input={schema_version:'usage-export-1',query_status:'ok',totals,coverage:[]};
+ const options={from:'2026-10-11',to:'2026-10-11',now:new Date('2026-10-13T12:00:00Z')};
+ const report=summarize(input,options),md=markdown(report),rows=csv(report).trim().split('\n');
+ assert.equal(report.totals.length,totals.length);assert.equal(rows.length,totals.length+1);
+ for(const row of totals){
+  assert.ok(md.includes('| '+[row.day,row.version,row.event,row.page,row.detail,row.failure||'—',row.count].join(' | ')+' |'));
+  assert.ok(rows.includes([row.day,row.version,row.event,row.page,row.detail,row.failure,row.count].map(v=>JSON.stringify(v)).join(',')));
+ }
+ assert.ok(md.includes('automatic refresh'));assert.ok(md.includes('not distinct imports'));
+ for(const change of [{accountID:'PRIVATE-ACCOUNT'},{token:'PRIVATE-TOKEN'},{score:100.1234},{detail:'PRIVATE-ACCOUNT'},{detail:'lxns'},{event:'file_import_started',detail:'portable'},{event:'provider_file_fallback_clicked'},{failure:'PRIVATE-ERROR'}])
+  assert.throws(()=>summarize({...input,totals:[{...totals[0],...change}]},options),/Invalid aggregate/);
+ assert.throws(()=>summarize({...input,token:'PRIVATE-TOKEN'},options),/Missing or failed/);
+});
 
 test('owner report includes readable export actions while CSV preserves finite keys',()=>{
  const rows=Object.entries(DETAILS).filter(([event])=>event.startsWith('score_export_')).flatMap(([event,details])=>details.map(detail=>({day:'2026-10-11',version:1,event,page:'song',detail,failure:'',count:2})));

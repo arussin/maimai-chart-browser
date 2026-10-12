@@ -1,0 +1,76 @@
+{
+  "messages": {
+    "Unsupported Utage rows excluded: {0}. Import the remaining scores or cancel to keep your current data.": {
+      "zh-Hans": "已排除不支持的宴谱记录：{0}。可导入其余成绩，或取消以保留当前数据。",
+      "ko": "지원하지 않는 우타게 채보 기록 제외: {0}. 나머지 성적을 가져오거나 취소하여 현재 데이터를 유지하세요.",
+      "ja": "未対応の宴譜面の記録を除外しました：{0}。残りの成績を読み込むか、キャンセルして現在のデータを保持してください。",
+      "id": "Catatan Utage yang tidak didukung dikecualikan: {0}. Impor skor lainnya atau batalkan untuk mempertahankan data saat ini."
+    },
+    "China": {
+      "zh-Hans": "中国",
+      "ko": "중국",
+      "ja": "中国",
+      "id": "Tiongkok"
+    },
+    "Partial score snapshot": {
+      "zh-Hans": "部分成绩快照",
+      "ko": "일부 성적 스냅샷",
+      "ja": "成績の部分スナップショット",
+      "id": "Snapshot skor sebagian"
+    },
+    "Unmatched charts are retained but are not attached to catalog results.": {
+      "zh-Hans": "未匹配的谱面记录会保留，但不会关联到曲目目录中的结果。",
+      "ko": "매칭되지 않은 채보는 보존되지만 카탈로그 결과에 연결되지 않습니다.",
+      "ja": "一致しない譜面の記録も保持しますが、カタログの結果には関連付けません。",
+      "id": "Chart yang tidak cocok tetap disimpan, tetapi tidak dihubungkan ke hasil katalog."
+    },
+    "This export contains too many records. Nothing was imported.": {
+      "zh-Hans": "此导出文件包含的记录过多。未导入任何数据。",
+      "ko": "내보내기 파일에 기록이 너무 많습니다. 아무것도 가져오지 않았습니다.",
+      "ja": "エクスポートの記録数が多すぎます。データは読み込まれていません。",
+      "id": "Ekspor ini memuat terlalu banyak catatan. Tidak ada data yang diimpor."
+    },
+    "Unsupported chart difficulty.": {
+      "zh-Hans": "不支持此谱面难度。",
+      "ko": "지원하지 않는 채보 난이도입니다.",
+      "ja": "この譜面難度には対応していません。",
+      "id": "Tingkat kesulitan chart tidak didukung."
+    },
+    "Conflicting chart identities in this export. Nothing was imported.": {
+      "zh-Hans": "此导出文件中的谱面标识存在冲突。未导入任何数据。",
+      "ko": "내보내기 파일의 채보 식별 정보가 충돌합니다. 아무것도 가져오지 않았습니다.",
+      "ja": "エクスポート内の譜面識別情報が矛盾しています。データは読み込まれていません。",
+      "id": "Identitas chart dalam ekspor ini bertentangan. Tidak ada data yang diimpor."
+    },
+    "Conflicting personal bests in this export. Nothing was imported.": {
+      "zh-Hans": "此导出文件中的个人最佳成绩存在冲突。未导入任何数据。",
+      "ko": "내보내기 파일의 개인 최고 기록이 충돌합니다. 아무것도 가져오지 않았습니다.",
+      "ja": "エクスポート内の自己ベストが矛盾しています。データは読み込まれていません。",
+      "id": "Skor terbaik pribadi dalam ekspor ini bertentangan. Tidak ada data yang diimpor."
+    },
+    "The export disagrees with its source song metadata. Nothing was imported.": {
+      "zh-Hans": "导出文件与来源歌曲元数据不一致。未导入任何数据。",
+      "ko": "내보내기 파일이 원본 곡 메타데이터와 일치하지 않습니다. 아무것도 가져오지 않았습니다.",
+      "ja": "エクスポートが読み込み元の楽曲メタデータと一致しません。データは読み込まれていません。",
+      "id": "Ekspor tidak cocok dengan metadata lagu sumbernya. Tidak ada data yang diimpor."
+    },
+    "Unsupported file provider or region.": {
+      "zh-Hans": "不支持此文件来源或区域。",
+      "ko": "지원하지 않는 파일 소스 또는 지역입니다.",
+      "ja": "このファイルの読み込み元または地域には対応していません。",
+      "id": "Sumber berkas atau wilayah tidak didukung."
+    },
+    "Invalid account identifier.": {
+      "zh-Hans": "账号标识无效。",
+      "ko": "계정 식별자가 올바르지 않습니다.",
+      "ja": "アカウント識別子が無効です。",
+      "id": "Pengenal akun tidak valid."
+    },
+    "The encoded account identifier exceeds the portable player-data limit.": {
+      "zh-Hans": "编码后的账号标识超出了可移植玩家数据格式的长度限制。",
+      "ko": "인코딩된 계정 식별자가 플레이어 데이터 형식의 길이 제한을 초과합니다.",
+      "ja": "エンコード後のアカウント識別子が、プレイヤーデータ形式の長さ制限を超えています。",
+      "id": "Pengenal akun yang dikodekan melebihi batas format data pemain portabel."
+    }
+  }
+}

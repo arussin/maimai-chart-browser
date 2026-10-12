@@ -17,13 +17,15 @@ import re
 import tempfile
 from copy import deepcopy
 from pathlib import Path
-from urllib.parse import quote
+from urllib.parse import quote, unquote
 
 FORMAT = "maimai-player-data"
 VERSION = 1
 MAX_COMPRESSED = 32 * 1024 * 1024
 MAX_DECODED = 128 * 1024 * 1024
 MAX_RECORDS = 1_000_000
+FILE_PROVIDERS = {"diving-fish"}
+FILE_REGIONS = {"cn"}
 HEX = re.compile(r"[a-f0-9]{64}\Z")
 RECORD_FIELDS = {
     "chartID",
@@ -108,6 +110,12 @@ def validate_player(player):
     elif player["provider"] == "maishift":
         identity = quote(player["username"], safe="~()*!.'-_")
         expected = {"maishift:maimaidx:" + region + ":" + identity for region in ("jp", "intl")}
+    elif player["provider"] in FILE_PROVIDERS:
+        parts = player["key"].split(":")
+        if len(parts) != 4 or parts[2] not in FILE_REGIONS:
+            raise ValueError("Unsupported player region")
+        identity = quote(player["username"], safe="~()*!.'-_")
+        expected = {player["provider"] + ":maimaidx:" + parts[2] + ":" + identity}
     else:
         raise ValueError("Unsupported player source")
     if player["key"] not in expected:
@@ -145,6 +153,23 @@ def validate(data, *, check_revision=True):
             if key in {"__proto__", "constructor", "prototype"}:
                 raise ValueError("Reserved player-data identity")
     for key, c in data["charts"].items():
+        if data["player"]["provider"] in FILE_PROVIDERS:
+            prefix = data["player"]["provider"] + ":" + data["player"]["key"].split(":")[2] + ":"
+            suffix = key[len(prefix) :]
+            if (
+                not key.startswith(prefix)
+                or not re.fullmatch(r"[A-Za-z0-9._~!'()*%+:-]+", suffix)
+                or re.search(r"%(?![0-9a-fA-F]{2})", suffix)
+            ):
+                raise ValueError("Invalid file-provider chart reference")
+            for part in suffix.split(":"):
+                try:
+                    decoded = unquote(part, errors="strict")
+                except UnicodeDecodeError as error:
+                    raise ValueError("Invalid file-provider chart reference") from error
+                _text(decoded, 256)
+                if decoded in {"__proto__", "constructor", "prototype"}:
+                    raise ValueError("Reserved file-provider chart reference")
         if data["player"]["provider"] == "maishift":
             prefix = "maishift:" + data["player"]["key"].split(":")[2] + ":"
             if not key.startswith(prefix) or not key[len(prefix) :]:

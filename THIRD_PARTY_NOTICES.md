@@ -1,5 +1,12 @@
 # Attribution and data boundaries
 
+## Import service marks
+
+The import dialog bundles identifying marks for Maishift, Kamaitachi and
+Diving-Fish. Sources and the Diving-Fish permission notice are retained in
+[Import service marks](docs/IMPORT_SERVICE_ICONS.md). Provider trademarks remain
+their owners' and do not imply endorsement.
+
 ## Personal result graphics
 
 The optional personal layer uses SEGA combo/sync icons and rating frames from

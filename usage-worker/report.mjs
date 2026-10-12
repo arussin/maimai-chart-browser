@@ -19,13 +19,13 @@ export function startUTC(day){
  return new Date(high).toISOString();
 }
 export function summarize(input,{from,to,now=new Date()}={}){
- if(!input||input.schema_version!=='usage-export-1'||!Array.isArray(input.totals)||!Array.isArray(input.coverage)||input.query_status!=='ok')throw Error('Missing or failed aggregate query; counts are unknown.');
+ if(!record(input)||Object.keys(input).some(k=>!['schema_version','query_status','activation','totals','coverage'].includes(k))||input.schema_version!=='usage-export-1'||!Array.isArray(input.totals)||!Array.isArray(input.coverage)||input.query_status!=='ok')throw Error('Missing or failed aggregate query; counts are unknown.');
  to??=addDay(dayKey(now),-1);from??=addDay(to,-29);
  if(!validDay(from)||!validDay(to)||from>to||to>=dayKey(now))throw Error('Choose a valid range of completed New York days.');
  const days=[];for(let d=from;d<=to;d=addDay(d,1)){if(days.length>=3660)throw Error('Report range exceeds 10 years');days.push(d);}
  const totalKeys=new Set();
  const totals=input.totals.map(r=>{
-  if(!record(r)||!validDay(r.day)||!validVersion(r.version)||!Number.isSafeInteger(r.count)||r.count<0)throw Error('Invalid aggregate row');
+  if(!record(r)||Object.keys(r).sort().join(',')!=='count,day,detail,event,failure,page,version'||!validDay(r.day)||!validVersion(r.version)||!Number.isSafeInteger(r.count)||r.count<0)throw Error('Invalid aggregate row');
   const safe=validateRow({event:r.event,page:r.page,detail:r.detail,failure:r.failure,count:1});
   if(!safe)throw Error('Invalid aggregate row');
   const row={day:r.day,version:r.version,event:safe.event,page:safe.page,detail:safe.detail,failure:safe.failure,count:r.count},key=tuple(row);
@@ -50,7 +50,7 @@ export function summarize(input,{from,to,now=new Date()}={}){
   return {day,version,status,count:totals.filter(r=>r.day===day&&r.version===version).reduce((n,r)=>n+r.count,0),zero_is_measured:status==='complete'};
  }):[{day,version:null,status:'unknown',count:0,zero_is_measured:false}]);
  return {schema_version:'usage-report-1',timezone:zone,from,to,utc_start:startUTC(from),utc_end_exclusive:startUTC(addDay(to,1)),activation:input.activation??null,coverage,totals,
-  limitations:['Counts describe actions, not unique people or sessions.','No funnels, visitor sources, owner exclusion or retention are available.','Opt-outs, blocked requests and dropped batches are not measurable.','Only days marked complete distinguish measured zero from unknown coverage.']};
+  limitations:['Counts describe actions, not unique people or sessions.','Provider lifecycle stages are separate counters, not distinct imports or a linked funnel; automatic refresh and background status/cleanup are excluded.','No funnels, visitor sources, owner exclusion or retention are available.','Opt-outs, blocked requests and dropped batches are not measurable.','Only days marked complete distinguish measured zero from unknown coverage.']};
 }
 export function queryDatabase(database,{remote=false,persistTo,activation=null,from,to,now=new Date(),run=spawnSync}={}){
  if(!/^[a-zA-Z0-9_-]{1,80}$/.test(database))throw Error('Invalid database name');

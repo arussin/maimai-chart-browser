@@ -100,7 +100,10 @@ test('unchanged refresh saves freshness without replacing portable observations'
   assert.equal(f.owner.lastImportedAt, 1000000);
   assert.equal(f.calls.save, 1);
   assert.equal(f.owner.refreshing, false);
-  assert.equal(f.calls.events.length, 0);
+  assert.deepEqual(f.calls.events, [
+    ['provider_refresh_started', 'report'],
+    ['provider_refresh_completed', 'report'],
+  ]);
 });
 
 test('interrupted and mismatched handoff transactions close their port without committing', async () => {

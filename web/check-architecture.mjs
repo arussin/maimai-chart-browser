@@ -42,6 +42,7 @@ const pureDomains = new Set([
   'src/player-session.ts',
   'src/views/player-data-core.ts',
   'src/views/player-maishift.ts',
+  'src/domain/import-identities.ts',
   'src/domain/challenge-matching.ts',
   'src/runtime/recovery.ts',
   'src/runtime/public-routes.ts',

@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {dayKey,makeDashboardData,validateExport} from '../dashboard-model.mjs';
 import {renderDashboard,safeJSON} from '../dashboard.mjs';
+import {providerUsageRows} from './provider-usage-fixture.mjs';
 import {DETAILS} from '../../web/src/usage-contract.ts';
 const now=new Date('2026-10-03T13:00:00Z');
 const row={day:'2026-10-03',version:1,event:'page_view',page:'charts',detail:'',failure:'',count:7};
@@ -16,6 +17,18 @@ test('received counts and missing coverage are preserved without inventing compl
  const result=makeDashboardData(fixture(),{now,capturedAt:now.toISOString()});
  assert.equal(result.schema_version,'usage-dashboard-1');assert.equal(result.today,'2026-10-03');
  assert.equal(result.totals[0].count,7);assert.deepEqual(result.coverage,[]);
+});
+
+test('offline dashboard embeds every finite provider lifecycle and tracker-link counter and retains its limits',async()=>{
+ const totals=providerUsageRows.map(r=>({...r,day:row.day,version:1}));
+ const input={...fixture(),totals};
+ const data=makeDashboardData(input,{now,capturedAt:now.toISOString()});
+ assert.deepEqual(data.totals,totals);assert.ok(data.limitations.some(text=>text.includes('Automatic refresh')));
+ const html=await renderDashboard(input,{now,capturedAt:now.toISOString()});
+ for(const event of new Set(totals.map(r=>r.event)))assert.ok(html.includes(event),event);
+ assert(html.includes("connect-src 'none'"));
+ for(const change of [{accountID:'PRIVATE'},{displayName:'PRIVATE'},{url:'https://provider.invalid/PRIVATE'},{token:'PRIVATE'},{score:100.1234},{detail:'lxns'},{event:'file_import_started',detail:'portable'},{event:'provider_file_fallback_clicked'}])
+  assert.throws(()=>validateExport({...input,totals:[{...totals[0],...change}]},now));
 });
 test('private dashboard labels and export section cover every new finite counter',async()=>{
  const totals=Object.entries(DETAILS).filter(([event])=>event.startsWith('score_export_')).flatMap(([event,details])=>details.map(detail=>({...row,event,detail,count:1})));

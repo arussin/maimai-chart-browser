@@ -1,4 +1,13 @@
 import { ImportCoordinator } from '../runtime/import-coordinator';
+import {
+  IMPORT_SERVICES,
+  IMPORT_SERVICE_MONOGRAMS,
+  importServiceForMethod,
+  importMethodFileFormat,
+  type ImportMethodValue,
+} from './player-import-services';
+import { IMPORT_SERVICE_ICONS } from './import-service-icons';
+import { exactFileChartIndex, isFileProvider } from '../domain/import-identities';
 import { createScoreExporter } from './score-export';
 import { createScoreExportPreferences } from '../runtime/score-export-preferences';
 import { knownScoreExportVersionIDs, type ExportPlayerRating } from '../domain/score-export';
@@ -13,8 +22,14 @@ import type { HistoryPort } from '../runtime/history';
 import type { NavigationCoordinator } from '../runtime/navigation';
 import type { CatalogChart, PublicCatalog } from '../runtime/catalog';
 import type { PlayerChart, PlayerDataset, PlayerRecord } from '../domain/player-data';
-import type { PlayerOffer, Consent, ConsentOptions } from '../runtime/player-session-contracts';
+import type {
+  PlayerOffer,
+  Consent,
+  ConsentOptions,
+  OAuthProvider,
+} from '../runtime/player-session-contracts';
 import { errorMessage } from '../runtime/player-session-contracts';
+import { isOAuthProvider } from './player-provider-connections';
 import type * as PlayerDomain from '../player-session';
 import type { ProviderMapping } from '../player-session';
 import type { createPlayerDataCore } from './player-data-core';
@@ -45,6 +60,19 @@ interface PersonalPorts {
   songPages: NavigationCoordinator;
   historyPort: HistoryPort;
   usage: UsageAPI;
+}
+/** A blocked popup is a failed deliberate attempt before the coordinator can start. */
+export function openProviderPopup(
+  browser: Pick<Window, 'open'>,
+  provider: OAuthProvider,
+  usage: (...args: PersonalUsage) => void,
+) {
+  const popup = browser.open('about:blank', '_blank', 'popup,width=600,height=760');
+  if (!popup) {
+    usage('provider_connect_started', provider);
+    usage('provider_connect_failed', provider, 'unavailable');
+  }
+  return popup;
 }
 /** Personal views receive their root and a single import-session owner. */
 export function createPlayerData(ports: PersonalPorts) {
@@ -95,12 +123,14 @@ export function createPlayerData(ports: PersonalPorts) {
   let exportArtwork: ReturnType<typeof createArtworkModel> | undefined;
   let reverse = new Map<string, string[]>(),
     lastTimes = new Map<string, number>();
+  let fileReverse = new Map<string, string[]>();
   let maishiftMapping: ProviderMapping | undefined,
     maishiftReverse = new Map<string, string | null>(),
     catalogByID = new Map<string, CatalogChart>();
   const browserSession = createSessionBrowser(storageKey);
   const player = new ImportCoordinator({
     core,
+
     sources,
     storage: ports.playerStorage,
     maishift: ports.maishift,
@@ -161,7 +191,7 @@ export function createPlayerData(ports: PersonalPorts) {
   });
   const input = make('input');
   input.type = 'file';
-  input.accept = '.gz,application/gzip';
+  input.accept = '.json,.gz,application/json,application/gzip';
   input.hidden = true;
   root.append(input);
   let hideButton: HTMLButtonElement, forgetButton: HTMLButtonElement;
@@ -339,6 +369,10 @@ export function createPlayerData(ports: PersonalPorts) {
   function changed(redraw = true) {
     const scroll: [number, number] = [scrollX, scrollY];
     pbs = player.active ? core.current(player.active).pbs : new Map();
+    fileReverse =
+      player.active && isFileProvider(player.active.player.provider)
+        ? exactFileChartIndex(catalog?.catalog ?? [], player.active.charts)
+        : new Map();
     pbDates = new Map();
     if (player.active)
       for (const s of Object.values(player.active.snapshots))
@@ -370,7 +404,12 @@ export function createPlayerData(ports: PersonalPorts) {
         card,
         make(
           'small',
-          ports.localization.message('Last Updated: {0}', [date(player.lastImportedAt)]),
+          ports.localization.message(
+            player.source?.type === 'kamaitachi' || player.source?.type === 'diving-fish'
+              ? 'Last imported: {0}'
+              : 'Last Updated: {0}',
+            [date(player.lastImportedAt)],
+          ),
           'player-storage-label',
         ),
       );
@@ -473,6 +512,25 @@ export function createPlayerData(ports: PersonalPorts) {
       badge.append(digits);
       card.append(badge, make('small', label, 'player-profile-rating-label'));
     }
+    if (isFileProvider(offer.player.provider)) {
+      card.append(
+        make(
+          'span',
+          ports.localization.message('{0} PBs', [offer.pbCount.toLocaleString()]),
+          'player-profile-history',
+        ),
+        make('small', 'Partial score snapshot', 'player-profile-history'),
+      );
+      if (offer.playCount)
+        card.append(
+          make(
+            'span',
+            `${offer.playCount.toLocaleString()} retained ${offer.playCount === 1 ? 'play' : 'plays'}`,
+            'player-profile-history',
+          ),
+        );
+      return card;
+    }
     if (offer.player.provider === 'maishift') {
       let username = make('span', i18n.verbatim(offer.player.username), 'player-profile-history');
       // Portable identities are broader than the verified public URL grammar.
@@ -509,6 +567,7 @@ export function createPlayerData(ports: PersonalPorts) {
     offer: PlayerOffer,
     {
       file = false,
+      excludedUtage = 0,
       stale = false,
       connection = null,
       rememberDefault = true,
@@ -543,12 +602,22 @@ export function createPlayerData(ports: PersonalPorts) {
             'player-import-replace-warning',
           ),
         );
+      if ((unmatched ?? 0) > 0) {
+        dialog.append(
+          make(
+            'p',
+            ports.localization.message('Unmatched PB charts: {0}', [String(unmatched)]),
+            'player-import-warning',
+          ),
+          make('p', 'Unmatched charts are retained but are not attached to catalog results.'),
+        );
+      }
       if (connection) {
-        if ((unmatched ?? 0) > 0)
+        if (connection.warnings?.includes('fish_masking_unverified'))
           dialog.append(
             make(
               'p',
-              ports.localization.message('Unmatched PB charts: {0}', [String(unmatched)]),
+              'Diving-Fish score masking could not be verified. Masked scores may be inaccurate.',
               'player-import-warning',
             ),
           );
@@ -563,6 +632,17 @@ export function createPlayerData(ports: PersonalPorts) {
             ),
           );
       }
+      if (excludedUtage)
+        dialog.append(
+          make(
+            'p',
+            ports.localization.message(
+              'Unsupported Utage rows excluded: {0}. Import the remaining scores or cancel to keep your current data.',
+              [String(excludedUtage)],
+            ),
+            'player-import-warning',
+          ),
+        );
       const label = make('label', undefined, 'player-remember'),
         check = make('input');
       check.type = 'checkbox';
@@ -573,7 +653,16 @@ export function createPlayerData(ports: PersonalPorts) {
         check,
         make('span', connection ? 'Remember and refresh' : 'Remember on this device'),
       );
-      dialog.append(label, make('p', 'Stored only in your browser.', 'player-import-privacy'));
+      dialog.append(
+        label,
+        make(
+          'p',
+          connection && isOAuthProvider(connection.type)
+            ? 'Your scores are saved in this browser. The connection service stores an access grant for refreshes.'
+            : 'Stored only in your browser.',
+          'player-import-privacy',
+        ),
+      );
       const actions = make('div', undefined, 'player-actions'),
         yes = make('button', 'Import data'),
         no = make('button', file ? 'Cancel' : 'Not now');
@@ -612,7 +701,7 @@ export function createPlayerData(ports: PersonalPorts) {
     if (file) void player.importFile(file);
   };
   function reading(cancel: () => void) {
-    message('Reading public player data', 'You can cancel this request.');
+    message('Reading player data', 'You can cancel this request.');
     const close = dialog.querySelector('button')!;
     close.addEventListener('click', cancel);
     dialog.addEventListener('cancel', cancel);
@@ -631,12 +720,24 @@ export function createPlayerData(ports: PersonalPorts) {
     link.rel = 'noopener noreferrer';
     link.referrerPolicy = 'no-referrer';
     const resource =
-      label === 'Maishift' ? 'maishift' : label === 'Open report' ? 'session_report' : null;
+      label === 'Maishift'
+        ? 'maishift'
+        : label === 'Open report'
+          ? 'session_report'
+          : label === 'Open Diving-Fish'
+            ? 'diving_fish'
+            : null;
     if (resource) link.addEventListener('click', () => usage('resource_opened', resource));
     return link;
   }
   function unmatchedPBs(data: PlayerDataset) {
-    const ids = new Set([...reverse.values()].flat());
+    if (isFileProvider(data.player.provider)) {
+      const matched = new Set(
+        [...exactFileChartIndex(catalog?.catalog ?? [], data.charts).values()].flat(),
+      );
+      return [...core.current(data).pbs.keys()].filter((id) => !matched.has(id)).length;
+    }
+    const ids = new Set([...reverse.values()].flat().filter((id) => kamaitachiMatch(data, id)));
     return [...core.current(data).pbs.keys()].filter((id) =>
       data.player.provider === 'maishift'
         ? !maishiftMatch(data, id)
@@ -652,58 +753,291 @@ export function createPlayerData(ports: PersonalPorts) {
     dialog.removeAttribute('aria-describedby');
     const heading = make('h2', 'Import player data');
     heading.id = 'player-dialog-title';
-    const group = make('fieldset', undefined, 'player-source-options');
-    group.append(make('legend', 'Choose a source'));
-    const reports = make('div', undefined, 'player-source-group'),
-      reportRows = make('div', undefined, 'player-source-rows'),
-      maishift = make('div', undefined, 'player-source-group');
-    reports.append(reportRows, helpLink('session-report', 'About Session Report imports'));
-    group.append(reports, maishift);
+    const group = make('div', undefined, 'player-source-options');
     const fields = make('div', undefined, 'player-source-fields'),
       actions = make('div', undefined, 'player-actions'),
       next = make('button', 'Continue'),
       cancel = make('button', 'Cancel');
-    let selected = player.source?.type || 'file',
+    let selected: ImportMethodValue = player.source?.type || 'file',
       rememberChoice = true;
-    for (const [value, label] of [
-      ['file', 'Upload a file'],
-      ['report', 'Hosted Session Report'],
-      ['maishift', 'Maishift'],
-    ] as const) {
-      const row = make('label'),
-        radio = make('input'),
-        icon = make('img');
-      radio.type = 'radio';
-      radio.name = 'player-source';
-      radio.value = value;
-      radio.checked = value === selected;
-      radio.onchange = () => {
-        selected = value;
-        render();
+    let openService: string | null = importServiceForMethod(selected).id;
+    const sections = new Map<string, { toggle: HTMLButtonElement; body: HTMLDivElement }>();
+    const lastMethods = new Map<string, ImportMethodValue>([[openService, selected]]);
+    let directAvailable: Awaited<ReturnType<typeof sources.directCapabilities>> | null = null;
+    let checkingAvailability = false;
+    const availability = new AbortController();
+    dialog.addEventListener('close', () => availability.abort(), { once: true });
+    for (const service of IMPORT_SERVICES) {
+      const section = make('section', undefined, 'player-import-service'),
+        header = make('div', undefined, 'player-service-header'),
+        title = make('h3'),
+        toggle = make('button', undefined, 'player-service-toggle'),
+        body = make('div', undefined, 'player-service-body'),
+        methods = make('fieldset', undefined, 'player-service-methods');
+      section.dataset.importService = service.id;
+      toggle.type = 'button';
+      toggle.dataset.serviceToggle = service.id;
+      toggle.id = `player-service-${service.id}`;
+      body.id = `player-service-body-${service.id}`;
+      toggle.setAttribute('aria-controls', body.id);
+      section.setAttribute('aria-labelledby', toggle.id);
+      const iconURL = IMPORT_SERVICE_ICONS[service.id];
+      if (iconURL) {
+        const icon = make('img');
+        icon.src = iconURL;
+        icon.alt = '';
+        icon.width = 24;
+        icon.height = 24;
+        icon.setAttribute('aria-hidden', 'true');
+        toggle.append(icon);
+      } else {
+        const monogram = make(
+          'span',
+          i18n.verbatim(IMPORT_SERVICE_MONOGRAMS[service.id] ?? service.title.slice(0, 2)),
+          'player-service-monogram',
+        );
+        monogram.setAttribute('aria-hidden', 'true');
+        toggle.append(monogram);
+      }
+      const chevron = make('span', i18n.verbatim('⌄'), 'player-service-chevron');
+      chevron.setAttribute('aria-hidden', 'true');
+      toggle.append(make('span', i18n.verbatim(service.title)), chevron);
+      toggle.onclick = () => {
+        if (openService === service.id) {
+          openService = null;
+          updateSections();
+        } else selectMethod(lastMethods.get(service.id) ?? service.methods[0]!.value);
       };
-      icon.alt = '';
-      icon.width = 22;
-      icon.height = 22;
-      icon.setAttribute('aria-hidden', 'true');
-      icon.src =
-        value === 'maishift'
-          ? (ports.songPages?.asset('maishift-favicon.ico') ?? 'maishift-favicon.ico')
-          : document.querySelector<HTMLLinkElement>('link[rel=icon][sizes="32x32"]')?.href ||
-            document.querySelector<HTMLLinkElement>('link[rel=icon]')?.href ||
-            '';
-      row.append(radio, icon, make('span', label));
-      (value === 'maishift' ? maishift : reportRows).append(row);
+      title.append(toggle);
+      header.append(title, helpLink(service.help, service.helpLabel));
+      methods.append(make('legend', 'Import method'));
+      for (const method of service.methods) {
+        const row = make('label'),
+          radio = make('input');
+        radio.type = 'radio';
+        radio.name = 'player-source';
+        radio.value = method.value;
+        radio.dataset.importMethod = method.value;
+        radio.checked = method.value === selected;
+        radio.onchange = () => selectMethod(method.value);
+        row.append(radio, make('span', method.label));
+        methods.append(row);
+      }
+      body.append(methods);
+      section.append(header, body);
+      group.append(section);
+      sections.set(service.id, { toggle, body });
     }
-    maishift.append(helpLink('maishift', 'About Maishift imports'));
+    function updateSections() {
+      for (const [id, { toggle, body }] of sections) {
+        toggle.setAttribute('aria-expanded', String(openService === id));
+        body.hidden = openService !== id;
+      }
+    }
+    function selectMethod(value: ImportMethodValue) {
+      const unchanged = selected === value;
+      selected = value;
+      openService = importServiceForMethod(value).id;
+      lastMethods.set(openService, value);
+      group.querySelector<HTMLInputElement>(`input[data-import-method="${value}"]`)!.checked = true;
+      if (unchanged) updateSections();
+      else render();
+    }
     function render() {
+      const body = sections.get(importServiceForMethod(selected).id)!.body;
+      body.append(fields, actions);
+      updateSections();
       fields.replaceChildren();
+      i18n.text(next, 'Continue');
       next.disabled = selected === 'maishift' && !sources.capabilities.maishift;
-      if (selected === 'file') {
+      const chosen = importMethodFileFormat(selected);
+      if (chosen !== null) {
         fields.append(make('p', 'Choose a compressed player file exported by Session Report.'));
         next.onclick = () => {
           dialog.close();
           input.click();
         };
+      } else if (selected === 'kamaitachi') {
+        const label = make('label', 'Kamaitachi username or profile URL'),
+          account = make('input');
+        account.id = 'player-kamaitachi-account';
+        account.autocomplete = 'off';
+        account.spellcheck = false;
+        account.maxLength = 2048;
+        account.required = true;
+        account.value = player.source?.type === 'kamaitachi' ? (player.source.account ?? '') : '';
+        label.append(account);
+        fields.append(
+          make('p', 'Import personal bests already stored in a Kamaitachi maimai DX profile.'),
+          label,
+          make('p', 'No sign-in or API key needed. You will review the profile before importing.'),
+          make(
+            'p',
+            'Update your scores on Kamaitachi first. Refresh in Party only reads what is already there.',
+          ),
+          helpLink('kamaitachi', 'About Kamaitachi imports'),
+        );
+        i18n.text(next, 'Preview scores');
+        next.onclick = () => {
+          if (!account.reportValidity()) return;
+          void player.importSource(
+            { type: 'kamaitachi', account: account.value.trim() },
+            rememberChoice,
+          );
+        };
+      } else if (isOAuthProvider(selected)) {
+        const provider = selected;
+        const saved = player.source?.type === provider ? player.source : null;
+        fields.append(
+          make('p', 'For players whose China-region scores are already visible in Diving-Fish.'),
+          make(
+            'p',
+            'Open Diving-Fish first, accept its tracker agreement, and check your scores. Creating an account does not add arcade scores.',
+          ),
+          external('Open Diving-Fish', 'https://maimai.diving-fish.com/'),
+          helpLink('diving-fish', 'About Diving-Fish imports'),
+        );
+        if (!directAvailable) {
+          next.disabled = true;
+          fields.append(make('p', 'Checking connection availability…'));
+          if (!checkingAvailability) {
+            checkingAvailability = true;
+            void sources
+              .directCapabilities(availability.signal)
+              .then((value) => {
+                if (availability.signal.aborted || !group.isConnected) return;
+                directAvailable = value;
+                if (isOAuthProvider(selected)) render();
+              })
+              .catch(() => {});
+          }
+          return;
+        }
+        if (!directAvailable[provider]) {
+          next.disabled = true;
+          fields.append(
+            make(
+              'p',
+              directAvailable.checked
+                ? 'Diving-Fish connection is not available yet. Please try again later.'
+                : 'Could not check Diving-Fish availability. Please try again when online.',
+            ),
+          );
+          showOtherConnections();
+          return;
+        }
+        fields.append(
+          make(
+            'p',
+            'Sign in to Diving-Fish and allow maimai.party to read your profile name and scores. You will preview them before importing.',
+          ),
+        );
+        let masking: HTMLInputElement | undefined;
+        if (provider === 'diving-fish') {
+          fields.append(
+            make(
+              'p',
+              'In Diving-Fish, open Edit profile (编辑个人资料) and turn off score masking (对非网页查询的成绩使用掩码). Keep public-query privacy on if you prefer. Party cannot verify masking for you.',
+            ),
+          );
+          const label = make('label', undefined, 'player-remember');
+          masking = make('input');
+          masking.id = 'player-fish-masking';
+          masking.type = 'checkbox';
+          label.append(masking, make('span', 'I have disabled score masking in Diving-Fish.'));
+          fields.append(label);
+        }
+        const connect = () => {
+          if (player.busy) return;
+          if (masking && !masking.checked) {
+            masking.focus();
+            return;
+          }
+          const popup = openProviderPopup(window, provider, usage);
+          if (!popup) {
+            message(
+              'Player data could not be imported',
+              'Allow pop-ups to connect your account, then try again.',
+            );
+            return;
+          }
+          const nonce = crypto.randomUUID();
+          void player.importSource({ type: provider }, rememberChoice, (signal) =>
+            sources.authorize(
+              provider,
+              popup,
+              nonce,
+              masking?.checked === true,
+              signal,
+              i18n.locale,
+              (outcome) => {
+                if (outcome === 'started') usage('provider_disconnect_started', provider);
+                else if (outcome === 'completed') usage('provider_disconnect_completed', provider);
+                else usage('provider_disconnect_failed', provider, 'unavailable');
+              },
+            ),
+          );
+        };
+        if (saved) {
+          i18n.text(next, 'Preview connected scores');
+          next.onclick = () => void player.importSource(saved, rememberChoice);
+          const another = make('button', 'Connect another account');
+          another.type = 'button';
+          another.onclick = connect;
+          fields.append(another);
+        } else {
+          i18n.text(next, 'Connect Diving-Fish');
+          next.disabled = !!masking && !masking.checked;
+          if (masking)
+            masking.onchange = () => {
+              next.disabled = !masking!.checked;
+            };
+          next.onclick = connect;
+        }
+        showOtherConnections();
+        function showOtherConnections() {
+          const otherConnections = make('div', undefined, 'player-provider-connections');
+          fields.append(otherConnections);
+          void sources
+            .connectionStatus(availability.signal)
+            .then((connections) => {
+              if (availability.signal.aborted || !otherConnections.isConnected) return;
+              const others = connections.filter(
+                (row) => row.provider === provider && row.connectionID !== saved?.connectionID,
+              );
+              if (!others.length) return;
+              otherConnections.append(make('h4', 'Other provider connections'));
+              for (const connection of others) {
+                const row = make('div', undefined, 'player-provider-connection'),
+                  disconnect = make('button', 'Disconnect connection');
+                disconnect.type = 'button';
+                disconnect.onclick = async () => {
+                  disconnect.disabled = true;
+                  usage('provider_disconnect_started', provider);
+                  try {
+                    await sources.disconnect({
+                      type: provider,
+                      connectionID: connection.connectionID,
+                    });
+                    usage('provider_disconnect_completed', provider);
+                    row.remove();
+                    if (!otherConnections.querySelector('button')) otherConnections.remove();
+                  } catch (error) {
+                    usage('provider_disconnect_failed', provider, 'unavailable');
+                    message('Connection cleanup needed', errorMessage(error));
+                  } finally {
+                    disconnect.disabled = false;
+                  }
+                };
+                row.append(make('span', i18n.verbatim(connection.displayName)), disconnect);
+                otherConnections.append(row);
+              }
+            })
+            .catch((error: unknown) => {
+              if (!availability.signal.aborted && otherConnections.isConnected)
+                otherConnections.append(make('p', errorMessage(error)));
+            });
+        }
       } else if (selected === 'maishift' && !sources.capabilities.maishift)
         fields.append(
           make(
@@ -771,8 +1105,42 @@ export function createPlayerData(ports: PersonalPorts) {
       dialog.close();
       focusDialogTrigger();
     };
-    actions.append(next, cancel);
-    dialog.append(heading);
+    actions.append(next);
+    const footer = make('div', undefined, 'player-actions player-source-footer');
+    footer.append(cancel);
+    dialog.append(heading, make('p', 'Choose a service and an import method.'));
+    if (sources.pendingCleanup()) {
+      const retry = make('button', 'Retry connection cleanup'),
+        cleanupNote = make('p', 'A provider connection still needs cleanup.');
+      retry.type = 'button';
+      retry.className = 'player-connection-cleanup';
+      retry.onclick = async () => {
+        retry.disabled = true;
+        try {
+          const outcomes = await Promise.allSettled(
+            sources.pendingCleanupProviders().map(async (provider) => {
+              usage('provider_cleanup_started', provider);
+              try {
+                await sources.retryCleanup(provider);
+                usage('provider_cleanup_completed', provider);
+              } catch (error) {
+                usage('provider_cleanup_failed', provider, 'unavailable');
+                throw error;
+              }
+            }),
+          );
+          const failed = outcomes.find((outcome) => outcome.status === 'rejected');
+          if (failed?.status === 'rejected') throw failed.reason;
+          retry.remove();
+          cleanupNote.remove();
+        } catch (error) {
+          message('Connection cleanup needed', errorMessage(error));
+        } finally {
+          retry.disabled = false;
+        }
+      };
+      dialog.append(cleanupNote, retry);
+    }
     if (player.active)
       dialog.append(
         make(
@@ -781,7 +1149,7 @@ export function createPlayerData(ports: PersonalPorts) {
           'player-import-replace-warning',
         ),
       );
-    dialog.append(group, fields, actions);
+    dialog.append(group, footer);
     render();
     if (!dialog.open) dialog.showModal();
     group.querySelector<HTMLInputElement>(':checked')?.focus();
@@ -825,8 +1193,26 @@ export function createPlayerData(ports: PersonalPorts) {
       ports.maishift.matchChart(data.player, data.charts[id], row, c)
     );
   }
+  function kamaitachiMatch(data: PlayerDataset, id: string) {
+    if (
+      !Object.values(data.captures).some(
+        (capture) => capture.sourceKind === 'kamaitachi-public-pbs',
+      )
+    )
+      return true;
+    const row = mapping?.charts[id];
+    return sources.kamaitachiMatch(
+      data.player,
+      data.charts[id],
+      row,
+      catalogByID.get(row?.chart_id ?? ''),
+    );
+  }
   function providerIDs(c: CatalogChart) {
-    if (player.active?.player.provider === 'kamaitachi') return reverse.get(c.chart_id) || [];
+    if (player.active && isFileProvider(player.active.player.provider))
+      return fileReverse.get(c.chart_id) || [];
+    if (player.active?.player.provider === 'kamaitachi')
+      return (reverse.get(c.chart_id) || []).filter((id) => kamaitachiMatch(player.active!, id));
     if (player.active?.player.provider !== 'maishift') return [];
     const id = maishiftReverse.get(player.active.player.key.split(':')[2] + ':' + c.chart_id);
     return id && maishiftMatch(player.active, id) ? [id] : [];
@@ -838,12 +1224,24 @@ export function createPlayerData(ports: PersonalPorts) {
   function exportIdentity(chart: PlayerChart) {
     if (!player.active || !catalog) return;
     let canonicalChartID: string | undefined;
-    if (player.active.player.provider === 'maishift') {
+    if (isFileProvider(player.active.player.provider)) {
+      // Reuse the exact metadata match used by catalog results; source IDs alone
+      // never authorize export artwork or chart-version enrichment.
+      for (const [id, sourceIDs] of fileReverse)
+        if (sourceIDs.includes(chart.chartID)) {
+          canonicalChartID = id;
+          break;
+        }
+    } else if (player.active.player.provider === 'maishift') {
       if (maishiftMatch(player.active, chart.chartID))
         canonicalChartID = maishiftMapping?.charts[chart.chartID]?.chart_id;
     } else {
       const row = mapping?.charts[chart.chartID];
-      if (row && reverse.get(row.chart_id)?.includes(chart.chartID))
+      if (
+        row &&
+        reverse.get(row.chart_id)?.includes(chart.chartID) &&
+        kamaitachiMatch(player.active, chart.chartID)
+      )
         canonicalChartID = row.chart_id;
     }
     if (!canonicalChartID) return;

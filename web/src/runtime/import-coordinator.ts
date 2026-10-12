@@ -7,8 +7,14 @@ import type {
   ImportStage,
   HandoffTransfer,
   SessionNotification,
+  SessionUsage,
+  OAuthProvider,
 } from './player-session-contracts';
 import { importTime, errorMessage, isAbort } from './player-session-contracts';
+type ProviderFlow =
+  | { action: 'connect'; provider: OAuthProvider }
+  | { action: 'read'; provider: OAuthProvider | 'kamaitachi' }
+  | { action: 'refresh'; provider: SourceConnection['type'] };
 /** Sole owner of player readiness and transaction state; DOM and transport are ports. */
 export class ImportCoordinator {
   private revision = 0;
@@ -208,6 +214,12 @@ export class ImportCoordinator {
     } = {},
   ) {
     const { core, storage, effects } = this.ports;
+    const previousConnections = remember
+      ? await this.savedConnections()
+      : this.connection
+        ? [this.connection]
+        : [];
+    let removedSavedConnection = false;
     let previous = this.data;
     if (connection?.type === 'maishift' && this.data?.player.key === data.player.key) {
       if (connection.adapterVersion === 2)
@@ -263,12 +275,18 @@ export class ImportCoordinator {
     } else {
       if (this.token) await storage.verify(this.token);
       this.assert(expected);
-      if (this.persistent && this.connection && connection?.url === this.connection.url) {
+      if (
+        this.persistent &&
+        this.connection &&
+        connection?.url === this.connection.url &&
+        connection.playerKey === this.connection.playerKey
+      ) {
         const key = this.ports.key('maimai-player-session'),
           old = this.ports.temporary.getItem(key);
         this.saveTab(bytes, this.token!.epoch + 1, connection?.profileRating ?? null, importedAt);
         try {
           this.token = await storage.forget(this.token);
+          removedSavedConnection = true;
         } catch (error) {
           if (old === null) this.clearTab();
           else this.ports.temporary.setItem(key, old);
@@ -293,6 +311,69 @@ export class ImportCoordinator {
     this.refreshMessage = '';
     if (!automatic) effects.show();
     effects.changed();
+    const releasedIDs: string[] = [];
+    for (const previous of previousConnections)
+      if (
+        (remember || removedSavedConnection) &&
+        previous.connectionID &&
+        previous.connectionID !== this.connection?.connectionID
+      ) {
+        await this.releaseConnection(previous);
+        releasedIDs.push(previous.connectionID);
+      }
+    return releasedIDs;
+  }
+  private trackProvider(
+    flow: ProviderFlow,
+    outcome: 'started' | 'completed' | 'cancelled' | 'failed',
+    failure: ImportStage = 'unavailable',
+  ) {
+    // All components are finite unions; no provider/account data enters usage rows.
+    const event = `provider_${flow.action}_${outcome}`;
+    this.ports.effects.usage(
+      ...((outcome === 'failed'
+        ? [event, flow.provider, failure]
+        : [event, flow.provider]) as SessionUsage),
+    );
+  }
+  private async releaseConnection(
+    source: SourceLocation | SourceConnection,
+    locallyRemoved = false,
+  ) {
+    if (source.type !== 'diving-fish' || !('connectionID' in source) || !source.connectionID)
+      return;
+    this.ports.effects.usage('provider_disconnect_started', source.type);
+    try {
+      await this.ports.sources.disconnect?.(source);
+      this.ports.effects.usage('provider_disconnect_completed', source.type);
+    } catch (error) {
+      this.ports.effects.usage('provider_disconnect_failed', source.type, 'unavailable');
+      this.ports.effects.message(
+        'Connection cleanup needed',
+        locallyRemoved
+          ? 'Saved player data was removed. A provider connection still needs cleanup; retry when online.'
+          : errorMessage(error),
+      );
+    }
+  }
+  private async savedConnections() {
+    const sources = this.connection ? [this.connection] : [];
+    // A one-time import can be displayed while an earlier profile is retained.
+    // Erasing local storage must also release that retained profile's grant.
+    try {
+      const saved = (await this.ports.storage.read()).active?.source;
+      if (saved && typeof saved.playerKey === 'string') {
+        const source = this.ports.sources.validateSource(saved, saved.playerKey);
+        if (
+          source?.connectionID &&
+          !sources.some((row) => row.connectionID === source.connectionID)
+        )
+          sources.push(source);
+      }
+    } catch {
+      /* Invalid metadata must never prevent local erasure. */
+    }
+    return sources;
   }
   async forget() {
     this.cancel();
@@ -301,6 +382,8 @@ export class ImportCoordinator {
     const { effects, storage } = this.ports;
     try {
       await this.ready;
+      this.assert(expected);
+      const connections = await this.savedConnections();
       this.assert(expected);
       const token = await storage.forget();
       this.assert(expected);
@@ -318,6 +401,7 @@ export class ImportCoordinator {
         'The saved profile and connection were removed. You can keep viewing these scores in this tab; automatic refresh is off.',
         { success: true },
       );
+      for (const connection of connections) await this.releaseConnection(connection, true);
     } catch (error) {
       if (expected === this.revision && !isAbort(error))
         effects.message('Could not forget data', errorMessage(error));
@@ -342,6 +426,8 @@ export class ImportCoordinator {
     try {
       await this.ready;
       this.assert(expected);
+      const connections = await this.savedConnections();
+      this.assert(expected);
       const cleared = await storage.clear();
       this.notify('cleared', cleared);
       if ((this.token?.version ?? -1) > cleared.version) return;
@@ -358,6 +444,7 @@ export class ImportCoordinator {
           success: true,
         },
       );
+      for (const connection of connections) await this.releaseConnection(connection, true);
     } catch (error) {
       if (expected === this.revision && !isAbort(error))
         effects.message('Could not clear player data', errorMessage(error));
@@ -401,16 +488,16 @@ export class ImportCoordinator {
       if (expected === this.revision || expected === undefined) this.importing = false;
     }
   }
-  async importSource(value: string | SourceLocation, rememberChoice: boolean) {
+  async importSource(
+    value: string | SourceLocation | SourceConnection,
+    rememberChoice: boolean,
+    authorize?: (signal: AbortSignal) => Promise<SourceLocation>,
+  ) {
     if (this.busy) return;
     const { sources, core, effects } = this.ports;
-    let parsed: SourceLocation, recovery: string | undefined;
+    let parsed: SourceLocation | SourceConnection, recovery: string | undefined;
     try {
-      if (typeof value === 'object')
-        parsed = {
-          ...value,
-          type: 'maishift',
-        };
+      if (typeof value === 'object') parsed = { ...value };
       else {
         const report = sources.reportURL(value);
         if (!report.manifest) {
@@ -427,13 +514,16 @@ export class ImportCoordinator {
       effects.message('Player data could not be imported', errorMessage(error));
       return;
     }
-    const method = parsed.type === 'maishift' ? 'maishift' : 'report';
+    const method = parsed.type;
     effects.usage('import_started', method);
     this.importing = true;
     let expected: number | undefined = this.revision + 1,
       reading = false,
       cancelled = false,
+      acquired: SourceLocation | null = null,
+      retained = false,
       stage: ImportStage = 'storage';
+    let acquisitionFlow: ProviderFlow | null = null;
     try {
       expected = await this.begin();
       stage = 'invalid';
@@ -449,9 +539,26 @@ export class ImportCoordinator {
       let result;
       try {
         reading = true;
+        if (authorize) {
+          if (method === 'diving-fish') {
+            acquisitionFlow = { action: 'connect', provider: method };
+            this.trackProvider(acquisitionFlow, 'started');
+          }
+          parsed = await authorize(this.signal());
+          acquired = parsed;
+          this.assert(expected);
+          if (acquisitionFlow) this.trackProvider(acquisitionFlow, 'completed');
+          acquisitionFlow = null;
+        }
+        if (method === 'kamaitachi' || method === 'diving-fish') {
+          acquisitionFlow = { action: 'read', provider: method };
+          this.trackProvider(acquisitionFlow, 'started');
+        }
         result = await sources.readSource(parsed, {
           signal: this.signal(),
         });
+        if (acquisitionFlow) this.trackProvider(acquisitionFlow, 'completed');
+        acquisitionFlow = null;
         reading = false;
       } finally {
         cleanup();
@@ -464,24 +571,39 @@ export class ImportCoordinator {
           connection: result.source,
           rememberDefault: rememberChoice,
           unmatched: effects.unmatched(result.data),
+          excludedUtage: result.source.excludedUtage,
         },
         this.signal(),
       );
       if (choice.accept) {
         stage = 'storage';
-        await this.commit(result.data, choice.remember, {
+        const releasedIDs = await this.commit(result.data, choice.remember, {
           connection: result.source,
           expected,
         });
+        retained = choice.remember;
+        if (retained && acquired && acquired.type === 'diving-fish')
+          for (const connectionID of acquired.previousConnectionIDs ?? [])
+            if (!releasedIDs.includes(connectionID))
+              await this.releaseConnection({ type: acquired.type, connectionID });
+        if (
+          !choice.remember &&
+          !acquired &&
+          !releasedIDs.includes(result.source.connectionID ?? '')
+        )
+          await this.releaseConnection(result.source);
         effects.usage('import_completed', method);
       } else effects.usage('import_cancelled', method);
     } catch (error) {
-      if (!isAbort(error)) {
+      if (acquisitionFlow)
+        this.trackProvider(acquisitionFlow, cancelled || isAbort(error) ? 'cancelled' : 'failed');
+      if (!isAbort(error) && !cancelled) {
         effects.usage('import_failed', method, reading ? 'unavailable' : stage);
-        if (reading && parsed.type !== 'maishift') effects.recovery(recovery!);
+        if (reading && parsed.type === 'report') effects.recovery(recovery!);
         else effects.message('Player data could not be imported', errorMessage(error));
-      }
+      } else if (!cancelled) effects.usage('import_cancelled', method);
     } finally {
+      if (acquired && !retained) await this.releaseConnection(acquired);
       if (expected === this.revision || expected === undefined) {
         this.importing = false;
         this.pending = null;
@@ -503,6 +625,8 @@ export class ImportCoordinator {
     const expected = this.revision;
     const { storage, sources, core, effects } = this.ports;
     let lease: Awaited<ReturnType<typeof storage.claim>> = null;
+    let refreshFlow: ProviderFlow | null = null,
+      refreshStage: ImportStage = 'unavailable';
     try {
       lease = await storage.claim(this.token!, manual);
       this.assert(expected);
@@ -517,12 +641,17 @@ export class ImportCoordinator {
       this.pending = new AbortController();
       this.refreshMessage = 'Checking for updated player data…';
       effects.changed(false);
+      if (manual) {
+        refreshFlow = { action: 'refresh', provider: this.connection.type };
+        this.trackProvider(refreshFlow, 'started');
+      }
       const result = await sources.readSource(this.connection, {
         signal: this.signal(),
         expectedPlayer: this.data!.player.key,
         manual,
       });
       this.assert(expected);
+      refreshStage = 'storage';
       const now = this.now();
       const updated = {
         ...this.connection,
@@ -536,7 +665,7 @@ export class ImportCoordinator {
       if (
         result.data.revision === this.connection.sourceRevision ||
         older ||
-        (this.connection.type === 'maishift' &&
+        (this.connection.contentRevision !== undefined &&
           result.source.contentRevision === this.connection.contentRevision)
       ) {
         if (older) {
@@ -590,9 +719,23 @@ export class ImportCoordinator {
       this.refreshMessage = older
         ? 'The source returned older data. Your saved data was kept.'
         : '';
+      if (refreshFlow) this.trackProvider(refreshFlow, 'completed');
     } catch (error) {
+      if (refreshFlow)
+        this.trackProvider(
+          refreshFlow,
+          expected !== this.revision || isAbort(error) ? 'cancelled' : 'failed',
+          refreshStage,
+        );
       if (expected === this.revision && !isAbort(error)) {
-        this.refreshMessage = 'Could not refresh — showing your saved data';
+        this.refreshMessage =
+          this.connection?.type === 'diving-fish' &&
+          typeof error === 'object' &&
+          error !== null &&
+          'code' in error &&
+          error.code === 'tracker_agreement_required'
+            ? 'Open Diving-Fish, accept its tracker agreement, and confirm your scores are visible. Then try again.'
+            : 'Could not refresh — showing your saved data';
         if (lease)
           try {
             const retryAt =

@@ -1,4 +1,4 @@
-param([switch]$Offline, [switch]$KeepWorkspace)
+param([switch]$Offline, [switch]$KeepWorkspace, [switch]$Build)
 $ErrorActionPreference='Stop'
 $prepared = (& (Join-Path $PSScriptRoot 'Test-Development.ps1') -Check prepare -Offline:$Offline -KeepWorkspace:$KeepWorkspace | Out-String)
 $record = $prepared.Substring($prepared.IndexOf('{')) | ConvertFrom-Json
@@ -15,6 +15,9 @@ try {
   try{
    $installArgs=@('ci','--no-audit','--no-fund');if($Offline){$installArgs+='--offline'}
    & npm.cmd @installArgs;if($LASTEXITCODE){throw "$part dependencies failed"}
+   if($Build -and $part -eq 'web'){
+    & npm.cmd run build;if($LASTEXITCODE){throw 'Browser asset build failed'}
+   }
    & npm.cmd run check;if($LASTEXITCODE){throw "$part type/generated check failed"}
    & npm.cmd test;if($LASTEXITCODE){throw "$part tests failed"}
   } finally {Pop-Location}

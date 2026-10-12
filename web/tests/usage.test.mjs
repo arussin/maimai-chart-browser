@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import { moduleSource, evaluateModule } from './module.mjs';
 import { gzipSync } from 'node:zlib';
+import { providerUsageRows } from '../../usage-worker/test/provider-usage-fixture.mjs';
 const source = await moduleSource('usage');
 const stagingSource = await moduleSource('usage-staging', { staging: true });
 import { DETAILS, validateRow } from '../src/usage-contract.ts';
@@ -142,6 +143,87 @@ test('same broad page category counts each committed navigation but no automatic
   api.activate('song');
   await api.flush();
   assert.equal(JSON.parse(requests[0].options.body).events[0].count, 2);
+});
+
+test('direct import counts accept only finite provider names and never account or grant identifiers', async () => {
+  const { api, requests } = fixture();
+  for (const provider of ['kamaitachi', 'diving-fish'])
+    api.emit('import_started', 'charts', provider);
+  for (const detail of [
+    'https://kamai.tachi.ac/u/PRIVATE',
+    'PRIVATE-ACCOUNT',
+    'diving-fish:PRIVATE-GRANT',
+  ])
+    api.emit('import_started', 'charts', detail);
+  await api.flush();
+  const body = requests[0].options.body;
+  assert.ok(!body.includes('PRIVATE'));
+  assert.deepEqual(
+    JSON.parse(body)
+      .events.map((row) => row.detail)
+      .sort(),
+    ['diving-fish', 'kamaitachi'],
+  );
+});
+
+test('every finite provider lifecycle and tracker-link row survives the browser transport unchanged', async () => {
+  const { api, requests } = fixture();
+  for (let i = 0; i < providerUsageRows.length; i += 16) {
+    for (const row of providerUsageRows.slice(i, i + 16))
+      api.emit(row.event, row.page, row.detail, row.failure);
+    await api.flush();
+  }
+  const received = requests.flatMap((request) => JSON.parse(request.options.body).events);
+  assert.deepEqual(received, providerUsageRows);
+  assert.ok(
+    requests.every((request) => new TextEncoder().encode(request.options.body).length <= 4096),
+  );
+});
+
+test('provider telemetry rejects identities, raw errors, invented auto events and invalid failure combinations', async () => {
+  const { api, requests } = fixture();
+  for (const detail of [
+    'PRIVATE-ACCOUNT',
+    'https://provider.invalid/PRIVATE',
+    'diving-fish:PRIVATE-GRANT',
+    'aquadx',
+  ])
+    api.emit('provider_connect_started', 'charts', detail);
+  api.emit('provider_connect_failed', 'charts', 'diving-fish', 'PRIVATE-TOKEN');
+  api.emit('provider_connect_started', 'charts', 'diving-fish', 'unavailable');
+  api.emit('provider_connect_failed', 'charts', 'diving-fish');
+  api.emit('provider_refresh_auto_completed', 'charts', 'diving-fish');
+  api.emit('provider_status_completed', 'charts', 'diving-fish');
+  api.emit('provider_disconnect_cancelled', 'charts', 'diving-fish');
+  for (const detail of ['lxns', 'mai-tools', 'dxrating', 'tomomai', 'jietng', 'aqua', 'tachi']) {
+    api.emit('import_started', 'charts', detail);
+    api.emit('provider_read_started', 'charts', detail);
+  }
+  api.emit('file_import_failed', 'charts', 'portable', 'invalid');
+  api.emit('provider_file_fallback_clicked', 'charts', 'diving-fish');
+  api.emit('resource_opened', 'charts', 'https://www.diving-fish.com/PRIVATE');
+  await api.flush();
+  assert.equal(requests.length, 0);
+});
+
+test('all new lifecycle counters honor opt-outs, suspension and the usage kill switch', async () => {
+  for (const settings of [
+    { gpc: true },
+    { dnt: '1' },
+    { enabled: false },
+    { host: 'preview.invalid' },
+  ]) {
+    const { api, requests } = fixture(settings);
+    for (const row of providerUsageRows) api.emit(row.event, row.page, row.detail, row.failure);
+    await api.flush();
+    assert.equal(requests.length, 0);
+  }
+  const { api, requests } = fixture();
+  api.suspend(() => {
+    for (const row of providerUsageRows) api.emit(row.event, row.page, row.detail, row.failure);
+  });
+  await api.flush();
+  assert.equal(requests.length, 0);
 });
 
 for (const [name, module, host, forbidden] of [

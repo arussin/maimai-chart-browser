@@ -15,6 +15,22 @@ completion or failure counts. No selected version, partner, song, player data,
 image, URL or error text is logged. Forget player data retains the single existing
 `data_action/clear` counter, labeled **Forget / clear player data** in owner reports.
 
+Kamaitachi and Diving-Fish connections add finite counts for initial reads and
+manual refreshes. Diving-Fish also records explicit connection, disconnect and
+cleanup-retry stages. Opening its tracker link uses `resource_opened/diving_fish`.
+Portable files keep the existing import counters; no provider-file events are
+collected. These overlapping stage counts are not distinct imports, users or a
+linked funnel. Automatic refresh, restored state and background availability,
+status and cleanup checks stay uncounted. No account names, grant identifiers,
+scores, source URLs or upstream error text enter the report.
+
+GPC/DNT, client and server kill switches, preview suppression and dropped-batch
+behavior also apply to the new events. Local validation does not establish hosted
+collection. Release the matching collector and report before enabling the new
+browser counters, and record their actual activation date; older missing counts
+are not measured zeroes. The finite event matrix and acceptance boundaries are in
+the [usage Worker guide](../usage-worker/README.md#import-and-provider-actions).
+
 | Source | Meaning | Limits |
 |---|---|---|
 | Private usage aggregates | Received daily actions by finite page type, event and detail | No unique people, sessions, click sequences, selected filter values or search text; opt-outs and dropped batches are absent |

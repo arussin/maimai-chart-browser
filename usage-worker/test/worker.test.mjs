@@ -4,6 +4,7 @@ import {readFile} from 'node:fs/promises';
 import {Miniflare,convertV4MiniflareOptions} from 'miniflare';
 import worker,{dayKey} from '../worker.mjs';
 import staging from '../staging.mjs';
+import {providerUsageRows} from './provider-usage-fixture.mjs';
 import {DETAILS} from '../../web/src/usage-contract.ts';
 let mf,db,stageDB;
 before(async()=>{
@@ -21,6 +22,31 @@ test('only finite aggregate fields are stored and concurrent increments sum',asy
  assert.ok(responses.every(r=>r.status===204));
  const {results}=await db.prepare('SELECT * FROM usage_daily').all();assert.equal(results.length,1);assert.equal(results[0].count,20);
  assert.deepEqual(Object.keys(results[0]).sort(),['count','day','detail','event','failure','page','version']);
+});
+
+test('compiled collector stores every finite provider lifecycle and tracker-link counter and rejects private siblings atomically',async()=>{
+ await db.prepare('DELETE FROM usage_daily').run();
+ for(let i=0;i<providerUsageRows.length;i+=16)
+  assert.equal((await call(req({version:1,events:providerUsageRows.slice(i,i+16)}))).status,204);
+ const {results}=await db.prepare('SELECT event,page,detail,failure,count FROM usage_daily').all();
+ const ordered=rows=>rows.map(r=>JSON.stringify([r.event,r.page,r.detail,r.failure,r.count])).sort();
+ assert.deepEqual(ordered(results),ordered(providerUsageRows));
+ const valid=providerUsageRows[0],prior=await db.prepare('SELECT SUM(count) AS n FROM usage_daily').first();
+ for(const invalid of [
+  {...valid,accountID:'PRIVATE-ACCOUNT'}, {...valid,connectionID:'PRIVATE-GRANT'},
+  {...valid,url:'https://provider.invalid/PRIVATE'}, {...valid,token:'PRIVATE-TOKEN'},
+  {...valid,score:100.1234}, {...valid,name:'PRIVATE-NAME'}, {...valid,detail:'PRIVATE-ACCOUNT'},
+  {...valid,detail:'lxns'}, {...valid,event:'file_import_started',detail:'portable'},
+  {...valid,event:'provider_file_fallback_clicked'},
+  {...valid,event:'resource_opened',detail:'https://www.diving-fish.com/PRIVATE'},
+  {...valid,event:'provider_refresh_auto_completed'}, {...valid,event:'provider_status_completed'},
+  {...valid,event:'provider_connect_failed',failure:'PRIVATE-ERROR'},
+  {...valid,event:'provider_connect_failed',failure:''}, {...valid,failure:'unavailable'}
+ ])assert.equal((await call(req({version:1,events:[valid,invalid]}))).status,400);
+ assert.deepEqual(await db.prepare('SELECT SUM(count) AS n FROM usage_daily').first(),prior);
+ for(const headers of [{DNT:'1'},{'Sec-GPC':'1'}])assert.equal((await call(req({version:1,events:[valid]},{headers}))).status,204);
+ assert.equal((await call(req({version:1,events:[valid]}),'false')).status,204);
+ assert.deepEqual(await db.prepare('SELECT SUM(count) AS n FROM usage_daily').first(),prior);
 });
 test('invalid batch is rejected whole; private sentinel never reaches D1',async()=>{
  const count=await db.prepare('SELECT SUM(count) AS n FROM usage_daily').first();

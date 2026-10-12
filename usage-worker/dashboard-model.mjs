@@ -30,5 +30,5 @@ export function makeDashboardData(input,{capturedAt,now=new Date()}={}) {
   if (!capturedAt || !Number.isFinite(Date.parse(capturedAt)) || new Date(capturedAt).getTime()>now.getTime()+60000) throw Error('A valid capture timestamp is required.');
   const exportData=validateExport(input,now),today=dayKey(now);
   return {...exportData,schema_version:'usage-dashboard-1',timezone:TIMEZONE,today,captured_at:new Date(capturedAt).toISOString(),action_labels:actionLabels,
-    limitations:['Received counts are actions, not unique people or sessions.','Launch-day totals include acceptance checks and one synthetic canary.','Missing coverage is unknown; only a completed day marked complete establishes measured zero.','Owner activity, blocked requests and dropped batches cannot be separated.']};
+    limitations:['Received counts are actions, not unique people or sessions.','Provider lifecycle stages are separate counters, not distinct imports or a linked funnel. Automatic refresh and background status/cleanup are excluded.','Launch-day totals include acceptance checks and one synthetic canary.','Missing coverage is unknown; only a completed day marked complete establishes measured zero.','Owner activity, blocked requests and dropped batches cannot be separated.']};
 }

@@ -1,0 +1,25 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "maimai-provider-imports",
+  "main": "provider-oauth-worker.mjs",
+  "compatibility_date": "2026-09-21",
+  "workers_dev": false,
+  "preview_urls": false,
+  "limits": { "cpu_ms": 1000 },
+  "vars": {
+    "PROVIDER_OAUTH_ENABLED": "false",
+    "DIVING_FISH_OAUTH_ENABLED": "false"
+  },
+  // Inert proposal: no route, account, rate namespace, or secret is provisioned.
+  // Follow docs/DIRECT_IMPORTS.md before activation. Missing bindings fail closed.
+  "ratelimits": [],
+  "durable_objects": {
+    "bindings": [
+      { "name": "PROVIDER_OAUTH_SESSIONS", "class_name": "ProviderOAuthSession" }
+    ]
+  },
+  "migrations": [
+    { "tag": "provider-oauth-v1", "new_sqlite_classes": ["ProviderOAuthSession"] }
+  ],
+  "observability": { "enabled": false }
+}

@@ -1,5 +1,8 @@
 import type { PlayerSource, PlayerStorage, StoreToken } from '../views/player-storage';
 import type { PlayerIdentity, PlayerDataset, PlayerRecord } from '../domain/player-data';
+import type { EmitArguments } from '../usage-contract';
+type WithoutPage<T> = T extends [infer E, unknown?, ...infer Details] ? [E, ...Details] : never;
+export type SessionUsage = WithoutPage<EmitArguments>;
 export type { PlayerIdentity, PlayerDataset } from '../domain/player-data';
 export interface PlayerOffer {
   format: string;
@@ -19,7 +22,7 @@ export interface PlayerOffer {
   };
 }
 export interface SourceConnection extends PlayerSource {
-  type: 'report' | 'maishift';
+  type: 'report' | 'maishift' | 'kamaitachi' | 'diving-fish';
   url: string;
   playerKey: string;
   adapterVersion: number;
@@ -31,7 +34,12 @@ export interface SourceConnection extends PlayerSource {
   contentRevision?: string;
   diagnosticCount?: number;
   diagnostics?: unknown[];
+  account?: string;
+  connectionID?: string;
+  warnings?: string[];
+  excludedUtage?: number;
 }
+export type OAuthProvider = 'diving-fish';
 export type SourceLocation =
   | {
       type: 'report';
@@ -41,6 +49,13 @@ export type SourceLocation =
       type: 'maishift';
       url: string;
       [field: string]: unknown;
+    }
+  | { type: 'kamaitachi'; account: string }
+  | {
+      type: OAuthProvider;
+      account?: string;
+      connectionID?: string;
+      previousConnectionIDs?: string[];
     };
 export interface PlayerCore {
   MAX_COMPRESSED: number;
@@ -75,6 +90,7 @@ export interface PlayerSources {
     data: PlayerDataset;
     source: SourceConnection;
   }>;
+  disconnect?(source: SourceLocation | SourceConnection): Promise<void>;
 }
 export interface Consent {
   accept: boolean;
@@ -82,12 +98,13 @@ export interface Consent {
 }
 export interface ConsentOptions {
   file?: boolean;
+  excludedUtage?: number;
   stale?: boolean;
   connection?: SourceConnection | null;
   rememberDefault?: boolean;
   unmatched?: number | null;
 }
-export type ImportMethod = 'file' | 'report' | 'maishift';
+export type ImportMethod = 'file' | 'report' | 'maishift' | 'kamaitachi' | OAuthProvider;
 export type ImportStage = 'storage' | 'invalid' | 'unavailable';
 export type SessionEvent = 'saved' | 'forgotten' | 'cleared' | 'invalidate';
 export interface SessionNotification {
@@ -111,13 +128,7 @@ export interface SessionEffects {
     },
   ): void;
   recovery(url: string): void;
-  usage(event: 'import_opened'): void;
-  usage(
-    event: 'import_started' | 'import_completed' | 'import_cancelled',
-    detail: ImportMethod,
-  ): void;
-  usage(event: 'import_failed', detail: ImportMethod, failure: ImportStage): void;
-  usage(event: 'data_action', detail: 'forget' | 'clear'): void;
+  usage(...args: SessionUsage): void;
   notify(kind: SessionEvent, token: StoreToken | null): void;
   unmatched(data: PlayerDataset): number;
 }
