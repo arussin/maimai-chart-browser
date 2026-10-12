@@ -28,7 +28,7 @@ const timestamp = (value: unknown): value is number =>
   value >= 0 &&
   value <= 8640000000000000;
 
-/** Normalize the verified Diving-Fish API response before the existing consent transaction. */
+/** Normalize verified tracker API responses before the existing consent transaction. */
 export async function normalizeImportDocument(
   core: ReturnType<typeof createPlayerDataCore>,
   input: unknown,
@@ -155,7 +155,7 @@ function observation(chartID: string, row: ImportRow): PlayerRecord {
     chartID,
     achievement: row.achievement,
     grade: gradeThresholds.find(([minimum]) => row.achievement >= minimum)?.[1] ?? '',
-    rate: null,
+    rate: row.rate ?? null,
     lamp: row.lamp,
     sync: row.sync,
     constant: row.constant,

@@ -41,7 +41,11 @@ class ProviderIdentityTests(unittest.TestCase):
             ("diving-fish", "private", "Fixture@server.invalid", False),
             ("diving-fish", "other", "Fixture", False),
             ("diving-fish", "cn", "名" * 30, False),
-            ("lxns", "cn", "Fixture", False),
+            ("lxns", "cn", "Fixture", True),
+            ("lxns", "cn", "名字:1", True),
+            ("lxns", "jp", "Fixture", False),
+            ("lxns", "intl", "Fixture", False),
+            ("lxns", "private", "Fixture", False),
             ("mai-tools", "cn", "Fixture", False),
             ("dxrating", "cn", "Fixture", False),
             ("tomomai", "jp", "Fixture", False),
@@ -105,12 +109,13 @@ class ProviderIdentityTests(unittest.TestCase):
         jp = dataset("maishift", "maishift:maimaidx:jp:fixture")
         tachi = dataset("kamaitachi", "kamaitachi:maimaidx:fixture")
         fish = dataset("diving-fish", "diving-fish:maimaidx:cn:fixture")
-        for other in [jp, tachi, fish]:
+        lxns = dataset("lxns", "lxns:maimaidx:cn:fixture")
+        for other in [jp, tachi, fish, lxns]:
             with self.assertRaises(ValueError):
                 core.merge(intl, other)
         self.assertEqual(core.decode(core.encode(intl)), intl)
 
-    def test_fish_account_identities_never_merge(self):
+    def test_tracker_account_identities_never_merge(self):
         def dataset(provider, region, username):
             identity = quote(username, safe="~()*!.'-_")
             return core.empty(
@@ -127,6 +132,8 @@ class ProviderIdentityTests(unittest.TestCase):
             dataset("diving-fish", "cn", "Fixture"),
             dataset("diving-fish", "cn", "fixture"),
             dataset("diving-fish", "cn", "Other"),
+            dataset("lxns", "cn", "Fixture"),
+            dataset("lxns", "cn", "fixture"),
         ]
         for index, left in enumerate(datasets):
             self.assertEqual(core.decode(core.encode(left)), left)

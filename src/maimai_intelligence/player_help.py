@@ -5,7 +5,7 @@ import re
 from importlib.resources import files
 from urllib.parse import urlsplit
 
-_ANCHORS = {"direct-connections", "session-report", "maishift", "kamaitachi", "diving-fish"}
+_ANCHORS = {"direct-connections", "session-report", "maishift", "kamaitachi", "diving-fish", "lxns"}
 
 
 def _inline_text(source):

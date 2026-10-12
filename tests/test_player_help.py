@@ -42,18 +42,21 @@ class PlayerHelpTests(unittest.TestCase):
                         "maishift",
                         "kamaitachi",
                         "diving-fish",
+                        "lxns",
                         "direct-connections",
                     },
                 )
-                self.assertEqual(len(parsed.anchors), 5)
+                self.assertEqual(len(parsed.anchors), 6)
                 urls = {link["href"] for link in parsed.links}
                 self.assertIn("https://maimai.shiftpsh.com/en/guide", urls)
                 self.assertIn("https://maimai.diving-fish.com/", urls)
                 self.assertIn("https://kamai.tachi.ac/import", urls)
                 self.assertIn("https://auth.diving-fish.com/apps", urls)
+                self.assertIn("https://maimai.lxns.net/", urls)
+                self.assertIn("https://maimai.lxns.net/docs/sync", urls)
                 self.assertIn("对非网页查询的成绩使用掩码", source)
                 self.assertNotRegex(
-                    source, r"LXNS|BATCH-MANUAL|AquaDX|JiETNG|DXRating|Tomomai|mai-tools"
+                    source, r"BATCH-MANUAL|AquaDX|JiETNG|DXRating|Tomomai|mai-tools"
                 )
                 self.assertNotIn("<script", rendered)
                 self.assertIn("ol", parsed.tags)

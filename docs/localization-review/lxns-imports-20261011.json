@@ -1,0 +1,30 @@
+{
+  "date": "2026-10-11",
+  "reviewer": "Codex with independent agent review",
+  "method": "Independent contextual AI linguistic and product review; not native-speaker certification",
+  "locales": [
+    "en",
+    "zh-Hans",
+    "ko",
+    "ja",
+    "id"
+  ],
+  "scope": "LXNS direct-connection service, eleven new interface messages, privacy copy including daily aggregate receipt times, and five localized setup/revocation walkthroughs; existing imports retained",
+  "corrections": [
+    "Provider-specific revocation destinations instead of a Fish-only destination in shared connection help",
+    "Consistent saved-score deletion wording matching the localized interface",
+    "No developer registration, personal API key, or Fish masking step for LXNS players",
+    "Clear sync-first guidance for empty accounts and failed reads preserve existing data",
+    "Independent contextual review accepted English and four privacy translations for first/latest server receipt times per day, distinct from individual action histories"
+  ],
+  "inputs": {
+    "src/maimai_intelligence/assets/locales/player-connections.json": "5af99abbf51957fc34901b743e71ebcf43a118a2d9f213993a4bd35c71aea50a",
+    "src/maimai_intelligence/assets/locales/privacy.json": "903bde722d26d430d991d67accbe22bedd62c58f84792b3d10ec00647d9d6e71",
+    "src/maimai_intelligence/assets/support-footer.html": "90258419b15f9281e37a82478da07a53f20e3d58c24cbbe697af3c94f48b94c8",
+    "src/maimai_intelligence/assets/import-help/README.id.md": "78ace00db17081dfaa5e223dbda4696a6519ec66883d85282fa872296d6f8927",
+    "src/maimai_intelligence/assets/import-help/README.ja.md": "8986eeb1bec391c248b315eff61d03d70a5a6609df921af84ac2935fed1ed91c",
+    "src/maimai_intelligence/assets/import-help/README.ko.md": "079917bf4afb0efdf8758f1bad99840b07de27c5b5c92031a0c955b49f5bec7b",
+    "src/maimai_intelligence/assets/import-help/README.md": "612f993830d397fafa0e4c413dd6b26831e74c84c141bee42058eca954b38675",
+    "src/maimai_intelligence/assets/import-help/README.zh-Hans.md": "04055be852c59cff01f987c48a86a855c71aa11b9b5c641e5dc0794d5a6bfbd4"
+  }
+}

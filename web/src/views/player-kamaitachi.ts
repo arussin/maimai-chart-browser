@@ -7,6 +7,7 @@ import type {
 } from '../domain/player-data';
 import type { ProviderRow } from '../player-session';
 import type { CatalogChart } from '../runtime/catalog';
+import { ImportFailureError, importFailure, transportFailure } from '../runtime/import-failure';
 
 export interface KamaitachiPorts {
   core: Pick<ReturnType<typeof createPlayerDataCore>, 'validate' | 'digest' | 'bounded'>;
@@ -25,7 +26,10 @@ export function createPlayerKamaitachi(ports: KamaitachiPorts) {
     origin = 'https://kamai.tachi.ac',
     maxRows = 20000;
   function fail(): never {
-    throw new Error('Kamaitachi returned an unsupported response. Your saved data was kept.');
+    throw new ImportFailureError(
+      'Kamaitachi returned an unsupported response. Your saved data was kept.',
+      'invalid_response',
+    );
   }
   const object = (v: unknown): v is Record<string, unknown> =>
     v !== null && typeof v === 'object' && !Array.isArray(v);
@@ -37,7 +41,10 @@ export function createPlayerKamaitachi(ports: KamaitachiPorts) {
     text(v, 200) && !!v && !['__proto__', 'constructor', 'prototype'].includes(v);
   function location(value: unknown) {
     if (typeof value !== 'string')
-      throw new Error('Enter a Kamaitachi username, numeric user ID, or profile URL.');
+      throw new ImportFailureError(
+        'Enter a Kamaitachi username, numeric user ID, or profile URL.',
+        'invalid',
+      );
     const input = value.trim(),
       // Accept only the public profile route, never an arbitrary request target.
       // Reject encoded paths, credentials, ports, queries and fragments outright.
@@ -48,7 +55,10 @@ export function createPlayerKamaitachi(ports: KamaitachiPorts) {
       account.toLowerCase() === 'me' ||
       (/^\d+$/.test(account) && (!integer(Number(account)) || String(Number(account)) !== account))
     )
-      throw new Error('Enter a Kamaitachi username, numeric user ID, or profile URL.');
+      throw new ImportFailureError(
+        'Enter a Kamaitachi username, numeric user ID, or profile URL.',
+        'invalid',
+      );
     return { account, url: origin + '/u/' + encodeURIComponent(account) };
   }
   function scaled(value: unknown, scale: number, max: number) {
@@ -90,31 +100,47 @@ export function createPlayerKamaitachi(ports: KamaitachiPorts) {
     missing: 'user' | 'maimaidx',
   ) {
     signal.throwIfAborted();
-    const response = await request(origin + path, {
-      method: 'GET',
-      credentials: 'omit',
-      redirect: 'error',
-      cache: 'no-store',
-      referrerPolicy: 'no-referrer',
-      headers: { Accept: 'application/json' },
-      signal,
-    });
+    let response: Response;
+    try {
+      response = await request(origin + path, {
+        method: 'GET',
+        credentials: 'omit',
+        redirect: 'error',
+        cache: 'no-store',
+        referrerPolicy: 'no-referrer',
+        headers: { Accept: 'application/json' },
+        signal,
+      });
+    } catch (error) {
+      throw transportFailure(
+        error,
+        'Kamaitachi could not be reached. Your saved data was kept.',
+        signal,
+      );
+    }
     if (!response.ok) {
       await response.body?.cancel();
       if (response.status === 429) {
         const error: Error & { retryAt: number } = Object.assign(
-          new Error('Kamaitachi is limiting requests. Try again later. Your saved data was kept.'),
+          new ImportFailureError(
+            'Kamaitachi is limiting requests. Try again later. Your saved data was kept.',
+            'rate_limited',
+          ),
           { retryAt: retryAfter(response.headers.get('Retry-After')) },
         );
         throw error;
       }
       if (response.status === 404)
-        throw new Error(
+        throw new ImportFailureError(
           missing === 'user'
             ? 'Kamaitachi could not find that user. Check the username or profile URL.'
             : 'This Kamaitachi user has no maimai DX profile. Import maimai DX scores into Kamaitachi first, then try again.',
+          'profile_missing',
         );
-      throw new Error('Kamaitachi could not be reached. Your saved data was kept.');
+      throw new ImportFailureError(
+        'Kamaitachi could not be reached. Your saved data was kept.',
+        response.status === 401 || response.status === 403 ? 'authorization_failed' : 'unavailable',
+      );
     }
     const length = response.headers.get('Content-Length');
     if (
@@ -301,8 +327,9 @@ export function createPlayerKamaitachi(ports: KamaitachiPorts) {
     // A missing PB or dangling chart would otherwise masquerade as a full reset.
     if (usedCharts.size !== charts.size || usedSongs.size !== songs.size) fail();
     if (records.length === 0)
-      throw new Error(
+      throw new ImportFailureError(
         'This Kamaitachi profile has no maimai DX personal bests to import. Update its scores in Kamaitachi first, then try again.',
+        'empty_scores',
       );
     for (let start = 0; start < records.length; start += 128) {
       const batch = records.slice(start, start + 128),
@@ -350,17 +377,21 @@ export function createPlayerKamaitachi(ports: KamaitachiPorts) {
         controller.signal,
         'user',
       );
+      if (!integer(profile.id) || !text(profile.username, 200) || !profile.username) fail();
       if (
-        !integer(profile.id) ||
-        !text(profile.username, 200) ||
-        !profile.username ||
-        (/^\d+$/.test(selected.account)
+        /^\d+$/.test(selected.account)
           ? String(profile.id) !== selected.account
-          : profile.username.toLowerCase() !== selected.account.toLowerCase())
+          : profile.username.toLowerCase() !== selected.account.toLowerCase()
       )
-        fail();
+        throw new ImportFailureError(
+          'Kamaitachi returned an unsupported response. Your saved data was kept.',
+          'account_mismatch',
+        );
       if (options.expectedPlayer && options.expectedPlayer !== 'kamaitachi:maimaidx:' + profile.id)
-        throw new Error('Kamaitachi returned a different player. Your saved data was kept.');
+        throw new ImportFailureError(
+          'Kamaitachi returned a different player. Your saved data was kept.',
+          'account_mismatch',
+        );
       const body = await get(
         '/api/v1/users/' + profile.id + '/games/maimaidx/pbs/all',
         32 * 1024 * 1024,
@@ -371,6 +402,20 @@ export function createPlayerKamaitachi(ports: KamaitachiPorts) {
       const result = await normalize(profile, body, now());
       controller.signal.throwIfAborted();
       return result;
+    } catch (error) {
+      options.signal.throwIfAborted();
+      if (controller.signal.aborted)
+        throw transportFailure(
+          error,
+          'Kamaitachi could not be reached. Your saved data was kept.',
+          options.signal,
+          controller.signal,
+        );
+      if (importFailure(error, 'unknown') !== 'unknown') throw error;
+      throw new ImportFailureError(
+        error instanceof Error ? error.message : String(error),
+        'invalid_response',
+      );
     } finally {
       clearTimeout(timer);
       options.signal.removeEventListener('abort', abort);

@@ -1,4 +1,5 @@
-export type ImportMethodValue = 'file' | 'report' | 'maishift' | 'kamaitachi' | 'diving-fish';
+export type ImportMethodValue =
+  'file' | 'report' | 'maishift' | 'kamaitachi' | 'diving-fish' | 'lxns';
 export interface ImportServiceMethod {
   value: ImportMethodValue;
   label: string;
@@ -16,6 +17,7 @@ export interface ImportService {
 export const IMPORT_SERVICE_MONOGRAMS: Readonly<Record<string, string>> = {
   kamaitachi: 'K',
   'diving-fish': 'DF',
+  lxns: 'LX',
   maishift: 'M',
   'session-report': 'P',
 };
@@ -35,6 +37,13 @@ export const IMPORT_SERVICES: readonly ImportService[] = [
     help: 'diving-fish',
     helpLabel: 'About Diving-Fish imports',
     methods: [{ value: 'diving-fish', label: 'Connect directly' }],
+  },
+  {
+    id: 'lxns',
+    title: 'LXNS',
+    help: 'lxns',
+    helpLabel: 'About LXNS imports',
+    methods: [{ value: 'lxns', label: 'Connect directly' }],
   },
   {
     id: 'maishift',

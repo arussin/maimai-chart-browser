@@ -14,6 +14,15 @@ export const PROVIDERS = Object.freeze({
     records: 'https://www.diving-fish.com/api/maimaidxprober/player/records',
     scopes: ['openid', 'profile', 'prober.records.read'],
   }),
+  lxns: Object.freeze({
+    variable: 'LXNS', issuer: 'https://maimai.lxns.net',
+    authorize: 'https://maimai.lxns.net/oauth/authorize',
+    token: 'https://maimai.lxns.net/api/v0/oauth/token',
+    userinfo: 'https://maimai.lxns.net/api/v0/oauth/userinfo', revoke: null,
+    records: 'https://maimai.lxns.net/api/v0/user/maimai/player/scores',
+    player: 'https://maimai.lxns.net/api/v0/user/maimai/player',
+    scopes: ['openid', 'read_player'],
+  }),
 });
 export class OAuthError extends Error {
   constructor(code, status = 502, retryAt = null) { super(code); this.code = code; this.status = status; this.retryAt = retryAt; }
@@ -103,7 +112,7 @@ export function createProviderOAuthService({now = Date.now} = {}) {
       const url = new URL(request.url);
       if (url.origin !== PARTY_ORIGIN || url.pathname.length > 160 || url.href.length > 8192) return jsonResponse(404, {error:'not_found'});
       if (url.pathname === OAUTH_PREFIX + '/capabilities' && !url.search && request.method === 'GET') return jsonResponse(200, {providers:Object.fromEntries(Object.keys(PROVIDERS).map(p => [p, {enabled:enabled(env, p)}]))});
-      const match = url.pathname.match(/^\/api\/player-import\/oauth\/(diving-fish)\/(start|callback|read|disconnect)$/);
+      const match = url.pathname.match(/^\/api\/player-import\/oauth\/(diving-fish|lxns)\/(start|callback|read|disconnect)$/);
       const status = url.pathname === OAUTH_PREFIX + '/status';
       if (!match && !status) return jsonResponse(404, {error:'not_found'});
       const provider = match?.[1], action = status ? 'status' : match[2];

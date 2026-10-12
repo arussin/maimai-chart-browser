@@ -252,12 +252,6 @@
       "ja": "Diving-Fish に接続",
       "id": "Hubungkan Diving-Fish"
     },
-    "The Diving-Fish connection could not be completed. Please try again.": {
-      "zh-Hans": "无法完成水鱼查分器连接。请重试。",
-      "ko": "Diving-Fish 연결을 완료하지 못했습니다. 다시 시도하세요.",
-      "ja": "Diving-Fish への接続を完了できませんでした。もう一度お試しください。",
-      "id": "Koneksi Diving-Fish tidak dapat diselesaikan. Silakan coba lagi."
-    },
     "Open Diving-Fish, accept its tracker agreement, and confirm your scores are visible. Then try again.": {
       "zh-Hans": "请打开水鱼查分器，同意查分器协议并确认成绩可见，然后重试。",
       "ko": "Diving-Fish를 열고 성적 조회 서비스 약관에 동의한 뒤 성적이 표시되는지 확인하고 다시 시도하세요.",
@@ -294,17 +288,77 @@
       "ja": "この Kamaitachi プロフィールには読み込める maimai DX の自己ベストがありません。先に Kamaitachi の成績を更新してから再試行してください。",
       "id": "Profil Kamaitachi ini belum memiliki skor terbaik pribadi maimai DX untuk diimpor. Perbarui skornya di Kamaitachi dahulu, lalu coba lagi."
     },
-    "If you connect Diving-Fish, Party's connection service reads scores from the provider and keeps an encrypted access grant and account label for refreshes. It does not store scores. Disconnect removes the grant from Party; you can also revoke access in the provider's settings.": {
-      "zh-Hans": "连接水鱼查分器后，Party 的连接服务会读取成绩，并保留加密的访问授权和账号名称以便刷新，不会存储成绩。断开连接会移除 Party 保存的授权；您也可以在服务方设置中撤销授权。",
-      "ko": "Diving-Fish에 연결하면 Party 연결 서비스가 성적을 읽고 새로고침을 위해 암호화된 접근 권한과 계정 이름을 보관합니다. 성적은 서버에 저장하지 않습니다. 연결을 해제하면 Party의 접근 권한이 삭제됩니다. 서비스 설정에서도 권한을 취소할 수 있습니다.",
-      "ja": "Diving-Fish に接続すると、Party の接続サービスは成績を読み取り、更新用に暗号化したアクセス許可とアカウント名を保持します。成績は保存しません。切断すると Party 側のアクセス許可を削除します。サービス側の設定でも許可を取り消せます。",
-      "id": "Jika Anda menghubungkan Diving-Fish, layanan koneksi Party membaca skor dan menyimpan izin akses terenkripsi serta nama akun untuk penyegaran. Layanan ini tidak menyimpan skor. Memutuskan koneksi menghapus izin dari Party; Anda juga dapat mencabut akses di pengaturan penyedia."
-    },
     "Last imported: {0}": {
       "zh-Hans": "最近导入：{0}",
       "ko": "마지막 가져오기: {0}",
       "ja": "最終読み込み: {0}",
       "id": "Terakhir diimpor: {0}"
+    },
+    "About LXNS imports": {
+      "zh-Hans": "关于 LXNS 导入",
+      "ko": "LXNS 가져오기 안내",
+      "ja": "LXNS の読み込みについて",
+      "id": "Tentang impor LXNS"
+    },
+    "Open LXNS": {
+      "zh-Hans": "打开 LXNS",
+      "ko": "LXNS 열기",
+      "ja": "LXNS を開く",
+      "id": "Buka LXNS"
+    },
+    "Connect LXNS": {
+      "zh-Hans": "连接 LXNS",
+      "ko": "LXNS 연결",
+      "ja": "LXNS に接続",
+      "id": "Hubungkan LXNS"
+    },
+    "For players whose China-region maimai DX scores are already visible in LXNS.": {
+      "zh-Hans": "适用于已在 LXNS 中显示舞萌 DX 中国区成绩的玩家。",
+      "ko": "중국 지역 maimai DX 성적이 이미 LXNS에 표시되는 플레이어를 위한 연결입니다.",
+      "ja": "中国地域の maimai DX の成績がすでに LXNS に表示されているプレイヤー向けです。",
+      "id": "Untuk pemain yang skor maimai DX wilayah Tiongkoknya sudah terlihat di LXNS."
+    },
+    "Open LXNS first and sync your scores to your account. Creating an account does not add arcade scores.": {
+      "zh-Hans": "请先打开 LXNS，将成绩同步到你的账号。仅注册账号不会添加机台成绩。",
+      "ko": "먼저 LXNS를 열고 계정에 성적을 동기화하세요. 계정 생성만으로 아케이드 성적이 추가되지는 않습니다.",
+      "ja": "先に LXNS を開き、アカウントに成績を同期してください。アカウントを作成するだけではゲームセンターの成績は追加されません。",
+      "id": "Buka LXNS dahulu dan sinkronkan skor ke akun Anda. Membuat akun saja tidak menambahkan skor arcade."
+    },
+    "LXNS connection is not available yet. Please try again later.": {
+      "zh-Hans": "LXNS 连接暂不可用。请稍后重试。",
+      "ko": "LXNS 연결을 아직 사용할 수 없습니다. 나중에 다시 시도하세요.",
+      "ja": "LXNS への接続はまだ利用できません。しばらくしてから再試行してください。",
+      "id": "Koneksi LXNS belum tersedia. Silakan coba lagi nanti."
+    },
+    "Could not check LXNS availability. Please try again when online.": {
+      "zh-Hans": "无法检查 LXNS 连接是否可用。请联网后重试。",
+      "ko": "LXNS 연결 가능 여부를 확인하지 못했습니다. 온라인 상태에서 다시 시도하세요.",
+      "ja": "LXNS の接続可否を確認できませんでした。オンラインの状態で再試行してください。",
+      "id": "Ketersediaan LXNS tidak dapat diperiksa. Silakan coba lagi saat terhubung ke internet."
+    },
+    "Sign in to LXNS and allow maimai.party to read your player name and scores. No personal API key is needed. You will preview them before importing.": {
+      "zh-Hans": "登录 LXNS 并允许 maimai.party 读取玩家名称和成绩。无需个人 API 密钥。导入前会显示预览。",
+      "ko": "LXNS에 로그인하고 maimai.party가 플레이어 이름과 성적을 읽도록 허용하세요. 개인 API 키는 필요하지 않습니다. 가져오기 전에 미리 확인할 수 있습니다.",
+      "ja": "LXNS にログインし、maimai.party にプレイヤー名と成績の読み取りを許可してください。個人用 API キーは不要です。読み込み前にプレビューで確認できます。",
+      "id": "Masuk ke LXNS dan izinkan maimai.party membaca nama pemain serta skor Anda. Kunci API pribadi tidak diperlukan. Anda akan melihat pratinjau sebelum mengimpor."
+    },
+    "No supported scores were found in LXNS. Sync your maimai DX scores to LXNS first, then try again.": {
+      "zh-Hans": "LXNS 中没有找到可导入的成绩。请先将舞萌 DX 成绩同步到 LXNS，然后重试。",
+      "ko": "LXNS에서 가져올 수 있는 성적을 찾지 못했습니다. 먼저 maimai DX 성적을 LXNS에 동기화한 후 다시 시도하세요.",
+      "ja": "LXNS に読み込み可能な成績がありません。先に maimai DX の成績を LXNS に同期してから再試行してください。",
+      "id": "Tidak ditemukan skor yang dapat diimpor dari LXNS. Sinkronkan skor maimai DX Anda ke LXNS dahulu, lalu coba lagi."
+    },
+    "The provider connection could not be completed. Please try again.": {
+      "zh-Hans": "无法完成服务连接。请重试。",
+      "ko": "서비스 연결을 완료하지 못했습니다. 다시 시도하세요.",
+      "ja": "サービスへの接続を完了できませんでした。もう一度お試しください。",
+      "id": "Koneksi ke layanan tidak dapat diselesaikan. Silakan coba lagi."
+    },
+    "If you connect Diving-Fish or LXNS, Party's connection service reads scores from the provider and keeps an encrypted access grant and account label for refreshes. It does not store scores. Disconnect removes the grant from Party; you can also revoke access in the provider's settings.": {
+      "zh-Hans": "连接水鱼查分器或 LXNS 后，Party 的连接服务会读取成绩，并保留加密的访问授权和账号名称以便刷新，不会存储成绩。断开连接会移除 Party 保存的授权；你也可以在服务方设置中撤销授权。",
+      "ko": "Diving-Fish 또는 LXNS에 연결하면 Party 연결 서비스가 성적을 읽고 새로고침을 위해 암호화된 접근 권한과 계정 이름을 보관합니다. 성적은 서버에 저장하지 않습니다. 연결을 해제하면 Party의 접근 권한이 삭제됩니다. 서비스 설정에서도 권한을 취소할 수 있습니다.",
+      "ja": "Diving-Fish または LXNS に接続すると、Party の接続サービスは成績を読み取り、更新用に暗号化したアクセス許可とアカウント名を保持します。成績は保存しません。切断すると Party 側のアクセス許可を削除します。サービス側の設定でも許可を取り消せます。",
+      "id": "Jika Anda menghubungkan Diving-Fish atau LXNS, layanan koneksi Party membaca skor dan menyimpan izin akses terenkripsi serta nama akun untuk penyegaran. Layanan ini tidak menyimpan skor. Memutuskan koneksi menghapus izin dari Party; Anda juga dapat mencabut akses di pengaturan penyedia."
     }
   }
 }

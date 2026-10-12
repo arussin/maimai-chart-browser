@@ -1,7 +1,7 @@
 import type { PlayerChart, PlayerIdentity } from './player-data';
 
-/** Explicit local-file namespaces. Adding a provider requires a verified adapter. */
-export const FILE_PROVIDERS = ['diving-fish'] as const;
+/** Portable provider namespaces. Adding a provider requires a verified adapter. */
+export const FILE_PROVIDERS = ['diving-fish', 'lxns'] as const;
 export const FILE_REGIONS = ['cn'] as const;
 export type FileProvider = (typeof FILE_PROVIDERS)[number];
 export type FileRegion = (typeof FILE_REGIONS)[number];
@@ -11,7 +11,7 @@ export const isFileProvider = (value: string): value is FileProvider =>
 const validText = (value: string, maximum: number) =>
   value.length > 0 && value.length <= maximum && !/[\x00-\x1f\uD800-\uDFFF]/u.test(value);
 
-/** Diving-Fish identities are explicitly scoped to the China tracker. */
+/** Both tracker identities are explicitly scoped to China and remain separate. */
 export function filePlayerKey(provider: string, region: string, username: string): string {
   if (!isFileProvider(provider) || !(FILE_REGIONS as readonly string[]).includes(region))
     throw new Error('Unsupported file provider or region.');

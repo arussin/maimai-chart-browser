@@ -7,6 +7,7 @@ export interface ImportRow {
   format: 'STD' | 'DX';
   difficulty: string;
   achievement: number;
+  rate?: number | null;
   lamp: string;
   sync: string;
   dxScore: number | null;
@@ -23,7 +24,7 @@ export interface ImportResult {
   excludedUtage?: number;
 }
 
-export type OfficialImportProvider = 'diving-fish';
+export type OfficialImportProvider = 'diving-fish' | 'lxns';
 type JsonObject = Record<string, unknown>;
 const DIFFICULTIES = ['BASIC', 'ADVANCED', 'EXPERT', 'MASTER', 'RE:MASTER'];
 const MAX_ROWS = 100_000;
@@ -157,6 +158,25 @@ function flag(value: unknown, sync = false): string {
   return names[name];
 }
 
+function timestamp(value: unknown): number | null {
+  if (value == null) return null;
+  // Explicit offsets keep importing independent of the browser's local timezone.
+  if (
+    typeof value !== 'string' ||
+    !/^\d{4}-\d\d-\d\dT(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d{1,3})?)?(?:Z|[+-](?:[01]\d|2[0-3]):[0-5]\d)$/.test(
+      value,
+    )
+  )
+    throw new Error('Expected an ISO timestamp with an explicit timezone.');
+  const date = Date.parse(value);
+  if (!Number.isFinite(date) || date < 0) throw new Error('Invalid timestamp.');
+  const day = value.slice(0, 10);
+  const calendar = new Date(`${day}T00:00:00Z`);
+  if (!Number.isFinite(calendar.getTime()) || calendar.toISOString().slice(0, 10) !== day)
+    throw new Error('Invalid timestamp calendar date.');
+  return date;
+}
+
 function row(
   fields: Partial<ImportRow> & Pick<ImportRow, 'format' | 'difficulty' | 'achievement'>,
 ): ImportRow {
@@ -233,13 +253,52 @@ function divingFish(input: unknown): ImportResult {
   };
 }
 
+function lxns(input: unknown): ImportResult {
+  // This launch reads the personal OAuth scores endpoint, never developer
+  // SimpleScore, B50, CSV or an arbitrary user-supplied export shape.
+  const envelope = object(input);
+  if (envelope.success !== true || envelope.code !== 200)
+    throw new Error('LXNS response was not successful.');
+  return {
+    capturedAt: null,
+    displayName: null,
+    coverage: 'unknown',
+    ...mapRows(array(envelope.data), (score) => {
+      const sourceSongID = String(integer(score.id, 'song ID', 0, 999_999_999_999));
+      if (!['standard', 'dx', 'utage'].includes(String(score.type)))
+        throw new Error('Invalid chart type.');
+      const chartFormat = format(score.type);
+      if (!('achievements' in score))
+        throw new Error('LXNS simplified scores contain no achievement percentage.');
+      const dxRating = optionalNumber(score.dx_rating, 'DX Rating', Number.MAX_SAFE_INTEGER);
+      return row({
+        sourceSongID,
+        title: text(score.song_name, 'song title'),
+        format: chartFormat,
+        difficulty: difficulty(score.level_index, true),
+        achievement: percentage(score.achievements),
+        // LXNS documents DX Rating as a float whose displayed value is floored.
+        rate: dxRating === null ? null : Math.floor(dxRating),
+        lamp: flag(score.fc),
+        sync: flag(score.fs, true),
+        dxScore: optionalNumber(score.dx_score, 'DX score', 100_000_000, true),
+        level: text(score.level, 'level'),
+        // upload_time and last_played_time are not the time this PB was achieved.
+        timeAchieved: timestamp(score.play_time),
+      });
+    }),
+  };
+}
+
 /** Input is already parsed JSON. This module never requests or stores credentials. */
 export function parseOfficialExport(
   provider: OfficialImportProvider,
   input: unknown,
 ): ImportResult {
-  if (provider !== 'diving-fish') throw new Error('Unsupported official-network score export.');
-  const result = divingFish(input);
+  let result: ImportResult;
+  if (provider === 'diving-fish') result = divingFish(input);
+  else if (provider === 'lxns') result = lxns(input);
+  else throw new Error('Unsupported official-network score export.');
   if (result.excludedUtage) result.coverage = 'partial';
   return result;
 }

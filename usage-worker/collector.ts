@@ -26,11 +26,13 @@ return {
     let batch;try{batch=validateBatch(await readBody(request));}catch{return answer(400);}
     if(!batch)return answer(400);
     if(!env.USAGE_DB)return answer(503);
-    const day=dayKey(new Date());
+    // One server receipt time per accepted batch. This is not a browser action
+    // timestamp, play time, session identifier, or proof of delivery ordering.
+    const now=new Date(),day=dayKey(now),receivedAt=now.toISOString();
     try{
       await env.USAGE_DB.batch(batch.events.map(row=>env.USAGE_DB.prepare(
-        'INSERT INTO usage_daily(day,version,event,page,detail,failure,count) VALUES(?,?,?,?,?,?,?) ON CONFLICT(day,version,event,page,detail,failure) DO UPDATE SET count=count+excluded.count'
-      ).bind(day,batch.version,row.event,row.page,row.detail,row.failure,row.count)));
+        'INSERT INTO usage_daily(day,version,event,page,detail,failure,count,first_received_at,last_received_at) VALUES(?,?,?,?,?,?,?,?,?) ON CONFLICT(day,version,event,page,detail,failure) DO UPDATE SET count=count+excluded.count,first_received_at=MIN(COALESCE(first_received_at,excluded.first_received_at),excluded.first_received_at),last_received_at=MAX(COALESCE(last_received_at,excluded.last_received_at),excluded.last_received_at)'
+      ).bind(day,batch.version,row.event,row.page,row.detail,row.failure,row.count,receivedAt,receivedAt)));
       return answer(204);
     }catch{return answer(503);}
   }

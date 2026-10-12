@@ -4,6 +4,7 @@ import {dayKey,makeDashboardData,validateExport} from '../dashboard-model.mjs';
 import {renderDashboard,safeJSON} from '../dashboard.mjs';
 import {providerUsageRows} from './provider-usage-fixture.mjs';
 import {DETAILS} from '../../web/src/usage-contract.ts';
+import {runInNewContext} from 'node:vm';
 const now=new Date('2026-10-03T13:00:00Z');
 const row={day:'2026-10-03',version:1,event:'page_view',page:'charts',detail:'',failure:'',count:7};
 const fixture=()=>({schema_version:'usage-export-1',query_status:'ok',activation:'2026-10-03',totals:[{...row}],coverage:[]});
@@ -23,11 +24,11 @@ test('offline dashboard embeds every finite provider lifecycle and tracker-link 
  const totals=providerUsageRows.map(r=>({...r,day:row.day,version:1}));
  const input={...fixture(),totals};
  const data=makeDashboardData(input,{now,capturedAt:now.toISOString()});
- assert.deepEqual(data.totals,totals);assert.ok(data.limitations.some(text=>text.includes('Automatic refresh')));
+ assert.deepEqual(data.totals,totals.map(r=>({...r,first_received_at:null,last_received_at:null})));assert.ok(data.limitations.some(text=>text.includes('Automatic refresh')));
  const html=await renderDashboard(input,{now,capturedAt:now.toISOString()});
  for(const event of new Set(totals.map(r=>r.event)))assert.ok(html.includes(event),event);
  assert(html.includes("connect-src 'none'"));
- for(const change of [{accountID:'PRIVATE'},{displayName:'PRIVATE'},{url:'https://provider.invalid/PRIVATE'},{token:'PRIVATE'},{score:100.1234},{detail:'lxns'},{event:'file_import_started',detail:'portable'},{event:'provider_file_fallback_clicked'}])
+ for(const change of [{accountID:'PRIVATE'},{displayName:'PRIVATE'},{url:'https://provider.invalid/PRIVATE'},{token:'PRIVATE'},{score:100.1234},{detail:'tomomai'},{event:'file_import_started',detail:'portable'},{event:'provider_file_fallback_clicked'}])
   assert.throws(()=>validateExport({...input,totals:[{...totals[0],...change}]},now));
 });
 test('private dashboard labels and export section cover every new finite counter',async()=>{
@@ -68,4 +69,41 @@ test('render is a self-contained private snapshot with enforced no-network polic
 test('embedded JSON cannot terminate its script element',()=>{
  const escaped=safeJSON({value:'</script><script>bad</script>\u2028&'});
  assert(!escaped.includes('<'));assert(!escaped.includes('&'));assert.deepEqual(JSON.parse(escaped),{value:'</script><script>bad</script>\u2028&'});
+});
+
+test('receipt bounds use the collector clock, preserve legacy nulls, and cannot exceed capture time',()=>{
+ const bounds={first_received_at:'2026-10-03T12:00:00.000Z',last_received_at:'2026-10-03T12:30:00.000Z'};
+ const input={...fixture(),totals:[{...row,...bounds}]};
+ assert.deepEqual(validateExport(input,now).totals[0],{...row,...bounds});
+ assert.equal(validateExport(fixture(),now).totals[0].last_received_at,null);
+ for(const change of [
+  {first_received_at:'2026-10-03T12:40:00Z'}, {last_received_at:null},
+  {last_received_at:'2026-10-03T14:00:00Z'}, {first_received_at:'2026-10-03T03:59:59Z'},
+  {first_received_at:'2026-10-03 12:00:00'}, {first_received_at:42},
+  {first_received_at:'2026-02-30T12:00:00Z'},
+ ])assert.throws(()=>validateExport({...input,totals:[{...row,...bounds,...change}]},now),/receipt/);
+ assert.throws(()=>makeDashboardData(input,{now,capturedAt:'2026-10-03T12:00:00Z'}),/receipt/);
+});
+
+test('rendered dashboard executes import summaries, page filters, partial-day coverage and receipt CSV',async()=>{
+ const base={...row,event:'import_started',detail:'diving-fish',count:4,first_received_at:'2026-10-03T12:00:00.000Z',last_received_at:'2026-10-03T12:30:00.000Z'};
+ const input={...fixture(),totals:[base,{...base,event:'import_completed',count:2},{...base,event:'provider_disconnect_failed',failure:'cleanup_required',count:1},{...base,detail:'lxns',page:'song',event:'provider_read_failed',failure:'empty_scores',count:1}],coverage:[{day:row.day,version:1,status:'complete'}]};
+ const html=await renderDashboard(input,{now,capturedAt:now.toISOString()});
+ const json=html.match(/<script type="application\/json" id="dashboard-data">([\s\S]*?)<\/script>/)[1],script=html.match(/<script>([\s\S]*?)<\/script>/)[1];
+ const elements=new Map();
+ const make=()=>({children:[],events:{},value:'',textContent:'',append(...values){this.children.push(...values);},replaceChildren(...values){this.children=values;},setAttribute(){},addEventListener(name,fn){this.events[name]=fn;},showModal(){this.open=true;},close(){this.open=false;}});
+ const el=id=>{if(!elements.has(id))elements.set(id,make());return elements.get(id);};
+ el('dashboard-data').textContent=json;el('range').value='today';
+ class FixedDate extends Date {constructor(...args){super(...(args.length?args:[now.getTime()]));}static now(){return now.getTime();}}
+ runInNewContext(script,{document:{getElementById:el,createElement:make},Date:FixedDate,Intl,Blob,URL:{createObjectURL:()=> 'blob:fixture',revokeObjectURL(){}},location:{reload(){}}});
+ const values=element=>element.children.map(tr=>tr.children.map(td=>td.textContent));
+ assert.deepEqual(values(el('imports'))[0],['Diving-Fish','4','—','—','2','—','—']);
+ assert.deepEqual(values(el('import-receipts'))[0],['Diving-Fish',base.first_received_at,base.last_received_at,base.last_received_at,base.last_received_at,base.last_received_at]);
+ assert.equal(el('imports').children.length,2);assert.equal(el('import-failures').children.length,2);
+ assert.equal(values(el('coverage'))[0][1],'Incomplete day');
+ assert.equal(values(el('import-failures')).some(r=>r.includes('Connection cleanup required')),true);
+ el('page').value='charts';el('page').events.change();assert.equal(el('imports').children.length,1);assert.equal(el('import-failures').children.length,1);
+ el('download').events.click();assert.match(el('csv-preview').value,/"first_received_at","last_received_at"/);assert.match(el('csv-preview').value,/2026-10-03T12:30:00.000Z/);assert.doesNotMatch(el('csv-preview').value,/"lxns"/);
+ el('search').value='import completed';el('search').events.input();assert.equal(values(el('imports'))[0][4],'2');assert.equal(values(el('imports'))[0][1],'—');assert.equal(el('import-failures-empty').hidden,false);
+ el('search').value='no matching action';el('search').events.input();assert.equal(el('imports-empty').hidden,false);
 });

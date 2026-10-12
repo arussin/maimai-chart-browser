@@ -20,6 +20,7 @@ const globals = {
 };
 const { createPlayerDataCore } = await loadModule('views/player-data-core', globals);
 const { createPlayerKamaitachi } = await loadModule('views/player-kamaitachi', globals);
+const { importFailure } = await loadModule('runtime/import-failure', globals);
 const core = createPlayerDataCore(),
   legacy = 'a'.repeat(40),
   stamp = 1791727516840;
@@ -101,6 +102,34 @@ function setup({ p = profile(), body = fixture(), now = stamp, responses } = {})
       adapter.read(account, { signal: new AbortController().signal, expectedPlayer }),
   };
 }
+
+test('Kamaitachi failures retain finite source causes without exposing response text', async () => {
+  for (const [responses, reason] of [
+    [[new Response('PRIVATE missing', { status: 404 })], 'profile_missing'],
+    [[new Response('PRIVATE limit', { status: 429 })], 'rate_limited'],
+    [[new Response('PRIVATE denial', { status: 403 })], 'authorization_failed'],
+    [[new Response('PRIVATE unavailable', { status: 503 })], 'unavailable'],
+    [[response({ ...profile(), username: 'Wrong_account' })], 'account_mismatch'],
+    [[response(profile()), response({ songs: [], charts: [], pbs: [] })], 'empty_scores'],
+    [[response(profile()), response({ songs: 'bad', charts: [], pbs: [] })], 'invalid_response'],
+  ]) {
+    await assert.rejects(setup({ responses }).read(), (error) => {
+      assert.equal(importFailure(error), reason);
+      assert.ok(!error.message.includes('PRIVATE'));
+      return true;
+    });
+  }
+  const adapter = createPlayerKamaitachi({
+    core,
+    fetch: async () => {
+      throw new TypeError('PRIVATE network');
+    },
+  });
+  await assert.rejects(
+    adapter.read('Fictional_Player', { signal: new AbortController().signal }),
+    (error) => importFailure(error) === 'network',
+  );
+});
 
 test('public v3 PB read resolves numeric account, omits credentials, and never invents plays', async () => {
   const { read, calls } = setup();

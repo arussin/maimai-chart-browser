@@ -1,4 +1,4 @@
-"""Project a reviewed Diving-Fish public song snapshot into the import lookup.
+"""Project reviewed Diving-Fish and LXNS public song snapshots into the import lookup.
 
 No player data or network access. Keep the raw input and SHA-256 receipt beside
 the task evidence; rerun explicitly when refreshing the pinned public snapshot.
@@ -23,6 +23,20 @@ def build(inputs):
             # Conflicting public source identities deliberately have no automatic join.
             prior = songs.get(key, row)
             songs[key] = [*row[:3], prior[3] | row[3]] if prior and prior[:3] == row[:3] else None
+    lxns_songs = {}
+    lxns_raw = (inputs / "lxns-metadata.json").read_bytes()
+    for song in json.loads(lxns_raw)["songs"]:
+        for kind, chart_format in (("standard", "STD"), ("dx", "DX")):
+            for chart in song["difficulties"].get(kind, []):
+                index = chart["difficulty"]
+                if type(index) is not int or not 0 <= index < 5:
+                    continue
+                key = str(song["id"]) + ":" + chart_format
+                row = [song["title"], song["artist"], song.get("genre", ""), 1 << index]
+                prior = lxns_songs.get(key, row)
+                lxns_songs[key] = (
+                    [*row[:3], prior[3] | row[3]] if prior and prior[:3] == row[:3] else None
+                )
     return {
         "version": 1,
         "capturedOn": "2026-10-11",
@@ -31,9 +45,14 @@ def build(inputs):
                 "source": "fish",
                 "url": "https://www.diving-fish.com/api/maimaidxprober/music_data",
                 "sha256": hashlib.sha256(raw).hexdigest(),
-            }
+            },
+            {
+                "source": "lxns",
+                "url": "https://maimai.lxns.net/api/v0/maimai/song/list",
+                "sha256": hashlib.sha256(lxns_raw).hexdigest(),
+            },
         ],
-        "tables": {"diving-fish": songs},
+        "tables": {"diving-fish": songs, "lxns": lxns_songs},
     }
 
 

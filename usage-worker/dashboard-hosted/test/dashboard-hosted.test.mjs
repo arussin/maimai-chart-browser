@@ -62,6 +62,7 @@ test('each authenticated page load queries fresh counters with fixed SELECT stat
  const b=await handler.fetch(request(t),{...env,USAGE_DB:db});
  assert.equal(a.status,200);assert.equal(b.status,200);assert.equal(db.reads,2);
  assert.deepEqual(db.statements,[...QUERIES,...QUERIES]);
+ assert.match(QUERIES[0],/count,first_received_at,last_received_at FROM usage_daily/);
  assert.match(await a.text(),/"count":1/);assert.match(await b.text(),/"count":2/);
 });
 test('all responses deny indexing and caching; successful HTML has restrictive CSP',async()=>{
@@ -114,5 +115,18 @@ test('hosted renderer reuses dashboard controls, explains fresh-on-load and reta
  assert.doesNotMatch(r.html,/Use your local refresh command/);
  assert.match(r.csp,/connect-src 'none'/);assert.match(r.csp,/script-src 'sha256-/);
  assert.match(r.html,/"coverage":\[\]/);
+ assert.match(r.html,/id="imports"/);assert.match(r.html,/id="import-receipts"/);assert.match(r.html,/id="import-failures"/);
+ assert.match(r.html,/const summarizeImports=function summarizeImports/);
  for(const placeholder of ['__CSP__','__STYLE__','__DATA__','__SCRIPT__']) assert(!r.html.includes(placeholder));
+});
+
+test('authenticated dashboard exposes finite import outcomes and collector receipts, not provider payloads',async()=>{
+ const at='2026-10-11T18:00:00.000Z',base={day:'2026-10-11',version:1,event:'import_completed',page:'charts',detail:'lxns',failure:'',count:2,first_received_at:'2026-10-11T12:00:00.000Z',last_received_at:'2026-10-11T17:00:00.000Z'};
+ const handler=createHandler({authenticate:async()=>true,render,now:()=>new Date(at)});
+ const db=rows=>({prepare:sql=>({sql}),batch:async()=>[{success:true,results:rows},{success:true,results:[]}]});
+ const success=await handler.fetch(request('fixture'),{USAGE_DB:db([base])});assert.equal(success.status,200);
+ const html=await success.text();assert.match(html,/"latest_completed_at":"2026-10-11T17:00:00.000Z"/);assert.match(html,/Saved locally/);assert.match(html,/not exact user-event times/);
+ for(const change of [{last_received_at:'PRIVATE-ERROR'},{last_received_at:'2026-10-11T19:00:00.000Z'},{accountID:'PRIVATE-ACCOUNT'}]){
+  const failed=await handler.fetch(request('fixture'),{USAGE_DB:db([{...base,...change}])});assert.equal(failed.status,503);assert.doesNotMatch(await failed.text(),/PRIVATE/);
+ }
 });

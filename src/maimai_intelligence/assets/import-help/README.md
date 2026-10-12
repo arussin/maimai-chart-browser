@@ -6,7 +6,7 @@ Open **Import player data**, open the service you use, then choose an **Import m
 
 ## Connections and refresh
 
-Diving-Fish uses account authorization when the connection is available. Players do not register developer applications. Sign in only on Diving-Fish's website. Party never asks for its password. Party's connection service keeps an encrypted access grant and account label for refreshes; scores are saved in your browser. Disconnect removes Party's stored grant; you can also revoke access in [Diving-Fish's authorized apps](https://auth.diving-fish.com/apps). Maishift and Kamaitachi use public lookups without an authorization grant.
+Diving-Fish and LXNS use account authorization when the connection is available. Players do not register developer applications. Sign in only on the selected provider's website. Party never asks for its password. Party's connection service keeps an encrypted access grant and account label for refreshes; scores are saved in your browser. Disconnect removes Party's stored grant; for Fish, you can also revoke access in [its authorized apps](https://auth.diving-fish.com/apps). See the LXNS section below for its steps. Maishift and Kamaitachi use public lookups without an authorization grant.
 
 **Refresh reads data already stored by the tracker. It does not acquire new results from SEGA, Wahlap or maimai NET.** Update the tracker first. A refresh date is not a play date. Failed reads preserve saved scores. If availability could not be checked, retry later; this does not mean the operator has disabled the connection.
 
@@ -60,4 +60,18 @@ If Fish has no scores, update Fish first. If Party asks you to accept the tracke
 
 Refresh reads Fish's stored PBs; it does not import new arcade results into Fish or create play history. The retrieval time shows when Party read Fish, not when you last played. Failed or empty reads preserve your saved data, and omitted PBs are retained. Unmatched charts are kept without guessing their identity.
 
-To stop future access, disconnect in Party. You can also revoke Party in [Fish's authorized apps](https://auth.diving-fish.com/apps). If permission expires or is revoked, connect again. Scores already saved in this browser are controlled separately by Party's Forget or Clear actions.
+To stop future access, disconnect in Party. You can also revoke Party in [Fish's authorized apps](https://auth.diving-fish.com/apps). If permission expires or is revoked, connect again. Scores already saved in this browser can be removed separately in Party.
+
+<a id="lxns"></a>
+
+## LXNS / 落雪咖啡屋
+
+Use this connection for China-region maimai DX scores already linked to your LXNS account. LXNS's setup instructions are in Chinese.
+
+1. Sign in to [LXNS](https://maimai.lxns.net/) and check your scores. If none appear, follow its [game-data sync guide](https://maimai.lxns.net/docs/sync) first. Creating an account alone does not add scores; the initial online sync links game data to your account.
+2. In Party, open LXNS, choose **Connect directly**, then **Connect LXNS**. Sign in on `maimai.lxns.net` and approve the read-only request. Players do not need a developer application or personal API key.
+3. Return to Party and check the player, China region, PB count and unmatched charts. Import once or remember the connection for refreshes.
+
+Party imports stored PBs, not play history. Refresh reads LXNS again; it does not start arcade-data synchronization. Empty or failed reads preserve saved data. If no supported scores are found, sync scores into LXNS before trying again. A failed first import discards the pending connection, so connect again afterward.
+
+Disconnect in Party to remove its stored grant. You can also revoke Party under **第三方应用** (third-party applications) in LXNS's profile, as described in its [authorization guide](https://maimai.lxns.net/docs/mcp). Saved browser scores can be removed separately in Party.

@@ -123,10 +123,13 @@ test(
 
       mf = localStore(persistTo, database.database_id);
       const db = await mf.getD1Database("USAGE_DB");
-      const schema = await readFile(
-        join(root, "migrations", "0001_daily.sql"),
-        "utf8",
-      );
+      const schema = (
+        await Promise.all(
+          ["0001_daily.sql", "0002_import_receipts.sql"].map((name) =>
+            readFile(join(root, "migrations", name), "utf8"),
+          ),
+        )
+      ).join("\n");
       for (const sql of schema
         .replace(/--[^\n]*/g, "")
         .split(";")
@@ -229,6 +232,10 @@ test(
       const parsed = JSON.parse(files[".json"]);
       assert.equal(parsed.schema_version, "usage-report-1");
       assert.deepEqual(parsed.totals, before.totals);
+      for (const row of parsed.totals) {
+        assert.equal(row.first_received_at, row.day + "T16:00:00.000Z");
+        assert.equal(row.last_received_at, row.first_received_at);
+      }
       assert.deepEqual(
         parsed.coverage.map((row) => [
           row.day,

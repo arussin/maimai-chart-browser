@@ -5,12 +5,15 @@ import type {
   SourceConnection,
   SourceLocation,
   ImportStage,
+  ImportMethod,
   HandoffTransfer,
   SessionNotification,
   SessionUsage,
   OAuthProvider,
 } from './player-session-contracts';
 import { importTime, errorMessage, isAbort } from './player-session-contracts';
+import { importFailure } from './import-failure';
+import type { Failure } from '../usage-contract';
 type ProviderFlow =
   | { action: 'connect'; provider: OAuthProvider }
   | { action: 'read'; provider: OAuthProvider | 'kamaitachi' }
@@ -206,11 +209,13 @@ export class ImportCoordinator {
       expected = this.revision,
       automatic = false,
       lease = null,
+      onCommitted,
     }: {
       connection?: SourceConnection | null;
       expected?: number;
       automatic?: boolean;
       lease?: string | null;
+      onCommitted?: () => void;
     } = {},
   ) {
     const { core, storage, effects } = this.ports;
@@ -267,11 +272,16 @@ export class ImportCoordinator {
         this.token,
         lease,
       );
+      // The IDB transaction has committed even if navigation cancelled this view
+      // while it was pending. Keep its grant and report the durable result before
+      // checking whether this operation may still update the current UI.
+      onCommitted?.();
+      onCommitted = undefined;
+      this.notify('saved', token);
       this.assert(expected);
       this.token = token;
       this.savedRevision = token.revision;
       this.clearTab();
-      this.notify('saved');
     } else {
       if (this.token) await storage.verify(this.token);
       this.assert(expected);
@@ -309,6 +319,7 @@ export class ImportCoordinator {
     this.persistent = remember;
     this.connection = remember ? connection : null;
     this.refreshMessage = '';
+    onCommitted?.();
     if (!automatic) effects.show();
     effects.changed();
     const releasedIDs: string[] = [];
@@ -326,7 +337,7 @@ export class ImportCoordinator {
   private trackProvider(
     flow: ProviderFlow,
     outcome: 'started' | 'completed' | 'cancelled' | 'failed',
-    failure: ImportStage = 'unavailable',
+    failure: Failure = 'unavailable',
   ) {
     // All components are finite unions; no provider/account data enters usage rows.
     const event = `provider_${flow.action}_${outcome}`;
@@ -336,18 +347,36 @@ export class ImportCoordinator {
         : [event, flow.provider]) as SessionUsage),
     );
   }
+  private async ask(
+    method: ImportMethod,
+    ...[offer, options, signal]: Parameters<SessionPorts['effects']['ask']>
+  ) {
+    signal.throwIfAborted();
+    const pending = this.ports.effects.ask(offer, options, signal);
+    this.ports.effects.usage('import_previewed', method);
+    const choice = await pending;
+    if (choice.accept) {
+      signal.throwIfAborted();
+      this.ports.effects.usage('import_confirmed', method);
+    }
+    return choice;
+  }
   private async releaseConnection(
     source: SourceLocation | SourceConnection,
     locallyRemoved = false,
   ) {
-    if (source.type !== 'diving-fish' || !('connectionID' in source) || !source.connectionID)
+    if (
+      (source.type !== 'diving-fish' && source.type !== 'lxns') ||
+      !('connectionID' in source) ||
+      !source.connectionID
+    )
       return;
     this.ports.effects.usage('provider_disconnect_started', source.type);
     try {
       await this.ports.sources.disconnect?.(source);
       this.ports.effects.usage('provider_disconnect_completed', source.type);
     } catch (error) {
-      this.ports.effects.usage('provider_disconnect_failed', source.type, 'unavailable');
+      this.ports.effects.usage('provider_disconnect_failed', source.type, importFailure(error));
       this.ports.effects.message(
         'Connection cleanup needed',
         locallyRemoved
@@ -458,14 +487,16 @@ export class ImportCoordinator {
     effects.usage('import_started', 'file');
     this.importing = true;
     let expected: number | undefined = this.revision + 1,
-      stage: ImportStage = 'storage';
+      stage: ImportStage = 'storage',
+      committed = false;
     try {
       expected = await this.begin();
       stage = 'invalid';
       if (file.size > core.MAX_COMPRESSED) throw new Error('Player file exceeds 32 MiB.');
       const data = await core.decode(await file.arrayBuffer());
       this.assert(expected);
-      const choice = await effects.ask(
+      const choice = await this.ask(
+        'file',
         core.offer(await core.reconcile(data)),
         {
           file: true,
@@ -476,12 +507,15 @@ export class ImportCoordinator {
         stage = 'storage';
         await this.commit(data, choice.remember, {
           expected,
+          onCommitted: () => {
+            committed = true;
+            effects.usage('import_completed', 'file');
+          },
         });
-        effects.usage('import_completed', 'file');
       } else effects.usage('import_cancelled', 'file');
     } catch (error) {
-      if (!isAbort(error)) {
-        effects.usage('import_failed', 'file', stage);
+      if (!isAbort(error) && !committed) {
+        effects.usage('import_failed', 'file', importFailure(error, stage));
         effects.message('Player data could not be imported', errorMessage(error));
       }
     } finally {
@@ -522,6 +556,7 @@ export class ImportCoordinator {
       cancelled = false,
       acquired: SourceLocation | null = null,
       retained = false,
+      committed = false,
       stage: ImportStage = 'storage';
     let acquisitionFlow: ProviderFlow | null = null;
     try {
@@ -540,7 +575,7 @@ export class ImportCoordinator {
       try {
         reading = true;
         if (authorize) {
-          if (method === 'diving-fish') {
+          if (method === 'diving-fish' || method === 'lxns') {
             acquisitionFlow = { action: 'connect', provider: method };
             this.trackProvider(acquisitionFlow, 'started');
           }
@@ -550,7 +585,7 @@ export class ImportCoordinator {
           if (acquisitionFlow) this.trackProvider(acquisitionFlow, 'completed');
           acquisitionFlow = null;
         }
-        if (method === 'kamaitachi' || method === 'diving-fish') {
+        if (method === 'kamaitachi' || method === 'diving-fish' || method === 'lxns') {
           acquisitionFlow = { action: 'read', provider: method };
           this.trackProvider(acquisitionFlow, 'started');
         }
@@ -564,7 +599,8 @@ export class ImportCoordinator {
         cleanup();
       }
       this.assert(expected);
-      const choice = await effects.ask(
+      const choice = await this.ask(
+        method,
         core.offer(await core.reconcile(result.data)),
         {
           file: true,
@@ -580,9 +616,13 @@ export class ImportCoordinator {
         const releasedIDs = await this.commit(result.data, choice.remember, {
           connection: result.source,
           expected,
+          onCommitted: () => {
+            committed = true;
+            retained = choice.remember;
+            effects.usage('import_completed', method);
+          },
         });
-        retained = choice.remember;
-        if (retained && acquired && acquired.type === 'diving-fish')
+        if (retained && acquired && (acquired.type === 'diving-fish' || acquired.type === 'lxns'))
           for (const connectionID of acquired.previousConnectionIDs ?? [])
             if (!releasedIDs.includes(connectionID))
               await this.releaseConnection({ type: acquired.type, connectionID });
@@ -592,16 +632,23 @@ export class ImportCoordinator {
           !releasedIDs.includes(result.source.connectionID ?? '')
         )
           await this.releaseConnection(result.source);
-        effects.usage('import_completed', method);
       } else effects.usage('import_cancelled', method);
     } catch (error) {
       if (acquisitionFlow)
-        this.trackProvider(acquisitionFlow, cancelled || isAbort(error) ? 'cancelled' : 'failed');
-      if (!isAbort(error) && !cancelled) {
-        effects.usage('import_failed', method, reading ? 'unavailable' : stage);
+        this.trackProvider(
+          acquisitionFlow,
+          cancelled || isAbort(error) ? 'cancelled' : 'failed',
+          importFailure(error),
+        );
+      if (!isAbort(error) && !cancelled && !committed) {
+        effects.usage(
+          'import_failed',
+          method,
+          importFailure(error, reading ? 'unavailable' : stage),
+        );
         if (reading && parsed.type === 'report') effects.recovery(recovery!);
         else effects.message('Player data could not be imported', errorMessage(error));
-      } else if (!cancelled) effects.usage('import_cancelled', method);
+      } else if (!cancelled && !committed) effects.usage('import_cancelled', method);
     } finally {
       if (acquired && !retained) await this.releaseConnection(acquired);
       if (expected === this.revision || expected === undefined) {
@@ -725,17 +772,17 @@ export class ImportCoordinator {
         this.trackProvider(
           refreshFlow,
           expected !== this.revision || isAbort(error) ? 'cancelled' : 'failed',
-          refreshStage,
+          importFailure(error, refreshStage),
         );
       if (expected === this.revision && !isAbort(error)) {
+        const code =
+          typeof error === 'object' && error !== null && 'code' in error ? error.code : undefined;
         this.refreshMessage =
-          this.connection?.type === 'diving-fish' &&
-          typeof error === 'object' &&
-          error !== null &&
-          'code' in error &&
-          error.code === 'tracker_agreement_required'
+          this.connection?.type === 'diving-fish' && code === 'tracker_agreement_required'
             ? 'Open Diving-Fish, accept its tracker agreement, and confirm your scores are visible. Then try again.'
-            : 'Could not refresh — showing your saved data';
+            : this.connection?.type === 'lxns' && code === 'lxns_player_missing'
+              ? 'No supported scores were found in LXNS. Sync your maimai DX scores to LXNS first, then try again.'
+              : 'Could not refresh — showing your saved data';
         if (lease)
           try {
             const retryAt =
@@ -831,6 +878,7 @@ export class ImportCoordinator {
     let ownsImport = false,
       expected: number | undefined,
       measured = false,
+      committed = false,
       stage: ImportStage = 'invalid';
     try {
       await this.ready;
@@ -850,7 +898,8 @@ export class ImportCoordinator {
       measured = true;
       effects.usage('import_opened');
       effects.usage('import_started', 'report');
-      const choice = await effects.ask(
+      const choice = await this.ask(
+        'report',
         offer,
         {
           stale,
@@ -882,13 +931,16 @@ export class ImportCoordinator {
       stage = 'storage';
       await this.commit(data, choice.remember, {
         expected,
+        onCommitted: () => {
+          committed = true;
+          effects.usage('import_completed', 'report');
+        },
       });
-      effects.usage('import_completed', 'report');
       transfer.send('imported');
     } catch (error) {
       transfer.send('error');
-      if (!isAbort(error)) {
-        if (measured) effects.usage('import_failed', 'report', stage);
+      if (!isAbort(error) && !committed) {
+        if (measured) effects.usage('import_failed', 'report', importFailure(error, stage));
         effects.message('Player data could not be imported', errorMessage(error));
       }
     } finally {

@@ -6,22 +6,52 @@ import worker,{dayKey} from '../worker.mjs';
 import staging from '../staging.mjs';
 import {providerUsageRows} from './provider-usage-fixture.mjs';
 import {DETAILS} from '../../web/src/usage-contract.ts';
-let mf,db,stageDB;
+let mf,db,stageDB,legacyDB;
+async function migrate(database,name){
+ for(const sql of (await readFile(new URL('../migrations/'+name,import.meta.url),'utf8')).replace(/--[^\n]*/g,'').split(';').filter(s=>s.trim()))await database.prepare(sql).run();
+}
 before(async()=>{
- mf=new Miniflare(convertV4MiniflareOptions({modules:true,script:'export default {fetch(){return new Response("local fixture")}}',compatibilityDate:'2026-09-22',d1Databases:['USAGE_DB','STAGING_DB'],outboundService:()=>{throw Error('No external requests allowed')}}));
- db=await mf.getD1Database('USAGE_DB');stageDB=await mf.getD1Database('STAGING_DB');
- for(const database of [db,stageDB])for(const sql of (await readFile(new URL('../migrations/0001_daily.sql',import.meta.url),'utf8')).replace(/--[^\n]*/g,'').split(';').filter(s=>s.trim()))await database.prepare(sql).run();
+ mf=new Miniflare(convertV4MiniflareOptions({modules:true,script:'export default {fetch(){return new Response("local fixture")}}',compatibilityDate:'2026-09-22',d1Databases:['USAGE_DB','STAGING_DB','LEGACY_DB'],outboundService:()=>{throw Error('No external requests allowed')}}));
+ db=await mf.getD1Database('USAGE_DB');stageDB=await mf.getD1Database('STAGING_DB');legacyDB=await mf.getD1Database('LEGACY_DB');
+ for(const database of [db,stageDB,legacyDB])await migrate(database,'0001_daily.sql');
+ for(const database of [db,stageDB])await migrate(database,'0002_import_receipts.sql');
 });
 after(async()=>{await mf?.dispose();});
 const row={event:'page_view',page:'charts',detail:'',count:1};
 const req=(body={version:1,events:[row]},opts={})=>new Request(opts.url||'https://maimai.party/__usage',{method:opts.method||'POST',headers:{Origin:'https://maimai.party','Content-Type':'application/json',...opts.headers},...(opts.method==='GET'?{}:{body:typeof body==='string'?body:JSON.stringify(body)})});
 const call=(request,enabled='true')=>worker.fetch(request,{USAGE_DB:db,USAGE_ENABLED:enabled});
-test('only finite aggregate fields are stored and concurrent increments sum',async()=>{
+test('only finite aggregate fields and server receipt bounds are stored; concurrent increments sum',async(t)=>{
  await db.prepare('DELETE FROM usage_daily').run();
+ t.mock.timers.enable({apis:['Date'],now:new Date('2026-10-12T16:00:00.123Z')});
  const responses=await Promise.all(Array.from({length:20},()=>call(req())));
  assert.ok(responses.every(r=>r.status===204));
  const {results}=await db.prepare('SELECT * FROM usage_daily').all();assert.equal(results.length,1);assert.equal(results[0].count,20);
- assert.deepEqual(Object.keys(results[0]).sort(),['count','day','detail','event','failure','page','version']);
+ assert.equal(results[0].first_received_at,'2026-10-12T16:00:00.123Z');
+ assert.equal(results[0].last_received_at,'2026-10-12T16:00:00.123Z');
+ assert.deepEqual(Object.keys(results[0]).sort(),['count','day','detail','event','failure','first_received_at','last_received_at','page','version']);
+ t.mock.timers.setTime(Date.parse('2026-10-12T15:00:00.456Z'));
+ assert.equal((await call(req())).status,204);
+ t.mock.timers.setTime(Date.parse('2026-10-12T17:00:00.789Z'));
+ assert.equal((await call(req())).status,204);
+ t.mock.timers.setTime(Date.parse('2026-10-12T16:30:00.000Z'));
+ assert.equal((await call(req())).status,204);
+ const stored=await db.prepare('SELECT * FROM usage_daily').first();
+ assert.equal(stored.count,23);
+ assert.equal(stored.first_received_at,'2026-10-12T15:00:00.456Z');
+ assert.equal(stored.last_received_at,'2026-10-12T17:00:00.789Z');
+ t.mock.timers.reset();
+});
+
+test('migration preserves historical counts and null receipt bounds until a new receipt',async(t)=>{
+ await legacyDB.prepare('INSERT INTO usage_daily(day,version,event,page,detail,failure,count) VALUES(?,?,?,?,?,?,?)').bind('2026-10-12',1,'page_view','charts','','',7).run();
+ await migrate(legacyDB,'0002_import_receipts.sql');
+ const historical=await legacyDB.prepare('SELECT * FROM usage_daily').first();
+ assert.equal(historical.count,7);assert.equal(historical.first_received_at,null);assert.equal(historical.last_received_at,null);
+ t.mock.timers.enable({apis:['Date'],now:new Date('2026-10-12T18:00:00.000Z')});
+ assert.equal((await worker.fetch(req(),{USAGE_DB:legacyDB,USAGE_ENABLED:'true'})).status,204);
+ const updated=await legacyDB.prepare('SELECT * FROM usage_daily').first();
+ assert.equal(updated.count,8);assert.equal(updated.first_received_at,'2026-10-12T18:00:00.000Z');assert.equal(updated.last_received_at,'2026-10-12T18:00:00.000Z');
+ t.mock.timers.reset();
 });
 
 test('compiled collector stores every finite provider lifecycle and tracker-link counter and rejects private siblings atomically',async()=>{
@@ -36,7 +66,7 @@ test('compiled collector stores every finite provider lifecycle and tracker-link
   {...valid,accountID:'PRIVATE-ACCOUNT'}, {...valid,connectionID:'PRIVATE-GRANT'},
   {...valid,url:'https://provider.invalid/PRIVATE'}, {...valid,token:'PRIVATE-TOKEN'},
   {...valid,score:100.1234}, {...valid,name:'PRIVATE-NAME'}, {...valid,detail:'PRIVATE-ACCOUNT'},
-  {...valid,detail:'lxns'}, {...valid,event:'file_import_started',detail:'portable'},
+  {...valid,detail:'tomomai'}, {...valid,event:'file_import_started',detail:'portable'},
   {...valid,event:'provider_file_fallback_clicked'},
   {...valid,event:'resource_opened',detail:'https://www.diving-fish.com/PRIVATE'},
   {...valid,event:'provider_refresh_auto_completed'}, {...valid,event:'provider_status_completed'},
@@ -54,6 +84,18 @@ test('invalid batch is rejected whole; private sentinel never reaches D1',async(
   assert.equal((await call(req(body))).status,400);
  }
  assert.deepEqual(await db.prepare('SELECT SUM(count) AS n FROM usage_daily').first(),count);
+});
+
+test('client receipt timestamps are rejected and opt-outs cannot alter aggregate receipt bounds',async()=>{
+ const read=async()=>(await db.prepare('SELECT * FROM usage_daily ORDER BY day,version,event,page,detail,failure').all()).results;
+ const before=await read(),value='2026-01-01T00:00:00.000Z';
+ for(const field of ['first_received_at','last_received_at','receivedAt','timestamp']){
+  assert.equal((await call(req({version:1,events:[row,{...row,[field]:value}]}))).status,400);
+  assert.equal((await call(req({version:1,events:[row],[field]:value}))).status,400);
+ }
+ for(const headers of [{DNT:'1'},{'Sec-GPC':'1'}])assert.equal((await call(req(undefined,{headers}))).status,204);
+ assert.equal((await call(req(),'false')).status,204);
+ assert.deepEqual(await read(),before);
 });
 test('export actions reach D1 only as the maintained finite categories',async()=>{
  const rows=Object.entries(DETAILS).filter(([event])=>event.startsWith('score_export_')).flatMap(([event,details])=>details.map(detail=>({event,page:'song',detail,failure:'',count:1})));
@@ -79,9 +121,17 @@ test('exact route, origin, method, type and opt-out controls fail closed',async(
 test('database failure has no leaked error details and batch rollback is atomic',async()=>{
  const response=await worker.fetch(req(),{USAGE_ENABLED:'true',USAGE_DB:{prepare(){return {bind(){return {}}}},batch(){throw Error('PRIVATE-SENTINEL')}}});
  assert.equal(response.status,503);assert.equal(await response.text(),'');
- const before=await db.prepare('SELECT SUM(count) AS n FROM usage_daily').first();
- await assert.rejects(db.batch([db.prepare('UPDATE usage_daily SET count=count+1'),db.prepare('INSERT INTO usage_daily VALUES(?,?,?,?,?,?,?)').bind('2026-09-22',1,'x','charts','','',-1)]));
- assert.deepEqual(await db.prepare('SELECT SUM(count) AS n FROM usage_daily').first(),before);
+ const before=(await db.prepare('SELECT * FROM usage_daily ORDER BY day,version,event,page,detail,failure').all()).results;
+ await assert.rejects(db.batch([db.prepare("UPDATE usage_daily SET count=count+1,last_received_at='2026-12-31T23:59:59.999Z'"),db.prepare('INSERT INTO usage_daily(day,version,event,page,detail,failure,count) VALUES(?,?,?,?,?,?,?)').bind('2026-09-22',1,'x','charts','','',-1)]));
+ assert.deepEqual((await db.prepare('SELECT * FROM usage_daily ORDER BY day,version,event,page,detail,failure').all()).results,before);
+ // Exercise the collector's real D1 batch too: the second valid tuple fails
+ // storage, rolling back the first tuple's count and receipt bounds together.
+ await db.prepare("CREATE TRIGGER fixture_reject_receipt BEFORE INSERT ON usage_daily WHEN NEW.event='settings_opened' BEGIN SELECT RAISE(ABORT,'fictional storage failure'); END").run();
+ try{
+  const failed=await call(req({version:1,events:[row,{...row,event:'settings_opened'}]}));
+  assert.equal(failed.status,503);assert.equal(await failed.text(),'');
+ }finally{await db.prepare('DROP TRIGGER fixture_reject_receipt').run();}
+ assert.deepEqual((await db.prepare('SELECT * FROM usage_daily ORDER BY day,version,event,page,detail,failure').all()).results,before);
 });
 test('New York boundary follows DST rather than UTC day',()=>{
  assert.equal(dayKey(new Date('2026-03-08T04:59:59Z')),'2026-03-07');

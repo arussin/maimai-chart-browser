@@ -6,6 +6,7 @@ import {ProviderOAuthSessionCore} from './provider-oauth-session-core.mjs';
 const nonce = () => crypto.randomUUID();
 const json = (v, status = 200, extra = {}) => new Response(JSON.stringify(v), {status, headers:{'Content-Type':'application/json', ...extra}});
 const fishScore = () => ({song_id:1,title:'Fictional song',type:'DX',level:'13+',level_index:3,achievements:100.1234,dxScore:1200,ds:13.7,fc:'fc',fs:''});
+const lxScore = () => ({id:1,song_name:'Fictional song',type:'dx',level:'13+',level_index:3,achievements:100.1234,dx_score:1200,dx_rating:300.9,rate:'sssp',fc:'fc',fs:null,play_time:null,upload_time:'2026-10-11T00:00:00Z',last_played_time:null,private:'not returned'});
 class Storage {
   values = new Map(); alarm = null;
   async get(k) { return structuredClone(this.values.get(k)); }
@@ -16,19 +17,21 @@ class Storage {
 }
 function setup() {
   const s = {time:1800000000000, calls:[], stores:new Map(), cores:new Map(), tokenNumber:0, override:null, allowed:true};
-  s.env = {PROVIDER_OAUTH_ENABLED:'true', DIVING_FISH_OAUTH_ENABLED:'true',
+  s.env = {PROVIDER_OAUTH_ENABLED:'true', DIVING_FISH_OAUTH_ENABLED:'true', LXNS_OAUTH_ENABLED:'true',
     PROVIDER_OAUTH_ENCRYPTION_KEY:randomID(), DIVING_FISH_OAUTH_CLIENT_ID:'fixture-fish-client', DIVING_FISH_OAUTH_CLIENT_SECRET:'fixture-fish-secret',
+    LXNS_OAUTH_CLIENT_ID:'fixture-lxns-client', LXNS_OAUTH_CLIENT_SECRET:'fixture-lxns-secret',
     PROVIDER_OAUTH_LIMITER:{limit:async () => ({success:s.allowed})},
   };
   s.fetcher = async (url, options) => {
     s.calls.push({url, options});
     const changed = await s.override?.(url, options); if (changed) return changed;
-    const provider = Object.entries(PROVIDERS).find(([,p]) => [p.discovery,p.token,p.userinfo,p.records,p.revoke].includes(url))?.[0];
+    const provider = Object.entries(PROVIDERS).find(([,p]) => [p.discovery,p.token,p.userinfo,p.records,p.revoke,p.player].includes(url))?.[0];
     assert.ok(provider, 'all upstream URLs must be fixed'); const p = PROVIDERS[provider];
     if (url === p.discovery) return json({issuer:p.issuer,authorization_endpoint:p.authorize,token_endpoint:p.token,userinfo_endpoint:p.userinfo,revocation_endpoint:p.revoke,code_challenge_methods_supported:['S256']});
     if (url === p.token) { s.tokenNumber++; return json({access_token:'fixture-access-' + s.tokenNumber,refresh_token:'fixture-refresh-' + s.tokenNumber,token_type:'Bearer',expires_in:900,scope:p.scopes.join(' ')}); }
     if (url === p.userinfo) return json({sub:'fixture-' + provider, name:'Fictional player', email:'not-returned@example.test'});
-    if (url === p.records) return json({nickname:'Fictional player',records:[fishScore()],user_general_data:{private:'not returned'},access_token:'not returned'});
+    if (url === p.player) return json({success:true,code:200,data:{name:'Fictional player',friend_code:123456,upload_time:'2026-10-11T00:00:00Z'}});
+    if (url === p.records) return provider === 'diving-fish' ? json({nickname:'Fictional player',records:[fishScore()],user_general_data:{private:'not returned'},access_token:'not returned'}) : json({success:true,code:200,data:[lxScore()]});
     if (url === p.revoke) return new Response(null, {status:200});
     throw Error('unexpected fixture request');
   };
@@ -59,27 +62,27 @@ function setup() {
 
 test('OAuth capabilities fail closed unless every required binding and provider setting exists', async () => {
   const s = setup();
-  assert.deepEqual(Object.keys(PROVIDERS), ['diving-fish']);
-  for (const k of ['PROVIDER_OAUTH_ENABLED','PROVIDER_OAUTH_ENCRYPTION_KEY','PROVIDER_OAUTH_SESSIONS','PROVIDER_OAUTH_LIMITER','DIVING_FISH_OAUTH_CLIENT_ID','DIVING_FISH_OAUTH_CLIENT_SECRET','DIVING_FISH_OAUTH_ENABLED']) {
+  assert.deepEqual(Object.keys(PROVIDERS), ['diving-fish','lxns']);
+  for (const provider of Object.keys(PROVIDERS)) for (const k of ['PROVIDER_OAUTH_ENABLED','PROVIDER_OAUTH_ENCRYPTION_KEY','PROVIDER_OAUTH_SESSIONS','PROVIDER_OAUTH_LIMITER',...['CLIENT_ID','CLIENT_SECRET','ENABLED'].map(suffix => PROVIDERS[provider].variable + '_OAUTH_' + suffix)]) {
     const v = s.env[k]; delete s.env[k];
-    const body = await (await s.call('/capabilities',{}, {method:'GET'})).json(); assert.equal(body.providers['diving-fish'].enabled,false,k); s.env[k] = v;
+    const body = await (await s.call('/capabilities',{}, {method:'GET'})).json(); assert.equal(body.providers[provider].enabled,false,k); s.env[k] = v;
   }
   assert.equal(s.calls.length,0);
 });
 test('deferred providers have no route, capability, session status or upstream access', async () => {
   const s = setup();
-  Object.assign(s.env, {LXNS_OAUTH_ENABLED:'true', LXNS_OAUTH_CLIENT_ID:'unused', LXNS_OAUTH_CLIENT_SECRET:'unused'});
-  assert.deepEqual(await (await s.call('/capabilities',{}, {method:'GET'})).json(), {providers:{'diving-fish':{enabled:true}}});
-  for (const path of ['/lxns/start','/lxns/read','/lxns/disconnect','/lxns/callback'])
+  Object.assign(s.env, {AQUA_OAUTH_ENABLED:'true', AQUA_OAUTH_CLIENT_ID:'unused', AQUA_OAUTH_CLIENT_SECRET:'unused'});
+  assert.deepEqual(await (await s.call('/capabilities',{}, {method:'GET'})).json(), {providers:{'diving-fish':{enabled:true},lxns:{enabled:true}}});
+  for (const path of ['/aqua/start','/aqua/read','/aqua/disconnect','/aqua/callback'])
     assert.equal((await s.call(path,{}, {method:path.endsWith('callback') ? 'GET' : 'POST'})).status,404);
   assert.equal(s.calls.length,0);
   const fish = await s.connect(), core = [...s.cores.values()][0], state = await core.load();
-  state.connections.lxns = {...state.connections['diving-fish'], displayName:'Deferred player'};
+  state.connections.aqua = {...state.connections['diving-fish'], displayName:'Deferred player'};
   await core.save(state);
   assert.deepEqual((await s.status()).map(c => c.connectionID),[fish.connectionID]);
   const count = s.calls.length;
-  await assert.rejects(core.upstream('https://maimai.lxns.net/api/v0/user/maimai/player/scores'),{code:'invalid_endpoint'});
-  const internal = await core.fetch(new Request('https://provider-session.invalid/read/lxns',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'}));
+  await assert.rejects(core.upstream('https://unknown-provider.test/player/scores'),{code:'invalid_endpoint'});
+  const internal = await core.fetch(new Request('https://provider-session.invalid/read/aqua',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'}));
   assert.equal(internal.status,404); assert.equal(s.calls.length,count);
 });
 test('OAuth browser API rejects foreign origins, missing CSRF header, alternate hosts, query relay and malformed bodies', async () => {
@@ -120,15 +123,16 @@ test('expired authorization attempts and duplicate state query parameters never 
   assert.match(await (await s.callback(flow,'diving-fish','&state=duplicate')).text(),/invalid_state/);
   s.time += 600001; assert.match(await (await s.callback(flow)).text(),/invalid_state/); assert.equal(s.calls.filter(c => c.url === PROVIDERS['diving-fish'].token).length,0);
 });
-test('full PB reads use the exact Fish contract and strip unrelated profile data', async () => {
-  for (const provider of ['diving-fish']) {
+test('full PB reads use exact Fish and LXNS contracts and strip unrelated profile data', async () => {
+  for (const provider of ['diving-fish','lxns']) {
     const s = setup(), c = await s.connect(provider), response = await s.call('/' + provider + '/read',{connectionID:c.connectionID});
     assert.equal(response.status,200); const body = await response.json();
     assert.equal(body.accountID.length,64); assert.equal(body.connectionID,c.connectionID); assert.equal(body.coverage,'full'); assert.equal(body.capturedAt,null); assert.equal(body.fetchedAt,s.time);
-    assert.deepEqual(body.warnings,['fish_masking_unverified']);
-    const records = body.data.records;
+    assert.deepEqual(body.warnings,provider === 'diving-fish' ? ['fish_masking_unverified'] : []);
+    const records = provider === 'diving-fish' ? body.data.records : body.data.data;
     assert.equal(records[0].achievements,100.1234); assert.ok(!JSON.stringify(body).includes('not returned')); assert.ok(!JSON.stringify(body).includes('friend_code'));
     assert.ok(s.calls.filter(c => c.url === PROVIDERS[provider].records).every(c => c.options.method === 'GET' && c.options.headers.Authorization.startsWith('Bearer fixture-access-')));
+    if (provider === 'lxns') { assert.equal(records[0].dx_rating,300.9); assert.equal(records[0].rate,'sssp'); }
     assert.equal((await s.call('/' + provider + '/read',{connectionID:c.connectionID})).status,429);
   }
 });
@@ -335,4 +339,175 @@ test('upstream fetch is called without a session receiver as required by workerd
     return json({sub:'fictional-subject'});
   }});
   assert.deepEqual(await core.upstream(PROVIDERS['diving-fish'].userinfo),{sub:'fictional-subject'});
+});
+
+test('LXNS requests only stable identity and player reads with bound state and S256', async () => {
+  const s = setup();
+  assert.equal((await s.call('/lxns/start',{nonce:nonce(),maskingDisabled:true})).status,400);
+  s.override = url => url === PROVIDERS.lxns.userinfo ? json({sub:'fixture-lxns-subject'}) : null;
+  const flow = await s.start('lxns');
+  assert.equal(flow.url.origin,'https://maimai.lxns.net'); assert.equal(flow.url.pathname,'/oauth/authorize');
+  assert.equal(flow.url.searchParams.get('scope'),'openid read_player');
+  assert.equal(flow.url.searchParams.get('redirect_uri'),PARTY_ORIGIN + OAUTH_PREFIX + '/lxns/callback');
+  assert.equal(flow.url.searchParams.get('code_challenge_method'),'S256');
+  const unbound = await s.call('/lxns/callback?state=' + flow.url.searchParams.get('state') + '&code=fixture-code',{}, {method:'GET',cookie:''});
+  assert.match(await unbound.text(),/invalid_state/); assert.equal(s.calls.length,0);
+  const callback = await s.callback(flow,'lxns'), html = await callback.text();
+  assert.match(html,/"status":"connected"/); assert.ok(!html.includes('fixture-'));
+  const form = new URLSearchParams(s.calls.find(c => c.url === PROVIDERS.lxns.token).options.body);
+  assert.equal(form.get('client_secret'),'fixture-lxns-secret');
+  const challenge = await crypto.subtle.digest('SHA-256',new TextEncoder().encode(form.get('code_verifier')));
+  assert.equal(Buffer.from(challenge).toString('base64url'),flow.url.searchParams.get('code_challenge'));
+  assert.equal(s.calls.filter(c => c.url === PROVIDERS.lxns.token).length,1);
+  assert.match(await (await s.callback(flow,'lxns')).text(),/invalid_state/);
+  const c = (await s.status())[0]; assert.equal(c.displayName,'LXNS player'); assert.deepEqual(c.warnings,[]);
+  s.override = url => url === PROVIDERS.lxns.player ? json({success:true,code:200,data:{name:'\u0000\ud800' + '🎵'.repeat(150),friend_code:123}}) : null;
+  const read = await s.call('/lxns/read',{connectionID:c.connectionID}), body = await read.json();
+  assert.equal(body.accountID,c.accountID); assert.equal(body.displayName,'🎵'.repeat(100));
+  assert.ok(!JSON.stringify(body).includes('fixture-lxns-subject')); assert.ok(!JSON.stringify(body).includes('friend_code'));
+  const decrypted = await [...s.cores.values()][0].load();
+  assert.ok(!JSON.stringify(decrypted).includes('Fictional song')); assert.ok(!JSON.stringify(decrypted).includes('100.1234'));
+  assert.ok(s.calls.every(c => c.options.redirect === 'manual' && c.options.credentials === 'omit'));
+});
+
+test('LXNS rejects missing or excessive scope and missing subject without replacing prior grants', async () => {
+  for (const failure of ['missing','write','userinfo','issuer']) {
+    const s = setup(), fish = await s.connect(), original = await s.connect('lxns'), flow = await s.start('lxns');
+    s.override = url => {
+      if (url === PROVIDERS.lxns.token && ['missing','write'].includes(failure)) return json({access_token:'fixture-a',refresh_token:'fixture-r',token_type:'Bearer',expires_in:900,scope:failure === 'missing' ? 'openid' : 'openid read_player write_player'});
+      if (url === PROVIDERS.lxns.userinfo && failure === 'userinfo') return json({name:'Missing stable subject'});
+      return null;
+    };
+    const result = await s.callback(flow,'lxns',failure === 'issuer' ? '&iss=https%3A%2F%2Fevil.test' : '');
+    assert.match(await result.text(),new RegExp({missing:'missing_scope',write:'unexpected_scope',userinfo:'invalid_identity',issuer:'invalid_issuer'}[failure]));
+    assert.deepEqual((await s.status()).map(c => c.connectionID),[fish.connectionID,original.connectionID]);
+    assert.ok(!s.calls.some(c => /revoke/.test(c.url)));
+    s.override = null; assert.equal((await s.call('/lxns/read',{connectionID:original.connectionID})).status,200);
+  }
+});
+
+test('LXNS full-score envelopes reject simplified records, malformed data and oversized responses', async () => {
+  const s = setup(), c = await s.connect('lxns');
+  const simple = lxScore(); delete simple.achievements;
+  for (const response of [
+    () => json({success:false,code:200,data:[lxScore()],message:'private rejection'}),
+    () => json({success:true,code:201,data:[lxScore()]}),
+    () => json({success:true,code:200,data:[simple]}),
+    () => json({success:true,code:200,data:[{...lxScore(),achievements:102}]}),
+    () => json({success:true,code:200,data:[{...lxScore(),song_name:'x'.repeat(513)}]}),
+    () => json({success:true,code:200,data:Array(25001).fill(lxScore())}),
+    () => json({success:true,code:200,data:[]},200,{'Content-Length':String(9*1024*1024)}),
+    () => new Response(null,{status:302,headers:{Location:'https://evil.test'}}),
+    () => new Response('<html>private login</html>',{headers:{'Content-Type':'text/html'}}),
+  ]) {
+    s.time += 30001; s.override = url => url === PROVIDERS.lxns.records ? response() : null;
+    const result = await s.call('/lxns/read',{connectionID:c.connectionID});
+    assert.equal(result.status,502); assert.ok(!(await result.text()).includes('private')); assert.equal((await s.status())[0].connected,true);
+  }
+  s.time += 30001; s.override = url => url === PROVIDERS.lxns.player ? json({success:true,code:200,data:null}) : null;
+  const count = s.calls.filter(c => c.url === PROVIDERS.lxns.records).length;
+  assert.equal((await s.call('/lxns/read',{connectionID:c.connectionID})).status,502);
+  assert.equal(s.calls.filter(c => c.url === PROVIDERS.lxns.records).length,count);
+});
+
+test('LXNS rotating refresh serializes and persists across restart; uncertain exchange cannot replay', async () => {
+  const s = setup(), c = await s.connect('lxns'); s.time += 901000;
+  const responses = await Promise.all([s.call('/lxns/read',{connectionID:c.connectionID}),s.call('/lxns/read',{connectionID:c.connectionID})]);
+  assert.deepEqual(responses.map(r => r.status),[200,429]);
+  assert.equal(s.calls.filter(c => c.url === PROVIDERS.lxns.token).length,2);
+  s.cores.clear(); s.time += 30001;
+  assert.equal((await s.call('/lxns/read',{connectionID:c.connectionID})).status,200);
+  assert.equal(s.calls.at(-1).options.headers.Authorization,'Bearer fixture-access-2');
+  s.time += 901000;
+  s.override = url => { if (url === PROVIDERS.lxns.token) throw Error('fixture lost rotation response'); return null; };
+  assert.equal((await s.call('/lxns/read',{connectionID:c.connectionID})).status,401);
+  const before = s.calls.length; s.cores.clear(); s.time += 30001;
+  assert.equal((await s.status())[0].requiresReconnect,true);
+  assert.equal((await s.call('/lxns/read',{connectionID:c.connectionID})).status,401); assert.equal(s.calls.length,before);
+});
+
+test('LXNS refresh may omit unchanged scope but cannot lose scope or reuse its old refresh token', async () => {
+  for (const failure of ['scope','reused']) {
+    const s = setup(), c = await s.connect('lxns'); s.time += 901000;
+    s.override = url => url === PROVIDERS.lxns.token ? json({access_token:'fixture-new-a',refresh_token:'fixture-new-r',token_type:'Bearer',expires_in:900}) : null;
+    assert.equal((await s.call('/lxns/read',{connectionID:c.connectionID})).status,200);
+    s.time += 901000;
+    s.override = url => url === PROVIDERS.lxns.token ? json({access_token:'fixture-next-a',refresh_token:failure === 'reused' ? 'fixture-new-r' : 'fixture-next-r',token_type:'Bearer',expires_in:900,scope:failure === 'scope' ? 'openid' : 'openid read_player'}) : null;
+    assert.equal((await s.call('/lxns/read',{connectionID:c.connectionID})).status,401);
+    assert.equal((await s.status())[0].requiresReconnect,true);
+  }
+});
+
+test('LXNS and Fish grants stay separate; replacement cancellation and disabled cleanup preserve other grants', async () => {
+  const s = setup();
+  s.override = url => [PROVIDERS.lxns.userinfo,PROVIDERS['diving-fish'].userinfo].includes(url) ? json({sub:'same-upstream-subject'}) : null;
+  const fish = await s.connect(), lxns = await s.connect('lxns'), fishCandidate = await s.connect(), lxnsCandidate = await s.connect('lxns');
+  assert.notEqual(fish.accountID,lxns.accountID); assert.equal(lxns.accountID,lxnsCandidate.accountID);
+  assert.equal((await s.status()).length,4); assert.equal((await s.call('/lxns/start',{nonce:nonce()})).status,409);
+  assert.equal((await s.call('/lxns/read',{connectionID:fish.connectionID})).status,409);
+  assert.equal((await s.call('/lxns/read',{connectionID:lxnsCandidate.connectionID})).status,200);
+  const before = s.calls.length;
+  const gone = await s.call('/lxns/disconnect',{connectionID:lxnsCandidate.connectionID});
+  assert.deepEqual(await gone.json(),{disconnected:true,revocation:'unavailable'}); assert.equal(s.calls.length,before);
+  assert.deepEqual((await s.status()).map(c => c.connectionID),[fish.connectionID,lxns.connectionID,fishCandidate.connectionID]);
+  assert.equal((await s.call('/lxns/read',{connectionID:lxns.connectionID})).status,200);
+  s.env.LXNS_OAUTH_ENABLED = 'false';
+  assert.equal((await s.call('/lxns/read',{connectionID:lxns.connectionID})).status,503);
+  assert.equal((await s.call('/lxns/disconnect',{connectionID:lxns.connectionID})).status,200);
+  assert.deepEqual((await s.status()).map(c => c.connectionID),[fish.connectionID,fishCandidate.connectionID]);
+  assert.equal((await s.call('/diving-fish/read',{connectionID:fish.connectionID})).status,200);
+});
+
+test('LXNS rate limits survive restart and authorization rejection never impersonates Fish setup recovery', async () => {
+  const s = setup(), c = await s.connect('lxns');
+  s.override = url => url === PROVIDERS.lxns.records ? json({message:'private text'},429,{'Retry-After':'120'}) : null;
+  const busy = await s.call('/lxns/read',{connectionID:c.connectionID});
+  assert.equal(busy.status,503); assert.equal(busy.headers.get('Retry-After'),'120'); assert.ok(!(await busy.text()).includes('private text'));
+  const count = s.calls.length; s.cores.clear(); s.time += 31000;
+  assert.equal((await s.call('/lxns/read',{connectionID:c.connectionID})).status,429); assert.equal(s.calls.length,count);
+  s.time += 120000;
+  s.override = url => url === PROVIDERS.lxns.records ? json({status:'error',message:'该用户未同意用户协议'},403) : null;
+  const rejected = await s.call('/lxns/read',{connectionID:c.connectionID});
+  assert.equal(rejected.status,401); assert.deepEqual(await rejected.json(),{error:'authorization_failed'}); assert.equal((await s.status())[0].requiresReconnect,true);
+  const disconnected = await s.call('/lxns/disconnect',{connectionID:c.connectionID},{cookie:''});
+  assert.deepEqual(await disconnected.json(),{disconnected:true,revocation:'unavailable',session:'unavailable'});
+});
+
+test('LXNS absent player data has a finite recovery error without discarding either provider grant', async () => {
+  for (const endpoint of [PROVIDERS.lxns.player,PROVIDERS.lxns.records]) {
+    const s = setup(), fish = await s.connect(), lxns = await s.connect('lxns');
+    s.override = url => url === endpoint ? json({success:false,code:404,message:'private upstream detail'},404) : null;
+    const response = await s.call('/lxns/read',{connectionID:lxns.connectionID});
+    assert.equal(response.status,404); assert.deepEqual(await response.json(),{error:'lxns_player_missing'});
+    s.cores.clear();
+    const status = await s.status();
+    assert.deepEqual(status.map(c => [c.connectionID,c.connected,c.requiresReconnect]),[[fish.connectionID,true,false],[lxns.connectionID,true,false]]);
+    if (endpoint === PROVIDERS.lxns.player) assert.ok(!s.calls.some(c => c.url === PROVIDERS.lxns.records));
+    s.override = null; s.time += 30001;
+    assert.equal((await s.call('/lxns/read',{connectionID:lxns.connectionID})).status,200);
+    assert.equal((await s.call('/diving-fish/read',{connectionID:fish.connectionID})).status,200);
+    assert.equal(s.calls.filter(c => c.url === PROVIDERS.lxns.token).length,1);
+  }
+});
+
+test('LXNS missing-player recovery requires the documented status and envelope on a player endpoint', async () => {
+  const s = setup(), c = await s.connect('lxns');
+  for (const response of [
+    () => json({success:false,code:404},200),
+    () => json({success:true,code:404},404),
+    () => json({success:false,code:400},404),
+    () => json({success:false,code:'404'},404),
+    () => json({success:false,code:404,message:'x'.repeat(2049)},404),
+    () => new Response('<html>not found</html>',{status:404,headers:{'Content-Type':'text/html'}}),
+    () => new Response('{',{status:404,headers:{'Content-Type':'application/json'}}),
+  ]) {
+    s.time += 30001; s.override = url => url === PROVIDERS.lxns.player ? response() : null;
+    const result = await s.call('/lxns/read',{connectionID:c.connectionID});
+    assert.equal(result.status,502); assert.notEqual((await result.json()).error,'lxns_player_missing');
+    assert.equal((await s.status())[0].connected,true);
+  }
+  const core = [...s.cores.values()][0];
+  core.fetcher = async () => json({success:false,code:404},404);
+  for (const url of [PROVIDERS.lxns.token,PROVIDERS.lxns.userinfo,PROVIDERS['diving-fish'].records])
+    await assert.rejects(core.upstream(url),{code:'source_unavailable'});
 });

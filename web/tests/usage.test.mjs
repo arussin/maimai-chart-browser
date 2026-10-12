@@ -6,7 +6,7 @@ import { gzipSync } from 'node:zlib';
 import { providerUsageRows } from '../../usage-worker/test/provider-usage-fixture.mjs';
 const source = await moduleSource('usage');
 const stagingSource = await moduleSource('usage-staging', { staging: true });
-import { DETAILS, validateRow } from '../src/usage-contract.ts';
+import { DETAILS, FAILURES, validateRow } from '../src/usage-contract.ts';
 function fixture({
   host = 'maimai.party',
   module = source,
@@ -145,9 +145,54 @@ test('same broad page category counts each committed navigation but no automatic
   assert.equal(JSON.parse(requests[0].options.body).events[0].count, 2);
 });
 
+test('import terminal outcomes flush promptly and are never discarded by a full finite queue', async () => {
+  const { api, requests } = fixture();
+  for (const detail of DETAILS.filter_first_used.slice(0, 16))
+    api.emit('filter_first_used', 'charts', detail);
+  assert.equal(requests.length, 0);
+  api.emit('import_completed', 'charts', 'lxns');
+  assert.equal(requests.length, 2);
+  const batches = requests.map((request) => JSON.parse(request.options.body));
+  assert.equal(batches[0].events.length, 16);
+  assert.deepEqual(batches[1].events, [
+    { event: 'import_completed', page: 'charts', detail: 'lxns', failure: '', count: 1 },
+  ]);
+  await api.flush();
+  assert.equal(requests.length, 2);
+});
+
+test('all finite import failure reasons reach transport without client timestamps or raw errors', async () => {
+  const { api, requests } = fixture({ fail: true });
+  for (const failure of FAILURES) {
+    api.emit('import_failed', 'charts', 'diving-fish', failure);
+  }
+  assert.equal(requests.length, FAILURES.length);
+  await api.flush();
+  assert.equal(requests.length, FAILURES.length, 'Failed requests must never retry');
+  assert.deepEqual(
+    requests.map((request) => JSON.parse(request.options.body).events[0].failure),
+    [...FAILURES],
+  );
+  const row = {
+    event: 'import_failed',
+    page: 'charts',
+    detail: 'lxns',
+    failure: 'empty_scores',
+    count: 1,
+  };
+  for (const extra of [
+    { timestamp: Date.now() },
+    { first_received_at: '2026-10-11T00:00:00.000Z' },
+    { message: 'PRIVATE-ERROR' },
+  ])
+    assert.equal(validateRow({ ...row, ...extra }), null);
+  api.emit('import_failed', 'charts', 'lxns', 'PRIVATE-ERROR');
+  assert.equal(requests.length, FAILURES.length);
+});
+
 test('direct import counts accept only finite provider names and never account or grant identifiers', async () => {
   const { api, requests } = fixture();
-  for (const provider of ['kamaitachi', 'diving-fish'])
+  for (const provider of ['kamaitachi', 'diving-fish', 'lxns'])
     api.emit('import_started', 'charts', provider);
   for (const detail of [
     'https://kamai.tachi.ac/u/PRIVATE',
@@ -162,7 +207,7 @@ test('direct import counts accept only finite provider names and never account o
     JSON.parse(body)
       .events.map((row) => row.detail)
       .sort(),
-    ['diving-fish', 'kamaitachi'],
+    ['diving-fish', 'kamaitachi', 'lxns'],
   );
 });
 
@@ -195,7 +240,7 @@ test('provider telemetry rejects identities, raw errors, invented auto events an
   api.emit('provider_refresh_auto_completed', 'charts', 'diving-fish');
   api.emit('provider_status_completed', 'charts', 'diving-fish');
   api.emit('provider_disconnect_cancelled', 'charts', 'diving-fish');
-  for (const detail of ['lxns', 'mai-tools', 'dxrating', 'tomomai', 'jietng', 'aqua', 'tachi']) {
+  for (const detail of ['mai-tools', 'dxrating', 'tomomai', 'jietng', 'aqua', 'tachi']) {
     api.emit('import_started', 'charts', detail);
     api.emit('provider_read_started', 'charts', detail);
   }

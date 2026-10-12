@@ -134,10 +134,13 @@ test(
         }),
       );
       const db = await mf.getD1Database("USAGE_DB", "collector");
-      const schema = await readFile(
-        join(root, "migrations/0001_daily.sql"),
-        "utf8",
-      );
+      const schema = (
+        await Promise.all(
+          ["0001_daily.sql", "0002_import_receipts.sql"].map((name) =>
+            readFile(join(root, "migrations", name), "utf8"),
+          ),
+        )
+      ).join("\n");
       for (const sql of schema
         .replace(/--[^\n]*/g, "")
         .split(";")
@@ -154,6 +157,7 @@ test(
             ...options.headers,
           },
         });
+      const receiptFloor = Date.now();
       const accepted = await send("/__usage", {
         headers: {
           Cookie: "CF_Authorization=PRIVATE-SENTINEL",
@@ -232,6 +236,14 @@ test(
       );
       const rows = (await db.prepare("SELECT * FROM usage_daily").all())
         .results;
+      assert.equal(rows.length, 1);
+      assert.equal(
+        new Date(rows[0].first_received_at).toISOString(),
+        rows[0].first_received_at,
+      );
+      assert.equal(rows[0].last_received_at, rows[0].first_received_at);
+      assert(Date.parse(rows[0].first_received_at) >= receiptFloor);
+      assert(Date.parse(rows[0].last_received_at) <= Date.now());
       assert.ok(!JSON.stringify(rows).includes("PRIVATE-SENTINEL"));
       passed = true;
     } finally {

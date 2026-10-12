@@ -2,8 +2,8 @@
   "version": 1,
   "tool": "esbuild-0.28.2",
   "entries": {
-    "hosted": "browser/browser-entry-DAEP5ST2.js",
-    "offline": "browser/browser-offline-JEAUBRXM.js"
+    "hosted": "browser/browser-entry-SMMWV32O.js",
+    "offline": "browser/browser-offline-D6BCDQEB.js"
   },
   "assets": {
     "browser/score-export-partner-otohime-splash-2HMETPV6.js": {
@@ -30,9 +30,9 @@
       "sha256": "9e32462f478fca9cf847c9e37306db19873899c1278e7379188f30cec523b012",
       "bytes": 21939
     },
-    "browser/application-QKSTVZA5.js": {
-      "sha256": "95ffc43e130c4a1e2433d8391f3f9be53b882df43d96c45c61b1a06e7c6cd180",
-      "bytes": 358854
+    "browser/application-VEUSVVQN.js": {
+      "sha256": "3a8443ba45444b8a5db5433f17a3a9d19ebd8e095cf1848190e5f840f44f0b4c",
+      "bytes": 400429
     },
     "browser/chunk-DXPPFQ5S.js": {
       "sha256": "f7fbea75cb876df33c7b0770e6eeb0c6c6ebd148ca19ef44868e4a08f166835c",
@@ -102,21 +102,21 @@
       "sha256": "c55595e30c87fa4149a28343ba0be765e7dcd62922a8ae833c1d86b723fa2bdd",
       "bytes": 174218
     },
-    "browser/browser-entry-DAEP5ST2.js": {
-      "sha256": "0200ccceac218ebedbf1a693dfd472decabd899b18db161f83a836859424ab6b",
-      "bytes": 23028
+    "browser/browser-entry-SMMWV32O.js": {
+      "sha256": "bc88f0c4e9332ce7304ed40ca3a31bc108dc5ceb97d5698e95ec3919b33a9a45",
+      "bytes": 23491
     },
     "browser/chunk-XTUOD3PW.js": {
       "sha256": "06388ba94a85ae5ea775f034a31c299917bd898db09bc58819c3a1ae61735cc9",
       "bytes": 2514
     },
-    "browser/import-provider-QYBR5IP3.js": {
-      "sha256": "ce8cd47eb1a4d1145f56a58b2a4c218571cd5abb49ba3cdcd3cde9ae83eaefd0",
-      "bytes": 115062
+    "browser/import-provider-ZOXQJJIZ.js": {
+      "sha256": "b7e68288ac4b576fbb8d97390022fc507510087e0209f6e085cb86f155e04867",
+      "bytes": 228893
     },
-    "browser/chunk-N5MLJMEI.js": {
-      "sha256": "6396115398549977d7121638995e59ed2f964088f92e3ab4630210a52ad4f415",
-      "bytes": 1540
+    "browser/chunk-26CPDZUZ.js": {
+      "sha256": "9cea78956a835672570e5e0c72d63a773d4729dc72e92f48bb363783d167a2d9",
+      "bytes": 1547
     },
     "browser/score-export-partner-derakkuma-magical-RQSO3O4Q.js": {
       "sha256": "1ceb0f7311318f86f40b738935937c263c79dbf4abb7c1a8a8fdd7f05dcb0547",
@@ -146,9 +146,9 @@
       "sha256": "ff9e0dca4365b7b1581e7275f3c6dbcf1474ffb874d81a3375ecf7a835dbaa6f",
       "bytes": 106
     },
-    "browser/browser-offline-JEAUBRXM.js": {
-      "sha256": "0e8d1aebefb7ec275826735947211cb2e2dd56ce6b9c9d793182ed2cac6a97f4",
-      "bytes": 6684335
+    "browser/browser-offline-D6BCDQEB.js": {
+      "sha256": "e67556d6f14054df17266dc7cf7d6cf158ec1a35e4df180a86c25b5b31226cca",
+      "bytes": 6839762
     },
     "browser/recovery-pagination-c898b2432a221525.js": {
       "sha256": "c898b2432a221525bd523d99a8666f562002886ac907d715f3d1687e07c366b6",
@@ -175,9 +175,9 @@
     "lab-loader.js"
   ],
   "preloads": [
-    "browser/application-QKSTVZA5.js",
+    "browser/application-VEUSVVQN.js",
+    "browser/chunk-26CPDZUZ.js",
     "browser/chunk-DXPPFQ5S.js",
-    "browser/chunk-N5MLJMEI.js",
     "browser/chunk-WOT6VMZA.js",
     "browser/chunk-XTUOD3PW.js"
   ],

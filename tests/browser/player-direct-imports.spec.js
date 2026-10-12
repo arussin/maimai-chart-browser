@@ -18,6 +18,7 @@ test.beforeEach(async ({ page, fixtureOrigins }) => {
   for (const origin of [
     "https://kamai.tachi.ac",
     "https://auth.diving-fish.com",
+    "https://maimai.lxns.net",
   ])
     fixtureOrigins.synthetic(origin);
   await page.addInitScript(() => {
@@ -187,6 +188,7 @@ async function mockOAuth(context, { enabled = true } = {}) {
     disconnectFail: false,
     empty: false,
     agreementRequired: false,
+    playerMissing: false,
     records: null,
     enabled,
     fetchedAt: Date.now(),
@@ -207,6 +209,7 @@ async function mockOAuth(context, { enabled = true } = {}) {
       return fulfill(route, {
         providers: {
           "diving-fish": { enabled: state.enabled },
+          lxns: { enabled: state.enabled },
         },
       });
     if (path[0] === "status")
@@ -223,7 +226,7 @@ async function mockOAuth(context, { enabled = true } = {}) {
         flowNonce: body.nonce,
         warnings: provider === "diving-fish" ? ["fish_masking_unverified"] : [],
       });
-      const origin = "https://auth.diving-fish.com";
+      const origin = provider === 'diving-fish' ? "https://auth.diving-fish.com" : "https://maimai.lxns.net";
       return fulfill(route, {
         authorizationURL:
           origin +
@@ -240,7 +243,8 @@ async function mockOAuth(context, { enabled = true } = {}) {
       });
     if (action === "read") {
       if (state.readFail) return fulfill(route, { error: "unavailable" }, 503);
-      if (state.agreementRequired) return fulfill(route, { error: 'tracker_agreement_required' }, 403);
+      if (provider === 'diving-fish' && state.agreementRequired) return fulfill(route, { error: 'tracker_agreement_required' }, 403);
+      if (provider === 'lxns' && state.playerMissing) return fulfill(route, { error: 'lxns_player_missing' }, 404);
       const grant = state.grants.find(
         (row) =>
           row.provider === provider && row.connectionID === body.connectionID,
@@ -253,7 +257,13 @@ async function mockOAuth(context, { enabled = true } = {}) {
         fs: "",
         level: "13",
       };
-      const data = {
+      const data = provider === 'lxns' ? {
+        success: true, code: 200, data: state.empty ? [] : state.records ?? [{
+          ...common, id: 999999, song_name: 'Synthetic Unknown OAuth Chart',
+          type: 'dx', dx_score: 1000, dx_rating: 270.8, rate: 'ss', fs: null,
+          play_time: null, upload_time: '2026-10-11T00:00:00Z',
+        }],
+      } : {
               nickname: "Synthetic Connected Player",
               records: state.empty ? [] : state.records ?? [
                 {
@@ -289,6 +299,7 @@ async function mockOAuth(context, { enabled = true } = {}) {
   });
   for (const [origin, provider] of [
     ["https://auth.diving-fish.com", "diving-fish"],
+    ["https://maimai.lxns.net", "lxns"],
   ]) {
     await context.route(origin + "/oauth/authorize**", (route) => {
       const url = new URL(route.request().url()),
@@ -314,9 +325,13 @@ async function connect(page, provider) {
   await expect(page.getByRole('heading', { name: 'Import this profile?', exact: true })).toBeVisible();
 }
 
-test('exact Fish metadata enables image exports without inventing a release or changing China provenance', async ({ page, context }) => {
+for (const provider of ['diving-fish', 'lxns']) test(provider + ' exact metadata enables image exports without inventing a release or changing China provenance', async ({ page, context }) => {
   const state = await mockOAuth(context);
-  state.records = [{
+  state.records = provider === 'lxns' ? [{
+    id: 8, song_name: 'True Love Song', type: 'standard', level_index: 3,
+    achievements: 99.4321, fc: 'fc', fs: null, level: '12', dx_score: 1000,
+    dx_rating: 260.8, rate: 'ss', play_time: null,
+  }] : [{
     song_id: 8, title: 'True Love Song', type: 'SD', level_index: 3,
     achievements: 99.4321, fc: 'fc', fs: '', level: '12', dxScore: 1000, ds: 12.4,
   }];
@@ -332,7 +347,7 @@ test('exact Fish metadata enables image exports without inventing a release or c
   });
   await boot(page);
   const fixture = await page.evaluate(() => {
-    // The API record omits artist. The real Fish normalizer must supply this
+    // The API record omits artist. The real provider normalizer must supply this
     // exact identity from the pinned public song table, not from this catalog.
     const chart = maimaiResearchCatalog.catalog[0];
     Object.assign(chart, {
@@ -371,11 +386,13 @@ test('exact Fish metadata enables image exports without inventing a release or c
   await context.route('**/' + fixture.path, route => route.fulfill({
     contentType: 'image/png', body: Buffer.from(fixture.jacket.split(',')[1], 'base64'),
   }));
-  await connect(page, 'diving-fish');
+  await connect(page, provider);
+  await expect(page.locator('.player-import-provenance')).toHaveText((provider === 'lxns' ? 'LXNS' : 'Diving-Fish') + ' · China');
   await expect(page.locator('#player-import-dialog')).not.toContainText('Unmatched PB charts:');
   await accept(page);
   const imported = await saved(page);
-  expect(imported.data.player.key).toBe('diving-fish:maimaidx:cn:' + 'b'.repeat(64));
+  expect(imported.data.player.key).toBe(provider + ':maimaidx:cn:' + 'b'.repeat(64));
+  if (provider === 'lxns') expect(Object.values(imported.data.records).map(row => row.rate)).toEqual([260]);
   expect(Object.values(imported.data.charts)).toMatchObject([{
     title: 'True Love Song', artist: 'Kai/クラシック「G線上のアリア」', displayVersion: '',
   }]);
@@ -410,15 +427,15 @@ test('exact Fish metadata enables image exports without inventing a release or c
   expect(after.data.player.key).toBe(imported.data.player.key);
 });
 
-test('four service sections expose five methods, local marks, and keyboard controls', async ({ page, context }, testInfo) => {
+test('five service sections expose six methods, local marks, and keyboard controls', async ({ page, context }, testInfo) => {
   await page.setViewportSize({ width: 1280, height: 1100 });
   const state = await mockOAuth(context, { enabled: false });
   await boot(page);
   await openImport(page);
   const dialog = page.locator('#player-import-dialog');
-  await expect(dialog.locator('[data-import-service]')).toHaveCount(4);
-  await expect(dialog.locator('input[name=player-source]')).toHaveCount(5);
-  expect(await dialog.locator('[data-import-service]').evaluateAll(nodes => nodes.map(node => node.dataset.importService))).toEqual(['kamaitachi', 'diving-fish', 'maishift', 'session-report']);
+  await expect(dialog.locator('[data-import-service]')).toHaveCount(5);
+  await expect(dialog.locator('input[name=player-source]')).toHaveCount(6);
+  expect(await dialog.locator('[data-import-service]').evaluateAll(nodes => nodes.map(node => node.dataset.importService))).toEqual(['kamaitachi', 'diving-fish', 'lxns', 'maishift', 'session-report']);
   await expect(dialog.locator('.player-service-body:visible')).toHaveCount(1);
   await expect(dialog.locator('[data-service-toggle="session-report"]')).toHaveAttribute('aria-expanded', 'true');
   await expect(dialog.getByRole('radio')).toHaveCount(2);
@@ -555,13 +572,13 @@ test('empty or missing Kamaitachi game profiles preserve the saved profile and c
   expect((await saved(page)).revision).toBe(first.revision);
 });
 
-test("Diving-Fish previews before save, cancel keeps an old grant, unchanged refresh adds no snapshots, and offline Forget is recoverable", async ({
+for (const provider of ['diving-fish', 'lxns']) test(provider + " previews before save, cancel keeps an old grant, unchanged refresh adds no snapshots, and offline Forget is recoverable", async ({
   page,
   context,
 }) => {
   const state = await mockOAuth(context);
   await boot(page);
-  await connect(page, "diving-fish");
+  await connect(page, provider);
   expect(await saved(page)).toBeNull();
   await expect(page.locator("#player-import-dialog")).toContainText(
     "Unmatched PB charts: 1",
@@ -569,8 +586,8 @@ test("Diving-Fish previews before save, cancel keeps an old grant, unchanged ref
   await accept(page);
   const first = await saved(page),
     original = first.source.connectionID;
-  await openImport(page, "diving-fish");
-  await page.locator('#player-fish-masking').check();
+  await openImport(page, provider);
+  if (provider === 'diving-fish') await page.locator('#player-fish-masking').check();
   await page
     .getByRole("button", { name: "Connect another account", exact: true })
     .click();
@@ -584,10 +601,25 @@ test("Diving-Fish previews before save, cancel keeps an old grant, unchanged ref
   await page.locator("#settings-toggle").click();
   await page.locator("#player-refresh").click();
   await expect
-    .poll(() => state.calls.filter((call) => call.path === "diving-fish/read").length)
+    .poll(() => state.calls.filter((call) => call.path === provider + "/read").length)
     .toBe(3);
   expect((await saved(page)).revision).toBe(first.revision);
   expect(Object.keys((await saved(page)).data.snapshots)).toHaveLength(1);
+  if (provider === 'lxns') {
+    state.playerMissing = true;
+    await age(page);
+    await page.locator('#settings-toggle').click();
+    await page.locator('#player-refresh').click();
+    await expect(page.locator('#player-status')).toContainText('No supported scores were found in LXNS. Sync your maimai DX scores to LXNS first, then try again.');
+    expect((await saved(page)).revision).toBe(first.revision);
+    expect(state.grants.map(row => row.connectionID)).toEqual([original]);
+    state.playerMissing = false;
+    await age(page);
+    await page.locator('#settings-toggle').click();
+    await page.locator('#player-refresh').click();
+    await expect.poll(() => state.calls.filter(call => call.path === 'lxns/read').length).toBe(5);
+    await expect(page.locator('#player-status')).not.toContainText('No supported scores');
+  }
   state.disconnectFail = true;
   await page.locator("#settings-toggle").click();
   await page.locator("#player-forget").click();
@@ -750,6 +782,17 @@ for (const locale of ["en", "zh-Hans", "ko", "ja", "id"]) {
           await page.screenshot({
             path: testInfo.outputPath("direct-import-" + locale + "-" + width + ".png"),
           });
+        await selectImportMethod(page, 'lxns');
+        await expect(page.locator('#player-fish-masking')).toHaveCount(0);
+        await expect(page.getByRole('button', { name: translated('Connect LXNS', locale), exact: true })).toBeEnabled();
+        await expect(page.locator('#player-import-dialog')).toContainText(translated('Sign in to LXNS and allow maimai.party to read your player name and scores. No personal API key is needed. You will preview them before importing.', locale));
+        const lxnsHelp = page.locator('[data-import-help=lxns]');
+        await expect(lxnsHelp).toHaveCount(2);
+        for (const link of await lxnsHelp.all())
+          await expect(link).toHaveAttribute('href', 'player-import-help.' + locale + '.html#lxns');
+        await unclipped(page);
+        if (width === 280 || width === 320 || (locale === 'en' && width === 1280))
+          await page.screenshot({ path: testInfo.outputPath('lxns-' + locale + '-' + width + '.png') });
         await selectImportMethod(page, 'maishift');
         await unclipped(page);
         await selectImportMethod(page, 'report');
@@ -762,3 +805,60 @@ for (const locale of ["en", "zh-Hans", "ko", "ja", "id"]) {
     },
   );
 }
+
+test('LXNS needs no API key or Fish masking acknowledgement, and one-time import removes its grant', async ({ page, context }) => {
+  const state = await mockOAuth(context);
+  await boot(page);
+  await openImport(page, 'lxns');
+  const dialog = page.locator('#player-import-dialog');
+  await expect(dialog.locator('#player-fish-masking, input[type=file], input[type=password]')).toHaveCount(0);
+  await expect(dialog.getByRole('link', { name: 'Open LXNS', exact: true })).toHaveAttribute('href', 'https://maimai.lxns.net/');
+  await expect(dialog.getByRole('button', { name: 'Connect LXNS', exact: true })).toBeEnabled();
+  await dialog.getByRole('button', { name: 'Connect LXNS', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Import this profile?', exact: true })).toBeVisible();
+  await expect(dialog).not.toContainText('score masking');
+  await expect(dialog).toContainText('China');
+  await expect(dialog).toContainText('The connection service stores an access grant for refreshes.');
+  expect(state.calls.find(call => call.path === 'lxns/start').body).toEqual({
+    nonce: expect.stringMatching(/^[a-f0-9-]{36}$/), locale: 'en',
+  });
+  await accept(page, false);
+  await expect.poll(() => state.grants.length).toBe(0);
+  expect(await saved(page)).toBeNull();
+  await expect(page.locator('#player-status')).toContainText('Synthetic Connected Player');
+});
+
+for (const failure of ['empty', 'playerMissing']) test('LXNS ' + failure + ' preserves saved scores, releases its uncommitted grant, and can retry after tracker sync', async ({ page, context }, testInfo) => {
+  const lxns = await mockOAuth(context);
+  await boot(page);
+  const chart = await configureKamaitachi(page);
+  await mockKamaitachi(context, chart);
+  await openImport(page, 'kamaitachi');
+  await page.locator('#player-kamaitachi-account').fill('42');
+  await page.getByRole('button', { name: 'Preview scores', exact: true }).click();
+  await accept(page);
+  const first = await saved(page);
+  lxns[failure] = true;
+  await openImport(page, 'lxns');
+  await page.getByRole('button', { name: 'Connect LXNS', exact: true }).click();
+  await expect(page.locator('#player-import-dialog')).toContainText('No supported scores were found in LXNS. Sync your maimai DX scores to LXNS first, then try again.');
+  await expect.poll(() => lxns.grants.length).toBe(0);
+  expect((await saved(page)).revision).toBe(first.revision);
+  await page.screenshot({ path: testInfo.outputPath('lxns-empty-account.png') });
+  await page.keyboard.press('Escape');
+  lxns[failure] = false;
+  await connect(page, 'lxns');
+  await expect(page.locator('.player-import-replace-warning')).toBeVisible();
+  await page.locator('#player-import-dialog .player-actions button').last().click();
+  await expect.poll(() => lxns.grants.length).toBe(0);
+  expect((await saved(page)).revision).toBe(first.revision);
+});
+
+test('LXNS availability is independent of Fish and neither disabled state starts authorization', async ({ page, context }) => {
+  const state = await mockOAuth(context, { enabled: false });
+  await boot(page);
+  await openImport(page, 'lxns');
+  await expect(page.locator('#player-import-dialog')).toContainText('LXNS connection is not available yet. Please try again later.');
+  await expect(page.locator('#player-import-dialog .player-actions button').first()).toBeDisabled();
+  expect(state.calls.every(call => ['capabilities', 'status'].includes(call.path))).toBe(true);
+});

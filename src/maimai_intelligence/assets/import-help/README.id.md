@@ -6,7 +6,7 @@ Buka **Impor data pemain**, buka bagian layanan yang Anda gunakan, lalu pilih **
 
 ## Koneksi dan pembaruan
 
-Saat koneksi Diving-Fish tersedia, Anda dapat memberikan izin untuk membaca data akun. Pemain tidak perlu mendaftarkan aplikasi pengembang. Masuk hanya di situs Diving-Fish. Party tidak pernah meminta kata sandi akun tersebut. Layanan koneksi Party menyimpan izin akses terenkripsi dan label akun untuk pembaruan; skor disimpan di browser Anda. Memutuskan koneksi menghapus izin yang disimpan Party; Anda juga dapat mencabut akses melalui [aplikasi yang diizinkan di Fish](https://auth.diving-fish.com/apps). Maishift dan Kamaitachi membaca data publik tanpa izin akses akun.
+Saat koneksi Diving-Fish atau LXNS tersedia, Anda dapat memberikan izin untuk membaca data akun. Pemain tidak perlu mendaftarkan aplikasi pengembang. Masuk hanya di situs penyedia yang dipilih. Party tidak pernah meminta kata sandi akun tersebut. Layanan koneksi Party menyimpan izin akses terenkripsi dan label akun untuk pembaruan; skor disimpan di browser Anda. Memutuskan koneksi menghapus izin yang disimpan Party; untuk Fish, Anda juga dapat mencabut akses melalui [aplikasi yang diizinkan](https://auth.diving-fish.com/apps). Lihat bagian LXNS di bawah untuk langkahnya. Maishift dan Kamaitachi membaca data publik tanpa izin akses akun.
 
 **Pembaruan membaca data yang sudah tersimpan di layanan pencatat skor. Pembaruan tidak mengambil hasil baru dari SEGA, Wahlap, atau maimai NET.** Perbarui data pada layanan tersebut terlebih dahulu. Tanggal pembaruan bukan tanggal bermain. Kegagalan membaca data tidak menghapus skor tersimpan. Jika ketersediaan koneksi tidak dapat diperiksa, coba lagi nanti; ini tidak berarti pengelola telah menonaktifkan koneksi.
 
@@ -60,4 +60,18 @@ Jika Fish belum memiliki skor, perbarui Fish terlebih dahulu. Jika Party meminta
 
 Pembaruan membaca PB yang tersimpan di Fish; pembaruan tidak memasukkan hasil arcade baru ke Fish atau membuat riwayat bermain. Waktu pengambilan menunjukkan kapan Party membaca Fish, bukan kapan Anda terakhir bermain. Pembacaan yang gagal atau kosong tetap mempertahankan data tersimpan, termasuk PB yang tidak muncul dalam respons baru. Chart yang tidak cocok tetap disimpan tanpa menebak identitasnya.
 
-Untuk menghentikan akses berikutnya, putuskan koneksi di Party. Anda juga dapat mencabut izin Party melalui [aplikasi yang diizinkan di Fish](https://auth.diving-fish.com/apps). Jika izin kedaluwarsa atau dicabut, hubungkan kembali. Skor yang sudah tersimpan di browser ini dikelola secara terpisah melalui tindakan Lupakan atau Hapus di Party.
+Untuk menghentikan akses berikutnya, putuskan koneksi di Party. Anda juga dapat mencabut izin Party melalui [aplikasi yang diizinkan di Fish](https://auth.diving-fish.com/apps). Jika izin kedaluwarsa atau dicabut, hubungkan kembali. Skor yang sudah tersimpan di browser ini dapat dihapus secara terpisah di Party.
+
+<a id="lxns"></a>
+
+## LXNS / 落雪咖啡屋
+
+Gunakan koneksi ini untuk skor maimai DX wilayah Tiongkok yang sudah terhubung ke akun LXNS Anda. Panduan pengaturan LXNS tersedia dalam bahasa Mandarin.
+
+1. Masuk ke [LXNS](https://maimai.lxns.net/) dan periksa skor Anda. Jika belum ada, ikuti [panduan sinkronisasi data permainan](https://maimai.lxns.net/docs/sync) dahulu. Membuat akun saja tidak menambahkan skor; sinkronisasi daring pertama menghubungkan data permainan ke akun.
+2. Di Party, buka LXNS, pilih **Hubungkan langsung**, lalu **Hubungkan LXNS**. Masuk di `maimai.lxns.net` dan izinkan akses baca saja. Pemain tidak perlu mendaftarkan aplikasi pengembang atau menyediakan kunci API pribadi.
+3. Kembali ke Party dan periksa pemain, wilayah Tiongkok, jumlah PB, serta chart yang tidak cocok. Impor sekali atau ingat koneksi untuk pembaruan berikutnya.
+
+Yang diimpor adalah PB tersimpan, bukan riwayat permainan. Pembaruan hanya membaca LXNS lagi, tanpa memulai sinkronisasi skor arcade. Hasil kosong atau kegagalan membaca tidak menghapus data tersimpan. Jika tidak ada skor yang dapat diimpor, sinkronkan ke LXNS dahulu. Kegagalan impor pertama membuang koneksi yang belum dikonfirmasi; hubungkan kembali setelah pengaturan selesai.
+
+Putuskan koneksi di Party untuk menghapus izin yang disimpannya. Sesuai [panduan izin akses](https://maimai.lxns.net/docs/mcp), Anda juga dapat mencabut izin Party pada **第三方应用** (aplikasi pihak ketiga) di profil LXNS. Skor yang sudah tersimpan di browser dapat dihapus secara terpisah di Party.

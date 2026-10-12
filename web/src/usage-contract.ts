@@ -2,10 +2,10 @@
 export const VERSION = 1;
 export const PAGES = ['charts', 'patterns', 'compare', 'about', 'song', 'version'] as const;
 export type Page = (typeof PAGES)[number];
-const methods = ['file', 'report', 'maishift', 'kamaitachi', 'diving-fish'] as const;
-const connectedProviders = ['diving-fish'] as const;
-const directProviders = ['kamaitachi', 'diving-fish'] as const;
-const refreshSources = ['report', 'maishift', 'kamaitachi', 'diving-fish'] as const;
+const methods = ['file', 'report', 'maishift', 'kamaitachi', 'diving-fish', 'lxns'] as const;
+const connectedProviders = ['diving-fish', 'lxns'] as const;
+const directProviders = ['kamaitachi', 'diving-fish', 'lxns'] as const;
+const refreshSources = ['report', 'maishift', 'kamaitachi', 'diving-fish', 'lxns'] as const;
 export const SCORE_EXPORT_KINDS = ['best50', 'achievement_pb', 'achievement_play'] as const;
 export type ScoreExportKind = (typeof SCORE_EXPORT_KINDS)[number];
 export const DETAILS = {
@@ -41,6 +41,8 @@ export const DETAILS = {
   similar_requested: [''],
   import_opened: [''],
   import_started: methods,
+  import_previewed: methods,
+  import_confirmed: methods,
   import_completed: methods,
   import_failed: methods,
   import_cancelled: methods,
@@ -96,6 +98,7 @@ export const DETAILS = {
     'session_report',
     'import_help',
     'diving_fish',
+    'lxns',
   ],
   report_issue_opened: [''],
 } as const satisfies Readonly<Record<string, readonly string[]>>;
@@ -105,7 +108,25 @@ type ScoreExportEvent = Extract<EventName, `score_export_${string}`>;
 export type ScoreExportUsageArguments = {
   [E in ScoreExportEvent]: [event: E, detail: EventDetail<E>];
 }[ScoreExportEvent];
-export type Failure = 'invalid' | 'unavailable' | 'storage' | 'unknown';
+export const FAILURES = [
+  'invalid',
+  'unavailable',
+  'storage',
+  'unknown',
+  'popup_blocked',
+  'authorization_failed',
+  'timeout',
+  'network',
+  'rate_limited',
+  'connection_expired',
+  'agreement_required',
+  'profile_missing',
+  'empty_scores',
+  'invalid_response',
+  'account_mismatch',
+  'cleanup_required',
+] as const;
+export type Failure = (typeof FAILURES)[number];
 const failureEvents = [
   'import_failed',
   'provider_connect_failed',
@@ -135,7 +156,6 @@ export interface Batch {
   version: 1;
   events: UsageRow[];
 }
-const failures = ['invalid', 'unavailable', 'storage', 'unknown'];
 const record = (x: unknown): x is Record<string, unknown> =>
   x !== null && typeof x === 'object' && !Array.isArray(x);
 export function validateRow(value: unknown): UsageRow | null {
@@ -160,7 +180,7 @@ export function validateRow(value: unknown): UsageRow | null {
   if (
     typeof failure !== 'string' ||
     ((failureEvents as readonly string[]).includes(event)
-      ? !failures.includes(failure)
+      ? !(FAILURES as readonly string[]).includes(failure)
       : failure !== '')
   )
     return null;

@@ -9,13 +9,13 @@ const {
   importMethodFileFormat,
 } = await loadModule('views/player-import-services');
 
-test('the small launch exposes four services and exactly five deliberate import methods', () => {
+test('the small launch exposes five services and exactly six deliberate import methods', () => {
   const methods = IMPORT_SERVICES.flatMap((service) => service.methods);
   assert.deepEqual(
     Array.from(IMPORT_SERVICES, (service) => service.id),
-    ['kamaitachi', 'diving-fish', 'maishift', 'session-report'],
+    ['kamaitachi', 'diving-fish', 'lxns', 'maishift', 'session-report'],
   );
-  assert.equal(new Set(methods.map((method) => method.value)).size, 5);
+  assert.equal(new Set(methods.map((method) => method.value)).size, 6);
   for (const service of IMPORT_SERVICES)
     assert.match(IMPORT_SERVICE_MONOGRAMS[service.id], /^[A-Z]{1,2}$/);
   assert.deepEqual(
@@ -39,13 +39,13 @@ test('only Session Report accepts a file; Fish has no manual fallback and Kamait
     );
   assert.deepEqual(values('kamaitachi'), ['kamaitachi']);
   assert.deepEqual(values('diving-fish'), ['diving-fish']);
+  assert.deepEqual(values('lxns'), ['lxns']);
   assert.deepEqual(values('session-report'), ['file', 'report']);
   assert.deepEqual(values('maishift'), ['maishift']);
   assert.equal(importServiceForMethod('file').title, 'maimai.party Session Report');
   assert.equal(importServiceForMethod('kamaitachi').methods[0].label, 'Import by username');
   for (const unsupported of [
     'invented',
-    'lxns',
     'file:diving-fish',
     'file:lxns',
     'file:tachi',

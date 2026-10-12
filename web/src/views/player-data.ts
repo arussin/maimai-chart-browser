@@ -1,4 +1,5 @@
 import { ImportCoordinator } from '../runtime/import-coordinator';
+import { importFailure } from '../runtime/import-failure';
 import {
   IMPORT_SERVICES,
   IMPORT_SERVICE_MONOGRAMS,
@@ -69,10 +70,22 @@ export function openProviderPopup(
 ) {
   const popup = browser.open('about:blank', '_blank', 'popup,width=600,height=760');
   if (!popup) {
+    usage('import_started', provider);
     usage('provider_connect_started', provider);
-    usage('provider_connect_failed', provider, 'unavailable');
+    usage('provider_connect_failed', provider, 'popup_blocked');
+    usage('import_failed', provider, 'popup_blocked');
   }
   return popup;
+}
+/** Native validation can stop a deliberate submit before the coordinator starts. */
+export function checkKamaitachiInput(
+  input: Pick<HTMLInputElement, 'reportValidity'>,
+  usage: (...args: PersonalUsage) => void,
+) {
+  if (input.reportValidity()) return true;
+  usage('import_started', 'kamaitachi');
+  usage('import_failed', 'kamaitachi', 'invalid');
+  return false;
 }
 /** Personal views receive their root and a single import-session owner. */
 export function createPlayerData(ports: PersonalPorts) {
@@ -405,7 +418,9 @@ export function createPlayerData(ports: PersonalPorts) {
         make(
           'small',
           ports.localization.message(
-            player.source?.type === 'kamaitachi' || player.source?.type === 'diving-fish'
+            player.source?.type === 'kamaitachi' ||
+              player.source?.type === 'diving-fish' ||
+              player.source?.type === 'lxns'
               ? 'Last imported: {0}'
               : 'Last Updated: {0}',
             [date(player.lastImportedAt)],
@@ -585,11 +600,18 @@ export function createPlayerData(ports: PersonalPorts) {
       dialog.removeAttribute('aria-describedby');
       const h = make('h2', 'Import this profile?');
       h.id = 'player-dialog-title';
-      dialog.append(
-        h,
-        profileCard(offer, connection?.profileRating),
-        make('p', `Captured ${date(offer.capturedAt)}`, 'player-capture-date'),
-      );
+      dialog.append(h, profileCard(offer, connection?.profileRating));
+      if (connection && isOAuthProvider(connection.type)) {
+        // Both supported OAuth readers validate China-region player identities.
+        const provenance = make('p', undefined, 'player-import-provenance');
+        provenance.append(
+          make('span', i18n.verbatim(connection.type === 'lxns' ? 'LXNS' : 'Diving-Fish')),
+          make('span', i18n.verbatim(' · ')),
+          make('span', 'China'),
+        );
+        dialog.append(provenance);
+      }
+      dialog.append(make('p', `Captured ${date(offer.capturedAt)}`, 'player-capture-date'));
       if (stale)
         dialog.append(
           make('p', 'The hosted update was unavailable. This is the snapshot saved in the report.'),
@@ -726,7 +748,9 @@ export function createPlayerData(ports: PersonalPorts) {
           ? 'session_report'
           : label === 'Open Diving-Fish'
             ? 'diving_fish'
-            : null;
+            : label === 'Open LXNS'
+              ? 'lxns'
+              : null;
     if (resource) link.addEventListener('click', () => usage('resource_opened', resource));
     return link;
   }
@@ -879,7 +903,7 @@ export function createPlayerData(ports: PersonalPorts) {
         );
         i18n.text(next, 'Preview scores');
         next.onclick = () => {
-          if (!account.reportValidity()) return;
+          if (!checkKamaitachiInput(account, usage)) return;
           void player.importSource(
             { type: 'kamaitachi', account: account.value.trim() },
             rememberChoice,
@@ -889,13 +913,24 @@ export function createPlayerData(ports: PersonalPorts) {
         const provider = selected;
         const saved = player.source?.type === provider ? player.source : null;
         fields.append(
-          make('p', 'For players whose China-region scores are already visible in Diving-Fish.'),
           make(
             'p',
-            'Open Diving-Fish first, accept its tracker agreement, and check your scores. Creating an account does not add arcade scores.',
+            provider === 'diving-fish'
+              ? 'For players whose China-region scores are already visible in Diving-Fish.'
+              : 'For players whose China-region maimai DX scores are already visible in LXNS.',
           ),
-          external('Open Diving-Fish', 'https://maimai.diving-fish.com/'),
-          helpLink('diving-fish', 'About Diving-Fish imports'),
+          make(
+            'p',
+            provider === 'diving-fish'
+              ? 'Open Diving-Fish first, accept its tracker agreement, and check your scores. Creating an account does not add arcade scores.'
+              : 'Open LXNS first and sync your scores to your account. Creating an account does not add arcade scores.',
+          ),
+          provider === 'diving-fish'
+            ? external('Open Diving-Fish', 'https://maimai.diving-fish.com/')
+            : external('Open LXNS', 'https://maimai.lxns.net/'),
+          provider === 'diving-fish'
+            ? helpLink('diving-fish', 'About Diving-Fish imports')
+            : helpLink('lxns', 'About LXNS imports'),
         );
         if (!directAvailable) {
           next.disabled = true;
@@ -919,8 +954,12 @@ export function createPlayerData(ports: PersonalPorts) {
             make(
               'p',
               directAvailable.checked
-                ? 'Diving-Fish connection is not available yet. Please try again later.'
-                : 'Could not check Diving-Fish availability. Please try again when online.',
+                ? provider === 'diving-fish'
+                  ? 'Diving-Fish connection is not available yet. Please try again later.'
+                  : 'LXNS connection is not available yet. Please try again later.'
+                : provider === 'diving-fish'
+                  ? 'Could not check Diving-Fish availability. Please try again when online.'
+                  : 'Could not check LXNS availability. Please try again when online.',
             ),
           );
           showOtherConnections();
@@ -929,7 +968,9 @@ export function createPlayerData(ports: PersonalPorts) {
         fields.append(
           make(
             'p',
-            'Sign in to Diving-Fish and allow maimai.party to read your profile name and scores. You will preview them before importing.',
+            provider === 'diving-fish'
+              ? 'Sign in to Diving-Fish and allow maimai.party to read your profile name and scores. You will preview them before importing.'
+              : 'Sign in to LXNS and allow maimai.party to read your player name and scores. No personal API key is needed. You will preview them before importing.',
           ),
         );
         let masking: HTMLInputElement | undefined;
@@ -970,10 +1011,10 @@ export function createPlayerData(ports: PersonalPorts) {
               masking?.checked === true,
               signal,
               i18n.locale,
-              (outcome) => {
+              (outcome, failure = 'unavailable') => {
                 if (outcome === 'started') usage('provider_disconnect_started', provider);
                 else if (outcome === 'completed') usage('provider_disconnect_completed', provider);
-                else usage('provider_disconnect_failed', provider, 'unavailable');
+                else usage('provider_disconnect_failed', provider, failure);
               },
             ),
           );
@@ -986,7 +1027,7 @@ export function createPlayerData(ports: PersonalPorts) {
           another.onclick = connect;
           fields.append(another);
         } else {
-          i18n.text(next, 'Connect Diving-Fish');
+          i18n.text(next, provider === 'diving-fish' ? 'Connect Diving-Fish' : 'Connect LXNS');
           next.disabled = !!masking && !masking.checked;
           if (masking)
             masking.onchange = () => {
@@ -1023,7 +1064,7 @@ export function createPlayerData(ports: PersonalPorts) {
                     row.remove();
                     if (!otherConnections.querySelector('button')) otherConnections.remove();
                   } catch (error) {
-                    usage('provider_disconnect_failed', provider, 'unavailable');
+                    usage('provider_disconnect_failed', provider, importFailure(error));
                     message('Connection cleanup needed', errorMessage(error));
                   } finally {
                     disconnect.disabled = false;
@@ -1124,7 +1165,7 @@ export function createPlayerData(ports: PersonalPorts) {
                 await sources.retryCleanup(provider);
                 usage('provider_cleanup_completed', provider);
               } catch (error) {
-                usage('provider_cleanup_failed', provider, 'unavailable');
+                usage('provider_cleanup_failed', provider, importFailure(error));
                 throw error;
               }
             }),

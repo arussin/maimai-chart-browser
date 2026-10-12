@@ -21,18 +21,24 @@ function label(value) {
 function exact(input, keys) { if (!object(input) || Object.keys(input).some(k => !keys.includes(k))) throw new OAuthError('invalid_request', 400); }
 function grantView(provider, c, candidate = false) {
   return {provider, connectionID:c.id, accountID:c.accountID, displayName:c.displayName, flowNonce:c.nonce,
-    connected:!!c.tokens && !c.requiresReconnect, requiresReconnect:!!c.requiresReconnect, candidate, warnings:['fish_masking_unverified']};
+    connected:!!c.tokens && !c.requiresReconnect, requiresReconnect:!!c.requiresReconnect, candidate, warnings:provider === 'diving-fish' ? ['fish_masking_unverified'] : []};
 }
 function retryAt(value, now) {
   const v = /^\d{1,9}$/.test(value || '') ? now + Number(value) * 1000 : Date.parse(value || '');
   return Number.isFinite(v) ? Math.min(now + 86400000, Math.max(now + 30000, v)) : now + 60000;
 }
-function pickRecord(record) {
+function envelope(value) {
+  if (!object(value) || value.success !== true || value.code !== 200) throw new OAuthError('invalid_response');
+  return value.data;
+}
+function pickRecord(provider, record) {
   if (!object(record)) throw new OAuthError('invalid_response');
-  const required = ['song_id','achievements','level_index','type'];
+  const fish = provider === 'diving-fish';
+  const required = fish ? ['song_id','achievements','level_index','type'] : ['id','achievements','level_index','type'];
   if (required.some(k => !(k in record))) throw new OAuthError('invalid_response');
   if (typeof record.achievements !== 'number' || !Number.isFinite(record.achievements) || record.achievements < 0 || record.achievements > 101) throw new OAuthError('invalid_response');
-  const keys = ['song_id','title','type','level','level_index','level_label','achievements','dxScore','ds','fc','fs'];
+  const keys = fish ? ['song_id','title','type','level','level_index','level_label','achievements','dxScore','ds','fc','fs']
+    : ['id','song_name','type','level','level_index','achievements','dx_score','dx_rating','rate','fc','fs','play_time','upload_time','last_played_time'];
   const result = {};
   for (const k of keys) if (k in record) {
     const value = record[k];
@@ -41,14 +47,14 @@ function pickRecord(record) {
   }
   return result;
 }
-function minimize(value) {
-  const rows = value?.records;
+function minimize(provider, value) {
+  const rows = provider === 'diving-fish' ? value?.records : envelope(value);
   if (!Array.isArray(rows) || rows.length > MAX_RECORDS) throw new OAuthError('invalid_response');
   // A future explicit mask flag is a positive rejection signal. Absence/false,
   // or any pattern in dxScore, cannot independently prove exactness today.
-  if (value.mask === true) throw new OAuthError('scores_masked', 409);
-  const records = rows.map(pickRecord);
-  return {records, nickname:label(value.nickname) || ''};
+  if (provider === 'diving-fish' && value.mask === true) throw new OAuthError('scores_masked', 409);
+  const records = rows.map(row => pickRecord(provider, row));
+  return provider === 'diving-fish' ? {records, nickname:label(value.nickname) || ''} : {success:true, code:200, data:records};
 }
 
 /** One object per opaque browser session. No scores
@@ -96,7 +102,7 @@ export class ProviderOAuthSessionCore {
   }
   fetch(request) { return this.serial(async () => {
     try {
-      const url = new URL(request.url), m = url.pathname.match(/^\/(status|start|callback|read|disconnect)(?:\/(diving-fish))?$/);
+      const url = new URL(request.url), m = url.pathname.match(/^\/(status|start|callback|read|disconnect)(?:\/(diving-fish|lxns))?$/);
       if (url.origin !== 'https://provider-session.invalid' || url.search || request.method !== 'POST' || !m || (m[1] === 'status' ? !!m[2] : !m[2])) throw new OAuthError('not_found', 404);
       let input;
       try { input = await readJSON(request, 2048, AbortSignal.any([request.signal, AbortSignal.timeout(5000)])); }
@@ -119,7 +125,7 @@ export class ProviderOAuthSessionCore {
   }); }
   async upstream(url, {method = 'GET', form = null, token = null, maximum = 65536, signal, optionalBody = false} = {}) {
     // Never accept a caller-supplied endpoint, host, redirect, or request header.
-    const allowed = Object.values(PROVIDERS).some(p => [p.discovery,p.token,p.userinfo,p.revoke,p.records].includes(url));
+    const allowed = typeof url === 'string' && Object.values(PROVIDERS).some(p => [p.discovery,p.token,p.userinfo,p.revoke,p.records,p.player].includes(url));
     if (!allowed) throw new OAuthError('invalid_endpoint', 500);
     const timed = AbortSignal.any([signal || new AbortController().signal, AbortSignal.timeout(this.timeoutMs)]);
     const headers = {Accept:'application/json'};
@@ -133,6 +139,14 @@ export class ProviderOAuthSessionCore {
       response = await fetcher(url, {method, headers, body:form ? new URLSearchParams(form).toString() : undefined,
         redirect:'manual', credentials:'omit', cache:'no-store', referrerPolicy:'no-referrer', signal:timed});
       if (!response.ok) {
+        if (response.status === 404 && [PROVIDERS.lxns.player,PROVIDERS.lxns.records].includes(url)) {
+          // LXNS documents matching HTTP/JSON status codes for absent resources.
+          // Only these own-player endpoints imply missing game data; a proxy
+          // page, unrelated endpoint or inconsistent envelope is not that signal.
+          const missing = await readJSON(response, 2048, timed).catch(() => null);
+          if (object(missing) && missing.success === false && missing.code === 404)
+            throw new OAuthError('lxns_player_missing', 404);
+        }
         if (response.status === 403 && url === PROVIDERS['diving-fish'].records) {
           // Recognize only the documented tracker-agreement response. Never
           // relay provider text or confuse a scope/token rejection with setup.
@@ -173,7 +187,8 @@ export class ProviderOAuthSessionCore {
   async start(state, provider, input, signal) {
     exact(input, ['nonce','maskingDisabled','locale']);
     if (!UUID.test(input.nonce || '')) throw new OAuthError('invalid_request', 400);
-    if (input.maskingDisabled !== true) throw new OAuthError('masking_confirmation_required', 400);
+    if (provider === 'diving-fish' && input.maskingDisabled !== true) throw new OAuthError('masking_confirmation_required', 400);
+    if (provider !== 'diving-fish' && input.maskingDisabled !== undefined) throw new OAuthError('invalid_request', 400);
     if (input.locale !== undefined && !['en','ja','ko','zh-Hans','id'].includes(input.locale)) throw new OAuthError('invalid_request', 400);
     if (state.candidates[provider]) throw new OAuthError('connection_pending', 409);
     state.starts = state.starts.filter(t => t > this.now() - FLOW_MS);
@@ -204,7 +219,7 @@ export class ProviderOAuthSessionCore {
       const tokens = this.tokenData(provider, raw);
       const identity = await this.upstream(PROVIDERS[provider].userinfo, {token:tokens.access, signal});
       if (!object(identity) || typeof identity.sub !== 'string' || !identity.sub || identity.sub.length > 512) throw new OAuthError('invalid_identity');
-      const c = {id:randomID(), accountID:await accountDigest(provider, identity.sub), displayName:label(identity.name) || label(identity.preferred_username) || 'Diving-Fish player', nonce:pending.nonce,
+      const c = {id:randomID(), accountID:await accountDigest(provider, identity.sub), displayName:label(identity.name) || label(identity.preferred_username) || (provider === 'diving-fish' ? 'Diving-Fish player' : 'LXNS player'), nonce:pending.nonce,
         tokens, requiresReconnect:false, renewing:false, lastReadAt:0, retryAt:0, maskingDisabled:pending.maskingDisabled};
       if (state.connections[provider]) state.candidates[provider] = c; else state.connections[provider] = c;
       state.expiresAt = this.now() + SESSION_MS; await this.save(state);
@@ -212,7 +227,8 @@ export class ProviderOAuthSessionCore {
     } catch (error) {
       // A token pair may have been issued before UserInfo/storage failed. Revoke
       // only that new chain, never the previously working grant. This bounded
-      // cleanup is independent of the popup's abort.
+      // cleanup is independent of the popup's abort. LXNS has no documented
+      // public revocation endpoint; users can revoke in their provider account.
       if (issuedRefresh && PROVIDERS[provider].revoke) {
         try { await this.upstream(PROVIDERS[provider].revoke, {method:'POST', form:{...this.client(provider), token:issuedRefresh, token_type_hint:'refresh_token'}, optionalBody:true}); } catch {}
       }
@@ -252,15 +268,20 @@ export class ProviderOAuthSessionCore {
     if (!c && !state.candidates[provider]) throw new OAuthError('not_connected', 401);
     if (!c || c.id !== input.connectionID) throw new OAuthError('connection_changed', 409);
     if (c.requiresReconnect || !c.tokens) throw new OAuthError('reconnect_required', 401);
-    if (!c.maskingDisabled) throw new OAuthError('masking_confirmation_required', 409);
+    if (provider === 'diving-fish' && !c.maskingDisabled) throw new OAuthError('masking_confirmation_required', 409);
     const until = Math.max(c.retryAt || 0, c.lastReadAt ? c.lastReadAt + 30000 : 0);
     if (until > this.now()) throw new OAuthError('rate_limited', 429, until);
     c.lastReadAt = this.now(); state.expiresAt = this.now() + SESSION_MS; await this.save(state);
     try {
       const token = await this.accessToken(state, provider, c, signal);
+      let player = null;
+      if (provider === 'lxns') {
+        player = envelope(await this.upstream(PROVIDERS[provider].player, {token, signal}));
+        if (!object(player)) throw new OAuthError('invalid_response');
+      }
       const raw = await this.upstream(PROVIDERS[provider].records, {token, maximum:MAX_DATA_BYTES, signal});
-      const data = minimize(raw);
-      c.displayName = label(raw.nickname) || c.displayName;
+      const data = minimize(provider, raw);
+      c.displayName = label(provider === 'diving-fish' ? raw.nickname : player.name) || c.displayName;
       c.retryAt = 0; await this.save(state);
       // No fabricated score-capture or play time. fetchedAt is acquisition only.
       return {...grantView(provider,c,candidate), coverage:'full', capturedAt:null, fetchedAt:this.now(), data};

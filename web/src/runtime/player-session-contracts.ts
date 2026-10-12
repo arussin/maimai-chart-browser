@@ -22,7 +22,7 @@ export interface PlayerOffer {
   };
 }
 export interface SourceConnection extends PlayerSource {
-  type: 'report' | 'maishift' | 'kamaitachi' | 'diving-fish';
+  type: 'report' | 'maishift' | 'kamaitachi' | 'diving-fish' | 'lxns';
   url: string;
   playerKey: string;
   adapterVersion: number;
@@ -39,7 +39,7 @@ export interface SourceConnection extends PlayerSource {
   warnings?: string[];
   excludedUtage?: number;
 }
-export type OAuthProvider = 'diving-fish';
+export type OAuthProvider = 'diving-fish' | 'lxns';
 export type SourceLocation =
   | {
       type: 'report';

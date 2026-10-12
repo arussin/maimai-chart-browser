@@ -165,8 +165,8 @@ for(const seen of [false,true])test('removed announcements leave Settings usable
 
 test('source selection remains localized and usable in all five languages',async({page})=>{
   await boot(page);for(const locale of ['en','zh-Hans','ko','ja','id']){
-    await page.evaluate(locale=>maimaiI18n.setLocale(locale),locale);await openImport(page);await expect(page.locator('#player-import-dialog input[name=player-source]')).toHaveCount(5);
-    expect(await page.locator('#player-import-dialog input[name=player-source]').evaluateAll(nodes=>nodes.map(node=>node.value))).toEqual(['kamaitachi','diving-fish','maishift','file','report']);
+    await page.evaluate(locale=>maimaiI18n.setLocale(locale),locale);await openImport(page);await expect(page.locator('#player-import-dialog input[name=player-source]')).toHaveCount(6);
+    expect(await page.locator('#player-import-dialog input[name=player-source]').evaluateAll(nodes=>nodes.map(node=>node.value))).toEqual(['kamaitachi','diving-fish','lxns','maishift','file','report']);
     const copy=await page.locator('.player-source-options').innerText();if(locale!=='en')expect(copy).not.toContain('Upload a file');
     await selectImportMethod(page,'report');await expect(page.locator('#player-report-url')).toBeVisible();expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);await page.keyboard.press('Escape');
   }

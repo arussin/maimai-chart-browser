@@ -38,8 +38,8 @@ const canonical = (id = 'canonical:one', overrides = {}) => ({
   ...overrides,
 });
 
-test('Fish identity preserves case and Unicode in its China tracker namespace', () => {
-  assert.deepEqual(FILE_PROVIDERS, ['diving-fish']);
+test('tracker identities preserve case and Unicode in distinct China namespaces', () => {
+  assert.deepEqual(FILE_PROVIDERS, ['diving-fish', 'lxns']);
   assert(validFilePlayer(player()));
   assert.equal(player().key, 'diving-fish:maimaidx:cn:Fixture');
   assert.notEqual(player().key, player('diving-fish', 'cn', 'fixture').key);
@@ -51,22 +51,18 @@ test('Fish identity preserves case and Unicode in its China tracker namespace', 
   assert.equal(validFilePlayer({ ...player(), game: 'other' }), false);
   assert.equal(validFilePlayer({ ...player(), key: 'missing' }), false);
   assert.equal(validFilePlayer({ ...player(), provider: 'unknown' }), false);
+  assert(validFilePlayer(player('lxns')));
+  assert.equal(player('lxns').key, 'lxns:maimaidx:cn:Fixture');
+  assert.notEqual(player('lxns').key, player().key);
+  assert.notEqual(player('lxns').key, player('lxns', 'cn', 'fixture').key);
 });
 
 test('deferred namespaces, unsupported regions and portable limits are rejected', () => {
-  for (const provider of [
-    'lxns',
-    'mai-tools',
-    'dxrating',
-    'tomomai',
-    'jietng',
-    'aqua',
-    'tachi',
-    'unknown',
-  ])
+  for (const provider of ['mai-tools', 'dxrating', 'tomomai', 'jietng', 'aqua', 'tachi', 'unknown'])
     assert.throws(() => filePlayerKey(provider, 'cn', 'Fixture'), /Unsupported/);
-  for (const region of ['jp', 'intl', 'private', 'unknown'])
-    assert.throws(() => filePlayerKey('diving-fish', region, 'Fixture'), /Unsupported/);
+  for (const provider of FILE_PROVIDERS)
+    for (const region of ['jp', 'intl', 'private', 'unknown'])
+      assert.throws(() => filePlayerKey(provider, region, 'Fixture'), /Unsupported/);
   for (const username of ['', 'x\n', '\ud800', '名'.repeat(30)])
     assert.throws(() => filePlayerKey('diving-fish', 'cn', username));
   assert.throws(
@@ -95,6 +91,8 @@ test('chart references cannot cross namespaces and source IDs stay encoded opaqu
   ])
     assert.equal(validFileChartID(source, id), false, id);
   assert.equal(validFileChartID({ ...source, provider: 'unknown' }, 'diving-fish:cn:101'), false);
+  assert(validFileChartID(player('lxns'), 'lxns:cn:101:DX:MASTER'));
+  assert.equal(validFileChartID(player('lxns'), 'diving-fish:cn:101:DX:MASTER'), false);
 });
 
 test('matching requires exact complete metadata and ignores numeric IDs and display projections', () => {

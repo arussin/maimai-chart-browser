@@ -8,7 +8,8 @@
   "limits": { "cpu_ms": 1000 },
   "vars": {
     "PROVIDER_OAUTH_ENABLED": "false",
-    "DIVING_FISH_OAUTH_ENABLED": "false"
+    "DIVING_FISH_OAUTH_ENABLED": "false",
+    "LXNS_OAUTH_ENABLED": "false"
   },
   // Inert proposal: no route, account, rate namespace, or secret is provisioned.
   // Follow docs/DIRECT_IMPORTS.md before activation. Missing bindings fail closed.

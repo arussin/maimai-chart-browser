@@ -91,6 +91,11 @@ test('export actions count explicit intent and current outcomes without private 
  await page.locator('input[type=file]').setInputFiles({name:'fictional.gz',mimeType:'application/gzip',buffer:gzipSync(Buffer.from(JSON.stringify(data)))});
  await page.locator('#player-import-dialog .player-remember input').uncheck();await page.locator('#player-import-dialog .player-actions button').first().click();
  await expect.poll(()=>page.evaluate(()=>maimaiPersonal.enabled())).toBe(true);
+ // The real UI sends the completed local import promptly, without calling flush
+ // from this test or waiting for the ordinary ten-second batching timer.
+ await expect.poll(()=>counts.flatMap(batch=>batch.events).filter(row=>row.event==='import_completed'&&row.detail==='file').reduce((sum,row)=>sum+row.count,0),{timeout:3000}).toBe(1);
+ for(const event of ['import_started','import_previewed','import_confirmed'])
+  expect(counts.flatMap(batch=>batch.events).filter(row=>row.event===event&&row.detail==='file').reduce((sum,row)=>sum+row.count,0)).toBe(1);
  const flush=()=>page.evaluate(()=>maimaiUsage.flush());
  const amount=(event,detail)=>counts.flatMap(batch=>batch.events).filter(row=>row.event===event&&row.detail===detail).reduce((sum,row)=>sum+row.count,0);
  const generate=async()=>{await page.locator('#player-export-generate').click();await expect(page.locator('#player-export-download')).toBeVisible();};
