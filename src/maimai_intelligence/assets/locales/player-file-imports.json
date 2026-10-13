@@ -60,6 +60,12 @@
       "ja": "このファイルの読み込み元または地域には対応していません。",
       "id": "Sumber berkas atau wilayah tidak didukung."
     },
+    "Unsupported tracker region.": {
+      "zh-Hans": "不支持此成绩记录服务的地区。",
+      "ko": "이 성적 기록 서비스의 지역은 지원하지 않습니다.",
+      "ja": "この成績管理サービスの地域には対応していません。",
+      "id": "Wilayah layanan pencatat skor ini tidak didukung."
+    },
     "Invalid account identifier.": {
       "zh-Hans": "账号标识无效。",
       "ko": "계정 식별자가 올바르지 않습니다.",

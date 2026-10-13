@@ -56,7 +56,7 @@
     "src/maimai_intelligence/assets/locales/bpm-filter.json": "de56afac29a72d7fcd7b55e74215fab9a34bb5ae16300984f692846866b71034",
     "src/maimai_intelligence/assets/locales/score-export.json": "000b7c21da92324d2c2a28f8521bff66ec77f4a37c3785487c29556763984690",
     "src/maimai_intelligence/assets/locales/player-connections.json": "bf9bd326281d53334f47a449cfd981927ff014b3800cb3fa654780eb4ef7be0f",
-    "src/maimai_intelligence/assets/locales/player-file-imports.json": "26eb599d7b29f6248dc6e41a6a61892927b1f4e01342bae79fa31c7d3ba9908a",
+    "src/maimai_intelligence/assets/locales/player-file-imports.json": "0ef932cf608581bba002833d61e2d38c551d54b5696d696d423a6b9ae7cf82de",
     "src/maimai_intelligence/assets/support-footer.html": "90258419b15f9281e37a82478da07a53f20e3d58c24cbbe697af3c94f48b94c8"
   },
   "documentation": {
@@ -147,6 +147,11 @@
       "date": "2026-10-13",
       "record": "docs/localization-review/file-connectors-and-controls-20261013.json",
       "scope": "Six added file import formats, concise upload and runtime-availability messages, and five localized file walkthroughs; independent contextual AI review with current-UI corrections recorded."
+    },
+    {
+      "date": "2026-10-13",
+      "record": "docs/localization-review/tracker-region-error-20261013.json",
+      "scope": "The missing Unsupported tracker region error translated and independently reviewed in Simplified Chinese, Korean, Japanese and Indonesian; typed identity validation remains unchanged."
     }
   ],
   "player_sources_review": {
