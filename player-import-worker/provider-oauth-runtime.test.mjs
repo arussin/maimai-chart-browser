@@ -4,10 +4,34 @@ import {Miniflare,convertV4MiniflareOptions} from 'miniflare';
 import {fileURLToPath} from 'node:url';
 import {readFileSync} from 'node:fs';
 import {OAUTH_PREFIX,PROVIDERS} from './provider-oauth.mjs';
+import {CONNECTOR_FLAGS_KEY,parseConnectorFlags} from './connector-flags.mjs';
+
+test('public connector flags read real KV and change without restarting the Worker',async()=>{
+  const root=fileURLToPath(new URL('.',import.meta.url));
+  const names=['provider-oauth-worker.mjs','provider-oauth.mjs','provider-oauth-session.mjs','provider-oauth-session-core.mjs','connector-flags.mjs'];
+  const modules=names.map(name=>({type:'ESModule',path:fileURLToPath(new URL(name,import.meta.url)),contents:readFileSync(new URL(name,import.meta.url),'utf8')}));
+  const mf=new Miniflare(convertV4MiniflareOptions({modules,modulesRoot:root,compatibilityDate:'2026-09-21',
+    kvNamespaces:['IMPORT_CONNECTOR_FLAGS'],
+    outboundService:()=>{throw Error('Flags must never contact an upstream provider');}}));
+  try {
+    const call=()=>mf.dispatchFetch('https://maimai.party'+OAUTH_PREFIX+'/connectors');
+    assert.equal((await call()).status,503);
+    const kv=await mf.getKVNamespace('IMPORT_CONNECTOR_FLAGS');
+    const value=JSON.stringify({schemaVersion:1,methods:{file:true,'file:tomomai':true}});
+    await kv.put(CONNECTOR_FLAGS_KEY,value);
+    const response=await call();
+    assert.equal(response.status,200);assert.deepEqual(await response.json(),parseConnectorFlags(value));
+    assert.match(response.headers.get('Cache-Control'),/no-store/);assert.equal(response.headers.has('Set-Cookie'),false);
+    await kv.put(CONNECTOR_FLAGS_KEY,JSON.stringify({schemaVersion:1,methods:{file:true}}));
+    assert.equal((await(await call()).json()).methods['file:tomomai'],false);
+    await kv.put(CONNECTOR_FLAGS_KEY,'invalid fixture');
+    const invalid=await call();assert.equal(invalid.status,503);assert.deepEqual(await invalid.json(),{error:'connectors_unavailable'});
+  } finally { await mf.dispose(); }
+});
 
 for (const provider of ['diving-fish','lxns']) test(provider + ' OAuth standalone workerd uses SQLite session binding, fixed upstreams and conditional logout',async()=>{
   const root=fileURLToPath(new URL('.',import.meta.url));
-  const names=['provider-oauth-worker.mjs','provider-oauth.mjs','provider-oauth-session.mjs','provider-oauth-session-core.mjs'];
+  const names=['provider-oauth-worker.mjs','provider-oauth.mjs','provider-oauth-session.mjs','provider-oauth-session-core.mjs','connector-flags.mjs'];
   const modules=names.map(name=>({type:'ESModule',path:fileURLToPath(new URL(name,import.meta.url)),contents:readFileSync(new URL(name,import.meta.url),'utf8')}));
   const calls=[];
   const mf=new Miniflare(convertV4MiniflareOptions({modules,modulesRoot:root,compatibilityDate:'2026-09-21',

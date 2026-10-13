@@ -1,5 +1,5 @@
 import {test} from 'node:test';import assert from 'node:assert/strict';import {startUTC,summarize,markdown,csv,coverageCSV,queryDatabase} from '../report.mjs';
-import {providerUsageRows} from './provider-usage-fixture.mjs';
+import {fileImportMethods,providerUsageRows} from './provider-usage-fixture.mjs';
 import {DETAILS} from '../../web/src/usage-contract.ts';
 import {actionLabel,summarizeImports} from '../action-labels.mjs';
 
@@ -71,6 +71,32 @@ test('import summary counts local commits separately from connection success and
  assert.match(md,/not exact user-event times/);assert.match(csv(report),/2026-10-11T12:00:00.000Z/);
  const all=summarizeImports(['file','report','maishift','kamaitachi','diving-fish','lxns'].map(detail=>({...base,detail,event:'import_started'})));
  assert.equal(all.summaries.length,6);assert.equal(all.failures.length,0);assert.ok(all.summaries.every(r=>r.completed===null));
+});
+
+test('each provider file has a separate labeled summary, receipts and failures without changing portable history',()=>{
+ const at='2026-10-11T12:00:00.000Z',later='2026-10-11T13:00:00.000Z';
+ const base={day:'2026-10-11',version:1,page:'charts',failure:'',count:1};
+ const totals=[{...base,event:'import_completed',detail:'file',count:7},...fileImportMethods.flatMap(detail=>[
+  {...base,event:'import_started',detail,count:3,first_received_at:at,last_received_at:later},
+  {...base,event:'import_completed',detail,count:2,first_received_at:later,last_received_at:later},
+  {...base,event:'import_failed',detail,failure:'invalid',first_received_at:later,last_received_at:later},
+ ])];
+ const input={schema_version:'usage-export-1',query_status:'ok',totals,coverage:[]};
+ const report=summarize(input,{from:base.day,to:base.day,now:new Date('2026-10-12T12:00:00Z')});
+ assert.equal(report.imports.summaries.length,7);
+ assert.equal(report.imports.summaries.find(row=>row.provider==='file').completed,7);
+ assert.equal(actionLabel('file'),'Session Report file');
+ const md=markdown(report),table=csv(report);
+ for(const method of fileImportMethods){
+  const summary=report.imports.summaries.find(row=>row.provider===method);
+  assert.equal(summary.started,3);assert.equal(summary.completed,2);assert.equal(summary.failed,1);
+  assert.equal(summary.latest_attempt_at,later);assert.equal(summary.latest_completed_at,later);assert.equal(summary.latest_failure_at,later);
+  assert.equal(report.imports.failures.find(row=>row.provider===method).failure,'invalid');
+  assert(md.includes('| '+actionLabel(method)+' | 3 | unknown | unknown | 2 | unknown | 1 |'));
+  assert(table.includes('"'+method+'"'));
+ }
+ for(const detail of ['tomomai','file:unknown','file:tomomai:PRIVATE-FILENAME'])
+  assert.throws(()=>summarize({...input,totals:[{...totals[0],detail}]},{from:base.day,to:base.day,now:new Date('2026-10-12T12:00:00Z')}),/aggregate/);
 });
 
 test('today requires explicit inclusion and stays partial even with a complete ledger',()=>{

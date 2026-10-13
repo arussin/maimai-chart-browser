@@ -401,6 +401,30 @@
       "ko": "서비스를 선택하세요.",
       "ja": "サービスを選んでください。",
       "id": "Pilih layanan."
+    },
+    "Checking import options…": {
+      "zh-Hans": "正在检查导入选项…",
+      "ko": "가져오기 옵션 확인 중…",
+      "ja": "読み込み方法を確認しています…",
+      "id": "Memeriksa opsi impor…"
+    },
+    "Import options are unavailable. You can still upload a Session Report file.": {
+      "zh-Hans": "导入选项暂不可用。仍可上传 Session Report 文件。",
+      "ko": "가져오기 옵션을 사용할 수 없습니다. Session Report 파일은 업로드할 수 있습니다.",
+      "ja": "読み込み方法を取得できません。Session Report ファイルはアップロードできます。",
+      "id": "Opsi impor tidak tersedia. Anda tetap dapat mengunggah berkas Session Report."
+    },
+    "No import options are available right now.": {
+      "zh-Hans": "目前没有可用的导入选项。",
+      "ko": "현재 사용할 수 있는 가져오기 옵션이 없습니다.",
+      "ja": "現在利用できる読み込み方法はありません。",
+      "id": "Saat ini tidak ada opsi impor yang tersedia."
+    },
+    "Retry": {
+      "zh-Hans": "重试",
+      "ko": "다시 시도",
+      "ja": "再試行",
+      "id": "Coba lagi"
     }
   }
 }

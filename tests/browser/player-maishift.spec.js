@@ -84,7 +84,8 @@ test('proxy preview has explicit consent, region, precision and unmatched covera
   await expect(page.locator('.player-import-details')).toHaveCount(0);await page.screenshot({path:testInfo.outputPath('maishift-fictional-preview.png')});
   await page.getByRole('button',{name:'Import & remember',exact:true}).click();await expect.poll(async()=>!!(await saved(page)).active).toBe(true);
   const source=(await saved(page)).active.source;expect(source.type).toBe('maishift');expect(source.region).toBe('intl');expect(source.autoRefresh).toBe(true);
-  const options=await page.evaluate(()=>requests[0]);expect(options.url).toBe(PATH);expect(options.credentials).toBe('omit');expect(options.referrerPolicy).toBe('no-referrer');expect(page.url()).not.toContain('fictional-player');
+  const captured=await page.evaluate(()=>requests);expect(captured.map(row=>[row.url,row.method])).toEqual([['/api/player-import/oauth/connectors','GET'],[PATH,'POST']]);
+  for(const options of captured){expect(options.credentials).toBe('omit');expect(options.referrerPolicy).toBe('no-referrer');}expect(page.url()).not.toContain('fictional-player');
   const result=await page.evaluate(async()=>{const state=await maimaiPlayerStorage.read(),data=await maimaiPlayerData.decode(state.active.bytes);return {achievements:Object.values(data.records).map(r=>r.achievement),plays:Object.keys(data.plays),counts:Object.keys(data.charts).length,portable:JSON.stringify(data)};});
   expect(result.achievements).toContain(987654);expect(result.plays).toHaveLength(0);expect(result.counts).toBe(3);expect(result.portable).not.toContain('profileCreatedAt');
   await open(page);await expect(page.locator('[data-service-toggle=maishift]')).toHaveAttribute('aria-expanded','true');

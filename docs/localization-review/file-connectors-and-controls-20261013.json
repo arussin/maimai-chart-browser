@@ -1,0 +1,48 @@
+{
+  "date": "2026-10-13",
+  "reviewer": "Codex independent localization reviewer",
+  "method": "Independent contextual AI linguistic and product review against canonical English, current import UI/coordinator, restored documented parsers, and maintained regional terminology. Not native-speaker certification.",
+  "locales": [
+    "en",
+    "zh-Hans",
+    "ko",
+    "ja",
+    "id"
+  ],
+  "scope": "25 restored or added file-import messages; 4 connector-availability messages; seven file-help sections and Kamaitachi BATCH-MANUAL pointer in all five help files. Existing direct-connection/checklist copy read for consistency, not re-certified against live upstream services.",
+  "corrections": [
+    "Removed obsolete extra JSON-method selection from single-method mai-tools, DXRating, JiETNG and AquaDX walkthroughs in all five languages.",
+    "Clarified Japanese and Korean Tomomai instructions so the selected region matches exported data rather than the account label.",
+    "Preserved BATCH-MANUAL as score observations that add neither PBs nor counted plays; native AquaDX files remain the preferred format when available.",
+    "Kept source snapshot dates distinct from gameplay timestamps, explicit file-date overwrite warnings, provider/region/server identity separation, unsupported Utage disclosures, and unknown/unmatched data limitations.",
+    "Accepted short loading, retry, empty-state and Session Report fallback messages without implying that a failed availability check proves operator disablement."
+  ],
+  "checks": {
+    "changed_catalog_entries": {
+      "player-file-imports": 25,
+      "player-connections": 4
+    },
+    "catalog_locales_complete": true,
+    "placeholders_preserved": true,
+    "help_anchors_match_english": true,
+    "help_link_destinations_match_english": true,
+    "help_inline_identifiers_match_english": true,
+    "source_ui_steps_reviewed": true,
+    "file_parser_semantics_reviewed": true,
+    "native_speaker_certification": false
+  },
+  "limitations": [
+    "This review does not establish live producer UI availability or real-account OAuth acceptance; instructions retain the verified-file versus advanced API-response distinction.",
+    "No complete China catalog, reconstructed regional Best 50, missing game-release evidence, inferred sessions or complete lifetime history is promised.",
+    "Visual layout, localization rendering and executable build validation are separate acceptance checks."
+  ],
+  "inputs": {
+    "src/maimai_intelligence/assets/locales/player-file-imports.json": "26eb599d7b29f6248dc6e41a6a61892927b1f4e01342bae79fa31c7d3ba9908a",
+    "src/maimai_intelligence/assets/locales/player-connections.json": "bf9bd326281d53334f47a449cfd981927ff014b3800cb3fa654780eb4ef7be0f",
+    "src/maimai_intelligence/assets/import-help/README.md": "5a735476cff3edac861415c5ea2c3080cc3dfc719d2d76a002765f4c88220169",
+    "src/maimai_intelligence/assets/import-help/README.zh-Hans.md": "517c20e86275a97aa28c00fa514102f8cc2c4c2ae64495873724efe611566260",
+    "src/maimai_intelligence/assets/import-help/README.ko.md": "bfd011cf6181797265f938b6176d4af6493d14e3386307703051f66a46b51159",
+    "src/maimai_intelligence/assets/import-help/README.ja.md": "06c1afdac183b7adc0a72456e4a16a002137a131f177fc6b92a24367dd032dcf",
+    "src/maimai_intelligence/assets/import-help/README.id.md": "2280e7aeb7863082ff3ba6eb4a7fab97d38a16aecd2cb3ffe41f4900adb7027d"
+  }
+}

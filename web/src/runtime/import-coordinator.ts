@@ -14,6 +14,7 @@ import type {
 import { importTime, errorMessage, isAbort } from './player-session-contracts';
 import { importFailure } from './import-failure';
 import type { Failure } from '../usage-contract';
+import type { ImportFile, FileImportOptions } from '../domain/import-options';
 type ProviderFlow =
   | { action: 'connect'; provider: OAuthProvider }
   | { action: 'read'; provider: OAuthProvider | 'kamaitachi' }
@@ -481,10 +482,12 @@ export class ImportCoordinator {
       if (expected === this.revision) this.importing = false;
     }
   }
-  async importFile(file: { size: number; arrayBuffer(): Promise<ArrayBuffer> }) {
+  async importFile(file: ImportFile, options?: FileImportOptions) {
     if (this.busy) return;
     const { core, effects } = this.ports;
-    effects.usage('import_started', 'file');
+    const method: ImportMethod =
+      !options || options.format === 'portable' ? 'file' : `file:${options.format}`;
+    effects.usage('import_started', method);
     this.importing = true;
     let expected: number | undefined = this.revision + 1,
       stage: ImportStage = 'storage',
@@ -493,13 +496,33 @@ export class ImportCoordinator {
       expected = await this.begin();
       stage = 'invalid';
       if (file.size > core.MAX_COMPRESSED) throw new Error('Player file exceeds 32 MiB.');
-      const data = await core.decode(await file.arrayBuffer());
+      if (options?.format && options.format !== 'portable' && !this.ports.readFile)
+        throw new Error('This file importer is unavailable.');
+      const result = this.ports.readFile
+        ? await this.ports.readFile(file, options)
+        : {
+            data: await core.decode(await file.arrayBuffer()),
+            excludedUtage: 0,
+            snapshotDateUnknown: false,
+          };
+      const data = result.data;
+      this.assert(expected);
+      const linked = new Set([
+        ...Object.values(data.plays),
+        ...Object.values(data.snapshots).flatMap((snapshot) => Object.values(snapshot.pbs)),
+      ]);
+      const reconciled = await core.reconcile(data);
       this.assert(expected);
       const choice = await this.ask(
-        'file',
-        core.offer(await core.reconcile(data)),
+        method,
+        core.offer(reconciled),
         {
           file: true,
+          fileExport: !!options && options.format !== 'portable',
+          unlinkedObservations: Object.keys(data.records).filter((ref) => !linked.has(ref)).length,
+          excludedUtage: result.excludedUtage,
+          snapshotDateUnknown: result.snapshotDateUnknown,
+          unmatched: effects.unmatched(data),
         },
         this.signal(),
       );
@@ -509,15 +532,15 @@ export class ImportCoordinator {
           expected,
           onCommitted: () => {
             committed = true;
-            effects.usage('import_completed', 'file');
+            effects.usage('import_completed', method);
           },
         });
-      } else effects.usage('import_cancelled', 'file');
+      } else effects.usage('import_cancelled', method);
     } catch (error) {
-      if (!isAbort(error) && !committed) {
-        effects.usage('import_failed', 'file', importFailure(error, stage));
+      if (expected === this.revision && !isAbort(error) && !committed) {
+        effects.usage('import_failed', method, importFailure(error, stage));
         effects.message('Player data could not be imported', errorMessage(error));
-      }
+      } else if (!committed) effects.usage('import_cancelled', method);
     } finally {
       if (expected === this.revision || expected === undefined) this.importing = false;
     }
@@ -599,9 +622,11 @@ export class ImportCoordinator {
         cleanup();
       }
       this.assert(expected);
+      const reconciled = await core.reconcile(result.data);
+      this.assert(expected);
       const choice = await this.ask(
         method,
-        core.offer(await core.reconcile(result.data)),
+        core.offer(reconciled),
         {
           file: true,
           connection: result.source,

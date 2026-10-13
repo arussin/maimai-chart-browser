@@ -86,7 +86,7 @@ for(const width of [320,537,1280]){
 }
 
 test('production enables Maishift without adopting pilot storage or launching a request',async({page})=>{
-  const requests=[];page.on('request',r=>{if(r.url().includes('/api/player-import'))requests.push(r.url());});
+  const requests=[];page.on('request',r=>{const url=new URL(r.url()),flags=r.method()==='GET'&&url.pathname==='/api/player-import/oauth/connectors'&&!url.search;if(url.pathname.startsWith('/api/player-import')&&!flags)requests.push(r.url());});
   await page.goto('/production/');await expect.poll(()=>page.evaluate(()=>!!window.maimaiPersonal)).toBe(true);await page.evaluate(()=>maimaiPersonal.ready);await expect(page.locator('#lab-status')).toBeHidden();
   expect(await page.evaluate(()=>({enabled:maimaiPlayerSources.capabilities.maishift,pilot:globalThis.maimaiPlayerContext?.pilot===true}))).toEqual({enabled:true,pilot:false});
   await expect(page.locator('.feature-announcement,#feature-announcement-replay')).toHaveCount(0);

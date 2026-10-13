@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {dayKey,makeDashboardData,validateExport} from '../dashboard-model.mjs';
 import {renderDashboard,safeJSON} from '../dashboard.mjs';
-import {providerUsageRows} from './provider-usage-fixture.mjs';
+import {fileImportMethods,providerUsageRows} from './provider-usage-fixture.mjs';
 import {DETAILS} from '../../web/src/usage-contract.ts';
 import {runInNewContext} from 'node:vm';
 const now=new Date('2026-10-03T13:00:00Z');
@@ -25,6 +25,11 @@ test('offline dashboard embeds every finite provider lifecycle and tracker-link 
  const input={...fixture(),totals};
  const data=makeDashboardData(input,{now,capturedAt:now.toISOString()});
  assert.deepEqual(data.totals,totals.map(r=>({...r,first_received_at:null,last_received_at:null})));assert.ok(data.limitations.some(text=>text.includes('Automatic refresh')));
+ for(const method of fileImportMethods){
+  assert.equal(data.imports.summaries.find(row=>row.provider===method).completed,1);
+  assert.equal(data.imports.failures.filter(row=>row.provider===method).length,16);
+  assert(data.action_labels[method].endsWith(' file'));
+ }
  const html=await renderDashboard(input,{now,capturedAt:now.toISOString()});
  for(const event of new Set(totals.map(r=>r.event)))assert.ok(html.includes(event),event);
  assert(html.includes("connect-src 'none'"));

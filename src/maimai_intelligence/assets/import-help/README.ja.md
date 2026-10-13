@@ -44,6 +44,8 @@ Party は、パスワードや API キーを使わず Kamaitachi の公開 API �
 
 プレイヤーが見つかっても maimai DX の成績がない場合は、先に Kamaitachi に成績を追加してから再試行してください。Party の更新は、Kamaitachi に保存済みのデータを読み直します。取得日時は最後のプレイ日時や提供元での同期日時ではありません。
 
+交換ファイルは Kamaitachi の **BATCH-MANUAL をアップロード**から選択します。[ファイル形式の制限](#tachi)を確認してください。Kamaitachi のアカウントバックアップではありません。
+
 <a id="diving-fish"></a>
 
 ## Diving-Fish / 水鱼查分器
@@ -75,3 +77,75 @@ LXNS アカウントに紐づけ済みの、中国地域の maimai DX 成績を�
 読み込むのは保存済みの自己ベストで、プレイ履歴ではありません。更新は LXNS を読み直す操作で、ゲームセンターの成績の同期は開始しません。空の結果や取得失敗でも保存済みデータは残ります。読み込める成績がない場合は、先に LXNS に同期してください。初回の読み込みに失敗すると未確定の接続は破棄されるため、その後もう一度接続します。
 
 Party で接続を解除すると、保持しているアクセス許可を削除します。[認可の案内](https://maimai.lxns.net/docs/mcp)にあるように、LXNS のプロフィールの **第三方应用**（サードパーティーアプリ）からも Party の許可を取り消せます。ブラウザーに保存済みの成績は、Party で別途削除できます。
+
+<a id="mai-tools"></a>
+
+## mai-tools / DX Rating Analyzer
+
+1. [導入ガイド](https://myjian.github.io/mai-tools/#howto)に従い、該当する公式 NET にログインして **Analyze Self DX Rating** を実行します。
+2. **Share → Export as JSON (all records)** で `maimai-scores-<timestamp>.json` を保存します。
+3. Party で mai-tools を開き、JSON ファイルを選択します。
+
+ツールの DXRating 形式で出力した場合は下の DXRating を使います。B15/B35 は一部のみです。クリップボードの TSV や画像は使えません。
+
+<a id="dxrating"></a>
+
+## DXRating
+
+1. 成績のあるブラウザーで [My rating](https://dxrating.net/rating) を開きます。必要なら先に DXRating の読み込み機能で成績を登録します。
+2. **Export... → Export to JSON (all records)** で `dxrating.export-<timestamp>.json` を保存します。
+3. Party で DXRating を開き、JSON ファイルを選択します。
+
+**Export to JSON (B50 records only)** にも対応しますが、B50 のみです。画像は成績ファイルではなく、エクスポート操作だけで筐体から新しい成績を取得することもありません。
+
+<a id="tomomai"></a>
+
+## Tomomai
+
+1. 上級者向けの API 応答読み込みです。Tomomai の **Settings → Developer** で説明されている個人キーと、信頼できる API クライアントを使います。Party に API キーの入力欄はありません。
+2. 利用先の `GET /api/v1/snapshots/latest?region=<region>` の正常な JSON 応答本文だけを保存します。スナップショットのメタデータと楽曲成績の読み取り権限が必要です。[個人キーのガイド](https://github.com/shedaniel/tomomai/blob/ee29589979ed37eb0203ab00781d5e70c984ccb2/apps/main/content/developer/guides/api-keys.mdx)を参照してください。
+3. Party で Tomomai を開いてアカウント名を入力し、エクスポートしたデータの地域を選んでから、JSON ファイルを選択します。
+
+B50 は一部の成績です。最近の成績だけの応答は観測レコードとして保持し、PB やプレイ数には加算しません。1 ページを全履歴とは扱いません。通常の成績 JSON ダウンロードボタンは未確認です。画像や通信アーカイブには未対応です。
+
+<a id="jietng"></a>
+
+## JiETNG v2
+
+1. 必要に応じて [JiETNG の設定と成績同期](https://jietng.matsuk1.com/en/guide/getting-started)を完了します。
+2. LINE の個人チャットで `export json`、Discord 連携が使える場合は `/export` を実行します。リンクが期限切れになる前に JSON を保存してください。
+3. Party で JiETNG v2 を開き、エクスポートしたデータに合わせて日本版または海外版を選んでから、`JiETNG-*` JSON ファイルを選択します。
+
+ネイティブのバージョン 2 JSON に対応します。XML や B50 画像は使えません。ベスト成績は PB、最近の成績は観測レコードとして保持し、プレイ数を作り出しません。ボットの Import Token を Party に入力しないでください。
+
+<a id="aqua"></a>
+
+## AquaDX / AquaNet
+
+1. 利用しているサーバーの AquaNet でログインし、設定の **Mai → Export Player Data** を選びます。
+2. `AquaDX_maimai2_export_<name>.json` を保存します。
+3. Party で AquaDX を開き、JSON ファイルを選択します。次回以降も同じアカウント名と、別項目のサーバー名を使ってください。
+
+ネイティブの maimai DX ファイルには PB と保持されたプレイログが含まれますが、生涯の全履歴とは限りません。派生版の仕様は異なる場合があります。**Export in Batch Manual (for Tachi)** はプレイの識別情報が失われる別形式なので、可能ならネイティブ形式を使ってください。SQL や全ゲームのバックアップには未対応です。プライベートサーバーを Party に公開する必要はありません。
+
+<a id="tachi"></a>
+
+## Tachi BATCH-MANUAL 交換ファイル
+
+1. AquaNet の **Export in Batch Manual (for Tachi)** など、明示的に BATCH-MANUAL を出力する機能を使います。
+2. Party で Kamaitachi を開き、**BATCH-MANUAL をアップロード**から変更していない JSON を選びます。以降も同じアカウント名とサーバー名を使います。
+3. 観測レコードを確認して読み込みます。
+
+Kamaitachi のアカウントバックアップではなく交換形式です。maimai DX（`maimaidx`、Single）のみ対応します。安定したプレイ ID がなく、PB のスナップショットとも判断できないため、**日時があっても PB やプレイ数には加算しません。**
+
+<a id="file-exports"></a>
+
+## ファイルの識別と制限
+
+ファイルにはローカルのアカウント名と地域、プライベートサーバーには別のサーバー名を指定します。ログイン情報ではありません。次回も同じ値を使い、パスワード、トークン、サーバー URL は入力しないでください。ファイルはブラウザー内で処理し、成績は共有リンクや利用状況分析には含めません。
+
+提供元、地域、サーバーが異なるデータは別プレイヤーです。OAuth と手入力のファイル識別情報も別です。別プレイヤーを読み込むとプロフィールを切り替えます。一部のみのファイルで省略された PB は残します。履歴には安定したイベント識別情報のある明示的なプレイだけを追加し、タイムゾーンが不明なら不明のまま保持します。
+
+楽曲、アーティスト、STD/DX、難易度が一意に一致した譜面を、利用可能な提供元メタデータと照合します。曖昧・未一致のレコードは推測で紐付けずに保持します。未対応の宴譜面の除外数はプレビューで示します。不明な値を補いません。
+
+使えるスナップショット日時がない場合はファイル日時で PB を並べます。**古いエクスポートを新しいファイルとして保存すると、新しい PB を置き換えることがあります。** 確認してから読み込んでください。スナップショットやファイルの日時からプレイ日時やセッションを作ることはありません。

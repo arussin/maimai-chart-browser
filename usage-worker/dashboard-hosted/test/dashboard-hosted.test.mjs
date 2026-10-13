@@ -5,6 +5,7 @@ import {generateKeyPair,exportJWK,SignJWT,createLocalJWKSet} from 'jose';
 import {createAccessVerifier} from '../access.mjs';
 import {createHandler,QUERIES} from '../handler.mjs';
 import {renderHosted} from '../render.mjs';
+import {fileImportMethods} from '../../test/provider-usage-fixture.mjs';
 const issuer='https://fixture.cloudflareaccess.com',aud='a'.repeat(64),owner='owner@example.test';
 const env={ACCESS_ISSUER:issuer,ACCESS_AUD:aud,OWNER_EMAIL:owner};
 const pair=await generateKeyPair('RS256');
@@ -124,8 +125,14 @@ test('authenticated dashboard exposes finite import outcomes and collector recei
  const at='2026-10-11T18:00:00.000Z',base={day:'2026-10-11',version:1,event:'import_completed',page:'charts',detail:'lxns',failure:'',count:2,first_received_at:'2026-10-11T12:00:00.000Z',last_received_at:'2026-10-11T17:00:00.000Z'};
  const handler=createHandler({authenticate:async()=>true,render,now:()=>new Date(at)});
  const db=rows=>({prepare:sql=>({sql}),batch:async()=>[{success:true,results:rows},{success:true,results:[]}]});
- const success=await handler.fetch(request('fixture'),{USAGE_DB:db([base])});assert.equal(success.status,200);
+ const success=await handler.fetch(request('fixture'),{USAGE_DB:db([base,...fileImportMethods.map(detail=>({...base,detail}))])});assert.equal(success.status,200);
  const html=await success.text();assert.match(html,/"latest_completed_at":"2026-10-11T17:00:00.000Z"/);assert.match(html,/Saved locally/);assert.match(html,/not exact user-event times/);
+ const data=JSON.parse(html.match(/<script type="application\/json" id="dashboard-data">([\s\S]*?)<\/script>/)[1]);
+ for(const method of fileImportMethods){
+  const summary=data.imports.summaries.find(row=>row.provider===method);
+  assert.equal(summary.completed,2);assert.equal(summary.latest_completed_at,base.last_received_at);
+  assert(data.action_labels[method].endsWith(' file'));
+ }
  for(const change of [{last_received_at:'PRIVATE-ERROR'},{last_received_at:'2026-10-11T19:00:00.000Z'},{accountID:'PRIVATE-ACCOUNT'}]){
   const failed=await handler.fetch(request('fixture'),{USAGE_DB:db([{...base,...change}])});assert.equal(failed.status,503);assert.doesNotMatch(await failed.text(),/PRIVATE/);
  }

@@ -5,7 +5,21 @@ import re
 from importlib.resources import files
 from urllib.parse import urlsplit
 
-_ANCHORS = {"direct-connections", "session-report", "maishift", "kamaitachi", "diving-fish", "lxns"}
+_ANCHORS = {
+    "direct-connections",
+    "session-report",
+    "maishift",
+    "kamaitachi",
+    "diving-fish",
+    "lxns",
+    "mai-tools",
+    "dxrating",
+    "tomomai",
+    "jietng",
+    "aqua",
+    "tachi",
+    "file-exports",
+}
 
 
 def _inline_text(source):
@@ -18,9 +32,13 @@ def _inline(source):
     """Render the bundled prose's small Markdown subset; never allow raw HTML."""
     output = []
     end = 0
-    for match in re.finditer(r"\[([^\]\n]+)\]\((https://[^\s<>]+)\)", source):
+    for match in re.finditer(r"\[([^\]\n]+)\]\((https://[^\s<>]+|#[a-z-]+)\)", source):
         output.append(_inline_text(source[end : match.start()]))
         label, destination = match.groups()
+        if destination.startswith("#") and destination[1:] in _ANCHORS:
+            output.append(f'<a href="{destination}">{_inline_text(label)}</a>')
+            end = match.end()
+            continue
         try:
             url = urlsplit(destination)
             safe = (

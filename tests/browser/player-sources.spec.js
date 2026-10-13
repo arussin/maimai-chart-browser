@@ -24,7 +24,7 @@ async function age(page){await page.evaluate(async()=>{const db=await new Promis
 
 test('source selection makes no requests and blocked Maishift tells the truth',async({page},testInfo)=>{
   await boot(page);let requests=0;page.on('request',r=>{if(r.url().includes('shiftpsh')||r.url().includes('public-report'))requests++;});await openImport(page);
-  await expect(page.getByRole('radio')).toHaveCount(2);await expect(page.getByLabel('Upload a file',{exact:true})).toBeChecked();
+  await expect(page.locator('[data-import-service="session-report"]').getByRole('radio')).toHaveCount(2);await expect(page.getByLabel('Upload a file',{exact:true})).toBeChecked();
   await page.getByLabel('Upload a file',{exact:true}).focus();await page.keyboard.press('ArrowDown');await expect(page.getByLabel('Hosted Session Report',{exact:true})).toBeChecked();
   await selectImportMethod(page,'maishift');await expect(page.getByRole('button',{name:'Continue',exact:true})).toBeDisabled();await expect(page.locator('#player-import-dialog')).toContainText('not available yet');expect(requests).toBe(0);
   await expect(page.locator('.feature-announcement,#feature-announcement-replay')).toHaveCount(0);
@@ -165,8 +165,8 @@ for(const seen of [false,true])test('removed announcements leave Settings usable
 
 test('source selection remains localized and usable in all five languages',async({page})=>{
   await boot(page);for(const locale of ['en','zh-Hans','ko','ja','id']){
-    await page.evaluate(locale=>maimaiI18n.setLocale(locale),locale);await openImport(page);await expect(page.locator('#player-import-dialog input[name=player-source]')).toHaveCount(2);
-    expect(await page.locator('#player-import-dialog input[name=player-source]').evaluateAll(nodes=>nodes.map(node=>node.value))).toEqual(['file','report']);
+    await page.evaluate(locale=>maimaiI18n.setLocale(locale),locale);await openImport(page);await expect(page.locator('[data-import-service="session-report"] input[name=player-source]')).toHaveCount(2);
+    expect(await page.locator('[data-import-service="session-report"] input[name=player-source]').evaluateAll(nodes=>nodes.map(node=>node.value))).toEqual(['file','report']);
     const copy=await page.locator('.player-source-options').innerText();if(locale!=='en')expect(copy).not.toContain('Upload a file');
     await selectImportMethod(page,'report');await expect(page.locator('#player-report-url')).toBeVisible();expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);await page.keyboard.press('Escape');
   }

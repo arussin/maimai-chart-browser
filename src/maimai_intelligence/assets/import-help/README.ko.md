@@ -44,6 +44,8 @@ Party는 비밀번호나 API 키 없이 Kamaitachi의 공개 API를 읽습니다
 
 플레이어를 찾았지만 maimai DX 성적이 없다면 먼저 Kamaitachi에 성적을 추가한 뒤 다시 시도하세요. Party의 새로고침은 Kamaitachi에 이미 있는 데이터를 읽습니다. 가져온 시각은 마지막 플레이 시각이나 원본 서비스의 동기화 시각이 아닙니다.
 
+교환 파일은 Kamaitachi에서 **BATCH-MANUAL 업로드**를 선택하세요. [파일 형식의 제한](#tachi)을 확인하세요. Kamaitachi 계정 백업 형식은 아닙니다.
+
 <a id="diving-fish"></a>
 
 ## Diving-Fish / 水鱼查分器
@@ -75,3 +77,75 @@ LXNS 계정에 이미 연결된 중국 지역 maimai DX 성적을 가져오는 �
 저장된 개인 최고 기록만 가져오며 플레이 이력은 가져오지 않습니다. 새로고침은 LXNS를 다시 읽을 뿐, 아케이드 성적 동기화를 시작하지 않습니다. 결과가 비어 있거나 읽기에 실패해도 저장된 데이터는 유지됩니다. 가져올 성적이 없다면 먼저 LXNS에 동기화하세요. 첫 가져오기에 실패하면 미확정 연결이 삭제되므로 이후 다시 연결해야 합니다.
 
 Party에서 연결을 해제하면 보관 중인 접근 권한이 삭제됩니다. [승인 안내](https://maimai.lxns.net/docs/mcp)에 따라 LXNS 프로필의 **第三方应用**(타사 앱)에서도 Party의 권한을 취소할 수 있습니다. 브라우저에 저장된 성적은 Party에서 별도로 삭제할 수 있습니다.
+
+<a id="mai-tools"></a>
+
+## mai-tools / DX Rating Analyzer
+
+1. [설치 안내](https://myjian.github.io/mai-tools/#howto)에 따라 해당 공식 NET 사이트에서 로그인하고 **Analyze Self DX Rating**을 실행합니다.
+2. **Share → Export as JSON (all records)**를 선택해 `maimai-scores-<timestamp>.json`을 저장합니다.
+3. Party에서 mai-tools를 열고 JSON 파일을 선택합니다.
+
+도구에서 DXRating 형식으로 내보냈다면 아래 DXRating을 사용하세요. B15/B35는 일부 기록이며, 클립보드 TSV나 스크린샷은 사용할 수 없습니다.
+
+<a id="dxrating"></a>
+
+## DXRating
+
+1. 기록이 있는 브라우저에서 [My rating](https://dxrating.net/rating)을 엽니다. 필요하면 먼저 DXRating의 가져오기 기능으로 기록을 넣으세요.
+2. **Export... → Export to JSON (all records)**로 `dxrating.export-<timestamp>.json`을 저장합니다.
+3. Party에서 DXRating을 열고 JSON 파일을 선택합니다.
+
+**Export to JSON (B50 records only)**도 지원하지만 B50만 포함합니다. 이미지는 성적 파일이 아니며, 내보내기만으로 기기의 새 성적을 가져오지는 않습니다.
+
+<a id="tomomai"></a>
+
+## Tomomai
+
+1. 고급 API 응답 방법입니다. Tomomai의 **Settings → Developer** 개인 키 안내와 신뢰할 수 있는 API 클라이언트를 사용하세요. Party에는 API 키 입력란이 없습니다.
+2. 이용하는 Tomomai의 `GET /api/v1/snapshots/latest?region=<region>`에서 성공한 JSON 응답 본문만 저장합니다. 스냅샷 메타데이터와 곡 성적 읽기 권한이 필요합니다. [개인 키 안내](https://github.com/shedaniel/tomomai/blob/ee29589979ed37eb0203ab00781d5e70c984ccb2/apps/main/content/developer/guides/api-keys.mdx)를 참고하세요.
+3. Party에서 Tomomai를 열고 계정 표시 이름을 입력합니다. 내보낸 데이터에 맞는 지역을 지정한 뒤 JSON 파일을 선택합니다.
+
+B50은 일부 기록입니다. 최근 기록만 있는 응답은 관측 기록으로 보관하며 PB나 플레이 횟수에 더하지 않습니다. 한 페이지가 전체 이력은 아닙니다. 일반 성적 JSON 다운로드 버튼은 확인되지 않았습니다. 이미지나 네트워크 기록 파일은 지원하지 않습니다.
+
+<a id="jietng"></a>
+
+## JiETNG v2
+
+1. 필요하면 [JiETNG 설정과 성적 동기화](https://jietng.matsuk1.com/en/guide/getting-started)를 완료합니다.
+2. 개인 LINE 대화에서 `export json`을 보내거나, Discord 연동이 제공되는 곳에서 `/export`를 실행합니다. 링크가 만료되기 전에 JSON을 내려받으세요.
+3. Party에서 JiETNG v2를 열고 내보낸 데이터에 맞는 일본 또는 인터내셔널 지역을 지정한 뒤 `JiETNG-*` JSON 파일을 선택합니다.
+
+기본 버전 2 JSON을 지원하며 XML이나 B50 이미지는 지원하지 않습니다. 최고 기록은 PB 스냅샷으로, 최근 기록은 관측 기록으로 유지해 플레이 횟수를 만들어 내지 않습니다. 봇의 Import Token을 Party에 입력하지 마세요.
+
+<a id="aqua"></a>
+
+## AquaDX / AquaNet
+
+1. 사용하는 서버의 AquaNet에서 로그인하고 설정의 **Mai → Export Player Data**를 선택합니다.
+2. `AquaDX_maimai2_export_<name>.json`을 저장합니다.
+3. Party에서 AquaDX를 열고 JSON 파일을 선택합니다. 이후에도 같은 계정 표시 이름과 별도의 서버 이름을 사용하세요.
+
+기본 maimai DX 파일은 PB와 보관된 플레이로그를 포함하지만 전체 이력을 보장하지 않습니다. 포크마다 다를 수 있습니다. **Export in Batch Manual (for Tachi)**는 원래 플레이 식별 정보를 잃는 별도 형식이므로 가능하면 기본 파일을 사용하세요. SQL 덤프나 전체 게임 백업은 지원하지 않으며, 비공개 서버를 Party에 공개할 필요도 없습니다.
+
+<a id="tachi"></a>
+
+## Tachi BATCH-MANUAL 교환 파일
+
+1. AquaNet의 **Export in Batch Manual (for Tachi)**처럼 BATCH-MANUAL을 명시적으로 내보내는 도구를 사용합니다.
+2. Party에서 Kamaitachi를 열고 **BATCH-MANUAL 업로드**에서 수정하지 않은 JSON을 선택합니다. 이후에도 같은 계정과 서버 이름을 사용하세요.
+3. 관측 기록을 확인하고 가져옵니다.
+
+Kamaitachi 계정 백업이 아닌 교환 형식입니다. maimai DX(`maimaidx`, Single)만 지원합니다. 안정적인 플레이 ID가 없고 PB 스냅샷임을 보장하지 않으므로 **타임스탬프가 있어도 PB나 플레이 횟수를 추가하지 않습니다.**
+
+<a id="file-exports"></a>
+
+## 파일 식별과 제한
+
+파일에는 로컬 계정 표시 이름과 지역을, 비공개 서버에는 별도 서버 이름도 지정합니다. 로그인 정보가 아닙니다. 이후에도 같은 값을 쓰고 비밀번호, 토큰, 서버 URL은 입력하지 마세요. 파일은 브라우저에서 처리하며 성적을 공유 링크나 이용 통계에 포함하지 않습니다.
+
+제공자, 지역, 서버가 다르면 별도 플레이어로 유지합니다. OAuth 식별 정보도 직접 이름을 입력한 파일 식별 정보와 별도입니다. 다른 플레이어를 가져오면 프로필이 전환됩니다. 부분 파일에서 빠진 PB는 보존합니다. 안정적인 이벤트 식별 정보가 있는 명시적 플레이만 이력에 추가하며, 시간대를 모르면 알 수 없는 상태로 유지합니다.
+
+곡, 아티스트, STD/DX, 난이도가 정확히 하나로 일치해야 채보에 연결하며 가능한 경우 제공자의 메타데이터를 사용합니다. 모호하거나 매칭되지 않은 기록은 추측해 연결하지 않고 보관합니다. 지원하지 않는 Utage 제외 기록은 미리보기에 표시합니다. 알 수 없는 값은 채우지 않습니다.
+
+쓸 수 있는 원본 스냅샷 시간이 없으면 파일 날짜로 PB 순서를 정합니다. **오래된 내보내기를 새 파일로 저장하면 더 최신 PB를 대체할 수 있습니다.** 수락 전에 파일과 미리보기를 확인하세요. 스냅샷이나 파일 날짜를 플레이 날짜 또는 세션으로 바꾸지 않습니다.

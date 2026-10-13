@@ -19,7 +19,7 @@ an empty failure value. No provider response is passed to usage reporting.
 
 | Event family | Detail values | Meaning |
 |---|---|---|
-| `import_{started,previewed,confirmed,completed,cancelled,failed}` | file, report, maishift, kamaitachi, diving-fish, lxns | Overall attempt, valid preview shown, confirmation, local browser commit, cancellation or failure; completed is emitted after local commit and before connection cleanup |
+| `import_{started,previewed,confirmed,completed,cancelled,failed}` | file, report, maishift, kamaitachi, diving-fish, lxns, file:mai-tools, file:dxrating, file:tomomai, file:jietng, file:aqua, file:tachi | Overall attempt, valid preview shown, confirmation, local browser commit, cancellation or failure; completed is emitted after local commit and before connection cleanup |
 | `provider_connect_{started,completed,cancelled,failed}` | diving-fish, lxns | Explicit provider authorization; completed means the browser obtained a connection, before data-import consent |
 | `provider_read_{started,completed,cancelled,failed}` | kamaitachi, diving-fish, lxns | Initial direct read; completed means the returned dataset was validated, before import consent |
 | `provider_refresh_{started,completed,cancelled,failed}` | report, maishift, kamaitachi, diving-fish, lxns | Explicit manual refresh; completed includes a successful unchanged-data check |
@@ -35,8 +35,12 @@ longer accessible; it does **not** establish provider-side revocation.
 
 Do not add these stage counters together as distinct imports, people, grants or
 a linked funnel. Overall `import_*` and provider-stage counters describe overlapping
-attempts. Portable files retain their existing `import_*/file` counters; there are
-no provider-file or file-fallback events. Cancellation and a failed subsequent grant cleanup are separate
+attempts. Portable files retain their existing `import_*/file` counters. Other
+file importers use their exact finite `file:*` method from the table, so the owner
+can distinguish each file format's attempts and outcomes. Bare names such as
+`tomomai`, filenames, account IDs, and inferred file contents are never detail
+values. File importers do not emit provider connect/read/refresh events, and there
+is no separate file-fallback event. Cancellation and a failed subsequent grant cleanup are separate
 outcomes. Received starts/terminals need not balance because the collector drops
 blocked or failed batches and a tab can close before completing an action.
 
@@ -47,8 +51,9 @@ render every accepted event/detail/failure row without a separate hardcoded
 feature list, and reject extra private aggregate fields. First apply the additive
 `0002_import_receipts.sql` migration to the reviewed database, then release the
 matching collector and owner reports/dashboards, then release the browser's new
-finite values. An old collector rejects an entire batch containing an unknown
-event or failure reason. Updated reports query the receipt columns and fail safely
+finite values, including the six new `file:*` methods. An old collector rejects
+an entire batch containing an unknown event, method, or failure reason. No new
+database migration is needed just for these method values. Updated reports query the receipt columns and fail safely
 until the schema exists. No new logging sink is introduced. Retain the actual
 activation date of the new counters and receipt fields;
 older complete coverage does not prove that these features were instrumented.
@@ -72,7 +77,9 @@ an older collector that does not recognize them.
 
 The **Imports** section separates attempts, previews, confirmations, actual local
 commits, cancellations and import failures by service and method. Session Report
-file and URL are separate methods. A second table shows first/latest known
+file and URL are separate methods; each additional provider file importer has its
+own labeled row. Runtime visibility changes do not erase historical counters,
+and a hidden connector does not imply zero usage. A second table shows first/latest known
 activity and the latest attempt, local commit and failure receipts. Failure rows
 name the fixed stage and category; a connection cleanup failure can follow a
 successful local commit. Stage counts overlap and must not be summed as distinct

@@ -11,6 +11,11 @@
     "DIVING_FISH_OAUTH_ENABLED": "false",
     "LXNS_OAUTH_ENABLED": "false"
   },
+  // One-time owner setup: bind a dedicated KV namespace as IMPORT_CONNECTOR_FLAGS
+  // and seed connectors:v1 using docs/IMPORT_CONNECTOR_FLAGS.md. No namespace is
+  // provisioned here. Without the binding/key, the public flag endpoint fails closed.
+  // Example binding entry: { "binding": "IMPORT_CONNECTOR_FLAGS", "id": "<owner-assigned-namespace-id>" }
+  "kv_namespaces": [],
   // Inert proposal: no route, account, rate namespace, or secret is provisioned.
   // Follow docs/DIRECT_IMPORTS.md before activation. Missing bindings fail closed.
   "ratelimits": [],

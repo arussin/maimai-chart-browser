@@ -24,8 +24,17 @@ VERSION = 1
 MAX_COMPRESSED = 32 * 1024 * 1024
 MAX_DECODED = 128 * 1024 * 1024
 MAX_RECORDS = 1_000_000
-FILE_PROVIDERS = {"diving-fish", "lxns"}
-FILE_REGIONS = {"cn"}
+FILE_PROVIDERS = {
+    "diving-fish",
+    "lxns",
+    "mai-tools",
+    "dxrating",
+    "tomomai",
+    "jietng",
+    "tachi",
+    "aqua",
+}
+FILE_REGIONS = {"cn", "jp", "intl", "private"}
 HEX = re.compile(r"[a-f0-9]{64}\Z")
 RECORD_FIELDS = {
     "chartID",
@@ -114,6 +123,19 @@ def validate_player(player):
         parts = player["key"].split(":")
         if len(parts) != 4 or parts[2] not in FILE_REGIONS:
             raise ValueError("Unsupported player region")
+        if player["provider"] in {"diving-fish", "lxns"} and parts[2] != "cn":
+            raise ValueError("Unsupported tracker region")
+        if player["provider"] in {"tachi", "aqua"} and parts[2] != "private":
+            raise ValueError("Private server exports require the private region")
+        if parts[2] == "private":
+            account, separator, instance = player["username"].rpartition("@")
+            if (
+                not account
+                or not separator
+                or not instance
+                or any(c.isspace() or c == "\ufeff" for c in player["username"])
+            ):
+                raise ValueError("Private accounts need an explicit account@instance")
         identity = quote(player["username"], safe="~()*!.'-_")
         expected = {player["provider"] + ":maimaidx:" + parts[2] + ":" + identity}
     else:

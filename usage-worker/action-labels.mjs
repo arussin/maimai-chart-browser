@@ -16,6 +16,12 @@ export const actionLabels = Object.freeze({
   kamaitachi: 'Kamaitachi',
   'diving-fish': 'Diving-Fish',
   lxns: 'LXNS',
+  'file:mai-tools': 'mai-tools file',
+  'file:dxrating': 'DXRating file',
+  'file:tomomai': 'Tomomai file',
+  'file:jietng': 'JiETNG file',
+  'file:aqua': 'Aqua / AquaDX file',
+  'file:tachi': 'Tachi file',
   import_started: 'Import attempted',
   import_previewed: 'Import preview shown',
   import_confirmed: 'Import confirmed',
@@ -44,7 +50,7 @@ export const isScoreExport = event => event.startsWith('score_export_');
 
 /** Shared by the CLI and its CSP-hashed dashboard script; input is validated aggregates. */
 export function summarizeImports(rows) {
-  const methods=['file','report','maishift','kamaitachi','diving-fish','lxns'];
+  const methods=['file','report','maishift','kamaitachi','diving-fish','lxns','file:mai-tools','file:dxrating','file:tomomai','file:jietng','file:aqua','file:tachi'];
   const stages=['started','previewed','confirmed','completed','cancelled','failed'];
   const summaries=new Map(),failures=new Map();
   const receipts=(target,row)=>{

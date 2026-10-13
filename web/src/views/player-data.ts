@@ -1,7 +1,12 @@
 import { ImportCoordinator } from '../runtime/import-coordinator';
+import { readImportFile } from '../runtime/import-file';
+import {
+  fetchImportConnectorFlags,
+  OFFLINE_IMPORT_CONNECTORS,
+} from '../runtime/import-connector-flags';
 import { importFailure } from '../runtime/import-failure';
 import {
-  IMPORT_SERVICES,
+  visibleImportServices,
   IMPORT_SERVICE_MONOGRAMS,
   importServiceForMethod,
   importMethodFileFormat,
@@ -9,6 +14,7 @@ import {
 } from './player-import-services';
 import { IMPORT_SERVICE_ICONS } from './import-service-icons';
 import { exactFileChartIndex, isFileProvider } from '../domain/import-identities';
+import type { FileImportOptions } from '../domain/import-options';
 import { createScoreExporter } from './score-export';
 import { createScoreExportPreferences } from '../runtime/score-export-preferences';
 import { knownScoreExportVersionIDs, type ExportPlayerRating } from '../domain/score-export';
@@ -143,7 +149,20 @@ export function createPlayerData(ports: PersonalPorts) {
   const browserSession = createSessionBrowser(storageKey);
   const player = new ImportCoordinator({
     core,
-
+    readFile: async (file, options) => {
+      let excludedUtage = 0,
+        snapshotDateUnknown = false;
+      const data = await readImportFile(
+        core,
+        file,
+        options ?? { format: 'portable', username: '', region: 'intl' },
+        (excluded, unknownDate) => {
+          excludedUtage = excluded;
+          snapshotDateUnknown = unknownDate;
+        },
+      );
+      return { data, excludedUtage, snapshotDateUnknown };
+    },
     sources,
     storage: ports.playerStorage,
     maishift: ports.maishift,
@@ -203,6 +222,7 @@ export function createPlayerData(ports: PersonalPorts) {
     if (!dialog.open) focusDialogTrigger();
   });
   const input = make('input');
+  let fileOptions: FileImportOptions | undefined;
   input.type = 'file';
   input.accept = '.json,.gz,application/json,application/gzip';
   input.hidden = true;
@@ -582,6 +602,9 @@ export function createPlayerData(ports: PersonalPorts) {
     offer: PlayerOffer,
     {
       file = false,
+      fileExport = false,
+      unlinkedObservations = 0,
+      snapshotDateUnknown = false,
       excludedUtage = 0,
       stale = false,
       connection = null,
@@ -634,6 +657,32 @@ export function createPlayerData(ports: PersonalPorts) {
           make('p', 'Unmatched charts are retained but are not attached to catalog results.'),
         );
       }
+      if (fileExport)
+        dialog.append(
+          make(
+            'p',
+            'Imported file snapshots may contain only part of your scores. Missing charts are kept.',
+          ),
+        );
+      if (unlinkedObservations)
+        dialog.append(
+          make(
+            'p',
+            ports.localization.message(
+              'Unlinked score observations: {0}. These are retained without claiming personal bests or play counts.',
+              [String(unlinkedObservations)],
+            ),
+            'player-import-warning',
+          ),
+        );
+      if (snapshotDateUnknown)
+        dialog.append(
+          make(
+            'p',
+            'This source has no snapshot timestamp. The file date is used for ordering; an older export can replace newer personal bests.',
+            'player-import-warning',
+          ),
+        );
       if (connection) {
         if (connection.warnings?.includes('fish_masking_unverified'))
           dialog.append(
@@ -720,7 +769,7 @@ export function createPlayerData(ports: PersonalPorts) {
   input.onchange = () => {
     const file = input.files?.[0];
     input.value = '';
-    if (file) void player.importFile(file);
+    if (file) void player.importFile(file, fileOptions);
   };
   function reading(cancel: () => void) {
     message('Reading player data', 'You can cancel this request.');
@@ -768,15 +817,41 @@ export function createPlayerData(ports: PersonalPorts) {
         : data.player.provider !== 'kamaitachi' || !ids.has(id),
     ).length;
   }
+  let sourceOptions: AbortController | null = null;
   async function selectSource() {
+    sourceOptions?.abort();
+    const availability = new AbortController();
+    sourceOptions = availability;
     usage('import_opened');
     await ready;
+    if (availability.signal.aborted) return;
     player.cancel();
     dialog.replaceChildren();
     dialog.classList.remove('player-message');
     dialog.removeAttribute('aria-describedby');
     const heading = make('h2', 'Import player data');
     heading.id = 'player-dialog-title';
+    dialog.addEventListener('close', () => availability.abort(), { once: true });
+    const loading = make('p', 'Checking import options…'),
+      loadingCancel = make('button', 'Cancel');
+    loading.setAttribute('role', 'status');
+    loadingCancel.onclick = () => {
+      availability.abort();
+      dialog.close();
+      focusDialogTrigger();
+    };
+    dialog.append(heading, loading, loadingCancel);
+    if (!dialog.open) dialog.showModal();
+    let flags = OFFLINE_IMPORT_CONNECTORS,
+      optionsUnavailable = false;
+    try {
+      flags = await fetchImportConnectorFlags(availability.signal);
+    } catch {
+      optionsUnavailable = true;
+    }
+    if (availability.signal.aborted || !dialog.open) return;
+    dialog.replaceChildren();
+    const services = visibleImportServices(flags);
     const group = make('div', undefined, 'player-source-options');
     const fields = make('div', undefined, 'player-source-fields'),
       actions = make('div', undefined, 'player-actions'),
@@ -784,14 +859,14 @@ export function createPlayerData(ports: PersonalPorts) {
       cancel = make('button', 'Cancel');
     let selected: ImportMethodValue = player.source?.type || 'file',
       rememberChoice = true;
+    if (!services.some((service) => service.methods.some((method) => method.value === selected)))
+      selected = services[0]?.methods[0]?.value ?? 'file';
     let openService: string | null = importServiceForMethod(selected).id;
     const sections = new Map<string, { toggle: HTMLButtonElement; body: HTMLDivElement }>();
     const lastMethods = new Map<string, ImportMethodValue>([[openService, selected]]);
     let directAvailable: Awaited<ReturnType<typeof sources.directCapabilities>> | null = null;
     let checkingAvailability = false;
-    const availability = new AbortController();
-    dialog.addEventListener('close', () => availability.abort(), { once: true });
-    for (const service of IMPORT_SERVICES) {
+    for (const service of services) {
       const section = make('section', undefined, 'player-import-service'),
         header = make('div', undefined, 'player-service-header'),
         title = make('h3'),
@@ -877,8 +952,80 @@ export function createPlayerData(ports: PersonalPorts) {
       next.disabled = selected === 'maishift' && !sources.capabilities.maishift;
       const chosen = importMethodFileFormat(selected);
       if (chosen !== null) {
-        fields.append(make('p', 'Choose a compressed player file exported by Session Report.'));
+        i18n.text(next, 'Choose file');
+        if (chosen === 'portable') {
+          fields.append(make('p', 'Choose a compressed player file exported by Session Report.'));
+          next.onclick = () => {
+            fileOptions = undefined;
+            input.accept = '.json,.gz,application/json,application/gzip';
+            dialog.close();
+            input.click();
+          };
+          return;
+        }
+        const accountLabel = make('label', 'Source account'),
+          account = make('input');
+        account.id = 'player-file-account';
+        account.autocomplete = 'off';
+        account.spellcheck = false;
+        account.maxLength = 100;
+        account.required = true;
+        accountLabel.append(account);
+        const regionLabel = make('label', 'Game region'),
+          region = make('select');
+        region.id = 'player-file-region';
+        const isPrivate = chosen === 'aqua' || chosen === 'tachi';
+        for (const [value, text] of [
+          ['intl', 'International'],
+          ['jp', 'Japan'],
+          ['cn', 'China'],
+          ['private', 'Private server'],
+        ]) {
+          if (
+            isPrivate
+              ? value !== 'private'
+              : value === 'private' || (value === 'cn' && chosen !== 'tomomai')
+          )
+            continue;
+          const option = make('option', text);
+          option.value = value;
+          region.append(option);
+        }
+        regionLabel.append(region);
+        const instanceLabel = make('label', 'Server name'),
+          instance = make('input');
+        instance.id = 'player-file-instance';
+        instance.autocomplete = 'off';
+        instance.spellcheck = false;
+        instance.maxLength = 100;
+        instance.required = isPrivate;
+        instanceLabel.append(instance);
+        fields.append(
+          make(
+            'p',
+            chosen === 'tomomai'
+              ? 'Choose a saved API response (JSON).'
+              : chosen === 'tachi'
+                ? 'Imports score observations, not personal bests.'
+                : 'Choose a JSON export.',
+          ),
+          accountLabel,
+          regionLabel,
+        );
+        if (isPrivate) fields.append(instanceLabel);
         next.onclick = () => {
+          if (!account.reportValidity() || (isPrivate && !instance.reportValidity())) {
+            usage('import_started', `file:${chosen}`);
+            usage('import_failed', `file:${chosen}`, 'invalid');
+            return;
+          }
+          fileOptions = {
+            format: chosen,
+            username: account.value,
+            region: region.value as FileImportOptions['region'],
+            ...(isPrivate ? { instance: instance.value } : {}),
+          };
+          input.accept = '.json,.gz,application/json,application/gzip';
           dialog.close();
           input.click();
         };
@@ -1172,7 +1319,25 @@ export function createPlayerData(ports: PersonalPorts) {
     actions.append(next);
     const footer = make('div', undefined, 'player-actions player-source-footer');
     footer.append(cancel);
-    dialog.append(heading, make('p', 'Choose a service.'));
+    dialog.append(
+      heading,
+      make(
+        'p',
+        optionsUnavailable
+          ? 'Import options are unavailable. You can still upload a Session Report file.'
+          : services.length
+            ? 'Choose a service.'
+            : 'No import options are available right now.',
+      ),
+    );
+    if (optionsUnavailable || !services.length) {
+      const retry = make('button', 'Retry');
+      retry.onclick = () => {
+        dialog.addEventListener('close', () => void selectSource(), { once: true });
+        dialog.close();
+      };
+      dialog.append(retry);
+    }
     if (sources.pendingCleanup()) {
       const retry = make('button', 'Retry connection cleanup'),
         cleanupNote = make('p', 'A provider connection still needs cleanup.');
@@ -1214,7 +1379,7 @@ export function createPlayerData(ports: PersonalPorts) {
         ),
       );
     dialog.append(group, footer);
-    render();
+    if (services.length) render();
     if (!dialog.open) dialog.showModal();
     (
       group.querySelector<HTMLInputElement>('input[data-import-method]:checked') ??

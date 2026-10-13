@@ -343,3 +343,275 @@ test('only typed finite causes classify direct failures across independently bun
   ]);
   finite(f);
 });
+
+const fileProviders = ['tomomai', 'mai-tools', 'dxrating', 'jietng', 'aqua', 'tachi'];
+const localFile = () => ({
+  name: 'PRIVATE-export.json',
+  size: 1,
+  arrayBuffer: async () => new ArrayBuffer(1),
+});
+const fileOptions = (format) => ({
+  format,
+  username: 'PRIVATE-account',
+  region: format === 'aqua' || format === 'tachi' ? 'private' : 'intl',
+  ...(format === 'aqua' || format === 'tachi' ? { instance: 'PRIVATE-instance.invalid' } : {}),
+});
+const fileResult = (revision = 'new') => ({
+  data: dataset(revision, 200),
+  excludedUtage: 0,
+  snapshotDateUnknown: true,
+});
+
+test('all six file formats pass exact options and disclose diagnostics before a finite local commit', async () => {
+  for (const format of fileProviders) {
+    const f = makeSession(),
+      upload = localFile(),
+      options = fileOptions(format),
+      result = fileResult();
+    result.data.records = { pb: {}, play: {}, observed: {}, secondObservation: {} };
+    result.data.plays = { realPlay: 'play' };
+    result.data.snapshots = { captured: { pbs: { chart: 'pb' } } };
+    result.excludedUtage = 2;
+    f.ports.effects.unmatched = (data) => {
+      assert.equal(data, result.data);
+      return 3;
+    };
+    f.ports.readFile = async (file, received) => {
+      assert.equal(file, upload);
+      assert.equal(received, options);
+      assert.equal(f.calls.save, 0);
+      return result;
+    };
+    f.ports.effects.ask = async (_offer, diagnostics) => {
+      assert.equal(f.calls.save, 0);
+      assert.deepEqual(JSON.parse(JSON.stringify(diagnostics)), {
+        file: true,
+        fileExport: true,
+        unlinkedObservations: 2,
+        excludedUtage: 2,
+        snapshotDateUnknown: true,
+        unmatched: 3,
+      });
+      return { accept: true, remember: true };
+    };
+    await f.owner.importFile(upload, options);
+    assert.deepEqual(events(f, 'import_'), [
+      ['import_started', `file:${format}`],
+      ['import_previewed', `file:${format}`],
+      ['import_confirmed', `file:${format}`],
+      ['import_completed', `file:${format}`],
+    ]);
+    assert.equal(f.calls.save, 1);
+    assert.equal(f.owner.active.revision, 'new');
+    assert.equal(f.owner.source, null);
+    assert.deepEqual(events(f, 'provider_'), []);
+    assert.ok(!JSON.stringify(f.calls.events).includes('PRIVATE'));
+    finite(f);
+  }
+});
+
+test('all six malformed file failures remain finite and leave saved scores intact', async () => {
+  for (const format of fileProviders) {
+    const f = makeSession({ initial: dataset('retained') });
+    await f.owner.ready;
+    f.ports.readFile = async () => {
+      throw Error('PRIVATE filename, account and parser detail');
+    };
+    await f.owner.importFile(localFile(), fileOptions(format));
+    assert.deepEqual(events(f, 'import_'), [
+      ['import_started', `file:${format}`],
+      ['import_failed', `file:${format}`, 'invalid'],
+    ]);
+    assert.equal(f.calls.save, 0);
+    assert.equal(f.owner.active.revision, 'retained');
+    assert.equal(f.state.active.revision, 'retained');
+    assert.ok(!JSON.stringify(f.calls.events).includes('PRIVATE'));
+    finite(f);
+  }
+});
+
+test('declining each file preview counts cancellation without confirmation or persistence', async () => {
+  for (const format of fileProviders) {
+    const f = makeSession();
+    f.ports.readFile = async () => fileResult();
+    f.ports.effects.ask = async () => ({ accept: false, remember: true });
+    await f.owner.importFile(localFile(), fileOptions(format));
+    assert.deepEqual(events(f, 'import_'), [
+      ['import_started', `file:${format}`],
+      ['import_previewed', `file:${format}`],
+      ['import_cancelled', `file:${format}`],
+    ]);
+    assert.equal(f.calls.save, 0);
+    assert.equal(f.state.active, null);
+    finite(f);
+  }
+});
+
+test('cancelling any file during reading prevents late results from opening a preview', async () => {
+  for (const format of fileProviders) {
+    const f = makeSession(),
+      reading = deferred(),
+      release = deferred();
+    f.ports.readFile = async () => {
+      reading.resolve();
+      return release.promise;
+    };
+    const running = f.owner.importFile(localFile(), fileOptions(format));
+    await reading.promise;
+    f.owner.cancel();
+    release.resolve(fileResult());
+    await running;
+    assert.deepEqual(events(f, 'import_'), [
+      ['import_started', `file:${format}`],
+      ['import_cancelled', `file:${format}`],
+    ]);
+    assert.equal(f.calls.save, 0);
+    assert.equal(f.owner.active, null);
+    finite(f);
+  }
+});
+
+test('all six file storage failures never count a successful local import', async () => {
+  for (const format of fileProviders) {
+    const f = makeSession({ initial: dataset('retained') });
+    await f.owner.ready;
+    f.ports.readFile = async () => fileResult();
+    f.ports.storage.save = async () => {
+      throw Error('PRIVATE storage failure');
+    };
+    await f.owner.importFile(localFile(), fileOptions(format));
+    assert.deepEqual(events(f, 'import_'), [
+      ['import_started', `file:${format}`],
+      ['import_previewed', `file:${format}`],
+      ['import_confirmed', `file:${format}`],
+      ['import_failed', `file:${format}`, 'storage'],
+    ]);
+    assert.equal(f.owner.active.revision, 'retained');
+    assert.equal(f.state.active.revision, 'retained');
+    assert.ok(!JSON.stringify(f.calls.events).includes('PRIVATE'));
+    finite(f);
+  }
+});
+
+test('all six durable file saves count once after cancellation without installing a stale view', async () => {
+  for (const format of fileProviders) {
+    const f = makeSession(),
+      persisted = deferred(),
+      release = deferred(),
+      save = f.ports.storage.save;
+    f.ports.readFile = async () => fileResult();
+    f.ports.storage.save = async (...args) => {
+      const token = await save(...args);
+      persisted.resolve();
+      await release.promise;
+      return token;
+    };
+    const running = f.owner.importFile(localFile(), fileOptions(format));
+    await persisted.promise;
+    f.owner.cancel();
+    release.resolve();
+    await running;
+    assert.deepEqual(events(f, 'import_'), [
+      ['import_started', `file:${format}`],
+      ['import_previewed', `file:${format}`],
+      ['import_confirmed', `file:${format}`],
+      ['import_completed', `file:${format}`],
+    ]);
+    assert.equal(f.owner.active, null);
+    assert.equal(f.state.active.source, null);
+    const restored = new f.owner.constructor(f.ports);
+    await restored.ready;
+    assert.equal(restored.active.revision, 'new');
+    assert.equal(restored.remembered, true);
+    assert.equal(restored.source, null);
+    finite(f);
+  }
+});
+
+test('a delayed file save cannot resurrect data cleared after its durable commit', async () => {
+  const f = makeSession(),
+    persisted = deferred(),
+    release = deferred(),
+    save = f.ports.storage.save;
+  f.ports.readFile = async () => fileResult();
+  f.ports.storage.save = async (...args) => {
+    const token = await save(...args);
+    persisted.resolve();
+    await release.promise;
+    return token;
+  };
+  const running = f.owner.importFile(localFile(), fileOptions('tomomai'));
+  await persisted.promise;
+  await f.owner.clear();
+  release.resolve();
+  await running;
+  assert.equal(f.state.active, null);
+  assert.equal(f.owner.active, null);
+  assert.equal(events(f, 'import_completed').length, 1);
+  assert.equal(events(f, 'import_cancelled').length, 0);
+  assert.equal(events(f, 'import_failed').length, 0);
+  finite(f);
+});
+
+test('a superseded file reconciliation cannot borrow a newer import signal or reopen consent', async () => {
+  const f = makeSession(),
+    reconciling = deferred(),
+    release = deferred(),
+    newShown = deferred(),
+    newChoice = deferred(),
+    offers = [];
+  f.ports.readFile = async (_file, options) => fileResult(options.format);
+  f.ports.core.reconcile = async (data) => {
+    if (data.revision === 'tomomai') {
+      reconciling.resolve();
+      await release.promise;
+    }
+    return data;
+  };
+  f.ports.effects.ask = async (offer) => {
+    offers.push(offer.revision);
+    if (offer.revision === 'dxrating') {
+      newShown.resolve();
+      return newChoice.promise;
+    }
+    return { accept: true, remember: true };
+  };
+  const old = f.owner.importFile(localFile(), fileOptions('tomomai'));
+  await reconciling.promise;
+  f.owner.cancel();
+  const current = f.owner.importFile(localFile(), fileOptions('dxrating'));
+  await newShown.promise;
+  release.resolve();
+  await old;
+  assert.deepEqual(offers, ['dxrating']);
+  assert.equal(f.owner.busy, true);
+  assert.equal(f.calls.save, 0);
+  newChoice.resolve({ accept: true, remember: true });
+  await current;
+  assert.equal(f.owner.active.revision, 'dxrating');
+  assert.deepEqual(events(f, 'import_cancelled'), [['import_cancelled', 'file:tomomai']]);
+  assert.deepEqual(events(f, 'import_completed'), [['import_completed', 'file:dxrating']]);
+  finite(f);
+});
+
+test('a file parser rejecting after cancellation cannot show a stale error over a later operation', async () => {
+  const f = makeSession(),
+    reading = deferred(),
+    release = deferred();
+  f.ports.readFile = async () => {
+    reading.resolve();
+    return release.promise;
+  };
+  const running = f.owner.importFile(localFile(), fileOptions('aqua'));
+  await reading.promise;
+  f.owner.cancel();
+  release.reject(Error('PRIVATE stale parser detail'));
+  await running;
+  assert.deepEqual(events(f, 'import_'), [
+    ['import_started', 'file:aqua'],
+    ['import_cancelled', 'file:aqua'],
+  ]);
+  assert.equal(f.calls.messages.length, 0);
+  assert.equal(f.calls.save, 0);
+  finite(f);
+});

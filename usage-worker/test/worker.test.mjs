@@ -4,7 +4,7 @@ import {readFile} from 'node:fs/promises';
 import {Miniflare,convertV4MiniflareOptions} from 'miniflare';
 import worker,{dayKey} from '../worker.mjs';
 import staging from '../staging.mjs';
-import {providerUsageRows} from './provider-usage-fixture.mjs';
+import {fileImportMethods,providerUsageRows} from './provider-usage-fixture.mjs';
 import {DETAILS} from '../../web/src/usage-contract.ts';
 let mf,db,stageDB,legacyDB;
 async function migrate(database,name){
@@ -54,7 +54,7 @@ test('migration preserves historical counts and null receipt bounds until a new 
  t.mock.timers.reset();
 });
 
-test('compiled collector stores every finite provider lifecycle and tracker-link counter and rejects private siblings atomically',async()=>{
+test('compiled collector stores every finite file import, provider lifecycle and tracker-link counter and rejects private siblings atomically',async()=>{
  await db.prepare('DELETE FROM usage_daily').run();
  for(let i=0;i<providerUsageRows.length;i+=16)
   assert.equal((await call(req({version:1,events:providerUsageRows.slice(i,i+16)}))).status,204);
@@ -73,6 +73,11 @@ test('compiled collector stores every finite provider lifecycle and tracker-link
   {...valid,event:'provider_connect_failed',failure:'PRIVATE-ERROR'},
   {...valid,event:'provider_connect_failed',failure:''}, {...valid,failure:'unavailable'}
  ])assert.equal((await call(req({version:1,events:[valid,invalid]}))).status,400);
+ for(const detail of fileImportMethods){
+  for(const event of ['provider_connect_started','provider_read_started','provider_refresh_started'])
+   assert.equal((await call(req({version:1,events:[valid,{event,page:'charts',detail,failure:'',count:1}]}))).status,400);
+  assert.equal((await call(req({version:1,events:[valid,{event:'import_started',page:'charts',detail:detail+':PRIVATE-FILENAME',failure:'',count:1}]}))).status,400);
+ }
  assert.deepEqual(await db.prepare('SELECT SUM(count) AS n FROM usage_daily').first(),prior);
  for(const headers of [{DNT:'1'},{'Sec-GPC':'1'}])assert.equal((await call(req({version:1,events:[valid]},{headers}))).status,204);
  assert.equal((await call(req({version:1,events:[valid]}),'false')).status,204);

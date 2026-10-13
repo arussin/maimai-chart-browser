@@ -203,6 +203,7 @@ async function mockOAuth(context, { enabled = true } = {}) {
     const request = route.request(),
       url = new URL(request.url()),
       path = url.pathname.split("/").slice(4);
+    if (path[0] === "connectors") return route.fallback();
     const body = request.method() === "POST" ? request.postDataJSON() : {};
     state.calls.push({ path: path.join("/"), body });
     if (path[0] === "capabilities")
@@ -428,15 +429,15 @@ for (const provider of ['diving-fish', 'lxns']) test(provider + ' exact metadata
   expect(after.data.player.key).toBe(imported.data.player.key);
 });
 
-test('five service sections expose six methods, local marks, and keyboard controls', async ({ page, context }, testInfo) => {
+test('service sections expose grouped imports, local marks, and keyboard controls', async ({ page, context }, testInfo) => {
   await page.setViewportSize({ width: 1280, height: 1100 });
   const state = await mockOAuth(context, { enabled: false });
   await boot(page);
   await openImport(page);
   const dialog = page.locator('#player-import-dialog');
-  await expect(dialog.locator('[data-import-service]')).toHaveCount(5);
-  await expect(dialog.locator('input[name=player-source]')).toHaveCount(2);
-  expect(await dialog.locator('[data-import-service]').evaluateAll(nodes => nodes.map(node => node.dataset.importService))).toEqual(['kamaitachi', 'diving-fish', 'lxns', 'maishift', 'session-report']);
+  await expect(dialog.locator('[data-import-service]')).toHaveCount(10);
+  await expect(dialog.locator('input[name=player-source]')).toHaveCount(4);
+  expect(await dialog.locator('[data-import-service]').evaluateAll(nodes => nodes.map(node => node.dataset.importService))).toEqual(['kamaitachi', 'diving-fish', 'lxns', 'maishift', 'session-report', 'tomomai', 'mai-tools', 'dxrating', 'jietng', 'aqua']);
   await expect(dialog.locator('.player-service-body:visible')).toHaveCount(1);
   await expect(dialog.locator('[data-service-toggle="session-report"]')).toHaveAttribute('aria-expanded', 'true');
   await expect(dialog.getByRole('radio')).toHaveCount(2);
@@ -454,7 +455,7 @@ test('five service sections expose six methods, local marks, and keyboard contro
   await expect(kamaitachi).toBeFocused();
   await expect(kamaitachi).toHaveAttribute('aria-expanded', 'true');
   await expect(dialog.locator('.player-service-body:visible')).toHaveCount(1);
-  await expect(dialog.getByRole('radio')).toHaveCount(0);
+  await expect(dialog.getByRole('radio')).toHaveCount(2);
   await expect(dialog.getByRole('button', { name: 'Preview scores', exact: true })).toBeVisible();
   await page.locator('#player-kamaitachi-account').fill('UnsubmittedDraft');
   await kamaitachi.focus();
@@ -466,7 +467,8 @@ test('five service sections expose six methods, local marks, and keyboard contro
   await selectImportMethod(page, 'diving-fish');
   await expect(dialog.getByRole('radio')).toHaveCount(0);
   await expect(dialog.locator('.player-file-fallback')).toHaveCount(0);
-  await expect(dialog.locator('input[data-import-method^="file:"]')).toHaveCount(0);
+  await expect(dialog.locator('input[data-import-method="file:diving-fish"]')).toHaveCount(0);
+  await expect(dialog.locator('input[data-import-method="file:lxns"]')).toHaveCount(0);
   await expect(dialog.locator('#player-file-account')).toHaveCount(0);
   await expect(dialog).toContainText('Diving-Fish connection is not available yet.');
   expect(state.calls.every(call => ['capabilities', 'status'].includes(call.path))).toBe(true);

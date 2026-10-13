@@ -39,7 +39,16 @@ const canonical = (id = 'canonical:one', overrides = {}) => ({
 });
 
 test('tracker identities preserve case and Unicode in distinct China namespaces', () => {
-  assert.deepEqual(FILE_PROVIDERS, ['diving-fish', 'lxns']);
+  assert.deepEqual(FILE_PROVIDERS, [
+    'diving-fish',
+    'lxns',
+    'mai-tools',
+    'dxrating',
+    'tomomai',
+    'jietng',
+    'tachi',
+    'aqua',
+  ]);
   assert(validFilePlayer(player()));
   assert.equal(player().key, 'diving-fish:maimaidx:cn:Fixture');
   assert.notEqual(player().key, player('diving-fish', 'cn', 'fixture').key);
@@ -57,10 +66,25 @@ test('tracker identities preserve case and Unicode in distinct China namespaces'
   assert.notEqual(player('lxns').key, player('lxns', 'cn', 'fixture').key);
 });
 
-test('deferred namespaces, unsupported regions and portable limits are rejected', () => {
-  for (const provider of ['mai-tools', 'dxrating', 'tomomai', 'jietng', 'aqua', 'tachi', 'unknown'])
-    assert.throws(() => filePlayerKey(provider, 'cn', 'Fixture'), /Unsupported/);
-  for (const provider of FILE_PROVIDERS)
+test('file namespaces preserve region and instance boundaries while live trackers stay China-only', () => {
+  for (const provider of ['mai-tools', 'dxrating', 'tomomai', 'jietng']) {
+    const jp = player(provider, 'jp'),
+      intl = player(provider, 'intl');
+    assert(validFilePlayer(jp));
+    assert(validFilePlayer(intl));
+    assert.notEqual(jp.key, intl.key);
+  }
+  for (const provider of ['aqua', 'tachi']) {
+    const first = player(provider, 'private', 'Fixture@first.invalid');
+    const second = player(provider, 'private', 'Fixture@second.invalid');
+    assert(validFilePlayer(first));
+    assert.notEqual(first.key, second.key);
+    assert.throws(() => filePlayerKey(provider, 'private', 'Fixture'), /instance/);
+    assert.throws(() => filePlayerKey(provider, 'private', 'Fixture@'), /instance/);
+    assert.throws(() => filePlayerKey(provider, 'jp', 'Fixture@first.invalid'), /private/);
+  }
+  assert.throws(() => filePlayerKey('unknown', 'cn', 'Fixture'), /Unsupported/);
+  for (const provider of ['diving-fish', 'lxns'])
     for (const region of ['jp', 'intl', 'private', 'unknown'])
       assert.throws(() => filePlayerKey(provider, region, 'Fixture'), /Unsupported/);
   for (const username of ['', 'x\n', '\ud800', '名'.repeat(30)])

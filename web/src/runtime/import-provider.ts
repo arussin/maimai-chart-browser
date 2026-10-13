@@ -1,8 +1,8 @@
 import type { PlayerChart, PlayerDataset, PlayerRecord } from '../domain/player-data';
 import type { ProviderImportOptions } from '../domain/import-provider-options';
-import { filePlayerKey } from '../domain/import-identities';
+import { filePlayerKey, type FileProvider, type FileRegion } from '../domain/import-identities';
 import { enrichImportRow } from '../domain/import-metadata';
-import { parseOfficialExport, type ImportRow } from '../domain/import-official';
+import { parseOfficialExport, type ImportRow, type ImportResult } from '../domain/import-official';
 import type { createPlayerDataCore } from '../views/player-data-core';
 
 const difficulties = ['BASIC', 'ADVANCED', 'EXPERT', 'MASTER', 'RE:MASTER'];
@@ -36,10 +36,33 @@ export async function normalizeImportDocument(
   acquisition: { capturedAt?: number; sourceKind: string; sourceID?: string },
   diagnostics: (excludedUtage: number, snapshotDateUnknown: boolean) => void = () => {},
 ): Promise<PlayerDataset> {
+  if (
+    (options.provider !== 'diving-fish' && options.provider !== 'lxns') ||
+    options.region !== 'cn'
+  )
+    throw new Error('Unsupported tracker provider or region.');
+  return normalizeParsedImportDocument(
+    core,
+    input,
+    options,
+    parseOfficialExport(options.provider, input),
+    acquisition,
+    diagnostics,
+  );
+}
+
+/** Shared portable-data builder; parsers establish the source contract before calling it. */
+export async function normalizeParsedImportDocument(
+  core: ReturnType<typeof createPlayerDataCore>,
+  input: unknown,
+  options: { provider: FileProvider; username: string; region: FileRegion; displayName?: string },
+  parsed: ImportResult,
+  acquisition: { capturedAt?: number; sourceKind: string; sourceID?: string },
+  diagnostics: (excludedUtage: number, snapshotDateUnknown: boolean) => void = () => {},
+): Promise<PlayerDataset> {
   const provider = options.provider;
   const username = options.username.trim();
   const key = filePlayerKey(provider, options.region, username);
-  const parsed = parseOfficialExport(provider, input);
   if (parsed.rows.length > 100000)
     throw new Error('This export contains too many records. Nothing was imported.');
   const capturedAt = timestamp(parsed.capturedAt)
@@ -56,7 +79,7 @@ export async function normalizeImportDocument(
       provider,
       game: 'maimaidx',
       username,
-      displayName: parsed.displayName || options.username.trim(),
+      displayName: parsed.displayName || options.displayName || options.username.trim(),
     },
     charts: {},
     records: {},
@@ -81,9 +104,10 @@ export async function normalizeImportDocument(
         const row = enrichImportRow(provider, input);
         if (!difficulties.includes(row.difficulty))
           throw new Error('Unsupported chart difficulty.');
-        const [chartHash, songHash] = await Promise.all([
+        const [chartHash, songHash, playHash] = await Promise.all([
           identityHash(row.sourceID),
           identityHash(row.sourceSongID || row.title),
+          row.playID === undefined ? undefined : identityHash(row.playID),
         ]);
         const chartID = `${provider}:${options.region}:${chartHash}`;
         const chart: PlayerChart = {
@@ -108,10 +132,11 @@ export async function normalizeImportDocument(
           chart,
           record,
           ref: await core.digest(record),
+          playID: playHash === undefined ? undefined : `${provider}:${options.region}:${playHash}`,
         };
       }),
     );
-    for (const { chartID, chart, record, ref } of batch) {
+    for (const { row, chartID, chart, record, ref, playID } of batch) {
       const prior = data.charts[chartID];
       if (
         prior &&
@@ -122,10 +147,16 @@ export async function normalizeImportDocument(
         throw new Error('Conflicting chart identities in this export. Nothing was imported.');
       data.charts[chartID] = chart;
       data.records[ref] = record;
-      if (explicitPBs.has(chartID) && pbs[chartID] !== ref)
-        throw new Error('Conflicting personal bests in this export. Nothing was imported.');
-      explicitPBs.add(chartID);
-      pbs[chartID] = ref;
+      if (playID !== undefined) {
+        if (Object.hasOwn(data.plays, playID) && data.plays[playID] !== ref)
+          throw new Error('Conflicting play identities in this export. Nothing was imported.');
+        data.plays[playID] = ref;
+      } else if (!row.kind || row.kind === 'pb') {
+        if (explicitPBs.has(chartID) && pbs[chartID] !== ref)
+          throw new Error('Conflicting personal bests in this export. Nothing was imported.');
+        explicitPBs.add(chartID);
+        pbs[chartID] = ref;
+      }
     }
   }
   // Neither an export nor a current API response proves that an omitted chart
@@ -138,8 +169,8 @@ export async function normalizeImportDocument(
     sourceKind: acquisition.sourceKind,
     sourceID: acquisition.sourceID ?? (await core.digest(input)),
     sessionID: '',
-    historyCoverage: 'none',
-    playIDs: [],
+    historyCoverage: Object.keys(data.plays).length ? 'retained-only' : 'none',
+    playIDs: Object.keys(data.plays).sort(),
     snapshotIDs: [snapshotID],
   };
   data.captures[await core.digest(capture)] = capture;
@@ -162,14 +193,14 @@ function observation(chartID: string, row: ImportRow): PlayerRecord {
     displayVersion: '',
     timeAchieved: row.timeAchieved,
     dxScore: row.dxScore,
-    maxDxScore: null,
-    maxCombo: null,
-    fast: null,
-    slow: null,
-    miss: null,
-    good: null,
-    great: null,
-    perfect: null,
-    pcrit: null,
+    maxDxScore: row.maxDxScore ?? null,
+    maxCombo: row.maxCombo ?? null,
+    fast: row.fast ?? null,
+    slow: row.slow ?? null,
+    miss: row.miss ?? null,
+    good: row.good ?? null,
+    great: row.great ?? null,
+    perfect: row.perfect ?? null,
+    pcrit: row.pcrit ?? null,
   };
 }

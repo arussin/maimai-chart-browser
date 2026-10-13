@@ -44,6 +44,8 @@ Party reads Kamaitachi's public API without a password or API key. This imports 
 
 If the player is found but has no maimai DX scores, add scores in Kamaitachi first, then try again. Refresh in Party reads what Kamaitachi already has. Its retrieval time is not the last arcade play or upstream synchronization time.
 
+For an interchange file, choose **Upload BATCH-MANUAL** in Kamaitachi. See [the file format limits](#tachi); this is not a native Kamaitachi account backup.
+
 <a id="diving-fish"></a>
 
 ## Diving-Fish / 水鱼查分器
@@ -75,3 +77,75 @@ Use this connection for China-region maimai DX scores already linked to your LXN
 Party imports stored PBs, not play history. Refresh reads LXNS again; it does not start arcade-data synchronization. Empty or failed reads preserve saved data. If no supported scores are found, sync scores into LXNS before trying again. A failed first import discards the pending connection, so connect again afterward.
 
 Disconnect in Party to remove its stored grant. You can also revoke Party under **第三方应用** (third-party applications) in LXNS's profile, as described in its [authorization guide](https://maimai.lxns.net/docs/mcp). Saved browser scores can be removed separately in Party.
+
+<a id="mai-tools"></a>
+
+## mai-tools / DX Rating Analyzer
+
+1. Follow the [tool's setup guide](https://myjian.github.io/mai-tools/#howto), sign in to the appropriate official NET site, then run **Analyze Self DX Rating**.
+2. In the analyzer, choose **Share → Export as JSON (all records)** and save `maimai-scores-<timestamp>.json`.
+3. Open mai-tools in Party and choose the JSON file.
+
+If you exported the analyzer's DXRating format, use DXRating below. B15/B35 is only a subset. Clipboard TSV and screenshots are not accepted.
+
+<a id="dxrating"></a>
+
+## DXRating
+
+1. Open [My rating](https://dxrating.net/rating) in the browser where your records are stored. Populate it with DXRating's own import tools first if needed.
+2. Choose **Export... → Export to JSON (all records)** and save `dxrating.export-<timestamp>.json`.
+3. Open DXRating in Party and choose the JSON file.
+
+**Export to JSON (B50 records only)** also works, but contains only that subset. An image is not a score file. Exporting does not fetch new cabinet results.
+
+<a id="tomomai"></a>
+
+## Tomomai
+
+1. This is an advanced API-response method. Use Tomomai's documented **Settings → Developer** personal-key setup and your own trusted API client. Party has no API-key field.
+2. Save only the successful JSON body from `GET /api/v1/snapshots/latest?region=<region>` on your Tomomai deployment. The key needs the documented snapshot metadata and song-read permissions. See the [personal-key guide](https://github.com/shedaniel/tomomai/blob/ee29589979ed37eb0203ab00781d5e70c984ccb2/apps/main/content/developer/guides/api-keys.mdx).
+3. Open Tomomai in Party. Enter your account label and matching region, then choose the JSON file.
+
+B50 responses are partial. Recent-only responses remain observations, not PBs or counted plays; one page is not full history. No ordinary score-JSON download button has been verified. Images and network archives are unsupported.
+
+<a id="jietng"></a>
+
+## JiETNG v2
+
+1. Complete [JiETNG's setup and score synchronization](https://jietng.matsuk1.com/en/guide/getting-started) if needed.
+2. Send `export json` in your private LINE conversation, or use `/export` where its Discord integration is available. Download the JSON promptly; export links can expire.
+3. Open JiETNG v2 in Party. Select the matching Japan or International region, then choose the `JiETNG-*` JSON file.
+
+Party supports native version 2 JSON, not XML or a B50 image. Best records become PB snapshots; recent rows remain observations without invented play counts. Do not enter a bot Import Token into Party.
+
+<a id="aqua"></a>
+
+## AquaDX / AquaNet
+
+1. Sign in on your own server's AquaNet site. In settings, choose **Mai → Export Player Data**.
+2. Save `AquaDX_maimai2_export_<name>.json`.
+3. Open AquaDX in Party and choose the JSON file. Use the same account label and separate server name for future updates.
+
+The native maimai DX export contains PBs and retained playlogs, not necessarily lifetime history. Forks may differ. Prefer this file to **Export in Batch Manual (for Tachi)**, which belongs to the separate method below and loses native play identities. SQL dumps and all-games backups are unsupported; you do not need to expose your private server to Party.
+
+<a id="tachi"></a>
+
+## Tachi BATCH-MANUAL interchange file
+
+1. Use a tool that explicitly exports BATCH-MANUAL, such as AquaNet's **Export in Batch Manual (for Tachi)**.
+2. In Party, open Kamaitachi and choose **Upload BATCH-MANUAL**. Select the unmodified JSON. Reuse the same account and server labels on later imports.
+3. Review the observations before importing.
+
+This is an interchange format, not a native Kamaitachi account backup. Only maimai DX (`maimaidx`, Single) is supported. The rows lack stable play identities and do not establish a PB snapshot, so **they add neither PBs nor counted plays**, even when timestamps are present.
+
+<a id="file-exports"></a>
+
+## File identity and limits
+
+File forms ask for a source account label and game region; private-server files also need a separate server name. These are local identity labels, not login credentials. Reuse them for later updates. Do not enter passwords, tokens or server URLs. Files are processed in this browser; scores are not added to shared links or analytics.
+
+Different providers, regions and private servers remain separate players. An OAuth identity also stays separate from a manually labeled file identity. Importing another player switches profiles. Partial imports retain PBs omitted by the new file. Explicit source play records can contribute history only when they have stable event identities; unknown timezones remain unknown.
+
+Exact, unique chart matches use song, artist, STD/DX format and difficulty, with source metadata where available. Ambiguous or unmatched rows are preserved without attaching them to a guessed chart. Unsupported Utage rows are disclosed in the preview. Unknown measurements stay unknown.
+
+Without a usable source snapshot timestamp, Party uses the file date to order PB snapshots. **An old export saved as a new file can replace newer PBs.** Check the file and preview before accepting. Neither a snapshot date nor a file date creates a play date or session.

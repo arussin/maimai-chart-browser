@@ -20,6 +20,7 @@ async function setup(page,context,locale='en'){
   await context.route('**/*',async route=>{
     const req=route.request(),url=new URL(req.url());
     if(url.hostname!=='127.0.0.1'){state.external.push(url.origin);await route.abort();return;}
+    if(req.method()==='GET'&&url.pathname==='/api/player-import/oauth/connectors'&&!url.search)return route.fallback();
     if(url.pathname!==PATH){await route.continue();return;}
     const headers=await req.allHeaders();for(const key of ['cookie','authorization','referer'])expect(headers[key]).toBeUndefined();
     state.calls++;state.requests.push(JSON.parse(req.postData()));if(state.hold)await state.hold;
@@ -221,8 +222,8 @@ test('new file replaces a delayed refresh and temporary imports remain isolated'
 for(const locale of ['en','zh-Hans','ko','ja','id'])test(`browser pilot ${locale} fits narrow controls and supports keyboard import`,async({page,context},testInfo)=>{
   await page.setViewportSize({width:320,height:800});await setup(page,context,locale);
   await page.locator('#player-import-primary').focus();await page.keyboard.press('Enter');
-  await expect(page.locator('.player-source-help')).toHaveCount(5);await expect(page.locator('.player-import-help')).toHaveCount(0);
-  expect(await page.locator('#player-import-dialog [data-import-service]').evaluateAll(nodes=>nodes.map(node=>node.dataset.importService))).toEqual(['kamaitachi','diving-fish','lxns','maishift','session-report']);
+  await expect(page.locator('.player-source-help')).toHaveCount(10);await expect(page.locator('.player-import-help')).toHaveCount(0);
+  expect(await page.locator('#player-import-dialog [data-import-service]').evaluateAll(nodes=>nodes.map(node=>node.dataset.importService))).toEqual(['kamaitachi','diving-fish','lxns','maishift','session-report','tomomai','mai-tools','dxrating','jietng','aqua']);
   const help=page.locator('[data-import-help=maishift]');await expect(help).toHaveAttribute('href','player-import-help.'+locale+'.html#maishift');
   const opened=context.waitForEvent('page');await help.click();const guide=await opened;await guide.setViewportSize({width:320,height:800});await expect(guide).toHaveURL(new RegExp('player-import-help\\.'+locale+'\\.html#maishift$'));
   await expect(guide.locator('html')).toHaveAttribute('lang',locale);await expect(guide.locator('#maishift')).toHaveCount(1);expect(await guide.evaluate(()=>window.opener===null)).toBe(true);await guide.close();

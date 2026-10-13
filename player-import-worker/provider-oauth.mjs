@@ -1,4 +1,5 @@
 // Fixed-origin OAuth entrypoint. The existing Maishift service is independent.
+import {readConnectorFlags} from './connector-flags.mjs';
 export const PARTY_ORIGIN = 'https://maimai.party';
 export const OAUTH_PREFIX = '/api/player-import/oauth';
 export const SESSION_COOKIE = '__Host-party-provider-import';
@@ -111,6 +112,12 @@ export function createProviderOAuthService({now = Date.now} = {}) {
     try {
       const url = new URL(request.url);
       if (url.origin !== PARTY_ORIGIN || url.pathname.length > 160 || url.href.length > 8192) return jsonResponse(404, {error:'not_found'});
+      if (url.pathname === OAUTH_PREFIX + '/connectors') {
+        if (url.search) return jsonResponse(404, {error:'not_found'});
+        if (request.method !== 'GET') return jsonResponse(405, {error:'method_not_allowed'});
+        try { return jsonResponse(200, await readConnectorFlags(env, request.signal)); }
+        catch { return jsonResponse(503, {error:'connectors_unavailable'}); }
+      }
       if (url.pathname === OAUTH_PREFIX + '/capabilities' && !url.search && request.method === 'GET') return jsonResponse(200, {providers:Object.fromEntries(Object.keys(PROVIDERS).map(p => [p, {enabled:enabled(env, p)}]))});
       const match = url.pathname.match(/^\/api\/player-import\/oauth\/(diving-fish|lxns)\/(start|callback|read|disconnect)$/);
       const status = url.pathname === OAUTH_PREFIX + '/status';

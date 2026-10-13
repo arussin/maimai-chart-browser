@@ -1,9 +1,17 @@
+import type { FileImportFormat } from '../domain/import-options';
+
 export type ImportMethodValue =
-  'file' | 'report' | 'maishift' | 'kamaitachi' | 'diving-fish' | 'lxns';
+  | 'file'
+  | 'report'
+  | 'maishift'
+  | 'kamaitachi'
+  | 'diving-fish'
+  | 'lxns'
+  | `file:${Exclude<FileImportFormat, 'portable'>}`;
 export interface ImportServiceMethod {
   value: ImportMethodValue;
   label: string;
-  fileFormat?: 'portable';
+  fileFormat?: FileImportFormat;
 }
 export interface ImportService {
   id: string;
@@ -20,6 +28,11 @@ export const IMPORT_SERVICE_MONOGRAMS: Readonly<Record<string, string>> = {
   lxns: 'LX',
   maishift: 'M',
   'session-report': 'P',
+  'mai-tools': 'MT',
+  dxrating: 'DR',
+  tomomai: 'TM',
+  jietng: 'JT',
+  aqua: 'AD',
 };
 
 /** Service identity owns the available methods; labels never select a parser. */
@@ -29,7 +42,10 @@ export const IMPORT_SERVICES: readonly ImportService[] = [
     title: 'Kamaitachi',
     help: 'kamaitachi',
     helpLabel: 'About Kamaitachi imports',
-    methods: [{ value: 'kamaitachi', label: 'Import by username' }],
+    methods: [
+      { value: 'kamaitachi', label: 'Import by username' },
+      { value: 'file:tachi', label: 'Upload BATCH-MANUAL', fileFormat: 'tachi' },
+    ],
   },
   {
     id: 'diving-fish',
@@ -62,6 +78,21 @@ export const IMPORT_SERVICES: readonly ImportService[] = [
       { value: 'report', label: 'Hosted Session Report' },
     ],
   },
+  ...(
+    [
+      ['tomomai', 'Tomomai'],
+      ['mai-tools', 'mai-tools'],
+      ['dxrating', 'DXRating'],
+      ['jietng', 'JiETNG v2'],
+      ['aqua', 'AquaDX'],
+    ] as const
+  ).map(([id, title]) => ({
+    id,
+    title,
+    help: id,
+    helpLabel: 'About file exports',
+    methods: [{ value: `file:${id}` as ImportMethodValue, label: 'Upload a file', fileFormat: id }],
+  })),
 ];
 
 export function importServiceForMethod(method: ImportMethodValue): ImportService {
@@ -71,8 +102,18 @@ export function importServiceForMethod(method: ImportMethodValue): ImportService
   if (!service) throw new Error('Unknown player import method.');
   return service;
 }
-export function importMethodFileFormat(method: ImportMethodValue): 'portable' | null {
+export function importMethodFileFormat(method: ImportMethodValue): FileImportFormat | null {
   return (
     importServiceForMethod(method).methods.find((row) => row.value === method)?.fileFormat ?? null
   );
+}
+
+/** Hiding a method removes its choice; hiding every method removes the service. */
+export function visibleImportServices(
+  flags: Readonly<Partial<Record<ImportMethodValue, boolean>>>,
+): readonly ImportService[] {
+  return IMPORT_SERVICES.map((service) => ({
+    ...service,
+    methods: service.methods.filter((method) => flags[method.value] === true),
+  })).filter((service) => service.methods.length > 0);
 }

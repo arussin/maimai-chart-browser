@@ -1,6 +1,7 @@
 import type { PlayerSource, PlayerStorage, StoreToken } from '../views/player-storage';
 import type { PlayerIdentity, PlayerDataset, PlayerRecord } from '../domain/player-data';
 import type { EmitArguments } from '../usage-contract';
+import type { ImportFile, FileImportOptions, FileImportFormat } from '../domain/import-options';
 type WithoutPage<T> = T extends [infer E, unknown?, ...infer Details] ? [E, ...Details] : never;
 export type SessionUsage = WithoutPage<EmitArguments>;
 export type { PlayerIdentity, PlayerDataset } from '../domain/player-data';
@@ -98,13 +99,22 @@ export interface Consent {
 }
 export interface ConsentOptions {
   file?: boolean;
+  fileExport?: boolean;
+  unlinkedObservations?: number;
+  snapshotDateUnknown?: boolean;
   excludedUtage?: number;
   stale?: boolean;
   connection?: SourceConnection | null;
   rememberDefault?: boolean;
   unmatched?: number | null;
 }
-export type ImportMethod = 'file' | 'report' | 'maishift' | 'kamaitachi' | OAuthProvider;
+export type ImportMethod =
+  | 'file'
+  | 'report'
+  | 'maishift'
+  | 'kamaitachi'
+  | OAuthProvider
+  | `file:${Exclude<FileImportFormat, 'portable'>}`;
 export type ImportStage = 'storage' | 'invalid' | 'unavailable';
 export type SessionEvent = 'saved' | 'forgotten' | 'cleared' | 'invalidate';
 export interface SessionNotification {
@@ -143,6 +153,14 @@ export interface SessionPorts {
   key(name: string): string;
   effects: SessionEffects;
   refreshAllowed(): boolean;
+  readFile?(
+    file: ImportFile,
+    options?: FileImportOptions,
+  ): Promise<{
+    data: PlayerDataset;
+    excludedUtage: number;
+    snapshotDateUnknown: boolean;
+  }>;
   clock?: () => number;
 }
 export interface HandoffTransfer {

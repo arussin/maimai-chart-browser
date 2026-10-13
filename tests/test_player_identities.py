@@ -46,12 +46,29 @@ class ProviderIdentityTests(unittest.TestCase):
             ("lxns", "jp", "Fixture", False),
             ("lxns", "intl", "Fixture", False),
             ("lxns", "private", "Fixture", False),
-            ("mai-tools", "cn", "Fixture", False),
-            ("dxrating", "cn", "Fixture", False),
-            ("tomomai", "jp", "Fixture", False),
-            ("jietng", "jp", "Fixture", False),
-            ("aqua", "private", "42@one.invalid", False),
-            ("tachi", "private", "42@one.invalid", False),
+            ("mai-tools", "cn", "Fixture", True),
+            ("mai-tools", "intl", "Fixture", True),
+            ("dxrating", "jp", "Fixture", True),
+            ("dxrating", "intl", "Fixture", True),
+            ("tomomai", "jp", "名前:1", True),
+            ("tomomai", "intl", "Fixture", True),
+            ("jietng", "jp", "名前:1", True),
+            ("jietng", "intl", "Fixture", True),
+            ("aqua", "private", "42@one.invalid", True),
+            ("aqua", "private", "42@two.invalid", True),
+            ("tachi", "private", "42@one.invalid", True),
+            ("aqua", "cn", "42@one.invalid", False),
+            ("tachi", "intl", "42@one.invalid", False),
+            ("aqua", "private", "Fixture", False),
+            ("aqua", "private", "@server.invalid", False),
+            ("aqua", "private", "Fixture@", False),
+            ("aqua", "private", "Fixture @server.invalid", False),
+            ("aqua", "private", "Fixture\u0085@server.invalid", False),
+            ("aqua", "private", "Fixture\ufeff@server.invalid", False),
+            ("tomomai", "private", "Fixture@server.invalid", True),
+            ("tomomai", "private", "Fixture", False),
+            ("tomomai", "jp", "名" * 30, False),
+            ("jietng", "other", "Fixture", False),
         ]:
             identity = quote(username, safe="~()*!.'-_")
             cases.append(
@@ -115,7 +132,7 @@ class ProviderIdentityTests(unittest.TestCase):
                 core.merge(intl, other)
         self.assertEqual(core.decode(core.encode(intl)), intl)
 
-    def test_tracker_account_identities_never_merge(self):
+    def test_tracker_file_account_regions_and_private_instances_never_merge(self):
         def dataset(provider, region, username):
             identity = quote(username, safe="~()*!.'-_")
             return core.empty(
@@ -134,6 +151,14 @@ class ProviderIdentityTests(unittest.TestCase):
             dataset("diving-fish", "cn", "Other"),
             dataset("lxns", "cn", "Fixture"),
             dataset("lxns", "cn", "fixture"),
+            dataset("mai-tools", "intl", "Fixture"),
+            dataset("dxrating", "intl", "Fixture"),
+            dataset("tomomai", "jp", "Fixture"),
+            dataset("tomomai", "intl", "Fixture"),
+            dataset("jietng", "jp", "Fixture"),
+            dataset("aqua", "private", "42@one.invalid"),
+            dataset("aqua", "private", "42@two.invalid"),
+            dataset("tachi", "private", "42@one.invalid"),
         ]
         for index, left in enumerate(datasets):
             self.assertEqual(core.decode(core.encode(left)), left)
@@ -184,3 +209,78 @@ class ProviderIdentityTests(unittest.TestCase):
                 else:
                     with self.assertRaises(ValueError):
                         core.seal(data)
+
+    def test_file_provider_round_trips_preserve_partial_pbs_and_observations_without_versions(self):
+        for provider in ("mai-tools", "dxrating", "tomomai", "jietng", "aqua", "tachi"):
+            region = "private" if provider in {"aqua", "tachi"} else "intl"
+            username = "Fixture@server.invalid" if region == "private" else "Fixture"
+            player = dict(
+                provider=provider,
+                game="maimaidx",
+                username=username,
+                displayName="Synthetic Player",
+                key=provider + ":maimaidx:" + region + ":" + quote(username, safe="~()*!.'-_"),
+            )
+            data = core.empty(player)
+            chart_id = provider + ":" + region + ":synthetic-chart"
+            data["charts"][chart_id] = dict(
+                chartID=chart_id,
+                songID="source-song",
+                title="Fictional Song",
+                artist="Synthetic Artist",
+                format="DX",
+                difficulty="MASTER",
+                level="13+",
+                constant=None,
+                displayVersion="",
+                inGameID=None,
+            )
+            record = dict.fromkeys(core.RECORD_FIELDS)
+            record.update(
+                chartID=chart_id,
+                achievement=1001234,
+                grade="SSS",
+                lamp="FULL COMBO",
+                sync="",
+                displayVersion="",
+            )
+            record_id = core.digest(record)
+            data["records"][record_id] = record
+            snapshot = dict(
+                capturedAt=1000,
+                phase="after",
+                complete=False,
+                versions=[],
+                pbs={} if provider == "tachi" else {chart_id: record_id},
+            )
+            snapshot_id = core.digest(snapshot)
+            data["snapshots"][snapshot_id] = snapshot
+            if provider == "aqua":
+                data["plays"][provider + ":private:native-event"] = record_id
+            capture = dict(
+                capturedAt=1000,
+                sourceKind=provider + "-file",
+                sourceID="synthetic-source",
+                sessionID="",
+                historyCoverage="retained-only" if data["plays"] else "none",
+                playIDs=list(data["plays"]),
+                snapshotIDs=[snapshot_id],
+            )
+            data["captures"][core.digest(capture)] = capture
+            with self.subTest(provider=provider):
+                sealed = core.seal(data)
+                self.assertEqual(core.decode(core.encode(sealed)), sealed)
+                self.assertEqual(core.reconcile(sealed), sealed)
+                self.assertEqual(core.merge(sealed, sealed), sealed)
+                offer = core.offer(sealed)
+                self.assertEqual(offer["pbCount"], 0 if provider == "tachi" else 1)
+                self.assertEqual(offer["playCount"], 1 if provider == "aqua" else 0)
+                self.assertEqual(offer["pbCoverage"], "partial")
+                self.assertIsNone(offer["profile"]["rating"])
+                self.assertEqual(offer["profile"]["sessionCount"], 0)
+                self.assertEqual(len(sealed["records"]), 1)
+                wrong_chart = "other:" + region + ":synthetic-chart"
+                sealed["charts"][wrong_chart] = sealed["charts"].pop(chart_id)
+                sealed["charts"][wrong_chart]["chartID"] = wrong_chart
+                with self.assertRaisesRegex(ValueError, "file-provider chart"):
+                    core.seal(sealed)

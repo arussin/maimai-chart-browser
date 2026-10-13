@@ -3,7 +3,10 @@ import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import { moduleSource, evaluateModule } from './module.mjs';
 import { gzipSync } from 'node:zlib';
-import { providerUsageRows } from '../../usage-worker/test/provider-usage-fixture.mjs';
+import {
+  fileImportMethods,
+  providerUsageRows,
+} from '../../usage-worker/test/provider-usage-fixture.mjs';
 const source = await moduleSource('usage');
 const stagingSource = await moduleSource('usage-staging', { staging: true });
 import { DETAILS, FAILURES, validateRow } from '../src/usage-contract.ts';
@@ -211,7 +214,7 @@ test('direct import counts accept only finite provider names and never account o
   );
 });
 
-test('every finite provider lifecycle and tracker-link row survives the browser transport unchanged', async () => {
+test('every finite import, provider lifecycle and tracker-link row survives the browser transport unchanged', async () => {
   const { api, requests } = fixture();
   for (let i = 0; i < providerUsageRows.length; i += 16) {
     for (const row of providerUsageRows.slice(i, i + 16))
@@ -243,6 +246,12 @@ test('provider telemetry rejects identities, raw errors, invented auto events an
   for (const detail of ['mai-tools', 'dxrating', 'tomomai', 'jietng', 'aqua', 'tachi']) {
     api.emit('import_started', 'charts', detail);
     api.emit('provider_read_started', 'charts', detail);
+  }
+  for (const detail of fileImportMethods) {
+    api.emit('provider_connect_started', 'charts', detail);
+    api.emit('provider_read_started', 'charts', detail);
+    api.emit('provider_refresh_started', 'charts', detail);
+    api.emit('import_started', 'charts', detail + ':PRIVATE-FILENAME');
   }
   api.emit('file_import_failed', 'charts', 'portable', 'invalid');
   api.emit('provider_file_fallback_clicked', 'charts', 'diving-fish');

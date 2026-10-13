@@ -1,8 +1,17 @@
 import type { PlayerChart, PlayerIdentity } from './player-data';
 
-/** Portable provider namespaces. Adding a provider requires a verified adapter. */
-export const FILE_PROVIDERS = ['diving-fish', 'lxns'] as const;
-export const FILE_REGIONS = ['cn'] as const;
+/** Explicit local-file namespaces. Adding a provider requires a verified adapter. */
+export const FILE_PROVIDERS = [
+  'diving-fish',
+  'lxns',
+  'mai-tools',
+  'dxrating',
+  'tomomai',
+  'jietng',
+  'tachi',
+  'aqua',
+] as const;
+export const FILE_REGIONS = ['cn', 'jp', 'intl', 'private'] as const;
 export type FileProvider = (typeof FILE_PROVIDERS)[number];
 export type FileRegion = (typeof FILE_REGIONS)[number];
 
@@ -11,11 +20,24 @@ export const isFileProvider = (value: string): value is FileProvider =>
 const validText = (value: string, maximum: number) =>
   value.length > 0 && value.length <= maximum && !/[\x00-\x1f\uD800-\uDFFF]/u.test(value);
 
-/** Both tracker identities are explicitly scoped to China and remain separate. */
+function scopedAccount(username: string) {
+  const separator = username.lastIndexOf('@');
+  return (
+    separator > 0 && separator < username.length - 1 && !/[\p{White_Space}\ufeff]/u.test(username)
+  );
+}
+
+/** Private identities use an explicit account@instance supplied by the user/export. */
 export function filePlayerKey(provider: string, region: string, username: string): string {
   if (!isFileProvider(provider) || !(FILE_REGIONS as readonly string[]).includes(region))
     throw new Error('Unsupported file provider or region.');
+  if (['diving-fish', 'lxns'].includes(provider) && region !== 'cn')
+    throw new Error('Unsupported tracker region.');
+  if (['tachi', 'aqua'].includes(provider) && region !== 'private')
+    throw new Error('Private server exports require the private region.');
   if (!validText(username, 200)) throw new Error('Invalid account identifier.');
+  if (region === 'private' && !scopedAccount(username))
+    throw new Error('Private accounts need an explicit account@instance identifier.');
   const key = provider + ':maimaidx:' + region + ':' + encodeURIComponent(username);
   if (key.length > 200)
     throw new Error('The encoded account identifier exceeds the portable player-data limit.');

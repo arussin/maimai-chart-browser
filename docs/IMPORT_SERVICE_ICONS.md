@@ -15,8 +15,31 @@ licenses are not presented as a general grant to use the providers' brands.
 | Diving-Fish | <https://maimai.diving-fish.com/favicon.ico> |
 | LXNS | <https://maimai.lxns.net/favicon.webp> |
 
+DXRating's advertised favicon returned HTTP 404 on 2026-10-11. Its section uses
+the initials DR. mai-tools uses MT because no dedicated mark was verified.
+BATCH-MANUAL appears as a file method in Kamaitachi, not a separate service.
+These are text fallbacks, not invented logos.
 
-The Kamaitachi CDN mark and existing Maishift favicon identify their sources. No upstream renderer code is bundled. First-party provenance does not establish a separate brand-use license.
+Three additional provider sections use text fallbacks following the license
+review. Their reviewed image downloads are not bundled in the chooser:
+
+| Service | Fallback | Reason and primary source |
+| --- | --- | --- |
+| JiETNG | JT | The [pinned license](https://github.com/Matsuk1/JiETNG-maimai-dx-bot/blob/abc6ebf3e00dd033f549bc8e9c17870f61f357ae/LICENSE) is proprietary, copyright 2025–2026 Matsuki (Matsuk1), and restricts copying/distribution. No exception for the documentation logo was established. |
+| AquaDX | AD | The [pinned license](https://github.com/MewoLab/AquaDX/blob/4a0254ec198fe0448a2682eba82f8222a233605a/LICENSE) is CC BY-NC-SA 4.0. The optional mark is omitted rather than introducing its noncommercial redistribution conditions into this asset collection. |
+| Tomomai | TM | The [pinned license](https://github.com/shedaniel/tomomai/blob/ee29589979ed37eb0203ab00781d5e70c984ccb2/LICENSE) and [README](https://github.com/shedaniel/tomomai/blob/ee29589979ed37eb0203ab00781d5e70c984ccb2/README.md) specify AGPL v3. No separate permission for the provider favicon was established; this collection does not redistribute it. |
+
+The retained Kamaitachi CDN mark and existing Maishift favicon identify their
+respective sources. This review established their first-party provenance, not a
+separate brand-use license. Neither the Tachi seed-data license nor Party's own
+MIT license is asserted to cover those marks. No upstream code is bundled by
+this icon change.
+
+The acquired asset hashes and download status are recorded with the local
+review evidence under `investigations/import-service-ui-20261011/icon-downloads.json`
+in the parent workspace. That acquisition receipt also records reviewed assets
+subsequently omitted; `web/src/views/import-service-icons.json` is the actual
+bundled set. See the provider links above for first-party provenance.
 
 ## Diving-Fish notice
 

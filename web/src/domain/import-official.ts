@@ -1,5 +1,17 @@
 /** Read-only adapters for documented public score export contracts. */
 export interface ImportRow {
+  kind?: 'pb' | 'play' | 'observation';
+  sourceGenre?: string;
+  playID?: string;
+  maxDxScore?: number | null;
+  maxCombo?: number | null;
+  fast?: number | null;
+  slow?: number | null;
+  miss?: number | null;
+  good?: number | null;
+  great?: number | null;
+  perfect?: number | null;
+  pcrit?: number | null;
   sourceID: string;
   sourceSongID: string;
   title: string;
@@ -22,6 +34,7 @@ export interface ImportResult {
   displayName: string | null;
   coverage: 'partial' | 'unknown' | 'full';
   excludedUtage?: number;
+  sourceRegion?: 'jp' | 'intl';
 }
 
 export type OfficialImportProvider = 'diving-fish' | 'lxns';
@@ -97,6 +110,12 @@ function constant(value: unknown): number | null {
   if (Math.abs(decimal * 10 - tenths) > 0.000001)
     throw new Error('Invalid chart constant precision.');
   return tenths;
+}
+
+function maiConstant(value: unknown): number | null {
+  if (value == null) return null;
+  const level = number(value, 'chart constant', -20, 20);
+  return level < 0 ? null : constant(level);
 }
 
 function difficulty(value: unknown, indexed = false): string {
@@ -299,6 +318,215 @@ export function parseOfficialExport(
   if (provider === 'diving-fish') result = divingFish(input);
   else if (provider === 'lxns') result = lxns(input);
   else throw new Error('Unsupported official-network score export.');
+  if (result.excludedUtage) result.coverage = 'partial';
+  return result;
+}
+
+function maiTools(input: unknown): ImportResult {
+  return {
+    capturedAt: null,
+    displayName: null,
+    coverage: 'unknown',
+    ...mapRows(array(input), (score) =>
+      row({
+        title: text(score.songName, 'song title', true),
+        sourceSongID:
+          score.songName === 'Link' &&
+          typeof score.genre === 'string' &&
+          /niconico|ニコニコ/i.test(score.genre)
+            ? 'Link (2)'
+            : text(score.songName, 'song title', true),
+        sourceGenre: text(score.genre, 'genre'),
+        format: format(score.chartType, true),
+        difficulty: difficulty(score.difficulty, true),
+        achievement: percentage(score.achievement),
+        lamp: flag(score.fcap),
+        // Negative mai-tools levels mean an estimated constant, not exact metadata.
+        constant: maiConstant(score.level),
+      }),
+    ),
+  };
+}
+
+function dxrating(input: unknown): ImportResult {
+  return {
+    capturedAt: null,
+    displayName: null,
+    coverage: 'unknown',
+    ...mapRows(array(input), (score) => {
+      const sheetID = text(score.sheetId, 'DXRating sheet ID', true);
+      const pieces = sheetID.split('__dxrt__');
+      if (pieces.length !== 3 || !pieces[0]) throw new Error('Invalid DXRating sheet ID.');
+      const [songID, type, diff] = pieces;
+      if (score.identity != null) {
+        const identity = object(score.identity);
+        if (identity.songId !== songID || identity.type !== type || identity.difficulty !== diff) {
+          throw new Error('DXRating identity disagrees with its sheet ID.');
+        }
+      }
+      return row({
+        sourceID: sheetID,
+        sourceSongID: songID,
+        // Retain unknown native title IDs; enrichment resolves known disambiguators.
+        title: songID,
+        format: format(type),
+        difficulty: difficulty(diff),
+        achievement: percentage(score.achievementRate),
+        lamp: flag(score.comboFlag),
+        sync: flag(score.syncFlag, true),
+      });
+    }),
+  };
+}
+
+function tomomaiChartID(value: unknown): string {
+  const id = text(value, 'Tomomai song ID', true);
+  // Public API catalogue IDs distinguish a stable chart from a versioned instance.
+  const match = /^([A-Za-z0-9_-]{8})(?::[jic]-?(?:0|[1-9]\d*))?$/.exec(id);
+  if (!match) throw new Error('Invalid Tomomai song ID.');
+  return match[1];
+}
+
+function tomomai(input: unknown): ImportResult {
+  const data = object(input);
+  const recent = 'plays' in data;
+  if (!recent && data.songs === null)
+    throw new Error('Tomomai response does not include song scores.');
+  const scores = array(recent ? data.plays : data.songs);
+  const b50 = !recent && scores.some((score) => 'rating' in object(score));
+  return {
+    capturedAt: recent ? null : timestamp(data.fetchedAt),
+    displayName: text(data.displayName, 'display name') || null,
+    coverage: recent || b50 ? 'partial' : 'unknown',
+    ...mapRows(scores, (score) => {
+      const song = recent ? object(score.song) : score;
+      const result = row({
+        kind: recent ? 'observation' : 'pb',
+        sourceSongID: tomomaiChartID(song.songId),
+        title: text(song.songName, 'song title', true),
+        artist: text(song.artist, 'song artist'),
+        sourceGenre: text(song.genre, 'genre'),
+        format: format(song.type),
+        difficulty: difficulty(song.difficulty),
+        achievement: integer(score.achievement, 'achievement ticks', 0, 1_010_000),
+        lamp: flag(score.fc),
+        sync: flag(score.fs, true),
+        dxScore: optionalNumber(score.dxScore, 'DX score', 100_000_000, true),
+        constant:
+          song.levelPrecise == null
+            ? null
+            : integer(song.levelPrecise, 'scaled chart constant', 0, 200),
+        level: text(song.level, 'level'),
+        timeAchieved: recent ? timestamp(text(score.playedAt, 'play timestamp', true)) : null,
+      });
+      if (recent) {
+        result.maxDxScore = optionalNumber(score.maxDxScore, 'maximum DX score', 100_000_000, true);
+        if (score.maxCombo != null) {
+          const count = text(score.maxCombo, 'maximum combo');
+          if (!/^\d{1,8}$/.test(count)) throw new Error('Invalid maximum combo.');
+          result.maxCombo = integer(Number(count), 'maximum combo', 0, 100_000_000);
+        }
+        if (score.notes != null) {
+          const notes = object(score.notes);
+          result.fast = optionalNumber(notes.fast, 'fast count', 100_000_000, true);
+          result.slow = optionalNumber(notes.late, 'late count', 100_000_000, true);
+          const groups = ['tap', 'hold', 'slide', 'touch', 'break'].map((name) =>
+            object(notes[name]),
+          );
+          for (const [inputName, outputName] of [
+            ['cPerfect', 'pcrit'],
+            ['perfect', 'perfect'],
+            ['great', 'great'],
+            ['good', 'good'],
+            ['miss', 'miss'],
+          ] as const) {
+            const counts = groups.map((group) =>
+              optionalNumber(group[inputName], `${inputName} count`, 100_000_000, true),
+            );
+            result[outputName] = counts.some((count) => count == null)
+              ? null
+              : counts.reduce<number>((sum, count) => sum + (count ?? 0), 0);
+          }
+        }
+      }
+      return result;
+    }),
+  };
+}
+
+function jietng(input: unknown): ImportResult {
+  const data = object(input);
+  if (data.format !== 'JiETNGExport' || data.schema_version !== 2)
+    throw new Error('Choose a native JiETNG version-2 JSON export.');
+  if (data.maimai_version !== 'jp' && data.maimai_version !== 'intl')
+    throw new Error('Invalid JiETNG game region.');
+  const generated = text(data.generated_at, 'JiETNG export timestamp', true);
+  let capturedAt: number | null;
+  if (/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d$/.test(generated)) {
+    // The current producer emits local wall-clock time with no timezone.
+    // Validate calendar syntax without treating the appended Z as real provenance.
+    timestamp(generated + 'Z');
+    capturedAt = null;
+  } else capturedAt = timestamp(generated);
+  const profile = object(data.profile);
+  const records = object(data.records);
+  const scores = [
+    ...array(records.best).map((score) => ({ best: score })),
+    ...array(records.recent).map((score) => ({ recent: score })),
+  ];
+  return {
+    capturedAt,
+    displayName: text(profile.name, 'display name') || null,
+    sourceRegion: data.maimai_version,
+    coverage: 'unknown',
+    ...mapRows(scores, (wrapped) => {
+      const best = Object.hasOwn(wrapped, 'best');
+      const score = object(best ? wrapped.best : wrapped.recent);
+      const title = text(score.title, 'song title', true);
+      const result = row({
+        kind: best ? 'pb' : 'observation',
+        sourceSongID: title,
+        sourceGenre: 'dxrating-title',
+        title,
+        format: format(score.type),
+        difficulty: difficulty(score.difficulty),
+        achievement: percentage(score.achievement),
+        lamp: flag(score.combo),
+        sync: flag(score.sync, true),
+        dxScore: optionalNumber(score.dx_score, 'DX score', 100_000_000, true),
+        maxDxScore: optionalNumber(score.dx_score_max, 'maximum DX score', 100_000_000, true),
+        // The producer writes zero when metadata lookup fails.
+        constant: score.internal_level === 0 ? null : constant(score.internal_level),
+      });
+      if (result.dxScore != null && result.maxDxScore != null && result.dxScore > result.maxDxScore)
+        throw new Error('DX score exceeds its maximum.');
+      return result;
+    }),
+  };
+}
+
+/** File-only schemas are deliberately separate from the live OAuth response contract. */
+export function parseOfficialFileExport(
+  provider: 'mai-tools' | 'dxrating' | 'tomomai' | 'jietng',
+  input: unknown,
+): ImportResult {
+  let result: ImportResult;
+  switch (provider) {
+    case 'mai-tools':
+      result = maiTools(input);
+      break;
+    case 'dxrating':
+      result = dxrating(input);
+      break;
+    case 'tomomai':
+      result = tomomai(input);
+      break;
+    case 'jietng':
+      result = jietng(input);
+      break;
+    default:
+      throw new Error('Unsupported official-network file export.');
+  }
   if (result.excludedUtage) result.coverage = 'partial';
   return result;
 }

@@ -2,7 +2,20 @@
 export const VERSION = 1;
 export const PAGES = ['charts', 'patterns', 'compare', 'about', 'song', 'version'] as const;
 export type Page = (typeof PAGES)[number];
-const methods = ['file', 'report', 'maishift', 'kamaitachi', 'diving-fish', 'lxns'] as const;
+const methods = [
+  'file',
+  'report',
+  'maishift',
+  'kamaitachi',
+  'diving-fish',
+  'lxns',
+  'file:mai-tools',
+  'file:dxrating',
+  'file:tomomai',
+  'file:jietng',
+  'file:aqua',
+  'file:tachi',
+] as const;
 const connectedProviders = ['diving-fish', 'lxns'] as const;
 const directProviders = ['kamaitachi', 'diving-fish', 'lxns'] as const;
 const refreshSources = ['report', 'maishift', 'kamaitachi', 'diving-fish', 'lxns'] as const;

@@ -44,9 +44,16 @@ class PlayerHelpTests(unittest.TestCase):
                         "diving-fish",
                         "lxns",
                         "direct-connections",
+                        "mai-tools",
+                        "dxrating",
+                        "tomomai",
+                        "jietng",
+                        "aqua",
+                        "tachi",
+                        "file-exports",
                     },
                 )
-                self.assertEqual(len(parsed.anchors), 6)
+                self.assertEqual(len(parsed.anchors), 13)
                 urls = {link["href"] for link in parsed.links}
                 self.assertIn("https://maimai.shiftpsh.com/en/guide", urls)
                 self.assertIn("https://maimai.diving-fish.com/", urls)
@@ -55,13 +62,23 @@ class PlayerHelpTests(unittest.TestCase):
                 self.assertIn("https://maimai.lxns.net/", urls)
                 self.assertIn("https://maimai.lxns.net/docs/sync", urls)
                 self.assertIn("对非网页查询的成绩使用掩码", source)
-                self.assertNotRegex(
-                    source, r"BATCH-MANUAL|AquaDX|JiETNG|DXRating|Tomomai|mai-tools"
-                )
+                self.assertIn("#tachi", urls)
+                for provider in (
+                    "BATCH-MANUAL",
+                    "AquaDX",
+                    "JiETNG",
+                    "DXRating",
+                    "Tomomai",
+                    "mai-tools",
+                ):
+                    self.assertIn(provider, source)
                 self.assertNotIn("<script", rendered)
                 self.assertIn("ol", parsed.tags)
                 self.assertIn("strong", parsed.tags)
                 for link in parsed.links:
+                    if link["href"] == "#tachi":
+                        self.assertNotIn("target", link)
+                        continue
                     self.assertTrue(link["href"].startswith("https://"))
                     self.assertEqual(link["rel"], "noopener noreferrer")
 
@@ -70,7 +87,8 @@ class PlayerHelpTests(unittest.TestCase):
             '<script>alert(1)</script>\n\n<a id="unexpected"></a>\n\n'
             "[bad](javascript:alert(1)) [bad](http://example.test) "
             "[bad](https://user:password@example.test/) "
-            "[bad](https://[broken/) [safe](https://example.test/?a=1&b=2)"
+            "[bad](https://[broken/) [bad](#unexpected) "
+            '[bad](#tachi"onclick="alert(1)) [safe](https://example.test/?a=1&b=2)'
         )
         rendered = _render_markdown(source)
         parsed = Links()

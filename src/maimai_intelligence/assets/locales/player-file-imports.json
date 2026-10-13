@@ -71,6 +71,156 @@
       "ko": "인코딩된 계정 식별자가 플레이어 데이터 형식의 길이 제한을 초과합니다.",
       "ja": "エンコード後のアカウント識別子が、プレイヤーデータ形式の長さ制限を超えています。",
       "id": "Pengenal akun yang dikodekan melebihi batas format data pemain portabel."
+    },
+    "The export and selected game region do not match.": {
+      "zh-Hans": "导出文件与所选游戏区域不一致。",
+      "ko": "내보내기 파일과 선택한 게임 지역이 일치하지 않습니다.",
+      "ja": "エクスポートと選択したゲームの地域が一致しません。",
+      "id": "Ekspor dan wilayah game yang dipilih tidak cocok."
+    },
+    "This source has no snapshot timestamp. The file date is used for ordering; an older export can replace newer personal bests.": {
+      "zh-Hans": "此来源没有快照时间戳，将使用文件日期排序；旧导出文件可能覆盖较新的个人最佳成绩。",
+      "ko": "이 소스에는 스냅샷 타임스탬프가 없습니다. 파일 날짜로 순서를 정하므로 오래된 내보내기가 더 최근의 개인 최고 기록을 덮어쓸 수 있습니다.",
+      "ja": "この読み込み元にはスナップショットの日時がありません。ファイルの日時で順序を決めるため、古いエクスポートが新しい自己ベストを置き換える場合があります。",
+      "id": "Sumber ini tidak memiliki waktu snapshot. Tanggal berkas digunakan untuk pengurutan; ekspor lama dapat menggantikan skor terbaik pribadi yang lebih baru."
+    },
+    "Unlinked score observations: {0}. These are retained without claiming personal bests or play counts.": {
+      "zh-Hans": "未关联的成绩记录：{0}。这些记录会保留，但不会被视为个人最佳成绩或计入游玩次数。",
+      "ko": "연결되지 않은 성적 기록: {0}. 이 기록은 보존되지만 개인 최고 기록이나 플레이 횟수로 취급하지 않습니다.",
+      "ja": "未関連の成績記録：{0}。これらは保持しますが、自己ベストやプレイ回数としては扱いません。",
+      "id": "Catatan skor yang belum terhubung: {0}. Catatan ini disimpan tanpa dianggap sebagai skor terbaik pribadi atau jumlah permainan."
+    },
+    "Export format": {
+      "zh-Hans": "导出格式",
+      "ko": "내보내기 형식",
+      "ja": "エクスポート形式",
+      "id": "Format ekspor"
+    },
+    "Source account": {
+      "zh-Hans": "来源账号",
+      "ko": "원본 계정",
+      "ja": "読み込み元のアカウント",
+      "id": "Akun sumber"
+    },
+    "Private server": {
+      "zh-Hans": "私人服务器",
+      "ko": "개인 서버",
+      "ja": "プライベートサーバー",
+      "id": "Server privat"
+    },
+    "Server name or hostname": {
+      "zh-Hans": "服务器名称或主机名",
+      "ko": "서버 이름 또는 호스트명",
+      "ja": "サーバー名またはホスト名",
+      "id": "Nama server atau nama host"
+    },
+    "Choose a JSON export from your score tracker. Your file stays in this browser.": {
+      "zh-Hans": "选择成绩记录服务导出的 JSON 文件。文件只在此浏览器中处理。",
+      "ko": "성적 기록 서비스에서 내보낸 JSON 파일을 선택하세요. 파일은 이 브라우저 안에서만 처리됩니다.",
+      "ja": "成績管理サービスからエクスポートした JSON ファイルを選択してください。ファイルはこのブラウザー内でのみ扱います。",
+      "id": "Pilih ekspor JSON dari layanan pencatat skor Anda. Berkas tetap di browser ini."
+    },
+    "Use the same account and server name when importing updates.": {
+      "zh-Hans": "导入更新时，请使用相同的账号和服务器名称。",
+      "ko": "업데이트를 가져올 때도 같은 계정과 서버 이름을 사용하세요.",
+      "ja": "更新を読み込むときも、同じアカウント名とサーバー名を使用してください。",
+      "id": "Gunakan akun dan nama server yang sama saat mengimpor pembaruan."
+    },
+    "Imported file snapshots may contain only part of your scores. Missing charts are kept.": {
+      "zh-Hans": "导入的文件快照可能只包含部分成绩。文件中缺少的谱面记录会保留。",
+      "ko": "가져온 파일 스냅샷에는 일부 성적만 포함될 수 있습니다. 파일에 없는 채보 기록도 유지됩니다.",
+      "ja": "読み込むファイルのスナップショットには、成績の一部しか含まれない場合があります。ファイルにない譜面の記録も保持します。",
+      "id": "Snapshot berkas yang diimpor mungkin hanya memuat sebagian skor Anda. Catatan chart yang tidak ada dalam berkas tetap disimpan."
+    },
+    "Snapshot date comes from the export, or the file date when unavailable.": {
+      "zh-Hans": "快照日期取自导出数据；如无此信息，则使用文件日期。",
+      "ko": "스냅샷 날짜는 내보낸 데이터의 날짜를 사용하며, 없으면 파일 날짜를 사용합니다.",
+      "ja": "スナップショットの日時にはエクスポート内の日時を使用し、なければファイルの日時を使用します。",
+      "id": "Tanggal snapshot berasal dari data ekspor, atau tanggal berkas jika tidak tersedia."
+    },
+    "About file exports": {
+      "zh-Hans": "关于导出文件",
+      "ko": "내보낸 파일 안내",
+      "ja": "エクスポートファイルについて",
+      "id": "Tentang berkas ekspor"
+    },
+    "Enter your source account name.": {
+      "zh-Hans": "请输入来源账号名称。",
+      "ko": "원본 계정 이름을 입력하세요.",
+      "ja": "読み込み元のアカウント名を入力してください。",
+      "id": "Masukkan nama akun sumber Anda."
+    },
+    "Choose a valid JSON export for the selected source.": {
+      "zh-Hans": "请选择所选来源的有效 JSON 导出文件。",
+      "ko": "선택한 소스의 올바른 JSON 내보내기 파일을 선택하세요.",
+      "ja": "選択した読み込み元の有効な JSON エクスポートを選択してください。",
+      "id": "Pilih ekspor JSON yang valid untuk sumber yang dipilih."
+    },
+    "Choose the private-server region for this export.": {
+      "zh-Hans": "请为此导出文件选择私人服务器区域。",
+      "ko": "이 내보내기 파일의 지역으로 개인 서버를 선택하세요.",
+      "ja": "このエクスポートの地域にはプライベートサーバーを選択してください。",
+      "id": "Pilih wilayah server privat untuk ekspor ini."
+    },
+    "Enter the server name or hostname without a URL, password, or token.": {
+      "zh-Hans": "请输入服务器名称或主机名，不要填写网址、密码或令牌。",
+      "ko": "URL, 비밀번호, 토큰 없이 서버 이름이나 호스트명만 입력하세요.",
+      "ja": "URL、パスワード、トークンを含めずに、サーバー名またはホスト名を入力してください。",
+      "id": "Masukkan nama server atau nama host tanpa URL, kata sandi, atau token."
+    },
+    "Conflicting play identities in this export. Nothing was imported.": {
+      "zh-Hans": "此导出文件中的游玩记录标识存在冲突。未导入任何数据。",
+      "ko": "내보내기 파일의 플레이 식별 정보가 충돌합니다. 아무것도 가져오지 않았습니다.",
+      "ja": "エクスポート内のプレイ識別情報が矛盾しています。データは読み込まれていません。",
+      "id": "Identitas permainan dalam ekspor ini bertentangan. Tidak ada data yang diimpor."
+    },
+    "Private server exports require the private region.": {
+      "zh-Hans": "私人服务器导出文件必须选择私人服务器区域。",
+      "ko": "개인 서버 내보내기에는 개인 서버 지역을 선택해야 합니다.",
+      "ja": "プライベートサーバーのエクスポートには、プライベートサーバーの地域設定が必要です。",
+      "id": "Ekspor server privat memerlukan wilayah server privat."
+    },
+    "Private accounts need an explicit account@instance identifier.": {
+      "zh-Hans": "私人服务器账号必须使用明确的“账号@服务器”标识。",
+      "ko": "개인 서버 계정에는 명시적인 계정@서버 식별자가 필요합니다.",
+      "ja": "プライベートサーバーのアカウントには、明示的な「アカウント@サーバー」識別子が必要です。",
+      "id": "Akun privat memerlukan pengenal akun@server yang jelas."
+    },
+    "Upload BATCH-MANUAL": {
+      "zh-Hans": "上传 BATCH-MANUAL",
+      "ko": "BATCH-MANUAL 업로드",
+      "ja": "BATCH-MANUAL をアップロード",
+      "id": "Unggah BATCH-MANUAL"
+    },
+    "Choose file": {
+      "zh-Hans": "选择文件",
+      "ko": "파일 선택",
+      "ja": "ファイルを選択",
+      "id": "Pilih berkas"
+    },
+    "Server name": {
+      "zh-Hans": "服务器名称",
+      "ko": "서버 이름",
+      "ja": "サーバー名",
+      "id": "Nama server"
+    },
+    "Choose a saved API response (JSON).": {
+      "zh-Hans": "选择已保存的 API 响应（JSON）。",
+      "ko": "저장한 API 응답(JSON)을 선택하세요.",
+      "ja": "保存した API 応答（JSON）を選択してください。",
+      "id": "Pilih respons API tersimpan (JSON)."
+    },
+    "Choose a JSON export.": {
+      "zh-Hans": "选择导出的 JSON 文件。",
+      "ko": "내보낸 JSON 파일을 선택하세요.",
+      "ja": "エクスポートした JSON ファイルを選択してください。",
+      "id": "Pilih berkas ekspor JSON."
+    },
+    "Imports score observations, not personal bests.": {
+      "zh-Hans": "仅导入成绩记录，不会添加个人最佳成绩。",
+      "ko": "성적 기록만 가져오며 개인 최고 기록으로 추가하지 않습니다.",
+      "ja": "成績の記録として読み込みます。自己ベストには追加しません。",
+      "id": "Mengimpor catatan skor tanpa menambah skor terbaik pribadi."
     }
   }
 }
