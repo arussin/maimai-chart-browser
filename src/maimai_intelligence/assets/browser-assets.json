@@ -2,8 +2,8 @@
   "version": 1,
   "tool": "esbuild-0.28.2",
   "entries": {
-    "hosted": "browser/browser-entry-EASOLO73.js",
-    "offline": "browser/browser-offline-HUHUTJS4.js"
+    "hosted": "browser/browser-entry-YU4BQSNP.js",
+    "offline": "browser/browser-offline-2HMHPC26.js"
   },
   "assets": {
     "browser/score-export-partner-otohime-splash-2HMETPV6.js": {
@@ -30,9 +30,9 @@
       "sha256": "9e32462f478fca9cf847c9e37306db19873899c1278e7379188f30cec523b012",
       "bytes": 21939
     },
-    "browser/application-NFOHTHRB.js": {
-      "sha256": "badf625cf3cde7ef43b6b4b93ad44ae2ad79816be59dec545eb9a669e5e1712c",
-      "bytes": 415281
+    "browser/application-QVSQMYXJ.js": {
+      "sha256": "79f7935dbff00a6af3c76dbd3851195f5dc7c872adc9093b79efe2d4401c93e3",
+      "bytes": 415324
     },
     "browser/chunk-DXPPFQ5S.js": {
       "sha256": "f7fbea75cb876df33c7b0770e6eeb0c6c6ebd148ca19ef44868e4a08f166835c",
@@ -102,8 +102,8 @@
       "sha256": "c55595e30c87fa4149a28343ba0be765e7dcd62922a8ae833c1d86b723fa2bdd",
       "bytes": 174218
     },
-    "browser/browser-entry-EASOLO73.js": {
-      "sha256": "dcad7754e9193e8d4c81d383ad81db0d77cc5241a055f5ed12c58cc9259a140e",
+    "browser/browser-entry-YU4BQSNP.js": {
+      "sha256": "6c01488a41eb26a11a7f7027ed94997d6de012beb301671f1b30127698d7f8cd",
       "bytes": 23578
     },
     "browser/chunk-XTUOD3PW.js": {
@@ -146,9 +146,9 @@
       "sha256": "ff9e0dca4365b7b1581e7275f3c6dbcf1474ffb874d81a3375ecf7a835dbaa6f",
       "bytes": 106
     },
-    "browser/browser-offline-HUHUTJS4.js": {
-      "sha256": "b2070543e6c162232e27884c2d2918150f50e4d788b4a44c38896db6a916ee3e",
-      "bytes": 7200933
+    "browser/browser-offline-2HMHPC26.js": {
+      "sha256": "f2eeeac515ad407e386ca7fd4228174ba9e6a5bb49e9897c178f95e07ffd6af7",
+      "bytes": 7200976
     },
     "browser/recovery-pagination-c898b2432a221525.js": {
       "sha256": "c898b2432a221525bd523d99a8666f562002886ac907d715f3d1687e07c366b6",
@@ -175,7 +175,7 @@
     "lab-loader.js"
   ],
   "preloads": [
-    "browser/application-NFOHTHRB.js",
+    "browser/application-QVSQMYXJ.js",
     "browser/chunk-ANBJGSXB.js",
     "browser/chunk-DXPPFQ5S.js",
     "browser/chunk-WOT6VMZA.js",

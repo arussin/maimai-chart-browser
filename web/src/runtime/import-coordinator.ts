@@ -967,7 +967,7 @@ export class ImportCoordinator {
       if (!isAbort(error) && !committed) {
         if (measured) effects.usage('import_failed', 'report', importFailure(error, stage));
         effects.message('Player data could not be imported', errorMessage(error));
-      }
+      } else if (measured && !committed) effects.usage('import_cancelled', 'report');
     } finally {
       transfer.close();
       this.handoffPending = false;
