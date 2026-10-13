@@ -528,7 +528,7 @@ test("long Japanese Tachi identifiers retain observations without inventing play
 });
 
 async function expectUnclippedDialog(page) {
-  const layout = await page
+  const { selectionMeasurements, ...layout } = await page
     .locator("#player-import-dialog")
     .evaluate((dialog) => {
       const bounds = dialog.getBoundingClientRect();
@@ -550,20 +550,27 @@ async function expectUnclippedDialog(page) {
         .map((node) => node.id || node.textContent);
       const canvas = document.createElement("canvas"),
         context = canvas.getContext("2d");
-      const clippedSelection = controls
+      const selectionMeasurements = controls
         .filter((node) => node.tagName === "SELECT")
-        .some((node) => {
+        .map((node) => {
           const style = getComputedStyle(node);
           context.font = style.font;
-          return (
-            context.measureText(node.selectedOptions[0]?.textContent || "")
-              .width +
+          const text = node.selectedOptions[0]?.textContent || "";
+          return {
+            id: node.id,
+            text,
+            font: style.font,
+            width: node.clientWidth,
+            requiredWidth:
+              context.measureText(text).width +
               parseFloat(style.paddingLeft) +
               parseFloat(style.paddingRight) +
-              20 >
-            node.clientWidth + 1
-          );
+              20,
+          };
         });
+      const clippedSelection = selectionMeasurements.some(
+        ({ requiredWidth, width }) => requiredWidth > width + 1,
+      );
       const overlappingLabels = [
         ...dialog.querySelectorAll(".player-source-fields label"),
       ].some((label) => {
@@ -591,11 +598,12 @@ async function expectUnclippedDialog(page) {
         contained,
         clipped,
         clippedSelection,
+        selectionMeasurements,
         overlappingLabels,
         pageOverflow: document.documentElement.scrollWidth > innerWidth + 1,
       };
     });
-  expect(layout).toEqual({
+  expect(layout, JSON.stringify(selectionMeasurements)).toEqual({
     contained: true,
     clipped: [],
     clippedSelection: false,
@@ -605,14 +613,14 @@ async function expectUnclippedDialog(page) {
 }
 
 for (const locale of ["en", "zh-Hans", "ko", "ja", "id"]) {
-  test(
-    "file controls and preview are translated and unclipped in " + locale,
-    async ({ page }, testInfo) => {
-      await boot(page);
-      const data = await snapshot(page);
-      await page.evaluate((locale) => maimaiI18n.setLocale(locale), locale);
-      for (const width of [280, 320, 430, 1280]) {
+  for (const width of [280, 320, 430, 1280]) {
+    test(
+      `file controls and preview are translated and unclipped in ${locale} at ${width}px`,
+      async ({ page }, testInfo) => {
         await page.setViewportSize({ width, height: 1000 });
+        await boot(page);
+        const data = await snapshot(page);
+        await page.evaluate((locale) => maimaiI18n.setLocale(locale), locale);
         for (const format of [
           "mai-tools",
           "dxrating",
@@ -665,8 +673,8 @@ for (const locale of ["en", "zh-Hans", "ko", "ja", "id"]) {
           .last()
           .click();
         await expect(page.locator("#player-import-dialog")).not.toBeVisible();
-      }
-      expect(await saved(page)).toBeNull();
-    },
-  );
+        expect(await saved(page)).toBeNull();
+      },
+    );
+  }
 }

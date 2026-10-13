@@ -47,6 +47,8 @@ details summary{cursor:pointer;min-height:44px;padding:12px 0}.sources{border-to
 .player-source-fields p {margin:0}
 #player-import-dialog .player-service-body .player-actions button:disabled{background:#f1f5f6;border-color:#d3e0e3;color:#667d83;cursor:default}
 .player-dialog:has(.player-source-options){width:min(480px,calc(100% - 24px));padding:20px}.player-dialog .player-service-toggle{min-height:48px;padding:8px;border:0;border-radius:7px;background:transparent;font-size:14px;font-weight:600}#player-import-dialog .player-service-body .player-actions button{background:#007887;border-color:#007887;color:white}#player-import-dialog .player-source-footer button{background:transparent;color:#15555c;border-color:#abcacf}
+/* Leave room for native select arrows and a dialog scrollbar at narrow widths. */
+@media(max-width:360px){.player-dialog:has(.player-source-options){padding:12px}.player-source-fields select{padding-inline:8px}}
 .player-status small {display:block;overflow-wrap:anywhere}
 .player-dialog a {overflow-wrap:anywhere}
 
