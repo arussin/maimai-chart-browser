@@ -49,7 +49,7 @@
     "src/maimai_intelligence/assets/import-help/README.ko.md": "0c2ecd61b9e5f4af2642f7bba76e38d9665ddaae0ef15a92c54871ae7ae82300",
     "src/maimai_intelligence/assets/import-help/README.md": "0f48fe33e30370ccd863268b0a454e9ac710a32b1db4921adc2e6756fc154dce",
     "src/maimai_intelligence/assets/import-help/README.zh-Hans.md": "fc7cf8161fa13d19f052a5c9b5c66eae05be1b1ee98490e082e4441c9da996cf",
-    "src/maimai_intelligence/assets/song-display-readings.json": "94d944ed0f56d8a36d5565af9893f6701b99666b224a1f7db6e767413b67973c",
+    "src/maimai_intelligence/assets/song-display-readings.json": "71960f736531381708777e1d61f5818f393f7b37dc014abec2c58ff08376a63d",
     "src/maimai_intelligence/assets/locales/card-history.json": "0d706787dad9dbbce0a748b55fe2a89a86661ae0f6cca95fe97c408912ccad36",
     "README.id.md": "f95b7c38bbcec394c785fa97ae4f6168eb9bb01b8516ffa6d194138a6a8e4708",
     "src/maimai_intelligence/assets/import-help/README.id.md": "0fc0a02bec2f1492a058dd86e6364e647d16b88655c5c532980199e2201e064b",
@@ -274,5 +274,12 @@
       "record": "docs/localization-review/remove-whats-new-20261011.json",
       "scope": "Five unused announcement/replay labels and all twenty translated values removed after source-consumer review; remaining UI translations unchanged."
     }
-  ]
+  ],
+  "song_discovery_review": {
+    "date": "2026-10-16",
+    "reviewer": "Codex",
+    "method": "AI linguistic review of five-language static metadata and evidence review of the single English BOGE abbreviation; not native-speaker certification.",
+    "record": "docs/localization-review/song-discovery-20261016.md",
+    "unchanged": "All 321 reviewed reading entries and multilingual search projections."
+  }
 }
