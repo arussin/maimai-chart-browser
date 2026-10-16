@@ -11,7 +11,7 @@ import hashlib
 import json
 import re
 import unicodedata
-from collections import defaultdict
+from collections import Counter, defaultdict
 from dataclasses import dataclass
 from html import escape
 from typing import Any
@@ -22,6 +22,7 @@ from .route_model import valid_permalink_slug
 from .snapshots import canonical
 from .song_catalog import SONG_DIFFICULTIES as ORDER
 from .song_catalog import song_chart_order
+from .song_search import song_presentation_data
 
 ORIGIN = "https://maimai.party"
 WORDS = {
@@ -179,6 +180,67 @@ TITLE_LABELS = {
     "zh-hans": ("无题（有意留空）", "曲名未知"),
     "id": ("Tanpa judul (disengaja)", "Judul tidak tersedia"),
 }
+
+# Static public-document copy follows the same five-language review workflow as
+# WORDS. This line is currently eligible only on English pages; regional search
+# glosses have no community-name publication approval.
+ALTERNATE_NAME_LABELS = {
+    "en": "Also known as",
+    "ja": "別名",
+    "ko": "다른 이름",
+    "zh-hans": "别名",
+    "id": "Nama lain",
+}
+
+
+def _presentation(chart, projection, locale, names):
+    """A regional label never acquires another identity's reviewed name."""
+    row = names.get(chart.get("song_id"), {})
+    if locale != "en" or chart.get("title_state") in {"missing", "intentional_blank"}:
+        return "", []
+    if any(
+        row.get(k) != chart.get(k) or row.get(k) != projection.get(k) for k in ("title", "artist")
+    ):
+        return "", []
+    return row.get("reading", ""), row.get("alternate_names", [])
+
+
+def _secondary(jp, intl, *, tag="p", css="seo-secondary-title", language="ja-Latn"):
+    if not (jp or intl):
+        return ""
+    return _regional(
+        tag,
+        jp,
+        intl,
+        attributes=(
+            f' class="{css}"'
+            + (f' lang="{language}"' if language else "")
+            + f' data-seo-jp-visible="{str(bool(jp)).lower()}" '
+            f'data-seo-intl-visible="{str(bool(intl)).lower()}"' + ("" if jp else " hidden")
+        ),
+    )
+
+
+def _song_description(title, artist, charts, navigation, locale, words):
+    """Use catalog facts; omit unknown values and make no availability claims."""
+    facts = []
+    for chart in charts:
+        if chart.get("difficulty") not in {"MASTER", "RE:MASTER"}:
+            continue
+        projection = _projection(chart, navigation)
+        level = projection.get("level")
+        if level in (None, "", "unknown"):
+            continue
+        label = DIFFICULTIES[locale][ORDER.index(chart["difficulty"])]
+        fact = f"{chart.get('format', '')} {label} {level}".strip()
+        constant = projection.get("chart_constant")
+        if constant not in (None, "", "unknown"):
+            fact += f" ({words['constant']} {constant})"
+        if fact not in facts:
+            facts.append(fact)
+    prefix = title + (f" — {artist}" if artist not in (None, "", "unknown") else "")
+    details = "; ".join(facts) if facts else words["song_description"]
+    return f"{prefix}. maimai {words['charts']}: {details}"
 
 
 def _title(chart, projection, locale, unknown):
@@ -381,6 +443,7 @@ def prepare_seo(
     ledger = json.loads(json.dumps(previous if previous is not None else empty_permalinks()))
     validate_permalinks(ledger)
     navigation = catalog.get("navigation", {}).get("charts", {})
+    names = song_presentation_data()
     songs = defaultdict(list)
     for chart in catalog.get("catalog", []):
         if (
@@ -414,6 +477,7 @@ def prepare_seo(
                     versions[str(version)].add(sid)
     for version in sorted(versions):
         ledger["versions"].setdefault(version, _slug(version, version))
+    title_counts = Counter(charts[0].get("title") for charts in songs.values())
     validate_permalinks(ledger)
     from .song_catalog import prepare_song_catalog, validate_song_binding
 
@@ -447,6 +511,15 @@ def prepare_seo(
             first = charts[0]
             jp, intl = _projection(first, navigation), _projection(first, navigation, True)
             title = _title(first, jp, locale, words["unknown"])
+            reading, alternate_names = _presentation(first, jp, locale, names)
+            intl_reading, intl_alternates = _presentation(first, intl, locale, names)
+            search_title = f"{title} ({reading})" if reading else title
+            page_title = search_title
+            if title_counts[first.get("title")] > 1 and jp.get("artist"):
+                page_title += f" — {jp['artist']}"
+                formats = sorted({c["format"] for c in charts if c.get("format")})
+                if formats:
+                    page_title += " · " + " / ".join(formats)
             browser = "/?" + urlencode(
                 {"view": "catalog", "chart": first["chart_id"], "lang": LOCALES[locale]}
             )
@@ -455,7 +528,16 @@ def prepare_seo(
                 f'<section class="seo-document" data-song-id="{escape(sid, quote=True)}" '
                 f'data-song-binding="{binding_json}" data-catalog-sha256="{catalog_sha}">'
                 + _regional("h1", title, _title(first, intl, locale, words["unknown"]))
+                + _secondary(reading, intl_reading)
             )
+            if alternate_names or intl_alternates:
+                label = ALTERNATE_NAME_LABELS[locale]
+                body += _secondary(
+                    f"{label}: {', '.join(alternate_names)}" if alternate_names else "",
+                    f"{label}: {', '.join(intl_alternates)}" if intl_alternates else "",
+                    css="seo-alternate-names",
+                    language=None,
+                )
             artwork = catalog.get("artwork", {})
             art = artwork.get("songs", {}).get(sid, {})
             regions = art.get("regions", {})
@@ -534,8 +616,10 @@ def prepare_seo(
                 locale,
                 "songs",
                 ledger["songs"][sid],
-                title,
-                f"{title} — {words['song_description']}",
+                f"{page_title} — maimai {words['charts']}",
+                _song_description(
+                    search_title, jp.get("artist"), charts, navigation, locale, words
+                ),
                 body,
                 words,
                 browser_csp,

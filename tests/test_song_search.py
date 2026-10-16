@@ -4,11 +4,52 @@ import shutil
 import subprocess
 import unittest
 from importlib.resources import files
+from unittest.mock import patch
 
-from maimai_intelligence.song_search import display_readings, song_search_script
+from maimai_intelligence.song_search import (
+    _search_sources,
+    display_readings,
+    song_presentation_data,
+    song_search_script,
+)
 
 
 class DisplayReadingsTests(unittest.TestCase):
+    def test_public_names_require_separate_identity_and_evidence_review(self):
+        sources = _search_sources()
+        sid = "song:2d9de697-55ca-472c-80f7-e9fed7c35cef"
+        names = song_presentation_data()
+        self.assertEqual(names[sid]["alternate_names"], ["BOGE"])
+        self.assertEqual(names[sid]["reading"], "")
+        self.assertEqual(
+            names["song:9000aa45-25a5-4847-a6c3-5ee152121826"]["reading"], "Umiyuri Kaiteitan"
+        )
+        self.assertEqual(names["song:39407427-33d2-4c6e-9155-d742d7a3fd6a"]["reading"], "")
+        for key, value in (
+            ("artist", "Wrong artist"),
+            ("song_id", "wrong-id"),
+            ("kind", "translation"),
+            ("review_status", "ai-reviewed"),
+            ("value", "unreviewed nickname"),
+            ("sources", []),
+            ("locales", ["ko"]),
+        ):
+            changed = copy.deepcopy(sources)
+            changed[2]["alternate_names"][0][key] = value
+            with (
+                self.subTest(key=key),
+                patch("maimai_intelligence.song_search._search_sources", return_value=changed),
+            ):
+                with self.assertRaisesRegex(ValueError, "source identity"):
+                    song_presentation_data()
+
+    def test_public_name_review_does_not_modify_browser_search_payload(self):
+        before = song_search_script()
+        sources = _search_sources()
+        sources[2].pop("alternate_names")
+        with patch("maimai_intelligence.song_search._search_sources", return_value=sources):
+            self.assertEqual(song_search_script(), before)
+
     def test_display_excludes_approximations_and_keeps_alias_identity(self):
         def row(title, reading, kind="kana-title"):
             return {
