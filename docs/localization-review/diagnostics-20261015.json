@@ -5,6 +5,12 @@
   "locales": ["en", "zh-Hans", "ko", "ja", "id"],
   "entries": 1,
   "scope": ["Unknown failure"],
+  "invariants": [
+    {
+      "value": "DiagnosticError",
+      "reason": "Reviewed Error.name assignment in the typed diagnostic wrapper and generated Maishift adapter; public dialogs display Error.message through localization, not the class name."
+    }
+  ],
   "checks": [
     "Short fallback for a thrown value that is not an Error during import normalization or encoding.",
     "Translations preserve an unknown error without inventing its cause or exposing the thrown value.",
