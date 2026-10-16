@@ -26,7 +26,7 @@ test('failed query cannot become zero and incomplete current day cannot be reque
 
 test('owner query is read-only, no public endpoint, and failed query is not reported as zero',()=>{
  let command;
- const input=queryDatabase('local_usage',{run:(exe,args)=>{command=args;return {status:0,stdout:JSON.stringify([{success:true,results:[]},{success:true,results:[]}])}}});
+ const input=queryDatabase('local_usage',{run:(exe,args)=>{command=args;return {status:0,stdout:JSON.stringify([{success:true,results:[]},{success:true,results:[]},{success:true,results:[]}])}}});
  assert.equal(input.query_status,'ok');assert.ok(command.includes('--local'));assert.ok(!command.includes('--remote'));
  assert.ok(command.at(-1).startsWith('SELECT '));assert.ok(!command.at(-1).includes('INSERT'));
  assert.throws(()=>queryDatabase('private/path'));assert.throws(()=>queryDatabase('local_usage',{run:()=>({status:1})}));

@@ -6,6 +6,8 @@ import type {
 } from '../runtime/player-session-contracts';
 import type { createPlayerDataCore } from './player-data-core';
 import type { createPlayerMaishift } from './player-maishift';
+import { DiagnosticError, diagnosticError } from '../runtime/diagnostic-error';
+import { sourceRequest, sourceJSON, workerReason } from '../runtime/source-transport';
 interface SavedConnection extends SourceConnection {
   schemaVersion: number;
   region: string;
@@ -159,24 +161,37 @@ export function createPlayerSources(ports: SourcesPorts) {
       : now + AUTO_INTERVAL;
   }
   async function request(url: string, maximum: number, signal: AbortSignal, timeout: number) {
-    const response = await fetch(url, {
-      credentials: 'omit',
-      referrerPolicy: 'no-referrer',
-      cache: 'no-store',
-      redirect: 'error',
-      signal: AbortSignal.any([signal, AbortSignal.timeout(timeout)]),
-    });
+    const { response, bytes } = await sourceRequest(
+      url,
+      {
+        credentials: 'omit',
+        referrerPolicy: 'no-referrer',
+        cache: 'no-store',
+        redirect: 'error',
+      },
+      signal,
+      timeout,
+    );
     if (!response.ok) {
-      const error: Error & { retryAt?: number } = new Error(
+      const error = new DiagnosticError(
         'The public source could not be read. Open the report to use its import or download controls.',
+        response.status === 429
+          ? 'rate_limited'
+          : response.status === 503
+            ? 'upstream_busy'
+            : [401, 403, 404].includes(response.status)
+              ? 'profile_unavailable'
+              : 'unknown',
+        'transport',
       );
       if (response.status === 429 || response.status === 503)
         error.retryAt = retryAfter(response.headers.get('Retry-After'));
       throw error;
     }
-    const size = Number(response.headers.get('Content-Length'));
-    if (size > maximum) throw new Error('The source response exceeds its size limit.');
-    return { response, bytes: await core.bounded(response.body!, maximum) };
+    return {
+      response,
+      bytes: await bytes(maximum, undefined, 'The source response exceeds its size limit.'),
+    };
   }
   async function readReport(
     value: string,
@@ -193,18 +208,33 @@ export function createPlayerSources(ports: SourcesPorts) {
         response.headers.get('Content-Type') || '',
       )
     )
-      throw new Error(
+      throw new DiagnosticError(
         'The source did not return player data. Open the report to sign in or download a player file.',
+        'malformed_response',
+        'response',
       );
     let parsedMeta: unknown;
     try {
       parsedMeta = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(raw));
     } catch {
-      throw new Error('The source did not return valid player data.');
+      throw new DiagnosticError(
+        'The source did not return valid player data.',
+        'malformed_response',
+        'response',
+      );
     }
-    const meta = core.validateOffer(parsedMeta) as PlayerOffer & {
+    let meta: PlayerOffer & {
       object?: { sha256: string; path: string; bytes: number };
     };
+    try {
+      meta = core.validateOffer(parsedMeta);
+    } catch (error) {
+      throw new DiagnosticError(
+        error instanceof Error ? error.message : 'Invalid report data offer.',
+        'contract_changed',
+        'response',
+      );
+    }
     const ref = meta.object,
       prefix = new URL(parsed.manifest).pathname.slice(0, -'latest.json'.length);
     if (
@@ -215,10 +245,12 @@ export function createPlayerSources(ports: SourcesPorts) {
       ref.bytes < 1 ||
       ref.bytes > core.MAX_COMPRESSED
     )
-      throw new Error('Invalid player data reference.');
+      throw new DiagnosticError('Invalid player data reference.', 'contract_changed', 'response');
     if (expectedPlayer && meta.player.key !== expectedPlayer)
-      throw new Error(
+      throw new DiagnosticError(
         'The source now identifies a different player. Import it again to confirm the switch.',
+        'identity',
+        'identity',
       );
     const { bytes } = await request(
       new URL(ref.path, parsed.manifest).href,
@@ -227,9 +259,18 @@ export function createPlayerSources(ports: SourcesPorts) {
       30000,
     );
     if (bytes.length !== ref.bytes || (await core.hash(bytes)) !== ref.sha256)
-      throw new Error('Player file integrity check failed.');
-    const data = await core.decode(bytes),
-      offer = core.offer(data);
+      throw new DiagnosticError('Player file integrity check failed.', 'integrity', 'response');
+    let data: PlayerDataset;
+    try {
+      data = await core.decode(bytes);
+    } catch (error) {
+      throw new DiagnosticError(
+        error instanceof Error ? error.message : 'The source did not return valid player data.',
+        'normalization',
+        'decode',
+      );
+    }
+    const offer = core.offer(data);
     if (
       !Object.entries(offer).every(
         ([key, value]) =>
@@ -237,7 +278,11 @@ export function createPlayerSources(ports: SourcesPorts) {
           core.canonical(value) === core.canonical(meta[key as keyof typeof meta]),
       )
     )
-      throw new Error('The report sent a different dataset from the one offered.');
+      throw new DiagnosticError(
+        'The report sent a different dataset from the one offered.',
+        'snapshot_changed',
+        'identity',
+      );
     signal.throwIfAborted();
     return { data, source: connection(parsed.manifest, data) };
   }
@@ -255,50 +300,83 @@ export function createPlayerSources(ports: SourcesPorts) {
       );
     const adapter = ports.maishift,
       selected = adapter.location(value.url || value.handle, value.region);
-    const response = await fetch('/api/player-import/maishift', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ handle: selected.handle, region: selected.region, manual }),
-      credentials: 'omit',
-      referrerPolicy: 'no-referrer',
-      cache: 'no-store',
-      redirect: 'error',
-      signal: AbortSignal.any([signal, AbortSignal.timeout(45000)]),
-    });
+    const { response, bytes } = await sourceRequest(
+      '/api/player-import/maishift',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ handle: selected.handle, region: selected.region, manual }),
+        credentials: 'omit',
+        referrerPolicy: 'no-referrer',
+        cache: 'no-store',
+        redirect: 'error',
+      },
+      signal,
+      45000,
+      'Maishift could not be read. Your saved data was kept. Try again later or open your public profile.',
+    );
     if (!response.ok) {
-      let regionMismatch = false;
-      if (
-        response.status === 409 &&
-        /^application\/json(?:;|$)/i.test(response.headers.get('Content-Type') || '')
-      )
+      let reason: import('../diagnostic-contract').Reason =
+        response.status === 429 ? 'rate_limited' : 'unknown';
+      if (/^application\/json(?:;|$)/i.test(response.headers.get('Content-Type') || ''))
         try {
-          regionMismatch =
-            JSON.parse(new TextDecoder().decode(await core.bounded(response.body!, 2048))).error ===
-            'region_mismatch';
-        } catch {}
-      const error: Error & { retryAt?: number } = new Error(
-        regionMismatch
+          const value = sourceJSON(await bytes(2048));
+          reason = workerReason(
+            value && typeof value === 'object' && 'error' in value ? value.error : undefined,
+          );
+        } catch (error) {
+          signal.throwIfAborted();
+          if (error instanceof DiagnosticError && [429, 503].includes(response.status))
+            error.retryAt = retryAfter(response.headers.get('Retry-After'));
+          throw error;
+        }
+      const error = new DiagnosticError(
+        reason === 'region_mismatch'
           ? 'Maishift returned a different game region. Try the other region.'
           : 'Maishift could not be read. Your saved data was kept. Try again later or open your public profile.',
+        reason,
+        'response',
       );
       if (response.status === 429 || response.status === 503)
         error.retryAt = retryAfter(response.headers.get('Retry-After'));
       throw error;
     }
-    if (
-      !/^application\/json(?:;|$)/i.test(response.headers.get('Content-Type') || '') ||
-      Number(response.headers.get('Content-Length')) > 4 * 1024 * 1024
-    )
-      throw new Error('Maishift returned an unsupported response. Your saved data was kept.');
-    const raw = await core.bounded(response.body!, 4 * 1024 * 1024);
+    if (!/^application\/json(?:;|$)/i.test(response.headers.get('Content-Type') || ''))
+      throw new DiagnosticError(
+        'Maishift returned an unsupported response. Your saved data was kept.',
+        'malformed_response',
+        'response',
+      );
+    const raw = await bytes(
+      4 * 1024 * 1024,
+      undefined,
+      'Maishift returned an unsupported response. Your saved data was kept.',
+    );
     let envelope: unknown;
     try {
       envelope = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(raw));
     } catch {
-      throw new Error('Maishift returned an unsupported response. Your saved data was kept.');
+      throw new DiagnosticError(
+        'Maishift returned an unsupported response. Your saved data was kept.',
+        'malformed_response',
+        'response',
+      );
     }
-    const result = await adapter.normalize(envelope, selected),
-      data = result.data,
+    let result: Awaited<ReturnType<typeof adapter.normalize>>;
+    try {
+      result = await adapter.normalize(envelope, selected);
+    } catch (error) {
+      signal.throwIfAborted();
+      if (diagnosticError(error)) throw error;
+      throw new DiagnosticError(
+        error instanceof Error
+          ? error.message
+          : 'Maishift returned an unsupported response. Your saved data was kept.',
+        'normalization',
+        'normalize',
+      );
+    }
+    const data = result.data,
       resolved = adapter.location(
         selected.handle,
         (envelope as { identity: { region: string } }).identity.region,
@@ -306,8 +384,10 @@ export function createPlayerSources(ports: SourcesPorts) {
     // Identity is the user-selected provider/region/handle. Profile dates describe
     // records, not account ownership; a normal upload can change createdAt.
     if (expectedPlayer && data.player.key !== expectedPlayer)
-      throw new Error(
+      throw new DiagnosticError(
         'The source now identifies a different player. Import it again to confirm the switch.',
+        'identity',
+        'identity',
       );
     const source: SourceConnection = {
       ...connection(resolved.url, data),

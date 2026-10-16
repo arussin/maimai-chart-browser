@@ -1,6 +1,7 @@
 /** Private read-only presentation of the maintained finite usage contract. */
 import {VERSION, validateRow} from '../web/src/usage-contract.ts';
 import {actionLabels} from './action-labels.mjs';
+import {diagnosticReport} from './diagnostics-report.mjs';
 export const TIMEZONE = 'America/New_York';
 export const dayKey = date => new Intl.DateTimeFormat('en-CA', {timeZone: TIMEZONE, year:'numeric', month:'2-digit', day:'2-digit'}).format(date);
 export const addDay = (day, amount) => new Date(Date.parse(day+'T12:00:00Z')+amount*86400000).toISOString().slice(0,10);
@@ -8,7 +9,7 @@ const validDay = day => typeof day==='string' && /^\d{4}-\d{2}-\d{2}$/.test(day)
 const record = value => value!==null && typeof value==='object' && !Array.isArray(value);
 const keys = (value, expected) => record(value) && Object.keys(value).sort().join(',')===expected.split(',').sort().join(',');
 export function validateExport(input, now=new Date()) {
-  if (!keys(input,'schema_version,query_status,activation,totals,coverage') || input.schema_version!=='usage-export-1' || input.query_status!=='ok' || !validDay(input.activation) || !Array.isArray(input.totals) || !Array.isArray(input.coverage)) throw Error('A successful aggregate export with an activation date is required. Missing data is not zero.');
+  if (!keys(input,'schema_version,query_status,activation,totals,coverage'+(input?.schema_version==='usage-export-2'?',diagnostics':'')) || !['usage-export-1','usage-export-2'].includes(input.schema_version) || input.query_status!=='ok' || !validDay(input.activation) || !Array.isArray(input.totals) || !Array.isArray(input.coverage)||input.schema_version==='usage-export-2'&&!Array.isArray(input.diagnostics)) throw Error('A successful aggregate export with an activation date is required. Missing data is not zero.');
   const today=dayKey(now), seen=new Set(), ledgerSeen=new Set();
   const totals=input.totals.map(row=>{
     if (!keys(row,'day,version,event,page,detail,failure,count') || !validDay(row.day) || row.day<input.activation || row.day>today || row.version!==VERSION || !Number.isSafeInteger(row.count) || row.count<0) throw Error('Invalid or unsupported aggregate row.');
@@ -24,11 +25,12 @@ export function validateExport(input, now=new Date()) {
     return {...row};
   });
   const sum=totals.reduce((n,r)=>n+r.count,0); if(!Number.isSafeInteger(sum)) throw Error('Aggregate sum exceeds safe integer range.');
-  return {schema_version:'usage-export-1',query_status:'ok',activation:input.activation,totals,coverage};
+  return {schema_version:input.schema_version,query_status:'ok',activation:input.activation,totals,coverage,...diagnosticReport(input.diagnostics,now)};
 }
 export function makeDashboardData(input,{capturedAt,now=new Date()}={}) {
   if (!capturedAt || !Number.isFinite(Date.parse(capturedAt)) || new Date(capturedAt).getTime()>now.getTime()+60000) throw Error('A valid capture timestamp is required.');
   const exportData=validateExport(input,now),today=dayKey(now);
+  diagnosticReport(exportData.diagnostics,new Date(capturedAt));
   return {...exportData,schema_version:'usage-dashboard-1',timezone:TIMEZONE,today,captured_at:new Date(capturedAt).toISOString(),action_labels:actionLabels,
     limitations:['Received counts are actions, not unique people or sessions.','Launch-day totals include acceptance checks and one synthetic canary.','Missing coverage is unknown; only a completed day marked complete establishes measured zero.','Owner activity, blocked requests and dropped batches cannot be separated.']};
 }

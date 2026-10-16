@@ -1,3 +1,4 @@
+import { DiagnosticError } from './diagnostic-error';
 /** One bounded reader for all public content references. */
 export interface SingleVerifiedRef {
   path: string;
@@ -58,13 +59,28 @@ export class PublicReader {
   async read(path: string, maximum: number, signal?: AbortSignal): Promise<Uint8Array> {
     const url = new URL(path, this.base);
     if (url.origin !== this.base.origin) throw Error('Invalid public data reference');
-    const response = await fetch(url, {
-      credentials: 'omit',
-      referrerPolicy: 'no-referrer',
-      redirect: 'error',
-      signal,
-    });
-    if (!response.ok || !response.body) throw Error('Research catalog could not be loaded');
+    let response: Response;
+    try {
+      response = await fetch(url, {
+        credentials: 'omit',
+        referrerPolicy: 'no-referrer',
+        redirect: 'error',
+        signal,
+      });
+    } catch {
+      signal?.throwIfAborted();
+      throw new DiagnosticError('Research catalog could not be loaded', 'network', 'transport');
+    }
+    if (!response.ok || !response.body)
+      throw new DiagnosticError(
+        'Research catalog could not be loaded',
+        response.status === 429
+          ? 'rate_limited'
+          : response.status === 503
+            ? 'upstream_busy'
+            : 'network',
+        'transport',
+      );
     const reader = response.body.getReader(),
       chunks: Uint8Array[] = [];
     let size = 0;
@@ -73,12 +89,21 @@ export class PublicReader {
         const { done, value } = await reader.read();
         if (done) break;
         size += value.length;
-        if (size > maximum) throw Error('Research catalog exceeds its size limit');
+        if (size > maximum)
+          throw new DiagnosticError(
+            'Research catalog exceeds its size limit',
+            'oversized_response',
+            'response',
+          );
         chunks.push(value);
       }
     } catch (error) {
-      await reader.cancel();
-      throw error;
+      await reader.cancel().catch(() => {});
+      signal?.throwIfAborted();
+      if (error instanceof DiagnosticError) throw error;
+      throw new DiagnosticError('Research catalog could not be loaded', 'network', 'transport');
+    } finally {
+      reader.releaseLock();
     }
     const bytes = new Uint8Array(size);
     let offset = 0;
@@ -110,10 +135,14 @@ export class PublicReader {
       await Promise.all([consume(), consume()]);
     } else bytes = await this.read(ref.path, ref.bytes, signal);
     if (bytes.length !== ref.bytes || (await sha256(bytes)) !== ref.sha256)
-      throw Error('Public data integrity check failed');
+      throw new DiagnosticError('Public data integrity check failed', 'integrity', 'response');
     return bytes;
   }
 }
 export function decodeJSON<T = unknown>(bytes: Uint8Array): T {
-  return JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes)) as T;
+  try {
+    return JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes)) as T;
+  } catch {
+    throw new DiagnosticError('Invalid public data reference', 'malformed_response', 'decode');
+  }
 }

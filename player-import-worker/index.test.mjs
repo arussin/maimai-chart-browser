@@ -148,10 +148,10 @@ test('size and time bounds cancel streams, and thrown upstream details stay priv
   const controller=new AbortController();let cancelled=false;
   const stream=new ReadableStream({cancel(){cancelled=true;}}),reading=boundedJSON(new Response(stream,{headers:{'Content-Type':'application/json'}}),100,controller.signal);controller.abort();await assert.rejects(reading);assert.equal(cancelled,true);
   await assert.rejects(boundedJSON(new Response('x'.repeat(101),{headers:{'Content-Type':'application/json'}}),100,new AbortController().signal));
-  const s=setup({fetcher:async()=>{throw new Error('secret source URL and player data');}}),r=await s.service.fetch(request(),s.env);assert.equal(await r.text(),'{"error":"source_unavailable"}');
+  const s=setup({fetcher:async()=>{throw new Error('secret source URL and player data');}}),r=await s.service.fetch(request(),s.env);assert.equal(await r.text(),'{"error":"upstream_network"}');
   const slow=setup({timeoutMs:5,fetcher:async(_url,{signal})=>new Promise((_,reject)=>signal.addEventListener('abort',()=>reject(signal.reason)))});
   // A referenced timer keeps Node alive while testing AbortSignal.timeout.
-  const hold=setTimeout(()=>{},1000);try{assert.equal((await slow.service.fetch(request(),slow.env)).status,502);}finally{clearTimeout(hold);}
+  const hold=setTimeout(()=>{},1000);try{const result=await slow.service.fetch(request(),slow.env);assert.equal(result.status,502);assert.deepEqual(await result.json(),{error:'worker_timeout'});}finally{clearTimeout(hold);}
 });
 test('conservative handles and region-specific URLs never infer region from language',()=>{
   for(const suffix of ['', '/', '/home', '/home/'])assert.equal(adapter.location('https://maimai.shiftpsh.com/en/profile/fictional-player'+suffix,'intl').handle,input.handle);

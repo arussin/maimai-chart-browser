@@ -26,7 +26,7 @@
     "src/maimai_intelligence/assets/locales/about.json": "0bc7a173a5f434878ca26e362c9d4d1341d66fe933cc4b43ce11eaa18eaed252",
     "src/maimai_intelligence/assets/locales/analysis.json": "6d11ca6347dbbb2a255588b55cd21b2db566f05a16741725312100d4131aeff6",
     "src/maimai_intelligence/assets/locales/composed.json": "602228d6df4bfe352306c56fee97413782940df51388ebbd2bba5e876354918c",
-    "src/maimai_intelligence/assets/locales/errors.json": "6171073353a5d881728c9a159b56a1c457efe11c9213565b0152d6553e3c1adb",
+    "src/maimai_intelligence/assets/locales/errors.json": "e1558b23ab0eacd4d2246f74aeae6a36c7a73204f2f9eddb01ce1d929d5a28ee",
     "src/maimai_intelligence/assets/locales/invariants.json": "458e3d52902a40e8c649cc8a226b84ec18115f6e3b6e83de734e60c55df9a1e1",
     "src/maimai_intelligence/assets/locales/lessons.json": "002f4515304ae70e5ddc91807649f08428fd85c8c4e7f9f52177864e2654354f",
     "src/maimai_intelligence/assets/locales/messages.json": "36c67c70d240d071e131e173b9e700699234760ca105640b8d5ecf7b9a35274a",
@@ -239,6 +239,11 @@
     }
   ],
   "followups": [
+    {
+      "date": "2026-10-15",
+      "record": "docs/localization-review/diagnostics-20261015.json",
+      "scope": "One unknown-error fallback reviewed in Simplified Chinese, Korean, Japanese and Indonesian in its import-dialog context; English and existing translations unchanged."
+    },
     {
       "date": "2026-10-04",
       "record": "docs/localization-review/card-history-20261004.json",

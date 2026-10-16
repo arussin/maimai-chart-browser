@@ -39,7 +39,13 @@ export const file = (data) => {
   const bytes = encode(data);
   return { size: bytes.length, arrayBuffer: async () => bytes.buffer };
 };
-export function makeSession({ initial = null, source = null, read = null } = {}) {
+export function makeSession({
+  initial = null,
+  source = null,
+  read = null,
+  diagnose,
+  configure,
+} = {}) {
   const calls = {
     begin: 0,
     save: 0,
@@ -146,6 +152,7 @@ export function makeSession({ initial = null, source = null, read = null } = {})
     digest: async () => 'fixture-merged',
   };
   const effects = {
+    diagnose,
     changed: () => {
       calls.changed++;
     },
@@ -182,6 +189,7 @@ export function makeSession({ initial = null, source = null, read = null } = {})
     refreshAllowed: () => true,
     clock: () => 1000000,
   };
+  configure?.(ports);
   const owner = new ImportCoordinator(ports);
   return { owner, ports, calls, state, values, token };
 }

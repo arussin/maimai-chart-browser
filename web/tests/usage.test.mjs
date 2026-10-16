@@ -13,6 +13,9 @@ function fixture({
   dnt = '0',
   enabled = true,
   fail = false,
+  status = 204,
+  receipt = false,
+  timeout = false,
 } = {}) {
   const listeners = {},
     requests = [];
@@ -27,17 +30,88 @@ function fixture({
     navigator: { globalPrivacyControl: gpc, doNotTrack: dnt },
     document: { prerendering: false, addEventListener: (key, fn) => (listeners[key] = fn) },
     TextEncoder,
-    AbortSignal,
+    AbortSignal: timeout
+      ? { timeout: () => AbortSignal.abort(new DOMException('private', 'TimeoutError')) }
+      : AbortSignal,
     clearTimeout() {},
     fetch: async (url, options) => {
       requests.push({ url, options });
       if (fail) throw Error('private network error');
-      return { ok: true };
+      return {
+        status,
+        headers: {
+          get: (key) =>
+            key === 'X-Maimai-Usage-Schema'
+              ? '1,2'
+              : key === 'X-Maimai-Usage-Receipt' && receipt
+                ? 'stored'
+                : null,
+        },
+      };
     },
   });
   const api = evaluateModule(module, context).createUsage();
   return { api, requests, listeners, context };
 }
+const diagnostic = {
+  operation: 'catalog',
+  stage: 'transport',
+  reason: 'network',
+  outcome: 'failed',
+  source: 'none',
+  mode: 'automatic',
+  duration: 'under_1s',
+  instrumentation: 'diagnostics-1',
+  count: 1,
+};
+test('delivery status distinguishes unconfirmed 204, acknowledgement, rejection, unavailable and uncertain transport', async () => {
+  for (const [settings, expected] of [
+    [{}, 'unconfirmed'],
+    [{ receipt: true }, 'recorded'],
+    [{ status: 400 }, 'rejected'],
+    [{ status: 503 }, 'unavailable'],
+    [{ fail: true }, 'network'],
+    [{ fail: true, timeout: true }, 'timeout'],
+  ]) {
+    const f = fixture(settings);
+    f.api.diagnose(diagnostic);
+    await f.api.flush();
+    assert.equal(f.api.delivery().last, expected);
+    assert.equal(f.requests.length, 1);
+    await f.api.flush();
+    assert.equal(f.requests.length, 1);
+    assert.equal(JSON.parse(f.requests[0].options.body).version, 2);
+    assert(Object.isFrozen(f.api.delivery()));
+  }
+});
+test('diagnostics share every privacy gate and local saturation status stays bounded', async () => {
+  for (const settings of [
+    { gpc: true },
+    { dnt: '1' },
+    { enabled: false },
+    { host: 'preview.invalid' },
+  ]) {
+    const f = fixture(settings);
+    f.api.diagnose(diagnostic);
+    await f.api.flush();
+    assert.equal(f.requests.length, 0);
+    assert.equal(f.api.delivery().last, 'disabled');
+  }
+  const f = fixture();
+  f.api.suspend(() => f.api.diagnose(diagnostic));
+  await f.api.flush();
+  assert.equal(f.requests.length, 0);
+  for (let i = 0; i < 2000; i++) f.api.emit('settings_opened');
+  assert.equal(f.api.delivery().saturated, 1000);
+  assert.equal(f.api.delivery().dropped, 1000);
+  await f.api.flush();
+  assert.equal(JSON.parse(f.requests[0].options.body).events[0].count, 100);
+  f.api.disable();
+  assert.equal(f.api.delivery().dropped, 0);
+  f.api.diagnose(diagnostic);
+  await f.api.flush();
+  assert.equal(f.requests.length, 1);
+});
 test('first-party counts are bounded finite data, with no application or persistent access', async () => {
   const { api, requests, listeners } = fixture();
   api.activate('song');

@@ -1,4 +1,5 @@
 import type { createPlayerDataCore } from './player-data-core';
+import { DiagnosticError } from '../runtime/diagnostic-error.ts';
 import type {
   PlayerDataset,
   PlayerIdentity,
@@ -54,7 +55,11 @@ export interface MaishiftPorts {
 export function createPlayerMaishift(ports: MaishiftPorts) {
   const core = ports.playerCore;
   const fail = (): never => {
-    throw new Error('Maishift returned an unsupported response. Your saved data was kept.');
+    throw new DiagnosticError(
+      'Maishift returned an unsupported response. Your saved data was kept.',
+      'contract_changed',
+      'response',
+    );
   };
   // Korean's default links omit the locale. Keep all supported profile tabs and
   // encoded region separators in one parser so location and region hints agree.
@@ -155,6 +160,23 @@ export function createPlayerMaishift(ports: MaishiftPorts) {
       fail();
     const p = envelope.identity,
       c = envelope.coverage;
+    if (object(p) && typeof p.handle === 'string' && p.handle !== selected.handle)
+      throw new DiagnosticError(
+        'Maishift returned an unsupported response. Your saved data was kept.',
+        'identity',
+        'identity',
+      );
+    if (
+      object(p) &&
+      ['intl', 'jp'].includes(p.region) &&
+      selected.region !== 'auto' &&
+      p.region !== selected.region
+    )
+      throw new DiagnosticError(
+        'The profile URL and selected game region do not match.',
+        'region_mismatch',
+        'identity',
+      );
     if (
       !object(p) ||
       p.handle !== selected.handle ||

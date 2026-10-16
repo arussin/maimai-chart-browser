@@ -44,6 +44,7 @@ function commandEnvironment(directory, violationFile) {
     "TEMP",
     "TMP",
     "TMPDIR",
+    "MAIMAI_VALIDATION_DEPENDENCIES",
   ]) {
     if (process.env[key] !== undefined) env[key] = process.env[key];
   }
@@ -54,7 +55,7 @@ function commandEnvironment(directory, violationFile) {
     WRANGLER_SEND_METRICS: "false",
     WRANGLER_LOG_PATH: join(directory, "wrangler.log"),
     XDG_CONFIG_HOME: join(directory, "configuration"),
-    NODE_OPTIONS: `--require "${guard.replaceAll("\\", "/")}"`,
+    NODE_OPTIONS: `--require "${guard.replaceAll("\\", "/")}"`+(process.env.MAIMAI_VALIDATION_DEPENDENCIES?` --import "${new URL('../../tools/validation-dependencies.mjs',import.meta.url).href}"`:''),
     MAIMAI_NETWORK_VIOLATIONS: violationFile,
   };
 }
@@ -123,10 +124,11 @@ test(
 
       mf = localStore(persistTo, database.database_id);
       const db = await mf.getD1Database("USAGE_DB");
-      const schema = await readFile(
+      let schema = await readFile(
         join(root, "migrations", "0001_daily.sql"),
         "utf8",
       );
+      schema+='\n'+await readFile(join(root,'migrations','0003_diagnostics.sql'),'utf8');
       for (const sql of schema
         .replace(/--[^\n]*/g, "")
         .split(";")
