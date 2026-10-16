@@ -2,6 +2,7 @@ import type { PlayerChart, PlayerRecord } from '../domain/player-data';
 import { achievementPalette, achievementSpriteLayout, ratingTier } from './score-export-style';
 import { scoreExportPartners } from './score-export-partners';
 import { loadScoreExportPartnerArtwork } from './score-export-partner-artwork';
+import { DiagnosticError } from '../runtime/diagnostic-error';
 import {
   gradeForAchievement,
   lampLabel,
@@ -12,6 +13,7 @@ import {
 } from '../domain/score-export';
 
 export interface ExportCanvasOptions {
+  artworkFallback?(): void;
   translate(key: string, values?: readonly (string | number)[]): string;
   /** A verified public-artwork projection, never a URL from an imported player file. */
   jacketURL(chart: PlayerChart): string | undefined;
@@ -161,8 +163,22 @@ function surface(document: Document, width: number, height: number) {
   const canvas = document.createElement('canvas');
   canvas.width = width;
   canvas.height = height;
-  const ctx = canvas.getContext('2d');
-  if (!ctx) throw new Error('Image export is unavailable in this browser.');
+  let ctx: CanvasRenderingContext2D | null;
+  try {
+    ctx = canvas.getContext('2d');
+  } catch {
+    throw new DiagnosticError(
+      'Image export is unavailable in this browser.',
+      'canvas_context',
+      'canvas',
+    );
+  }
+  if (!ctx)
+    throw new DiagnosticError(
+      'Image export is unavailable in this browser.',
+      'canvas_context',
+      'canvas',
+    );
   return { canvas, ctx };
 }
 function jacket(
@@ -240,6 +256,7 @@ async function jackets(
     const selectedPartner = scoreExportPartners.some((choice) => choice.key === partnerKey)
       ? 'partner:' + partnerKey
       : undefined;
+    if (!artwork) options.artworkFallback?.();
     if (artwork)
       for (const [key, source] of Object.entries(artwork)) {
         if (key.startsWith('partner:') && key !== selectedPartner) continue;
@@ -247,6 +264,7 @@ async function jackets(
         queue.push({ key: 'art:' + key, source, embedded: true });
       }
   } catch {
+    options.artworkFallback?.();
     /* The original canvas layout remains usable without decorative artwork. */
   } finally {
     window.clearTimeout(timer);
@@ -286,7 +304,11 @@ async function jackets(
   }
   async function load(item: (typeof queue)[number]) {
     const remaining = deadline - Date.now();
-    if (remaining <= 0) return;
+    if (!item.source) return;
+    if (remaining <= 0) {
+      options.artworkFallback?.();
+      return;
+    }
     let url: URL | undefined,
       dataURL = '';
     try {
@@ -308,10 +330,13 @@ async function jackets(
           url.search ||
           url.hash ||
           !/\/media\/[a-f0-9]{64}\.webp$/.test(url.pathname)
-        )
+        ) {
+          options.artworkFallback?.();
           return;
+        }
       }
     } catch {
+      options.artworkFallback?.();
       return;
     }
     const controller = new AbortController();
@@ -376,6 +401,7 @@ async function jackets(
     } catch {
       /* Artwork failure cannot prevent a score export. */
     } finally {
+      if (!loaded.has(item.key)) options.artworkFallback?.();
       window.clearTimeout(timeout);
     }
   }

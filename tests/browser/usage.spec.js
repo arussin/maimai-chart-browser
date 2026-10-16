@@ -33,7 +33,7 @@ test('actual user hooks produce only finite page/actions after GA refusal',async
  const rows=counts.flatMap(b=>b.events);expect(rows.some(r=>r.event==='page_view')).toBe(true);expect(rows.some(r=>r.event==='settings_opened')).toBe(true);expect(rows.some(r=>r.event==='search_used')).toBe(true);
  expect(JSON.stringify(counts)).not.toContain('PRIVATE-SENTINEL');expect(external).toEqual([]);
  expect(await page.evaluate(()=>window.dataLayer)).toBeUndefined();
- for(const row of rows)expect(Object.keys(row).sort()).toEqual(['count','detail','event','failure','page']);
+ for(const batch of counts)for(const row of batch.events)expect(Object.keys(row).sort()).toEqual(batch.version===1?['count','detail','event','failure','page']:['count','duration','instrumentation','mode','operation','outcome','reason','source','stage']);
  const persisted=await page.evaluate(()=>[...Object.keys(localStorage),...Object.keys(sessionStorage)].filter(k=>/usage/i.test(k)));expect(persisted).toEqual([]);
 });
 for(const option of [{gpc:true},{dnt:true},{disabled:true}])test('collection suppression '+JSON.stringify(option),async({page,context})=>{
@@ -70,8 +70,7 @@ test('BPM emits only its finite category and never replays on restore', async ({
   expect(external).toEqual([]);
 });
 
-test('export actions count explicit intent and current outcomes without private values or restored choices',async({page,context})=>{
- const {counts,external}=await hosted(context);
+async function prepareExport(page){
  await page.addInitScript(()=>localStorage.setItem('maimai-chart-sections-v1',JSON.stringify({chart:false,player:false})));
  await page.goto('https://maimai.party/');await expect(page.locator('#catalog-count strong')).toHaveText('6');
  const data=await page.evaluate(async()=>{
@@ -91,6 +90,73 @@ test('export actions count explicit intent and current outcomes without private 
  await page.locator('input[type=file]').setInputFiles({name:'fictional.gz',mimeType:'application/gzip',buffer:gzipSync(Buffer.from(JSON.stringify(data)))});
  await page.locator('#player-import-dialog .player-remember input').uncheck();await page.locator('#player-import-dialog .player-actions button').first().click();
  await expect.poll(()=>page.evaluate(()=>maimaiPersonal.enabled())).toBe(true);
+}
+
+for(const fault of ['renderer_module','canvas_context','preview_preparation','artwork_failed'])test('export diagnostic boundary '+fault,async({page,context})=>{
+ const {counts,external}=await hosted(context);await prepareExport(page);
+ if(fault==='renderer_module')await page.route('**/score-export-canvas-*.js',route=>route.abort());
+ if(fault==='artwork_failed')await page.route('**/score-export-artwork-*.js',route=>route.abort());
+ if(fault==='canvas_context')await page.evaluate(()=>HTMLCanvasElement.prototype.getContext=()=>null);
+ if(fault==='preview_preparation')await page.evaluate(()=>{
+  const decode=HTMLImageElement.prototype.decode;
+  HTMLImageElement.prototype.decode=function(){return this.id==='player-export-preview'?Promise.reject(new Error('PRIVATE-SENTINEL')):decode.call(this);};
+ });
+ await page.locator('#player-export-best50').click();await page.locator('#player-export-generate').click();
+ if(fault==='artwork_failed')await expect(page.locator('#player-export-download')).toBeVisible();
+ else await expect(page.locator('#player-export-status')).toContainText('could not be created');
+ await page.evaluate(()=>maimaiUsage.flush());
+ const rows=counts.filter(b=>b.version===2).flatMap(b=>b.events).filter(r=>r.operation==='image_export');
+ expect(rows.reduce((n,r)=>n+r.count,0)).toBe(1);
+ expect(rows[0]).toMatchObject({reason:fault,outcome:fault==='artwork_failed'?'degraded':'failed'});
+ expect(JSON.stringify(counts)).not.toContain('PRIVATE-SENTINEL');expect(external).toEqual([]);
+});
+
+for(const action of ['close','replace'])test('render '+action+' is a single cancellation or supersession',async({page,context})=>{
+ const {counts}=await hosted(context);await prepareExport(page);
+ await page.evaluate(()=>HTMLCanvasElement.prototype.toBlob=function(callback){window.releaseUsagePNG=()=>callback(null);});
+ await page.locator('#player-export-best50').click();await page.locator('#player-export-generate').click();
+ await page.waitForFunction(()=>!!window.releaseUsagePNG);
+ if(action==='close')await page.keyboard.press('Escape');
+ else await page.evaluate(()=>document.getElementById('player-forget').click());
+ await expect(page.locator('#player-export-dialog')).not.toBeVisible();
+ await page.evaluate(()=>releaseUsagePNG());await page.evaluate(()=>maimaiUsage.flush());
+ const rows=counts.filter(b=>b.version===2).flatMap(b=>b.events).filter(r=>r.operation==='image_export');
+ expect(rows.reduce((n,r)=>n+r.count,0)).toBe(1);expect(rows[0].outcome).toBe(action==='close'?'cancelled':'superseded');
+ expect(counts.flatMap(b=>b.events).some(r=>r.event==='score_export_failed')).toBe(false);
+});
+
+test('comparison exceptions are finite and deliberate same-chart selections are not failures',async({page,context})=>{
+ const {counts}=await hosted(context);await page.goto('https://maimai.party/');await expect(page.locator('#catalog-count strong')).toHaveText('6');
+ await page.locator('#compare-tab').click();
+ const choose=async(side,title)=>{await page.locator('#compare-'+side+'-search').fill(title);await page.locator('#compare-'+side+'-choices [role=option]').first().click();};
+ await choose('left','Fictional study 0');await choose('right','Fictional study 0');await page.evaluate(()=>maimaiUsage.flush());
+ expect(counts.flatMap(b=>b.events).filter(r=>r.operation==='comparison'&&r.outcome==='failed')).toEqual([]);
+ await page.locator('#compare-right-search').fill('Fictional study 1');
+ await page.evaluate(()=>document.getElementById('direct-comparison').replaceChildren=()=>{throw Error('PRIVATE-SENTINEL');});
+ await page.locator('#compare-right-choices [role=option]').first().click();await page.evaluate(()=>maimaiUsage.flush());
+ const rows=counts.flatMap(b=>b.events).filter(r=>r.operation==='comparison');
+ expect(rows.reduce((n,r)=>n+r.count,0)).toBe(1);expect(rows[0]).toMatchObject({reason:'unknown',stage:'compute',outcome:'failed'});
+ expect(JSON.stringify(counts)).not.toContain('PRIVATE-SENTINEL');
+});
+
+test('similar exceptions and empty matches have different outcomes',async({page,context})=>{
+ const {counts}=await hosted(context);await page.addInitScript(()=>localStorage.setItem('maimai-catalog-filters-collapsed','0'));await page.goto('https://maimai.party/');await expect(page.locator('#catalog-count strong')).toHaveText('6');
+ await page.locator('#compare-tab').click();await page.locator('#compare-left-search').fill('Fictional study 0');await page.locator('#compare-left-choices [role=option]').first().click();
+ await page.evaluate(()=>document.getElementById('similar-results').replaceChildren=()=>{throw Error('PRIVATE-SENTINEL');});
+ await page.locator('#find-similar').click();await page.evaluate(()=>maimaiUsage.flush());
+ const rows=counts.flatMap(b=>b.events).filter(r=>r.operation==='similar');
+ expect(rows.reduce((n,r)=>n+r.count,0)).toBe(1);expect(rows[0]).toMatchObject({reason:'unknown',outcome:'failed'});
+ await page.evaluate(()=>delete document.getElementById('similar-results').replaceChildren);
+ await page.locator('#similar-priority').selectOption('measurements');
+ await page.locator('#catalog-tab').click();await page.locator('#filter-bpm-operator').selectOption('lte');await page.locator('#filter-bpm-value').fill('1');await page.locator('#filter-bpm-value').press('Enter');await expect(page.locator('#catalog-count strong')).toHaveText('0');
+ await page.locator('#compare-tab').click();await page.locator('#similar-use-filters').check();await page.locator('#find-similar').click();await page.evaluate(()=>maimaiUsage.flush());
+ expect(counts.flatMap(b=>b.events).some(r=>r.operation==='similar'&&r.outcome==='empty'&&r.reason==='no_matches')).toBe(true);
+ expect(JSON.stringify(counts)).not.toContain('PRIVATE-SENTINEL');
+});
+
+test('export actions count explicit intent and current outcomes without private values or restored choices',async({page,context})=>{
+ const {counts,external}=await hosted(context);
+ await prepareExport(page);
  const flush=()=>page.evaluate(()=>maimaiUsage.flush());
  const amount=(event,detail)=>counts.flatMap(batch=>batch.events).filter(row=>row.event===event&&row.detail===detail).reduce((sum,row)=>sum+row.count,0);
  const generate=async()=>{await page.locator('#player-export-generate').click();await expect(page.locator('#player-export-download')).toBeVisible();};
@@ -121,5 +187,9 @@ test('export actions count explicit intent and current outcomes without private 
  expect(amount('score_export_opened','best50')).toBe(2);expect(amount('score_export_opened','achievement_pb')).toBe(1);expect(amount('score_export_opened','achievement_play')).toBe(1);
  expect(amount('score_export_failed','achievement_play')).toBe(1);expect(amount('score_export_download_clicked','best50')).toBe(1);expect(amount('score_export_download_clicked','achievement_play')).toBe(1);
  expect(amount('score_export_option_changed','partner')).toBe(2);expect(amount('data_action','clear')).toBe(1);expect(amount('data_action','forget')).toBe(0);
+ const diagnostics=counts.filter(b=>b.version===2).flatMap(b=>b.events).filter(r=>r.operation==='image_export');
+ const outcomes=(kind,outcome,reason)=>diagnostics.filter(r=>r.source===kind&&r.outcome===outcome&&(!reason||r.reason===reason)).reduce((n,r)=>n+r.count,0);
+ expect(outcomes('achievement_pb','superseded')).toBe(1);expect(outcomes('achievement_play','failed','png_encoding')).toBe(1);
+ expect(diagnostics.reduce((n,r)=>n+r.count,0)).toBe(5);
  expect(JSON.stringify(counts)).not.toMatch(/PRIVATE-SENTINEL|private-export-chart|private-song|private-source|private-session|kanadera|derakkuma|magical|prismplus/i);expect(external).toEqual([]);
 });

@@ -1,5 +1,9 @@
 /** Owner-report presentation of finite counters; never accept application text here. */
 export const actionLabels = Object.freeze({
+  under_1s: 'Under 1 second',
+  '1_10s': '1–10 seconds',
+  over_10s: 'Over 10 seconds',
+  search_used: 'Search interactions',
   score_export_opened: 'Image exporter opened',
   score_export_option_changed: 'Export option changed',
   score_export_started: 'Create image requested',

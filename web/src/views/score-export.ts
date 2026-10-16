@@ -11,12 +11,16 @@ import type { renderAchievement } from './score-export-canvas';
 import { defaultScoreExportPartner, scoreExportPartners } from './score-export-partners';
 import type { ScoreExportPreferences } from '../runtime/score-export-preferences';
 import type { ScoreExportKind, ScoreExportUsageArguments } from '../usage-contract';
+import type { DiagnosticSink, Reason, Outcome } from '../diagnostic-contract';
+import { beginDiagnostic } from '../runtime/operation-diagnostics';
+import { DiagnosticError } from '../runtime/diagnostic-error';
 
 interface ExportPorts {
   root: HTMLElement;
   localization: TextView;
   preferences: ScoreExportPreferences;
   usage(...args: ScoreExportUsageArguments): void;
+  diagnose?: DiagnosticSink;
   dataset(): PlayerDataset | null;
   playerRating?(): ExportPlayerRating | null;
   resolve(
@@ -50,6 +54,7 @@ export function createScoreExporter(ports: ExportPorts) {
     generation = 0,
     activeRevision: string | null = null;
   let disposeFields = () => {};
+  let rendering: ReturnType<typeof beginDiagnostic> | null = null;
   const make = <K extends keyof HTMLElementTagNameMap>(tag: K, text?: LocalizedText) => {
     const node = document.createElement(tag);
     if (text !== undefined) i18n.text(node, text);
@@ -65,13 +70,15 @@ export function createScoreExporter(ports: ExportPorts) {
     );
     return node.textContent || '';
   };
-  function discard() {
+  function discard(outcome: Outcome = 'superseded') {
+    rendering?.finish(outcome);
+    rendering = null;
     generation++;
     if (imageURL) URL.revokeObjectURL(imageURL);
     imageURL = null;
   }
   dialog.addEventListener('close', () => {
-    discard();
+    discard('cancelled');
     disposeFields();
     disposeFields = () => {};
     activeRevision = null;
@@ -132,38 +139,69 @@ export function createScoreExporter(ports: ExportPorts) {
       download.removeAttribute('href');
       i18n.text(status, '');
     };
-    async function render(create: () => Promise<HTMLCanvasElement>, filename: string) {
+    async function render(
+      create: (fallback: () => void) => Promise<HTMLCanvasElement>,
+      filename: string,
+    ) {
       invalidate();
       const ticket = generation;
       generate.disabled = true;
       i18n.text(status, 'Creating image…');
       ports.usage('score_export_started', kind);
+      const operation = beginDiagnostic(ports.diagnose, 'image_export', kind, 'manual');
+      rendering = operation;
+      let fallback = false,
+        failure: Reason = 'unknown';
+      operation.stage('canvas');
       const current = () =>
         ticket === generation && dialog.open && ports.dataset()?.revision === dataset.revision;
       try {
-        const canvas = await create();
+        const canvas = await create(() => {
+          fallback = true;
+        });
+        if (!current()) {
+          operation.finish('superseded');
+          return;
+        }
+        operation.stage('encode');
+        failure = 'png_encoding';
         const blob = await new Promise<Blob>((resolve, reject) =>
           canvas.toBlob(
             (blob) => (blob ? resolve(blob) : reject(Error('PNG unavailable'))),
             'image/png',
           ),
         );
-        if (!current()) return;
+        if (!current()) {
+          operation.finish('superseded');
+          return;
+        }
+        operation.stage('preview');
+        failure = 'preview_preparation';
         imageURL = URL.createObjectURL(blob);
         // Published pages already allow data images; keep their CSP unchanged.
         preview.src = canvas.toDataURL('image/png');
+        if (preview.decode) await preview.decode();
+        if (!current()) {
+          operation.finish('superseded');
+          return;
+        }
         download.href = imageURL;
         download.download = filename;
         preview.hidden = download.hidden = false;
         i18n.text(status, 'Image ready. Download it or save the preview.');
         download.focus({ preventScroll: true });
         ports.usage('score_export_completed', kind);
-      } catch {
+        operation.finish(fallback ? 'degraded' : 'success', fallback ? 'artwork_failed' : 'none');
+      } catch (error) {
         if (current()) {
+          operation.fail(error, failure);
+          if (imageURL) URL.revokeObjectURL(imageURL);
+          imageURL = null;
           i18n.text(status, 'The image could not be created. Please try again.');
           ports.usage('score_export_failed', kind);
-        }
+        } else operation.finish('superseded');
       } finally {
+        if (rendering === operation) rendering = null;
         if (ticket === generation) generate.disabled = false;
       }
     }
@@ -258,13 +296,14 @@ export function createScoreExporter(ports: ExportPorts) {
     ui.generate.onclick = () => {
       if (!choices.find((choice) => choice.id === select.value)?.supportsBest50) return;
       const model = buildBest50(dataset, select.value, ports.resolve);
-      void ui.render(async () => {
-        const renderer = await import('./score-export-canvas');
+      void ui.render(async (artworkFallback) => {
+        const renderer = await loadRenderer();
         return renderer.renderBest50(document, model, {
           translate,
           jacketURL: ports.jacketURL,
           versionLogoURL: ports.versionLogoURL,
           artworkURL: ports.artworkURL,
+          artworkFallback,
         });
       }, 'maimai-best50.png');
     };
@@ -324,13 +363,14 @@ export function createScoreExporter(ports: ExportPorts) {
     ui.generate.onclick = () => {
       const selectedInput = { ...input };
       void ui.render(
-        async () => {
-          const renderer = await import('./score-export-canvas');
+        async (artworkFallback) => {
+          const renderer = await loadRenderer();
           return renderer.renderAchievement(document, selectedInput, {
             translate,
             jacketURL: ports.jacketURL,
             versionLogoURL: ports.versionLogoURL,
             artworkURL: ports.artworkURL,
+            artworkFallback,
           });
         },
         'maimai-' +
@@ -347,7 +387,21 @@ export function createScoreExporter(ports: ExportPorts) {
     best50,
     achievement,
     changed() {
-      if (dialog.open && activeRevision !== ports.dataset()?.revision) dialog.close();
+      if (dialog.open && activeRevision !== ports.dataset()?.revision) {
+        rendering?.finish('superseded');
+        dialog.close();
+      }
     },
   };
+}
+async function loadRenderer() {
+  try {
+    return await import('./score-export-canvas');
+  } catch {
+    throw new DiagnosticError(
+      'The image could not be created. Please try again.',
+      'renderer_module',
+      'renderer',
+    );
+  }
 }

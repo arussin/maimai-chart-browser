@@ -21,6 +21,38 @@ async function importReport(page,remember=true){await openImport(page);await pag
 async function saved(page){return page.evaluate(()=>maimaiPlayerStorage.read());}
 async function age(page){await page.evaluate(async()=>{const db=await new Promise(resolve=>{const q=indexedDB.open('maimai-player-data',2);q.onsuccess=()=>resolve(q.result);});await new Promise((resolve,reject)=>{const t=db.transaction('datasets','readwrite'),s=t.objectStore('datasets'),q=s.get('active');q.onsuccess=()=>s.put({...q.result,source:{...q.result.source,lastAttempt:0}},'active');t.oncomplete=resolve;t.onabort=reject;});db.close();});}
 
+for(const [locale,message] of Object.entries({en:'Unknown failure','zh-Hans':'未知错误',ko:'알 수 없는 오류',ja:'不明なエラー',id:'Kesalahan tidak diketahui'}))test('unknown import failure is localized and preserves saved data: '+locale,async({page},testInfo)=>{
+  await boot(page);
+  const data=await fixture(page),upload={name:'fictional.gz',mimeType:'application/gzip',buffer:gzipSync(Buffer.from(JSON.stringify(data)))};
+  await page.locator('input[type=file]').setInputFiles(upload);
+  await page.locator('#player-import-dialog .player-remember input').check();
+  await page.locator('#player-import-dialog .player-actions button').first().click();
+  await expect.poll(async()=>(await saved(page)).active?.revision).toBe(data.revision);
+  const before=await saved(page);
+  await page.evaluate(locale=>{
+    maimaiI18n.setLocale(locale);
+    window.CompressionStream=class{constructor(){throw {private:'PRIVATE-SENTINEL'};}};
+  },locale);
+  await page.locator('input[type=file]').setInputFiles(upload);
+  await page.locator('#player-import-dialog .player-actions button').first().click();
+  const dialog=page.locator('#player-import-dialog'),body=page.locator('#player-message-body');
+  await expect(body).toHaveText(message);
+  await expect(dialog).not.toContainText('PRIVATE-SENTINEL');
+  for(const width of [320,430,1280]){
+    await page.setViewportSize({width,height:932});
+    const layout=await dialog.evaluate(root=>{
+      const bounds=root.getBoundingClientRect(),body=root.querySelector('#player-message-body'),button=root.querySelector('.player-message-actions button');
+      const rects=[body,button].map(n=>n.getBoundingClientRect());
+      return {contained:rects.every(r=>r.left>=bounds.left&&r.right<=bounds.right&&r.top>=bounds.top&&r.bottom<=bounds.bottom),clipped:[body,button].some(n=>n.scrollWidth>n.clientWidth+1||n.scrollHeight>n.clientHeight+1),overlap:rects[0].bottom>rects[1].top,overflow:document.documentElement.scrollWidth>innerWidth+1};
+    });
+    expect(layout).toEqual({contained:true,clipped:false,overlap:false,overflow:false});
+    if(width===320)await page.screenshot({path:testInfo.outputPath('localized-fallback.png')});
+  }
+  const after=await saved(page);
+  expect(after.active).toEqual(before.active);
+  expect(await page.evaluate(()=>maimaiPersonal.enabled())).toBe(true);
+});
+
 test('source selection makes no requests and blocked Maishift tells the truth',async({page},testInfo)=>{
   await boot(page);let requests=0;page.on('request',r=>{if(r.url().includes('shiftpsh')||r.url().includes('public-report'))requests++;});await openImport(page);
   await expect(page.getByRole('radio')).toHaveCount(3);await expect(page.getByLabel('Upload a file',{exact:true})).toBeChecked();

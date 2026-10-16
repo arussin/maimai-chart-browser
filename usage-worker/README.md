@@ -53,7 +53,7 @@ After building, run from the disposable usage-worker directory:
     node report.mjs --input synthetic-export.json --output C:\DevCache\path\usage-report
     node report.mjs --database maimai-usage-local --persist-to C:\DevCache\path\local-state --output C:\DevCache\path\usage-report
 
-The second form issues exactly two read-only SELECTs through Wrangler. It defaults to local. The --remote flag must be explicitly supplied by the owner after production setup review. Optional --from/--to select completed New York dates; the default is 30 completed days. --activated records the owner-supplied activation date. Reports include JSON, Markdown and CSV; JSON/Markdown carry coverage and limitations; a companion `.coverage.csv` preserves activation, daily UTC boundaries, and unknown versus measured-zero days. Query failure is an error, never a zero report.
+The second form issues exactly three read-only SELECTs through Wrangler. It defaults to local. The --remote flag must be explicitly supplied by the owner after production setup review. Optional --from/--to select completed New York dates; the default is 30 completed days. --activated records the owner-supplied activation date. Reports include JSON, Markdown and CSV; JSON/Markdown carry coverage and limitations; a companion `.coverage.csv` preserves activation, daily UTC boundaries, and unknown versus measured-zero days. Query failure is an error, never a zero report.
 
 ## Separate staging adapter
 
@@ -177,3 +177,11 @@ This crosses the protected security boundary and needs the security-sensitive / 
 Prepare a reviewed production config separately after the full SEO+coverage+usage candidate passes. Do not launch SEO alone or claim collection is active until the deployed browser, aggregate database and owner report are verified together with an approved non-personal canary. Use the independent kills for emergency degradation, then explicitly report the combined launch as degraded. Rollback restores the previous deployment and never deletes aggregate totals.
 
 References: https://developers.cloudflare.com/d1/worker-api/d1-database/#batch
+
+## Diagnostic outcomes
+
+The additive version-2 contract, local delivery status, compatibility order and
+pre-connector cherry-pick instructions are in [DIAGNOSTIC_LOGGING.md](../docs/DIAGNOSTIC_LOGGING.md).
+Version-1 action rows remain supported. Search counts mean search interactions.
+The third SELECT reads finite diagnostic aggregates and server receipt times;
+a receipt proves a past write only, and diagnostic coverage remains incomplete.

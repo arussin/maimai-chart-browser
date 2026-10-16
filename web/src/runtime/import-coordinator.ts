@@ -9,6 +9,9 @@ import type {
   SessionNotification,
 } from './player-session-contracts';
 import { importTime, errorMessage, isAbort } from './player-session-contracts';
+import { beginDiagnostic } from './operation-diagnostics';
+import { DiagnosticError, storageReason, diagnosticStep } from './diagnostic-error';
+import { observeStorage } from './storage-diagnostics';
 /** Sole owner of player readiness and transaction state; DOM and transport are ports. */
 export class ImportCoordinator {
   private revision = 0;
@@ -26,6 +29,7 @@ export class ImportCoordinator {
   private handoffPending = false;
   readonly ready: Promise<void>;
   constructor(private readonly ports: SessionPorts) {
+    this.ports = { ...ports, storage: observeStorage(ports.storage, ports.effects.diagnose) };
     this.ready = this.load();
   }
   get generation() {
@@ -81,7 +85,11 @@ export class ImportCoordinator {
   private clearTab() {
     try {
       this.ports.temporary.removeItem(this.ports.key('maimai-player-session'));
-    } catch {}
+    } catch (error) {
+      const operation = beginDiagnostic(this.ports.effects.diagnose, 'storage', 'temporary');
+      operation.stage('commit');
+      operation.fail(error, storageReason(error));
+    }
   }
   private saveTab(
     bytes: Uint8Array,
@@ -89,6 +97,8 @@ export class ImportCoordinator {
     profileRating: number | null = null,
     lastImportedAt: number | null = null,
   ) {
+    const operation = beginDiagnostic(this.ports.effects.diagnose, 'storage', 'temporary');
+    operation.stage('commit');
     let text = '';
     for (let i = 0; i < bytes.length; i += 32768)
       text += String.fromCharCode(...bytes.subarray(i, i + 32768));
@@ -102,9 +112,13 @@ export class ImportCoordinator {
           lastImportedAt,
         }),
       );
-    } catch {
-      throw new Error(
+      operation.finish('success');
+    } catch (error) {
+      operation.fail(error, storageReason(error));
+      throw new DiagnosticError(
         'This tab’s temporary storage is full or unavailable. Nothing was replaced. You can choose “Remember on this device” to use device storage.',
+        storageReason(error),
+        'commit',
       );
     }
   }
@@ -129,6 +143,8 @@ export class ImportCoordinator {
   }
   private async load() {
     const { core, storage, sources, temporary, key, effects } = this.ports;
+    const persistent = beginDiagnostic(effects.diagnose, 'restore', 'persistent');
+    persistent.stage('read');
     let failed = false,
       saved;
     try {
@@ -136,12 +152,17 @@ export class ImportCoordinator {
       saved = state.active;
       this.token = state.token;
       this.savedRevision = state.token.revision;
-    } catch {
+    } catch (error) {
+      persistent.fail(error, 'storage_unavailable');
       failed = true;
     }
+    const tab = beginDiagnostic(effects.diagnose, 'restore', 'temporary');
+    let restore = tab;
+    restore.stage('read');
     try {
       let temporaryValue = temporary.getItem(key('maimai-player-session'));
       if (temporaryValue) {
+        restore.stage('decode');
         if (temporaryValue.length > Math.ceil((core.MAX_COMPRESSED * 4) / 3) + 256)
           throw new Error('Oversized temporary data');
         const entry: {
@@ -159,9 +180,11 @@ export class ImportCoordinator {
           this.clearTab();
           temporaryValue = null;
         } else {
-          this.data = await core.reconcile(
-            await core.decode(Uint8Array.from(atob(entry.bytes), (c) => c.charCodeAt(0))),
+          const decoded = await core.decode(
+            Uint8Array.from(atob(entry.bytes), (c) => c.charCodeAt(0)),
           );
+          restore.stage('reconcile');
+          this.data = await core.reconcile(decoded);
           this.importedAt = importTime(entry.lastImportedAt);
           if (
             this.data.player.provider === 'maishift' &&
@@ -173,20 +196,36 @@ export class ImportCoordinator {
             this.rating = entry.profileRating;
         }
       }
+      tab.finish(temporaryValue ? 'success' : 'unchanged');
       if (!temporaryValue && saved) {
-        this.data = await core.reconcile(await core.decode(saved.bytes));
+        restore = persistent;
+        restore.stage('decode');
+        const decoded = await core.decode(saved.bytes);
+        restore.stage('reconcile');
+        this.data = await core.reconcile(decoded);
         this.persistent = true;
         try {
           this.connection = sources.validateSource(saved.source ?? null, this.data.player.key);
           this.rating =
             this.connection?.type === 'maishift' ? (this.connection.profileRating ?? null) : null;
         } catch {
+          restore.stage('identity');
+          restore.finish('degraded', 'identity');
           this.connection = null;
         }
         this.importedAt =
           importTime(saved.lastImportedAt) ?? importTime(this.connection?.lastSuccess);
       }
-    } catch {
+      persistent.finish(temporaryValue ? 'skipped' : saved ? 'success' : 'unchanged');
+    } catch (error) {
+      restore.fail(
+        error,
+        error instanceof DOMException &&
+          ['SecurityError', 'NotAllowedError', 'QuotaExceededError'].includes(error.name)
+          ? storageReason(error)
+          : 'saved_malformed',
+      );
+      if (restore === tab) persistent.finish('skipped');
       failed = true;
     }
     effects.changed();
@@ -200,11 +239,13 @@ export class ImportCoordinator {
       expected = this.revision,
       automatic = false,
       lease = null,
+      onCommitted,
     }: {
       connection?: SourceConnection | null;
       expected?: number;
       automatic?: boolean;
       lease?: string | null;
+      onCommitted?: () => void;
     } = {},
   ) {
     const { core, storage, effects } = this.ports;
@@ -227,24 +268,31 @@ export class ImportCoordinator {
         const { revision, ...body } = data;
         data.revision = await core.digest(body);
       } else if (core.offer(data).capturedAt <= core.offer(this.data).capturedAt)
-        throw new Error(
+        throw new DiagnosticError(
           'Maishift changed records without a newer source timestamp. Your saved data was kept.',
+          'snapshot_changed',
+          'normalize',
         );
     }
     const next =
       previous?.player.key === data.player.key
-        ? await core.merge(previous, data)
-        : await core.reconcile(data);
+        ? await diagnosticStep(() => core.merge(previous!, data), 'normalization', 'reconcile')
+        : await diagnosticStep(() => core.reconcile(data), 'normalization', 'reconcile');
     if (connection && core.offer(data).capturedAt >= core.offer(next).capturedAt) {
       next.player = structuredClone(data.player);
       const { revision, ...body } = next;
       next.revision = await core.digest(body);
     }
-    const bytes = await core.encode(next);
+    const bytes = await diagnosticStep(() => core.encode(next), 'normalization', 'encode');
     this.assert(expected);
     const importedAt = this.now();
     if (remember) {
-      if (!this.token) throw new Error('Device storage is unavailable.');
+      if (!this.token)
+        throw new DiagnosticError(
+          'Device storage is unavailable.',
+          'storage_unavailable',
+          'commit',
+        );
       const token = await storage.save(
         {
           revision: next.revision,
@@ -255,6 +303,8 @@ export class ImportCoordinator {
         this.token,
         lease,
       );
+      onCommitted?.();
+      onCommitted = undefined;
       this.assert(expected);
       this.token = token;
       this.savedRevision = token.revision;
@@ -286,6 +336,7 @@ export class ImportCoordinator {
         );
     }
     this.data = next;
+    onCommitted?.();
     this.importedAt = importedAt;
     this.rating = connection?.type === 'maishift' ? (connection.profileRating ?? null) : null;
     this.persistent = remember;
@@ -368,6 +419,9 @@ export class ImportCoordinator {
   async importFile(file: { size: number; arrayBuffer(): Promise<ArrayBuffer> }) {
     if (this.busy) return;
     const { core, effects } = this.ports;
+    const operation = beginDiagnostic(effects.diagnose, 'import', 'file', 'manual');
+    let committed = false;
+    operation.stage('read');
     effects.usage('import_started', 'file');
     this.importing = true;
     let expected: number | undefined = this.revision + 1,
@@ -375,9 +429,11 @@ export class ImportCoordinator {
     try {
       expected = await this.begin();
       stage = 'invalid';
+      operation.stage('decode');
       if (file.size > core.MAX_COMPRESSED) throw new Error('Player file exceeds 32 MiB.');
       const data = await core.decode(await file.arrayBuffer());
       this.assert(expected);
+      operation.stage('reconcile');
       const choice = await effects.ask(
         core.offer(await core.reconcile(data)),
         {
@@ -387,13 +443,25 @@ export class ImportCoordinator {
       );
       if (choice.accept) {
         stage = 'storage';
+        operation.stage('commit');
         await this.commit(data, choice.remember, {
           expected,
+          onCommitted: () => {
+            committed = true;
+            operation.finish('success');
+            effects.usage('import_completed', 'file');
+          },
         });
-        effects.usage('import_completed', 'file');
-      } else effects.usage('import_cancelled', 'file');
+      } else {
+        operation.finish('cancelled');
+        effects.usage('import_cancelled', 'file');
+      }
     } catch (error) {
-      if (!isAbort(error)) {
+      if (!committed) {
+        if (isAbort(error) || expected !== this.revision) operation.finish('superseded');
+        else operation.fail(error, stage === 'storage' ? 'storage_unavailable' : 'normalization');
+      }
+      if (!isAbort(error) && !committed && expected === this.revision) {
         effects.usage('import_failed', 'file', stage);
         effects.message('Player data could not be imported', errorMessage(error));
       }
@@ -428,6 +496,9 @@ export class ImportCoordinator {
       return;
     }
     const method = parsed.type === 'maishift' ? 'maishift' : 'report';
+    const operation = beginDiagnostic(effects.diagnose, 'import', method, 'manual');
+    let committed = false;
+    operation.stage('read');
     effects.usage('import_started', method);
     this.importing = true;
     let expected: number | undefined = this.revision + 1,
@@ -441,6 +512,7 @@ export class ImportCoordinator {
         if (expected === this.revision) {
           if (!cancelled) {
             cancelled = true;
+            operation.finish('cancelled');
             effects.usage('import_cancelled', method);
           }
           this.cancel();
@@ -449,6 +521,7 @@ export class ImportCoordinator {
       let result;
       try {
         reading = true;
+        operation.stage('transport');
         result = await sources.readSource(parsed, {
           signal: this.signal(),
         });
@@ -457,6 +530,7 @@ export class ImportCoordinator {
         cleanup();
       }
       this.assert(expected);
+      operation.stage('reconcile');
       const choice = await effects.ask(
         core.offer(await core.reconcile(result.data)),
         {
@@ -469,14 +543,31 @@ export class ImportCoordinator {
       );
       if (choice.accept) {
         stage = 'storage';
+        operation.stage('commit');
         await this.commit(result.data, choice.remember, {
           connection: result.source,
           expected,
+          onCommitted: () => {
+            committed = true;
+            operation.finish('success');
+            effects.usage('import_completed', method);
+          },
         });
-        effects.usage('import_completed', method);
-      } else effects.usage('import_cancelled', method);
+      } else {
+        operation.finish('cancelled');
+        effects.usage('import_cancelled', method);
+      }
     } catch (error) {
-      if (!isAbort(error)) {
+      if (!committed) {
+        if (isAbort(error) || expected !== this.revision)
+          operation.finish(cancelled ? 'cancelled' : 'superseded');
+        else
+          operation.fail(
+            error,
+            reading ? 'unknown' : stage === 'storage' ? 'storage_unavailable' : 'normalization',
+          );
+      }
+      if (!isAbort(error) && !committed && expected === this.revision) {
         effects.usage('import_failed', method, reading ? 'unavailable' : stage);
         if (reading && parsed.type !== 'maishift') effects.recovery(recovery!);
         else effects.message('Player data could not be imported', errorMessage(error));
@@ -502,11 +593,19 @@ export class ImportCoordinator {
     this.checking = true;
     const expected = this.revision;
     const { storage, sources, core, effects } = this.ports;
+    const operation = beginDiagnostic(
+      effects.diagnose,
+      'refresh',
+      this.connection.type,
+      manual ? 'manual' : 'automatic',
+    );
+    operation.stage('read');
     let lease: Awaited<ReturnType<typeof storage.claim>> = null;
     try {
       lease = await storage.claim(this.token!, manual);
       this.assert(expected);
       if (!lease) {
+        operation.finish('skipped', 'cooldown');
         if (manual) {
           this.refreshMessage = 'Please wait before refreshing again.';
           effects.changed(false);
@@ -517,12 +616,14 @@ export class ImportCoordinator {
       this.pending = new AbortController();
       this.refreshMessage = 'Checking for updated player data…';
       effects.changed(false);
+      operation.stage('transport');
       const result = await sources.readSource(this.connection, {
         signal: this.signal(),
         expectedPlayer: this.data!.player.key,
         manual,
       });
       this.assert(expected);
+      operation.stage('commit');
       const now = this.now();
       const updated = {
         ...this.connection,
@@ -544,6 +645,7 @@ export class ImportCoordinator {
             lastChecked: now,
             retryAt: null,
           })) as SourceConnection;
+          operation.finish('unchanged', 'older_snapshot');
           this.assert(expected);
           this.connection = connection;
         } else {
@@ -572,6 +674,7 @@ export class ImportCoordinator {
             this.token!,
             lease.id,
           );
+          operation.finish('unchanged');
           this.assert(expected);
           this.token = token;
           this.connection = checked;
@@ -586,11 +689,14 @@ export class ImportCoordinator {
           expected,
           automatic: true,
           lease: lease.id,
+          onCommitted: () => operation.finish('success'),
         });
       this.refreshMessage = older
         ? 'The source returned older data. Your saved data was kept.'
         : '';
     } catch (error) {
+      if (expected !== this.revision || isAbort(error)) operation.finish('superseded');
+      else operation.fail(error);
       if (expected === this.revision && !isAbort(error)) {
         this.refreshMessage = 'Could not refresh — showing your saved data';
         if (lease)
@@ -641,13 +747,17 @@ export class ImportCoordinator {
       effects.changed(update.kind === 'cleared');
     }
     await this.ready;
+    const operation = beginDiagnostic(effects.diagnose, 'restore', 'persistent');
+    operation.stage('read');
     try {
       const state = await storage.read();
       if (
         state.token.epoch === (this.token?.epoch ?? 0) &&
         state.token.version <= (this.token?.version ?? 0)
-      )
+      ) {
+        operation.finish('unchanged');
         return;
+      }
       const forgotten = state.token.epoch !== (this.token?.epoch ?? 0),
         cleared = (state.control.clearedEpoch ?? 0) > (this.token?.epoch ?? 0),
         wasRemembered = this.persistent;
@@ -662,9 +772,13 @@ export class ImportCoordinator {
         this.refreshMessage =
           'The saved profile and connection were removed. You can keep viewing these scores in this tab; automatic refresh is off.';
       } else if (wasRemembered && state.active && update.kind === 'saved') {
+        operation.stage('decode');
         const expected = this.revision,
-          data = await core.reconcile(await core.decode(state.active.bytes));
+          decoded = await core.decode(state.active.bytes);
+        operation.stage('reconcile');
+        const data = await core.reconcile(decoded);
         this.assert(expected);
+        operation.stage('identity');
         this.data = data;
         this.connection = sources.validateSource(state.active.source ?? null, data.player.key);
         this.rating =
@@ -673,7 +787,10 @@ export class ImportCoordinator {
           importTime(state.active.lastImportedAt) ?? importTime(this.connection?.lastSuccess);
       }
       effects.changed(cleared || update.kind !== 'invalidate');
-    } catch {
+      operation.finish('success');
+    } catch (error) {
+      if (isAbort(error)) operation.finish('superseded');
+      else operation.fail(error, 'saved_malformed');
       /* A failed notification never replaces the current in-memory data. */
     }
   }
@@ -685,6 +802,9 @@ export class ImportCoordinator {
   }
   async handoff(rawOffer: unknown, stale: boolean, transfer: HandoffTransfer) {
     const { core, effects } = this.ports;
+    const operation = beginDiagnostic(effects.diagnose, 'import', 'report', 'manual');
+    let committed = false;
+    operation.stage('read');
     let ownsImport = false,
       expected: number | undefined,
       measured = false,
@@ -696,11 +816,13 @@ export class ImportCoordinator {
       ownsImport = true;
       expected = this.revision + 1;
       expected = await this.begin();
+      operation.stage('decode');
       const offer = core.validateOffer(rawOffer);
       if (this.data && !core.needsUpdate(this.data, offer)) {
         effects.show();
         effects.changed();
         transfer.send('reused');
+        operation.finish('unchanged');
         this.importing = false;
         return;
       }
@@ -715,6 +837,7 @@ export class ImportCoordinator {
         this.signal(),
       );
       if (!choice.accept) {
+        operation.finish('cancelled');
         effects.usage('import_cancelled', 'report');
         effects.hide();
         effects.changed();
@@ -723,8 +846,10 @@ export class ImportCoordinator {
         return;
       }
       stage = 'unavailable';
+      operation.stage('transport');
       const bytes = await transfer.read(this.signal());
       stage = 'invalid';
+      operation.stage('decode');
       this.assert(expected);
       const data = await core.decode(bytes);
       const received = core.offer(data);
@@ -737,14 +862,31 @@ export class ImportCoordinator {
       )
         throw new Error('The report sent a different dataset from the one offered.');
       stage = 'storage';
+      operation.stage('commit');
       await this.commit(data, choice.remember, {
         expected,
+        onCommitted: () => {
+          committed = true;
+          operation.finish('success');
+          effects.usage('import_completed', 'report');
+        },
       });
-      effects.usage('import_completed', 'report');
       transfer.send('imported');
     } catch (error) {
+      if (!committed) {
+        if (isAbort(error)) operation.finish('cancelled');
+        else
+          operation.fail(
+            error,
+            stage === 'storage'
+              ? 'storage_unavailable'
+              : stage === 'invalid'
+                ? 'normalization'
+                : 'unknown',
+          );
+      }
       transfer.send('error');
-      if (!isAbort(error)) {
+      if (!isAbort(error) && !committed && expected === this.revision) {
         if (measured) effects.usage('import_failed', 'report', stage);
         effects.message('Player data could not be imported', errorMessage(error));
       }

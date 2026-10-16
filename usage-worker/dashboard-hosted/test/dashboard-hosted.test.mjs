@@ -41,7 +41,7 @@ function dbFixture(){
  let count=0;const statements=[];
  return {get reads(){return count},statements,
   prepare(sql){statements.push(sql);return {sql}},
-  async batch(){count++;return [{success:true,results:[{day:'2026-10-03',version:1,event:'page_view',page:'charts',detail:'',failure:'',count}]},{success:true,results:[]}]},
+  async batch(){count++;return [{success:true,results:[{day:'2026-10-03',version:1,event:'page_view',page:'charts',detail:'',failure:'',count}]},{success:true,results:[]},{success:true,results:[]}]},
  };
 }
 const assets={

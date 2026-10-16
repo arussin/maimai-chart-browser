@@ -111,6 +111,7 @@ export function createPlayerData(ports: PersonalPorts) {
       navigator.onLine &&
       !root.querySelector('dialog[open]'),
     effects: {
+      diagnose: ports.usage.diagnose,
       changed,
       show: () => {
         visible = true;
@@ -201,6 +202,7 @@ export function createPlayerData(ports: PersonalPorts) {
     root,
     localization: i18n,
     preferences: createScoreExportPreferences({
+      diagnose: ports.usage.diagnose,
       versionIDs: knownScoreExportVersionIDs(),
       partnerKeys: [
         defaultScoreExportPartner,
@@ -208,6 +210,7 @@ export function createPlayerData(ports: PersonalPorts) {
       ],
     }),
     usage: (...args) => usage(...args),
+    diagnose: ports.usage.diagnose,
     dataset: () => (visible ? player.active : null),
     playerRating: () => {
       const data = visible ? player.active : null;

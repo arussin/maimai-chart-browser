@@ -32,3 +32,9 @@ The community badge and Tidbyt traffic Worker share the identified-automation po
 Native dashboard charts labeled **Filtered** use the corresponding exclusions. On the traffic dashboard these cover visit and request totals, their trends, and visit breakdowns by country and device. The companion dashboard includes a filtered HTTP visit counter and whole-site trend. Charts labeled **All traffic** retain operational diagnostics, including errors, cache status, bandwidth and security actions. Charts labeled **Browser beacon** retain their RUM scope and are a separate measurement; neither group should be compared directly with the badge or Tidbyt visit count. The general query templates do not add automation exclusions automatically.
 
 Compare filtered visits using the same exact hostname and start/end timestamps. The badge uses a cached rolling 30-day snapshot, while Tidbyt presents New York calendar-day buckets; the current day is partial. Native dashboard links can select a rolling 30-day window, and changing the window changes the total. Filtering analytics does not block requests or prevent search-engine indexing. No dashboard identifiers, personal-site topology or private verification snapshots are required by this guide.
+
+Diagnostic operation outcomes and delivery limitations are documented in
+[DIAGNOSTIC_LOGGING.md](DIAGNOSTIC_LOGGING.md). Existing search counts are search
+interactions, not completed searches; chart-open and download-click counts do not
+prove evidence loading or a completed file save. Historical unavailable rows
+retain their original meaning.

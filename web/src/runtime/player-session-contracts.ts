@@ -1,5 +1,6 @@
 import type { PlayerSource, PlayerStorage, StoreToken } from '../views/player-storage';
 import type { PlayerIdentity, PlayerDataset, PlayerRecord } from '../domain/player-data';
+import type { DiagnosticSink } from '../diagnostic-contract';
 export type { PlayerIdentity, PlayerDataset } from '../domain/player-data';
 export interface PlayerOffer {
   format: string;
@@ -96,6 +97,7 @@ export interface SessionNotification {
   version?: number;
 }
 export interface SessionEffects {
+  diagnose?: DiagnosticSink;
   changed(redraw?: boolean): void;
   invalidate(): void;
   show(): void;

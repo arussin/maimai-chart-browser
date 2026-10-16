@@ -66,6 +66,12 @@ function render(){
  el('score-exports-empty').hidden=exports.length>0;
  el('row-count').textContent=visibleRows.length+' action combinations';el('empty').hidden=visibleRows.length>0;
  el('coverage').replaceChildren();[...daily].reverse().forEach(d=>el('coverage').append(row([d.day,cell(d.status,'status '+(d.status==='Complete'?'good':'')),cell(number(d.count),'number')])));
+ const diagnostics=(data.diagnostics??[]).filter(r=>r.day>=from&&r.day<=to&&(!search||[r.operation,r.stage,r.reason,r.outcome,r.source,r.mode].join(' ').replaceAll('_',' ').includes(search)));
+ el('diagnostic-rows').replaceChildren();
+ diagnostics.forEach(r=>el('diagnostic-rows').append(row([r.day,label(r.operation),label(r.source),label(r.mode),label(r.stage),label(r.outcome),label(r.reason),label(r.duration),r.instrumentation,cell(number(r.count),'number')])));
+ el('diagnostic-empty').hidden=diagnostics.length>0;
+ const health=data.diagnostic_health;
+ el('diagnostic-health').textContent='Readable diagnostic schema: '+(health?.schema??'unknown')+'. Latest known stored diagnostic receipt (UTC): '+(health?.last_receipt??'unknown')+'. Current collector write health: unknown. Coverage: incomplete.';
 }
 data.limitations.forEach(text=>el('limitations').append(node('li',text)));
 [...new Set(data.totals.map(r=>r.page))].sort().forEach(value=>{const option=node('option',label(value));option.value=value;el('page').append(option);});

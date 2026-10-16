@@ -2,7 +2,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { createRequire } from "node:module";
 import { mkdtemp, readFile, realpath, rm, writeFile } from "node:fs/promises";
 import { basename, dirname, join, sep } from "node:path";
 import { tmpdir } from "node:os";
@@ -11,9 +10,8 @@ import { build } from "esbuild";
 import { Miniflare, convertV4MiniflareOptions } from "miniflare";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
-const require = createRequire(import.meta.url);
 const wrangler = join(
-  dirname(require.resolve("wrangler/package.json")),
+  dirname(fileURLToPath(import.meta.resolve("wrangler/package.json"))),
   "bin/wrangler.js",
 );
 const origin = "https://maimai-party-staging.pages.dev";
