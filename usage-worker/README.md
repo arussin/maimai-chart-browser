@@ -30,6 +30,9 @@ an empty failure value. No provider response is passed to usage reporting.
 Automatic refresh, restored state, capability/status checks, popup status polling,
 and background cleanup do not emit these counters. GPC/DNT, both kill switches,
 preview/offline suppression, bounded batching and drop-without-retry still apply.
+Version-2 diagnostics separately record automatic operation outcomes, including
+refresh and connector-configuration failures. This does not add automatic actions
+to version 1 or turn diagnostic stages into a linked import funnel.
 Disconnect success means the browser's targeted connection is removed or no
 longer accessible; it does **not** establish provider-side revocation.
 
@@ -49,13 +52,14 @@ The owner Markdown/CSV report and dashboards import the maintained TypeScript
 contract directly. Both
 render every accepted event/detail/failure row without a separate hardcoded
 feature list, and reject extra private aggregate fields. First apply the additive
-`0002_import_receipts.sql` migration to the reviewed database, then release the
+`0002_import_receipts.sql` migration to the reviewed database while retaining
+production's additive `0003_diagnostics.sql` table, then release the
 matching collector and owner reports/dashboards, then release the browser's new
 finite values, including the six new `file:*` methods. An old collector rejects
 an entire batch containing an unknown event, method, or failure reason. No new
 database migration is needed just for these method values. Updated reports query the receipt columns and fail safely
 until the schema exists. No new logging sink is introduced. Retain the actual
-activation date of the new counters and receipt fields;
+activation date of the new counters, diagnostic categories and receipt fields;
 older complete coverage does not prove that these features were instrumented.
 Local fixtures verify all allowed lifecycle combinations, D1 writes, report
 rendering, opt-outs and private-field rejection; they do not prove hosted
@@ -135,7 +139,7 @@ After building, run from the disposable usage-worker directory:
     node report.mjs --input synthetic-export.json --output C:\DevCache\path\usage-report
     node report.mjs --database maimai-usage-local --persist-to C:\DevCache\path\local-state --output C:\DevCache\path\usage-report
 
-The second form issues exactly two read-only SELECTs through Wrangler. It defaults to local. The --remote flag must be explicitly supplied by the owner after production setup review. Optional --from/--to select completed New York dates; the default is 30 completed days. Explicit `--include-today` permits today and makes it the default end date; today stays partial even if its coverage ledger says complete. --activated records the owner-supplied activation date. Reports include JSON, Markdown and CSV; JSON/Markdown carry coverage, import outcomes, known collector receipt times and limitations; a companion `.coverage.csv` preserves activation, daily UTC boundaries, and unknown versus measured-zero days. Query failure or a missing receipt-column migration is an error, never a zero report.
+The second form issues exactly three read-only SELECTs through Wrangler. It defaults to local. The --remote flag must be explicitly supplied by the owner after production setup review. Optional --from/--to select completed New York dates; the default is 30 completed days. Explicit `--include-today` permits today and makes it the default end date; today stays partial even if its coverage ledger says complete. --activated records the owner-supplied activation date. Reports include JSON, Markdown and CSV; JSON/Markdown carry coverage, diagnostic outcomes and health, import outcomes, known collector receipt times and limitations; a companion `.coverage.csv` preserves activation, daily UTC boundaries, and unknown versus measured-zero days. Query failure or a missing receipt-column or diagnostic-table migration is an error, never a zero report.
 
 ## Separate staging adapter
 
@@ -259,3 +263,21 @@ This crosses the protected security boundary and needs the security-sensitive / 
 Prepare a reviewed production config separately after the full SEO+coverage+usage candidate passes. Do not launch SEO alone or claim collection is active until the deployed browser, aggregate database and owner report are verified together with an approved non-personal canary. Use the independent kills for emergency degradation, then explicitly report the combined launch as degraded. Rollback restores the previous deployment and never deletes aggregate totals.
 
 References: https://developers.cloudflare.com/d1/worker-api/d1-database/#batch
+
+## Diagnostic outcomes
+
+The additive version-2 contract, local delivery status, compatibility order and
+historical pre-connector rollout are in [DIAGNOSTIC_LOGGING.md](../docs/DIAGNOSTIC_LOGGING.md).
+Version-1 action rows remain supported. Search counts mean search interactions.
+The third SELECT reads finite diagnostic aggregates and server receipt times;
+a receipt proves a past write only, and diagnostic coverage remains incomplete.
+
+The connector release extends the shared `diagnostics-1` allowlist to the twelve
+import methods, provider authorization/disconnect/cleanup and visibility-loading
+operations. Existing diagnostic rows keep their meaning. Ship the updated
+collector and report readers before the browser: a previously deployed version-2
+collector can still reject a new category even though it advertises `1,2`.
+Both versions acknowledge only a successful database batch with
+`X-Maimai-Usage-Receipt: stored`; privacy no-ops remain unconfirmed. No new table
+is required for the additional categories. Version-1 import receipts require
+migration 0002 even when production already has migration 0003.

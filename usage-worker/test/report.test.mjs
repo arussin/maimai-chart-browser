@@ -43,7 +43,7 @@ test('failed query cannot become zero and incomplete current day cannot be reque
 
 test('owner query is read-only, no public endpoint, and failed query is not reported as zero',()=>{
  let command;
- const input=queryDatabase('local_usage',{run:(exe,args)=>{command=args;return {status:0,stdout:JSON.stringify([{success:true,results:[]},{success:true,results:[]}])}}});
+ const input=queryDatabase('local_usage',{run:(exe,args)=>{command=args;return {status:0,stdout:JSON.stringify([{success:true,results:[]},{success:true,results:[]},{success:true,results:[]}])}}});
  assert.equal(input.query_status,'ok');assert.ok(command.includes('--local'));assert.ok(!command.includes('--remote'));
  assert.ok(command.at(-1).startsWith('SELECT '));assert.ok(!command.at(-1).includes('INSERT'));
  assert.ok(command.at(-1).includes('count,first_received_at,last_received_at FROM usage_daily'));
@@ -108,7 +108,7 @@ test('today requires explicit inclusion and stays partial even with a complete l
  const empty=summarize({...input,coverage:[]},{now,from:day,includeToday:true});assert.equal(empty.coverage[0].status,'partial');assert.equal(empty.coverage[0].zero_is_measured,false);
  assert.match(markdown(report),/Today is partial/);assert.match(coverageCSV(report),/"partial","unknown",false/);
  assert.throws(()=>summarize(input,{now,to:'2026-10-12',includeToday:true}));
- let sql;queryDatabase('local_usage',{now,from:day,includeToday:true,run:(_exe,args)=>{sql=args.at(-1);return{status:0,stdout:JSON.stringify([{success:true,results:[]},{success:true,results:[]}])}}});
+ let sql;queryDatabase('local_usage',{now,from:day,includeToday:true,run:(_exe,args)=>{sql=args.at(-1);return{status:0,stdout:JSON.stringify([{success:true,results:[]},{success:true,results:[]},{success:true,results:[]}])}}});
  assert.match(sql,/day<='2026-10-11'/);
 });
 

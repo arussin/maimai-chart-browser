@@ -11,6 +11,7 @@ import type { createChartLinks } from './chart-links';
 import type { createRegistryBrowser } from './registry-browser';
 import type { createSongSearch } from './song-search';
 import type { UsageAPI } from '../usage';
+import { beginDiagnostic } from '../runtime/operation-diagnostics';
 type Side = 'left' | 'right';
 type PatternComparison = ReturnType<AnalysisModel['compare']>;
 interface Picker {
@@ -43,7 +44,7 @@ interface ComparisonPorts {
   registry: Pick<ReturnType<typeof createRegistryBrowser>, 'resolve'>;
   songSearch: ReturnType<typeof createSongSearch>;
   historyPort: Pick<HistoryPort, 'onTraversal' | 'replaceState'>;
-  usage?: Pick<UsageAPI, 'emit'>;
+  usage?: Pick<UsageAPI, 'emit' | 'diagnose'>;
 }
 /** Shared comparison controls; model state and repositories belong to the application. */
 export function createChartComparison(ports: ComparisonPorts) {
@@ -142,19 +143,37 @@ export function createChartComparison(ports: ComparisonPorts) {
         matches = null;
         state.similar = false;
       }
-      const deliberate =
-        write &&
+      const pair =
         !!(side === 'right' ? state.left : state.right) &&
         (side === 'right' ? state.left : state.right) !== id;
+      const deliberate = write && pair;
       if (deliberate) ports.usage?.emit('compare_requested');
-      ports.browserState.chooseComparison(side, id);
-      const picker = pickers[side];
-      picker.input.value = name(byId.get(id)!);
-      picker.close();
-      picker.selection.replaceChildren(identity(byId.get(id)!));
-      render();
-      if (deliberate) ports.usage?.emit('compare_loaded');
-      if (write) writeLink();
+      const operation = pair
+        ? beginDiagnostic(
+            ports.usage?.diagnose,
+            'comparison',
+            'none',
+            write ? 'manual' : 'automatic',
+          )
+        : null;
+      operation?.stage('compute');
+      try {
+        ports.browserState.chooseComparison(side, id);
+        const picker = pickers[side];
+        picker.input.value = name(byId.get(id)!);
+        picker.close();
+        picker.selection.replaceChildren(identity(byId.get(id)!));
+        const available = render();
+        if (deliberate) ports.usage?.emit('compare_loaded');
+        if (write) writeLink();
+        operation?.finish(
+          available ? 'success' : 'unavailable',
+          available ? 'none' : 'insufficient_coverage',
+        );
+      } catch (error) {
+        operation?.fail(error);
+        throw error;
+      }
     }
     for (const [side, title] of [
       ['left', 'First chart'],
@@ -419,6 +438,7 @@ export function createChartComparison(ports: ComparisonPorts) {
       }
       table.append(body);
       root.append(table);
+      return !!result;
     }
     function renderMatches() {
       const root = el('similar-results');
@@ -508,19 +528,36 @@ export function createChartComparison(ports: ComparisonPorts) {
             ? 'Choose a second chart or find similar chart demands.'
             : 'Choose a first chart to begin.',
       );
-      renderPair();
+      const compared = renderPair();
       renderMatches();
+      return compared;
     }
-    function find(scroll = true) {
+    function find(scroll = true, manual = true) {
       if (!state.left || !byId.get(state.left)?.demand) return;
-      state.similar = true;
-      matches = getIndex().similar(state.left, {
-        limit: 8,
-        eligibleIds: state.useFilters ? eligibleIds() : null,
-        patternCompare: state.priority === 'patterns' ? overview.compare : null,
-      });
-      render();
-      if (scroll) el('similar-results').scrollIntoView({ block: 'start', behavior: 'instant' });
+      const operation = beginDiagnostic(
+        ports.usage?.diagnose,
+        'similar',
+        'none',
+        manual ? 'manual' : 'automatic',
+      );
+      operation.stage('compute');
+      try {
+        state.similar = true;
+        matches = getIndex().similar(state.left, {
+          limit: 8,
+          eligibleIds: state.useFilters ? eligibleIds() : null,
+          patternCompare: state.priority === 'patterns' ? overview.compare : null,
+        });
+        render();
+        if (scroll) el('similar-results').scrollIntoView({ block: 'start', behavior: 'instant' });
+        operation.finish(
+          matches.length ? 'success' : 'empty',
+          matches.length ? 'none' : 'no_matches',
+        );
+      } catch (error) {
+        operation.fail(error);
+        throw error;
+      }
     }
     el('similar-priority').onchange = () => {
       state.priority = el('similar-priority').value === 'patterns' ? 'patterns' : 'measurements';
@@ -574,7 +611,7 @@ export function createChartComparison(ports: ComparisonPorts) {
         }
       }
       render();
-      if (params.get('similar') === '1' && state.left) find();
+      if (params.get('similar') === '1' && state.left) find(true, false);
       if (missing)
         i18n.text(
           el('comparison-status'),
@@ -595,7 +632,7 @@ export function createChartComparison(ports: ComparisonPorts) {
           pickers[side].selection.replaceChildren(...(chart ? [identity(chart)] : []));
           pickers[side].close();
         }
-        if (state.similar) find(false);
+        if (state.similar) find(false, false);
         else render();
       },
       first: () => state.left,

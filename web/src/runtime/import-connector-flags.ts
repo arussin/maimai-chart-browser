@@ -1,9 +1,13 @@
+import type { DiagnosticSink } from '../diagnostic-contract';
+import { DiagnosticError } from './diagnostic-error';
+import { beginDiagnostic } from './operation-diagnostics';
 import { IMPORT_SERVICES, type ImportMethodValue } from '../views/player-import-services';
 
 export type ImportConnectorFlags = Readonly<Record<ImportMethodValue, boolean>>;
 const methods = IMPORT_SERVICES.flatMap((service) => service.methods.map((method) => method.value));
 const limit = 8192;
-const unavailable = () => new Error('Import options are unavailable.');
+const unavailable = () =>
+  new DiagnosticError('Import options are unavailable.', 'contract_changed', 'response');
 const object = (value: unknown): value is Record<string, unknown> =>
   value !== null && typeof value === 'object' && !Array.isArray(value);
 
@@ -51,7 +55,10 @@ export async function fetchImportConnectorFlags(
   signal: AbortSignal,
   transport: typeof fetch = fetch,
   timeoutMs = 4000,
+  diagnose?: DiagnosticSink,
 ): Promise<ImportConnectorFlags> {
+  const operation = beginDiagnostic(diagnose, 'connector_config');
+  operation.stage('transport');
   const deadline = new AbortController();
   const abort = () => deadline.abort(signal.reason);
   signal.addEventListener('abort', abort, { once: true });
@@ -76,14 +83,26 @@ export async function fetchImportConnectorFlags(
       () => {},
     );
     response = await untilAborted(pending, deadline.signal);
+    operation.stage('response');
+    if (!response.ok)
+      throw new DiagnosticError(
+        'Import options are unavailable.',
+        'configuration_unavailable',
+        'response',
+      );
     if (
-      !response.ok ||
       !response.body ||
       !/^application\/json(?:\s*;|$)/i.test(response.headers.get('content-type') ?? '')
     )
       throw unavailable();
     const length = response.headers.get('content-length');
-    if (length !== null && (!/^\d+$/.test(length) || Number(length) > limit)) throw unavailable();
+    if (length !== null && !/^\d+$/.test(length)) throw unavailable();
+    if (length !== null && Number(length) > limit)
+      throw new DiagnosticError(
+        'Import options are unavailable.',
+        'oversized_response',
+        'response',
+      );
     reader = response.body.getReader();
     const parts: Uint8Array[] = [];
     let size = 0;
@@ -92,7 +111,12 @@ export async function fetchImportConnectorFlags(
       deadline.signal.throwIfAborted();
       if (done) break;
       size += value.byteLength;
-      if (size > limit) throw unavailable();
+      if (size > limit)
+        throw new DiagnosticError(
+          'Import options are unavailable.',
+          'oversized_response',
+          'response',
+        );
       parts.push(value);
     }
     const bytes = new Uint8Array(size);
@@ -101,9 +125,28 @@ export async function fetchImportConnectorFlags(
       bytes.set(part, offset);
       offset += part.byteLength;
     }
-    return parseImportConnectorFlags(
-      JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes)),
-    );
+    let value: unknown;
+    try {
+      value = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes));
+    } catch {
+      throw new DiagnosticError(
+        'Import options are unavailable.',
+        'malformed_response',
+        'response',
+      );
+    }
+    const flags = parseImportConnectorFlags(value);
+    operation.stage('complete');
+    operation.finish('success');
+    return flags;
+  } catch (error) {
+    if (signal.aborted) operation.finish('superseded');
+    else if (deadline.signal.aborted)
+      operation.fail(
+        new DiagnosticError('Import options are unavailable.', 'client_timeout', 'transport'),
+      );
+    else operation.fail(error, error instanceof SyntaxError ? 'malformed_response' : 'network');
+    throw error;
   } finally {
     clearTimeout(timer);
     signal.removeEventListener('abort', abort);

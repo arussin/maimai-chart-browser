@@ -14,6 +14,7 @@ const globals = {
   Uint8Array,
   ArrayBuffer,
   AbortController,
+  AbortSignal,
   DOMException,
   setTimeout,
   clearTimeout,

@@ -16,6 +16,35 @@ const partnerKeys = [
   ...scoreExportPartners.map((partner) => partner.key),
 ];
 const empty = { versionID: null, partnerKey: 'none' };
+test('optional persistence failures are bounded degraded outcomes while choices stay usable', () => {
+  const rows = [];
+  const saved = createScoreExportPreferences({
+    versionIDs,
+    partnerKeys,
+    diagnose: (r) => rows.push(r),
+    storage: () => ({
+      getItem() {
+        throw new DOMException('PRIVATE', 'SecurityError');
+      },
+      setItem() {
+        throw new DOMException('PRIVATE', 'QuotaExceededError');
+      },
+    }),
+  });
+  saved.read();
+  saved.read();
+  saved.setVersion('magical');
+  saved.setVersion('magical');
+  assert.equal(saved.read().versionID, 'magical');
+  assert.deepEqual(
+    rows.map((r) => [r.operation, r.outcome, r.reason]),
+    [
+      ['preferences', 'degraded', 'storage_denied'],
+      ['preferences', 'degraded', 'storage_quota'],
+    ],
+  );
+  assert(!JSON.stringify(rows).includes('PRIVATE'));
+});
 function memory(initial = null) {
   let value = initial;
   const writes = [];

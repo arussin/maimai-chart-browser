@@ -1,9 +1,10 @@
 # Kamaitachi, Diving-Fish and LXNS imports
 
 This change extends the production Import player data dialog with Kamaitachi,
-Diving-Fish and LXNS. It retains Maishift and maimai.party Session Report. Other providers
-remain deferred. The broader investigation and implementation are preserved on
-`codex/import-connectors-20261011`; they are not part of this launch.
+Diving-Fish and LXNS. It retains Maishift and maimai.party Session Report, and adds
+file imports for Tomomai, mai-tools, DXRating, JiETNG v2, AquaDX and Tachi.
+File methods and direct connections have separate runtime visibility controls;
+see [Import connector visibility](IMPORT_CONNECTOR_FLAGS.md).
 
 ## Player journeys
 
@@ -40,8 +41,8 @@ buttons. The tracker link opens the service for setup; **Connect** opens its own
 sign-in and approval page, then returns to Party's score preview. Confirmations
 are required for a new account connection, not for previewing an existing grant.
 
-No manual Fish or LXNS API-response upload is offered. Ordinary file upload
-remains under Session Report. Never ask
+No manual Fish or LXNS API-response upload is offered. Session Report and the
+additional file formats have their own service sections. Never ask
 players for provider API keys, application secrets, or passwords inside Party.
 
 ## Recovery and data boundaries
@@ -138,7 +139,13 @@ as empty scores, expired connection, rate limit, timeout and browser storage.
 The report shows received counts and first/latest server receipt times per daily
 aggregate; these are not exact action times or a linked history of a person.
 No account names, URLs, tokens, score values, or provider error bodies enter reports.
-Background polling and automatic refresh emit no action counters.
+Background polling and automatic refresh emit no action counters. Automatic and
+manual refresh do emit separate version-2 operation diagnostics, including
+unchanged snapshots, cooldown skips, failures and supersession. Import diagnostics
+record the failed boundary and a finite reason; a saved import keeps its success
+even if a later display or grant-cleanup step fails. Storage transactions are a
+separate operation family and must not be summed with imports as unique incidents.
+See [Diagnostic logging](DIAGNOSTIC_LOGGING.md) for privacy and compatibility rules.
 
 For owner functional smoke tests, set `window.maimaiUsageEnabled=false` before
 application startup and verify no `/__usage` requests are sent. Verify hosted

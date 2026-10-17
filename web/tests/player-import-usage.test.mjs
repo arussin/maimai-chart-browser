@@ -344,6 +344,24 @@ test('only typed finite causes classify direct failures across independently bun
   finite(f);
 });
 
+// The production coordinator snapshots optional ports at construction. Keep a
+// stable mock adapter there while each scenario controls its asynchronous read.
+function makeFileSession(options = {}) {
+  let readFile;
+  const fixture = makeSession({
+    ...options,
+    configure(ports) {
+      ports.readFile = (...args) => readFile(...args);
+    },
+  });
+  Object.defineProperty(fixture.ports, 'readFile', {
+    get: () => readFile,
+    set: (read) => {
+      readFile = read;
+    },
+  });
+  return fixture;
+}
 const fileProviders = ['tomomai', 'mai-tools', 'dxrating', 'jietng', 'aqua', 'tachi'];
 const localFile = () => ({
   name: 'PRIVATE-export.json',
@@ -364,7 +382,7 @@ const fileResult = (revision = 'new') => ({
 
 test('all six file formats pass exact options and disclose diagnostics before a finite local commit', async () => {
   for (const format of fileProviders) {
-    const f = makeSession(),
+    const f = makeFileSession(),
       upload = localFile(),
       options = fileOptions(format),
       result = fileResult();
@@ -412,7 +430,7 @@ test('all six file formats pass exact options and disclose diagnostics before a 
 
 test('all six malformed file failures remain finite and leave saved scores intact', async () => {
   for (const format of fileProviders) {
-    const f = makeSession({ initial: dataset('retained') });
+    const f = makeFileSession({ initial: dataset('retained') });
     await f.owner.ready;
     f.ports.readFile = async () => {
       throw Error('PRIVATE filename, account and parser detail');
@@ -432,7 +450,7 @@ test('all six malformed file failures remain finite and leave saved scores intac
 
 test('declining each file preview counts cancellation without confirmation or persistence', async () => {
   for (const format of fileProviders) {
-    const f = makeSession();
+    const f = makeFileSession();
     f.ports.readFile = async () => fileResult();
     f.ports.effects.ask = async () => ({ accept: false, remember: true });
     await f.owner.importFile(localFile(), fileOptions(format));
@@ -449,7 +467,7 @@ test('declining each file preview counts cancellation without confirmation or pe
 
 test('cancelling any file during reading prevents late results from opening a preview', async () => {
   for (const format of fileProviders) {
-    const f = makeSession(),
+    const f = makeFileSession(),
       reading = deferred(),
       release = deferred();
     f.ports.readFile = async () => {
@@ -473,7 +491,7 @@ test('cancelling any file during reading prevents late results from opening a pr
 
 test('all six file storage failures never count a successful local import', async () => {
   for (const format of fileProviders) {
-    const f = makeSession({ initial: dataset('retained') });
+    const f = makeFileSession({ initial: dataset('retained') });
     await f.owner.ready;
     f.ports.readFile = async () => fileResult();
     f.ports.storage.save = async () => {
@@ -495,7 +513,7 @@ test('all six file storage failures never count a successful local import', asyn
 
 test('all six durable file saves count once after cancellation without installing a stale view', async () => {
   for (const format of fileProviders) {
-    const f = makeSession(),
+    const f = makeFileSession(),
       persisted = deferred(),
       release = deferred(),
       save = f.ports.storage.save;
@@ -529,7 +547,7 @@ test('all six durable file saves count once after cancellation without installin
 });
 
 test('a delayed file save cannot resurrect data cleared after its durable commit', async () => {
-  const f = makeSession(),
+  const f = makeFileSession(),
     persisted = deferred(),
     release = deferred(),
     save = f.ports.storage.save;
@@ -554,7 +572,7 @@ test('a delayed file save cannot resurrect data cleared after its durable commit
 });
 
 test('a superseded file reconciliation cannot borrow a newer import signal or reopen consent', async () => {
-  const f = makeSession(),
+  const f = makeFileSession(),
     reconciling = deferred(),
     release = deferred(),
     newShown = deferred(),
@@ -595,7 +613,7 @@ test('a superseded file reconciliation cannot borrow a newer import signal or re
 });
 
 test('a file parser rejecting after cancellation cannot show a stale error over a later operation', async () => {
-  const f = makeSession(),
+  const f = makeFileSession(),
     reading = deferred(),
     release = deferred();
   f.ports.readFile = async () => {

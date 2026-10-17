@@ -197,10 +197,39 @@ test('verified details hydrate a disposable evidence view without mutating canon
     ['chart-details/' + detailHash + '.json', detail],
   ]);
   const reader = new data.PublicReader(new URL('http://127.0.0.1/'));
-  reader.read = async (path) => files.get(path);
-  const loaded = await loadCatalog(reader, null),
+  let broken = true,
+    reads = 0;
+  const diagnostics = [];
+  reader.read = async (path) => {
+    if (path.startsWith('chart-details/')) {
+      reads++;
+      if (broken) return new Uint8Array([0]);
+    }
+    return files.get(path);
+  };
+  const loaded = await loadCatalog(reader, null, undefined, undefined, (r) => diagnostics.push(r)),
     before = JSON.stringify(loaded.canonical);
+  const first = loaded.details.ensure(loaded.data.catalog[0]),
+    second = loaded.details.ensure(loaded.data.catalog[0]);
+  assert.equal(first, second);
+  await assert.rejects(first, /integrity/);
+  await assert.rejects(second, /integrity/);
+  await new Promise((r) => setTimeout(r, 0));
+  broken = false;
+  await Promise.all([
+    loaded.details.ensure(loaded.data.catalog[0]),
+    loaded.details.ensure(loaded.data.catalog[0]),
+  ]);
+  assert.equal(reads, 2);
+  assert.deepEqual(
+    diagnostics.filter((r) => r.operation === 'chart_details').map((r) => [r.outcome, r.reason]),
+    [
+      ['failed', 'integrity'],
+      ['recovered', 'none'],
+    ],
+  );
   await loaded.details.ensure(loaded.data.catalog[0]);
+  assert.equal(diagnostics.length, 3);
   assert.equal(loaded.data.analysis.charts.c.measured, true);
   assert.equal(JSON.stringify(loaded.canonical), before);
   assert.equal(loaded.details.ready(loaded.data.catalog[0]), true);

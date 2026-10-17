@@ -1,3 +1,5 @@
+import type { DiagnosticSink } from '../diagnostic-contract';
+import { beginDiagnostic } from '../runtime/operation-diagnostics';
 import { ImportCoordinator } from '../runtime/import-coordinator';
 import { readImportFile } from '../runtime/import-file';
 import {
@@ -73,9 +75,15 @@ export function openProviderPopup(
   browser: Pick<Window, 'open'>,
   provider: OAuthProvider,
   usage: (...args: PersonalUsage) => void,
+  diagnose?: DiagnosticSink,
 ) {
   const popup = browser.open('about:blank', '_blank', 'popup,width=600,height=760');
   if (!popup) {
+    for (const name of ['import', 'provider_connect'] as const) {
+      const operation = beginDiagnostic(diagnose, name, provider, 'manual');
+      operation.stage('authorization');
+      operation.finish('failed', 'popup_blocked');
+    }
     usage('import_started', provider);
     usage('provider_connect_started', provider);
     usage('provider_connect_failed', provider, 'popup_blocked');
@@ -87,8 +95,12 @@ export function openProviderPopup(
 export function checkKamaitachiInput(
   input: Pick<HTMLInputElement, 'reportValidity'>,
   usage: (...args: PersonalUsage) => void,
+  diagnose?: DiagnosticSink,
 ) {
   if (input.reportValidity()) return true;
+  const operation = beginDiagnostic(diagnose, 'import', 'kamaitachi', 'manual');
+  operation.stage('normalize');
+  operation.finish('failed', 'normalization');
   usage('import_started', 'kamaitachi');
   usage('import_failed', 'kamaitachi', 'invalid');
   return false;
@@ -173,6 +185,7 @@ export function createPlayerData(ports: PersonalPorts) {
       navigator.onLine &&
       !root.querySelector('dialog[open]'),
     effects: {
+      diagnose: ports.usage.diagnose,
       changed,
       show: () => {
         visible = true;
@@ -264,6 +277,7 @@ export function createPlayerData(ports: PersonalPorts) {
     root,
     localization: i18n,
     preferences: createScoreExportPreferences({
+      diagnose: ports.usage.diagnose,
       versionIDs: knownScoreExportVersionIDs(),
       partnerKeys: [
         defaultScoreExportPartner,
@@ -271,6 +285,7 @@ export function createPlayerData(ports: PersonalPorts) {
       ],
     }),
     usage: (...args) => usage(...args),
+    diagnose: ports.usage.diagnose,
     dataset: () => (visible ? player.active : null),
     playerRating: () => {
       const data = visible ? player.active : null;
@@ -845,7 +860,12 @@ export function createPlayerData(ports: PersonalPorts) {
     let flags = OFFLINE_IMPORT_CONNECTORS,
       optionsUnavailable = false;
     try {
-      flags = await fetchImportConnectorFlags(availability.signal);
+      flags = await fetchImportConnectorFlags(
+        availability.signal,
+        fetch,
+        4000,
+        ports.usage.diagnose,
+      );
     } catch {
       optionsUnavailable = true;
     }
@@ -1051,7 +1071,7 @@ export function createPlayerData(ports: PersonalPorts) {
         );
         i18n.text(next, 'Preview scores');
         next.onclick = () => {
-          if (!checkKamaitachiInput(account, usage)) return;
+          if (!checkKamaitachiInput(account, usage, ports.usage.diagnose)) return;
           void player.importSource(
             { type: 'kamaitachi', account: account.value.trim() },
             rememberChoice,
@@ -1161,7 +1181,7 @@ export function createPlayerData(ports: PersonalPorts) {
             (!updated.checked ? updated : masking!).focus();
             return;
           }
-          const popup = openProviderPopup(window, provider, usage);
+          const popup = openProviderPopup(window, provider, usage, ports.usage.diagnose);
           if (!popup) {
             message(
               'Player data could not be imported',
@@ -1226,10 +1246,13 @@ export function createPlayerData(ports: PersonalPorts) {
                   disconnect.disabled = true;
                   usage('provider_disconnect_started', provider);
                   try {
-                    await sources.disconnect({
-                      type: provider,
-                      connectionID: connection.connectionID,
-                    });
+                    await sources.disconnect(
+                      {
+                        type: provider,
+                        connectionID: connection.connectionID,
+                      },
+                      true,
+                    );
                     usage('provider_disconnect_completed', provider);
                     row.remove();
                     if (!otherConnections.querySelector('button')) otherConnections.remove();

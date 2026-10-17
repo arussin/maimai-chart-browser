@@ -5,7 +5,7 @@ import {generateKeyPair,exportJWK,SignJWT,createLocalJWKSet} from 'jose';
 import {createAccessVerifier} from '../access.mjs';
 import {createHandler,QUERIES} from '../handler.mjs';
 import {renderHosted} from '../render.mjs';
-import {fileImportMethods} from '../../test/provider-usage-fixture.mjs';
+import {fileImportMethods,importMethods,importDiagnosticRows} from '../../test/provider-usage-fixture.mjs';
 const issuer='https://fixture.cloudflareaccess.com',aud='a'.repeat(64),owner='owner@example.test';
 const env={ACCESS_ISSUER:issuer,ACCESS_AUD:aud,OWNER_EMAIL:owner};
 const pair=await generateKeyPair('RS256');
@@ -42,7 +42,7 @@ function dbFixture(){
  let count=0;const statements=[];
  return {get reads(){return count},statements,
   prepare(sql){statements.push(sql);return {sql}},
-  async batch(){count++;return [{success:true,results:[{day:'2026-10-03',version:1,event:'page_view',page:'charts',detail:'',failure:'',count}]},{success:true,results:[]}]},
+  async batch(){count++;return [{success:true,results:[{day:'2026-10-03',version:1,event:'page_view',page:'charts',detail:'',failure:'',count}]},{success:true,results:[]},{success:true,results:[]}]},
  };
 }
 const assets={
@@ -103,6 +103,9 @@ test('failed, malformed or truncated data never renders an apparently empty succ
   [{success:false,results:[]},{success:true,results:[]}],
   [{success:true,results:[{secret:'never-render-this'}]},{success:true,results:[]}],
   [{success:true,results:Array(50001).fill({})},{success:true,results:[]}],
+  [{success:true,results:[]},{success:true,results:[]},{success:false,results:[]}],
+  [{success:true,results:[]},{success:true,results:[]},{success:true,results:Array(50001).fill({})}],
+  [{success:true,results:[]},{success:true,results:[]},{success:true,results:[{token:'never-render-this'}]}],
   [],
  ]){
   const r=await handler.fetch(request(t),{...env,USAGE_DB:{prepare:sql=>({sql}),batch:async()=>response}});
@@ -124,16 +127,24 @@ test('hosted renderer reuses dashboard controls, explains fresh-on-load and reta
 test('authenticated dashboard exposes finite import outcomes and collector receipts, not provider payloads',async()=>{
  const at='2026-10-11T18:00:00.000Z',base={day:'2026-10-11',version:1,event:'import_completed',page:'charts',detail:'lxns',failure:'',count:2,first_received_at:'2026-10-11T12:00:00.000Z',last_received_at:'2026-10-11T17:00:00.000Z'};
  const handler=createHandler({authenticate:async()=>true,render,now:()=>new Date(at)});
- const db=rows=>({prepare:sql=>({sql}),batch:async()=>[{success:true,results:rows},{success:true,results:[]}]});
- const success=await handler.fetch(request('fixture'),{USAGE_DB:db([base,...fileImportMethods.map(detail=>({...base,detail}))])});assert.equal(success.status,200);
+ const diagnostics=importDiagnosticRows.map(row=>({day:base.day,version:2,...row,first_received_at:base.first_received_at,last_received_at:base.last_received_at}));
+ const db=(rows,diagnosticRows=diagnostics)=>({prepare:sql=>({sql}),batch:async()=>[{success:true,results:rows},{success:true,results:[]},{success:true,results:diagnosticRows}]});
+ const success=await handler.fetch(request('fixture'),{USAGE_DB:db(importMethods.map(detail=>({...base,detail})))});assert.equal(success.status,200);
  const html=await success.text();assert.match(html,/"latest_completed_at":"2026-10-11T17:00:00.000Z"/);assert.match(html,/Saved locally/);assert.match(html,/not exact user-event times/);
  const data=JSON.parse(html.match(/<script type="application\/json" id="dashboard-data">([\s\S]*?)<\/script>/)[1]);
- for(const method of fileImportMethods){
+ for(const method of importMethods){
   const summary=data.imports.summaries.find(row=>row.provider===method);
   assert.equal(summary.completed,2);assert.equal(summary.latest_completed_at,base.last_received_at);
-  assert(data.action_labels[method].endsWith(' file'));
+  if(fileImportMethods.includes(method))assert(data.action_labels[method].endsWith(' file'));
+  assert.equal(data.diagnostics.filter(row=>row.source===method).length,4);
  }
+ assert.equal(data.diagnostic_health.schema,'diagnostics-1');assert.equal(data.diagnostic_health.last_receipt,base.last_received_at);
+ assert.equal(data.diagnostic_health.collector,'unknown');assert.equal(data.diagnostic_health.coverage,'incomplete');
  for(const change of [{last_received_at:'PRIVATE-ERROR'},{last_received_at:'2026-10-11T19:00:00.000Z'},{accountID:'PRIVATE-ACCOUNT'}]){
   const failed=await handler.fetch(request('fixture'),{USAGE_DB:db([{...base,...change}])});assert.equal(failed.status,503);assert.doesNotMatch(await failed.text(),/PRIVATE/);
+ }
+ for(const change of [{filename:'PRIVATE-FILE'},{accountID:'PRIVATE-ACCOUNT'},{last_received_at:'2026-10-11T19:00:00.000Z'}]){
+  const failed=await handler.fetch(request('fixture'),{USAGE_DB:db([base],[{...diagnostics[0],...change}])});
+  assert.equal(failed.status,503);assert.doesNotMatch(await failed.text(),/PRIVATE/);
  }
 });

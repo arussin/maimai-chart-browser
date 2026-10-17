@@ -145,6 +145,7 @@ export async function createApplication(options: ApplicationOptions) {
             ? document.querySelector<HTMLElement>('[data-song-id]')?.dataset.catalogSha256
             : undefined,
           requiredResources().catalog,
+          usage.diagnose,
         );
   // Configuration and public data are independent. Observe acquisition failures
   // now, then deliver them after private controls have their validated configuration.
@@ -186,6 +187,7 @@ export async function createApplication(options: ApplicationOptions) {
   const playerCore = createPlayerDataCore({}),
     maishift = createPlayerMaishift({ playerCore });
   const playerSources = createPlayerSources({
+    diagnose: usage.diagnose,
     playerContext,
     playerCore,
     features: configuration.features,

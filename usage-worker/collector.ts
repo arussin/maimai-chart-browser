@@ -1,6 +1,7 @@
 import {validateBatch} from '../web/src/usage-contract';
+import {validateDiagnosticBatch} from '../web/src/diagnostic-contract';
 const headers={'Cache-Control':'no-store','Content-Type':'text/plain; charset=utf-8','X-Content-Type-Options':'nosniff'};
-const answer=(status:number)=>new Response(null,{status,headers});
+const answer=(status:number,stored=false)=>new Response(null,{status,headers:{...headers,'X-Maimai-Usage-Schema':'1,2',...(stored?{'X-Maimai-Usage-Receipt':'stored'}:{})}});
 export function dayKey(now:Date):string{
   return new Intl.DateTimeFormat('en-CA',{timeZone:'America/New_York',year:'numeric',month:'2-digit',day:'2-digit'}).format(now);
 }
@@ -23,17 +24,20 @@ return {
     if(request.method!=='POST')return answer(405);
     if(request.headers.get('Origin')!==origin||request.headers.get('Content-Type')!=='application/json')return answer(400);
     if(request.headers.get('Sec-GPC')==='1'||request.headers.get('DNT')==='1'||String(env.USAGE_ENABLED)!=='true')return answer(204);
-    let batch;try{batch=validateBatch(await readBody(request));}catch{return answer(400);}
+    let batch;try{const body=await readBody(request);batch=validateBatch(body)??validateDiagnosticBatch(body);}catch{return answer(400);}
     if(!batch)return answer(400);
     if(!env.USAGE_DB)return answer(503);
     // One server receipt time per accepted batch. This is not a browser action
     // timestamp, play time, session identifier, or proof of delivery ordering.
     const now=new Date(),day=dayKey(now),receivedAt=now.toISOString();
     try{
-      await env.USAGE_DB.batch(batch.events.map(row=>env.USAGE_DB.prepare(
+      if(batch.version===2)await env.USAGE_DB.batch(batch.events.map(row=>env.USAGE_DB.prepare(
+        'INSERT INTO usage_diagnostics_daily(day,version,instrumentation,operation,stage,reason,outcome,source,mode,duration,count,first_received_at,last_received_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(day,version,instrumentation,operation,stage,reason,outcome,source,mode,duration) DO UPDATE SET count=count+excluded.count,last_received_at=MAX(last_received_at,excluded.last_received_at),first_received_at=MIN(first_received_at,excluded.first_received_at)'
+      ).bind(day,2,row.instrumentation,row.operation,row.stage,row.reason,row.outcome,row.source,row.mode,row.duration,row.count,receivedAt,receivedAt)));
+      else await env.USAGE_DB.batch(batch.events.map(row=>env.USAGE_DB.prepare(
         'INSERT INTO usage_daily(day,version,event,page,detail,failure,count,first_received_at,last_received_at) VALUES(?,?,?,?,?,?,?,?,?) ON CONFLICT(day,version,event,page,detail,failure) DO UPDATE SET count=count+excluded.count,first_received_at=MIN(COALESCE(first_received_at,excluded.first_received_at),excluded.first_received_at),last_received_at=MAX(COALESCE(last_received_at,excluded.last_received_at),excluded.last_received_at)'
       ).bind(day,batch.version,row.event,row.page,row.detail,row.failure,row.count,receivedAt,receivedAt)));
-      return answer(204);
+      return answer(204,true);
     }catch{return answer(503);}
   }
 } satisfies ExportedHandler<Env>;

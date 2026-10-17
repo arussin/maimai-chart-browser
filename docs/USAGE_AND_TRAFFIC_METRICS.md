@@ -19,14 +19,16 @@ Kamaitachi, Diving-Fish and LXNS connections add finite counts for initial reads
 manual refreshes. Diving-Fish and LXNS also record explicit connection, disconnect and
 cleanup-retry stages. Opening their tracker links uses `resource_opened/diving_fish`
 or `resource_opened/lxns`.
-Portable files keep the existing import counters; no provider-file events are
-collected. Every method has attempt, preview shown, confirmed, saved locally,
+Session Report files keep the existing import counters; the six additional file
+formats have separate finite method labels. Every method has attempt, preview shown, confirmed, saved locally,
 cancelled and failed counters. Saved locally (`import_completed`) means the
 browser committed the imported data, before any subsequent connection cleanup.
 An authorization or read success alone is not an imported dataset. These
 overlapping stage counts are not distinct imports, users or a
 linked funnel. Automatic refresh, restored state and background availability,
-status and cleanup checks stay uncounted. No account names, grant identifiers,
+status and cleanup checks do not create user-action counters. Separate version-2
+diagnostics cover operation outcomes, including automatic refresh, storage,
+provider cleanup and connector configuration. No account names, grant identifiers,
 scores, source URLs or upstream error text enter the report.
 
 GPC/DNT, client and server kill switches, preview suppression and dropped-batch
@@ -34,7 +36,9 @@ behavior also apply to the new events. Local validation does not establish hoste
 collection. Apply the additive `0002_import_receipts.sql` migration first, release
 the matching collector and owner reports/dashboards second, and release the new
 browser counters last. An old collector rejects a batch with unknown finite
-events or reasons, and the new reports require the migrated columns. Record the
+events, diagnostic sources or reasons, and the new reports require the migrated
+columns. Keep production's version-2 diagnostics table and reader support; migration
+0003 was released independently and does not imply that 0002 is installed. Record the
 actual activation date; older missing counts
 are not measured zeroes. The finite event matrix and acceptance boundaries are in
 the [usage Worker guide](../usage-worker/README.md#import-and-provider-actions).
@@ -75,3 +79,9 @@ The community badge and Tidbyt traffic Worker share the identified-automation po
 Native dashboard charts labeled **Filtered** use the corresponding exclusions. On the traffic dashboard these cover visit and request totals, their trends, and visit breakdowns by country and device. The companion dashboard includes a filtered HTTP visit counter and whole-site trend. Charts labeled **All traffic** retain operational diagnostics, including errors, cache status, bandwidth and security actions. Charts labeled **Browser beacon** retain their RUM scope and are a separate measurement; neither group should be compared directly with the badge or Tidbyt visit count. The general query templates do not add automation exclusions automatically.
 
 Compare filtered visits using the same exact hostname and start/end timestamps. The badge uses a cached rolling 30-day snapshot, while Tidbyt presents New York calendar-day buckets; the current day is partial. Native dashboard links can select a rolling 30-day window, and changing the window changes the total. Filtering analytics does not block requests or prevent search-engine indexing. No dashboard identifiers, personal-site topology or private verification snapshots are required by this guide.
+
+Diagnostic operation outcomes and delivery limitations are documented in
+[DIAGNOSTIC_LOGGING.md](DIAGNOSTIC_LOGGING.md). Existing search counts are search
+interactions, not completed searches; chart-open and download-click counts do not
+prove evidence loading or a completed file save. Historical unavailable rows
+retain their original meaning.

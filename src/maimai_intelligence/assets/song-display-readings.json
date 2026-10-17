@@ -7,6 +7,26 @@
     "method": "AI linguistic review of title, artist and existing pinned Tachi aliases; rejected translations, truncated names and uncertain readings. Not native-speaker certification.",
     "date": "2026-09-22"
   },
+  "alternate_names": [
+    {
+      "song_id": "song:2d9de697-55ca-472c-80f7-e9fed7c35cef",
+      "title": "Beat of getting entangled",
+      "artist": "Shoichiro Hirata",
+      "value": "BOGE",
+      "kind": "abbreviation",
+      "locales": ["en"],
+      "review_status": "evidence-reviewed",
+      "sources": [
+        "https://www.reddit.com/r/maimai/comments/1k78imt/",
+        "https://github.com/zkldi/Tachi/blob/f08148f8644e40de9b178445df4bd59da712d3de/db/seeds/songs-maimaidx.json"
+      ],
+      "review": {
+        "reviewer": "Codex",
+        "date": "2026-10-16",
+        "method": "Player explicitly expands boge to Beat of getting entangled; pinned Tachi alias agrees on title and artist. An abbreviation, not a pronunciation or translation."
+      }
+    }
+  ],
   "entries": [
     {
       "song_id": "song:0023af58-f2bf-44b5-8bf6-4590eb027d10",

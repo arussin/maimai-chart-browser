@@ -1,3 +1,4 @@
+import { DiagnosticError, storageReason } from '../runtime/diagnostic-error';
 /** Device persistence. Data, source connection and invalidation share one transaction. */
 export interface StoreToken {
   revision: string | null;
@@ -49,7 +50,11 @@ export interface PlayerStorage {
 }
 
 const conflict = () =>
-  new Error('Player data changed in another tab. Reload before importing again.');
+  new DiagnosticError(
+    'Player data changed in another tab. Reload before importing again.',
+    'snapshot_changed',
+    'commit',
+  );
 const defaults = (): StoreControl => ({ epoch: 0, version: 0, lease: null });
 const token = (active: StoredPlayer | null, control: StoreControl): StoreToken => ({
   revision: active?.revision ?? null,
@@ -85,7 +90,14 @@ export function createPlayerStorage(ports: StoragePorts = {}): PlayerStorage {
         request.result.onversionchange = () => request.result.close();
         resolve(request.result);
       };
-      request.onerror = () => reject(new Error('Device storage is unavailable.'));
+      request.onerror = () =>
+        reject(
+          new DiagnosticError(
+            'Device storage is unavailable.',
+            storageReason(request.error),
+            'read',
+          ),
+        );
       request.onblocked = () =>
         reject(new Error('Close other maimai.party tabs to update device storage.'));
     });
@@ -118,7 +130,14 @@ export function createPlayerStorage(ports: StoragePorts = {}): PlayerStorage {
         transaction.oncomplete = () => resolve(result);
         transaction.onerror = () => {};
         transaction.onabort = () =>
-          reject(error || new Error('Device storage could not be updated. Nothing was replaced.'));
+          reject(
+            error ||
+              new DiagnosticError(
+                'Device storage could not be updated. Nothing was replaced.',
+                storageReason(transaction.error),
+                mode === 'readonly' ? 'read' : 'commit',
+              ),
+          );
       });
     } finally {
       database.close();

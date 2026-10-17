@@ -4,7 +4,7 @@ import {readFile} from 'node:fs/promises';
 import {Miniflare,convertV4MiniflareOptions} from 'miniflare';
 import worker,{dayKey} from '../worker.mjs';
 import staging from '../staging.mjs';
-import {fileImportMethods,providerUsageRows} from './provider-usage-fixture.mjs';
+import {fileImportMethods,providerUsageRows,importMethods,importDiagnosticRows} from './provider-usage-fixture.mjs';
 import {DETAILS} from '../../web/src/usage-contract.ts';
 let mf,db,stageDB,legacyDB;
 async function migrate(database,name){
@@ -15,16 +15,87 @@ before(async()=>{
  db=await mf.getD1Database('USAGE_DB');stageDB=await mf.getD1Database('STAGING_DB');legacyDB=await mf.getD1Database('LEGACY_DB');
  for(const database of [db,stageDB,legacyDB])await migrate(database,'0001_daily.sql');
  for(const database of [db,stageDB])await migrate(database,'0002_import_receipts.sql');
+ for(const database of [db,stageDB])await migrate(database,'0003_diagnostics.sql');
+ await migrate(legacyDB,'0003_diagnostics.sql');
 });
 after(async()=>{await mf?.dispose();});
 const row={event:'page_view',page:'charts',detail:'',count:1};
+const diagnostic={operation:'refresh',stage:'transport',reason:'worker_timeout',outcome:'failed',source:'maishift',mode:'automatic',duration:'over_10s',instrumentation:'diagnostics-1',count:1};
 const req=(body={version:1,events:[row]},opts={})=>new Request(opts.url||'https://maimai.party/__usage',{method:opts.method||'POST',headers:{Origin:'https://maimai.party','Content-Type':'application/json',...opts.headers},...(opts.method==='GET'?{}:{body:typeof body==='string'?body:JSON.stringify(body)})});
 const call=(request,enabled='true')=>worker.fetch(request,{USAGE_DB:db,USAGE_ENABLED:enabled});
+test('version 2 diagnostics coexist with old actions and acknowledge only stored batches',async()=>{
+ await db.prepare('DELETE FROM usage_diagnostics_daily').run();
+ const body={version:2,events:[diagnostic]};
+ const responses=await Promise.all(Array.from({length:4},()=>call(req(body))));
+ assert(responses.every(r=>r.status===204&&r.headers.get('X-Maimai-Usage-Receipt')==='stored'&&r.headers.get('X-Maimai-Usage-Schema')==='1,2'));
+ const rows=(await db.prepare('SELECT * FROM usage_diagnostics_daily').all()).results;
+ assert.equal(rows.length,1);assert.equal(rows[0].count,4);assert.equal(rows[0].reason,'worker_timeout');assert(rows[0].first_received_at<=rows[0].last_received_at);
+ for(const opts of [{headers:{DNT:'1'}},{headers:{'Sec-GPC':'1'}}]){
+  const response=await call(req(body,opts));assert.equal(response.status,204);assert.equal(response.headers.get('X-Maimai-Usage-Receipt'),null);
+ }
+ assert.equal((await call(req(body),'false')).headers.get('X-Maimai-Usage-Receipt'),null);
+ for(const field of ['operation','stage','reason','outcome','source','mode','duration','instrumentation','url','stack','player','query'])assert.equal((await call(req({version:2,events:[diagnostic,{...diagnostic,[field]:'PRIVATE-SENTINEL'}]}))).status,400);
+ assert.deepEqual((await db.prepare('SELECT * FROM usage_diagnostics_daily').all()).results,rows);
+ const failed=await worker.fetch(req(body),{USAGE_ENABLED:'true',USAGE_DB:{prepare(){return {bind(){return {}}}},batch(){throw Error('PRIVATE')}}});
+ assert.equal(failed.status,503);assert.equal(failed.headers.get('X-Maimai-Usage-Receipt'),null);assert.equal(await failed.text(),'');
+ assert.equal((await call(req())).status,204);
+});
+
+test('all twelve import methods store separate diagnostic outcomes and reject private siblings atomically',async()=>{
+ await db.prepare('DELETE FROM usage_diagnostics_daily').run();
+ const priorActions=(await db.prepare('SELECT * FROM usage_daily ORDER BY day,version,event,page,detail,failure').all()).results;
+ for(let offset=0;offset<importDiagnosticRows.length;offset+=8){
+  const body={version:2,events:importDiagnosticRows.slice(offset,offset+8)};
+  assert(Buffer.byteLength(JSON.stringify(body))<=4096);
+  const response=await call(req(body));assert.equal(response.status,204);assert.equal(response.headers.get('X-Maimai-Usage-Receipt'),'stored');
+ }
+ const rows=(await db.prepare('SELECT * FROM usage_diagnostics_daily ORDER BY source,stage,outcome').all()).results;
+ const dimensions=rows=>rows.map(({day,version,first_received_at,last_received_at,...row})=>JSON.stringify(Object.keys(row).sort().map(key=>[key,row[key]]))).sort();
+ assert.deepEqual(dimensions(rows),dimensions(importDiagnosticRows));
+ for(const source of importMethods)assert.equal(rows.filter(row=>row.source===source).length,4);
+ for(const field of ['filename','accountID','connectionID','url','token','score','message','first_received_at']){
+  const response=await call(req({version:2,events:[importDiagnosticRows[0],{...importDiagnosticRows[0],[field]:'PRIVATE-SENTINEL'}]}));
+  assert.equal(response.status,400);assert.equal(response.headers.get('X-Maimai-Usage-Receipt'),null);
+ }
+ for(const source of ['tomomai','file:unknown','file:tomomai:PRIVATE-SENTINEL'])
+  assert.equal((await call(req({version:2,events:[{...importDiagnosticRows[0],source}]}))).status,400);
+ assert.deepEqual((await db.prepare('SELECT * FROM usage_diagnostics_daily ORDER BY source,stage,outcome').all()).results,rows);
+ assert.deepEqual((await db.prepare('SELECT * FROM usage_daily ORDER BY day,version,event,page,detail,failure').all()).results,priorActions);
+ for(const headers of [{DNT:'1'},{'Sec-GPC':'1'}]){
+  const response=await call(req({version:2,events:importDiagnosticRows.slice(0,8)},{headers}));
+  assert.equal(response.status,204);assert.equal(response.headers.get('X-Maimai-Usage-Receipt'),null);
+ }
+ assert.deepEqual((await db.prepare('SELECT * FROM usage_diagnostics_daily ORDER BY source,stage,outcome').all()).results,rows);
+});
+
+test('authorization, cleanup and visibility failures retain finite diagnostic boundaries without inventing action rows',async()=>{
+ const base={...diagnostic,mode:'manual',duration:'under_1s'};
+ const events=[
+  ...['diving-fish','lxns'].flatMap(source=>['popup_blocked','authorization_failed','connection_expired','agreement_required'].map(reason=>({...base,source,operation:'provider_connect',stage:'authorization',reason}))),
+  {...base,source:'diving-fish',operation:'provider_disconnect',stage:'transport',reason:'cleanup_required'},
+  {...base,source:'lxns',operation:'provider_cleanup',stage:'transport',reason:'network'},
+  {...base,source:'lxns',operation:'import',stage:'normalize',reason:'empty_scores'},
+  {...base,source:'none',operation:'connector_config',stage:'response',reason:'configuration_unavailable',mode:'automatic'},
+ ];
+ const before=(await db.prepare('SELECT SUM(count) AS n FROM usage_daily').first()).n;
+ for(let offset=0;offset<events.length;offset+=8)assert.equal((await call(req({version:2,events:events.slice(offset,offset+8)}))).status,204);
+ for(const event of events){
+  const row=await db.prepare('SELECT count FROM usage_diagnostics_daily WHERE operation=? AND source=? AND reason=?').bind(event.operation,event.source,event.reason).first();
+  assert.equal(row.count,1);
+ }
+ assert.equal((await db.prepare('SELECT SUM(count) AS n FROM usage_daily').first()).n,before);
+ for(const event of [
+  {...events[0],source:'file:tomomai'},
+  {...events[0],source:'kamaitachi'},
+  {...events.at(-1),source:'lxns'},
+  {...events[0],reason:'PRIVATE-ERROR'},
+ ])assert.equal((await call(req({version:2,events:[events[0],event]}))).status,400);
+});
 test('only finite aggregate fields and server receipt bounds are stored; concurrent increments sum',async(t)=>{
  await db.prepare('DELETE FROM usage_daily').run();
  t.mock.timers.enable({apis:['Date'],now:new Date('2026-10-12T16:00:00.123Z')});
  const responses=await Promise.all(Array.from({length:20},()=>call(req())));
- assert.ok(responses.every(r=>r.status===204));
+ assert.ok(responses.every(r=>r.status===204&&r.headers.get('X-Maimai-Usage-Receipt')==='stored'));
  const {results}=await db.prepare('SELECT * FROM usage_daily').all();assert.equal(results.length,1);assert.equal(results[0].count,20);
  assert.equal(results[0].first_received_at,'2026-10-12T16:00:00.123Z');
  assert.equal(results[0].last_received_at,'2026-10-12T16:00:00.123Z');
@@ -44,6 +115,10 @@ test('only finite aggregate fields and server receipt bounds are stored; concurr
 
 test('migration preserves historical counts and null receipt bounds until a new receipt',async(t)=>{
  await legacyDB.prepare('INSERT INTO usage_daily(day,version,event,page,detail,failure,count) VALUES(?,?,?,?,?,?,?)').bind('2026-10-12',1,'page_view','charts','','',7).run();
+ // Production already has 0003. Receipt migration 0002 is still additive and
+ // required: an incompatible write must not falsely acknowledge storage.
+ const missing=await worker.fetch(req(),{USAGE_DB:legacyDB,USAGE_ENABLED:'true'});
+ assert.equal(missing.status,503);assert.equal(missing.headers.get('X-Maimai-Usage-Receipt'),null);
  await migrate(legacyDB,'0002_import_receipts.sql');
  const historical=await legacyDB.prepare('SELECT * FROM usage_daily').first();
  assert.equal(historical.count,7);assert.equal(historical.first_received_at,null);assert.equal(historical.last_received_at,null);
@@ -51,6 +126,9 @@ test('migration preserves historical counts and null receipt bounds until a new 
  assert.equal((await worker.fetch(req(),{USAGE_DB:legacyDB,USAGE_ENABLED:'true'})).status,204);
  const updated=await legacyDB.prepare('SELECT * FROM usage_daily').first();
  assert.equal(updated.count,8);assert.equal(updated.first_received_at,'2026-10-12T18:00:00.000Z');assert.equal(updated.last_received_at,'2026-10-12T18:00:00.000Z');
+ const diagnosed=await worker.fetch(req({version:2,events:[diagnostic]}),{USAGE_DB:legacyDB,USAGE_ENABLED:'true'});
+ assert.equal(diagnosed.status,204);assert.equal(diagnosed.headers.get('X-Maimai-Usage-Receipt'),'stored');
+ assert.equal((await legacyDB.prepare('SELECT COUNT(*) AS n FROM usage_diagnostics_daily').first()).n,1);
  t.mock.timers.reset();
 });
 

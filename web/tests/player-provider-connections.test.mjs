@@ -7,6 +7,7 @@ const { createPlayerProviderConnections, authorizeProvider } = await loadModule(
     Error,
     DOMException,
     AbortSignal,
+    AbortController,
     URL,
     TextDecoder,
     setInterval,
@@ -175,6 +176,7 @@ test('bounded authorization timeout remains timeout even when its cleanup fails'
     Error,
     DOMException,
     AbortSignal,
+    AbortController,
     URL,
     TextDecoder,
     setInterval: () => 1,
@@ -403,7 +405,9 @@ test('cancelled popup authorization closes the window and cancels only its nonce
   controller.abort();
   await assert.rejects(waiting, { name: 'AbortError' });
   assert.equal(popup.closed, true);
-  assert.deepEqual(JSON.parse(JSON.stringify(calls)), [['diving-fish', { nonce }]]);
+  assert.deepEqual(JSON.parse(JSON.stringify(calls)), [
+    ['diving-fish', { nonce }, 'provider_cleanup'],
+  ]);
 });
 
 test('detached popup proxies keep polling until the exact nonce is connected', async () => {

@@ -1,3 +1,6 @@
+import type { DiagnosticSink, Stage, Reason } from '../diagnostic-contract';
+import { beginDiagnostic } from './operation-diagnostics.ts';
+import { storageReason } from './diagnostic-error.ts';
 export const scoreExportPreferencesKey = 'maimai-score-export-preferences-v1';
 
 export interface ScoreExportPreferenceValues {
@@ -15,6 +18,7 @@ export function createScoreExportPreferences(ports: {
   versionIDs: readonly string[];
   partnerKeys: readonly string[];
   storage?: () => Pick<Storage, 'getItem' | 'setItem'>;
+  diagnose?: DiagnosticSink;
 }): ScoreExportPreferences {
   const versions = new Set(ports.versionIDs),
     partners = new Set(ports.partnerKeys),
@@ -22,6 +26,15 @@ export function createScoreExportPreferences(ports: {
     defaults = (): ScoreExportPreferenceValues => ({ versionID: null, partnerKey: 'none' });
   let state = defaults(),
     memoryOnly = false;
+  const reported = new Set<string>();
+  function degraded(stage: Stage, reason: Reason) {
+    const key = stage + ':' + reason;
+    if (reported.has(key)) return;
+    reported.add(key);
+    const operation = beginDiagnostic(ports.diagnose, 'preferences', 'persistent');
+    operation.stage(stage);
+    operation.finish('degraded', reason);
+  }
   const version = (value: unknown) =>
     typeof value === 'string' && versions.has(value) ? value : null;
   const partner = (value: unknown) =>
@@ -31,7 +44,8 @@ export function createScoreExportPreferences(ports: {
       let raw: string | null;
       try {
         raw = storage().getItem(scoreExportPreferencesKey);
-      } catch {
+      } catch (error) {
+        degraded('read', storageReason(error));
         // A denied storage getter/read still permits choices for this page session.
         memoryOnly = true;
         return { ...state };
@@ -39,7 +53,9 @@ export function createScoreExportPreferences(ports: {
       let value: unknown = null;
       try {
         if (raw && raw.length <= 2048) value = JSON.parse(raw);
+        else if (raw) degraded('decode', 'saved_malformed');
       } catch {
+        degraded('decode', 'saved_malformed');
         // Malformed preferences do not prevent later valid storage updates.
       }
       if (value && typeof value === 'object' && !Array.isArray(value)) {
@@ -57,7 +73,9 @@ export function createScoreExportPreferences(ports: {
     try {
       storage().setItem(scoreExportPreferencesKey, JSON.stringify({ schemaVersion: 1, ...state }));
       memoryOnly = false;
-    } catch {
+      reported.clear();
+    } catch (error) {
+      degraded('commit', storageReason(error));
       // Do not replace an unsaved manual choice with older storage on the next export.
       memoryOnly = true;
     }

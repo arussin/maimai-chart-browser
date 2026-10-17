@@ -4,6 +4,7 @@ import hashlib
 import json
 import re
 import unittest
+from unittest.mock import patch
 from urllib.parse import unquote
 from xml.etree import ElementTree
 
@@ -59,6 +60,127 @@ def catalog():
                     "regional_metrics": {"chart_constant": {"JP": 12.5, "INTL": 11.7}},
                 }
     return {"catalog": charts, "navigation": {"charts": navigation}, "snippets": {}}
+
+
+class SongDiscoverySEOTests(unittest.TestCase):
+    def fixture(
+        self,
+        title="ウミユリ海底譚",
+        artist="n-buna",
+        sid="song:9000aa45-25a5-4847-a6c3-5ee152121826",
+    ):
+        data = catalog()
+        data["catalog"] = data["catalog"][:4]
+        for chart in data["catalog"]:
+            chart.update(song_id=sid, title=title, artist=artist)
+            chart["regional"]["INTL"]["metadata"].update(title=title, artist=artist)
+        return data
+
+    def pages(self, data):
+        assets, ledger, _ = build_seo(data)
+        slug = next(iter(ledger["songs"].values()))
+        return {
+            locale: assets[unquote(route(locale, "songs", slug)[1:]) + "index.html"].decode()
+            for locale in LOCALES
+        }
+
+    def test_reviewed_romaji_is_in_initial_english_html_and_original_stays_h1(self):
+        pages = self.pages(self.fixture())
+        en = pages["en"]
+        self.assertIn(
+            "<title>ウミユリ海底譚 (Umiyuri Kaiteitan) — maimai Charts | maimai.party</title>", en
+        )
+        self.assertIn(">ウミユリ海底譚</h1>", en)
+        self.assertIn(">Umiyuri Kaiteitan</p>", en)
+        self.assertIn('class="seo-secondary-title" lang="ja-Latn"', en)
+        self.assertIn(
+            "ウミユリ海底譚 (Umiyuri Kaiteitan) — n-buna. maimai Charts: "
+            "DX MASTER 12 (Constant 12.5); STD MASTER 12 (Constant 12.5)",
+            en,
+        )
+        for locale, html in pages.items():
+            self.assertEqual(html.count('rel="canonical"'), 1)
+            self.assertEqual(html.count('rel="alternate"'), 6)
+            self.assertIn(">ウミユリ海底譚</h1>", html)
+            if locale != "en":
+                self.assertNotIn("Umiyuri Kaiteitan", html)
+
+    def test_wrong_artist_id_and_unreviewed_or_missing_readings_stay_absent(self):
+        for data in (
+            self.fixture(artist="Other artist"),
+            self.fixture(sid="song:new"),
+            self.fixture(
+                "白い雪のプリンセスは", "のぼる↑", "song:39407427-33d2-4c6e-9155-d742d7a3fd6a"
+            ),
+            self.fixture("???", "Unknown artist", "song:unknown"),
+        ):
+            html = self.pages(data)["en"]
+            self.assertNotIn('class="seo-secondary-title"', html)
+            self.assertNotIn("Umiyuri Kaiteitan", html)
+            self.assertNotIn("The Snow White Princess", html)
+        for state in ("intentional_blank", "missing"):
+            data = self.fixture()
+            for chart in data["catalog"]:
+                chart.update(title="", title_state=state, artist=None)
+            html = self.pages(data)["en"]
+            self.assertNotIn('class="seo-secondary-title"', html)
+            self.assertIn(
+                "Untitled (intentional)" if state == "intentional_blank" else "Title unavailable",
+                html,
+            )
+
+    def test_region_identity_drift_hides_the_reading_without_changing_permalink(self):
+        data = self.fixture()
+        _, ledger, _ = build_seo(data)
+        for chart in data["catalog"]:
+            chart["regional"]["INTL"]["metadata"]["artist"] = "Different artist"
+        html = self.pages(data)["en"]
+        self.assertIn('data-seo-jp="Umiyuri Kaiteitan" data-seo-intl=""', html)
+        self.assertIn('data-seo-jp-visible="true" data-seo-intl-visible="false"', html)
+        self.assertEqual(build_seo(data, previous=ledger)[1], ledger)
+
+    def test_verified_abbreviation_is_visible_but_never_a_pronunciation(self):
+        pages = self.pages(
+            self.fixture(
+                "Beat of getting entangled",
+                "Shoichiro Hirata",
+                "song:2d9de697-55ca-472c-80f7-e9fed7c35cef",
+            )
+        )
+        self.assertIn(">Also known as: BOGE</p>", pages["en"])
+        self.assertNotIn('class="seo-secondary-title"', pages["en"])
+        self.assertNotIn("(BOGE)", pages["en"])
+        for locale in LOCALES:
+            if locale != "en":
+                self.assertNotIn("BOGE", pages[locale])
+
+    def test_public_names_escape_html_and_duplicate_titles_have_artist_context(self):
+        sid = "song:9000aa45-25a5-4847-a6c3-5ee152121826"
+        dangerous = '<img src=x onerror="bad()"> & reading'
+        with patch(
+            "maimai_intelligence.seo.song_presentation_data",
+            return_value={
+                sid: {
+                    "title": "ウミユリ海底譚",
+                    "artist": "n-buna",
+                    "reading": dangerous,
+                    "alternate_names": [dangerous],
+                }
+            },
+        ):
+            html = self.pages(self.fixture())["en"]
+        self.assertNotIn("<img src=x", html)
+        self.assertIn("&lt;img src=x onerror=&quot;bad()&quot;&gt; &amp; reading", html)
+        data = catalog()
+        for chart in data["catalog"]:
+            if chart["song_id"] == "song:three":
+                chart["artist"] = "Another artist"
+        assets, ledger, _ = build_seo(data)
+        for sid, artist in (("song:two", "Public artist"), ("song:three", "Another artist")):
+            html = assets[
+                unquote(route("en", "songs", ledger["songs"][sid])[1:]) + "index.html"
+            ].decode()
+            self.assertIn(f"<title>Same?! — {artist} · DX / STD — maimai Charts", html)
 
 
 class SEOTests(unittest.TestCase):

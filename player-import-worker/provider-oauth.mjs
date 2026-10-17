@@ -25,8 +25,15 @@ export const PROVIDERS = Object.freeze({
     scopes: ['openid', 'read_player'],
   }),
 });
+const RENEWAL_DIAGNOSTICS = ['worker_timeout','upstream_network','rate_limited','upstream_busy','invalid_response','response_too_large','invalid_token_response','provider_configuration_changed'];
 export class OAuthError extends Error {
-  constructor(code, status = 502, retryAt = null) { super(code); this.code = code; this.status = status; this.retryAt = retryAt; }
+  constructor(code, status = 502, retryAt = null, diagnosticCode = undefined) {
+    super(code); this.code = code; this.status = status; this.retryAt = retryAt;
+    // Recovery guidance remains reconnect_required after an uncertain rotating
+    // token exchange. A separate finite cause can diagnose that boundary without
+    // exposing provider text, secrets, or persisting anything with the grant.
+    if (code === 'reconnect_required' && RENEWAL_DIAGNOSTICS.includes(diagnosticCode)) this.diagnosticCode = diagnosticCode;
+  }
 }
 export function validateDisconnectInput(input) {
   if (!input || typeof input !== 'object' || Array.isArray(input) || Object.keys(input).some(k => !['connectionID','nonce'].includes(k))
@@ -65,7 +72,11 @@ export function jsonResponse(status, data, retryAt = null, now = Date.now()) {
   return new Response(JSON.stringify(data), {status, headers});
 }
 export async function readJSON(response, maximum, signal) {
-  if (!/^application\/json(?:;|$)/i.test(response.headers.get('content-type') || '') || !response.body || Number(response.headers.get('content-length')) > maximum) {
+  const lengthHeader = response.headers.get('content-length');
+  if (lengthHeader !== null && /^\d+$/.test(lengthHeader) && Number(lengthHeader) > maximum) {
+    await response.body?.cancel().catch(() => {}); throw new OAuthError('response_too_large');
+  }
+  if (!/^application\/json(?:;|$)/i.test(response.headers.get('content-type') || '') || !response.body || lengthHeader !== null && !/^\d+$/.test(lengthHeader)) {
     await response.body?.cancel().catch(() => {}); throw new OAuthError('invalid_response');
   }
   const reader = response.body.getReader(), parts = []; let length = 0;

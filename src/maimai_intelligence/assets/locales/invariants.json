@@ -1,5 +1,12 @@
 {
   "invariants": {
+    "DiagnosticError": {
+      "reason": "Internal Error.name identifier for typed diagnostic exceptions; never displayed as UI copy or translated.",
+      "sources": [
+        "web/src/runtime/diagnostic-error.ts",
+        "src/maimai_intelligence/assets/player-maishift.js"
+      ]
+    },
     "Lv.": {
       "reason": "Official level abbreviation retained beside localized difficulty names.",
       "sources": [

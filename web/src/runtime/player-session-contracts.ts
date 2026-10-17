@@ -4,6 +4,7 @@ import type { EmitArguments } from '../usage-contract';
 import type { ImportFile, FileImportOptions, FileImportFormat } from '../domain/import-options';
 type WithoutPage<T> = T extends [infer E, unknown?, ...infer Details] ? [E, ...Details] : never;
 export type SessionUsage = WithoutPage<EmitArguments>;
+import type { DiagnosticSink } from '../diagnostic-contract';
 export type { PlayerIdentity, PlayerDataset } from '../domain/player-data';
 export interface PlayerOffer {
   format: string;
@@ -91,7 +92,7 @@ export interface PlayerSources {
     data: PlayerDataset;
     source: SourceConnection;
   }>;
-  disconnect?(source: SourceLocation | SourceConnection): Promise<void>;
+  disconnect?(source: SourceLocation | SourceConnection, manual?: boolean): Promise<void>;
 }
 export interface Consent {
   accept: boolean;
@@ -123,6 +124,7 @@ export interface SessionNotification {
   version?: number;
 }
 export interface SessionEffects {
+  diagnose?: DiagnosticSink;
   changed(redraw?: boolean): void;
   invalidate(): void;
   show(): void;

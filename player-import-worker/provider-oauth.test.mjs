@@ -284,9 +284,81 @@ test('aborted streams and size failures cancel response bodies; failed redirects
   await assert.rejects(core.upstream(PROVIDERS['diving-fish'].records,{maximum:50}),{code:'response_too_large'}); assert.equal(canceled,true);
   canceled = false; const controller = new AbortController();
   core.fetcher = async () => new Response(new ReadableStream({start() { queueMicrotask(() => controller.abort()); }, cancel() { canceled = true; }}),{headers:{'Content-Type':'application/json'}});
-  await assert.rejects(core.upstream(PROVIDERS['diving-fish'].records,{signal:controller.signal}),{code:'source_unavailable'}); assert.equal(canceled,true);
+  await assert.rejects(core.upstream(PROVIDERS['diving-fish'].records,{signal:controller.signal}),{code:'request_cancelled'}); assert.equal(canceled,true);
   let count = 0; core.fetcher = async (_url,options) => { count++; assert.equal(options.redirect,'manual'); return new Response(null,{status:307,headers:{Location:'https://evil.test'}}); };
   await assert.rejects(core.upstream(PROVIDERS['diving-fish'].records,{token:'fixture-access'}),{code:'source_unavailable'}); assert.equal(count,1);
+});
+
+for (const provider of ['diving-fish','lxns']) test(provider + ' Worker exposes only finite transport diagnostics and retains established grants', async () => {
+  const s = setup(), c = await s.connect(provider);
+  const cases = [
+    ['upstream_network', () => { throw Object.assign(Error('private payload and endpoint'), {code:'authorization_failed'}); }],
+    ['invalid_response', () => new Response('private malformed JSON', {headers:{'Content-Type':'application/json'}})],
+    ['provider_contract_changed', () => json({success:true,code:200,data:[{private:'unreported'}],records:[{private:'unreported'}]})],
+    ['response_too_large', () => new Response('{}', {headers:{'Content-Type':'application/json','Content-Length':String(9 * 1024 * 1024)}})],
+    ['rate_limited', () => json({private:'unreported'},429,{'Retry-After':'1'})],
+    ['upstream_busy', () => json({private:'unreported'},503,{'Retry-After':'1'})],
+  ];
+  for (const [code, response] of cases) {
+    s.time += 60001;
+    s.override = url => url === PROVIDERS[provider].records ? response() : null;
+    const result = await s.call('/'+provider+'/read',{connectionID:c.connectionID});
+    assert.deepEqual(await result.json(),{error:code});
+    const current = (await s.status()).find(row => row.provider === provider);
+    assert.equal(current.connectionID,c.connectionID); assert.equal(current.connected,true);
+    assert.equal(current.requiresReconnect,false);
+  }
+  s.time += 60001; s.override = null;
+  assert.equal((await s.call('/'+provider+'/read',{connectionID:c.connectionID})).status,200);
+});
+
+test('OAuth Worker distinguishes fetch/body deadlines, caller cancellation and malformed/oversized responses', async () => {
+  // Keep Node alive while AbortSignal.timeout uses its unreferenced timer.
+  const keepalive = setInterval(() => {},1000);
+  const core = new ProviderOAuthSessionCore(new Storage(),{}, {timeoutMs:10});
+  const url = PROVIDERS['diving-fish'].records;
+  try {
+    core.fetcher = (_url,{signal}) => new Promise((_resolve,reject) => signal.addEventListener('abort',() => reject(signal.reason),{once:true}));
+    await assert.rejects(core.upstream(url),{code:'worker_timeout'});
+    let cancelled = false;
+    core.fetcher = async () => new Response(new ReadableStream({cancel(){cancelled=true;}}),{headers:{'Content-Type':'application/json'}});
+    await assert.rejects(core.upstream(url),{code:'worker_timeout'}); assert.equal(cancelled,true);
+    const caller = new AbortController(); caller.abort();
+    let called = false; core.fetcher = async () => { called=true; return json({}); };
+    await assert.rejects(core.upstream(url,{signal:caller.signal}),{code:'request_cancelled'}); assert.equal(called,false);
+    for (const [headers,body,code] of [
+      [{'Content-Type':'application/json','Content-Length':'100'},'{}','response_too_large'],
+      [{'Content-Type':'application/json','Content-Length':'invalid'},'{}','invalid_response'],
+      [{'Content-Type':'text/html'},'private response','invalid_response'],
+      [{'Content-Type':'application/json'},new Uint8Array([0xff]),'invalid_response'],
+    ]) {
+      core.fetcher = async () => new Response(body,{headers});
+      await assert.rejects(core.upstream(url,{maximum:50}),{code});
+    }
+    core.fetcher = async () => new Response(new ReadableStream({start(controller){controller.error(Error('private socket detail'));}}),{headers:{'Content-Type':'application/json'}});
+    await assert.rejects(core.upstream(url),{code:'upstream_network'});
+    // A documented error-body read must not swallow the Worker deadline.
+    core.fetcher = async () => new Response(new ReadableStream({cancel(){}}),{status:403,headers:{'Content-Type':'application/json'}});
+    await assert.rejects(core.upstream(url),{code:'worker_timeout'});
+  } finally { clearInterval(keepalive); }
+});
+
+for (const provider of ['diving-fish','lxns']) test(provider + ' uncertain token renewal preserves finite cause without weakening reconnect recovery', async () => {
+  const s = setup(), c = await s.connect(provider); s.time += 901000;
+  s.override = url => { if (url === PROVIDERS[provider].token) throw Object.assign(Error('private token failure'),{diagnosticCode:'private arbitrary value'}); };
+  const response = await s.call('/'+provider+'/read',{connectionID:c.connectionID});
+  assert.equal(response.status,401);
+  assert.deepEqual(await response.json(),{error:'reconnect_required',diagnosticCode:'upstream_network'});
+  s.cores.clear();
+  const status = (await s.status()).find(row => row.provider === provider);
+  assert.equal(status.requiresReconnect,true); assert.equal(status.connected,false);
+  const state = await [...s.cores.values()][0].load();
+  assert.equal(state.connections[provider].tokens,null);
+  assert.equal(JSON.stringify(state).includes('diagnosticCode'),false);
+  const count = s.calls.length; s.time += 60001;
+  const next = await s.call('/'+provider+'/read',{connectionID:c.connectionID});
+  assert.deepEqual(await next.json(),{error:'reconnect_required'});
+  assert.equal(s.calls.length,count, 'uncertain rotating token is never replayed');
 });
 test('post-exchange failure revokes the new Fish token without replacing an older working connection', async () => {
   const s = setup(), original = await s.connect(), flow = await s.start();

@@ -6,7 +6,8 @@ export async function hash(value) {
 }
 export async function boundedJSON(response, maximum, signal) {
   if (!/^application\/json(?:;|$)/i.test(response.headers.get('content-type') || '')) throw new ImportError('invalid_response');
-  if (Number(response.headers.get('content-length')) > maximum || !response.body) throw new ImportError('response_too_large');
+  if (Number(response.headers.get('content-length')) > maximum) throw new ImportError('response_too_large');
+  if (!response.body) throw new ImportError('invalid_response');
   const reader = response.body.getReader(), chunks = []; let length = 0;
   const abort = () => { void reader.cancel().catch(() => {}); };
   signal.addEventListener('abort',abort,{once:true});
@@ -40,7 +41,7 @@ export function createService({fetcher = fetch, now = Date.now, timeoutMs = 3000
   // bodies. Durable Objects still coordinate each profile across isolates.
   let activeImports = 0;
   return {async fetch(request,env) {
-    let coordinator, lease, upstreamRetry = null, reserved = false;
+    let coordinator, lease, upstreamRetry = null, reserved = false, upstreamTimeout;
     try {
       const url = new URL(request.url);
       if (url.origin !== PARTY || url.pathname !== PATH || url.search) return response(404,{error:'not_found'},null,now());
@@ -62,18 +63,24 @@ export function createService({fetcher = fetch, now = Date.now, timeoutMs = 3000
       coordinator = env.PROFILE_LIMITER.getByName(await hash('profile:'+input.handle.toLowerCase()));
       lease = await coordinator.claim(input.manual);
       if (!lease.id) return response(429,{error:'rate_limited'},lease.retryAt,now());
-      const signal = AbortSignal.any([request.signal,AbortSignal.timeout(timeoutMs)]);
+      upstreamTimeout = AbortSignal.timeout(timeoutMs);
+      const signal = AbortSignal.any([request.signal,upstreamTimeout]);
       async function read(kind, selected = input) {
         signal.throwIfAborted();
-        const result = await fetcher(upstreamURL(kind,selected),{method:'GET',headers:{Accept:'application/json','x-tsr-serverFn':'true'},
-          credentials:'omit',referrerPolicy:'no-referrer',redirect:'manual',cache:'no-store',signal});
+        let result;
+        try { result = await fetcher(upstreamURL(kind,selected),{method:'GET',headers:{Accept:'application/json','x-tsr-serverFn':'true'},
+          credentials:'omit',referrerPolicy:'no-referrer',redirect:'manual',cache:'no-store',signal}); }
+        catch { throw new ImportError(upstreamTimeout.aborted ? 'worker_timeout' : request.signal.aborted ? 'request_cancelled' : 'upstream_network'); }
         if (!result.ok) {
           await result.body?.cancel();
           if (result.status === 429 || result.status === 503) throw new ImportError('upstream_busy',503,retryTime(result.headers.get('Retry-After'),now()));
           if ([401,403,404].includes(result.status)) throw new ImportError('profile_unavailable',404);
           throw new ImportError('upstream_failed');
         }
-        return decode(await boundedJSON(result,MAX_BYTES,signal));
+        let body;
+        try {body=await boundedJSON(result,MAX_BYTES,signal);}
+        catch(error){if(error instanceof ImportError)throw error;throw new ImportError(upstreamTimeout.aborted?'worker_timeout':request.signal.aborted?'request_cancelled':'upstream_network');}
+        return decode(body);
       }
       const before = profile(await read('profile'),input);
       if (allowedRegion && before.region !== allowedRegion) throw new ImportError('profile_not_approved',403);
@@ -86,7 +93,7 @@ export function createService({fetcher = fetch, now = Date.now, timeoutMs = 3000
     } catch (error) {
       const known = error instanceof ImportError;
       upstreamRetry = known ? error.retryAt : null;
-      return response(known ? error.status : 502,{error:known ? error.code : 'source_unavailable'},upstreamRetry,now());
+      return response(known ? error.status : 502,{error:upstreamTimeout?.aborted ? 'worker_timeout' : known ? error.code : 'source_unavailable'},upstreamRetry,now());
     } finally {
       // Await completion so a failed coordinator never produces an unhandled
       // promise. A lost completion retains the expiring lease, failing closed.

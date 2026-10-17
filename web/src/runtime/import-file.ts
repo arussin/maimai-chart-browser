@@ -1,3 +1,4 @@
+import { DiagnosticError, diagnosticStep } from './diagnostic-error';
 import type { PlayerDataset } from '../domain/player-data';
 import { IMPORT_FORMATS, type ImportFile, type FileImportOptions } from '../domain/import-options';
 import { parseOfficialFileExport } from '../domain/import-official';
@@ -14,11 +15,14 @@ export async function readImportFile(
 ): Promise<PlayerDataset> {
   if (!IMPORT_FORMATS.some(([format]) => format === options.format))
     throw new Error('Unsupported file provider.');
-  if (file.size > core.MAX_COMPRESSED) throw new Error('Player file exceeds 32 MiB.');
-  const bytes = new Uint8Array(await file.arrayBuffer());
-  if (bytes.length > core.MAX_COMPRESSED) throw new Error('Player file exceeds 32 MiB.');
+  if (file.size > core.MAX_COMPRESSED)
+    throw new DiagnosticError('Player file exceeds 32 MiB.', 'oversized_response', 'read');
+  const bytes = new Uint8Array(await diagnosticStep(() => file.arrayBuffer(), 'unknown', 'read'));
+  if (bytes.length > core.MAX_COMPRESSED)
+    throw new DiagnosticError('Player file exceeds 32 MiB.', 'oversized_response', 'read');
   const compressed = bytes[0] === 0x1f && bytes[1] === 0x8b;
-  if (options.format === 'portable' && compressed) return core.decode(bytes);
+  if (options.format === 'portable' && compressed)
+    return diagnosticStep(() => core.decode(bytes), 'normalization', 'decode');
   const raw = compressed
     ? await core.bounded(
         new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip')),
@@ -29,7 +33,11 @@ export async function readImportFile(
   try {
     input = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(raw));
   } catch {
-    throw new Error('Choose a valid JSON export for the selected source.');
+    throw new DiagnosticError(
+      'Choose a valid JSON export for the selected source.',
+      'malformed_response',
+      'decode',
+    );
   }
   if (options.format === 'portable') return core.validate(input);
   return normalizeFileImportDocument(
@@ -73,7 +81,11 @@ export async function normalizeFileImportDocument(
     ? parsePrivateExport(provider, input)
     : parseOfficialFileExport(provider, input);
   if ('sourceRegion' in parsed && parsed.sourceRegion && parsed.sourceRegion !== options.region)
-    throw new Error('The export and selected game region do not match.');
+    throw new DiagnosticError(
+      'The export and selected game region do not match.',
+      'region_mismatch',
+      'identity',
+    );
   return normalizeParsedImportDocument(
     core,
     input,

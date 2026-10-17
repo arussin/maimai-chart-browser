@@ -1,0 +1,26 @@
+{
+  "reviewer": "Codex",
+  "date": "2026-10-15",
+  "method": "AI contextual translation review by the primary agent; not native-speaker certification.",
+  "locales": ["en", "zh-Hans", "ko", "ja", "id"],
+  "entries": 1,
+  "scope": ["Unknown failure"],
+  "invariants": [
+    {
+      "value": "DiagnosticError",
+      "reason": "Reviewed Error.name assignment in the typed diagnostic wrapper and generated Maishift adapter; public dialogs display Error.message through localization, not the class name."
+    }
+  ],
+  "checks": [
+    "Short fallback for a thrown value that is not an Error during import normalization or encoding.",
+    "Translations preserve an unknown error without inventing its cause or exposing the thrown value.",
+    "Existing English wording, other translations and owner-dashboard language are unchanged."
+  ],
+  "translations": {
+    "zh-Hans": "未知错误",
+    "ko": "알 수 없는 오류",
+    "ja": "不明なエラー",
+    "id": "Kesalahan tidak diketahui"
+  },
+  "visual_validation": "The browser regression triggers the actual encoding fallback during import, checks all five languages at 320, 430 and 1280 CSS pixels, and verifies saved data is preserved. This review record does not itself assert those tests passed."
+}

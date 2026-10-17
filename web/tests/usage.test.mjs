@@ -5,6 +5,8 @@ import { moduleSource, evaluateModule } from './module.mjs';
 import { gzipSync } from 'node:zlib';
 import {
   fileImportMethods,
+  importMethods,
+  importDiagnosticRows,
   providerUsageRows,
 } from '../../usage-worker/test/provider-usage-fixture.mjs';
 const source = await moduleSource('usage');
@@ -17,6 +19,11 @@ function fixture({
   dnt = '0',
   enabled = true,
   fail = false,
+  status = 204,
+  receipt = false,
+  timeout = false,
+  schema = '1,2',
+  hold = null,
 } = {}) {
   const listeners = {},
     requests = [];
@@ -31,17 +38,208 @@ function fixture({
     navigator: { globalPrivacyControl: gpc, doNotTrack: dnt },
     document: { prerendering: false, addEventListener: (key, fn) => (listeners[key] = fn) },
     TextEncoder,
-    AbortSignal,
+    AbortSignal: timeout
+      ? { timeout: () => AbortSignal.abort(new DOMException('private', 'TimeoutError')) }
+      : AbortSignal,
     clearTimeout() {},
     fetch: async (url, options) => {
       requests.push({ url, options });
+      if (hold) await hold;
       if (fail) throw Error('private network error');
-      return { ok: true };
+      return {
+        status: typeof status === 'function' ? status(JSON.parse(options.body).version) : status,
+        headers: {
+          get: (key) =>
+            key === 'X-Maimai-Usage-Schema'
+              ? schema
+              : key === 'X-Maimai-Usage-Receipt' && receipt
+                ? 'stored'
+                : null,
+        },
+      };
     },
   });
   const api = evaluateModule(module, context).createUsage();
   return { api, requests, listeners, context };
 }
+const diagnostic = {
+  operation: 'catalog',
+  stage: 'transport',
+  reason: 'network',
+  outcome: 'failed',
+  source: 'none',
+  mode: 'automatic',
+  duration: 'under_1s',
+  instrumentation: 'diagnostics-1',
+  count: 1,
+};
+test('delivery status distinguishes unconfirmed 204, acknowledgement, rejection, unavailable and uncertain transport', async () => {
+  for (const [settings, expected] of [
+    [{}, 'unconfirmed'],
+    [{ receipt: true }, 'recorded'],
+    [{ status: 400 }, 'rejected'],
+    [{ status: 503 }, 'unavailable'],
+    [{ fail: true }, 'network'],
+    [{ fail: true, timeout: true }, 'timeout'],
+  ]) {
+    const f = fixture(settings);
+    f.api.diagnose(diagnostic);
+    await f.api.flush();
+    assert.equal(f.api.delivery().last, expected);
+    assert.equal(f.requests.length, 1);
+    await f.api.flush();
+    assert.equal(f.requests.length, 1);
+    assert.equal(JSON.parse(f.requests[0].options.body).version, 2);
+    assert(Object.isFrozen(f.api.delivery()));
+  }
+});
+test('diagnostics share every privacy gate and local saturation status stays bounded', async () => {
+  for (const settings of [
+    { gpc: true },
+    { dnt: '1' },
+    { enabled: false },
+    { host: 'preview.invalid' },
+  ]) {
+    const f = fixture(settings);
+    f.api.diagnose(diagnostic);
+    await f.api.flush();
+    assert.equal(f.requests.length, 0);
+    assert.equal(f.api.delivery().last, 'disabled');
+  }
+  const f = fixture();
+  f.api.suspend(() => f.api.diagnose(diagnostic));
+  await f.api.flush();
+  assert.equal(f.requests.length, 0);
+  for (let i = 0; i < 2000; i++) f.api.emit('settings_opened');
+  assert.equal(f.api.delivery().saturated, 1000);
+  assert.equal(f.api.delivery().dropped, 1000);
+  await f.api.flush();
+  assert.equal(JSON.parse(f.requests[0].options.body).events[0].count, 100);
+  f.api.disable();
+  assert.equal(f.api.delivery().dropped, 0);
+  f.api.diagnose(diagnostic);
+  await f.api.flush();
+  assert.equal(f.requests.length, 1);
+});
+
+test('all twelve import methods retain separate v1 actions and v2 acknowledged diagnostics', async () => {
+  const f = fixture({ receipt: true });
+  for (const method of importMethods) {
+    f.api.emit('import_started', 'charts', method);
+    f.api.diagnose(
+      importDiagnosticRows.find((row) => row.source === method && row.outcome === 'success'),
+    );
+    await f.api.flush();
+  }
+  const batches = f.requests.map((request) => JSON.parse(request.options.body));
+  assert.deepEqual(
+    batches
+      .filter((batch) => batch.version === 1)
+      .flatMap((batch) => batch.events)
+      .map((row) => row.detail),
+    importMethods,
+  );
+  assert.deepEqual(
+    batches
+      .filter((batch) => batch.version === 2)
+      .flatMap((batch) => batch.events)
+      .map((row) => row.source),
+    importMethods,
+  );
+  assert.equal(f.api.delivery().last, 'recorded');
+  assert.equal(f.api.delivery().schema, 'compatible');
+  assert.equal(f.api.delivery().dropped, 0);
+  assert(batches.every((batch) => new TextEncoder().encode(JSON.stringify(batch)).length <= 4096));
+  for (const row of importDiagnosticRows) f.api.diagnose({ ...row, filename: 'PRIVATE-SENTINEL' });
+  await f.api.flush();
+  assert.equal(f.requests.length, batches.length);
+});
+
+test('old collectors and rejected diagnostic batches cannot invalidate a separate action delivery', async () => {
+  const f = fixture({ schema: '1', status: (version) => (version === 1 ? 204 : 400) });
+  f.api.emit('import_started', 'charts', 'file:tomomai');
+  f.api.diagnose(importDiagnosticRows[0]);
+  await f.api.flush();
+  assert.deepEqual(
+    f.requests.map((request) => JSON.parse(request.options.body).version),
+    [1, 2],
+  );
+  assert.equal(f.api.delivery().last, 'rejected');
+  assert.equal(f.api.delivery().schema, 'incompatible');
+  assert.equal(f.api.delivery().dropped, 1);
+  await f.api.flush();
+  assert.equal(f.requests.length, 2, 'No action or diagnostic replay');
+});
+
+test('terminal bursts preserve the two-request limit and disclose discarded counts without retries', async () => {
+  let release;
+  const hold = new Promise((resolve) => {
+    release = resolve;
+  });
+  const f = fixture({ receipt: true, hold });
+  for (const method of importMethods) f.api.emit('import_completed', 'charts', method);
+  assert.equal(f.requests.length, 2);
+  assert.equal(f.api.delivery().dropped, importMethods.length - 2);
+  assert.equal(f.api.delivery().saturated, importMethods.length - 2);
+  release();
+  await new Promise((resolve) => setImmediate(resolve));
+  await f.api.flush();
+  assert.equal(f.requests.length, 2);
+  f.api.emit('import_completed', 'charts', 'file:tomomai');
+  await f.api.flush();
+  assert.equal(f.requests.length, 3);
+  assert.equal(f.api.delivery().dropped, importMethods.length - 2);
+});
+
+test('a normal local commit keeps its prompt action and separate storage/import diagnostics while delivery overlaps', async () => {
+  let release;
+  const hold = new Promise((resolve) => {
+    release = resolve;
+  });
+  const f = fixture({ receipt: true, hold });
+  const imported = importDiagnosticRows.find(
+    (row) => row.source === 'file:tomomai' && row.outcome === 'success',
+  );
+  f.api.emit('import_started', 'charts', 'file:tomomai');
+  f.api.diagnose({
+    ...imported,
+    operation: 'storage',
+    source: 'persistent',
+    mode: 'automatic',
+    stage: 'commit',
+  });
+  // The coordinator emits the action immediately at durable commit, then closes
+  // the import operation. Its diagnostic must survive the overlapping flush.
+  f.api.emit('import_completed', 'charts', 'file:tomomai');
+  assert.equal(f.requests.length, 1);
+  f.api.diagnose(imported);
+  const finalFlush = f.api.flush();
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(f.requests.length, 2);
+  release();
+  await finalFlush;
+  await new Promise((resolve) => setImmediate(resolve));
+  const batches = f.requests.map((request) => JSON.parse(request.options.body));
+  assert.equal(
+    batches
+      .filter((batch) => batch.version === 1)
+      .flatMap((batch) => batch.events)
+      .filter((row) => row.event === 'import_completed')
+      .reduce((sum, row) => sum + row.count, 0),
+    1,
+  );
+  assert.deepEqual(
+    batches
+      .filter((batch) => batch.version === 2)
+      .flatMap((batch) => batch.events)
+      .map((row) => row.operation)
+      .sort(),
+    ['import', 'storage'],
+  );
+  assert.equal(f.api.delivery().dropped, 0);
+  assert.equal(f.api.delivery().saturated, 0);
+  assert.equal(f.api.delivery().last, 'recorded');
+});
 test('first-party counts are bounded finite data, with no application or persistent access', async () => {
   const { api, requests, listeners } = fixture();
   api.activate('song');
@@ -168,6 +366,7 @@ test('all finite import failure reasons reach transport without client timestamp
   const { api, requests } = fixture({ fail: true });
   for (const failure of FAILURES) {
     api.emit('import_failed', 'charts', 'diving-fish', failure);
+    await api.flush();
   }
   assert.equal(requests.length, FAILURES.length);
   await api.flush();
@@ -217,8 +416,12 @@ test('direct import counts accept only finite provider names and never account o
 test('every finite import, provider lifecycle and tracker-link row survives the browser transport unchanged', async () => {
   const { api, requests } = fixture();
   for (let i = 0; i < providerUsageRows.length; i += 16) {
-    for (const row of providerUsageRows.slice(i, i + 16))
+    for (const row of providerUsageRows.slice(i, i + 16)) {
       api.emit(row.event, row.page, row.detail, row.failure);
+      // Exhaustive independent operations must settle between terminal flushes;
+      // the sender intentionally caps concurrent requests even during bursts.
+      await api.flush();
+    }
     await api.flush();
   }
   const received = requests.flatMap((request) => JSON.parse(request.options.body).events);

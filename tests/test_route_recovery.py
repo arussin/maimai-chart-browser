@@ -134,20 +134,21 @@ class RouteRecoveryTests(unittest.TestCase):
         )
 
     def test_ordinary_and_static_fixture_inventories_match_reviewed_bytes(self):
-        # Indonesian review reproduced the prior four-locale inventory exactly.
-        # Existing pages add only reciprocal id links; seven Indonesian routes
-        # and sitemap-id.xml are new. Chart recovery decisions are unchanged.
+        # Song-discovery review compared all bytes against production 30de8cd:
+        # only titles/descriptions change in 25 fictional song documents, in
+        # both ordinary and recovery inventories. Routes, bodies, chart recovery
+        # decisions and version documents remain identical (see SEO validation).
         # These are complete path-to-content inventories, not selected HTML text.
         def inventory_digest(assets):
             return digest(canonical({name: digest(raw) for name, raw in sorted(assets.items())}))
 
         self.assertEqual(
             inventory_digest(self.prepared.assets),
-            "2f334b44b9a6bb1886b7592dfcf69f42e60e258471da28c101329465959c6bab",
+            "a5b1b231d03fc9c563d6560a5357f74e01821e61cfbc3189634a36ed9d64453b",
         )
         self.assertEqual(
             inventory_digest(self.prepare().assets),
-            "4e67037355989fcb9a0b9932683122e9f5767f5d71c0e87c70db18db7f617f7a",
+            "d6000e3a83657b0ca0f08b6e86cb8d056b17d4f469170bec479402f9e2f737ec",
         )
         data = json.loads(self.baseline)
         data["catalog"] = data["catalog"][1:]
@@ -161,7 +162,7 @@ class RouteRecoveryTests(unittest.TestCase):
             inventory_digest(
                 self.prepare(baseline_catalog=raw, baseline_reference=reference).assets
             ),
-            "77b72a8ac2b579cfe96ef96b40da956b9430e04d15843cc26666384b53fe6ed4",
+            "5d359b5ad8c9c7950b0fad2b1790f04d8459032ec92dd8c2522a48c35ddd59c6",
         )
 
     def test_static_recovery_removes_application_module_preloads(self):

@@ -18,3 +18,4 @@ html.seo-static[lang="zh-Hans"] body{font-family:Arial,"Noto Sans CJK SC","Micro
 #seo-route-view{max-width:1168px;margin:auto;padding:0 32px}#seo-route-view .seo-document{max-width:none;padding:24px 0}#seo-route-view .song-workspace{display:grid;gap:12px;margin:16px 0}#seo-route-view .seo-facts{margin:16px 0}#seo-route-view .seo-artwork{float:left;margin:0 24px 16px 0}#seo-route-view .seo-actions{margin:16px 0}#seo-route-view .song-workspace{clear:both}@media(max-width:600px){#seo-route-view{padding:0 18px}#seo-route-view .seo-artwork{width:100px;height:100px;margin-right:16px}}
 
 #seo-route-view:focus{outline:none}
+.seo-document .seo-secondary-title{font-size:14px;font-weight:400;line-height:1.5;color:#52676d;margin:6px 0 0;overflow-wrap:anywhere}.seo-document .seo-alternate-names{font-size:13px;line-height:1.5;color:#52676d;margin:6px 0 0;overflow-wrap:anywhere}

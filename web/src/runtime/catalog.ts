@@ -1,4 +1,7 @@
 import type { Catalog, Chart } from '../catalog-query';
+import type { DiagnosticSink } from '../diagnostic-contract';
+import { beginDiagnostic } from './operation-diagnostics';
+import { DiagnosticError } from './diagnostic-error';
 import {
   PublicReader,
   MiB,
@@ -75,11 +78,33 @@ export interface LoadedCatalog {
   latest: boolean;
   hash: string;
 }
+const failedCatalogs = new WeakSet<PublicReader>();
 export async function loadCatalog(
   reader: PublicReader,
   requested: string | null,
   pinnedHash?: string,
   manifestReference?: SingleVerifiedRef,
+  diagnose?: DiagnosticSink,
+): Promise<LoadedCatalog> {
+  const operation = beginDiagnostic(diagnose, 'catalog');
+  operation.stage('response');
+  try {
+    const result = await readCatalog(reader, requested, pinnedHash, manifestReference, diagnose);
+    operation.finish(failedCatalogs.has(reader) ? 'recovered' : 'success');
+    failedCatalogs.delete(reader);
+    return result;
+  } catch (error) {
+    failedCatalogs.add(reader);
+    operation.fail(error, 'contract_changed');
+    throw error;
+  }
+}
+async function readCatalog(
+  reader: PublicReader,
+  requested: string | null,
+  pinnedHash?: string,
+  manifestReference?: SingleVerifiedRef,
+  diagnose?: DiagnosticSink,
 ): Promise<LoadedCatalog> {
   const manifest = decodeJSON<Manifest>(
     manifestReference
@@ -135,7 +160,7 @@ export async function loadCatalog(
   } else {
     bytes = await reader.read(entry.path, 64 * MiB);
     if ((await sha256(bytes)) !== entry.sha256)
-      throw Error('Research catalog integrity check failed');
+      throw new DiagnosticError('Research catalog integrity check failed', 'integrity', 'response');
   }
   return finish(bytes, entry);
   function finish(bytes: Uint8Array, entry: Release): LoadedCatalog {
@@ -168,7 +193,7 @@ export async function loadCatalog(
     return {
       canonical: data,
       data: view,
-      details: startup ? createDetails(reader, view, entry.sha256) : undefined,
+      details: startup ? createDetails(reader, view, entry.sha256, diagnose) : undefined,
       version,
       latest: version === manifest.default,
       hash: entry.sha256,
@@ -189,11 +214,18 @@ interface Job {
   resolve: () => void;
   reject: (reason: unknown) => void;
 }
-function createDetails(reader: PublicReader, data: PublicCatalog, hash: string): CatalogDetails {
+function createDetails(
+  reader: PublicReader,
+  data: PublicCatalog,
+  hash: string,
+  diagnose?: DiagnosticSink,
+): CatalogDetails {
   const charts = new Map(data.catalog.map((chart) => [chart.chart_id, chart])),
     loaded = new Set<string>(),
     jobs = new Map<string, Job>(),
     queue: Job[] = [];
+  const failed = new Set<string>(),
+    unavailable = new Set<string>();
   let active = 0;
   async function fetchBucket(bucket: string) {
     const ref = singleReference(data.detail_buckets?.[bucket], 'chart-details', 8 * MiB),
@@ -206,25 +238,30 @@ function createDetails(reader: PublicReader, data: PublicCatalog, hash: string):
               ? 'chart-details-2'
               : 'chart-details-1') || detail.source_catalog_sha256 !== hash
     )
-      throw Error('Chart details belong to another catalog');
+      throw new DiagnosticError(
+        'Chart details belong to another catalog',
+        'contract_changed',
+        'response',
+      );
     const expected = [...charts.values()].filter((chart) => chart.detail_bucket === bucket);
     if (
       !detail.identities ||
       Object.keys(detail.identities).length !== expected.length ||
       expected.some((chart) => detail.identities[chart.chart_id] !== chart.source_hash)
     )
-      throw Error('Chart detail identity mismatch');
+      throw new DiagnosticError('Chart detail identity mismatch', 'identity', 'identity');
     for (const [id, record] of Object.entries(detail.charts || {}))
       if (
         charts.get(id)?.detail_bucket !== bucket ||
         record.source_hash !== charts.get(id)?.source_hash
       )
-        throw Error('Chart detail identity mismatch');
+        throw new DiagnosticError('Chart detail identity mismatch', 'identity', 'identity');
     for (const id of Object.keys(detail.snippets || {}))
-      if (charts.get(id)?.detail_bucket !== bucket) throw Error('Passage identity mismatch');
+      if (charts.get(id)?.detail_bucket !== bucket)
+        throw new DiagnosticError('Passage identity mismatch', 'identity', 'identity');
     for (const chart of expected)
       if (data.analysis?.charts[chart.chart_id] && !detail.charts?.[chart.chart_id])
-        throw Error('Chart evidence is missing');
+        throw new DiagnosticError('Chart evidence is missing', 'contract_changed', 'response');
     if (data.analysis) Object.assign(data.analysis.charts, detail.charts);
     Object.assign(data.snippets, detail.snippets);
     loaded.add(bucket);
@@ -234,8 +271,21 @@ function createDetails(reader: PublicReader, data: PublicCatalog, hash: string):
       const job = queue.shift()!;
       active++;
       job.started = true;
+      const operation = beginDiagnostic(diagnose, 'chart_details');
+      operation.stage('response');
       void fetchBucket(job.bucket)
-        .then(job.resolve, job.reject)
+        .then(
+          () => {
+            operation.finish(failed.has(job.bucket) ? 'recovered' : 'success');
+            failed.delete(job.bucket);
+            job.resolve();
+          },
+          (error) => {
+            failed.add(job.bucket);
+            operation.fail(error, 'contract_changed');
+            job.reject(error);
+          },
+        )
         .finally(() => {
           active--;
           jobs.delete(job.bucket);
@@ -245,8 +295,14 @@ function createDetails(reader: PublicReader, data: PublicCatalog, hash: string):
   }
   function ensure(chart: ChartIdentity, priority = false): Promise<void> {
     const bucket = charts.get(chart.chart_id)?.detail_bucket;
-    if (!bucket || !Object.hasOwn(data.detail_buckets ?? {}, bucket))
+    if (!bucket || !Object.hasOwn(data.detail_buckets ?? {}, bucket)) {
+      if (!unavailable.has(chart.chart_id)) {
+        unavailable.add(chart.chart_id);
+        const operation = beginDiagnostic(diagnose, 'chart_details');
+        operation.finish('unavailable', 'not_prepared');
+      }
       return Promise.reject(Error('Chart details are unavailable'));
+    }
     if (loaded.has(bucket)) return Promise.resolve();
     const pending = jobs.get(bucket);
     if (pending) {

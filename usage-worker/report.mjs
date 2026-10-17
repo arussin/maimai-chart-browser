@@ -5,6 +5,7 @@ import {spawnSync} from 'node:child_process';
 import {validateRow} from '../web/src/usage-contract.ts';
 import {aggregateKeys,receiptTimes} from './dashboard-model.mjs';
 import {actionLabel,isScoreExport,summarizeImports} from './action-labels.mjs';
+import {diagnosticReport,diagnosticQuery,diagnosticMarkdown} from './diagnostics-report.mjs';
 export const zone='America/New_York';
 const dayFormat=new Intl.DateTimeFormat('en-CA',{timeZone:zone,year:'numeric',month:'2-digit',day:'2-digit'});
 export const dayKey=date=>dayFormat.format(date);
@@ -20,7 +21,7 @@ export function startUTC(day){
  return new Date(high).toISOString();
 }
 export function summarize(input,{from,to,now=new Date(),includeToday=false}={}){
- if(!record(input)||Object.keys(input).some(k=>!['schema_version','query_status','activation','totals','coverage'].includes(k))||input.schema_version!=='usage-export-1'||!Array.isArray(input.totals)||!Array.isArray(input.coverage)||input.query_status!=='ok')throw Error('Missing or failed aggregate query; counts are unknown.');
+ if(!record(input)||!['usage-export-1','usage-export-2'].includes(input.schema_version)||Object.keys(input).some(k=>!['schema_version','query_status','activation','totals','coverage',...(input.schema_version==='usage-export-2'?['diagnostics']:[])].includes(k))||!Array.isArray(input.totals)||!Array.isArray(input.coverage)||input.query_status!=='ok'||input.schema_version==='usage-export-2'&&!Array.isArray(input.diagnostics))throw Error('Missing or failed aggregate query; counts are unknown.');
  to??=addDay(dayKey(now),includeToday?0:-1);from??=addDay(to,-29);
  if(!validDay(from)||!validDay(to)||from>to||to>dayKey(now)||(!includeToday&&to===dayKey(now)))throw Error('Choose completed New York days, or explicitly include today as partial.');
  const days=[];for(let d=from;d<=to;d=addDay(d,1)){if(days.length>=3660)throw Error('Report range exceeds 10 years');days.push(d);}
@@ -51,28 +52,29 @@ export function summarize(input,{from,to,now=new Date(),includeToday=false}={}){
   if(!['complete','partial','off','unknown'].includes(status))throw Error('Invalid coverage state');
   return {day,version,status,count:totals.filter(r=>r.day===day&&r.version===version).reduce((n,r)=>n+r.count,0),zero_is_measured:status==='complete'};
  }):[{day,version:null,status:day===dayKey(now)?'partial':'unknown',count:0,zero_is_measured:false}]);
- return {schema_version:'usage-report-1',timezone:zone,from,to,utc_start:startUTC(from),utc_end_exclusive:startUTC(addDay(to,1)),activation:input.activation??null,partial_day:to===dayKey(now),coverage,totals,imports:summarizeImports(totals),
-  limitations:['Counts describe actions, not unique people or sessions.','Provider lifecycle stages are separate counters, not distinct imports or a linked funnel; automatic refresh and background status/cleanup are excluded.','Import completed means local data was committed; a later connection cleanup failure is a separate outcome.','First/latest known receipts are collector UTC times, not exact user-event times. Legacy rows have unknown receipt times.','No funnels, visitor sources, owner exclusion or retention are available.','Opt-outs, blocked requests and dropped batches are not measurable.','Only completed days marked complete distinguish measured zero from unknown coverage. New counters absent before rollout are unknown.']};
+ const diagnostic=diagnosticReport(input.diagnostics,now);diagnostic.diagnostics=diagnostic.diagnostics.filter(r=>r.day>=from&&r.day<=to);
+ return {schema_version:'usage-report-1',timezone:zone,from,to,utc_start:startUTC(from),utc_end_exclusive:startUTC(addDay(to,1)),activation:input.activation??null,partial_day:to===dayKey(now),coverage,totals,...diagnostic,imports:summarizeImports(totals),
+  limitations:['Counts describe actions, not unique people or sessions.','Provider lifecycle stages are separate counters, not distinct imports or a linked funnel; version-1 actions exclude automatic refresh and background status/cleanup. Version-2 diagnostics separately describe automatic operation outcomes.','Import completed means local data was committed; a later connection cleanup failure is a separate outcome.','First/latest known receipts are collector UTC times, not exact user-event times. Legacy rows have unknown receipt times.','No funnels, visitor sources, owner exclusion or retention are available.','Opt-outs, blocked requests and dropped batches are not measurable.','Only completed days marked complete distinguish measured zero from unknown coverage. New counters absent before rollout are unknown.']};
 }
 export function queryDatabase(database,{remote=false,persistTo,activation=null,from,to,now=new Date(),includeToday=false,run=spawnSync}={}){
  if(!/^[a-zA-Z0-9_-]{1,80}$/.test(database))throw Error('Invalid database name');
- const cli=fileURLToPath(new URL('./node_modules/wrangler/bin/wrangler.js',import.meta.url));
+ const cli=fileURLToPath(new URL('bin/wrangler.js',import.meta.resolve('wrangler/package.json')));
  to??=addDay(dayKey(now),includeToday?0:-1);from??=addDay(to,-29);
  if(!validDay(from)||!validDay(to)||from>to||to>dayKey(now)||(!includeToday&&to===dayKey(now)))throw Error('Choose completed New York days, or explicitly include today as partial.');
  const where=" WHERE day>='"+from+"' AND day<='"+to+"'";
- const sql='SELECT day,version,event,page,detail,failure,count,first_received_at,last_received_at FROM usage_daily'+where+'; SELECT day,version,status FROM usage_coverage'+where+';';
+ const sql='SELECT day,version,event,page,detail,failure,count,first_received_at,last_received_at FROM usage_daily'+where+'; SELECT day,version,status FROM usage_coverage'+where+'; '+diagnosticQuery+where+' LIMIT 50001;';
  const args=[cli,'d1','execute',database,remote?'--remote':'--local','--json','--command',sql];
  if(persistTo&&!remote)args.push('--persist-to',persistTo);
  const result=run(process.execPath,args,{encoding:'utf8',maxBuffer:32*1024*1024,env:{...process.env,WRANGLER_SEND_METRICS:'false'}});
  if(result.status!==0)throw Error('Aggregate query failed');
  const parsed=JSON.parse(result.stdout);
- if(!Array.isArray(parsed)||parsed.length!==2||parsed.some(r=>r.success!==true||!Array.isArray(r.results)))throw Error('Aggregate query incomplete');
+ if(!Array.isArray(parsed)||parsed.length!==3||parsed.some(r=>r.success!==true||!Array.isArray(r.results))||parsed[2].results.length>50000)throw Error('Aggregate query incomplete');
  if(activation!==null&&!validDay(activation))throw Error('Invalid activation day');
- return {schema_version:'usage-export-1',query_status:'ok',activation,totals:parsed[0].results,coverage:parsed[1].results};
+ return {schema_version:'usage-export-2',query_status:'ok',activation,totals:parsed[0].results,coverage:parsed[1].results,diagnostics:parsed[2].results};
 }
 export function markdown(report){
  const imports=summarizeImports(report.totals),value=v=>v??'unknown';
- return ['# maimai.party usage totals','',report.from+' through '+report.to+' ('+zone+')',
+ return ['# maimai.party usage totals','',diagnosticMarkdown(report),report.from+' through '+report.to+' ('+zone+')',
   ...(report.partial_day?['Today is partial. Counts cover received activity so far, not a completed day.']:[]),
   'Activation: '+(report.activation??'unknown'),
   'UTC interval: '+report.utc_start+' to '+report.utc_end_exclusive+' (exclusive)','',
@@ -92,7 +94,7 @@ export function markdown(report){
   ...imports.failures.map(r=>'| '+[actionLabel(r.provider),actionLabel(r.event),actionLabel(r.failure),r.count,value(r.first_received_at),value(r.last_received_at)].join(' | ')+' |'),'',
   '## All received counters','',
   '| Day | Instrumentation | Event | Page | Detail | Failure | Count | First known receipt (UTC) | Latest known receipt (UTC) |','|---|---:|---|---|---|---|---:|---|---|',
-  ...report.totals.map(r=>'| '+[r.day,r.version,r.event,r.page,r.event==='data_action'&&r.detail==='clear'?actionLabel(r.detail):r.detail||'—',r.failure||'—',r.count,value(r.first_received_at),value(r.last_received_at)].join(' | ')+' |'),'',
+  ...report.totals.map(r=>'| '+[r.day,r.version,r.event==='search_used'?actionLabel(r.event):r.event,r.page,r.event==='data_action'&&r.detail==='clear'?actionLabel(r.detail):r.detail||'—',r.failure||'—',r.count,value(r.first_received_at),value(r.last_received_at)].join(' | ')+' |'),'',
   '## Image exports','',
   'Received actions only. PNG download clicks do not confirm a saved file. Earlier missing counters are not measured zero.','',
   '| Day | Action | Page | Export or option | Count |','|---|---|---|---|---:|',

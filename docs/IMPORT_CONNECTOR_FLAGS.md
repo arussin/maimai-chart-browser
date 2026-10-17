@@ -10,6 +10,13 @@ change parsers, or bypass any authorization check. Disconnect and Forget remain
 available. An import already in progress is allowed to finish. Existing help pages
 may describe methods that are temporarily hidden.
 
+Each manifest read has a finite automatic configuration diagnostic. A failed read
+is distinct from a user import failure; recovery to Session Report upload does
+not claim that connector configuration succeeded. Diagnostic reporting preserves
+the production privacy controls and never includes the manifest contents or URLs.
+Deploy the compatible collector/report readers before the new browser, as
+described in [Diagnostic logging](DIAGNOSTIC_LOGGING.md).
+
 ## One-time setup
 
 The operator performs this as part of the reviewed release, using the existing

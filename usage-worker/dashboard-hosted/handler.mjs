@@ -1,3 +1,4 @@
+import {diagnosticQuery} from '../diagnostics-report.mjs';
 const headers = {
   'Cache-Control':'private, no-store, max-age=0', 'CDN-Cache-Control':'no-store',
   'Cloudflare-CDN-Cache-Control':'no-store', 'Pragma':'no-cache',
@@ -10,6 +11,7 @@ const reply = (text, status) => new Response(text, {status, headers:{...headers,
 export const QUERIES = [
   'SELECT day,version,event,page,detail,failure,count,first_received_at,last_received_at FROM usage_daily ORDER BY day,version,event,page,detail,failure LIMIT 50001',
   'SELECT day,version,status FROM usage_coverage ORDER BY day,version LIMIT 10001',
+  diagnosticQuery+' ORDER BY day,operation LIMIT 50001',
 ];
 export function createHandler({authenticate, render, now = () => new Date()}) {
   return {async fetch(request, env) {
@@ -22,9 +24,9 @@ export function createHandler({authenticate, render, now = () => new Date()}) {
     try {
       if (!env.USAGE_DB) throw Error('Missing database binding');
       const results = await env.USAGE_DB.batch(QUERIES.map(sql => env.USAGE_DB.prepare(sql)));
-      if (!Array.isArray(results) || results.length !== 2 || results.some(r => r.success !== true || !Array.isArray(r.results)) ||
-          results[0].results.length > 50000 || results[1].results.length > 10000) throw Error('Incomplete query');
-      const input = {schema_version:'usage-export-1',query_status:'ok',activation:'2026-10-03',totals:results[0].results,coverage:results[1].results};
+      if (!Array.isArray(results) || results.length !== 3 || results.some(r => r.success !== true || !Array.isArray(r.results)) ||
+          results[0].results.length > 50000 || results[1].results.length > 10000||results[2].results.length>50000) throw Error('Incomplete query');
+      const input = {schema_version:'usage-export-2',query_status:'ok',activation:'2026-10-03',totals:results[0].results,coverage:results[1].results,diagnostics:results[2].results};
       const capturedAt = now().toISOString();
       const {html, csp} = await render(input, capturedAt);
       return new Response(html, {headers:{...headers,'Content-Type':'text/html; charset=utf-8','Content-Security-Policy':csp}});

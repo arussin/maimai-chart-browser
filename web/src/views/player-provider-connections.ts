@@ -1,6 +1,10 @@
 import type { OAuthProvider } from '../runtime/player-session-contracts';
-import { ImportFailureError, importFailure, transportFailure } from '../runtime/import-failure';
+import { ImportFailureError, importFailure } from '../runtime/import-failure';
 import type { Failure } from '../usage-contract';
+import type { DiagnosticSink, Reason } from '../diagnostic-contract';
+import { DiagnosticError, diagnosticError } from '../runtime/diagnostic-error';
+import { sourceRequest } from '../runtime/source-transport';
+import { beginDiagnostic } from '../runtime/operation-diagnostics';
 
 const PATH = '/api/player-import/oauth';
 const unavailable = 'The provider connection could not be completed. Please try again.';
@@ -26,6 +30,7 @@ interface OAuthRead extends OAuthConnection {
   data: unknown;
 }
 interface ConnectionPorts {
+  diagnose?: DiagnosticSink;
   bounded(stream: ReadableStream<Uint8Array>, maximum: number): Promise<Uint8Array>;
   fetch?: typeof fetch;
   storage?: Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>;
@@ -125,10 +130,10 @@ export function createPlayerProviderConnections(ports: ConnectionPorts) {
     }
   }
   async function json(path: string, body: Record<string, unknown> | null, signal?: AbortSignal) {
-    const timeout = AbortSignal.timeout(45000);
-    let response: Response;
-    try {
-      response = await request(PATH + path, {
+    const caller = signal ?? new AbortController().signal;
+    const { response, bytes } = await sourceRequest(
+      PATH + path,
+      {
         method: body === null ? 'GET' : 'POST',
         headers: body === null ? {} : { 'Content-Type': 'application/json', 'X-Party-Import': '1' },
         ...(body === null ? {} : { body: JSON.stringify(body) }),
@@ -136,143 +141,144 @@ export function createPlayerProviderConnections(ports: ConnectionPorts) {
         cache: 'no-store',
         referrerPolicy: 'no-referrer',
         redirect: 'error',
-        signal: signal ? AbortSignal.any([signal, timeout]) : timeout,
-      });
-    } catch (error) {
-      throw transportFailure(error, unavailable, signal, timeout);
-    }
-    if (response.status === 429 || response.status === 503) {
-      const now = Date.now(),
-        retry = response.headers.get('Retry-After') ?? '';
-      const until = /^\d+$/.test(retry) ? now + Number(retry) * 1000 : Date.parse(retry);
-      const error: Error & { retryAt: number } = Object.assign(
-        new ImportFailureError(
-          unavailable,
-          response.status === 429 || retry ? 'rate_limited' : 'unavailable',
-        ),
-        {
-          retryAt: Number.isSafeInteger(until)
-            ? Math.max(now + 30000, Math.min(now + 86400000, until))
-            : now + 900000,
-        },
-      );
-      throw error;
-    }
-    if (response.status === 401 || response.status === 409) {
-      let reason: 'connection_expired' | 'cleanup_required' = 'connection_expired';
-      if (response.status === 409 && path.endsWith('/start')) {
-        try {
-          if (
-            /^application\/json(?:;|$)/i.test(response.headers.get('Content-Type') ?? '') &&
-            response.body
-          ) {
-            const value: unknown = JSON.parse(
-              new TextDecoder('utf-8', { fatal: true }).decode(
-                await ports.bounded(response.body, 2048),
-              ),
-            );
-            if (object(value) && value.error === 'connection_pending') reason = 'cleanup_required';
-          }
-        } catch {
-          /* Unknown response details never enter telemetry. */
-        }
+      },
+      caller,
+      45000,
+      unavailable,
+      request,
+    );
+    const jsonType = /^application\/json(?:;|$)/i.test(response.headers.get('Content-Type') ?? '');
+    const decode = async (maximum: number) => {
+      const raw = await bytes(maximum, unavailable);
+      try {
+        return JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(raw)) as unknown;
+      } catch {
+        throw new DiagnosticError(unavailable, 'malformed_response', 'response');
       }
-      throw new ImportFailureError(
-        'The connection needs to be renewed. Connect your account again.',
-        reason,
-      );
-    }
-    if (
-      (response.status === 403 && path === '/diving-fish/read') ||
-      (response.status === 404 && path === '/lxns/read')
-    ) {
+    };
+    const withRetry = <T extends Error & { retryAt?: number }>(error: T) => {
+      if (response.status === 429 || response.status === 503) {
+        const now = Date.now(),
+          retry = response.headers.get('Retry-After') ?? '';
+        const until = /^\d+$/.test(retry) ? now + Number(retry) * 1000 : Date.parse(retry);
+        error.retryAt = Number.isSafeInteger(until)
+          ? Math.max(now + 30000, Math.min(now + 86400000, until))
+          : now + 900000;
+      }
+      return error;
+    };
+    if (!response.ok) {
       let value: unknown;
       try {
-        if (
-          !/^application\/json(?:;|$)/i.test(response.headers.get('Content-Type') ?? '') ||
-          Number(response.headers.get('Content-Length')) > 2048 ||
-          !response.body
-        )
-          throw new Error(unavailable);
-        value = JSON.parse(
-          new TextDecoder('utf-8', { fatal: true }).decode(
-            await ports.bounded(response.body, 2048),
+        if (jsonType && response.body) value = await decode(2048);
+      } catch (error) {
+        caller.throwIfAborted();
+        if (error instanceof Error) throw withRetry(error);
+        throw error;
+      }
+      const code = object(value) && typeof value.error === 'string' ? value.error : '';
+      if (response.status === 401 || response.status === 409) {
+        const renewalReasons: Readonly<Record<string, Reason>> = {
+          worker_timeout: 'worker_timeout',
+          upstream_network: 'network',
+          rate_limited: 'rate_limited',
+          upstream_busy: 'upstream_busy',
+          invalid_response: 'malformed_response',
+          response_too_large: 'oversized_response',
+          invalid_token_response: 'contract_changed',
+          provider_configuration_changed: 'contract_changed',
+        };
+        const cause =
+          code === 'reconnect_required' &&
+          object(value) &&
+          typeof value.diagnosticCode === 'string' &&
+          Object.hasOwn(renewalReasons, value.diagnosticCode)
+            ? renewalReasons[value.diagnosticCode]
+            : null;
+        const failure =
+          response.status === 409 && path.endsWith('/start') && code === 'connection_pending'
+            ? 'cleanup_required'
+            : 'connection_expired';
+        throw withRetry(
+          new ImportFailureError(
+            'The connection needs to be renewed. Connect your account again.',
+            failure,
+            undefined,
+            cause ? { reason: cause, stage: 'authorization' } : undefined,
           ),
         );
-      } catch (error) {
-        await response.body?.cancel().catch(() => {});
-        signal?.throwIfAborted();
-        if (timeout.aborted) throw transportFailure(error, unavailable, signal, timeout);
-        throw new ImportFailureError(unavailable, 'invalid_response');
       }
       if (
+        response.status === 403 &&
         path === '/diving-fish/read' &&
-        object(value) &&
-        value.error === 'tracker_agreement_required'
+        code === 'tracker_agreement_required'
       )
         throw new ImportFailureError(
           agreementRequired,
           'agreement_required',
           'tracker_agreement_required',
         );
-      if (path === '/lxns/read' && object(value) && value.error === 'lxns_player_missing')
+      if (response.status === 404 && path === '/lxns/read' && code === 'lxns_player_missing')
         throw new ImportFailureError(
           'No supported scores were found in LXNS. Sync your maimai DX scores to LXNS first, then try again.',
           'profile_missing',
           'lxns_player_missing',
         );
-      throw new ImportFailureError(unavailable, 'unavailable');
-    }
-    if (response.status === 502) {
-      let invalid = false;
-      try {
-        if (
-          /^application\/json(?:;|$)/i.test(response.headers.get('Content-Type') ?? '') &&
-          Number(response.headers.get('Content-Length')) <= 2048 &&
-          response.body
-        ) {
-          const value: unknown = JSON.parse(
-            new TextDecoder('utf-8', { fatal: true }).decode(
-              await ports.bounded(response.body, 2048),
-            ),
-          );
-          invalid =
-            object(value) &&
-            ['invalid_response', 'response_too_large'].includes(String(value.error));
-        }
-      } catch {
-        signal?.throwIfAborted();
-      }
-      throw new ImportFailureError(unavailable, invalid ? 'invalid_response' : 'unavailable');
-    }
-    if (
-      !response.ok ||
-      !/^application\/json(?:;|$)/i.test(response.headers.get('Content-Type') ?? '') ||
-      Number(response.headers.get('Content-Length')) > 32 * 1024 * 1024 ||
-      !response.body
-    )
-      throw new ImportFailureError(
-        unavailable,
-        response.ok
-          ? 'invalid_response'
-          : response.status === 403
-            ? 'authorization_failed'
-            : 'unavailable',
+      const reasons: Readonly<Record<string, Reason>> = {
+        worker_timeout: 'worker_timeout',
+        upstream_network: 'network',
+        upstream_busy: 'upstream_busy',
+        rate_limited: 'rate_limited',
+        invalid_response: 'malformed_response',
+        response_too_large: 'oversized_response',
+        provider_contract_changed: 'contract_changed',
+        provider_configuration_changed: 'contract_changed',
+        integration_disabled: 'configuration_unavailable',
+        session_unavailable: 'configuration_unavailable',
+        invalid_token_response: 'contract_changed',
+        invalid_identity: 'identity',
+        authorization_failed: 'authorization_failed',
+      };
+      const reason: Reason = Object.hasOwn(reasons, code)
+        ? reasons[code]
+        : response.status === 429
+          ? 'rate_limited'
+          : response.status === 503
+            ? 'upstream_busy'
+            : response.status === 403
+              ? 'authorization_failed'
+              : 'unknown';
+      const failure: Failure =
+        code === 'worker_timeout'
+          ? 'timeout'
+          : code === 'upstream_network'
+            ? 'network'
+            : code === 'rate_limited' || response.status === 429
+              ? 'rate_limited'
+              : [
+                    'invalid_response',
+                    'response_too_large',
+                    'invalid_token_response',
+                    'provider_configuration_changed',
+                    'provider_contract_changed',
+                  ].includes(code)
+                ? 'invalid_response'
+                : code === 'invalid_identity'
+                  ? 'account_mismatch'
+                  : response.status === 403
+                    ? 'authorization_failed'
+                    : 'unavailable';
+      throw withRetry(
+        new ImportFailureError(unavailable, failure, undefined, { reason, stage: 'response' }),
       );
-    let value: unknown;
-    try {
-      value = JSON.parse(
-        new TextDecoder('utf-8', { fatal: true }).decode(
-          await ports.bounded(response.body, 32 * 1024 * 1024),
-        ),
-      );
-    } catch (error) {
-      signal?.throwIfAborted();
-      if (timeout.aborted) throw transportFailure(error, unavailable, signal, timeout);
-      throw new ImportFailureError(unavailable, 'invalid_response');
     }
+    if (!jsonType) {
+      await response.body?.cancel();
+      throw new DiagnosticError(unavailable, 'malformed_response', 'response');
+    }
+    const value = await decode(32 * 1024 * 1024);
     if (!object(value)) throw new ImportFailureError(unavailable, 'invalid_response');
-    signal?.throwIfAborted();
+    caller.throwIfAborted();
     return value;
   }
   async function capabilities(signal?: AbortSignal) {
@@ -359,7 +365,7 @@ export function createPlayerProviderConnections(ports: ConnectionPorts) {
       data: value.data,
     };
   }
-  async function disconnect(
+  async function disconnectRequest(
     provider: OAuthProvider,
     identity: { connectionID?: string; nonce?: string },
   ) {
@@ -385,20 +391,56 @@ export function createPlayerProviderConnections(ports: ConnectionPorts) {
       refreshCleanup();
       if (!cleanup.some((row) => cleanupID(row) === key) && cleanup.length < 8) cleanup.push(entry);
       saveCleanup();
-      throw new ImportFailureError(removed, importFailure(error));
+      throw new ImportFailureError(
+        removed,
+        importFailure(error),
+        undefined,
+        diagnosticError(error) ?? { reason: 'unknown', stage: 'response' },
+      );
+    }
+  }
+  async function disconnect(
+    provider: OAuthProvider,
+    identity: { connectionID?: string; nonce?: string },
+    operationName: 'provider_disconnect' | 'provider_cleanup' = 'provider_disconnect',
+    mode: 'manual' | 'automatic' = 'automatic',
+  ) {
+    const operation = beginDiagnostic(ports.diagnose, operationName, provider, mode);
+    operation.stage('transport');
+    try {
+      await disconnectRequest(provider, identity);
+      operation.finish('success');
+    } catch (error) {
+      operation.fail(error);
+      throw error;
     }
   }
   async function retryCleanup(provider?: OAuthProvider) {
     if (provider !== undefined && !isOAuthProvider(provider)) throw new Error(removed);
     refreshCleanup();
+    const providers = provider ? [provider] : [...new Set(cleanup.map((entry) => entry.provider))];
     const results = await Promise.allSettled(
-      cleanup
-        .filter((entry) => !provider || entry.provider === provider)
-        .map(({ provider, ...identity }) => disconnect(provider, identity)),
+      providers.map(async (provider) => {
+        const operation = beginDiagnostic(ports.diagnose, 'provider_cleanup', provider, 'manual');
+        operation.stage('transport');
+        const pending = cleanup.filter((entry) => entry.provider === provider);
+        if (!pending.length) {
+          operation.finish('unchanged');
+          return;
+        }
+        const results = await Promise.allSettled(
+          pending.map(({ provider, ...identity }) => disconnectRequest(provider, identity)),
+        );
+        const failed = results.find((result) => result.status === 'rejected');
+        if (failed?.status === 'rejected') {
+          operation.fail(failed.reason);
+          throw failed.reason;
+        }
+        operation.finish('success');
+      }),
     );
     const failed = results.find((result) => result.status === 'rejected');
-    if (failed?.status === 'rejected')
-      throw new ImportFailureError(removed, importFailure(failed.reason));
+    if (failed?.status === 'rejected') throw failed.reason;
   }
   return {
     capabilities,
@@ -489,22 +531,59 @@ export async function authorizeProvider(
         )
           return;
         if (event.data.status === 'connected') void verify();
-        else if (event.data.status === 'error')
+        else if (event.data.status === 'error') {
+          const code = typeof event.data.error === 'string' ? event.data.error : '';
+          const diagnosticReasons: Readonly<Record<string, Reason>> = {
+            invalid_response: 'malformed_response',
+            response_too_large: 'oversized_response',
+            worker_timeout: 'worker_timeout',
+            upstream_network: 'network',
+            rate_limited: 'rate_limited',
+            upstream_busy: 'upstream_busy',
+            provider_contract_changed: 'contract_changed',
+            provider_configuration_changed: 'contract_changed',
+            invalid_token_response: 'contract_changed',
+            invalid_identity: 'identity',
+            integration_disabled: 'configuration_unavailable',
+            session_unavailable: 'configuration_unavailable',
+          };
+          const failure = [
+            'authorization_denied',
+            'authorization_failed',
+            'invalid_state',
+            'invalid_issuer',
+            'missing_scope',
+            'unexpected_scope',
+          ].includes(code)
+            ? 'authorization_failed'
+            : code === 'worker_timeout'
+              ? 'timeout'
+              : code === 'upstream_network'
+                ? 'network'
+                : code === 'rate_limited'
+                  ? 'rate_limited'
+                  : [
+                        'provider_configuration_changed',
+                        'provider_contract_changed',
+                        'invalid_token_response',
+                        'invalid_response',
+                        'response_too_large',
+                      ].includes(code)
+                    ? 'invalid_response'
+                    : code === 'invalid_identity'
+                      ? 'account_mismatch'
+                      : 'unavailable';
           finish(
-            new ImportFailureError(
-              unavailable,
-              [
-                'authorization_denied',
-                'authorization_failed',
-                'invalid_state',
-                'invalid_issuer',
-                'missing_scope',
-                'unexpected_scope',
-              ].includes(String(event.data.error))
-                ? 'authorization_failed'
-                : 'unavailable',
-            ),
+            new ImportFailureError(unavailable, failure, undefined, {
+              reason: Object.hasOwn(diagnosticReasons, code)
+                ? diagnosticReasons[code]
+                : failure === 'authorization_failed'
+                  ? 'authorization_failed'
+                  : 'unknown',
+              stage: 'authorization',
+            }),
           );
+        }
       };
       const cancel = () => finish(new DOMException('Superseded operation', 'AbortError'));
       // COOP may detach WindowProxy while sign-in is still in progress. Only a
@@ -541,7 +620,7 @@ export async function authorizeProvider(
     if (!complete) {
       onCleanup?.('started');
       try {
-        await api.disconnect(provider, { nonce });
+        await api.disconnect(provider, { nonce }, 'provider_cleanup');
         onCleanup?.('completed');
       } catch (error) {
         onCleanup?.('failed', importFailure(error));

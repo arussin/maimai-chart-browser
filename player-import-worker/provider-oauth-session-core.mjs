@@ -28,28 +28,28 @@ function retryAt(value, now) {
   return Number.isFinite(v) ? Math.min(now + 86400000, Math.max(now + 30000, v)) : now + 60000;
 }
 function envelope(value) {
-  if (!object(value) || value.success !== true || value.code !== 200) throw new OAuthError('invalid_response');
+  if (!object(value) || value.success !== true || value.code !== 200) throw new OAuthError('provider_contract_changed');
   return value.data;
 }
 function pickRecord(provider, record) {
-  if (!object(record)) throw new OAuthError('invalid_response');
+  if (!object(record)) throw new OAuthError('provider_contract_changed');
   const fish = provider === 'diving-fish';
   const required = fish ? ['song_id','achievements','level_index','type'] : ['id','achievements','level_index','type'];
-  if (required.some(k => !(k in record))) throw new OAuthError('invalid_response');
-  if (typeof record.achievements !== 'number' || !Number.isFinite(record.achievements) || record.achievements < 0 || record.achievements > 101) throw new OAuthError('invalid_response');
+  if (required.some(k => !(k in record))) throw new OAuthError('provider_contract_changed');
+  if (typeof record.achievements !== 'number' || !Number.isFinite(record.achievements) || record.achievements < 0 || record.achievements > 101) throw new OAuthError('provider_contract_changed');
   const keys = fish ? ['song_id','title','type','level','level_index','level_label','achievements','dxScore','ds','fc','fs']
     : ['id','song_name','type','level','level_index','achievements','dx_score','dx_rating','rate','fc','fs','play_time','upload_time','last_played_time'];
   const result = {};
   for (const k of keys) if (k in record) {
     const value = record[k];
-    if (value !== null && !['string','number','boolean'].includes(typeof value) || typeof value === 'string' && value.length > 512 || typeof value === 'number' && (!Number.isFinite(value) || Math.abs(value) > 1e12)) throw new OAuthError('invalid_response');
+    if (value !== null && !['string','number','boolean'].includes(typeof value) || typeof value === 'string' && value.length > 512 || typeof value === 'number' && (!Number.isFinite(value) || Math.abs(value) > 1e12)) throw new OAuthError('provider_contract_changed');
     result[k] = value;
   }
   return result;
 }
 function minimize(provider, value) {
   const rows = provider === 'diving-fish' ? value?.records : envelope(value);
-  if (!Array.isArray(rows) || rows.length > MAX_RECORDS) throw new OAuthError('invalid_response');
+  if (!Array.isArray(rows) || rows.length > MAX_RECORDS) throw new OAuthError('provider_contract_changed');
   // A future explicit mask flag is a positive rejection signal. Absence/false,
   // or any pattern in dxScore, cannot independently prove exactness today.
   if (provider === 'diving-fish' && value.mask === true) throw new OAuthError('scores_masked', 409);
@@ -115,7 +115,7 @@ export class ProviderOAuthSessionCore {
       return jsonResponse(200, result);
     } catch (error) {
       const known = error instanceof OAuthError;
-      return jsonResponse(known ? error.status : 502, {error:known ? error.code : 'source_unavailable'}, known ? error.retryAt : null, this.now());
+      return jsonResponse(known ? error.status : 502, {error:known ? error.code : 'source_unavailable', ...(known && error.diagnosticCode ? {diagnosticCode:error.diagnosticCode} : {})}, known ? error.retryAt : null, this.now());
     }
   }); }
   alarm() { return this.serial(async () => {
@@ -127,23 +127,27 @@ export class ProviderOAuthSessionCore {
     // Never accept a caller-supplied endpoint, host, redirect, or request header.
     const allowed = typeof url === 'string' && Object.values(PROVIDERS).some(p => [p.discovery,p.token,p.userinfo,p.revoke,p.records,p.player].includes(url));
     if (!allowed) throw new OAuthError('invalid_endpoint', 500);
-    const timed = AbortSignal.any([signal || new AbortController().signal, AbortSignal.timeout(this.timeoutMs)]);
+    const timeout = AbortSignal.timeout(this.timeoutMs);
+    const timed = AbortSignal.any([signal || new AbortController().signal, timeout]);
     const headers = {Accept:'application/json'};
     if (form) headers['Content-Type'] = 'application/x-www-form-urlencoded';
     if (token) headers.Authorization = 'Bearer ' + token;
     let response;
     try {
+      timed.throwIfAborted();
       // workerd's global fetch rejects a foreign receiver. Detach the injected
       // callable instead of invoking it as a method on this session core.
       const fetcher = this.fetcher;
       response = await fetcher(url, {method, headers, body:form ? new URLSearchParams(form).toString() : undefined,
         redirect:'manual', credentials:'omit', cache:'no-store', referrerPolicy:'no-referrer', signal:timed});
+      timed.throwIfAborted();
       if (!response.ok) {
         if (response.status === 404 && [PROVIDERS.lxns.player,PROVIDERS.lxns.records].includes(url)) {
           // LXNS documents matching HTTP/JSON status codes for absent resources.
           // Only these own-player endpoints imply missing game data; a proxy
           // page, unrelated endpoint or inconsistent envelope is not that signal.
           const missing = await readJSON(response, 2048, timed).catch(() => null);
+          timed.throwIfAborted();
           if (object(missing) && missing.success === false && missing.code === 404)
             throw new OAuthError('lxns_player_missing', 404);
         }
@@ -151,17 +155,29 @@ export class ProviderOAuthSessionCore {
           // Recognize only the documented tracker-agreement response. Never
           // relay provider text or confuse a scope/token rejection with setup.
           const denied = await readJSON(response, 2048, timed).catch(() => null);
+          timed.throwIfAborted();
           if (object(denied) && denied.status === 'error' && denied.message === '该用户未同意用户协议')
             throw new OAuthError('tracker_agreement_required', 403);
         }
         await response.body?.cancel();
-        if (response.status === 429 || response.status === 503) throw new OAuthError('upstream_busy', 503, retryAt(response.headers.get('Retry-After'), this.now()));
+        if (response.status === 429 || response.status === 503) throw new OAuthError(response.status === 429 ? 'rate_limited' : 'upstream_busy', 503, retryAt(response.headers.get('Retry-After'), this.now()));
         if ([400,401,403].includes(response.status)) throw new OAuthError('authorization_failed', 401);
         throw new OAuthError('source_unavailable');
       }
       if (optionalBody) { await response.body?.cancel(); return null; }
       return await readJSON(response, maximum, timed);
-    } catch (error) { if (error instanceof OAuthError) throw error; throw new OAuthError('source_unavailable'); }
+    } catch (error) {
+      // Only local signals and allowlisted codes classify diagnostics. Never
+      // infer network causes from provider bodies, exception text or properties.
+      if (signal?.aborted) throw new OAuthError('request_cancelled');
+      if (timeout.aborted) throw new OAuthError('worker_timeout');
+      if (error instanceof OAuthError) throw error;
+      throw new OAuthError('upstream_network');
+    } finally {
+      // A cancellation can arrive with the response, before readJSON owns its
+      // stream. Release that body too, without masking the finite failure.
+      await response?.body?.cancel().catch(() => {});
+    }
   }
   async validateDiscovery(provider, signal) {
     const p = PROVIDERS[provider];
@@ -257,7 +273,7 @@ export class ProviderOAuthSessionCore {
       // Even a transport failure might have consumed the previous refresh token.
       // Never blindly retry it or restore it from an older browser/cookie copy.
       c.tokens = null; c.renewing = false; c.requiresReconnect = true; await this.save(state);
-      throw new OAuthError('reconnect_required', 401, error instanceof OAuthError ? error.retryAt : null);
+      throw new OAuthError('reconnect_required', 401, error instanceof OAuthError ? error.retryAt : null, error instanceof OAuthError ? error.code : undefined);
     }
   }
   async read(state, provider, input, signal) {
@@ -277,7 +293,7 @@ export class ProviderOAuthSessionCore {
       let player = null;
       if (provider === 'lxns') {
         player = envelope(await this.upstream(PROVIDERS[provider].player, {token, signal}));
-        if (!object(player)) throw new OAuthError('invalid_response');
+        if (!object(player)) throw new OAuthError('provider_contract_changed');
       }
       const raw = await this.upstream(PROVIDERS[provider].records, {token, maximum:MAX_DATA_BYTES, signal});
       const data = minimize(provider, raw);

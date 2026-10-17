@@ -8,6 +8,8 @@ import type {
 import type { ProviderRow } from '../player-session';
 import type { CatalogChart } from '../runtime/catalog';
 import { ImportFailureError, importFailure, transportFailure } from '../runtime/import-failure';
+import { DiagnosticError, diagnosticError } from '../runtime/diagnostic-error';
+import { sourceRequest } from '../runtime/source-transport';
 
 export interface KamaitachiPorts {
   core: Pick<ReturnType<typeof createPlayerDataCore>, 'validate' | 'digest' | 'bounded'>;
@@ -100,24 +102,21 @@ export function createPlayerKamaitachi(ports: KamaitachiPorts) {
     missing: 'user' | 'maimaidx',
   ) {
     signal.throwIfAborted();
-    let response: Response;
-    try {
-      response = await request(origin + path, {
+    const { response, bytes: readBytes } = await sourceRequest(
+      origin + path,
+      {
         method: 'GET',
         credentials: 'omit',
         redirect: 'error',
         cache: 'no-store',
         referrerPolicy: 'no-referrer',
         headers: { Accept: 'application/json' },
-        signal,
-      });
-    } catch (error) {
-      throw transportFailure(
-        error,
-        'Kamaitachi could not be reached. Your saved data was kept.',
-        signal,
-      );
-    }
+      },
+      signal,
+      20000,
+      'Kamaitachi could not be reached. Your saved data was kept.',
+      request,
+    );
     if (!response.ok) {
       await response.body?.cancel();
       if (response.status === 429) {
@@ -140,9 +139,27 @@ export function createPlayerKamaitachi(ports: KamaitachiPorts) {
       throw new ImportFailureError(
         'Kamaitachi could not be reached. Your saved data was kept.',
         response.status === 401 || response.status === 403 ? 'authorization_failed' : 'unavailable',
+        undefined,
+        {
+          reason:
+            response.status === 503
+              ? 'upstream_busy'
+              : [401, 403].includes(response.status)
+                ? 'authorization_failed'
+                : 'unknown',
+          stage: 'response',
+        },
       );
     }
     const length = response.headers.get('Content-Length');
+    if (length !== null && /^\d+$/.test(length) && Number(length) > maximum) {
+      await response.body?.cancel();
+      throw new DiagnosticError(
+        'Kamaitachi returned an unsupported response. Your saved data was kept.',
+        'oversized_response',
+        'response',
+      );
+    }
     if (
       response.status !== 200 ||
       response.redirected ||
@@ -156,13 +173,19 @@ export function createPlayerKamaitachi(ports: KamaitachiPorts) {
       await response.body?.cancel();
       fail();
     }
-    const bytes = await core.bounded(response.body, maximum);
+    const bytes = await readBytes(maximum);
     signal.throwIfAborted();
+    let parsed: unknown;
     try {
-      return envelope(JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes)));
+      parsed = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes));
     } catch {
-      fail();
+      throw new DiagnosticError(
+        'Kamaitachi returned an unsupported response. Your saved data was kept.',
+        'malformed_response',
+        'response',
+      );
     }
+    return envelope(parsed);
   }
   async function normalize(
     profile: Record<string, unknown>,
@@ -411,10 +434,12 @@ export function createPlayerKamaitachi(ports: KamaitachiPorts) {
           options.signal,
           controller.signal,
         );
-      if (importFailure(error, 'unknown') !== 'unknown') throw error;
+      if (diagnosticError(error) || importFailure(error, 'unknown') !== 'unknown') throw error;
       throw new ImportFailureError(
         error instanceof Error ? error.message : String(error),
         'invalid_response',
+        undefined,
+        { reason: 'normalization', stage: 'normalize' },
       );
     } finally {
       clearTimeout(timer);
