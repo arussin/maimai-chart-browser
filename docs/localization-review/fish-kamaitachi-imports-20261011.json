@@ -1,0 +1,30 @@
+{
+  "date": "2026-10-11",
+  "reviewer": "Codex with independent agent review",
+  "method": "Contextual AI linguistic and product review; not native-speaker certification",
+  "locales": [
+    "en",
+    "zh-Hans",
+    "ko",
+    "ja",
+    "id"
+  ],
+  "scope": "Four service sections with Kamaitachi username lookup and Diving-Fish read-only OAuth; five help pages; manual Fish and other new providers removed",
+  "corrections": [
+    "Neutral Kamaitachi profile wording without ownership claim",
+    "Chinese score masking terminology and exact setting label",
+    "Korean Utage chart terminology",
+    "Connected account preview phrasing in Korean, Japanese and Indonesian",
+    "Indonesian control label consistency",
+    "Session Report help restricted to supported compressed .gz input"
+  ],
+  "inputs": {
+    "src/maimai_intelligence/assets/locales/player-connections.json": "dd2c1dd36518c85971bcfd643073ceaa6be7e5163b74574ef4eec38055adeceb",
+    "src/maimai_intelligence/assets/locales/player-file-imports.json": "d69defaa36b10bd2c9e9dde07ebb72d56a309f51776d3aa344970fc9319e51b4",
+    "src/maimai_intelligence/assets/import-help/README.id.md": "a866c6ac2d3b0b92747a7459e40d39b15d46f8a4ff4532997e431ee97de16304",
+    "src/maimai_intelligence/assets/import-help/README.ja.md": "976d6e5456909cdd3c9bca9c1e5a8971aafa6cb6912aafe6c218e0c0341f8108",
+    "src/maimai_intelligence/assets/import-help/README.ko.md": "2e621aa2b67e68c61881fb1c2bc6dbff9e0f849c8954424d2cc8abdaa49ba37e",
+    "src/maimai_intelligence/assets/import-help/README.md": "387bd263a0c59f08408716a82cee06edb666f9c0626c54ab81caa469defde436",
+    "src/maimai_intelligence/assets/import-help/README.zh-Hans.md": "a5780f2f5e0316daa71029503215706f50f5f42efc469ab5f79374145b19a36a"
+  }
+}

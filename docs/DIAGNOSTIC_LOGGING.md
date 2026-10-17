@@ -1,10 +1,11 @@
 # Privacy-safe operation diagnostics
 
-This patch is based on production `8b26d3289f20345107beca415d7ee6d20ef4a4bc`.
-It is intended for a separate cherry-pick **before** connector launch. It does not
-include or activate the connector changes in draft PR63 (`6eaea32`). No deployment,
-database migration, new account access or logging configuration is authorized by
-this implementation task.
+The diagnostics foundation shipped separately in PR64 (`30de8cd`). PR63 now
+reconciles the import connectors with production `d732212` (PR65), preserving
+the production diagnostics, export behavior and song-discovery changes. The
+connector additions extend the finite contracts; they do not activate services
+or establish real-account acceptance. Deployment, database changes and provider
+access remain separate release steps.
 
 ## Baseline and historical interpretation
 
@@ -48,7 +49,7 @@ opening action. Neither establishes that lazy evidence loaded; inspect the share
 detail repository's diagnostic outcomes. PNG download clicks remain clicks; no
 download-completed metric is introduced.
 
-Public controls, feature visibility, layout and export styling are unchanged.
+The diagnostic instrumentation preserves the import controls and export styling.
 The preview-readiness check waits for image decoding before offering a download;
 that behavior was reviewed separately and accepted. Diagnostics add no public
 panels, labels or explanatory prose. Existing actionable validation messages,
@@ -65,10 +66,10 @@ properties or error strings cannot supply diagnostic tags.
 
 | Dimension | Purpose and bound |
 |---|---|
-| operation | Ten fixed operation families; keeps storage/restore separate from imports |
-| stage | Sixteen fixed boundary names; identifies the failed boundary without a trace |
+| operation | Fixed operation families in the shared contract; keeps storage/restore and provider authorization/cleanup separate from imports |
+| stage | Fixed boundary names; identifies the failed boundary without a trace |
 | reason / outcome | Fixed enums, including nonfailure outcomes; no strings derived from exceptions |
-| source | Current import methods, temporary/persistent storage, three image kinds, or `none`; checked against operation |
+| source | Twelve import methods, temporary/persistent storage, three image kinds, or `none`; checked against operation |
 | mode | Manual/automatic; refresh preserves this distinction, internal storage/restore work is automatic |
 | duration | Under 1 second, 1–10 seconds, or over 10 seconds; no exact client timestamp |
 | instrumentation | One reviewed value, `diagnostics-1`; bump through a coordinated contract change |
@@ -78,8 +79,9 @@ No HTTP dimension is added: the reviewed mappings already separate useful status
 outcomes, so another cross-product is unnecessary. No release hash from the
 runtime, IDs, handles, names, URLs, IPs/hashes, tokens, cookies, scores, payloads,
 filenames, search text, stacks or persistent identifiers are accepted. Server
-first/latest receipt bounds apply only to new daily diagnostic aggregates and
-are not individual event times.
+first/latest receipt bounds apply to daily action and diagnostic aggregates and
+are not individual event times. Historical action rows may have null receipt
+bounds; adding migration 0002 does not reconstruct their delivery history.
 
 DNT, GPC, both disable controls, exact origins, offline/preview suppression,
 request bounds, retention and owner Access checks remain in place. No Cloudflare
@@ -108,14 +110,45 @@ past successful write. Missing/rejected sends and opted-out operations cannot be
 reconstructed. A failed/missing/truncated query produces an error, never zero.
 The old action coverage ledger does not certify diagnostic coverage.
 
-## Compatibility and rollout plan (not executed)
+## Connector reconciliation and compatibility
 
-1. Review and cherry-pick the diagnostics commits onto current production after
-   checking for newer changes. Keep the connector branch intact.
+The diagnostic source vocabulary includes every file and direct import method.
+Provider authorization, disconnect and cleanup are separate operation families:
+authorizing a connection is not evidence that scores were saved. A runtime
+visibility-manifest read is an automatic configuration operation, not an import
+attempt. Failed initial provider-readiness checks also produce one configuration
+diagnostic; successful readiness checks and authorization status polls stay
+silent. Configuration successes therefore are not a readiness-success denominator.
+Finite reasons distinguish blocked popups, failed authorization, expired
+connections, missing agreements, empty scores and cleanup/configuration failures.
+The existing stage, cancellation, committed-success and privacy boundaries apply
+to these paths too. Automatic restore and refresh produce diagnostics without
+inventing version-1 user actions.
+
+Both versions and `diagnostics-1` remain readable. The vocabulary is additive,
+but an older collector rejects unknown sources/operations/reasons. Therefore the
+extended collector and report readers must precede the connector browser. Old
+diagnostic receipts prove only earlier accepted writes, not coverage of these new
+methods. Never reinterpret historical unknown failures or sum nested operation
+families as a linked incident count.
+
+The OAuth Worker keeps reconnect-required guidance after an uncertain rotating
+token exchange. Its optional `diagnosticCode` contains only a small reviewed
+allowlist of the immediate failure cause; the browser reconstructs a finite
+reason and never sends that field verbatim. It is not stored with the grant.
+Without that cause, `connection_expired` means reauthorization is required, not
+proof that expiration caused the failure. A failed renewal never replays the old
+refresh token to improve telemetry.
+
+## Release ordering
+
+1. Recheck current production and the exact reconciled connector candidate.
 2. Through the existing approved release workflow, verify current Worker/Pages/
-   collector/dashboard versions and settings, then apply additive migration
-   `0003_diagnostics.sql`. It does not depend on connector migration 0002 and does
-   not alter existing action rows. Keep migrations on rollback.
+   collector/dashboard versions and settings. Verify the already released
+   `0003_diagnostics.sql` and apply pending `0002_import_receipts.sql` if needed.
+   These additive migrations are independent, do not rewrite historical counts,
+   and remain in place on rollback. Check recorded migration state rather than
+   assuming numeric order implies that both are installed.
 3. Release collector support for both versions, plus CLI and hosted dashboard
    readers for the new table. Old version 1 clients continue to work. Legacy
    `usage-export-1` files remain readable with unknown diagnostic coverage.
@@ -132,14 +165,10 @@ Version 1 and version 2 are separate requests; a diagnostic rejection cannot
 invalidate an action batch. Roll back the browser before removing collector
 support. Retain the additive table and accepted counts; no destructive rollback.
 
-Before PR63 lands, rebase/reconcile it onto this patch. Preserve its provider and
-file-method lifecycle counters, receipt migration 0002, committed-result callback
-and cancellation fixes. Extend the diagnostic source/reason allowlists for those
-providers in that separate reviewed change. In particular reconcile
-`import-coordinator.ts`, `player-sources.ts`, `player-session-contracts.ts`,
-`player-data.ts`, `usage-client.ts`, collector/report/dashboard queries and
-`Test-Web.ps1`; do not replace either implementation wholesale. Re-run old-client
-and both-version tests. Do not deploy PR63's older collector over this version.
+The reconciliation retains provider/file lifecycle counters, receipt migration
+0002, committed-result callbacks, cancellation fixes and production delivery
+health. Old-client and both-version tests must pass on the delivered tree. Do not
+deploy PR63's historical collector over the diagnostics-capable production version.
 
 ## Validation and bounded workspaces
 

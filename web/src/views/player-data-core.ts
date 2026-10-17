@@ -6,6 +6,7 @@ import type {
   PlayerSnapshot,
 } from '../domain/player-data';
 import type { PlayerOffer } from '../runtime/player-session-contracts';
+import { isFileProvider, validFilePlayer, validFileChartID } from '../domain/import-identities';
 /** Portable data validation and deterministic merging. No DOM, persistence or provider requests. */
 export function createPlayerDataCore(_ports: Record<string, never> = {}) {
   const MAX_COMPRESSED = 32 * 1024 * 1024,
@@ -95,7 +96,7 @@ export function createPlayerDataCore(_ports: Record<string, never> = {}) {
       return ['jp', 'intl'].some(
         (region) => p.key === 'maishift:maimaidx:' + region + ':' + encodeURIComponent(p.username),
       );
-    return false;
+    return validFilePlayer(p);
   }
   function structure(input: unknown): PlayerDataset {
     const d = input as PlayerDataset;
@@ -127,12 +128,14 @@ export function createPlayerDataCore(_ports: Record<string, never> = {}) {
       )
         fail('Invalid or oversized player collection.');
     if (
-      p.provider === 'maishift' &&
-      Object.keys(d.charts).some(
-        (id) =>
-          !id.startsWith('maishift:' + p.key.split(':')[2] + ':') ||
-          id.split(':').slice(2).join(':') === '',
-      )
+      (isFileProvider(p.provider) &&
+        Object.keys(d.charts).some((id) => !validFileChartID(p, id))) ||
+      (p.provider === 'maishift' &&
+        Object.keys(d.charts).some(
+          (id) =>
+            !id.startsWith('maishift:' + p.key.split(':')[2] + ':') ||
+            id.split(':').slice(2).join(':') === '',
+        ))
     )
       fail('Invalid chart reference.');
     for (const [id, c] of Object.entries(d.charts))

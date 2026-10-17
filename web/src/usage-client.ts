@@ -67,6 +67,9 @@ export function createUsageForOrigin(
     }
     const key = [row.event, row.page, row.detail, row.failure].join('|'),
       existing = queue.get(key);
+    // Flush the bounded batch before accepting a new tuple. A completed import
+    // must not disappear just because earlier settings actions filled the queue.
+    if (!existing && queue.size === 16) void flush();
     if (existing) {
       if (existing.count === 100) {
         bump('saturated');
@@ -78,7 +81,12 @@ export function createUsageForOrigin(
       bump('saturated');
       bump('dropped');
     }
-    if (queue.size && !timer)
+    const terminal =
+      /^import_(completed|failed|cancelled)$/.test(event) ||
+      event === 'provider_connect_failed' ||
+      /^provider_(refresh|disconnect|cleanup)_(completed|failed|cancelled)$/.test(event);
+    if (terminal) void flush();
+    else if (queue.size && !timer)
       timer = window.setTimeout(() => {
         void flush();
       }, 10000);

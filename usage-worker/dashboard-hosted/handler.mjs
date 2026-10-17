@@ -9,7 +9,7 @@ const headers = {
 };
 const reply = (text, status) => new Response(text, {status, headers:{...headers,'Content-Type':'text/plain; charset=utf-8'}});
 export const QUERIES = [
-  'SELECT day,version,event,page,detail,failure,count FROM usage_daily ORDER BY day,version,event,page,detail,failure LIMIT 50001',
+  'SELECT day,version,event,page,detail,failure,count,first_received_at,last_received_at FROM usage_daily ORDER BY day,version,event,page,detail,failure LIMIT 50001',
   'SELECT day,version,status FROM usage_coverage ORDER BY day,version LIMIT 10001',
   diagnosticQuery+' ORDER BY day,operation LIMIT 50001',
 ];

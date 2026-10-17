@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "methods": {
+    "file": true,
+    "report": true,
+    "maishift": true,
+    "kamaitachi": true,
+    "diving-fish": true,
+    "lxns": true,
+    "file:mai-tools": true,
+    "file:dxrating": true,
+    "file:tomomai": true,
+    "file:jietng": true,
+    "file:aqua": true,
+    "file:tachi": true
+  }
+}

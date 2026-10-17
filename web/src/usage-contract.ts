@@ -2,7 +2,23 @@
 export const VERSION = 1;
 export const PAGES = ['charts', 'patterns', 'compare', 'about', 'song', 'version'] as const;
 export type Page = (typeof PAGES)[number];
-const methods = ['file', 'report', 'maishift'] as const;
+const methods = [
+  'file',
+  'report',
+  'maishift',
+  'kamaitachi',
+  'diving-fish',
+  'lxns',
+  'file:mai-tools',
+  'file:dxrating',
+  'file:tomomai',
+  'file:jietng',
+  'file:aqua',
+  'file:tachi',
+] as const;
+const connectedProviders = ['diving-fish', 'lxns'] as const;
+const directProviders = ['kamaitachi', 'diving-fish', 'lxns'] as const;
+const refreshSources = ['report', 'maishift', 'kamaitachi', 'diving-fish', 'lxns'] as const;
 export const SCORE_EXPORT_KINDS = ['best50', 'achievement_pb', 'achievement_play'] as const;
 export type ScoreExportKind = (typeof SCORE_EXPORT_KINDS)[number];
 export const DETAILS = {
@@ -38,9 +54,31 @@ export const DETAILS = {
   similar_requested: [''],
   import_opened: [''],
   import_started: methods,
+  import_previewed: methods,
+  import_confirmed: methods,
   import_completed: methods,
   import_failed: methods,
   import_cancelled: methods,
+  // Explicit user-initiated stages only. Automatic refresh, restore, status
+  // polling and background cleanup never emit these counters.
+  provider_connect_started: connectedProviders,
+  provider_connect_completed: connectedProviders,
+  provider_connect_cancelled: connectedProviders,
+  provider_connect_failed: connectedProviders,
+  provider_read_started: directProviders,
+  provider_read_completed: directProviders,
+  provider_read_cancelled: directProviders,
+  provider_read_failed: directProviders,
+  provider_refresh_started: refreshSources,
+  provider_refresh_completed: refreshSources,
+  provider_refresh_cancelled: refreshSources,
+  provider_refresh_failed: refreshSources,
+  provider_disconnect_started: connectedProviders,
+  provider_disconnect_completed: connectedProviders,
+  provider_disconnect_failed: connectedProviders,
+  provider_cleanup_started: connectedProviders,
+  provider_cleanup_completed: connectedProviders,
+  provider_cleanup_failed: connectedProviders,
   data_action: ['show', 'hide', 'forget', 'clear'],
   score_export_opened: SCORE_EXPORT_KINDS,
   score_export_option_changed: ['version', 'partner'],
@@ -66,7 +104,15 @@ export const DETAILS = {
   ],
   share_native_result: ['resolved', 'cancelled', 'failed'],
   share_copied: [''],
-  resource_opened: ['youtube', 'mai_notes', 'maishift', 'session_report', 'import_help'],
+  resource_opened: [
+    'youtube',
+    'mai_notes',
+    'maishift',
+    'session_report',
+    'import_help',
+    'diving_fish',
+    'lxns',
+  ],
   report_issue_opened: [''],
 } as const satisfies Readonly<Record<string, readonly string[]>>;
 export type EventName = keyof typeof DETAILS;
@@ -75,18 +121,45 @@ type ScoreExportEvent = Extract<EventName, `score_export_${string}`>;
 export type ScoreExportUsageArguments = {
   [E in ScoreExportEvent]: [event: E, detail: EventDetail<E>];
 }[ScoreExportEvent];
-export type Failure = 'invalid' | 'unavailable' | 'storage' | 'unknown';
+export const FAILURES = [
+  'invalid',
+  'unavailable',
+  'storage',
+  'unknown',
+  'popup_blocked',
+  'authorization_failed',
+  'timeout',
+  'network',
+  'rate_limited',
+  'connection_expired',
+  'agreement_required',
+  'profile_missing',
+  'empty_scores',
+  'invalid_response',
+  'account_mismatch',
+  'cleanup_required',
+] as const;
+export type Failure = (typeof FAILURES)[number];
+const failureEvents = [
+  'import_failed',
+  'provider_connect_failed',
+  'provider_read_failed',
+  'provider_refresh_failed',
+  'provider_disconnect_failed',
+  'provider_cleanup_failed',
+] as const;
+type FailureEvent = (typeof failureEvents)[number];
 export type UsageRow = {
   [E in EventName]: {
     event: E;
     page: Page;
     detail: EventDetail<E>;
-    failure: E extends 'import_failed' ? Failure : '';
+    failure: E extends FailureEvent ? Failure : '';
     count: number;
   };
 }[EventName];
 export type EmitArguments = {
-  [E in EventName]: E extends 'import_failed'
+  [E in EventName]: E extends FailureEvent
     ? [event: E, page: Page | undefined, detail: EventDetail<E>, failure: Failure]
     : '' extends EventDetail<E>
       ? [event: E, page?: Page, detail?: EventDetail<E>, failure?: '']
@@ -96,7 +169,6 @@ export interface Batch {
   version: 1;
   events: UsageRow[];
 }
-const failures = ['invalid', 'unavailable', 'storage', 'unknown'];
 const record = (x: unknown): x is Record<string, unknown> =>
   x !== null && typeof x === 'object' && !Array.isArray(x);
 export function validateRow(value: unknown): UsageRow | null {
@@ -120,7 +192,9 @@ export function validateRow(value: unknown): UsageRow | null {
     return null;
   if (
     typeof failure !== 'string' ||
-    (event === 'import_failed' ? !failures.includes(failure) : failure !== '')
+    ((failureEvents as readonly string[]).includes(event)
+      ? !(FAILURES as readonly string[]).includes(failure)
+      : failure !== '')
   )
     return null;
   if (

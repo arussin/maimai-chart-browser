@@ -1,0 +1,430 @@
+{
+  "messages": {
+    "Choose a service and an import method.": {
+      "zh-Hans": "请选择服务和导入方式。",
+      "ko": "서비스와 가져오기 방법을 선택하세요.",
+      "ja": "サービスと読み込み方法を選んでください。",
+      "id": "Pilih layanan dan metode impor."
+    },
+    "Import method": {
+      "zh-Hans": "导入方式",
+      "ko": "가져오기 방법",
+      "ja": "読み込み方法",
+      "id": "Metode impor"
+    },
+    "Public profile": {
+      "zh-Hans": "公开资料",
+      "ko": "공개 프로필",
+      "ja": "公開プロフィール",
+      "id": "Profil publik"
+    },
+    "Connect directly": {
+      "zh-Hans": "直接连接",
+      "ko": "직접 연결",
+      "ja": "直接接続",
+      "id": "Hubungkan langsung"
+    },
+    "About Kamaitachi imports": {
+      "zh-Hans": "关于 Kamaitachi 导入",
+      "ko": "Kamaitachi 가져오기 안내",
+      "ja": "Kamaitachi の読み込みについて",
+      "id": "Tentang impor Kamaitachi"
+    },
+    "Kamaitachi request timed out.": {
+      "zh-Hans": "Kamaitachi 请求超时。",
+      "ko": "Kamaitachi 요청 시간이 초과되었습니다.",
+      "ja": "Kamaitachi へのリクエストがタイムアウトしました。",
+      "id": "Waktu permintaan ke Kamaitachi habis."
+    },
+    "Retry connection cleanup": {
+      "zh-Hans": "重试清理连接",
+      "ko": "연결 정리 다시 시도",
+      "ja": "接続の解除を再試行",
+      "id": "Coba hapus koneksi lagi"
+    },
+    "Retry connection cleanup before connecting another account.": {
+      "zh-Hans": "请先重试清理连接，再连接其他账号。",
+      "ko": "다른 계정을 연결하기 전에 연결 정리를 다시 시도하세요.",
+      "ja": "別のアカウントに接続する前に、接続の解除を再試行してください。",
+      "id": "Coba hapus koneksi lagi sebelum menghubungkan akun lain."
+    },
+    "A provider connection still needs cleanup.": {
+      "zh-Hans": "仍有一个服务连接需要清理。",
+      "ko": "아직 정리해야 할 서비스 연결이 있습니다.",
+      "ja": "解除が必要なサービス接続が残っています。",
+      "id": "Masih ada koneksi penyedia yang perlu dihapus."
+    },
+    "Saved player data was removed. A provider connection still needs cleanup; retry when online.": {
+      "zh-Hans": "已移除保存的玩家数据。仍有一个服务连接需要清理；请联网后重试。",
+      "ko": "저장된 플레이어 데이터가 삭제되었습니다. 아직 정리해야 할 서비스 연결이 있으니 온라인 상태에서 다시 시도하세요.",
+      "ja": "保存済みのプレイヤーデータを削除しました。解除が必要なサービス接続が残っています。オンラインで再試行してください。",
+      "id": "Data pemain tersimpan telah dihapus. Masih ada koneksi penyedia yang perlu dihapus; coba lagi saat online."
+    },
+    "Other provider connections": {
+      "zh-Hans": "其他服务连接",
+      "ko": "다른 서비스 연결",
+      "ja": "その他のサービス接続",
+      "id": "Koneksi penyedia lainnya"
+    },
+    "Disconnect connection": {
+      "zh-Hans": "断开连接",
+      "ko": "연결 해제",
+      "ja": "接続を解除",
+      "id": "Putuskan koneksi"
+    },
+    "Connect another account": {
+      "zh-Hans": "连接其他账号",
+      "ko": "다른 계정 연결",
+      "ja": "別のアカウントに接続",
+      "id": "Hubungkan akun lain"
+    },
+    "Connection cleanup needed": {
+      "zh-Hans": "需要清理连接",
+      "ko": "연결 정리 필요",
+      "ja": "接続の解除が必要です",
+      "id": "Koneksi perlu dihapus"
+    },
+    "The provider connection could not be removed. Try again when online.": {
+      "zh-Hans": "无法移除与服务的连接。请联网后重试。",
+      "ko": "서비스 연결을 해제하지 못했습니다. 온라인 상태에서 다시 시도하세요.",
+      "ja": "サービスとの接続を解除できませんでした。オンラインで再試行してください。",
+      "id": "Koneksi penyedia belum dapat dihapus. Coba lagi saat online."
+    },
+    "Kamaitachi returned an unsupported response. Your saved data was kept.": {
+      "zh-Hans": "Kamaitachi 返回了不支持的响应。已保留保存的数据。",
+      "ko": "Kamaitachi에서 지원하지 않는 응답을 반환했습니다. 저장된 데이터는 유지됩니다.",
+      "ja": "Kamaitachi から未対応の応答が返されました。保存済みのデータは保持されています。",
+      "id": "Kamaitachi mengembalikan respons yang tidak didukung. Data tersimpan tetap dipertahankan."
+    },
+    "Kamaitachi is limiting requests. Try again later. Your saved data was kept.": {
+      "zh-Hans": "Kamaitachi 正在限制请求频率。请稍后重试。已保留保存的数据。",
+      "ko": "Kamaitachi가 요청 횟수를 제한하고 있습니다. 나중에 다시 시도하세요. 저장된 데이터는 유지됩니다.",
+      "ja": "Kamaitachi がリクエストを制限しています。時間をおいて再試行してください。保存済みのデータは保持されています。",
+      "id": "Kamaitachi sedang membatasi permintaan. Coba lagi nanti. Data tersimpan tetap dipertahankan."
+    },
+    "Kamaitachi could not be reached. Your saved data was kept.": {
+      "zh-Hans": "无法连接 Kamaitachi。已保留保存的数据。",
+      "ko": "Kamaitachi에 연결하지 못했습니다. 저장된 데이터는 유지됩니다.",
+      "ja": "Kamaitachi に接続できませんでした。保存済みのデータは保持されています。",
+      "id": "Kamaitachi tidak dapat dihubungi. Data tersimpan tetap dipertahankan."
+    },
+    "Kamaitachi returned a different player. Your saved data was kept.": {
+      "zh-Hans": "Kamaitachi 返回了其他玩家的数据。已保留保存的数据。",
+      "ko": "Kamaitachi에서 다른 플레이어의 데이터를 반환했습니다. 저장된 데이터는 유지됩니다.",
+      "ja": "Kamaitachi から別のプレイヤーのデータが返されました。保存済みのデータは保持されています。",
+      "id": "Kamaitachi mengembalikan data pemain lain. Data tersimpan tetap dipertahankan."
+    },
+    "Checking connection availability…": {
+      "zh-Hans": "正在检查连接是否可用…",
+      "ko": "연결 가능 여부 확인 중…",
+      "ja": "接続できるか確認しています…",
+      "id": "Memeriksa ketersediaan koneksi…"
+    },
+    "Your scores are saved in this browser. The connection service stores an access grant for refreshes.": {
+      "zh-Hans": "成绩保存在此浏览器中。连接服务会保存访问授权，以便刷新成绩。",
+      "ko": "성적은 이 브라우저에 저장됩니다. 연결 서비스는 새로고침을 위한 접근 권한을 저장합니다.",
+      "ja": "成績はこのブラウザーに保存されます。接続サービスは更新に使うアクセス権限を保存します。",
+      "id": "Skor disimpan di browser ini. Layanan koneksi menyimpan izin akses untuk memperbarui skor."
+    },
+    "I have disabled score masking in Diving-Fish.": {
+      "zh-Hans": "我已在水鱼查分器中关闭成绩掩码。",
+      "ko": "Diving-Fish에서 성적 마스킹을 껐습니다.",
+      "ja": "Diving-Fish の成績マスクを無効にしました。",
+      "id": "Saya sudah menonaktifkan penyamaran skor di Diving-Fish."
+    },
+    "Diving-Fish score masking could not be verified. Masked scores may be inaccurate.": {
+      "zh-Hans": "无法确认水鱼查分器的成绩掩码设置。使用掩码的成绩可能不准确。",
+      "ko": "Diving-Fish 성적 마스킹 설정을 확인할 수 없습니다. 마스킹된 성적은 부정확할 수 있습니다.",
+      "ja": "Diving-Fish の成績マスク設定を確認できません。マスクされた成績は正確でない場合があります。",
+      "id": "Pengaturan penyamaran skor Diving-Fish tidak dapat diverifikasi. Skor yang disamarkan mungkin tidak akurat."
+    },
+    "Allow pop-ups to connect your account, then try again.": {
+      "zh-Hans": "请允许弹出窗口以连接账号，然后重试。",
+      "ko": "계정 연결을 위해 팝업을 허용한 후 다시 시도하세요.",
+      "ja": "アカウントに接続するためにポップアップを許可し、もう一度お試しください。",
+      "id": "Izinkan pop-up untuk menghubungkan akun, lalu coba lagi."
+    },
+    "The connection needs to be renewed. Connect your account again.": {
+      "zh-Hans": "连接需要重新授权。请再次连接账号。",
+      "ko": "연결을 갱신해야 합니다. 계정을 다시 연결하세요.",
+      "ja": "接続の更新が必要です。アカウントに接続し直してください。",
+      "id": "Koneksi perlu diperbarui. Hubungkan kembali akun Anda."
+    },
+    "Reading player data": {
+      "zh-Hans": "正在读取玩家数据",
+      "ko": "플레이어 데이터 읽는 중",
+      "ja": "プレイヤーデータを読み込んでいます",
+      "id": "Membaca data pemain"
+    },
+    "Import by username": {
+      "zh-Hans": "按用户名导入",
+      "ko": "사용자 이름으로 가져오기",
+      "ja": "ユーザー名で読み込む",
+      "id": "Impor dengan nama pengguna"
+    },
+    "About Diving-Fish imports": {
+      "zh-Hans": "关于水鱼查分器导入",
+      "ko": "Diving-Fish 가져오기 안내",
+      "ja": "Diving-Fish の読み込みについて",
+      "id": "Tentang impor Diving-Fish"
+    },
+    "Kamaitachi username or profile URL": {
+      "zh-Hans": "Kamaitachi 用户名或个人主页链接",
+      "ko": "Kamaitachi 사용자 이름 또는 프로필 URL",
+      "ja": "Kamaitachi のユーザー名またはプロフィール URL",
+      "id": "Nama pengguna atau URL profil Kamaitachi"
+    },
+    "Import personal bests already stored in a Kamaitachi maimai DX profile.": {
+      "zh-Hans": "导入 Kamaitachi maimai DX 玩家资料中已有的个人最佳成绩。",
+      "ko": "Kamaitachi maimai DX 프로필에 이미 저장된 개인 최고 기록을 가져옵니다.",
+      "ja": "Kamaitachi の maimai DX プロフィールに保存されている自己ベストを読み込みます。",
+      "id": "Impor skor terbaik pribadi yang sudah tersimpan di profil maimai DX Kamaitachi."
+    },
+    "No sign-in or API key needed. You will review the profile before importing.": {
+      "zh-Hans": "无需登录或 API 密钥。导入前可先确认玩家资料。",
+      "ko": "로그인이나 API 키가 필요하지 않습니다. 가져오기 전에 프로필을 확인할 수 있습니다.",
+      "ja": "ログインや API キーは不要です。読み込む前にプロフィールを確認できます。",
+      "id": "Tidak perlu masuk atau kunci API. Anda akan meninjau profil sebelum mengimpor."
+    },
+    "Update your scores on Kamaitachi first. Refresh in Party only reads what is already there.": {
+      "zh-Hans": "请先更新 Kamaitachi 中的成绩。Party 的刷新只读取其中已有的数据。",
+      "ko": "먼저 Kamaitachi의 성적을 갱신하세요. Party 새로고침은 그곳에 이미 있는 데이터만 읽습니다.",
+      "ja": "先に Kamaitachi の成績を更新してください。Party の更新では、すでに保存されているデータのみ取得します。",
+      "id": "Perbarui skor di Kamaitachi terlebih dahulu. Penyegaran di Party hanya membaca data yang sudah ada di sana."
+    },
+    "Preview scores": {
+      "zh-Hans": "预览成绩",
+      "ko": "성적 미리보기",
+      "ja": "成績をプレビュー",
+      "id": "Pratinjau skor"
+    },
+    "For players whose China-region scores are already visible in Diving-Fish.": {
+      "zh-Hans": "适用于水鱼查分器中已有国服成绩的玩家。",
+      "ko": "Diving-Fish에 중국 지역 성적이 이미 표시되는 플레이어를 위한 기능입니다.",
+      "ja": "Diving-Fish に中国版の成績がすでに表示されているプレイヤー向けです。",
+      "id": "Untuk pemain yang skor wilayah Tiongkoknya sudah terlihat di Diving-Fish."
+    },
+    "Open Diving-Fish first, accept its tracker agreement, and check your scores. Creating an account does not add arcade scores.": {
+      "zh-Hans": "请先打开水鱼查分器，同意查分器协议并确认成绩。仅注册账号不会自动添加机台成绩。",
+      "ko": "먼저 Diving-Fish를 열고 성적 조회 서비스 약관에 동의한 뒤 성적을 확인하세요. 계정 생성만으로 아케이드 성적이 추가되지는 않습니다.",
+      "ja": "先に Diving-Fish を開き、成績管理サービスの規約に同意して成績を確認してください。アカウントを作るだけではゲームの成績は追加されません。",
+      "id": "Buka Diving-Fish, setujui ketentuan penggunaannya, lalu periksa skor Anda. Membuat akun tidak otomatis menambahkan skor arcade."
+    },
+    "Open Diving-Fish": {
+      "zh-Hans": "打开水鱼查分器",
+      "ko": "Diving-Fish 열기",
+      "ja": "Diving-Fish を開く",
+      "id": "Buka Diving-Fish"
+    },
+    "Diving-Fish connection is not available yet. Please try again later.": {
+      "zh-Hans": "水鱼查分器连接暂未开放。请稍后重试。",
+      "ko": "Diving-Fish 연결은 아직 사용할 수 없습니다. 나중에 다시 시도하세요.",
+      "ja": "Diving-Fish への接続はまだ利用できません。後でもう一度お試しください。",
+      "id": "Koneksi Diving-Fish belum tersedia. Silakan coba lagi nanti."
+    },
+    "Could not check Diving-Fish availability. Please try again when online.": {
+      "zh-Hans": "无法检查水鱼查分器的连接状态。请联网后重试。",
+      "ko": "Diving-Fish 연결 가능 여부를 확인하지 못했습니다. 온라인 상태에서 다시 시도하세요.",
+      "ja": "Diving-Fish に接続できるか確認できませんでした。オンラインで再試行してください。",
+      "id": "Ketersediaan Diving-Fish tidak dapat diperiksa. Silakan coba lagi saat online."
+    },
+    "Sign in to Diving-Fish and allow maimai.party to read your profile name and scores. You will preview them before importing.": {
+      "zh-Hans": "登录水鱼查分器并允许 maimai.party 读取您的昵称和成绩。导入前可先预览。",
+      "ko": "Diving-Fish에 로그인하여 maimai.party가 프로필 이름과 성적을 읽도록 허용하세요. 가져오기 전에 미리 확인할 수 있습니다.",
+      "ja": "Diving-Fish にログインし、maimai.party にプロフィール名と成績の読み取りを許可してください。読み込む前に内容を確認できます。",
+      "id": "Masuk ke Diving-Fish dan izinkan maimai.party membaca nama profil serta skor Anda. Anda dapat meninjaunya sebelum mengimpor."
+    },
+    "In Diving-Fish, open Edit profile (编辑个人资料) and turn off score masking (对非网页查询的成绩使用掩码). Keep public-query privacy on if you prefer. Party cannot verify masking for you.": {
+      "zh-Hans": "在水鱼查分器中打开“编辑个人资料”，关闭“对非网页查询的成绩使用掩码”。“禁止公开接口使用我的成绩（授权不受影响）”可保持开启。Party 无法代您确认掩码设置。",
+      "ko": "Diving-Fish의 프로필 편집(编辑个人资料)에서 성적 마스킹(对非网页查询的成绩使用掩码)을 끄세요. 공개 API를 통한 성적 조회 차단은 켜 두어도 됩니다. Party는 마스킹 설정을 확인할 수 없습니다.",
+      "ja": "Diving-Fish の「编辑个人资料」（プロフィール編集）で「对非网页查询的成绩使用掩码」（成績のマスキング）をオフにしてください。公開 API からの成績照会を禁止する設定はオンのままでも構いません。Party はマスキング設定を確認できません。",
+      "id": "Di Diving-Fish, buka Edit profil (编辑个人资料), lalu nonaktifkan penyamaran skor (对非网页查询的成绩使用掩码). Pembatasan akses skor melalui API publik boleh tetap aktif. Party tidak dapat memeriksa pengaturan penyamaran Anda."
+    },
+    "Preview connected scores": {
+      "zh-Hans": "预览已连接账号的成绩",
+      "ko": "연결된 계정의 성적 미리보기",
+      "ja": "接続中のアカウントの成績をプレビュー",
+      "id": "Pratinjau skor akun terhubung"
+    },
+    "Connect Diving-Fish": {
+      "zh-Hans": "连接水鱼查分器",
+      "ko": "Diving-Fish 연결",
+      "ja": "Diving-Fish に接続",
+      "id": "Hubungkan Diving-Fish"
+    },
+    "Open Diving-Fish, accept its tracker agreement, and confirm your scores are visible. Then try again.": {
+      "zh-Hans": "请打开水鱼查分器，同意查分器协议并确认成绩可见，然后重试。",
+      "ko": "Diving-Fish를 열고 성적 조회 서비스 약관에 동의한 뒤 성적이 표시되는지 확인하고 다시 시도하세요.",
+      "ja": "Diving-Fish を開き、成績管理サービスの規約に同意して成績が表示されることを確認し、再試行してください。",
+      "id": "Buka Diving-Fish, setujui ketentuan penggunaannya, dan pastikan skor Anda terlihat. Lalu coba lagi."
+    },
+    "No supported scores were found in Diving-Fish. Open its tracker, accept the agreement, and add your scores before trying again.": {
+      "zh-Hans": "水鱼查分器中没有找到可导入的成绩。请打开查分器，同意协议并添加成绩后重试。",
+      "ko": "Diving-Fish에서 가져올 수 있는 성적을 찾지 못했습니다. 성적 조회 사이트를 열고 약관에 동의한 뒤 성적을 추가하고 다시 시도하세요.",
+      "ja": "Diving-Fish に読み込み可能な成績がありません。成績管理サイトを開き、規約に同意して成績を追加してから再試行してください。",
+      "id": "Tidak ditemukan skor yang dapat diimpor dari Diving-Fish. Buka layanan pencatatan skornya, setujui ketentuan penggunaan, dan tambahkan skor sebelum mencoba lagi."
+    },
+    "Enter a Kamaitachi username, numeric user ID, or profile URL.": {
+      "zh-Hans": "请输入 Kamaitachi 用户名、数字用户 ID 或个人主页链接。",
+      "ko": "Kamaitachi 사용자 이름, 숫자 사용자 ID 또는 프로필 URL을 입력하세요.",
+      "ja": "Kamaitachi のユーザー名、数字のユーザー ID、またはプロフィール URL を入力してください。",
+      "id": "Masukkan nama pengguna, ID pengguna numerik, atau URL profil Kamaitachi."
+    },
+    "Kamaitachi could not find that user. Check the username or profile URL.": {
+      "zh-Hans": "Kamaitachi 找不到该用户。请检查用户名或个人主页链接。",
+      "ko": "Kamaitachi에서 해당 사용자를 찾지 못했습니다. 사용자 이름이나 프로필 URL을 확인하세요.",
+      "ja": "Kamaitachi でユーザーが見つかりません。ユーザー名またはプロフィール URL を確認してください。",
+      "id": "Kamaitachi tidak dapat menemukan pengguna tersebut. Periksa nama pengguna atau URL profil."
+    },
+    "This Kamaitachi user has no maimai DX profile. Import maimai DX scores into Kamaitachi first, then try again.": {
+      "zh-Hans": "该 Kamaitachi 用户没有 maimai DX 资料。请先将 maimai DX 成绩导入 Kamaitachi，然后重试。",
+      "ko": "이 Kamaitachi 사용자에게는 maimai DX 프로필이 없습니다. 먼저 Kamaitachi에 maimai DX 성적을 가져온 후 다시 시도하세요.",
+      "ja": "この Kamaitachi ユーザーには maimai DX プロフィールがありません。先に Kamaitachi に maimai DX の成績を取り込んでから再試行してください。",
+      "id": "Pengguna Kamaitachi ini belum memiliki profil maimai DX. Impor skor maimai DX ke Kamaitachi dahulu, lalu coba lagi."
+    },
+    "This Kamaitachi profile has no maimai DX personal bests to import. Update its scores in Kamaitachi first, then try again.": {
+      "zh-Hans": "该 Kamaitachi 资料中没有可导入的 maimai DX 个人最佳成绩。请先更新 Kamaitachi 成绩，然后重试。",
+      "ko": "이 Kamaitachi 프로필에는 가져올 maimai DX 개인 최고 기록이 없습니다. 먼저 Kamaitachi의 성적을 갱신한 후 다시 시도하세요.",
+      "ja": "この Kamaitachi プロフィールには読み込める maimai DX の自己ベストがありません。先に Kamaitachi の成績を更新してから再試行してください。",
+      "id": "Profil Kamaitachi ini belum memiliki skor terbaik pribadi maimai DX untuk diimpor. Perbarui skornya di Kamaitachi dahulu, lalu coba lagi."
+    },
+    "Last imported: {0}": {
+      "zh-Hans": "最近导入：{0}",
+      "ko": "마지막 가져오기: {0}",
+      "ja": "最終読み込み: {0}",
+      "id": "Terakhir diimpor: {0}"
+    },
+    "About LXNS imports": {
+      "zh-Hans": "关于 LXNS 导入",
+      "ko": "LXNS 가져오기 안내",
+      "ja": "LXNS の読み込みについて",
+      "id": "Tentang impor LXNS"
+    },
+    "Open LXNS": {
+      "zh-Hans": "打开 LXNS",
+      "ko": "LXNS 열기",
+      "ja": "LXNS を開く",
+      "id": "Buka LXNS"
+    },
+    "Connect LXNS": {
+      "zh-Hans": "连接 LXNS",
+      "ko": "LXNS 연결",
+      "ja": "LXNS に接続",
+      "id": "Hubungkan LXNS"
+    },
+    "For players whose China-region maimai DX scores are already visible in LXNS.": {
+      "zh-Hans": "适用于已在 LXNS 中显示舞萌 DX 中国区成绩的玩家。",
+      "ko": "중국 지역 maimai DX 성적이 이미 LXNS에 표시되는 플레이어를 위한 연결입니다.",
+      "ja": "中国地域の maimai DX の成績がすでに LXNS に表示されているプレイヤー向けです。",
+      "id": "Untuk pemain yang skor maimai DX wilayah Tiongkoknya sudah terlihat di LXNS."
+    },
+    "Open LXNS first and sync your scores to your account. Creating an account does not add arcade scores.": {
+      "zh-Hans": "请先打开 LXNS，将成绩同步到你的账号。仅注册账号不会添加机台成绩。",
+      "ko": "먼저 LXNS를 열고 계정에 성적을 동기화하세요. 계정 생성만으로 아케이드 성적이 추가되지는 않습니다.",
+      "ja": "先に LXNS を開き、アカウントに成績を同期してください。アカウントを作成するだけではゲームセンターの成績は追加されません。",
+      "id": "Buka LXNS dahulu dan sinkronkan skor ke akun Anda. Membuat akun saja tidak menambahkan skor arcade."
+    },
+    "LXNS connection is not available yet. Please try again later.": {
+      "zh-Hans": "LXNS 连接暂不可用。请稍后重试。",
+      "ko": "LXNS 연결을 아직 사용할 수 없습니다. 나중에 다시 시도하세요.",
+      "ja": "LXNS への接続はまだ利用できません。しばらくしてから再試行してください。",
+      "id": "Koneksi LXNS belum tersedia. Silakan coba lagi nanti."
+    },
+    "Could not check LXNS availability. Please try again when online.": {
+      "zh-Hans": "无法检查 LXNS 连接是否可用。请联网后重试。",
+      "ko": "LXNS 연결 가능 여부를 확인하지 못했습니다. 온라인 상태에서 다시 시도하세요.",
+      "ja": "LXNS の接続可否を確認できませんでした。オンラインの状態で再試行してください。",
+      "id": "Ketersediaan LXNS tidak dapat diperiksa. Silakan coba lagi saat terhubung ke internet."
+    },
+    "Sign in to LXNS and allow maimai.party to read your player name and scores. No personal API key is needed. You will preview them before importing.": {
+      "zh-Hans": "登录 LXNS 并允许 maimai.party 读取玩家名称和成绩。无需个人 API 密钥。导入前会显示预览。",
+      "ko": "LXNS에 로그인하고 maimai.party가 플레이어 이름과 성적을 읽도록 허용하세요. 개인 API 키는 필요하지 않습니다. 가져오기 전에 미리 확인할 수 있습니다.",
+      "ja": "LXNS にログインし、maimai.party にプレイヤー名と成績の読み取りを許可してください。個人用 API キーは不要です。読み込み前にプレビューで確認できます。",
+      "id": "Masuk ke LXNS dan izinkan maimai.party membaca nama pemain serta skor Anda. Kunci API pribadi tidak diperlukan. Anda akan melihat pratinjau sebelum mengimpor."
+    },
+    "No supported scores were found in LXNS. Sync your maimai DX scores to LXNS first, then try again.": {
+      "zh-Hans": "LXNS 中没有找到可导入的成绩。请先将舞萌 DX 成绩同步到 LXNS，然后重试。",
+      "ko": "LXNS에서 가져올 수 있는 성적을 찾지 못했습니다. 먼저 maimai DX 성적을 LXNS에 동기화한 후 다시 시도하세요.",
+      "ja": "LXNS に読み込み可能な成績がありません。先に maimai DX の成績を LXNS に同期してから再試行してください。",
+      "id": "Tidak ditemukan skor yang dapat diimpor dari LXNS. Sinkronkan skor maimai DX Anda ke LXNS dahulu, lalu coba lagi."
+    },
+    "The provider connection could not be completed. Please try again.": {
+      "zh-Hans": "无法完成服务连接。请重试。",
+      "ko": "서비스 연결을 완료하지 못했습니다. 다시 시도하세요.",
+      "ja": "サービスへの接続を完了できませんでした。もう一度お試しください。",
+      "id": "Koneksi ke layanan tidak dapat diselesaikan. Silakan coba lagi."
+    },
+    "If you connect Diving-Fish or LXNS, Party's connection service reads scores from the provider and keeps an encrypted access grant and account label for refreshes. It does not store scores. Disconnect removes the grant from Party; you can also revoke access in the provider's settings.": {
+      "zh-Hans": "连接水鱼查分器或 LXNS 后，Party 的连接服务会读取成绩，并保留加密的访问授权和账号名称以便刷新，不会存储成绩。断开连接会移除 Party 保存的授权；你也可以在服务方设置中撤销授权。",
+      "ko": "Diving-Fish 또는 LXNS에 연결하면 Party 연결 서비스가 성적을 읽고 새로고침을 위해 암호화된 접근 권한과 계정 이름을 보관합니다. 성적은 서버에 저장하지 않습니다. 연결을 해제하면 Party의 접근 권한이 삭제됩니다. 서비스 설정에서도 권한을 취소할 수 있습니다.",
+      "ja": "Diving-Fish または LXNS に接続すると、Party の接続サービスは成績を読み取り、更新用に暗号化したアクセス許可とアカウント名を保持します。成績は保存しません。切断すると Party 側のアクセス許可を削除します。サービス側の設定でも許可を取り消せます。",
+      "id": "Jika Anda menghubungkan Diving-Fish atau LXNS, layanan koneksi Party membaca skor dan menyimpan izin akses terenkripsi serta nama akun untuk penyegaran. Layanan ini tidak menyimpan skor. Memutuskan koneksi menghapus izin dari Party; Anda juga dapat mencabut akses di pengaturan penyedia."
+    },
+    "My scores are updated.": {
+      "zh-Hans": "我的成绩已更新。",
+      "ko": "성적을 갱신했습니다.",
+      "ja": "成績を更新しました。",
+      "id": "Skor saya sudah diperbarui."
+    },
+    "Score masking is off.": {
+      "zh-Hans": "成绩掩码已关闭。",
+      "ko": "성적 마스킹을 껐습니다.",
+      "ja": "成績のマスクを無効にしました。",
+      "id": "Penyamaran skor sudah dimatikan."
+    },
+    "Why update scores first?": {
+      "zh-Hans": "为什么要先更新成绩？",
+      "ko": "왜 성적을 먼저 갱신해야 하나요?",
+      "ja": "先に成績を更新する理由",
+      "id": "Mengapa skor perlu diperbarui dahulu?"
+    },
+    "About score masking": {
+      "zh-Hans": "关于成绩掩码",
+      "ko": "성적 마스킹 안내",
+      "ja": "成績のマスクについて",
+      "id": "Tentang penyamaran skor"
+    },
+    "Update your China-region scores in Diving-Fish and accept its tracker agreement. Connect asks for read-only access; you can review the scores before importing.": {
+      "zh-Hans": "请先在水鱼查分器更新国服成绩并接受查分器协议。连接时只需授予读取权限；导入前可以预览成绩。",
+      "ko": "먼저 Diving-Fish에서 중국 지역 성적을 갱신하고 조회 서비스 약관에 동의하세요. 연결 시 읽기 전용 권한을 요청하며, 가져오기 전에 성적을 확인할 수 있습니다.",
+      "ja": "先に Diving-Fish で中国版の成績を更新し、利用規約に同意してください。接続時に読み取り専用の権限を求めます。読み込む前に成績を確認できます。",
+      "id": "Perbarui skor wilayah Tiongkok Anda di Diving-Fish dan setujui perjanjian pelacaknya. Koneksi meminta izin baca saja; Anda dapat meninjau skor sebelum mengimpor."
+    },
+    "Sync your China-region maimai DX scores in LXNS first. Connect asks for read-only access; you can review the scores before importing.": {
+      "zh-Hans": "请先在 LXNS 同步国服舞萌 DX 成绩。连接时只需授予读取权限；导入前可以预览成绩。",
+      "ko": "먼저 LXNS에서 중국 지역 maimai DX 성적을 동기화하세요. 연결 시 읽기 전용 권한을 요청하며, 가져오기 전에 성적을 확인할 수 있습니다.",
+      "ja": "先に LXNS で中国版 maimai DX の成績を同期してください。接続時に読み取り専用の権限を求めます。読み込む前に成績を確認できます。",
+      "id": "Sinkronkan skor maimai DX wilayah Tiongkok Anda di LXNS dahulu. Koneksi meminta izin baca saja; Anda dapat meninjau skor sebelum mengimpor."
+    },
+    "Choose a service.": {
+      "zh-Hans": "请选择服务。",
+      "ko": "서비스를 선택하세요.",
+      "ja": "サービスを選んでください。",
+      "id": "Pilih layanan."
+    },
+    "Checking import options…": {
+      "zh-Hans": "正在检查导入选项…",
+      "ko": "가져오기 옵션 확인 중…",
+      "ja": "読み込み方法を確認しています…",
+      "id": "Memeriksa opsi impor…"
+    },
+    "Import options are unavailable. You can still upload a Session Report file.": {
+      "zh-Hans": "导入选项暂不可用。仍可上传 Session Report 文件。",
+      "ko": "가져오기 옵션을 사용할 수 없습니다. Session Report 파일은 업로드할 수 있습니다.",
+      "ja": "読み込み方法を取得できません。Session Report ファイルはアップロードできます。",
+      "id": "Opsi impor tidak tersedia. Anda tetap dapat mengunggah berkas Session Report."
+    },
+    "No import options are available right now.": {
+      "zh-Hans": "目前没有可用的导入选项。",
+      "ko": "현재 사용할 수 있는 가져오기 옵션이 없습니다.",
+      "ja": "現在利用できる読み込み方法はありません。",
+      "id": "Saat ini tidak ada opsi impor yang tersedia."
+    },
+    "Retry": {
+      "zh-Hans": "重试",
+      "ko": "다시 시도",
+      "ja": "再試行",
+      "id": "Coba lagi"
+    }
+  }
+}

@@ -15,6 +15,53 @@ completion or failure counts. No selected version, partner, song, player data,
 image, URL or error text is logged. Forget player data retains the single existing
 `data_action/clear` counter, labeled **Forget / clear player data** in owner reports.
 
+Kamaitachi, Diving-Fish and LXNS connections add finite counts for initial reads and
+manual refreshes. Diving-Fish and LXNS also record explicit connection, disconnect and
+cleanup-retry stages. Opening their tracker links uses `resource_opened/diving_fish`
+or `resource_opened/lxns`.
+Session Report files keep the existing import counters; the six additional file
+formats have separate finite method labels. Every method has attempt, preview shown, confirmed, saved locally,
+cancelled and failed counters. Saved locally (`import_completed`) means the
+browser committed the imported data, before any subsequent connection cleanup.
+An authorization or read success alone is not an imported dataset. These
+overlapping stage counts are not distinct imports, users or a
+linked funnel. Automatic refresh, restored state and background availability,
+status and cleanup checks do not create user-action counters. Separate version-2
+diagnostics cover operation outcomes, including automatic refresh, storage,
+provider cleanup and connector configuration. No account names, grant identifiers,
+scores, source URLs or upstream error text enter the report.
+
+GPC/DNT, client and server kill switches, preview suppression and dropped-batch
+behavior also apply to the new events. Local validation does not establish hosted
+collection. Apply the additive `0002_import_receipts.sql` migration first, release
+the matching collector and owner reports/dashboards second, and release the new
+browser counters last. An old collector rejects a batch with unknown finite
+events, diagnostic sources or reasons, and the new reports require the migrated
+columns. Keep production's version-2 diagnostics table and reader support; migration
+0003 was released independently and does not imply that 0002 is installed. Record the
+actual activation date; older missing counts
+are not measured zeroes. The finite event matrix and acceptance boundaries are in
+the [usage Worker guide](../usage-worker/README.md#import-and-provider-actions).
+
+The owner dashboard and Markdown report have a dedicated **Imports** section by
+service and method, with attempts, previews, confirmations, local commits,
+cancellations and failures. Failure detail separates stages and fixed reasons,
+including blocked authorization windows, authorization failure, empty scores,
+expired connections, tracker agreement requirements and local storage failure.
+Raw provider messages and private payloads are never report fields. A cleanup
+failure after a local commit appears separately and does not change that commit
+into a failed import.
+
+First/latest receipt bounds are nullable ISO UTC values from the collector clock
+for each daily aggregate tuple. Separate latest-attempt, latest-local-commit and
+latest-failure columns make outcome timing visible. These are known receipt
+times, not exact user-event timestamps or a sequence of individual actions.
+Historical rows and old file exports without bounds stay unknown; a later receipt
+cannot reconstruct the earlier timing. Dashboard filters apply to all these
+tables. Today stays partial; the report CLI requires explicit `--include-today`
+and otherwise defaults to completed New York days. Counts absent because of
+opt-outs, blockers or dropped batches cannot be recovered or counted as zero.
+
 | Source | Meaning | Limits |
 |---|---|---|
 | Private usage aggregates | Received daily actions by finite page type, event and detail | No unique people, sessions, click sequences, selected filter values or search text; opt-outs and dropped batches are absent |

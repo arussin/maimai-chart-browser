@@ -8,22 +8,25 @@ export async function sourceRequest(
   caller: AbortSignal,
   milliseconds: number,
   message = 'The public source could not be read. Open the report to use its import or download controls.',
+  transport: typeof fetch = fetch,
 ) {
   const timeout = AbortSignal.timeout(milliseconds),
     signal = AbortSignal.any([caller, timeout]);
-  const failure = () => {
+  const failure = (error?: unknown) => {
     caller.throwIfAborted();
     return new DiagnosticError(
       message,
-      timeout.aborted ? 'client_timeout' : 'network',
+      timeout.aborted || (error instanceof DOMException && error.name === 'TimeoutError')
+        ? 'client_timeout'
+        : 'network',
       'transport',
     );
   };
   let response: Response;
   try {
-    response = await fetch(url, { ...init, signal });
-  } catch {
-    throw failure();
+    response = await transport(url, { ...init, signal });
+  } catch (error) {
+    throw failure(error);
   }
   async function bytes(
     maximum: number,
@@ -55,7 +58,7 @@ export async function sourceRequest(
       }
     } catch (error) {
       if (error instanceof DiagnosticError) throw error;
-      throw failure();
+      throw failure(error);
     } finally {
       signal.removeEventListener('abort', abort);
       await reader.cancel().catch(() => {});

@@ -22,12 +22,15 @@ FEATURES = {
     "analysis": "Chart analysis and comparison",
     "player": "Player data",
     "player-sources": "Player import sources",
+    "player-file-imports": "Player file exports",
+    "player-connections": "Direct score tracker connections",
     "player-maishift": "Maishift public profiles",
     "composed": "Combined labels and sorting",
     "remaining": "Other controls",
     "about": "About and credits",
     "maishift-pilot": "Opt-in Maishift pilot",
     "card-history": "Chart card and play history",
+    "bpm-filter": "BPM filter controls",
     "score-export": "Best 50 and achievement image exports",
 }
 

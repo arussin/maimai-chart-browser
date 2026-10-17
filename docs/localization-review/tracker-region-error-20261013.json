@@ -1,0 +1,32 @@
+{
+  "date": "2026-10-13",
+  "reviewer": "Codex file-import localization author and independent UI reviewer",
+  "method": "Contextual AI review by a separate UI reviewer against the typed Fish/LXNS non-China identity rejection and existing score-tracker terminology. Not native-speaker certification.",
+  "locales": [
+    "en",
+    "zh-Hans",
+    "ko",
+    "ja",
+    "id"
+  ],
+  "scope": "One missing browser error classified and translated; English key and typed domain behavior unchanged.",
+  "entries": {
+    "Unsupported tracker region.": {
+      "zh-Hans": "不支持此成绩记录服务的地区。",
+      "ko": "이 성적 기록 서비스의 지역은 지원하지 않습니다.",
+      "ja": "この成績管理サービスの地域には対応していません。",
+      "id": "Wilayah layanan pencatat skor ini tidak didukung."
+    }
+  },
+  "checks": {
+    "catalog_locales_complete": true,
+    "placeholders_preserved": true,
+    "source_error_condition_reviewed": true,
+    "existing_tracker_terminology_preserved": true,
+    "independent_review_corrections_needed": false,
+    "native_speaker_certification": false
+  },
+  "inputs": {
+    "src/maimai_intelligence/assets/locales/player-file-imports.json": "0ef932cf608581bba002833d61e2d38c551d54b5696d696d423a6b9ae7cf82de"
+  }
+}

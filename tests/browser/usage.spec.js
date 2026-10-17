@@ -1,4 +1,5 @@
 import {test,expect} from './fixtures.js';
+import {selectImportMethod} from './player-import-fixture.mjs';
 import {readFile} from 'node:fs/promises';
 import {resolve,extname,sep} from 'node:path';
 import {gzipSync} from 'node:zlib';
@@ -35,6 +36,90 @@ test('actual user hooks produce only finite page/actions after GA refusal',async
  expect(await page.evaluate(()=>window.dataLayer)).toBeUndefined();
  for(const batch of counts)for(const row of batch.events)expect(Object.keys(row).sort()).toEqual(batch.version===1?['count','detail','event','failure','page']:['count','duration','instrumentation','mode','operation','outcome','reason','source','stage']);
  const persisted=await page.evaluate(()=>[...Object.keys(localStorage),...Object.keys(sessionStorage)].filter(k=>/usage/i.test(k)));expect(persisted).toEqual([]);
+});
+test('opening imports checks visibility without emitting import attempts or provider activity',async({page,context})=>{
+ const {counts,external}=await hosted(context),configurationRequests=[],providerRequests=[];
+ let malformed=false;
+ await context.route('https://maimai.party/api/player-import/oauth/connectors',async route=>{
+  const request=route.request();configurationRequests.push({url:request.url(),method:request.method()});
+  await route.fulfill({status:200,contentType:'application/json',body:malformed?'{invalid':JSON.stringify({schemaVersion:1,methods:{'file:tomomai':true}})});
+ });
+ page.on('request',request=>{
+  const url=new URL(request.url());
+  if(url.pathname.startsWith('/api/player-import/')&&!(request.method()==='GET'&&url.pathname==='/api/player-import/oauth/connectors'&&!url.search))providerRequests.push(request.url());
+ });
+ await page.goto('https://maimai.party/');
+ await expect.poll(()=>page.evaluate(()=>!!window.maimaiPersonal)).toBe(true);await page.evaluate(()=>maimaiPersonal.ready);
+ await page.locator('#player-import-primary').click();
+ await expect(page.locator('#player-import-dialog [data-import-service="tomomai"]')).toBeVisible();
+ await page.keyboard.press('Escape');await expect(page.locator('#player-import-dialog')).toBeHidden();
+ malformed=true;await page.locator('#player-import-primary').click();
+ await expect(page.locator('#player-import-dialog')).toContainText('You can still upload a Session Report file.');
+ await expect(page.locator('#player-import-dialog [data-import-service]')).toHaveCount(1);
+ await expect(page.locator('#player-import-dialog [data-import-service="session-report"]')).toBeVisible();
+ await page.evaluate(()=>maimaiUsage.flush());
+ const rows=counts.flatMap(batch=>batch.events);
+ expect(rows.filter(row=>row.event==='import_opened').reduce((total,row)=>total+row.count,0)).toBe(2);
+ expect(rows.filter(row=>row.event?.startsWith('provider_')||/^import_(?:started|previewed|confirmed|completed|failed|cancelled)$/.test(row.event))).toEqual([]);
+ const diagnostics=rows.filter(row=>row.operation==='connector_config');
+ expect(diagnostics.reduce((total,row)=>total+row.count,0)).toBe(2);
+ expect(diagnostics).toEqual(expect.arrayContaining([
+  expect.objectContaining({source:'none',mode:'automatic',stage:'complete',outcome:'success',reason:'none',count:1}),
+  expect.objectContaining({source:'none',mode:'automatic',stage:'response',outcome:'failed',reason:'malformed_response',count:1}),
+ ]));
+ expect(configurationRequests).toEqual(Array.from({length:2},()=>({url:'https://maimai.party/api/player-import/oauth/connectors',method:'GET'})));
+ expect(providerRequests).toEqual([]);expect(external).toEqual([]);
+});
+test('Tomomai file chooser logs finite preview, saved import, and malformed-file outcomes',async({page,context})=>{
+ const {counts,external}=await hosted(context),providerRequests=[];
+ await context.route('https://maimai.party/api/player-import/oauth/connectors',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({schemaVersion:1,methods:{'file:tomomai':true}})}));
+ page.on('request',request=>{
+  const url=new URL(request.url());
+  if(url.pathname.startsWith('/api/player-import/')&&!(request.method()==='GET'&&url.pathname==='/api/player-import/oauth/connectors'&&!url.search))providerRequests.push(request.url());
+ });
+ await page.goto('https://maimai.party/');await expect(page.locator('#catalog-count strong')).toHaveText('6');
+ const snapshot=await page.evaluate(async()=>{
+  await maimaiPersonal.ready;
+  const chart=maimaiResearchCatalog.catalog[0];
+  return {fetchedAt:'2026-10-01T12:00:00Z',displayName:'PRIVATE-TOMOMAI-DISPLAY',songs:[{songId:'abcdefgh:i11',songName:chart.title,artist:chart.artist,type:chart.format,difficulty:chart.difficulty,achievement:987643,fc:'fc',fs:'',dxScore:null,level:chart.level||'',levelPrecise:null}]};
+ });
+ const choose=async data=>{
+  await page.locator('#settings-toggle').click();await page.locator('#player-import').click();
+  await selectImportMethod(page,'file:tomomai');
+  await page.locator('#player-file-account').fill('PRIVATE-TOMOMAI-ACCOUNT');await page.locator('#player-file-region').selectOption('intl');
+  const choosing=page.waitForEvent('filechooser');await page.locator('#player-import-dialog .player-actions button').first().click();
+  await (await choosing).setFiles({name:'PRIVATE-TOMOMAI-FILE.json',mimeType:'application/json',buffer:Buffer.from(typeof data==='string'?data:JSON.stringify(data))});
+ };
+ const amount=(event,failure)=>counts.flatMap(batch=>batch.events).filter(row=>row.event===event&&row.detail==='file:tomomai'&&(failure===undefined||row.failure===failure)).reduce((sum,row)=>sum+row.count,0);
+ await choose(snapshot);await expect(page.locator('#player-import-dialog .player-remember')).toBeVisible();
+ expect(await page.evaluate(async()=>(await maimaiPlayerStorage.read()).active)).toBeNull();
+ await page.evaluate(()=>maimaiUsage.flush());
+ expect(amount('import_started')).toBe(1);expect(amount('import_previewed')).toBe(1);expect(amount('import_confirmed')).toBe(0);expect(amount('import_completed')).toBe(0);
+ await page.locator('#player-import-dialog .player-remember input').check();await page.locator('#player-import-dialog .player-actions button').first().click();
+ await expect(page.locator('#player-import-dialog')).toBeHidden();
+ await expect.poll(()=>page.evaluate(async()=>typeof (await maimaiPlayerStorage.read()).active?.revision)).toBe('string');
+ await expect.poll(()=>page.evaluate(()=>maimaiPersonal.enabled())).toBe(true);
+ const saved=await page.evaluate(async()=>{
+  const {active}=await maimaiPlayerStorage.read(),data=await maimaiPlayerData.decode(active.bytes);
+  return {revision:active.revision,key:data.player.key,achievement:Object.values(data.records)[0].achievement};
+ });
+ expect(saved.key).toBe('tomomai:maimaidx:intl:PRIVATE-TOMOMAI-ACCOUNT');expect(saved.achievement).toBe(987643);
+ await choose('{invalid');await expect(page.locator('#player-import-dialog')).toContainText('Choose a valid JSON export for the selected source.');
+ expect(await page.evaluate(async()=>(await maimaiPlayerStorage.read()).active?.revision)).toBe(saved.revision);
+ await page.evaluate(()=>maimaiUsage.flush());
+ for(const [event,count] of [['import_started',2],['import_previewed',1],['import_confirmed',1],['import_completed',1],['import_failed',1],['import_cancelled',0]])expect(amount(event),event).toBe(count);
+ expect(amount('import_failed','invalid')).toBe(1);
+ const diagnostics=counts.filter(batch=>batch.version===2).flatMap(batch=>batch.events).filter(row=>row.operation==='import'&&row.source==='file:tomomai');
+ expect(diagnostics.reduce((sum,row)=>sum+row.count,0)).toBe(2);
+ expect(diagnostics).toEqual(expect.arrayContaining([
+  expect.objectContaining({mode:'manual',stage:'commit',outcome:'success',reason:'none',count:1}),
+  expect.objectContaining({mode:'manual',stage:'decode',outcome:'failed',reason:'malformed_response',count:1}),
+ ]));
+ const rows=counts.flatMap(batch=>batch.events),stages=rows.filter(row=>/^import_(?:started|previewed|confirmed|completed|failed|cancelled)$/.test(row.event));
+ expect(stages.every(row=>row.detail==='file:tomomai')).toBe(true);expect(rows.filter(row=>row.event?.startsWith('provider_'))).toEqual([]);
+ for(const batch of counts)for(const row of batch.events)expect(Object.keys(row).sort()).toEqual(batch.version===1?['count','detail','event','failure','page']:['count','duration','instrumentation','mode','operation','outcome','reason','source','stage']);
+ expect(JSON.stringify(counts)).not.toMatch(/PRIVATE-TOMOMAI|abcdefgh:i11|987643|2026-10-01T12:00:00Z/);
+ expect(providerRequests).toEqual([]);expect(external).toEqual([]);
 });
 for(const option of [{gpc:true},{dnt:true},{disabled:true}])test('collection suppression '+JSON.stringify(option),async({page,context})=>{
  const {counts}=await hosted(context,option);await page.goto('https://maimai.party/');await expect(page.locator('#catalog-count strong')).toHaveText('6');
@@ -157,6 +242,11 @@ test('similar exceptions and empty matches have different outcomes',async({page,
 test('export actions count explicit intent and current outcomes without private values or restored choices',async({page,context})=>{
  const {counts,external}=await hosted(context);
  await prepareExport(page);
+ // The real UI sends the completed local import promptly, without calling flush
+ // from this test or waiting for the ordinary ten-second batching timer.
+ await expect.poll(()=>counts.flatMap(batch=>batch.events).filter(row=>row.event==='import_completed'&&row.detail==='file').reduce((sum,row)=>sum+row.count,0),{timeout:3000}).toBe(1);
+ for(const event of ['import_started','import_previewed','import_confirmed'])
+  expect(counts.flatMap(batch=>batch.events).filter(row=>row.event===event&&row.detail==='file').reduce((sum,row)=>sum+row.count,0)).toBe(1);
  const flush=()=>page.evaluate(()=>maimaiUsage.flush());
  const amount=(event,detail)=>counts.flatMap(batch=>batch.events).filter(row=>row.event===event&&row.detail===detail).reduce((sum,row)=>sum+row.count,0);
  const generate=async()=>{await page.locator('#player-export-generate').click();await expect(page.locator('#player-export-download')).toBeVisible();};

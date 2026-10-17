@@ -3,11 +3,13 @@ import {readFile,writeFile} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import {pathToFileURL} from 'node:url';
 import {makeDashboardData} from './dashboard-model.mjs';
+import {summarizeImports} from './action-labels.mjs';
 export const safeJSON = value => JSON.stringify(value).replaceAll('<','\\u003c').replaceAll('>','\\u003e').replaceAll('&','\\u0026').replaceAll('\u2028','\\u2028').replaceAll('\u2029','\\u2029');
 const hash = text => createHash('sha256').update(text).digest('base64');
 export async function renderDashboard(input, options) {
   const data=makeDashboardData(input,options);
-  const [template,script,style]=await Promise.all(['dashboard.html','dashboard-client.js','dashboard.css'].map(name=>readFile(new URL(name,import.meta.url),'utf8')));
+  const [template,client,style]=await Promise.all(['dashboard.html','dashboard-client.js','dashboard.css'].map(name=>readFile(new URL(name,import.meta.url),'utf8')));
+  const script='const summarizeImports='+summarizeImports.toString()+';\n'+client;
   const csp="default-src 'none'; connect-src 'none'; img-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; script-src 'sha256-"+hash(script)+"'; style-src 'sha256-"+hash(style)+"'";
   return template.replace('__CSP__',csp).replace('__STYLE__',()=>style).replace('__DATA__',()=>safeJSON(data)).replace('__SCRIPT__',()=>script);
 }

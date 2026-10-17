@@ -2,10 +2,14 @@
   "version": 1,
   "tool": "esbuild-0.28.2",
   "entries": {
-    "hosted": "browser/browser-entry-VHOT2DZW.js",
-    "offline": "browser/browser-offline-75BPHZNI.js"
+    "hosted": "browser/browser-entry-FRGMC6MQ.js",
+    "offline": "browser/browser-offline-AU7VHGVA.js"
   },
   "assets": {
+    "browser/score-export-partner-otohime-splash-2HMETPV6.js": {
+      "sha256": "16f3540ee6e1d55ba0f9bac8b60bc9265b6c0914da0da23a08cf97513973e017",
+      "bytes": 267146
+    },
     "browser/score-export-partner-otohime-buddies-FFTETS4W.js": {
       "sha256": "d2a946ff6e128283e439d4bb872d438b5b16eaada0c2023fa32466464096dda1",
       "bytes": 200718
@@ -22,17 +26,21 @@
       "sha256": "067738c39f4e09f707b43c2028d873a12f3dc814b02fd3d85fe09c266d102f56",
       "bytes": 388361
     },
-    "browser/score-export-canvas-BMD22AF2.js": {
-      "sha256": "5d6abe10d7abf1993ab40904449433fb1620e5751f60d018aa20d6ef5c9173d9",
+    "browser/score-export-canvas-NOPINNPJ.js": {
+      "sha256": "f75bb9bf3bce08ddaf83151f94245211a863a41a5a7bb251222bd4aaaf01ca79",
       "bytes": 22273
     },
-    "browser/application-TUY77FPZ.js": {
-      "sha256": "931bd5c52a0d77fb09fbdad962f9d3aed3efe3794fe685f98285f2d0db60626b",
-      "bytes": 283587
+    "browser/application-PYJ4CMMG.js": {
+      "sha256": "5ca46873973406938c48d0c8ba61884d67cef20cd0c5ab0be86ed9895724f6dc",
+      "bytes": 430420
     },
     "browser/chunk-DXPPFQ5S.js": {
       "sha256": "f7fbea75cb876df33c7b0770e6eeb0c6c6ebd148ca19ef44868e4a08f166835c",
       "bytes": 7919
+    },
+    "browser/score-export-partner-chiffon-festival-MJM6FN6Z.js": {
+      "sha256": "1bce3e8f658b1167543cdb9dd631c36f4cd5fc4cf68cf995c4080f2a56d27265",
+      "bytes": 75458
     },
     "browser/score-export-partner-chiffon-festival-plus-DCQYM2QN.js": {
       "sha256": "c24fc5b21d8245e534c8f1308bce910dac3360ef8f1e42ad58ba65fb84fdee18",
@@ -62,9 +70,9 @@
       "sha256": "4ac37a11235689ad6665c3b9e386c67025cbe2b8575c4c6dfa498313c18487f6",
       "bytes": 125338
     },
-    "browser/score-export-partner-otohime-splash-2HMETPV6.js": {
-      "sha256": "16f3540ee6e1d55ba0f9bac8b60bc9265b6c0914da0da23a08cf97513973e017",
-      "bytes": 267146
+    "browser/score-export-partner-otohime-NXATKVAE.js": {
+      "sha256": "c40b4ae0c3883d556a8caf1985b556d1649483a0d15456801ad9a92ebe6a9fde",
+      "bytes": 242802
     },
     "browser/score-export-partner-chiffon-A5SG2FFL.js": {
       "sha256": "def75b86922662daf33ec0b7e72ba49f337164550761dd0554dfdeebb2d81ade",
@@ -94,21 +102,25 @@
       "sha256": "c55595e30c87fa4149a28343ba0be765e7dcd62922a8ae833c1d86b723fa2bdd",
       "bytes": 174218
     },
-    "browser/score-export-partner-chiffon-festival-MJM6FN6Z.js": {
-      "sha256": "1bce3e8f658b1167543cdb9dd631c36f4cd5fc4cf68cf995c4080f2a56d27265",
-      "bytes": 75458
+    "browser/browser-entry-FRGMC6MQ.js": {
+      "sha256": "3c6a11261b3541464e10ae19cceaeb1a72c77ead7db679a3c6e54701c16ad651",
+      "bytes": 25035
     },
-    "browser/browser-entry-VHOT2DZW.js": {
-      "sha256": "5d30d5a732a51ad6b532eee9d2ee1856198b7042a0e23cc7d29c41abfb046ce1",
-      "bytes": 23696
-    },
-    "browser/chunk-6JEL2CAL.js": {
-      "sha256": "2f4e5191897805a6760e229fed0774cae6aa56a28f90f3f8ca6ee27a98612896",
+    "browser/chunk-MIG5D6U7.js": {
+      "sha256": "405365ee201790666cea0173db2b2d3e706167edb4bb4a9051f4d11ee3487c80",
       "bytes": 3038
     },
-    "browser/chunk-WDLPH33D.js": {
-      "sha256": "e9c2940a195db35e513355ab3d0b5f6087fc2b8671dfb976b0671027050244d2",
-      "bytes": 2916
+    "browser/chunk-OAHMEW7Y.js": {
+      "sha256": "68d4313eba4dad1faec88d61cd9c9518dc856c2336384ba12d5c242d12036fb7",
+      "bytes": 3524
+    },
+    "browser/import-provider-SGDJCPNM.js": {
+      "sha256": "e8faf0d4a65f23c143ddee1bdfa707491fbdc065972b10f8c1f1f77724a12a6f",
+      "bytes": 148
+    },
+    "browser/chunk-ANBJGSXB.js": {
+      "sha256": "6640f905ce474d7137394819f965bd0ac2044efd30cfe2e28ebdf34c6a9de315",
+      "bytes": 576569
     },
     "browser/score-export-partner-derakkuma-magical-RQSO3O4Q.js": {
       "sha256": "1ceb0f7311318f86f40b738935937c263c79dbf4abb7c1a8a8fdd7f05dcb0547",
@@ -134,17 +146,13 @@
       "sha256": "50c8c2773313c4eb37e10c5dd97112afc662000433a433a99952327005d64118",
       "bytes": 188770
     },
-    "browser/score-export-partner-otohime-NXATKVAE.js": {
-      "sha256": "c40b4ae0c3883d556a8caf1985b556d1649483a0d15456801ad9a92ebe6a9fde",
-      "bytes": 242802
-    },
     "browser/chunk-WOT6VMZA.js": {
       "sha256": "ff9e0dca4365b7b1581e7275f3c6dbcf1474ffb874d81a3375ecf7a835dbaa6f",
       "bytes": 106
     },
-    "browser/browser-offline-75BPHZNI.js": {
-      "sha256": "ba76a5ae12d84c4c759b03e3c4c2fe840026040beead3a18865abb1975bfe321",
-      "bytes": 6494616
+    "browser/browser-offline-AU7VHGVA.js": {
+      "sha256": "043b11dd79fd4277b192b965364b377b5e3cd33f2fae0d44e9d2b949777aac55",
+      "bytes": 7218507
     },
     "browser/recovery-pagination-c898b2432a221525.js": {
       "sha256": "c898b2432a221525bd523d99a8666f562002886ac907d715f3d1687e07c366b6",
@@ -171,10 +179,11 @@
     "lab-loader.js"
   ],
   "preloads": [
-    "browser/application-TUY77FPZ.js",
-    "browser/chunk-6JEL2CAL.js",
+    "browser/application-PYJ4CMMG.js",
+    "browser/chunk-ANBJGSXB.js",
     "browser/chunk-DXPPFQ5S.js",
-    "browser/chunk-WDLPH33D.js",
+    "browser/chunk-MIG5D6U7.js",
+    "browser/chunk-OAHMEW7Y.js",
     "browser/chunk-WOT6VMZA.js"
   ],
   "recoveryPagination": "browser/recovery-pagination-c898b2432a221525.js"

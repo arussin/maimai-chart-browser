@@ -1,3 +1,4 @@
+import { selectImportMethod } from './player-import-fixture.mjs';
 import {mockBrowserConfiguration} from './browser-configuration-fixture.mjs';
 import {observeRetiredAnnouncements,retiredAnnouncementState} from './removed-announcement-fixture.mjs';
 import {test,expect} from './fixtures.js';
@@ -17,7 +18,7 @@ async function mock(context,page,data,{status=200,html=false,delay=null}={}){
   });
 }
 async function openImport(page){await page.locator('#settings-toggle').click();await page.locator('#player-import').click();}
-async function importReport(page,remember=true){await openImport(page);await page.getByLabel('Hosted Session Report',{exact:true}).check();await page.getByLabel('Hosted Session Report URL',{exact:true}).fill(manifest);await page.getByLabel('Remember and refresh').setChecked(remember);await page.getByRole('button',{name:'Continue',exact:true}).click();await page.getByRole('button',{name:remember?'Import & remember':'Import once',exact:true}).click();await expect.poll(()=>page.evaluate(()=>maimaiPersonal.enabled())).toBe(true);if(remember)await expect.poll(async()=>!!(await saved(page)).active?.source).toBe(true);}
+async function importReport(page,remember=true){await openImport(page);await selectImportMethod(page,'report');await page.getByLabel('Hosted Session Report URL',{exact:true}).fill(manifest);await page.getByLabel('Remember and refresh').setChecked(remember);await page.getByRole('button',{name:'Continue',exact:true}).click();await page.getByRole('button',{name:remember?'Import & remember':'Import once',exact:true}).click();await expect.poll(()=>page.evaluate(()=>maimaiPersonal.enabled())).toBe(true);if(remember)await expect.poll(async()=>!!(await saved(page)).active?.source).toBe(true);}
 async function saved(page){return page.evaluate(()=>maimaiPlayerStorage.read());}
 async function age(page){await page.evaluate(async()=>{const db=await new Promise(resolve=>{const q=indexedDB.open('maimai-player-data',2);q.onsuccess=()=>resolve(q.result);});await new Promise((resolve,reject)=>{const t=db.transaction('datasets','readwrite'),s=t.objectStore('datasets'),q=s.get('active');q.onsuccess=()=>s.put({...q.result,source:{...q.result.source,lastAttempt:0}},'active');t.oncomplete=resolve;t.onabort=reject;});db.close();});}
 
@@ -55,12 +56,12 @@ for(const [locale,message] of Object.entries({en:'Unknown failure','zh-Hans':'æœ
 
 test('source selection makes no requests and blocked Maishift tells the truth',async({page},testInfo)=>{
   await boot(page);let requests=0;page.on('request',r=>{if(r.url().includes('shiftpsh')||r.url().includes('public-report'))requests++;});await openImport(page);
-  await expect(page.getByRole('radio')).toHaveCount(3);await expect(page.getByLabel('Upload a file',{exact:true})).toBeChecked();
+  await expect(page.locator('[data-import-service="session-report"]').getByRole('radio')).toHaveCount(2);await expect(page.getByLabel('Upload a file',{exact:true})).toBeChecked();
   await page.getByLabel('Upload a file',{exact:true}).focus();await page.keyboard.press('ArrowDown');await expect(page.getByLabel('Hosted Session Report',{exact:true})).toBeChecked();
-  await page.getByLabel('Maishift',{exact:true}).check();await expect(page.getByRole('button',{name:'Continue',exact:true})).toBeDisabled();await expect(page.locator('#player-import-dialog')).toContainText('not available yet');expect(requests).toBe(0);
+  await selectImportMethod(page,'maishift');await expect(page.getByRole('button',{name:'Continue',exact:true})).toBeDisabled();await expect(page.locator('#player-import-dialog')).toContainText('not available yet');expect(requests).toBe(0);
   await expect(page.locator('.feature-announcement,#feature-announcement-replay')).toHaveCount(0);
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
-  await page.getByLabel('Hosted Session Report',{exact:true}).check();await page.screenshot({path:testInfo.outputPath('import-sources.png')});
+  await selectImportMethod(page,'report');await page.screenshot({path:testInfo.outputPath('import-sources.png')});
 });
 
 test('public source previews and remembers atomically; requests omit credentials and referrers',async({page,context})=>{
@@ -90,7 +91,7 @@ for(const locale of ['en','zh-Hans','ko','ja','id'])test('report recovery action
   await boot(page);await mock(context,page,await fixture(page),{html:true});
   for(const width of [320,430,1280]){
     await page.setViewportSize({width,height:932});await page.evaluate(locale=>maimaiI18n.setLocale(locale),locale);
-    await openImport(page);await page.locator('input[value=report]').check();await page.locator('#player-report-url').fill('https://public-report.example/fixture');await page.locator('.player-dialog .player-actions button').first().click();
+    await openImport(page);await selectImportMethod(page,'report');await page.locator('#player-report-url').fill('https://public-report.example/fixture');await page.locator('#player-import-dialog .player-actions button').first().click();
     const actions=page.locator('.player-message-actions');await expect(actions.locator('a')).toHaveAttribute('href','https://public-report.example/fixture');
     const layout=await actions.evaluate(root=>{const a=root.querySelector('a'),b=root.querySelector('button'),ar=a.getBoundingClientRect(),br=b.getBoundingClientRect(),d=root.closest('dialog'),dr=d.getBoundingClientRect();return {separated:ar.right+10<=br.left||br.right+10<=ar.left||ar.bottom+10<=br.top||br.bottom+10<=ar.top,targets:[a,b].every(n=>n.getBoundingClientRect().height>=44),contained:[ar,br].every(r=>r.left>=dr.left&&r.right<=dr.right),clipped:[a,b].some(n=>n.scrollWidth>n.clientWidth+1),overflow:document.documentElement.scrollWidth>innerWidth+1,labels:[a,b].map(n=>n.textContent)};});
     expect(layout.separated).toBe(true);expect(layout.targets).toBe(true);expect(layout.contained).toBe(true);expect(layout.clipped).toBe(false);expect(layout.overflow).toBe(false);if(locale!=='en')expect(layout.labels).not.toContain('Open report');
@@ -154,7 +155,7 @@ test('storage denial reports failure without losing an active temporary import',
   await boot(page);const data=await fixture(page);await mock(context,page,data);await importReport(page,false);
     // Exercise real IndexedDB failure while preserving the active temporary view.
   await page.evaluate(()=>{const original=IDBDatabase.prototype.transaction;IDBDatabase.prototype.transaction=function(...args){if(args[1]==='readwrite')throw new DOMException('Synthetic quota failure','QuotaExceededError');return original.apply(this,args);};});
-  await openImport(page);await page.getByLabel('Hosted Session Report',{exact:true}).check();await page.getByLabel('Hosted Session Report URL',{exact:true}).fill(manifest);await page.getByRole('button',{name:'Continue',exact:true}).click();await expect(page.getByRole('heading',{name:'Player data could not be imported',exact:true})).toBeVisible();expect(await page.evaluate(()=>maimaiPersonal.enabled())).toBe(true);
+  await openImport(page);await selectImportMethod(page,'report');await page.getByLabel('Hosted Session Report URL',{exact:true}).fill(manifest);await page.getByRole('button',{name:'Continue',exact:true}).click();await expect(page.getByRole('heading',{name:'Player data could not be imported',exact:true})).toBeVisible();expect(await page.evaluate(()=>maimaiPersonal.enabled())).toBe(true);
 });
 
 test('upstream throttling records backoff without replacing scores',async({page,context})=>{
@@ -196,8 +197,10 @@ for(const seen of [false,true])test('removed announcements leave Settings usable
 
 test('source selection remains localized and usable in all five languages',async({page})=>{
   await boot(page);for(const locale of ['en','zh-Hans','ko','ja','id']){
-    await page.evaluate(locale=>maimaiI18n.setLocale(locale),locale);await openImport(page);await expect(page.locator('input[name=player-source]')).toHaveCount(3);const copy=await page.locator('.player-source-options').innerText();if(locale!=='en')expect(copy).not.toContain('Upload a file');
-    await page.locator('input[value=report]').check();await expect(page.locator('#player-report-url')).toBeVisible();expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);await page.keyboard.press('Escape');
+    await page.evaluate(locale=>maimaiI18n.setLocale(locale),locale);await openImport(page);await expect(page.locator('[data-import-service="session-report"] input[name=player-source]')).toHaveCount(2);
+    expect(await page.locator('[data-import-service="session-report"] input[name=player-source]').evaluateAll(nodes=>nodes.map(node=>node.value))).toEqual(['file','report']);
+    const copy=await page.locator('.player-source-options').innerText();if(locale!=='en')expect(copy).not.toContain('Upload a file');
+    await selectImportMethod(page,'report');await expect(page.locator('#player-report-url')).toBeVisible();expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);await page.keyboard.press('Escape');
   }
 });
 
@@ -217,7 +220,7 @@ test('upgrading a legacy database preserves its v1 dataset without enabling refr
 
 test('cancelled reads cannot clear the busy state of a newer import',async({page,context})=>{
   await boot(page);const data=await fixture(page);let started,release;const start=new Promise(r=>started=r),held=new Promise(r=>release=r);await mock(context,page,data,{delay:()=>{started();return held;}});
-  await openImport(page);await page.getByLabel('Hosted Session Report',{exact:true}).check();await page.getByLabel('Hosted Session Report URL',{exact:true}).fill(manifest);await page.getByRole('button',{name:'Continue',exact:true}).click();await start;
+  await openImport(page);await selectImportMethod(page,'report');await page.getByLabel('Hosted Session Report URL',{exact:true}).fill(manifest);await page.getByRole('button',{name:'Continue',exact:true}).click();await start;
   await page.getByRole('button',{name:'Close',exact:true}).click();await page.locator('input[type=file]').setInputFiles({name:'file.gz',mimeType:'application/gzip',buffer:gzipSync(Buffer.from(JSON.stringify(data)))});await expect(page.getByRole('heading',{name:'Import this profile?',exact:true})).toBeVisible();release();
   await page.getByRole('button',{name:'Import data',exact:true}).click();await expect.poll(()=>page.evaluate(()=>maimaiPersonal.enabled())).toBe(true);expect((await saved(page)).active).toBeNull();
 });

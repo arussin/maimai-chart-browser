@@ -1,3 +1,4 @@
+import { selectImportMethod } from './player-import-fixture.mjs';
 import {test,expect} from './fixtures.js';
 import {readFile} from 'node:fs/promises';
 import path from 'node:path';
@@ -19,6 +20,7 @@ async function setup(page,context,locale='en'){
   await context.route('**/*',async route=>{
     const req=route.request(),url=new URL(req.url());
     if(url.hostname!=='127.0.0.1'){state.external.push(url.origin);await route.abort();return;}
+    if(req.method()==='GET'&&url.pathname==='/api/player-import/oauth/connectors'&&!url.search)return route.fallback();
     if(url.pathname!==PATH){await route.continue();return;}
     const headers=await req.allHeaders();for(const key of ['cookie','authorization','referer'])expect(headers[key]).toBeUndefined();
     state.calls++;state.requests.push(JSON.parse(req.postData()));if(state.hold)await state.hold;
@@ -30,11 +32,11 @@ async function setup(page,context,locale='en'){
   await page.clock.install();await boot(page);return state;
 }
 async function importData(page,remember=true,expectedRating=15432){
-  await page.locator('#player-import-primary').click();await page.locator('input[value=maishift]').check();
+  await page.locator('#player-import-primary').click();await selectImportMethod(page,'maishift');
   await page.locator('#player-maishift-url').fill('fictional-player');await page.locator('.player-actions button').first().click();
   await expect(page.locator('.player-profile-name').last()).toHaveText('Fictional Player');
-  await expect(page.locator('.player-dialog .player-rating')).toHaveAttribute('aria-label',expectedRating==null?'Rating unknown':'Maishift rating '+expectedRating);
-  await page.locator('.player-dialog .player-remember input').setChecked(remember);await page.locator('.player-dialog .player-actions button').first().click();
+  await expect(page.locator('#player-import-dialog .player-rating')).toHaveAttribute('aria-label',expectedRating==null?'Rating unknown':'Maishift rating '+expectedRating);
+  await page.locator('#player-import-dialog .player-remember input').setChecked(remember);await page.locator('#player-import-dialog .player-actions button').first().click();
   await expect.poll(()=>page.evaluate(()=>maimaiPersonal.enabled())).toBe(true);
 }
 async function menu(page,id){await page.locator('#settings-toggle').click();await page.locator('#'+id).click();}
@@ -220,27 +222,30 @@ test('new file replaces a delayed refresh and temporary imports remain isolated'
 for(const locale of ['en','zh-Hans','ko','ja','id'])test(`browser pilot ${locale} fits narrow controls and supports keyboard import`,async({page,context},testInfo)=>{
   await page.setViewportSize({width:320,height:800});await setup(page,context,locale);
   await page.locator('#player-import-primary').focus();await page.keyboard.press('Enter');
-  await expect(page.locator('.player-source-help')).toHaveCount(2);await expect(page.locator('.player-import-help')).toHaveCount(0);
+  await expect(page.locator('.player-source-help')).toHaveCount(10);await expect(page.locator('.player-import-help')).toHaveCount(0);
+  expect(await page.locator('#player-import-dialog [data-import-service]').evaluateAll(nodes=>nodes.map(node=>node.dataset.importService))).toEqual(['kamaitachi','diving-fish','lxns','maishift','session-report','tomomai','mai-tools','dxrating','jietng','aqua']);
   const help=page.locator('[data-import-help=maishift]');await expect(help).toHaveAttribute('href','player-import-help.'+locale+'.html#maishift');
-  const opened=context.waitForEvent('page');await help.click();const guide=await opened;await expect(guide).toHaveURL(new RegExp('player-import-help\\.'+locale+'\\.html#maishift$'));
+  const opened=context.waitForEvent('page');await help.click();const guide=await opened;await guide.setViewportSize({width:320,height:800});await expect(guide).toHaveURL(new RegExp('player-import-help\\.'+locale+'\\.html#maishift$'));
   await expect(guide.locator('html')).toHaveAttribute('lang',locale);await expect(guide.locator('#maishift')).toHaveCount(1);expect(await guide.evaluate(()=>window.opener===null)).toBe(true);await guide.close();
+  // Firefox shares the native window with the help tab; restore the narrow click surface.
+  await page.setViewportSize({width:320,height:800});
   await expect(page.locator('input[value=file]')).toBeChecked();expect(await page.locator('.player-source-options img').evaluateAll(nodes=>nodes.every(n=>n.complete&&n.naturalWidth>0))).toBe(true);
-  await page.locator('input[value=report]').check();await expect(page.locator('.player-source-fields a')).toHaveCount(0);await expect(page.locator('[data-import-help=session-report]')).toHaveAttribute('href','player-import-help.'+locale+'.html#session-report');await page.locator('input[value=file]').check();
+  await selectImportMethod(page,'report');await expect(page.locator('.player-source-fields a')).toHaveCount(0);await expect(page.locator('[data-import-help=session-report]')).toHaveAttribute('href','player-import-help.'+locale+'.html#session-report');await selectImportMethod(page,'file');
   await page.screenshot({path:testInfo.outputPath('import-sources-'+locale+'.png')});
-  await page.locator('input[value=maishift]').check();await page.locator('#player-maishift-url').fill('fictional-player');await page.locator('.player-actions button').first().click();
+  await selectImportMethod(page,'maishift');await page.locator('#player-maishift-url').fill('fictional-player');await page.locator('.player-actions button').first().click();
   await expect(page.locator('.player-source-fields select,.player-import-details')).toHaveCount(0);
   await expect(page.locator('.player-profile-name').last()).toHaveText('Fictional Player');
-  const badge=page.locator('.player-dialog .player-rating');
+  const badge=page.locator('#player-import-dialog .player-rating');
   await expect(badge).toBeVisible();await expect(badge).toHaveAttribute('data-tier','rainbow');
   expect(await badge.evaluate(node=>getComputedStyle(node).backgroundImage.startsWith('url("data:image/webp;base64,'))).toBe(true);
   expect(await page.locator('#player-import-dialog').evaluate(node=>node.scrollWidth<=node.clientWidth+1)).toBe(true);
   expect(await badge.evaluate(node=>{const card=node.parentElement,style=getComputedStyle(card),a=card.getBoundingClientRect(),b=node.getBoundingClientRect();return b.left>=a.left+parseFloat(style.paddingLeft)-1&&b.right<=a.right-parseFloat(style.paddingRight)+1;})).toBe(true);
-  await expect(page.locator('.player-dialog .player-profile-link')).toHaveText('fictional-player');
-  await expect(page.locator('.player-dialog .player-profile-link')).toHaveAttribute('href','https://maimai.shiftpsh.com/en@intl/profile/fictional-player/home');
-  await expect(page.locator('.player-dialog .player-profile-link')).toHaveAttribute('rel','noopener noreferrer');
+  await expect(page.locator('#player-import-dialog .player-profile-link')).toHaveText('fictional-player');
+  await expect(page.locator('#player-import-dialog .player-profile-link')).toHaveAttribute('href','https://maimai.shiftpsh.com/en@intl/profile/fictional-player/home');
+  await expect(page.locator('#player-import-dialog .player-profile-link')).toHaveAttribute('rel','noopener noreferrer');
   await expect(page.locator('.player-profile')).not.toContainText(/International|Japan|国际版|日本版|국제판|일본판|海外版/);
   await page.screenshot({path:testInfo.outputPath('profile-import-'+locale+'.png')});
-  await page.locator('.player-dialog .player-actions button').first().click();await expect.poll(()=>page.evaluate(()=>maimaiPersonal.enabled())).toBe(true);
+  await page.locator('#player-import-dialog .player-actions button').first().click();await expect.poll(()=>page.evaluate(()=>maimaiPersonal.enabled())).toBe(true);
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
   const clipped=await page.locator('#player-import-primary,#settings-actions button,.personal-scope button').evaluateAll(nodes=>nodes.filter(n=>n.getBoundingClientRect().width&&n.scrollWidth>n.clientWidth+2).map(n=>n.id));expect(clipped).toEqual([]);
   await page.locator('#settings-toggle').click();await expect(page.locator('#player-status .player-rating')).toBeVisible();
@@ -251,7 +256,7 @@ for(const locale of ['en','zh-Hans','ko','ja','id'])test(`browser pilot ${locale
   await page.screenshot({path:testInfo.outputPath('profile-settings-'+locale+'.png')});await page.locator('#settings-toggle').click();
   const forgetLabels={en:'Forget player data','zh-Hans':'删除玩家数据',ko:'플레이어 데이터 삭제',ja:'プレイヤーデータを削除',id:'Hapus data pemain'};
   await expect(page.locator('#player-forget')).toHaveText(forgetLabels[locale]);await expect(page.locator('#player-clear')).toHaveCount(0);
-  await menu(page,'player-import');await expect(page.locator('input[value=maishift]')).toBeChecked();
+  await menu(page,'player-import');await expect(page.locator('[data-service-toggle=maishift]')).toHaveAttribute('aria-expanded','true');
   const warning=page.locator('.player-import-replace-warning');await expect(warning).toBeVisible();
   const overwrite={en:'Importing will overwrite data from the currently imported account.','zh-Hans':'导入将覆盖当前已导入账号的数据。',ko:'가져오면 현재 가져온 계정의 데이터를 덮어씁니다.',ja:'読み込むと、現在読み込み済みのアカウントのデータが上書きされます。',id:'Impor akan menimpa data dari akun yang saat ini diimpor.'};
   await expect(warning).toHaveText(overwrite[locale]);
@@ -314,7 +319,7 @@ test('only new imports into a loaded account warn; cancel and refresh preserve d
   const state=await setup(page,context);await menu(page,'player-import');await expect(page.locator('.player-import-replace-warning')).toHaveCount(0);await page.keyboard.press('Escape');
   await importData(page);const before=(await saved(page)).active.revision;
   await menu(page,'player-import');await expect(page.locator('.player-import-replace-warning')).toHaveText('Importing will overwrite data from the currently imported account.');
-  for(const value of ['file','report','maishift']){await page.locator('input[value='+value+']').check();await expect(page.locator('.player-import-replace-warning')).toBeVisible();}expect(state.calls).toBe(1);
+  for(const value of ['file','report','maishift']){await selectImportMethod(page,value);await expect(page.locator('.player-import-replace-warning')).toBeVisible();}expect(state.calls).toBe(1);
   await page.locator('.player-actions button').first().click();await expect(page.locator('.player-import-replace-warning')).toHaveCount(0);
   await page.locator('.player-actions button').last().click();expect((await saved(page)).active.revision).toBe(before);
   const data=await page.evaluate(d=>maimaiPlayerData.reconcile(d),await fixture());
@@ -357,7 +362,7 @@ test('reported rating survives a temporary reload and missing rating stays unkno
 });
 
 test('pasted explicit regional URL selects its record region without a read',async({page,context})=>{
-  const state=await setup(page,context);await page.locator('#player-import-primary').click();await page.locator('input[value=maishift]').check();
+  const state=await setup(page,context);await page.locator('#player-import-primary').click();await selectImportMethod(page,'maishift');
   for(const part of ['jp','na','intl']){await page.locator('#player-maishift-url').fill('https://maimai.shiftpsh.com/en@'+part+'/profile/fictional-player');await expect(page.locator('.player-source-fields select')).toHaveCount(0);}
   expect(state.calls).toBe(0);
   await page.locator('.player-actions button').first().click();await expect(page.locator('.player-profile-name').last()).toHaveText('Fictional Player');expect(state.requests[0].region).toBe('intl');
@@ -369,7 +374,7 @@ test('automatic region is resolved and remembered explicitly; a regional link sw
   await page.clock.fastForward(31000);await refreshAndWait(page);expect(state.requests.length).toBe(2);expect(state.requests[1].region).toBe('jp');
   state.profile.region='ASIA';await menu(page,'player-import');await page.locator('#player-maishift-url').fill('https://maimai.shiftpsh.com/en@intl/profile/fictional-player');await page.locator('.player-actions button').first().click();
   await expect(page.locator('#player-import-dialog')).toContainText('1 PBs');await expect(page.locator('#player-import-dialog')).toContainText('Importing will overwrite data from the currently imported account.');
-  await page.locator('.player-dialog .player-actions button').first().click();await expect.poll(async()=>(await saved(page)).active.source.region).toBe('intl');
+  await page.locator('#player-import-dialog .player-actions button').first().click();await expect.poll(async()=>(await saved(page)).active.source.region).toBe('intl');
   expect(await page.evaluate(async()=>{const d=await maimaiPlayerData.decode((await maimaiPlayerStorage.read()).active.bytes);return Object.keys(d.charts).every(id=>id.startsWith('maishift:intl:'));})).toBe(true);
 });
 

@@ -3,6 +3,81 @@
 import html
 import re
 from importlib.resources import files
+from urllib.parse import urlsplit
+
+_ANCHORS = {
+    "direct-connections",
+    "session-report",
+    "maishift",
+    "kamaitachi",
+    "diving-fish",
+    "lxns",
+    "mai-tools",
+    "dxrating",
+    "tomomai",
+    "jietng",
+    "aqua",
+    "tachi",
+    "file-exports",
+}
+
+
+def _inline_text(source):
+    escaped = html.escape(source)
+    escaped = re.sub(r"`([^`\n]+)`", r"<code>\1</code>", escaped)
+    return re.sub(r"\*\*([^*\n]+)\*\*", r"<strong>\1</strong>", escaped)
+
+
+def _inline(source):
+    """Render the bundled prose's small Markdown subset; never allow raw HTML."""
+    output = []
+    end = 0
+    for match in re.finditer(r"\[([^\]\n]+)\]\((https://[^\s<>]+|#[a-z-]+)\)", source):
+        output.append(_inline_text(source[end : match.start()]))
+        label, destination = match.groups()
+        if destination.startswith("#") and destination[1:] in _ANCHORS:
+            output.append(f'<a href="{destination}">{_inline_text(label)}</a>')
+            end = match.end()
+            continue
+        try:
+            url = urlsplit(destination)
+            safe = (
+                url.scheme == "https"
+                and bool(url.hostname)
+                and not url.username
+                and not url.password
+            )
+        except ValueError:
+            safe = False
+        if safe:
+            output.append(
+                f'<a href="{html.escape(destination, quote=True)}" target="_blank" '
+                f'rel="noopener noreferrer">{_inline_text(label)}</a>'
+            )
+        else:
+            output.append(_inline_text(match.group()))
+        end = match.end()
+    output.append(_inline_text(source[end:]))
+    return "".join(output)
+
+
+def _render_markdown(source):
+    blocks = []
+    for block in source.strip().split("\n\n"):
+        anchor = re.fullmatch(r'<a id="([a-z-]+)"></a>', block)
+        if anchor and anchor.group(1) in _ANCHORS:
+            blocks.append(block)
+            continue
+        if all(re.match(r"\d+\. ", line) for line in block.splitlines()):
+            items = "".join(
+                f"<li>{_inline(line.split('. ', 1)[1])}</li>" for line in block.splitlines()
+            )
+            blocks.append(f"<ol>{items}</ol>")
+            continue
+        tag = "h1" if block.startswith("# ") else "h2" if block.startswith("## ") else "p"
+        content = block.lstrip("# ") if tag != "p" else block
+        blocks.append(f"<{tag}>{_inline(content)}</{tag}>")
+    return "".join(blocks)
 
 
 def build_player_help(root):
@@ -21,14 +96,6 @@ def build_player_help(root):
     for locale in languages:
         suffix = "" if locale == "en" else "." + locale
         source = assets.joinpath(f"import-help/README{suffix}.md").read_text("utf-8")
-        blocks = []
-        for block in source.strip().split("\n\n"):
-            if re.fullmatch(r'<a id="(?:session-report|maishift)"></a>', block):
-                blocks.append(block)
-                continue
-            tag = "h1" if block.startswith("# ") else "h2" if block.startswith("## ") else "p"
-            content = block.lstrip("# ") if tag != "p" else block
-            blocks.append(f"<{tag}>{html.escape(content)}</{tag}>")
         title = html.escape(source.splitlines()[0].removeprefix("# "))
         document = (
             f'<!doctype html><html lang="{locale}"><head><meta charset="utf-8">'
@@ -38,7 +105,7 @@ def build_player_help(root):
             f"<title>{title} · maimai.party</title>"
             '<link rel="stylesheet" href="player-import-help.css">'
             "</head><body><main>"
-            f"<nav>{navigation}</nav>{''.join(blocks)}</main></body></html>"
+            f"<nav>{navigation}</nav>{_render_markdown(source)}</main></body></html>"
         )
         (root / f"player-import-help.{locale}.html").write_text(document, encoding="utf-8")
     (root / "player-import-help.css").write_bytes(

@@ -27,11 +27,11 @@
       "bytes": 18290
     },
     "player-data-core.js": {
-      "sha256": "4fe825e98a38754af2e20a8c6afce74e36189c86960c4881b2c9da2470e7afa4",
-      "bytes": 10645
+      "sha256": "1335a2ba67c63d8140802db2c08b9a988e08b15ad2c34bd6f0e5060d495eb96e",
+      "bytes": 12129
     },
     "player-maishift.js": {
-      "sha256": "3afdc839e1438dd20578fa435d6b7190790a9b02fa364d23ac3c2f7a2e42900d",
+      "sha256": "1a3f0a8068c6532d136b1f3afc52876a1e89d335d87a76e7218b6183b1e0de75",
       "bytes": 7235
     },
     "chart-visuals.js": {
