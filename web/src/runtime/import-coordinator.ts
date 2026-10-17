@@ -341,17 +341,32 @@ export class ImportCoordinator {
         const key = this.ports.key('maimai-player-session'),
           old = this.ports.temporary.getItem(key);
         this.saveTab(bytes, this.token!.epoch + 1, connection?.profileRating ?? null, importedAt);
+        let token: StoreToken;
         try {
-          this.token = await storage.forget(this.token);
+          token = await storage.forget(this.token);
           removedSavedConnection = true;
         } catch (error) {
           if (old === null) this.clearTab();
           else this.ports.temporary.setItem(key, old);
           throw error;
         }
+        // The temporary bytes become restorable when forgetting advances the
+        // epoch. Superseding the view cannot turn that committed import into a
+        // cancellation or leave its obsolete saved grant without cleanup.
+        onCommitted?.();
+        onCommitted = undefined;
+        this.notify('forgotten', token);
+        if (expected !== this.revision) {
+          const releasedIDs: string[] = [];
+          for (const previous of previousConnections)
+            if (previous.connectionID) {
+              await this.releaseConnection(previous);
+              releasedIDs.push(previous.connectionID);
+            }
+          return releasedIDs;
+        }
+        this.token = token;
         this.savedRevision = null;
-        this.notify('forgotten');
-        this.assert(expected);
       } else
         this.saveTab(
           bytes,

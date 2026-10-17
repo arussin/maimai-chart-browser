@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { loadModule } from './module.mjs';
-import { makeSession, dataset, connection, file } from './player-session-fixture.mjs';
+import { makeSession, dataset, connection, deferred, file } from './player-session-fixture.mjs';
 import { validateDiagnostic } from '../src/diagnostic-contract.ts';
 const globals = {
   Error,
@@ -145,6 +145,61 @@ test('durable direct refresh retains both successes when its view is superseded 
     );
     assert.equal(terminals(rows, 'refresh').length, 1);
     assert.equal(terminals(rows, 'refresh')[0].outcome, unchanged ? 'unchanged' : 'success');
+  }
+});
+
+test('remembered-to-once imports keep committed success and scoped cleanup after navigation during forget', async () => {
+  for (const provider of ['diving-fish', 'lxns']) {
+    const rows = [],
+      source = { ...connection(), type: provider, connectionID: 'PRIVATE-old-grant' },
+      f = makeSession({ initial: dataset(), source, diagnose: (row) => rows.push(row) }),
+      forgotten = deferred(),
+      release = deferred(),
+      disconnected = [];
+    await f.owner.ready;
+    f.ports.effects.ask = async () => ({ accept: true, remember: false });
+    f.ports.sources.readSource = async () => ({
+      data: dataset('new', 200),
+      source: { ...source, connectionID: 'PRIVATE-new-grant' },
+    });
+    f.ports.sources.disconnect = async (value) => disconnected.push(value.connectionID);
+    const forget = f.ports.storage.forget;
+    f.ports.storage.forget = async (...args) => {
+      const token = await forget(...args);
+      forgotten.resolve();
+      await release.promise;
+      return token;
+    };
+    const running = f.owner.importSource({ type: provider }, false, async () => ({
+      type: provider,
+      connectionID: 'PRIVATE-new-grant',
+    }));
+    await forgotten.promise;
+    assert.equal(f.state.active, null);
+    f.owner.cancel();
+    release.resolve();
+    await running;
+    assert.equal(f.owner.active.capturedAt, 100, 'navigation must not install a stale UI');
+    assert.deepEqual(disconnected, ['PRIVATE-old-grant', 'PRIVATE-new-grant']);
+    assert.deepEqual(
+      f.calls.events.filter(([event]) => event.startsWith('import_')),
+      [
+        ['import_started', provider],
+        ['import_previewed', provider],
+        ['import_confirmed', provider],
+        ['import_completed', provider],
+      ],
+    );
+    const result = terminals(rows, 'import');
+    assert.equal(result.length, 1);
+    assert.equal(result[0].outcome, 'success');
+    assert.equal(result[0].stage, 'commit');
+    const restored = new f.owner.constructor(f.ports);
+    await restored.ready;
+    assert.equal(restored.active.capturedAt, 200);
+    assert.equal(restored.remembered, false);
+    assert.equal(restored.source, null);
+    safe(rows);
   }
 });
 
