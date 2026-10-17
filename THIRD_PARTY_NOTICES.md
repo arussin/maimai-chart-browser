@@ -58,6 +58,16 @@ logo repository is included. Jackets remain separately prepared. Exact
 title/artist matching follows arussin/maimai-session-report's
 artwork helper, without taking a runtime dependency on the report library.
 
+Export-sized song jackets use a separate reviewed index and explicitly supplied
+image store. Sources include the [LXNS public jacket service](https://maimai.lxns.net/docs/api/maimai),
+accepted SEGA mobile jackets, and the pinned public otoge-db artwork source.
+[Export assembly and bounds](docs/EXPORT_ARTWORK.md) and the
+[image provenance inventory](docs/export-jacket-provenance.json) describe identity
+checks, dimensions, source hashes and fallbacks. Ordinary thumbnails and catalog
+identities remain unchanged. These jackets retain their original ownership and
+are excluded from this code's MIT license; public availability does not establish
+new redistribution rights or endorsement.
+
 The bundled PRiSM (748×350), PRiSM PLUS (800×315) and CiRCLE (799×357)
 logos use the larger originals retained in
 [Tomomai's pinned logo collection](https://github.com/shedaniel/tomomai/tree/7608b9c250f4a8778cdfd4768cdecb7628cd5889/apps/render/public/res/logo).

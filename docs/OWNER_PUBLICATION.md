@@ -124,15 +124,18 @@ to turn one into a release.
 
 ## Publish an update
 
-Use Wrangler 4.131.1 from the official npm registry, authenticated as the
-owner. Confirm the selected Cloudflare account and project before sending files.
+Use the reviewed local Wrangler installation matching the repository lockfile
+(4.135.0 for this candidate), authenticated through the existing owner workflow.
+Record its package integrity and entry-point path in the capacity evidence;
+do not implicitly install a different uploader during publication.
+Confirm the selected Cloudflare account and project before sending files.
 The `maimai-party` project already exists; do not recreate it.
 These commands publish only the named prepared directory; they do not download,
 import game data, recalculate the corpus, or touch report history.
 
 ```text
-npx wrangler@4.131.1 whoami
-npx wrangler@4.131.1 pages deploy output/public-release-next --project-name maimai-party --branch main --commit-hash REVIEWED_MAIN_COMMIT
+node REVIEWED_WRANGLER_ENTRY whoami
+node REVIEWED_WRANGLER_ENTRY pages deploy REVIEWED_PUBLIC_DIRECTORY --project-name maimai-party --branch main --commit-hash REVIEWED_MAIN_COMMIT
 ```
 
 Record the deployment ID, immutable preview URL, source commit, catalog version,

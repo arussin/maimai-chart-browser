@@ -318,7 +318,7 @@ test("account and private server labels are required before selecting a file", a
 
 test("partial JSON updates keep omitted charts and malformed files keep the active profile", async ({
   page,
-}) => {
+}, testInfo) => {
   await boot(page);
   await preview(page, await snapshot(page));
   await commit(page);
@@ -359,6 +359,13 @@ test("partial JSON updates keep omitted charts and malformed files keep the acti
         maimaiPersonal.record(maimaiResearchCatalog.catalog[0])?.achievement,
     ),
   ).toBe(965000);
+  await page.screenshot({ path: testInfo.outputPath('file-invalid-fixture.png') });
+  await page.keyboard.press('Escape');
+  await preview(page, await snapshot(page, { achievement: 980000, date: '2026-10-03T12:00:00Z' }));
+  expect((await saved(page)).revision).toBe(updated.revision);
+  await page.screenshot({ path: testInfo.outputPath('file-recovery-fixture-preview.png') });
+  await page.locator('#player-import-dialog .player-actions button').last().click();
+  expect((await saved(page)).revision).toBe(updated.revision);
 });
 
 test("private-server instances remain separate even for the same account name", async ({
@@ -642,6 +649,8 @@ for (const locale of ["en", "zh-Hans", "ko", "ja", "id"]) {
               translated("Server name", locale),
             );
           await expectUnclippedDialog(page);
+          if (locale === 'en' && width === 1280)
+            await page.screenshot({ path: testInfo.outputPath('file-source-' + format + '.png') });
           await page.keyboard.press("Escape");
         }
         await openFileOptions(page);
@@ -650,6 +659,8 @@ for (const locale of ["en", "zh-Hans", "ko", "ja", "id"]) {
         );
         await expect(page.locator("#player-file-instance")).toHaveCount(0);
         await expectUnclippedDialog(page);
+        if (locale === 'en' && width === 1280)
+          await page.screenshot({ path: testInfo.outputPath('file-source-tomomai.png') });
         await uploadSelected(page, data);
         await expect(
           page.locator("#player-import-dialog .player-remember"),

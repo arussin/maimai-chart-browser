@@ -180,7 +180,7 @@ async function prepareExport(page){
 for(const fault of ['renderer_module','canvas_context','preview_preparation','artwork_failed'])test('export diagnostic boundary '+fault,async({page,context})=>{
  const {counts,external}=await hosted(context);await prepareExport(page);
  if(fault==='renderer_module')await page.route('**/score-export-canvas-*.js',route=>route.abort());
- if(fault==='artwork_failed')await page.route('**/score-export-artwork-*.js',route=>route.abort());
+ if(fault==='artwork_failed')await page.route('**/score-export-afterglow-artwork-*.js',route=>route.abort());
  if(fault==='canvas_context')await page.evaluate(()=>HTMLCanvasElement.prototype.getContext=()=>null);
  if(fault==='preview_preparation')await page.evaluate(()=>{
   const decode=HTMLImageElement.prototype.decode;

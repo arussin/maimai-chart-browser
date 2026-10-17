@@ -65,6 +65,12 @@ async function saved(page) {
       : null;
   });
 }
+async function captureSavedProfile(page, testInfo, provider) {
+  await page.locator('#settings-toggle').click();
+  await expect(page.locator('#player-status')).toBeVisible();
+  await page.screenshot({ path: testInfo.outputPath(provider + '-fixture-saved.png') });
+  await page.keyboard.press('Escape');
+}
 async function age(page) {
   await page.evaluate(async () => {
     const db = await new Promise((resolve) => {
@@ -418,7 +424,7 @@ for (const provider of ['diving-fish', 'lxns']) test(provider + ' exact metadata
 
   await page.keyboard.press('Escape');
   await page.locator('.player-export-achievement').first().click();
-  await page.locator('#player-export-partner').selectOption('none');
+  await expect(page.locator('#player-export-partner')).toHaveCount(0);
   await page.evaluate(() => { window.fishExportJacketDraws = 0; });
   await page.locator('#player-export-generate').click();
   await expect(page.locator('#player-export-download')).toHaveAttribute('href', /^blob:/);
@@ -476,6 +482,8 @@ test('service sections expose grouped imports, local marks, and keyboard control
   await page.screenshot({ path: testInfo.outputPath('service-import-sections-desktop.png') });
   await dialog.locator('[data-service-toggle="session-report"]').click();
   await page.screenshot({ path: testInfo.outputPath('service-import-overview.png') });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.screenshot({ path: testInfo.outputPath('service-import-overview-mobile.png') });
 });
 
 test('availability failure differs from disabled Fish, and both preserve the remaining import routes', async ({ page, context }, testInfo) => {
@@ -494,6 +502,7 @@ test('availability failure differs from disabled Fish, and both preserve the rem
   await expect(dialog).toContainText('Could not check Diving-Fish availability. Please try again when online.');
   await expect(dialog).not.toContainText('connection is not available yet');
   await expect(dialog.locator('.player-actions button').first()).toBeDisabled();
+  await page.screenshot({ path: testInfo.outputPath('connection-availability-failed.png') });
   await selectImportMethod(page, 'kamaitachi');
   await page.locator('#player-kamaitachi-account').fill('Fixture42');
   await expect(dialog.getByRole('button', { name: 'Preview scores', exact: true })).toBeEnabled();
@@ -505,15 +514,17 @@ test('availability failure differs from disabled Fish, and both preserve the rem
 test("Kamaitachi public PBs match exactly, survive reload and failed refresh, and Forget stops refresh", async ({
   page,
   context,
-}) => {
+}, testInfo) => {
   await boot(page);
   const chart = await configureKamaitachi(page),
     state = await mockKamaitachi(context, chart);
   await openImport(page, "kamaitachi");
   await page.locator("#player-kamaitachi-account").fill("https://kamai.tachi.ac/u/Fixture42");
+  await page.screenshot({ path: testInfo.outputPath('kamaitachi-fixture-setup.png') });
   await page.locator("#player-import-dialog .player-actions button").first().click();
   await expect(page.locator("#player-import-dialog .player-remember")).toBeVisible();
   expect(await saved(page)).toBeNull();
+  await page.screenshot({ path: testInfo.outputPath('kamaitachi-fixture-preview.png') });
   await accept(page);
   const first = await saved(page);
   expect(first.source.account).toBe("42");
@@ -528,6 +539,7 @@ test("Kamaitachi public PBs match exactly, survive reload and failed refresh, an
         maimaiPersonal.record(maimaiResearchCatalog.catalog[0])?.achievement,
     ),
   ).toBe(991234);
+  await captureSavedProfile(page, testInfo, 'kamaitachi');
   await boot(page);
   await configureKamaitachi(page);
   expect((await saved(page)).revision).toBe(first.revision);
@@ -547,7 +559,7 @@ test("Kamaitachi public PBs match exactly, survive reload and failed refresh, an
   expect(await page.evaluate(() => maimaiPersonal.enabled())).toBe(false);
 });
 
-test('empty or missing Kamaitachi game profiles preserve the saved profile and can be retried', async ({ page, context }) => {
+test('empty or missing Kamaitachi game profiles preserve the saved profile and can be retried', async ({ page, context }, testInfo) => {
   await boot(page);
   const chart = await configureKamaitachi(page), state = await mockKamaitachi(context, chart);
   await openImport(page, 'kamaitachi');
@@ -565,6 +577,7 @@ test('empty or missing Kamaitachi game profiles preserve the saved profile and c
     await expect(page.locator('#player-import-dialog')).toContainText(message);
     await expect(page.locator('#player-import-dialog .player-remember')).toHaveCount(0);
     expect((await saved(page)).revision).toBe(first.revision);
+    if (flag === 'empty') await page.screenshot({ path: testInfo.outputPath('kamaitachi-fixture-no-scores.png') });
     state[flag] = false;
     await page.keyboard.press('Escape');
   }
@@ -578,7 +591,7 @@ test('empty or missing Kamaitachi game profiles preserve the saved profile and c
 for (const provider of ['diving-fish', 'lxns']) test(provider + " previews before save, cancel keeps an old grant, unchanged refresh adds no snapshots, and offline Forget is recoverable", async ({
   page,
   context,
-}) => {
+}, testInfo) => {
   const state = await mockOAuth(context);
   await boot(page);
   await connect(page, provider);
@@ -586,9 +599,11 @@ for (const provider of ['diving-fish', 'lxns']) test(provider + " previews befor
   await expect(page.locator("#player-import-dialog")).toContainText(
     "Unmatched PB charts: 1",
   );
+  await page.screenshot({ path: testInfo.outputPath(provider + '-fixture-preview.png') });
   await accept(page);
   const first = await saved(page),
     original = first.source.connectionID;
+  await captureSavedProfile(page, testInfo, provider);
   await openImport(page, provider);
   await expect(page.locator('#player-provider-updated')).not.toBeChecked();
   await expect(page.getByRole('button', { name: 'Preview connected scores', exact: true })).toBeEnabled();
@@ -648,7 +663,7 @@ for (const provider of ['diving-fish', 'lxns']) test(provider + " previews befor
   )).toBeNull();
 });
 
-for (const provider of ['diving-fish', 'lxns']) test(provider + ' uses required checklist steps with accessible optional help', async ({ page, context }) => {
+for (const provider of ['diving-fish', 'lxns']) test(provider + ' uses required checklist steps with accessible optional help', async ({ page, context }, testInfo) => {
   const state = await mockOAuth(context);
   await boot(page);
   await openImport(page, provider);
@@ -661,6 +676,7 @@ for (const provider of ['diving-fish', 'lxns']) test(provider + ' uses required 
   await expect(connect).toBeDisabled();
   await expect(page.locator('#player-provider-updated-help')).toBeHidden();
   await expect(help).toHaveAttribute('aria-controls', 'player-provider-updated-help');
+  await page.screenshot({ path: testInfo.outputPath(provider + '-fixture-setup.png') });
   await help.focus();
   await page.keyboard.press('Enter');
   await expect(help).toHaveAttribute('aria-expanded', 'true');
@@ -724,7 +740,7 @@ test("Diving-Fish requires masking acknowledgement and one-time consent removes 
   await expect(page.locator("#player-refresh")).toBeHidden();
 });
 
-test('Fish agreement and empty-account failures preserve local data, clean up the new grant, and allow retry', async ({ page, context }) => {
+test('Fish agreement and empty-account failures preserve local data, clean up the new grant, and allow retry', async ({ page, context }, testInfo) => {
   const fish = await mockOAuth(context);
   await boot(page);
   const chart = await configureKamaitachi(page);
@@ -746,6 +762,7 @@ test('Fish agreement and empty-account failures preserve local data, clean up th
     await expect(page.locator('#player-import-dialog')).toContainText(message);
     await expect.poll(() => fish.grants.length).toBe(0);
     expect((await saved(page)).revision).toBe(first.revision);
+    if (flag === 'empty') await page.screenshot({ path: testInfo.outputPath('diving-fish-fixture-no-scores.png') });
     fish[flag] = false;
     await page.keyboard.press('Escape');
   }
@@ -917,7 +934,7 @@ for (const failure of ['empty', 'playerMissing']) test('LXNS ' + failure + ' pre
   await expect(page.locator('#player-import-dialog')).toContainText('No supported scores were found in LXNS. Sync your maimai DX scores to LXNS first, then try again.');
   await expect.poll(() => lxns.grants.length).toBe(0);
   expect((await saved(page)).revision).toBe(first.revision);
-  await page.screenshot({ path: testInfo.outputPath('lxns-empty-account.png') });
+  await page.screenshot({ path: testInfo.outputPath('lxns-' + failure + '-account.png') });
   await page.keyboard.press('Escape');
   lxns[failure] = false;
   await connect(page, 'lxns');

@@ -62,6 +62,9 @@ for(const [name,url]of [['main','/lab/'],['pilot',entry]]){
   });
 
   test(`prominent import fits all five languages in the ${name} Charts heading`,async({page,context},testInfo)=>{
+    // This test covers 35 responsive/locale combinations; keep each assertion's
+    // normal deadline while allowing the complete matrix its own total budget.
+    test.slow();
     await setup(page,context);if(url!==entry){await page.goto(url);await expect.poll(()=>page.evaluate(()=>!!window.maimaiPersonal)).toBe(true);await page.evaluate(()=>maimaiPersonal.ready);}
     const translations={en:'Import player data','zh-Hans':'导入玩家数据',ko:'플레이어 데이터 가져오기',ja:'プレイヤーデータを読み込む',id:'Impor data pemain'};
     for(const width of [320,390,600,740,1061,1100,1280]){

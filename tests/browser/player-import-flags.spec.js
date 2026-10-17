@@ -40,24 +40,27 @@ async function serviceIDs(page) {
   return services(page).evaluateAll(nodes => nodes.map(node => node.dataset.importService));
 }
 
-test('connector boxes turn off and back on between openings without reloading or changing saved data', async ({page, context}) => {
+test('connector boxes turn off and back on between openings without reloading or changing saved data', async ({page, context}, testInfo) => {
   const state = await flagFixture(context, {file:true, 'file:tomomai':true});
   await boot(page);
   const before = await page.evaluate(() => maimaiPlayerStorage.read());
   await openImport(page);
   await expect(services(page)).toHaveCount(2);
   expect(await serviceIDs(page)).toEqual(['session-report', 'tomomai']);
+  await page.screenshot({path:testInfo.outputPath('connector-visibility-before.png')});
   await closeImport(page);
   state.methods = {file:true};
   await openImport(page);
   await expect(services(page)).toHaveCount(1);
   expect(await serviceIDs(page)).toEqual(['session-report']);
+  await page.screenshot({path:testInfo.outputPath('connector-visibility-hidden.png')});
   await closeImport(page);
   state.methods = {file:true, 'file:tomomai':true};
   await openImport(page);
   await expect(services(page)).toHaveCount(2);
   await selectImportMethod(page, 'file:tomomai');
   await expect(page.locator('#player-file-account')).toBeVisible();
+  await page.screenshot({path:testInfo.outputPath('connector-visibility-restored.png')});
   expect(state.reads).toBe(3);
   expect(await page.evaluate(() => maimaiPlayerStorage.read())).toEqual(before);
 });

@@ -18,6 +18,7 @@ import { IMPORT_SERVICE_ICONS } from './import-service-icons';
 import { exactFileChartIndex, isFileProvider } from '../domain/import-identities';
 import type { FileImportOptions } from '../domain/import-options';
 import { createScoreExporter } from './score-export';
+import { createSupportPrompt } from './support-prompt';
 import { createScoreExportPreferences } from '../runtime/score-export-preferences';
 import { knownScoreExportVersionIDs, type ExportPlayerRating } from '../domain/score-export';
 import { defaultScoreExportPartner, scoreExportPartners } from './score-export-partners';
@@ -273,6 +274,27 @@ export function createPlayerData(ports: PersonalPorts) {
     localization: i18n,
     asset: (path) => ports.songPages.asset(path),
   });
+  function exportArtworkChart(chart: PlayerChart) {
+    if (!catalog || !exportArtwork) return;
+    const id = exportIdentity(chart)?.canonicalChartID,
+      canonical = id ? catalogByID.get(id) : undefined;
+    if (!canonical) return;
+    const accountRegion =
+        player.active &&
+        (player.active.player.provider === 'maishift' ||
+          isFileProvider(player.active.player.provider))
+          ? player.active.player.key.split(':')[2]
+          : undefined,
+      region =
+        accountRegion === 'intl' || accountRegion === 'jp'
+          ? accountRegion.toUpperCase()
+          : accountRegion === 'cn' || accountRegion === 'private'
+            ? accountRegion.toUpperCase()
+            : ports.browserState.region.international
+              ? 'INTL'
+              : 'JP';
+    return { ...canonical, view_region: region };
+  }
   const exporter = createScoreExporter({
     root,
     localization: i18n,
@@ -330,23 +352,18 @@ export function createPlayerData(ports: PersonalPorts) {
       )?.[1];
       return url && url.length <= 2 * 1024 * 1024 ? url : undefined;
     },
-    jacketURL: (chart) => {
-      if (!catalog) return;
-      const id = exportIdentity(chart)?.canonicalChartID,
-        canonical = id ? catalogByID.get(id) : undefined;
+    jacketURL: async (chart) => {
+      const canonical = exportArtworkChart(chart);
       if (!canonical) return;
-      const accountRegion =
-          player.active?.player.provider === 'maishift'
-            ? player.active.player.key.split(':')[2]
-            : undefined,
-        region =
-          accountRegion === 'intl' || accountRegion === 'jp'
-            ? accountRegion.toUpperCase()
-            : ports.browserState.region.international
-              ? 'INTL'
-              : 'JP',
-        art = exportArtwork!,
-        path = art.jacket({ ...canonical, view_region: region });
+      const { resolveExportJacket } = await import('../domain/export-artwork');
+      const path = resolveExportJacket(exportArtwork!, canonical);
+      return path ? ports.songPages.asset(path) : undefined;
+    },
+    jacketFallbackURL: (chart) => {
+      const canonical = exportArtworkChart(chart);
+      if (!canonical) return;
+      const art = exportArtwork!,
+        path = art.jacket(canonical);
       return art.accepted(path) ? ports.songPages.asset(path) : undefined;
     },
   });
@@ -1402,6 +1419,8 @@ export function createPlayerData(ports: PersonalPorts) {
         ),
       );
     dialog.append(group, footer);
+    const support = createSupportPrompt(document, i18n, 'import');
+    if (support) dialog.append(support);
     if (services.length) render();
     if (!dialog.open) dialog.showModal();
     (

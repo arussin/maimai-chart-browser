@@ -1,5 +1,18 @@
 {
   "invariants": {
+    "#settings-actions #site-share": {
+      "reason": "CSS descendant selector locating Share within settings actions so Support is inserted immediately after it; internal DOM lookup, never UI copy.",
+      "sources": [
+        "web/src/views/support-stripe.ts",
+        "src/maimai_intelligence/assets/support-stripe.js"
+      ]
+    },
+    "UTAGE": {
+      "reason": "Official difficulty-category label, kept verbatim like the other game difficulty names in the export design.",
+      "sources": [
+        "web/src/views/afterglow-painter.ts"
+      ]
+    },
     "DiagnosticError": {
       "reason": "Internal Error.name identifier for typed diagnostic exceptions; never displayed as UI copy or translated.",
       "sources": [
