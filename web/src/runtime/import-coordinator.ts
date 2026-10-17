@@ -613,7 +613,9 @@ export class ImportCoordinator {
         else operation.fail(error, stage === 'storage' ? 'storage_unavailable' : 'normalization');
       }
       if (!isAbort(error) && !committed && expected === this.revision) {
-        effects.usage('import_failed', method, importFailure(error, stage));
+        // Version 1 local-file counters retain invalid/storage categories;
+        // the diagnostic above carries the detailed decode or storage cause.
+        effects.usage('import_failed', method, stage);
         effects.message('Player data could not be imported', errorMessage(error));
       } else if (!committed) effects.usage('import_cancelled', method);
     } finally {

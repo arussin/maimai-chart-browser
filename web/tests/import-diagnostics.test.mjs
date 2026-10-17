@@ -352,6 +352,85 @@ test('malformed file and size failures classify boundaries without filename or a
   }
 });
 
+test('real local parsers retain v1 invalid while v2 identifies malformed content and oversized files', async () => {
+  for (const format of ['portable', 'mai-tools', 'dxrating', 'tomomai', 'jietng', 'aqua', 'tachi'])
+    for (const [bytes, size, reason, stage] of [
+      [new TextEncoder().encode('{invalid'), 8, 'malformed_response', 'decode'],
+      [new Uint8Array([0xff]), 1, 'malformed_response', 'decode'],
+      [new Uint8Array(), 33 * 1024 * 1024, 'oversized_response', 'read'],
+    ]) {
+      const rows = [],
+        method = format === 'portable' ? 'file' : `file:${format}`,
+        f = makeSession({
+          initial: dataset(),
+          diagnose: (row) => rows.push(row),
+          configure: (ports) => {
+            ports.readFile = async (file, options) => ({
+              data: await readImportFile(ports.core, file, options),
+              excludedUtage: 0,
+              snapshotDateUnknown: false,
+            });
+          },
+        });
+      await f.owner.ready;
+      await f.owner.importFile(
+        { name: 'PRIVATE.json', size, arrayBuffer: async () => bytes.buffer },
+        { format, username: 'PRIVATE', region: 'intl' },
+      );
+      assert.deepEqual(f.calls.events, [
+        ['import_started', method],
+        ['import_failed', method, 'invalid'],
+      ]);
+      assert.equal(f.calls.save, 0);
+      assert.equal(f.state.active.revision, 'one');
+      const result = terminals(rows, 'import');
+      assert.equal(result.length, 1);
+      assert.equal(result[0].source, method);
+      assert.equal(result[0].outcome, 'failed');
+      assert.equal(result[0].reason, reason);
+      assert.equal(result[0].stage, stage);
+      safe(rows);
+    }
+});
+
+test('a real portable file reaching a denied save retains v1 storage and detailed v2 quota failure', async () => {
+  const rows = [],
+    f = makeSession({
+      initial: dataset(),
+      diagnose: (row) => rows.push(row),
+      configure: (ports) => {
+        ports.core.validate = async (value) => value;
+        ports.readFile = async (file, options) => ({
+          data: await readImportFile(ports.core, file, options),
+          excludedUtage: 0,
+          snapshotDateUnknown: false,
+        });
+        ports.storage.save = async () => {
+          throw new DOMException('PRIVATE quota details', 'QuotaExceededError');
+        };
+      },
+    });
+  await f.owner.ready;
+  await f.owner.importFile(file(dataset('new')), {
+    format: 'portable',
+    username: 'PRIVATE',
+    region: 'intl',
+  });
+  assert.deepEqual(f.calls.events, [
+    ['import_started', 'file'],
+    ['import_previewed', 'file'],
+    ['import_confirmed', 'file'],
+    ['import_failed', 'file', 'storage'],
+  ]);
+  assert.equal(f.state.active.revision, 'one');
+  const result = terminals(rows, 'import');
+  assert.equal(result.length, 1);
+  assert.equal(result[0].reason, 'storage_quota');
+  assert.equal(result[0].stage, 'commit');
+  assert.equal(result[0].outcome, 'failed');
+  safe(rows);
+});
+
 test('blocked popup and native validation have diagnostics before the coordinator can start', () => {
   const rows = [],
     events = [];
