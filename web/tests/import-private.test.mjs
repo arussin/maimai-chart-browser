@@ -61,6 +61,38 @@ function batch() {
   };
 }
 
+test('Tachi song-title identities retain supplied whitespace without relaxing ID or text guards', () => {
+  const ordinary = batch();
+  Object.assign(ordinary.scores[0], {
+    matchType: 'songTitle',
+    identifier: 'Fictional Song',
+    artist: 'Synthetic',
+  });
+  const before = parsePrivateExport('tachi', ordinary).rows[0];
+  ordinary.scores[0].identifier = '  Fictional Song  ';
+  const padded = parsePrivateExport('tachi', ordinary).rows[0];
+  assert.equal(padded.title, before.title);
+  assert.equal(padded.sourceID, before.sourceID);
+  for (const title of ['\u3000', ' ', '  ', '\u3000\u3000']) {
+    const input = batch();
+    Object.assign(input.scores[0], { matchType: 'songTitle', identifier: title, artist: 'x0o0x_' });
+    const row = parsePrivateExport('tachi', input).rows[0];
+    assert.equal(row.title, title);
+    assert.equal(row.kind, 'observation');
+    assert.equal(row.artist, 'x0o0x_');
+  }
+  for (const identifier of [undefined, null, '', '\n', '\u007f', 'x'.repeat(501)]) {
+    const input = batch();
+    Object.assign(input.scores[0], { matchType: 'songTitle', identifier });
+    assert.throws(() => parsePrivateExport('tachi', input));
+  }
+  for (const matchType of ['inGameID', 'tachiSongID']) {
+    const input = batch();
+    Object.assign(input.scores[0], { matchType, identifier: '\u3000' });
+    assert.throws(() => parsePrivateExport('tachi', input));
+  }
+});
+
 test('Aqua full export keeps PBs separate from attempts, scaled ticks and exact song IDs', () => {
   const result = plain(parsePrivateExport('aqua', JSON.stringify(aqua())));
   assert.equal(result.rows.length, 2);

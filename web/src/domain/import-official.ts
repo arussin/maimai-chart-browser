@@ -66,6 +66,18 @@ function text(value: unknown, name: string, required = false): string {
   return value;
 }
 
+function songTitle(value: unknown, allowEmpty = false): string {
+  // U+3000 is a real song title. Preserve supplied text; only a validated stable
+  // source ID (Tomomai) lets an empty title remain a valid, unmatched score.
+  if (
+    typeof value !== 'string' ||
+    (!allowEmpty && value.length === 0) ||
+    /[\x00-\x1f\uD800-\uDFFF]/u.test(value)
+  )
+    throw new Error('Invalid song title.');
+  return text(value, 'song title');
+}
+
 function number(value: unknown, name: string, min: number, max: number): number {
   if (typeof value !== 'number' || !Number.isFinite(value) || value < min || value > max) {
     throw new Error(`Invalid ${name}.`);
@@ -329,13 +341,13 @@ function maiTools(input: unknown): ImportResult {
     coverage: 'unknown',
     ...mapRows(array(input), (score) =>
       row({
-        title: text(score.songName, 'song title', true),
+        title: songTitle(score.songName),
         sourceSongID:
           score.songName === 'Link' &&
           typeof score.genre === 'string' &&
           /niconico|ニコニコ/i.test(score.genre)
             ? 'Link (2)'
-            : text(score.songName, 'song title', true),
+            : songTitle(score.songName),
         sourceGenre: text(score.genre, 'genre'),
         format: format(score.chartType, true),
         difficulty: difficulty(score.difficulty, true),
@@ -403,7 +415,7 @@ function tomomai(input: unknown): ImportResult {
       const result = row({
         kind: recent ? 'observation' : 'pb',
         sourceSongID: tomomaiChartID(song.songId),
-        title: text(song.songName, 'song title', true),
+        title: songTitle(song.songName, true),
         artist: text(song.artist, 'song artist'),
         sourceGenre: text(song.genre, 'genre'),
         format: format(song.type),
@@ -482,7 +494,7 @@ function jietng(input: unknown): ImportResult {
     ...mapRows(scores, (wrapped) => {
       const best = Object.hasOwn(wrapped, 'best');
       const score = object(best ? wrapped.best : wrapped.recent);
-      const title = text(score.title, 'song title', true);
+      const title = songTitle(score.title);
       const result = row({
         kind: best ? 'pb' : 'observation',
         sourceSongID: title,

@@ -1,6 +1,6 @@
 import metadata from './import-song-metadata.json';
 import type { ImportRow } from './import-official';
-import { isFileProvider } from './import-identities';
+import { isFileProvider, titleIdentity } from './import-identities';
 
 type MetadataRow = [string, string, string, number] | null;
 const tables = metadata.tables as unknown as Record<string, Record<string, MetadataRow>>;
@@ -40,7 +40,7 @@ export function enrichImportRow(provider: string, input: ImportRow): ImportRow {
   // DXRating song IDs may disambiguate duplicate titles (for example Link (2)).
   const knownTitle = table === 'dxrating' && input.title === song;
   if (
-    (input.title && !knownTitle && normalized(input.title) !== normalized(row[0])) ||
+    (input.title && !knownTitle && titleIdentity(input.title) !== titleIdentity(row[0])) ||
     (input.artist && normalized(input.artist) !== normalized(row[1]))
   )
     throw new Error('The export disagrees with its source song metadata. Nothing was imported.');

@@ -24,6 +24,7 @@ const { readImportFile, normalizeFileImportDocument } = await loadModule(
   globals,
 );
 const { exactFileChartIndex } = await loadModule('domain/import-identities', globals);
+const { enrichImportRow } = await loadModule('domain/import-metadata', globals);
 const core = createPlayerDataCore();
 const options = { format: 'mai-tools', username: 'Fictional', region: 'intl' };
 const mai = (achievement = 100.1234) => [
@@ -48,6 +49,110 @@ function file(value, gzip = false) {
       bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength),
   };
 }
+
+function titleFiles(title) {
+  return [
+    ['mai-tools', [{ songName: title, chartType: 1, difficulty: 3, achievement: 100 }]],
+    [
+      'tomomai',
+      {
+        songs: [
+          {
+            songId: 'Ab3xK9pQ:i11',
+            songName: title,
+            artist: 'x0o0x_',
+            type: 'dx',
+            difficulty: 'master',
+            achievement: 1000000,
+          },
+        ],
+      },
+    ],
+    [
+      'jietng',
+      {
+        format: 'JiETNGExport',
+        schema_version: 2,
+        maimai_version: 'intl',
+        generated_at: '2026-10-10T20:30:00',
+        profile: {},
+        records: {
+          best: [{ title, type: 'DX', difficulty: 'Master', achievement: 100 }],
+          recent: [],
+        },
+      },
+    ],
+  ];
+}
+
+test('supplied ideographic-space titles survive file normalization and match only complete metadata', async () => {
+  // Pinned metadata includes the U+3000 song by x0o0x_; observations are fictional.
+  const cases = [
+    ...titleFiles('\u3000'),
+    ['dxrating', [{ sheetId: '\u3000__dxrt__dx__dxrt__master', achievementRate: 100 }]],
+  ];
+  for (const [format, input] of cases) {
+    const data = await readImportFile(core, file(input), { ...options, format });
+    const chart = Object.values(data.charts)[0];
+    assert.equal(chart.title, '\u3000', format);
+    assert.equal(chart.artist, 'x0o0x_', format);
+    assert.equal(core.current(data).pbs.size, 1, format);
+    assert.equal(Object.keys(data.plays).length, 0, format);
+    const canonical = { ...chart, chart_id: 'reviewed', variant_id: 'ordinary' };
+    assert.equal(exactFileChartIndex([canonical], data.charts).get('reviewed')?.[0], chart.chartID);
+    assert.equal((await core.decode(await core.encode(data))).revision, data.revision);
+  }
+});
+
+test('file song titles must be supplied bounded strings; only stable Tomomai IDs allow empty titles', async () => {
+  for (const invalid of [undefined, null, 42, '\n', '\ud800', 'x'.repeat(2001)])
+    for (const [format, input] of titleFiles(invalid))
+      await assert.rejects(() => readImportFile(core, file(input), { ...options, format }));
+  for (const [format, input] of titleFiles('')) {
+    if (format !== 'tomomai') {
+      await assert.rejects(() => readImportFile(core, file(input), { ...options, format }));
+      continue;
+    }
+    const data = await readImportFile(core, file(input), { ...options, format });
+    const chart = Object.values(data.charts)[0];
+    assert.equal(chart.title, '');
+    assert.equal(chart.songID, 'Ab3xK9pQ');
+    assert.equal(core.current(data).pbs.size, 1);
+    assert.equal(exactFileChartIndex([{ ...chart, chart_id: 'no-identity' }], data.charts).size, 0);
+    const recent = await readImportFile(
+      core,
+      file({
+        plays: [{ song: input.songs[0], achievement: 990000, playedAt: '2026-10-10T12:30:00Z' }],
+      }),
+      { ...options, format },
+    );
+    assert.equal(Object.values(recent.charts)[0].title, '');
+    assert.equal(core.current(recent).pbs.size, 0);
+    assert.equal(Object.keys(recent.plays).length, 0);
+    for (const songId of [undefined, null, 'invalid']) {
+      const invalid = structuredClone(input);
+      invalid.songs[0].songId = songId;
+      await assert.rejects(() => readImportFile(core, file(invalid), { ...options, format }));
+    }
+  }
+});
+
+test('stable-ID metadata enrichment does not conflate supplied space titles', () => {
+  for (const [provider, sourceSongID] of [
+    ['diving-fish', '11422'],
+    ['lxns', '1422'],
+    ['aqua', '11422'],
+  ]) {
+    const row = { sourceSongID, title: '\u3000', artist: '', format: 'DX', difficulty: 'MASTER' };
+    for (const title of ['\u3000', '']) {
+      const result = enrichImportRow(provider, { ...row, title });
+      assert.equal(result.title, '\u3000');
+      assert.equal(result.artist, 'x0o0x_');
+    }
+    for (const title of [' ', '  ', '\u3000\u3000'])
+      assert.throws(() => enrichImportRow(provider, { ...row, title }), /disagrees/);
+  }
+});
 
 test('file metadata enriches exact identities without inventing versions or gameplay times', async () => {
   const data = await readImportFile(core, file(mai()), options);

@@ -22,6 +22,7 @@ const globals = {
 const { createPlayerDataCore } = await loadModule('views/player-data-core', globals);
 const { createPlayerKamaitachi } = await loadModule('views/player-kamaitachi', globals);
 const { importFailure } = await loadModule('runtime/import-failure', globals);
+const { diagnosticError } = await loadModule('runtime/diagnostic-error', globals);
 const core = createPlayerDataCore(),
   legacy = 'a'.repeat(40),
   stamp = 1791727516840;
@@ -172,6 +173,137 @@ test('public v3 PB read resolves numeric account, omits credentials, and never i
   assert.equal(JSON.stringify(data).includes('not retained'), false);
   assert.equal(JSON.stringify(data).includes('real-but-not'), false);
   assert.equal((await core.validate(data)).revision, data.revision);
+});
+
+test('blank song titles preserve exact metadata and PB identity through validation and catalog matching', async () => {
+  for (const title of ['', ' ', '\u3000']) {
+    const body = fixture();
+    body.songs[0].title = title;
+    const { adapter, read } = setup({ body });
+    const { data } = await read();
+    const chart = data.charts[legacy];
+    assert.equal(chart.title, title);
+    assert.equal(chart.songID, body.songs[0].id);
+    assert.equal(core.current(data).pbs.size, 1);
+    assert.equal(core.current(data).pbs.get(legacy).chartID, legacy);
+    assert.equal(Object.keys(data.plays).length, 0);
+    assert.equal((await core.validate(data)).revision, data.revision);
+    const target = { ...chart, chart_id: 'catalog' },
+      row = { chart_id: 'catalog' };
+    assert.equal(adapter.matchChart(data.player, chart, row, target), true);
+    assert.equal(
+      adapter.matchChart(data.player, chart, row, { ...target, title: 'Other title' }),
+      false,
+    );
+    assert.equal(
+      adapter.matchChart(
+        data.player,
+        chart,
+        { ...row, expected_source: { ...chart } },
+        { ...target, title: 'Reviewed display title' },
+      ),
+      true,
+    );
+  }
+});
+
+test('blank titles do not relax exact joins, required identity, text types or character bounds', async () => {
+  for (const title of [null, undefined, 42, '\x00', '\n', '\t', '\ud800', 'x'.repeat(513)]) {
+    const body = fixture();
+    body.songs[0].title = title;
+    await assert.rejects(
+      () => setup({ body }).read(),
+      (error) => {
+        assert.equal(importFailure(error), 'invalid_response');
+        assert.deepEqual(
+          { ...diagnosticError(error) },
+          {
+            reason: 'contract_changed',
+            stage: 'normalize',
+          },
+        );
+        return true;
+      },
+    );
+  }
+  for (const mutate of [
+    (body) => {
+      body.charts[0].song = { ...body.songs[0], title: 'Different title' };
+    },
+    (body) => {
+      body.charts[0].song = { ...body.songs[0], title: ' ' };
+    },
+    (body) => {
+      body.charts[0].song = { ...body.songs[0], artist: 'Different artist' };
+    },
+    (body) => {
+      body.charts[0].song = { ...body.songs[0], id: 'different-song' };
+    },
+    (body) => {
+      body.songs[0].id = '';
+    },
+  ]) {
+    const body = fixture();
+    body.songs[0].title = '';
+    mutate(body);
+    await assert.rejects(
+      () => setup({ body }).read(),
+      (error) => {
+        assert.equal(importFailure(error), 'invalid_response');
+        assert.deepEqual(
+          { ...diagnosticError(error) },
+          {
+            reason: 'contract_changed',
+            stage: 'normalize',
+          },
+        );
+        return true;
+      },
+    );
+  }
+});
+
+test('response and normalization rejections retain distinct finite stages and the same v1 failure', async () => {
+  for (const responses of [
+    [
+      new Response(JSON.stringify({ success: false }), {
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    ],
+    [
+      response(profile()),
+      new Response(JSON.stringify({ success: true, body: [] }), {
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    ],
+    [new Response('{}', { headers: { 'Content-Type': 'text/plain' } })],
+    [response({ ...profile(), username: '' })],
+  ]) {
+    await assert.rejects(
+      () => setup({ responses }).read(),
+      (error) => {
+        assert.equal(importFailure(error), 'invalid_response');
+        assert.deepEqual(
+          { ...diagnosticError(error) },
+          { reason: 'contract_changed', stage: 'response' },
+        );
+        return true;
+      },
+    );
+  }
+  const body = fixture();
+  body.pbs[0].scoreData.percent = 100.12345;
+  await assert.rejects(
+    () => setup({ body }).read(),
+    (error) => {
+      assert.equal(importFailure(error), 'invalid_response');
+      assert.deepEqual(
+        { ...diagnosticError(error) },
+        { reason: 'contract_changed', stage: 'normalize' },
+      );
+      return true;
+    },
+  );
 });
 
 test('renamed numeric user retains identity; wrong account or changed expected identity rejects before PB read', async () => {

@@ -27,10 +27,12 @@ export function createPlayerKamaitachi(ports: KamaitachiPorts) {
     now = ports.now ?? Date.now,
     origin = 'https://kamai.tachi.ac',
     maxRows = 20000;
-  function fail(): never {
+  function fail(stage: 'normalize' | 'response' = 'normalize'): never {
     throw new ImportFailureError(
       'Kamaitachi returned an unsupported response. Your saved data was kept.',
       'invalid_response',
+      undefined,
+      { reason: 'contract_changed', stage },
     );
   }
   const object = (v: unknown): v is Record<string, unknown> =>
@@ -79,7 +81,7 @@ export function createPlayerKamaitachi(ports: KamaitachiPorts) {
     return value;
   }
   function envelope(value: unknown) {
-    if (!object(value) || value.success !== true || !object(value.body)) fail();
+    if (!object(value) || value.success !== true || !object(value.body)) fail('response');
     return value.body;
   }
   function retryAfter(value: string | null) {
@@ -174,7 +176,7 @@ export function createPlayerKamaitachi(ports: KamaitachiPorts) {
       !response.body
     ) {
       await response.body?.cancel();
-      fail();
+      fail('response');
     }
     const bytes = await readBytes(maximum);
     signal.throwIfAborted();
@@ -213,12 +215,13 @@ export function createPlayerKamaitachi(ports: KamaitachiPorts) {
     const arrays = ['songs', 'charts', 'pbs'] as const;
     for (const k of arrays) if (!Array.isArray(body[k]) || body[k].length > maxRows) fail();
     const songs = new Map<string, { title: string; artist: string }>();
+    // Song titles are display metadata and may be intentionally empty. Preserve
+    // their exact value; IDs and the embedded chart/song join establish identity.
     for (const song of body.songs as unknown[]) {
       if (
         !object(song) ||
         !id(song.id) ||
         !text(song.title) ||
-        !song.title ||
         !text(song.artist) ||
         songs.has(song.id)
       )
@@ -403,7 +406,8 @@ export function createPlayerKamaitachi(ports: KamaitachiPorts) {
         controller.signal,
         'user',
       );
-      if (!integer(profile.id) || !text(profile.username, 200) || !profile.username) fail();
+      if (!integer(profile.id) || !text(profile.username, 200) || !profile.username)
+        fail('response');
       if (
         /^\d+$/.test(selected.account)
           ? String(profile.id) !== selected.account

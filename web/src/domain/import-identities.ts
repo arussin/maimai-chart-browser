@@ -89,8 +89,12 @@ interface CatalogMatchChart extends MatchChart {
   variant_id?: unknown;
 }
 const normalized = (value: string) => value.normalize('NFC').trim().replace(/\s+/gu, ' ');
+/** A whitespace-only song name is supplied metadata, distinct from a missing title. */
+export function titleIdentity(value: string): string {
+  return normalized(value) || value.normalize('NFC');
+}
 function exactIdentity(chart: MatchChart): string | null {
-  const title = normalized(chart.title),
+  const title = titleIdentity(chart.title),
     artist = normalized(chart.artist);
   if (
     !title ||

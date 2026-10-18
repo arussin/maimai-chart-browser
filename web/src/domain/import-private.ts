@@ -54,6 +54,14 @@ function text(value: unknown, field: string, max: number, required = false): str
   return result;
 }
 
+function titleIdentifier(value: unknown, field: string): string {
+  // Validate the original bytes and bounds without stripping a whitespace-only
+  // song name. Empty identifiers still lack the identity required by songTitle.
+  text(value, field, 500);
+  if (typeof value !== 'string' || value.length === 0) throw new Error(`${field} is required.`);
+  return value.trim() || value;
+}
+
 function gameID(value: unknown, field: string): number {
   const id = typeof value === 'string' && /^[1-9]\d{0,4}$/u.test(value) ? Number(value) : value;
   const result = integer(id, field, 99_999);
@@ -253,11 +261,14 @@ function parseTachi(input: ObjectValue): ParsedPrivateExport {
     ) {
       throw new Error(`${field} contains a conflicting game or playtype.`);
     }
-    const identifier = text(source.identifier, `${field}.identifier`, 500, true);
     const matchType = source.matchType;
     if (!['inGameID', 'tachiSongID', 'songTitle'].includes(String(matchType))) {
       throw new Error(`${field}.matchType is unsupported.`);
     }
+    const identifier =
+      matchType === 'songTitle'
+        ? titleIdentifier(source.identifier, `${field}.identifier`)
+        : text(source.identifier, `${field}.identifier`, 500, true);
     if (matchType === 'inGameID') {
       const id = gameID(identifier, `${field}.identifier`);
       if (id >= 10_000 !== (format === 'DX'))

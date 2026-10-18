@@ -170,3 +170,39 @@ test('duplicate or nonordinary identities remain unmatched and leave original re
   );
   assert.deepEqual(source, original);
 });
+
+test('whitespace song names retain exact identity and never become missing-title or ambiguous matches', () => {
+  const source = chart('tomomai:jp:reviewed', { title: '\u3000', artist: 'x0o0x_' });
+  const target = canonical('reviewed', { title: '\u3000', artist: 'x0o0x_' });
+  assert.equal(
+    exactFileChartIndex([target], { [source.chartID]: source }).get('reviewed')?.[0],
+    source.chartID,
+  );
+  for (const title of ['', ' ', '  ', '\u3000\u3000']) {
+    const other = { ...source, title };
+    assert.equal(exactFileChartIndex([target], { [other.chartID]: other }).size, 0);
+  }
+  for (const change of [
+    { artist: '' },
+    { artist: 'Different' },
+    { format: 'STD' },
+    { difficulty: 'EXPERT' },
+  ])
+    assert.equal(
+      exactFileChartIndex([target], { [source.chartID]: { ...source, ...change } }).size,
+      0,
+    );
+  assert.equal(
+    exactFileChartIndex([target, { ...target, chart_id: 'duplicate' }], {
+      [source.chartID]: source,
+    }).size,
+    0,
+  );
+  assert.equal(
+    exactFileChartIndex([target], {
+      [source.chartID]: source,
+      duplicate: { ...source, chartID: 'duplicate' },
+    }).size,
+    0,
+  );
+});
