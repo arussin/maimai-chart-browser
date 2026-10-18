@@ -41,12 +41,12 @@ for(const [locale,message] of Object.entries({en:'Unknown failure','zh-Hans':'æœ
   await expect(dialog).not.toContainText('PRIVATE-SENTINEL');
   for(const width of [320,430,1280]){
     await page.setViewportSize({width,height:932});
-    const layout=await dialog.evaluate(root=>{
+    // Native dialog positioning can settle after WebKit reports the viewport resize.
+    await expect.poll(()=>dialog.evaluate(root=>{
       const bounds=root.getBoundingClientRect(),body=root.querySelector('#player-message-body'),button=root.querySelector('.player-message-actions button');
       const rects=[body,button].map(n=>n.getBoundingClientRect());
       return {contained:rects.every(r=>r.left>=bounds.left&&r.right<=bounds.right&&r.top>=bounds.top&&r.bottom<=bounds.bottom),clipped:[body,button].some(n=>n.scrollWidth>n.clientWidth+1||n.scrollHeight>n.clientHeight+1),overlap:rects[0].bottom>rects[1].top,overflow:document.documentElement.scrollWidth>innerWidth+1};
-    });
-    expect(layout).toEqual({contained:true,clipped:false,overlap:false,overflow:false});
+    }),{timeout:2000}).toEqual({contained:true,clipped:false,overlap:false,overflow:false});
     if(width===320)await page.screenshot({path:testInfo.outputPath('localized-fallback.png')});
   }
   const after=await saved(page);

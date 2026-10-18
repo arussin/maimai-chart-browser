@@ -58,9 +58,14 @@ async function generate(page){
   await page.evaluate(()=>{window.exportPaintText=[];window.exportCanvasLabels=[];});
   await page.locator('#player-export-generate').click();
   const download=page.locator('#player-export-download');
-  await expect(download).toBeVisible();
-  await expect(download).toHaveAttribute('href',/^blob:/);
-  await expect.poll(()=>page.locator('#player-export-preview').evaluate(img=>img.complete&&img.naturalWidth>0)).toBe(true);
+  // Artwork may use its full 5s deadline. Allow another 5s for lazy modules,
+  // the 2000x5380 Best 50 canvas, PNG encoding and preview decoding on CI.
+  // One shared bound still requires the real downloadable, decoded result.
+  await expect.poll(async()=>({
+    visible:await download.isVisible(),
+    blob:/^blob:/.test(await download.getAttribute('href')||''),
+    decoded:await page.locator('#player-export-preview').evaluate(img=>img.complete&&img.naturalWidth>0),
+  }),{timeout:10000,message:'Export must finish artwork, PNG encoding and preview preparation'}).toEqual({visible:true,blob:true,decoded:true});
   return download;
 }
 

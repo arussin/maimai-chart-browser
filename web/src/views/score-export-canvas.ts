@@ -8,7 +8,7 @@ export interface ExportCanvasOptions {
   translate(key: string, values?: readonly (string | number)[]): string;
   /** A verified public-artwork projection, never a URL from an imported player file. */
   jacketURL(chart: PlayerChart): string | undefined | Promise<string | undefined>;
-  /** Accepted ordinary thumbnail, tried once only if the preferred jacket is unavailable. */
+  /** Accepted ordinary thumbnail, secured before optional larger-image upgrades. */
   jacketFallbackURL?(chart: PlayerChart): string | undefined | Promise<string | undefined>;
   /** Only reviewed, packaged interface artwork; never a provider image URL. */
   artworkURL?(key: string): string | undefined;
@@ -44,9 +44,11 @@ async function jackets(
     key: string;
     source?: string;
     resolve?: () => ReturnType<ExportCanvasOptions['jacketURL']>;
-    fallback?: () => ReturnType<ExportCanvasOptions['jacketURL']>;
     embedded: boolean;
   }[] = [];
+  const upgrades: typeof queue = [],
+    loadedSources = new Map<string, string>(),
+    reported = new Set<string>();
   let timer = 0;
   try {
     const artwork = await Promise.race([
@@ -94,12 +96,15 @@ async function jackets(
     /* Unknown releases retain their written version label. */
   }
   for (const chart of new Map(charts.map((chart) => [chart.chartID, chart])).values()) {
-    queue.push({
+    const preferred = {
       key: 'jacket:' + chart.chartID,
       resolve: () => options.jacketURL(chart),
-      fallback: options.jacketFallbackURL ? () => options.jacketFallbackURL?.(chart) : undefined,
       embedded: false,
-    });
+    };
+    if (options.jacketFallbackURL) {
+      queue.push({ ...preferred, resolve: () => options.jacketFallbackURL?.(chart) });
+      upgrades.push(preferred);
+    } else queue.push(preferred);
   }
   async function loadAttempt(item: (typeof queue)[number], failed: () => void) {
     let remaining = deadline - Date.now();
@@ -163,8 +168,11 @@ async function jackets(
       failed();
       return;
     }
+    const identity = url?.href || dataURL;
+    if (loadedSources.get(item.key) === identity) return;
     const controller = new AbortController();
     const timeout = window.setTimeout(() => controller.abort(), remaining);
+    let accepted = false;
     try {
       if (url) {
         const response = await window.fetch(url, {
@@ -227,33 +235,39 @@ async function jackets(
         if (controller.signal.aborted) abort();
         else image.src = dataURL;
       });
-      if (decoded && !controller.signal.aborted && Date.now() < deadline)
+      if (decoded && !controller.signal.aborted && Date.now() < deadline) {
         loaded.set(item.key, image);
+        loadedSources.set(item.key, identity);
+        accepted = true;
+      }
     } catch {
       /* Artwork failure cannot prevent a score export. */
     } finally {
-      if (!loaded.has(item.key)) failed();
+      if (!accepted) failed();
       window.clearTimeout(timeout);
     }
   }
   async function load(item: (typeof queue)[number]) {
-    let reported = false;
     const failed = () => {
-      if (!reported) options.artworkFallback?.();
-      reported = true;
+      if (!reported.has(item.key)) options.artworkFallback?.();
+      reported.add(item.key);
     };
     await loadAttempt(item, failed);
-    if (!loaded.has(item.key) && item.fallback && Date.now() < deadline) {
-      // One ordinary-thumbnail attempt shares the original deadline and privacy checks.
-      await loadAttempt({ key: item.key, resolve: item.fallback, embedded: false }, failed);
-    }
   }
-  await Promise.all(
-    Array.from({ length: Math.min(6, queue.length) }, async () => {
-      let item: (typeof queue)[number] | undefined;
-      while ((item = queue.shift())) await load(item);
-    }),
-  );
+  async function drain(pending: typeof queue) {
+    await Promise.all(
+      Array.from({ length: Math.min(6, pending.length) }, async () => {
+        let item: (typeof queue)[number] | undefined;
+        while ((item = pending.shift())) await load(item);
+      }),
+    );
+  }
+  // Secure ordinary jackets for every chart before spending bandwidth on larger
+  // images. Upgrades share the original deadline and replace only after decode;
+  // failure or late completion keeps the settled thumbnail. Extremely slow
+  // thumbnail loads can still reach the deadline and retain neutral placeholders.
+  await drain(queue);
+  await drain(upgrades);
   return loaded;
 }
 

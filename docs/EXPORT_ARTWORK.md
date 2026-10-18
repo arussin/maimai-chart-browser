@@ -11,8 +11,15 @@ JP or INTL region, exact selected title/artist, and the accepted thumbnail hash.
 A changed identity or thumbnail invalidates the override. CN, PRIVATE and unknown
 regions keep their accepted existing image; this index does not claim a reviewed
 China catalog projection. A jacketless song requires its own explicit binding.
-Missing overrides keep the thumbnail, and failed larger-image requests may use the
-accepted thumbnail within the same bounded export job.
+Missing overrides keep the thumbnail. Generation prepares ordinary thumbnails for
+all charts before starting optional larger-image upgrades. Both phases share one
+five-second image-preparation deadline and at most six concurrent jobs. A decoded
+thumbnail stays available if an upgrade fails, times out or finishes too late;
+identical ordinary and preferred URLs reuse the same image without another fetch.
+Missing or failed thumbnails can still receive a reviewed larger image when time
+remains. Very slow thumbnail or preceding interface-artwork loads can still leave
+neutral placeholders. PNG encoding and preview decoding follow image preparation
+and are outside that five-second deadline.
 
 Image bytes are intentionally absent from the source package. The reviewed input
 store for this release is `C:\Dev\maimai\artwork-inputs\export-jackets-20261017`.
@@ -48,7 +55,7 @@ copy_export_artwork(reviewed_export_input, demo_output, paths=selected_media_pat
 ```
 
 Without an explicit source store, the release planner includes no larger image
-bytes. The export loader's accepted-thumbnail fallback preserves local operation.
+bytes. The export loader prepares accepted thumbnails first, preserving local operation.
 A production release claiming larger-art coverage must supply and validate the
 complete store. Do not copy the full image store into source or every DevCache
 snapshot, and do not infer coverage from a demo screenshot.

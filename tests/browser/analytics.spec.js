@@ -206,7 +206,18 @@ test('imported player card remains accessible outside the Settings action menu',
   await page.locator('#settings-toggle').click();
   await expect(page.locator('#player-status')).toBeVisible();
   await expect(page.getByRole('menu',{name:'Settings'})).toBeVisible();
+  const tabEntry=page.locator('#settings-actions [role=menuitem][tabindex="0"]');
+  await expect(tabEntry).toHaveCount(1);await expect(tabEntry).toHaveAttribute('id','player-import');
+  await expect(page.locator('#settings-toggle')).toBeFocused();
   expect((await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21aa']).analyze()).violations).toEqual([]);
+  await page.keyboard.press('Tab');await expect(page.locator('#player-import')).toBeFocused();
+  await page.keyboard.press('End');await expect(page.locator('#site-support')).toBeFocused();
+  await expect(tabEntry).toHaveCount(1);await expect(tabEntry).toHaveAttribute('id','site-support');
+  await page.keyboard.press('Home');await expect(page.locator('#player-import')).toBeFocused();
+  await expect(tabEntry).toHaveCount(1);await expect(tabEntry).toHaveAttribute('id','player-import');
+  await page.keyboard.press('Shift+Tab');await expect(page.locator('#settings-toggle')).toBeFocused();
+  await page.keyboard.press('Escape');await expect(page.locator('#settings-menu')).toBeHidden();
+  await expect(tabEntry).toHaveCount(0);
 });
 
 test('issue reporting supports keyboard access in public and personal browsers without sending page data',async({page,context})=>{
@@ -218,19 +229,26 @@ test('issue reporting supports keyboard access in public and personal browsers w
   });
   for(const [origin,path] of [['https://maimai.party','/lab/'],['https://preview.invalid','/']]){
     await ready(page,path+'?search=PRIVATE_SEARCH#PRIVATE_HASH',origin);
-    const link=page.locator('#report-issue');
+    const link=page.locator('#report-issue'),share=page.locator('#site-share'),support=page.locator('#site-support'),hasSupport=path==='/lab/';
+    await expect(support).toHaveCount(hasSupport?1:0);
+    expect(await page.locator('#settings-actions [role=menuitem]').evaluateAll((nodes,count)=>nodes.slice(-count).map(node=>node.id),hasSupport?3:2)).toEqual(hasSupport?['report-issue','site-share','site-support']:['report-issue','site-share']);
     await page.locator('#settings-toggle').focus();await page.keyboard.press('ArrowUp');
-    await expect(page.locator('#site-share')).toBeFocused();await page.keyboard.press('ArrowUp');
+    if(hasSupport){await expect(support).toBeFocused();await page.keyboard.press('ArrowUp');}
+    await expect(share).toBeFocused();await page.keyboard.press('ArrowUp');
     await expect(link).toBeFocused();await expect(link).toBeEnabled();
     await expect(link).toHaveAttribute('href',issueURL);
     await expect(link).toHaveAttribute('rel','noopener noreferrer');
     await page.keyboard.press('ArrowUp');await expect(page.locator('#analytics-settings')).toBeFocused();
-    await page.keyboard.press('End');await expect(page.locator('#site-share')).toBeFocused();await page.keyboard.press('ArrowUp');await expect(link).toBeFocused();
+    await page.keyboard.press('End');
+    if(hasSupport){await expect(support).toBeFocused();await page.keyboard.press('ArrowUp');}
+    await expect(share).toBeFocused();await page.keyboard.press('ArrowUp');await expect(link).toBeFocused();
     const hasPlayerImport=await page.locator('#player-import').count()>0;
     await page.keyboard.press('Home');await expect(page.locator(hasPlayerImport?'#player-import':'#analytics-settings')).toBeFocused();
     await page.keyboard.press('ArrowDown');await expect(hasPlayerImport?page.locator('#analytics-settings'):link).toBeFocused();
     await page.keyboard.press('Escape');await expect(page.locator('#settings-toggle')).toBeFocused();
-    await page.keyboard.press('ArrowUp');await page.keyboard.press('ArrowUp');
+    await page.keyboard.press('ArrowUp');
+    if(hasSupport){await expect(support).toBeFocused();await page.keyboard.press('ArrowUp');}
+    await expect(share).toBeFocused();await page.keyboard.press('ArrowUp');await expect(link).toBeFocused();
     const opened=context.waitForEvent('page');
     if(path==='/lab/'){
       // Reproduce browsers that blur the current item without focusing a clicked link.
@@ -284,7 +302,8 @@ test('settings work before the catalog loads and after a catalog failure',async(
   await settings(page);await expect(page.locator('#analytics-dialog')).toBeVisible();
   await page.keyboard.press('Escape');await expect(page.locator('#settings-toggle')).toBeFocused();
   release();await expect(page.locator('#lab-status')).toContainText('could not be loaded');
-  await page.locator('#settings-toggle').press('ArrowUp');await expect(page.locator('#site-share')).toBeFocused();
+  await page.locator('#settings-toggle').press('ArrowUp');await expect(page.locator('#site-support')).toBeFocused();
+  await page.keyboard.press('ArrowUp');await expect(page.locator('#site-share')).toBeFocused();
   await page.keyboard.press('ArrowUp');await expect(page.locator('#report-issue')).toBeFocused();
   await expect(page.locator('#report-issue')).toBeEnabled();await page.keyboard.press('Escape');
   await settings(page);await expect(page.locator('#analytics-dialog')).toBeVisible();

@@ -261,10 +261,12 @@ test('export actions count explicit intent and current outcomes without private 
  await generate();await download();await close();await page.locator('#player-export-best50').click();
  await expect(page.locator('#player-export-version')).toHaveValue('magical');await close();await flush();
  expect(amount('score_export_option_changed','version')).toBe(1);
- await page.locator('.player-export-achievement').first().click();await page.locator('#player-export-partner').selectOption('kanadera-magical');
- await page.evaluate(()=>{const encode=HTMLCanvasElement.prototype.toBlob;window.restoreUsagePNG=()=>HTMLCanvasElement.prototype.toBlob=encode;HTMLCanvasElement.prototype.toBlob=function(callback){window.releaseUsagePNG=()=>encode.call(this,callback,'image/png');};});
+ await page.locator('.player-export-achievement').first().click();await expect(page.locator('#player-export-partner')).toHaveCount(0);
+ await page.evaluate(()=>{const encode=HTMLCanvasElement.prototype.toBlob;window.restoreUsagePNG=()=>HTMLCanvasElement.prototype.toBlob=encode;HTMLCanvasElement.prototype.toBlob=function(callback){window.releaseUsagePNG=()=>new Promise(resolve=>encode.call(this,blob=>{callback(blob);resolve();},'image/png'));};});
  await page.locator('#player-export-generate').click();await page.waitForFunction(()=>!!window.releaseUsagePNG);
- await page.locator('#player-export-partner').selectOption('derakkuma-magical');await page.evaluate(()=>{restoreUsagePNG();releaseUsagePNG();});
+ // Closing cancels this render; its delayed encoder must not fill the reopened dialog.
+ await close();await expect(page.locator('.player-export-achievement').first()).toBeFocused();await page.locator('.player-export-achievement').first().click();
+ await page.evaluate(async()=>{restoreUsagePNG();await releaseUsagePNG();});
  await expect(page.locator('#player-export-download')).toBeHidden();await flush();
  expect(amount('score_export_completed','achievement_pb')).toBe(0);expect(amount('score_export_failed','achievement_pb')).toBe(0);
  await generate();await close();await page.locator('.player-export-play').first().click();await generate();await download();
@@ -274,12 +276,13 @@ test('export actions count explicit intent and current outcomes without private 
  for(const [kind,started] of [['best50',1],['achievement_pb',2],['achievement_play',2]]){
   expect(amount('score_export_started',kind)).toBe(started);expect(amount('score_export_completed',kind)).toBe(1);
  }
- expect(amount('score_export_opened','best50')).toBe(2);expect(amount('score_export_opened','achievement_pb')).toBe(1);expect(amount('score_export_opened','achievement_play')).toBe(1);
+ expect(amount('score_export_opened','best50')).toBe(2);expect(amount('score_export_opened','achievement_pb')).toBe(2);expect(amount('score_export_opened','achievement_play')).toBe(1);
  expect(amount('score_export_failed','achievement_play')).toBe(1);expect(amount('score_export_download_clicked','best50')).toBe(1);expect(amount('score_export_download_clicked','achievement_play')).toBe(1);
- expect(amount('score_export_option_changed','partner')).toBe(2);expect(amount('data_action','clear')).toBe(1);expect(amount('data_action','forget')).toBe(0);
+ expect(amount('score_export_option_changed','partner')).toBe(0);expect(amount('data_action','clear')).toBe(1);expect(amount('data_action','forget')).toBe(0);
  const diagnostics=counts.filter(b=>b.version===2).flatMap(b=>b.events).filter(r=>r.operation==='image_export');
  const outcomes=(kind,outcome,reason)=>diagnostics.filter(r=>r.source===kind&&r.outcome===outcome&&(!reason||r.reason===reason)).reduce((n,r)=>n+r.count,0);
- expect(outcomes('achievement_pb','superseded')).toBe(1);expect(outcomes('achievement_play','failed','png_encoding')).toBe(1);
+ expect(outcomes('achievement_pb','cancelled','none')).toBe(1);expect(outcomes('achievement_pb','superseded')).toBe(0);expect(outcomes('achievement_play','failed','png_encoding')).toBe(1);
+ expect(diagnostics.find(row=>row.source==='achievement_pb'&&row.outcome==='cancelled')).toMatchObject({mode:'manual',stage:'encode',reason:'none',count:1});
  expect(diagnostics.reduce((n,r)=>n+r.count,0)).toBe(5);
  expect(JSON.stringify(counts)).not.toMatch(/PRIVATE-SENTINEL|private-export-chart|private-song|private-source|private-session|kanadera|derakkuma|magical|prismplus/i);expect(external).toEqual([]);
 });

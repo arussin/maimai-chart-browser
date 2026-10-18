@@ -255,7 +255,11 @@ function loaderFixture(
         naturalWidth: 400,
         naturalHeight: 400,
         removeAttribute() {},
+        get src() {
+          return this.currentSource;
+        },
         set src(source) {
+          this.currentSource = source;
           decodedSources.push(source);
           queueMicrotask(() => this.onload?.());
         },
@@ -263,8 +267,8 @@ function loaderFixture(
     },
   };
   class Reader {
-    readAsDataURL() {
-      this.result = 'data:image/webp;base64,AA==';
+    readAsDataURL(blob) {
+      this.result = blob.dataURL || 'data:image/webp;base64,AA==';
       queueMicrotask(() => this.onload?.());
     }
     abort() {
@@ -412,27 +416,39 @@ test('async reviewed jacket resolution retains same-origin fetch privacy and rem
   assert.equal(fixture.fallbacks, 0);
 });
 
-test('successful preferred jacket never resolves or requests the thumbnail fallback', async () => {
-  const fixture = loaderFixture(() => '/media/' + '1'.repeat(64) + '.webp');
-  const images = await fixture.load(undefined, {
-    jacketFallbackURL() {
-      assert.fail('A loaded preferred image must not trigger thumbnail resolution');
+test('a successful larger jacket upgrades the already decoded ordinary thumbnail', async () => {
+  const preferred = '/media/' + '1'.repeat(64) + '.webp';
+  const thumbnail = '/media/' + '0'.repeat(64) + '.webp';
+  const fixture = loaderFixture(() => preferred, {
+    fetchResponse(url) {
+      const dataURL = 'data:image/webp;base64,' + (url.pathname === preferred ? 'AQ==' : 'AA==');
+      return { ok: true, blob: async () => ({ type: 'image/webp', size: 32, dataURL }) };
     },
   });
-  assert.ok(images.has('jacket:synthetic'));
-  assert.equal(fixture.requests.length, 1);
+  const images = await fixture.load(undefined, {
+    jacketFallbackURL: () => thumbnail,
+  });
+  assert.equal(images.get('jacket:synthetic').src, 'data:image/webp;base64,AQ==');
+  assert.deepEqual(
+    fixture.requests.map(({ url }) => new URL(url).pathname),
+    [thumbnail, preferred],
+  );
+  assert.deepEqual(fixture.decodedSources, [
+    'data:image/webp;base64,AA==',
+    'data:image/webp;base64,AQ==',
+  ]);
   assert.equal(fixture.fallbacks, 0);
   assert.equal(fixture.timers.size, 0);
 });
 
-test('404 preferred jacket uses one accepted thumbnail within the original privacy and time budget', async () => {
+test('a 404 larger jacket keeps the accepted thumbnail within the original privacy and time budget', async () => {
   const preferred = '/media/' + '2'.repeat(64) + '.webp';
   const thumbnail = '/media/' + '3'.repeat(64) + '.webp';
   let thumbnailResolutions = 0;
   const fixture = loaderFixture(() => preferred, {
     fetchResponse(url) {
       if (url.pathname === preferred) {
-        fixture.setNow(1300);
+        fixture.setNow(2200);
         return { ok: false, status: 404 };
       }
       return { ok: true, blob: async () => ({ type: 'image/webp', size: 32 }) };
@@ -450,7 +466,7 @@ test('404 preferred jacket uses one accepted thumbnail within the original priva
   assert.equal(thumbnailResolutions, 1);
   assert.deepEqual(
     fixture.requests.map(({ url }) => url),
-    ['https://maimai.party' + preferred, 'https://maimai.party' + thumbnail],
+    ['https://maimai.party' + thumbnail, 'https://maimai.party' + preferred],
   );
   for (const { options } of fixture.requests) {
     assert.equal(options.credentials, 'omit');
@@ -475,7 +491,37 @@ test('unavailable preferred projection can use an ordinary thumbnail without rep
   assert.equal(fixture.timers.size, 0);
 });
 
-test('thumbnail fallback retains URL validation and never recursively retries a failure', async () => {
+test('identical preferred and ordinary URLs reuse the settled image without a second request', async () => {
+  const thumbnail = '/media/' + '4'.repeat(64) + '.webp';
+  const fixture = loaderFixture(() => 'https://maimai.party' + thumbnail);
+  const images = await fixture.load(undefined, { jacketFallbackURL: () => thumbnail });
+  assert.equal(images.size, 1);
+  assert.equal(fixture.requests.length, 1);
+  assert.equal(fixture.decodedSources.length, 1);
+  assert.equal(fixture.fallbacks, 0);
+  assert.equal(fixture.timers.size, 0);
+});
+
+test('a missing or failed ordinary thumbnail can still receive its reviewed larger jacket', async () => {
+  const preferred = '/media/' + '1'.repeat(64) + '.webp';
+  const thumbnail = '/media/' + '0'.repeat(64) + '.webp';
+  for (const ordinary of [undefined, thumbnail]) {
+    const fixture = loaderFixture(() => preferred, {
+      fetchResponse(url) {
+        return url.pathname === thumbnail
+          ? { ok: false, status: 404 }
+          : { ok: true, blob: async () => ({ type: 'image/webp', size: 32 }) };
+      },
+    });
+    const images = await fixture.load(undefined, { jacketFallbackURL: () => ordinary });
+    assert.equal(images.size, 1);
+    assert.equal(fixture.requests.length, ordinary ? 2 : 1);
+    assert.equal(fixture.fallbacks, ordinary ? 1 : 0);
+    assert.equal(fixture.timers.size, 0);
+  }
+});
+
+test('thumbnail preparation retains URL validation and never recursively retries a failure', async () => {
   const thumbnail = '/media/' + '5'.repeat(64) + '.webp';
   for (const value of [
     'https://external.example' + thumbnail,
@@ -504,55 +550,72 @@ test('thumbnail fallback retains URL validation and never recursively retries a 
   }
 });
 
-test('expired preferred requests and late thumbnail resolutions cannot extend the shared deadline', async () => {
+test('expired ordinary-thumbnail requests never begin a larger-jacket upgrade', async () => {
   const preferred = '/media/' + '7'.repeat(64) + '.webp';
   const thumbnail = '/media/' + '8'.repeat(64) + '.webp';
-  const expired = loaderFixture(() => preferred, {
-    fetchResponse() {
-      expired.setNow(5000);
-      return { ok: false, status: 404 };
+  const expired = loaderFixture(
+    () => {
+      assert.fail('No upgrade may resolve after the thumbnail phase exhausts the deadline');
+      return preferred;
     },
-  });
+    {
+      fetchResponse() {
+        expired.setNow(5000);
+        return { ok: false, status: 404 };
+      },
+    },
+  );
   const noFallback = await expired.load(undefined, {
-    jacketFallbackURL() {
-      assert.fail('No thumbnail attempt may begin at or after the original deadline');
-    },
+    jacketFallbackURL: () => thumbnail,
   });
   assert.equal(noFallback.size, 0);
   assert.equal(expired.requests.length, 1);
+  assert.equal(new URL(expired.requests[0].url).pathname, thumbnail);
+  assert.equal(expired.fallbacks, 1);
   assert.equal(expired.timers.size, 0);
+});
 
+test('late larger-jacket resolution preserves its settled thumbnail without extending the deadline', async () => {
+  const preferred = '/media/' + '7'.repeat(64) + '.webp';
+  const thumbnail = '/media/' + '8'.repeat(64) + '.webp';
   let release;
-  const delayed = loaderFixture(() => preferred, {
-    fetchResponse() {
-      delayed.setNow(3000);
-      return { ok: false, status: 404 };
-    },
-  });
-  const pending = delayed.load(undefined, {
-    jacketFallbackURL: () =>
+  const delayed = loaderFixture(
+    () =>
       new Promise((resolve) => {
         release = resolve;
       }),
+    {
+      fetchResponse() {
+        delayed.setNow(3000);
+        return { ok: true, blob: async () => ({ type: 'image/webp', size: 32 }) };
+      },
+    },
+  );
+  const pending = delayed.load(undefined, {
+    jacketFallbackURL: () => thumbnail,
   });
   await new Promise(setImmediate);
   assert.equal(delayed.timerDurations.at(-1), 2000);
   delayed.setNow(5000);
   delayed.expire();
   const images = await pending;
-  assert.equal(images.size, 0);
-  release(thumbnail);
+  assert.equal(images.size, 1);
+  const settled = images.get('jacket:synthetic');
+  release(preferred);
   await new Promise(setImmediate);
-  assert.equal(delayed.requests.length, 1, 'Late fallback resolution starts no thumbnail request');
-  assert.equal(images.size, 0, 'Late work does not mutate the completed image map');
+  assert.equal(delayed.requests.length, 1, 'Late upgrade resolution starts no request');
+  assert.equal(images.get('jacket:synthetic'), settled, 'Late work does not replace the thumbnail');
   assert.equal(delayed.fallbacks, 1);
   assert.equal(delayed.timers.size, 0);
 });
 
-test('a pending jacket fetch aborts at the shared deadline without starting its fallback', async () => {
+test('a pending larger-jacket fetch aborts at the shared deadline and keeps its thumbnail', async () => {
+  const thumbnail = '/media/' + '0'.repeat(64) + '.webp';
   let release;
   const fixture = loaderFixture(() => '/media/' + '9'.repeat(64) + '.webp', {
-    fetchResponse(_url, { signal }) {
+    fetchResponse(url, { signal }) {
+      if (url.pathname === thumbnail)
+        return { ok: true, blob: async () => ({ type: 'image/webp', size: 32 }) };
       return new Promise((resolve, reject) => {
         release = resolve;
         signal.addEventListener('abort', () => reject(new Error('aborted')), { once: true });
@@ -560,22 +623,124 @@ test('a pending jacket fetch aborts at the shared deadline without starting its 
     },
   });
   const pending = fixture.load(undefined, {
-    jacketFallbackURL() {
-      assert.fail('An expired fetch must not reset the time budget for a fallback');
-    },
+    jacketFallbackURL: () => thumbnail,
   });
   await new Promise(setImmediate);
   fixture.setNow(5000);
   fixture.expire();
   const images = await pending;
-  assert.equal(fixture.requests[0].options.signal.aborted, true);
+  assert.equal(fixture.requests[1].options.signal.aborted, true);
+  const settled = images.get('jacket:synthetic');
   release({ ok: true, blob: async () => ({ type: 'image/webp', size: 32 }) });
   await new Promise(setImmediate);
-  assert.equal(images.size, 0);
-  assert.equal(fixture.decodedSources.length, 0);
-  assert.equal(fixture.requests.length, 1);
+  assert.equal(images.size, 1);
+  assert.equal(images.get('jacket:synthetic'), settled);
+  assert.equal(fixture.decodedSources.length, 1);
+  assert.equal(fixture.requests.length, 2);
   assert.equal(fixture.fallbacks, 1);
   assert.equal(fixture.timers.size, 0);
+});
+
+test('slow-link partial upgrades preserve every settled thumbnail and never exceed six workers', async () => {
+  const path = (stage, id) => '/media/' + stage + id.toString(16).padStart(63, '0') + '.webp';
+  const image = (stage, id) =>
+    'data:image/webp;base64,' + Buffer.from(stage + ':' + id).toString('base64');
+  const response = (stage, id) => ({
+    ok: true,
+    blob: async () => ({ type: 'image/webp', size: 32, dataURL: image(stage, id) }),
+  });
+  const thumbnails = [],
+    upgrades = [],
+    resolvedUpgrades = [];
+  let inFlight = 0,
+    maximumInFlight = 0;
+  const fixture = loaderFixture(
+    (chart) => {
+      resolvedUpgrades.push(chart.chartID);
+      return path('2', Number(chart.chartID));
+    },
+    {
+      fetchResponse(url, { signal }) {
+        const stage = url.pathname[7],
+          id = Number.parseInt(url.pathname.slice(8, -5), 16);
+        inFlight++;
+        maximumInFlight = Math.max(maximumInFlight, inFlight);
+        if (stage === '2' && id < 2) {
+          inFlight--;
+          return response(stage, id);
+        }
+        return new Promise((resolve, reject) => {
+          let pending = true;
+          const finish = () => {
+            if (pending) inFlight--;
+            pending = false;
+          };
+          const item = {
+            id,
+            resolve() {
+              finish();
+              resolve(response(stage, id));
+            },
+          };
+          (stage === '1' ? thumbnails : upgrades).push(item);
+          signal.addEventListener(
+            'abort',
+            () => {
+              finish();
+              reject(new Error('aborted'));
+            },
+            { once: true },
+          );
+        });
+      },
+    },
+  );
+  const charts = Array.from({ length: 10 }, (_, id) => ({ chartID: String(id) }));
+  const pending = fixture.load(charts, {
+    jacketFallbackURL: (chart) => path('1', Number(chart.chartID)),
+  });
+  await new Promise(setImmediate);
+  assert.equal(thumbnails.length, 6);
+  assert.deepEqual(resolvedUpgrades, []);
+  fixture.setNow(800);
+  for (const item of thumbnails.slice()) item.resolve();
+  await new Promise(setImmediate);
+  assert.equal(thumbnails.length, 10);
+  assert.deepEqual(
+    resolvedUpgrades,
+    [],
+    'No high-resolution lookup starts before every thumbnail settles',
+  );
+  fixture.setNow(1500);
+  for (const item of thumbnails.slice(6)) item.resolve();
+  await new Promise(setImmediate);
+  assert.equal(upgrades.length, 6, 'Two completed upgrades leave six slow requests in flight');
+  assert.equal(resolvedUpgrades.length, 8);
+  assert.equal(maximumInFlight, 6);
+  assert.ok(fixture.requests.slice(0, 10).every(({ url }) => new URL(url).pathname[7] === '1'));
+  fixture.setNow(5000);
+  fixture.expire();
+  const images = await pending;
+  assert.equal(images.size, 10, 'The deadline cannot discard any settled ordinary jacket');
+  for (let id = 0; id < 10; id++)
+    assert.equal(images.get('jacket:' + id).src, image(id < 2 ? '2' : '1', id));
+  assert.equal(fixture.requests.length, 18, 'The final two upgrades start no request after expiry');
+  assert.equal(fixture.fallbacks, 8, 'Each incomplete upgrade has one finite fallback signal');
+  assert.equal(inFlight, 0);
+  assert.equal(fixture.timers.size, 0);
+  const settled = Array.from(images.values());
+  for (const item of upgrades) item.resolve();
+  await new Promise(setImmediate);
+  assert.deepEqual(
+    Array.from(images.values()),
+    settled,
+    'Late responses cannot replace completed output',
+  );
+  assert.equal(
+    fixture.decodedSources.length,
+    12,
+    'Only ten thumbnails and two timely upgrades decode',
+  );
 });
 
 test('async jacket URLs cannot bypass the reviewed artwork boundary', async () => {
