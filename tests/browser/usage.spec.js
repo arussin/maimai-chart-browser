@@ -1,5 +1,6 @@
 import {test,expect} from './fixtures.js';
 import {selectImportMethod} from './player-import-fixture.mjs';
+import {clickOutsideDialog} from './dialog-dismiss-fixture.mjs';
 import {readFile} from 'node:fs/promises';
 import {resolve,extname,sep} from 'node:path';
 import {gzipSync} from 'node:zlib';
@@ -70,6 +71,23 @@ test('opening imports checks visibility without emitting import attempts or prov
  expect(configurationRequests).toEqual(Array.from({length:2},()=>({url:'https://maimai.party/api/player-import/oauth/connectors',method:'GET'})));
  expect(providerRequests).toEqual([]);expect(external).toEqual([]);
 });
+test('outside dismissal of an import preview logs one cancellation without saving or failure',async({page,context})=>{
+ const {counts,external}=await hosted(context);
+ await page.goto('https://maimai.party/');await expect.poll(()=>page.evaluate(()=>!!window.maimaiPersonal)).toBe(true);await page.evaluate(()=>maimaiPersonal.ready);
+ const fixture=JSON.parse(await readFile(new URL('../../output/reconciliation-fixture.json',import.meta.url),'utf8'));
+ const data=await page.evaluate(data=>maimaiPlayerData.reconcile(data),fixture);
+ await page.locator('input[type=file]').setInputFiles({name:'PRIVATE-CANCEL-FILE.gz',mimeType:'application/gzip',buffer:gzipSync(Buffer.from(JSON.stringify(data)))});
+ const dialog=page.locator('#player-import-dialog');await expect(dialog.locator('.player-remember')).toBeVisible();
+ await clickOutsideDialog(page,dialog);await expect(dialog).toBeHidden();await expect(page.locator('#settings-toggle')).toBeFocused();
+ await page.evaluate(()=>maimaiUsage.flush());
+ const rows=counts.flatMap(batch=>batch.events),actions=rows.filter(row=>row.detail==='file');
+ for(const [event,count] of [['import_started',1],['import_previewed',1],['import_cancelled',1],['import_confirmed',0],['import_completed',0],['import_failed',0]])expect(actions.filter(row=>row.event===event).reduce((sum,row)=>sum+row.count,0),event).toBe(count);
+ const diagnostics=rows.filter(row=>row.operation==='import'&&row.source==='file');
+ expect(diagnostics).toEqual([expect.objectContaining({outcome:'cancelled',reason:'none',mode:'manual',count:1})]);
+ expect(await page.evaluate(async()=>(await maimaiPlayerStorage.read()).active)).toBeNull();expect(await page.evaluate(()=>maimaiPersonal.enabled())).toBe(false);
+ expect(JSON.stringify(counts)).not.toContain('PRIVATE-CANCEL-FILE');expect(external).toEqual([]);
+});
+
 test('Tomomai file chooser logs finite preview, saved import, and malformed-file outcomes',async({page,context})=>{
  const {counts,external}=await hosted(context),providerRequests=[];
  await context.route('https://maimai.party/api/player-import/oauth/connectors',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({schemaVersion:1,methods:{'file:tomomai':true}})}));
@@ -196,7 +214,7 @@ for(const fault of ['renderer_module','canvas_context','preview_preparation','ar
  expect(JSON.stringify(counts)).not.toContain('PRIVATE-SENTINEL');expect(external).toEqual([]);
 });
 
-for(const action of ['close','close button','replace'])test('render '+action+' is a single cancellation or supersession',async({page,context})=>{
+for(const action of ['close','close button','outside','replace'])test('render '+action+' is a single cancellation or supersession',async({page,context})=>{
  const {counts}=await hosted(context);await prepareExport(page);
  await page.evaluate(()=>HTMLCanvasElement.prototype.toBlob=function(callback){window.releaseUsagePNG=()=>callback(null);});
  await page.locator('#player-export-best50').click();await page.locator('#player-export-generate').click();
@@ -207,13 +225,14 @@ for(const action of ['close','close button','replace'])test('render '+action+' i
   window.exportClosed=new Promise(resolve=>dialog.addEventListener('close',()=>{window.exportCloseOrder.push('close');resolve();},{once:true}));
   if(action==='replace')return;
   // Resume encoding before the queued close event, rather than relying on browser timing.
-  const target=action==='close'?dialog:dialog.querySelector('.player-export-actions button:last-child');
-  target.addEventListener(action==='close'?'cancel':'click',()=>queueMicrotask(()=>{
+  const cancels=action==='close'||action==='outside',target=cancels?dialog:dialog.querySelector('.player-export-actions button:last-child');
+  target.addEventListener(cancels?'cancel':'click',()=>queueMicrotask(()=>{
    window.exportCloseOrder.push('encode');window.exportOpenDuringRelease=dialog.open;window.releaseUsagePNG();
   }),{once:true});
  },action);
  if(action==='close')await page.keyboard.press('Escape');
  else if(action==='close button')await page.locator('#player-export-dialog').getByRole('button',{name:'Close',exact:true}).click();
+ else if(action==='outside')await clickOutsideDialog(page,page.locator('#player-export-dialog'));
  else await page.evaluate(()=>document.getElementById('player-forget').click());
  await expect(page.locator('#player-export-dialog')).not.toBeVisible();
  await page.evaluate(async action=>{if(action==='replace')releaseUsagePNG();await window.exportClosed;},action);

@@ -35,7 +35,7 @@
     "src/maimai_intelligence/assets/locales/player.json": "b6f179f161f310bbb4ad19ba8ed6de76707a9cad843b9690688bc4b34d961fd5",
     "src/maimai_intelligence/assets/locales/privacy.json": "903bde722d26d430d991d67accbe22bedd62c58f84792b3d10ec00647d9d6e71",
     "src/maimai_intelligence/assets/locales/remaining.json": "e92aac89a60bfda27bcc2676e4e53cec27b2ceb564b1716243a4a247d676ba60",
-    "src/maimai_intelligence/assets/locales/support.json": "32a0442b03a67df5474e0b6e0cdf0302ed1feb8ef35572729d01340184bc5cab",
+    "src/maimai_intelligence/assets/locales/support.json": "aaae89f4d95dff445d7cb96e86831430b3df287e5ed11ff7f19b61433e66f9be",
     "src/maimai_intelligence/assets/song-pronunciations.json": "fd237c304809ac65354b59a0f0defd51ea1bf4d57a920475915d155bd768a864",
     "README.md": "c892403040c4fb6f8866aae06d50a0acdb7675cdbaf5d0653588eb9e8b575efe",
     "README.zh-Hans.md": "78b12a7ed6f3ca0986d18c3b21ebaff9423ad1d967d4077356a6bc2c94cbb43b",
@@ -56,7 +56,7 @@
     "src/maimai_intelligence/assets/locales/bpm-filter.json": "de56afac29a72d7fcd7b55e74215fab9a34bb5ae16300984f692846866b71034",
     "src/maimai_intelligence/assets/locales/score-export.json": "2f880eaaadfd79d5c987b1942e37d8e596956f501bb1b89be4de1ea0133b4f20",
     "src/maimai_intelligence/assets/locales/player-connections.json": "bf9bd326281d53334f47a449cfd981927ff014b3800cb3fa654780eb4ef7be0f",
-    "src/maimai_intelligence/assets/locales/player-file-imports.json": "0ef932cf608581bba002833d61e2d38c551d54b5696d696d423a6b9ae7cf82de",
+    "src/maimai_intelligence/assets/locales/player-file-imports.json": "bdeaed703505e64eb5e871a019af0fc946b11d4263573c6f83ca7b568e667c01",
     "src/maimai_intelligence/assets/support-footer.html": "90258419b15f9281e37a82478da07a53f20e3d58c24cbbe697af3c94f48b94c8"
   },
   "documentation": {
@@ -152,6 +152,13 @@
       "date": "2026-10-13",
       "record": "docs/localization-review/tracker-region-error-20261013.json",
       "scope": "The missing Unsupported tracker region error translated and independently reviewed in Simplified Chinese, Korean, Japanese and Indonesian; typed identity validation remains unchanged."
+    },
+    {
+      "date": "2026-10-18",
+      "reviewer": "Codex",
+      "method": "AI contextual language review; not native-speaker certification.",
+      "record": "docs/localization-review/annotation-followup-20261018.json",
+      "scope": "Source account purpose label in English, Simplified Chinese, Korean, Japanese and Indonesian. Both support placements reuse the existing reviewed maintenance wording; the unused export-only opening and translations are removed."
     }
   ],
   "player_sources_review": {

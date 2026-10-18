@@ -1,5 +1,6 @@
 import type { TextView, LocalizedText } from '../components/chart-card';
 import { createVersionPicker } from '../components/version-picker';
+import { dismissDialogOnOutsideClick } from '../components/dialog-dismiss';
 import type { PlayerChart, PlayerDataset, PlayerRecord } from '../domain/player-data';
 import {
   buildBest50,
@@ -50,6 +51,7 @@ export function createScoreExporter(ports: ExportPorts) {
   dialog.className = 'player-dialog player-export-dialog';
   dialog.setAttribute('aria-labelledby', 'player-export-title');
   ports.root.append(dialog);
+  dismissDialogOnOutsideClick(dialog);
   let trigger: HTMLElement | null = null,
     imageURL: string | null = null,
     generation = 0,

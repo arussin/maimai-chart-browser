@@ -642,20 +642,22 @@ for (const locale of ["en", "zh-Hans", "ko", "ja", "id"]) {
             ...(isPrivate ? { instance: "fixture.invalid" } : {}),
           });
           await expect(page.locator("#player-import-dialog")).toContainText(
-            translated("Source account", locale),
+            translated("Source account (to identify your imports)", locale),
           );
           if (isPrivate)
             await expect(page.locator("#player-import-dialog")).toContainText(
               translated("Server name", locale),
             );
           await expectUnclippedDialog(page);
+          if (locale === 'en' && width === 320 && format === 'mai-tools')
+            await page.screenshot({ path: testInfo.outputPath('mai-tools-account-en-320.png') });
           if (locale === 'en' && width === 1280)
             await page.screenshot({ path: testInfo.outputPath('file-source-' + format + '.png') });
           await page.keyboard.press("Escape");
         }
         await openFileOptions(page);
         await expect(page.locator("#player-import-dialog")).toContainText(
-          translated("Source account", locale),
+          translated("Source account (to identify your imports)", locale),
         );
         await expect(page.locator("#player-file-instance")).toHaveCount(0);
         await expectUnclippedDialog(page);

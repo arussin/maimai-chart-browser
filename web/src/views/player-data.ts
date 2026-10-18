@@ -19,6 +19,7 @@ import { exactFileChartIndex, isFileProvider } from '../domain/import-identities
 import type { FileImportOptions } from '../domain/import-options';
 import { createScoreExporter } from './score-export';
 import { createSupportPrompt } from './support-prompt';
+import { dismissDialogOnOutsideClick } from '../components/dialog-dismiss';
 import { createScoreExportPreferences } from '../runtime/score-export-preferences';
 import { knownScoreExportVersionIDs, type ExportPlayerRating } from '../domain/score-export';
 import { defaultScoreExportPartner, scoreExportPartners } from './score-export-partners';
@@ -228,6 +229,7 @@ export function createPlayerData(ports: PersonalPorts) {
   dialog.id = 'player-import-dialog';
   dialog.setAttribute('aria-labelledby', 'player-dialog-title');
   root.append(dialog);
+  dismissDialogOnOutsideClick(dialog);
   let dialogTrigger = find('settings-toggle');
   function focusDialogTrigger() {
     dialogTrigger?.focus({ preventScroll: true });
@@ -1008,7 +1010,7 @@ export function createPlayerData(ports: PersonalPorts) {
           };
           return;
         }
-        const accountLabel = make('label', 'Source account'),
+        const accountLabel = make('label', 'Source account (to identify your imports)'),
           account = make('input');
         account.id = 'player-file-account';
         account.autocomplete = 'off';
@@ -1092,7 +1094,6 @@ export function createPlayerData(ports: PersonalPorts) {
             'p',
             'Update your scores on Kamaitachi first. Refresh in Party only reads what is already there.',
           ),
-          helpLink('kamaitachi', 'About Kamaitachi imports'),
         );
         i18n.text(next, 'Preview scores');
         next.onclick = () => {

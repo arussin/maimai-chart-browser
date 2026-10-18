@@ -247,10 +247,10 @@ for (const kind of ['best50', 'pb', 'play']) test('ready-only export support pre
   await page.locator('#player-export-generate').click();
   const download = page.locator('#player-export-download'), preview = page.locator('#player-export-preview');
   await expect(download).toBeVisible(); await expect(note).toBeVisible();
-  await expect(note.locator('p>span')).toHaveText('Finding maimai.party useful?');
+  await expect(note.locator('p>span')).toHaveText('maimai.party is free to use, but costs quite a bit to maintain.');
   const href = await download.getAttribute('href'), src = await preview.getAttribute('src');
   const paint = await page.evaluate(() => supportPaintText.join('\n'));
-  expect(paint).not.toContain('Finding maimai.party useful?');
+  expect(paint).not.toContain('maimai.party is free to use, but costs quite a bit to maintain.');
   expect(paint).not.toContain('Please consider supporting its development and hosting.');
   const actions = await dialog.locator('.player-export-actions').boundingBox(), noteBox = await note.boundingBox();
   expect(noteBox.y).toBeGreaterThanOrEqual(actions.y + actions.height);
@@ -262,7 +262,7 @@ for (const kind of ['best50', 'pb', 'play']) test('ready-only export support pre
     for (const locale of ['en', 'zh-Hans', 'ko', 'ja', 'id']) {
       await page.evaluate(locale => maimaiI18n.setLocale(locale), locale);
       if (locale !== 'en') {
-        await expect(note.locator('p>span')).not.toHaveText('Finding maimai.party useful?');
+        await expect(note.locator('p>span')).not.toHaveText('maimai.party is free to use, but costs quite a bit to maintain.');
         await expect(link).not.toHaveText('Please consider supporting its development and hosting.');
       }
       for (const width of [1280, 320, 280]) {

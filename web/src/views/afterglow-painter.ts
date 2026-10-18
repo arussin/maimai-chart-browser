@@ -216,7 +216,14 @@ function cover(
 }
 
 /** Exact site colors, with a positive INK gap on both sides of the domain separator. */
-function brand(ctx: Context, x: number, baseline: number, maximumWidth: number, size: number) {
+function brand(
+  ctx: Context,
+  x: number,
+  baseline: number,
+  maximumWidth: number,
+  size: number,
+  align: 'left' | 'center' = 'left',
+) {
   ctx.save();
   ctx.font = `italic 850 ${size}px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;
   ctx.textAlign = 'left';
@@ -236,12 +243,28 @@ function brand(ctx: Context, x: number, baseline: number, maximumWidth: number, 
     inkRight = position + bounds.actualBoundingBoxRight;
   }
   const scale = Math.min(1, maximumWidth / inkRight);
-  ctx.translate(x, baseline);
+  ctx.translate(align === 'center' ? x - (inkRight * scale) / 2 : x, baseline);
   ctx.scale(scale, scale);
   for (const part of parts) {
     ctx.fillStyle = part.color;
     ctx.fillText(part.value, part.x, 0);
   }
+  ctx.restore();
+}
+
+/** Keep localized native text, with a restrained arcade bevel and violet depth. */
+function best50Title(ctx: Context, value: string) {
+  ctx.save();
+  // The offset layer gives the title a crisp edge without changing glyph shapes.
+  label(ctx, value, 592, 209, 800, 112, '#725994', 'left', 900, true);
+  const face = ctx.createLinearGradient(0, 96, 0, 209);
+  face.addColorStop(0, '#ffffff');
+  face.addColorStop(0.48, '#f7efff');
+  face.addColorStop(1, '#c5afe9');
+  ctx.shadowColor = '#0a0612';
+  ctx.shadowBlur = 10;
+  ctx.shadowOffsetY = 3;
+  label(ctx, value, 592, 203, 800, 112, face, 'left', 900, true);
   ctx.restore();
 }
 
@@ -682,9 +705,9 @@ export function paintAfterglowBest50(
   const noticeHeight = noticeLines.length ? 26 + noticeLines.length * 30 : 0;
   const { canvas, ctx } = surface(document, 2000, 5380 + noticeHeight, description);
   playerBadge(ctx, images, name, model.totalRating, 48, 52, 480, t);
-  label(ctx, t('Best 50'), 592, 203, 800, 112, white, 'left', 900, true);
+  best50Title(ctx, t('Best 50'));
   if (options.regionLabel) label(ctx, options.regionLabel, 592, 252, 790, 22, muted);
-  brand(ctx, 1630, 102, 322, 52);
+  brand(ctx, 1756, 102, 322, 52, 'center');
   if (!fit(ctx, images.get('art:version'), 1560, 126, 392, 154))
     wrappedLabel(ctx, model.version.label, 1560, 157, 392, 28, 3, white, 800);
   rule(ctx, 48, 299, 1904);

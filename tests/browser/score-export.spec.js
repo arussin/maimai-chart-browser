@@ -1,6 +1,7 @@
 import {test,expect} from './fixtures.js';
 import {readFile} from 'node:fs/promises';
 import {gzipSync} from 'node:zlib';
+import {clickOutsideDialog,dialogPoints,dragOutsideDialog} from './dialog-dismiss-fixture.mjs';
 
 const privateName='PRIVATE_EXPORT_SENTINEL';
 const dialog=page=>page.locator('#player-export-dialog');
@@ -103,6 +104,29 @@ test('Best 50 uses the imported version and downloads a local PNG without changi
   expect(requests.join('\n')).not.toContain('private_export_sentinel');
   expect(await page.evaluate(async()=>{const saved=await maimaiPlayerStorage.read();return (await maimaiPlayerData.decode(saved.active.bytes)).revision;})).toBe(data.revision);
   await page.keyboard.press('Escape');await expect(dialog(page)).not.toBeVisible();await expect(page.locator('#player-export-best50')).toBeFocused();
+});
+
+test('export backdrop dismissal preserves inside gestures and releases the prepared PNG once',async({page},testInfo)=>{
+  await boot(page);const data=await fixture(page);await importData(page,data);
+  await page.evaluate(()=>{
+    const revoke=URL.revokeObjectURL.bind(URL);window.dismissedExportURLs=[];
+    URL.revokeObjectURL=url=>{window.dismissedExportURLs.push(url);revoke(url);};
+  });
+  await page.locator('#player-export-best50').click();const download=await generate(page),url=await download.getAttribute('href');
+  const {inside}=await dialogPoints(dialog(page));await page.mouse.click(inside.x,inside.y);
+  await expect(dialog(page)).toBeVisible();await expect(download).toHaveAttribute('href',url);
+  await dragOutsideDialog(page,dialog(page));await expect(dialog(page)).toBeVisible();await expect(download).toHaveAttribute('href',url);
+  await clickOutsideDialog(page,dialog(page));await expect(dialog(page)).toBeHidden();await expect(dialog(page).locator('*')).toHaveCount(0);
+  await expect(page.locator('#player-export-best50')).toBeFocused();
+  expect(await page.evaluate(url=>window.dismissedExportURLs.filter(value=>value===url).length,url)).toBe(1);
+  expect(await page.evaluate(async()=>(await maimaiPlayerStorage.read()).active.revision)).toBe(data.revision);
+  await page.locator('#player-export-best50').click();await expect(page.locator('#player-export-download')).toBeHidden();
+  expect(await page.locator('#player-export-download').getAttribute('href')).toBeNull();
+  if(testInfo.project.use.hasTouch){
+    await page.screenshot({path:testInfo.outputPath('export-backdrop-mobile.png')});
+    const {outside}=await dialogPoints(dialog(page));await page.touchscreen.tap(outside.x,outside.y);
+    await expect(dialog(page)).toBeHidden();await expect(page.locator('#player-export-best50')).toBeFocused();
+  }
 });
 
 test('export canvas and artwork stay unloaded until Generate and unused partners never load',async({page})=>{

@@ -126,8 +126,8 @@
 /* Quiet support links stay in the controls, outside exported images. */
 .player-dialog .player-support-prompt{display:flex;align-items:center;gap:10px;margin:18px 0 0;color:#526f77;text-align:left}
 .player-dialog .player-support-prompt[hidden]{display:none}
-.player-dialog .player-support-prompt>svg{flex:0 0 16px;width:16px;height:16px;color:#a04d67}
-.player-dialog .player-support-prompt>p{flex:1;min-width:0;margin:0;font-size:12px;font-weight:400;line-height:1.65;overflow-wrap:anywhere}
+.player-dialog .player-support-prompt>svg{flex:0 0 18px;width:18px;height:18px;color:#a04d67}
+.player-dialog .player-support-prompt>p{flex:1;min-width:0;margin:0;font-size:14px;font-weight:400;line-height:1.65;overflow-wrap:anywhere}
 .player-dialog .player-support-link{display:inline;max-width:100%;min-height:0;margin:0;padding:0;border:0;border-radius:0;background:none;color:#007887;font:inherit;line-height:inherit;text-align:inherit;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px;white-space:normal;overflow-wrap:anywhere;cursor:pointer}
 .player-dialog .player-support-link:hover{background:none;color:#006976}
 .player-dialog .player-support-link:focus-visible{outline:2px solid #007887;outline-offset:3px}

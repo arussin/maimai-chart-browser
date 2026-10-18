@@ -102,11 +102,11 @@
       "ja": "エクスポート形式",
       "id": "Format ekspor"
     },
-    "Source account": {
-      "zh-Hans": "来源账号",
-      "ko": "원본 계정",
-      "ja": "読み込み元のアカウント",
-      "id": "Akun sumber"
+    "Source account (to identify your imports)": {
+      "zh-Hans": "来源账号（用于区分导入的数据）",
+      "ko": "원본 계정 (가져온 데이터 식별용)",
+      "ja": "読み込み元のアカウント（読み込んだデータの識別用）",
+      "id": "Akun sumber (untuk mengenali data impor Anda)"
     },
     "Private server": {
       "zh-Hans": "私人服务器",

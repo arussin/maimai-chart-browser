@@ -259,6 +259,56 @@ test('Afterglow wordmark keeps exact brand colors and positive ink gaps around i
   }
 });
 
+test('Best50 centers the complete wordmark ink over different version-logo shapes', () => {
+  for (const [naturalWidth, naturalHeight] of [
+    [400, 400],
+    [1200, 300],
+    [120, 600],
+  ]) {
+    const canvas = painter.paintAfterglowBest50(
+      documentFixture().document,
+      best50(),
+      new Map([['art:version', { key: 'version', naturalWidth, naturalHeight }]]),
+      options,
+    );
+    const wordmark = canvas.texts.filter(({ font }) => font.includes('italic 850 52px system-ui'));
+    const [, logoX, , logoWidth] = canvas.images.find(([img]) => img.key === 'version');
+    assert.equal(wordmark.map(({ value }) => value).join(''), 'maimai.party');
+    assert.ok(
+      Math.abs((wordmark[0].left + wordmark.at(-1).right) / 2 - (logoX + logoWidth / 2)) < 1e-8,
+    );
+    assert.ok(wordmark[1].left > wordmark[0].right);
+    assert.ok(wordmark[2].left > wordmark[1].right);
+    assert.ok(wordmark[0].left >= 1560 && wordmark.at(-1).right <= 1952);
+  }
+});
+
+test('Best50 title treatment preserves localized native text and the neighboring header content', () => {
+  const messages = JSON.parse(
+    readFileSync(
+      new URL('../../src/maimai_intelligence/assets/locales/score-export.json', import.meta.url),
+      'utf8',
+    ),
+  ).messages;
+  for (const locale of ['en', 'zh-Hans', 'ko', 'ja', 'id']) {
+    const translate = (key, values = []) =>
+      (messages[key]?.[locale] || key).replace(/\{(\d+)\}/g, (_, i) => String(values[i]));
+    const canvas = painter.paintAfterglowBest50(documentFixture().document, best50(), new Map(), {
+      translate,
+      regionLabel: 'Header region',
+    });
+    const title = canvas.texts.filter(({ value }) => value === translate('Best 50'));
+    assert.equal(title.length, 2, 'Native title face and depth use the same complete translation');
+    assert.ok(title.every(({ font }) => /italic 900 112px/.test(font)));
+    assert.ok(title.every(({ x, bounds }) => x >= 592 && x + bounds.width < 1392));
+    assert.ok(title[1].color.stops.length > 1, 'The readable face uses the restrained gradient');
+    const region = canvas.texts.find(({ value }) => value === 'Header region');
+    assert.ok(title.every(({ y, bounds }) => y + bounds.actualBoundingBoxDescent < region.y - 22));
+    assert.ok(canvas.attributes['aria-label'].includes(translate('Best 50')));
+    assert.ok(canvas.texts.some(({ value }) => value === 'PRiSM PLUS'));
+  }
+});
+
 test('Best50 cards keep imported precision and constants independent of catalog labels', () => {
   for (const constant of [149, null, 0])
     for (const format of ['DX', 'STD']) {

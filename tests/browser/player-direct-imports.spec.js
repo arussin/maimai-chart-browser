@@ -519,6 +519,7 @@ test("Kamaitachi game-profile URL imports exact PBs, survives reload and failed 
   const chart = await configureKamaitachi(page),
     state = await mockKamaitachi(context, chart);
   await openImport(page, "kamaitachi");
+  await expect(page.locator('#player-import-dialog [data-import-help="kamaitachi"]')).toHaveCount(1);
   await page.locator("#player-kamaitachi-account").fill("https://kamai.tachi.ac/u/Fixture42/games/maimaidx/");
   await page.screenshot({ path: testInfo.outputPath('kamaitachi-fixture-setup.png') });
   await page.locator("#player-import-dialog .player-actions button").first().click();

@@ -1,0 +1,12 @@
+{
+  "date": "2026-10-18",
+  "reviewer": "Codex with independent Codex contextual review",
+  "method": "AI contextual language review; not native-speaker certification.",
+  "scope": "Source account purpose label in English, Simplified Chinese, Korean, Japanese and Indonesian. Both support placements reuse the existing reviewed maintenance wording; the unused export-only opening and translations are removed.",
+  "decisions": [
+    "The source account is used for imported profile identity and display, so the label does not claim display-only use or authentication.",
+    "Chinese distinguishes imported data, Korean identifies imported data, Japanese identifies loaded data, and Indonesian identifies imported data. All preserve the source account meaning.",
+    "Support copy is identical in import and export and still outside PNG rendering. The existing translated support link is unchanged."
+  ],
+  "visual_validation": "Pending the new prepared candidate; this language review does not claim browser layout or native-speaker acceptance."
+}

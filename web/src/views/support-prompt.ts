@@ -34,12 +34,7 @@ export function createSupportPrompt(
   const text = document.createElement('p'),
     intro = document.createElement('span'),
     link = document.createElement('button');
-  localization.text(
-    intro,
-    context === 'import'
-      ? 'maimai.party is free to use, but costs quite a bit to maintain.'
-      : 'Finding maimai.party useful?',
-  );
+  localization.text(intro, 'maimai.party is free to use, but costs quite a bit to maintain.');
   link.type = 'button';
   link.className = 'player-support-link';
   link.dataset.supportOpen = '';

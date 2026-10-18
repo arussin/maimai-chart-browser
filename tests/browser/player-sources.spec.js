@@ -2,6 +2,7 @@ import { selectImportMethod } from './player-import-fixture.mjs';
 import {mockBrowserConfiguration} from './browser-configuration-fixture.mjs';
 import {observeRetiredAnnouncements,retiredAnnouncementState} from './removed-announcement-fixture.mjs';
 import {test,expect} from './fixtures.js';
+import {clickOutsideDialog,dialogPoints,dragOutsideDialog} from './dialog-dismiss-fixture.mjs';
 test.beforeEach(async({fixtureOrigins})=>{for(const origin of ["https://public-report.example"])fixtureOrigins.synthetic(origin);});
 import {readFile} from 'node:fs/promises';
 import {gzipSync} from 'node:zlib';
@@ -21,6 +22,39 @@ async function openImport(page){await page.locator('#settings-toggle').click();a
 async function importReport(page,remember=true){await openImport(page);await selectImportMethod(page,'report');await page.getByLabel('Hosted Session Report URL',{exact:true}).fill(manifest);await page.getByLabel('Remember and refresh').setChecked(remember);await page.getByRole('button',{name:'Continue',exact:true}).click();await page.getByRole('button',{name:remember?'Import & remember':'Import once',exact:true}).click();await expect.poll(()=>page.evaluate(()=>maimaiPersonal.enabled())).toBe(true);if(remember)await expect.poll(async()=>!!(await saved(page)).active?.source).toBe(true);}
 async function saved(page){return page.evaluate(()=>maimaiPlayerStorage.read());}
 async function age(page){await page.evaluate(async()=>{const db=await new Promise(resolve=>{const q=indexedDB.open('maimai-player-data',2);q.onsuccess=()=>resolve(q.result);});await new Promise((resolve,reject)=>{const t=db.transaction('datasets','readwrite'),s=t.objectStore('datasets'),q=s.get('active');q.onsuccess=()=>s.put({...q.result,source:{...q.result.source,lastAttempt:0}},'active');t.oncomplete=resolve;t.onabort=reject;});db.close();});}
+
+test('import backdrop clicks dismiss while inside clicks and drags preserve the form',async({page},testInfo)=>{
+  await boot(page);const before=await saved(page);await openImport(page);await selectImportMethod(page,'report');
+  const dialog=page.locator('#player-import-dialog'),field=page.getByLabel('Hosted Session Report URL',{exact:true});
+  await field.fill(manifest);
+  const {inside}=await dialogPoints(dialog);await page.mouse.click(inside.x,inside.y);
+  await expect(dialog).toBeVisible();await expect(field).toHaveValue(manifest);
+  await dragOutsideDialog(page,dialog);await expect(dialog).toBeVisible();await expect(field).toHaveValue(manifest);
+  await clickOutsideDialog(page,dialog);await expect(dialog).toBeHidden();await expect(page.locator('#settings-toggle')).toBeFocused();
+  expect(await saved(page)).toEqual(before);
+  if(testInfo.project.use.hasTouch){
+    await openImport(page);await selectImportMethod(page,'report');await field.fill(manifest);
+    await page.screenshot({path:testInfo.outputPath('import-backdrop-mobile.png')});
+    const {outside}=await dialogPoints(dialog);await page.touchscreen.tap(outside.x,outside.y);
+    await expect(dialog).toBeHidden();await expect(page.locator('#settings-toggle')).toBeFocused();expect(await saved(page)).toEqual(before);
+  }
+});
+
+test('dismissing an import preview outside cancels consent and permits a new import',async({page})=>{
+  await boot(page);const data=await fixture(page),before=await saved(page);
+  const upload={name:'fictional.gz',mimeType:'application/gzip',buffer:gzipSync(Buffer.from(JSON.stringify(data)))};
+  await page.locator('input[type=file]').setInputFiles(upload);
+  const dialog=page.locator('#player-import-dialog');await expect(dialog.locator('.player-remember')).toBeVisible();
+  await clickOutsideDialog(page,dialog);await expect(dialog).toBeHidden();await expect(page.locator('#settings-toggle')).toBeFocused();
+  const after=await saved(page);
+  expect(after.active).toEqual(before.active);
+  expect({...after.control,version:before.control.version}).toEqual(before.control);
+  expect({...after.token,version:before.token.version}).toEqual(before.token);
+  // Starting an import advances its concurrency token even when consent is declined.
+  expect(await page.evaluate(()=>maimaiPersonal.enabled())).toBe(false);
+  await page.locator('input[type=file]').setInputFiles(upload);await expect(dialog.locator('.player-remember')).toBeVisible();
+  await dialog.getByRole('button',{name:'Import data',exact:true}).click();await expect.poll(()=>page.evaluate(()=>maimaiPersonal.enabled())).toBe(true);
+});
 
 for(const [locale,message] of Object.entries({en:'Unknown failure','zh-Hans':'未知错误',ko:'알 수 없는 오류',ja:'不明なエラー',id:'Kesalahan tidak diketahui'}))test('unknown import failure is localized and preserves saved data: '+locale,async({page},testInfo)=>{
   await boot(page);
@@ -218,10 +252,11 @@ test('upgrading a legacy database preserves its v1 dataset without enabling refr
   },{data,bytes});await boot(page);expect(await page.evaluate(()=>maimaiPersonal.enabled())).toBe(true);expect((await saved(page)).active.revision).toBe(data.revision);await expect(page.locator('#player-refresh')).toBeHidden();
 });
 
-test('cancelled reads cannot clear the busy state of a newer import',async({page,context})=>{
+for(const dismissal of ['Close','outside'])test('cancelled reads cannot clear the busy state of a newer import: '+dismissal,async({page,context})=>{
   await boot(page);const data=await fixture(page);let started,release;const start=new Promise(r=>started=r),held=new Promise(r=>release=r);await mock(context,page,data,{delay:()=>{started();return held;}});
   await openImport(page);await selectImportMethod(page,'report');await page.getByLabel('Hosted Session Report URL',{exact:true}).fill(manifest);await page.getByRole('button',{name:'Continue',exact:true}).click();await start;
-  await page.getByRole('button',{name:'Close',exact:true}).click();await page.locator('input[type=file]').setInputFiles({name:'file.gz',mimeType:'application/gzip',buffer:gzipSync(Buffer.from(JSON.stringify(data)))});await expect(page.getByRole('heading',{name:'Import this profile?',exact:true})).toBeVisible();release();
+  if(dismissal==='outside')await clickOutsideDialog(page,page.locator('#player-import-dialog'));else await page.getByRole('button',{name:'Close',exact:true}).click();
+  await page.locator('input[type=file]').setInputFiles({name:'file.gz',mimeType:'application/gzip',buffer:gzipSync(Buffer.from(JSON.stringify(data)))});await expect(page.getByRole('heading',{name:'Import this profile?',exact:true})).toBeVisible();release();
   await page.getByRole('button',{name:'Import data',exact:true}).click();await expect.poll(()=>page.evaluate(()=>maimaiPersonal.enabled())).toBe(true);expect((await saved(page)).active).toBeNull();
 });
 
