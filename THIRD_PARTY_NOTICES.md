@@ -2,10 +2,13 @@
 
 ## Import service marks
 
-The import dialog bundles identifying marks for Maishift, Kamaitachi and
-Diving-Fish. Sources and the Diving-Fish permission notice are retained in
+The import dialog bundles identifying marks for Maishift, Kamaitachi,
+Diving-Fish, LXNS and DXRating, plus the existing Party ring. Sources and
+retained permission notices are in
 [Import service marks](docs/IMPORT_SERVICE_ICONS.md). Provider trademarks remain
 their owners' and do not imply endorsement.
+The Tomomai, mai-tools, JiETNG and AquaDX sections use original maimai.party
+service pictograms under this project's MIT license, not provider logos.
 
 ## Personal result graphics
 

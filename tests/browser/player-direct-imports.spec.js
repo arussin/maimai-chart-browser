@@ -451,7 +451,7 @@ test('service sections expose grouped imports, local marks, and keyboard control
   await page.keyboard.press('ArrowDown');
   await expect(dialog.locator('input[value=report]')).toBeChecked();
   expect(state.calls).toEqual([]);
-  await expect.poll(() => dialog.locator('.player-service-toggle img').evaluateAll(nodes => nodes.length > 0 && nodes.every(node => node.src.startsWith('data:image/') && node.complete && node.naturalWidth > 0))).toBe(true);
+  await expect.poll(() => dialog.locator('.player-service-toggle img').evaluateAll(nodes => nodes.length === 10 && nodes.every(node => node.src.startsWith('data:image/') && node.complete && node.naturalWidth > 0))).toBe(true);
   const kamaitachiMark = dialog.locator('[data-import-service="kamaitachi"] .player-service-toggle img');
   await expect(kamaitachiMark).toHaveCount(1);
   await expect(kamaitachiMark).toHaveAttribute('src', /^data:image\//);
@@ -511,7 +511,7 @@ test('availability failure differs from disabled Fish, and both preserve the rem
   await expect(dialog.locator('.player-actions button').first()).toBeEnabled();
   expect(state.calls.every(call => ['capabilities', 'status'].includes(call.path))).toBe(true);
 });
-test("Kamaitachi public PBs match exactly, survive reload and failed refresh, and Forget stops refresh", async ({
+test("Kamaitachi game-profile URL imports exact PBs, survives reload and failed refresh, and Forget stops refresh", async ({
   page,
   context,
 }, testInfo) => {
@@ -519,10 +519,14 @@ test("Kamaitachi public PBs match exactly, survive reload and failed refresh, an
   const chart = await configureKamaitachi(page),
     state = await mockKamaitachi(context, chart);
   await openImport(page, "kamaitachi");
-  await page.locator("#player-kamaitachi-account").fill("https://kamai.tachi.ac/u/Fixture42");
+  await page.locator("#player-kamaitachi-account").fill("https://kamai.tachi.ac/u/Fixture42/games/maimaidx/");
   await page.screenshot({ path: testInfo.outputPath('kamaitachi-fixture-setup.png') });
   await page.locator("#player-import-dialog .player-actions button").first().click();
   await expect(page.locator("#player-import-dialog .player-remember")).toBeVisible();
+  expect(state.requests).toEqual([
+    "https://kamai.tachi.ac/api/v1/users/Fixture42",
+    "https://kamai.tachi.ac/api/v1/users/42/games/maimaidx/pbs/all",
+  ]);
   expect(await saved(page)).toBeNull();
   await page.screenshot({ path: testInfo.outputPath('kamaitachi-fixture-preview.png') });
   await accept(page);

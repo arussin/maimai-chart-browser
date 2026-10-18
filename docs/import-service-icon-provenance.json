@@ -1,0 +1,86 @@
+{
+  "schemaVersion": 1,
+  "reviewedAt": "2026-10-18",
+  "localOnly": true,
+  "brandUse": "Service identification only; no endorsement or trademark license is asserted.",
+  "icons": [
+    {
+      "service": "tomomai",
+      "mimeType": "image/svg+xml",
+      "bytes": 483,
+      "sha256": "71376345af559cf3282af894c4f50109daf3045be5ac178dbc9ec71fdde4ba44",
+      "meaning": "Music score list",
+      "providerMark": false,
+      "source": "Original maimai.party pictogram",
+      "license": "MIT",
+      "copyright": "Copyright (c) 2026 arussin",
+      "dimensions": [
+        24,
+        24
+      ],
+      "externalResources": false
+    },
+    {
+      "service": "mai-tools",
+      "mimeType": "image/svg+xml",
+      "bytes": 350,
+      "sha256": "359c812855855bb6f79323990596a251e7007b9885375efb1a61266f1f5eb193",
+      "meaning": "Wrench",
+      "providerMark": false,
+      "source": "Original maimai.party pictogram",
+      "license": "MIT",
+      "copyright": "Copyright (c) 2026 arussin",
+      "dimensions": [
+        24,
+        24
+      ],
+      "externalResources": false
+    },
+    {
+      "service": "dxrating",
+      "mimeType": "image/x-icon",
+      "bytes": 15086,
+      "sha256": "37c89dd1a293ef8e9bbe68da94d869deca41bd3e6e2ee3be34ccd74620dccf50",
+      "meaning": "Provider favicon",
+      "providerMark": true,
+      "source": "https://shama.dxrating.net/favicon/pack/v1/favicon.ico",
+      "license": "MIT",
+      "advertisedBy": "https://dxrating.net/search",
+      "sourceLicense": "https://github.com/gekichumai/dxrating/blob/2ee0c4ef6bda9abe0612ecdc0eff03a4f1dab431/LICENSE",
+      "copyright": "Copyright (c) 2024 Gekichumai",
+      "unaltered": true
+    },
+    {
+      "service": "jietng",
+      "mimeType": "image/svg+xml",
+      "bytes": 526,
+      "sha256": "ff53d7ba0a39b3a5cb0ac06d1b931d769a5613fd5ed924ceb7d20b03768968bb",
+      "meaning": "Chat bot",
+      "providerMark": false,
+      "source": "Original maimai.party pictogram",
+      "license": "MIT",
+      "copyright": "Copyright (c) 2026 arussin",
+      "dimensions": [
+        24,
+        24
+      ],
+      "externalResources": false
+    },
+    {
+      "service": "aqua",
+      "mimeType": "image/svg+xml",
+      "bytes": 505,
+      "sha256": "bdecae286014d1bec5f8660e9629e93941c6c47b6cc69f450f6763ee60a4c0fc",
+      "meaning": "Server",
+      "providerMark": false,
+      "source": "Original maimai.party pictogram",
+      "license": "MIT",
+      "copyright": "Copyright (c) 2026 arussin",
+      "dimensions": [
+        24,
+        24
+      ],
+      "externalResources": false
+    }
+  ]
+}

@@ -48,9 +48,12 @@ export function createPlayerKamaitachi(ports: KamaitachiPorts) {
         'invalid',
       );
     const input = value.trim(),
-      // Accept only the public profile route, never an arbitrary request target.
+      // Accept the public root profile or its maimai DX page, never an arbitrary request target.
       // Reject encoded paths, credentials, ports, queries and fragments outright.
-      profile = /^https:\/\/kamai\.tachi\.ac\/u\/([A-Za-z0-9_-]{1,64})\/?$/.exec(input),
+      profile =
+        /^https:\/\/kamai\.tachi\.ac\/u\/([A-Za-z0-9_-]{1,64})(?:\/games\/maimaidx)?\/?$/.exec(
+          input,
+        ),
       account = profile ? profile[1] : input;
     if (
       !/^[A-Za-z0-9_-]{1,64}$/.test(account) ||
