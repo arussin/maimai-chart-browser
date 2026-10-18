@@ -15,28 +15,35 @@ licenses are not presented as a general grant to use the providers' brands.
 | Diving-Fish | <https://maimai.diving-fish.com/favicon.ico> |
 | LXNS | <https://maimai.lxns.net/favicon.webp> |
 | DXRating | <https://shama.dxrating.net/favicon/pack/v1/favicon.ico>, advertised by <https://dxrating.net/search> |
+| Tomomai | <https://www.tomomai.lol/icon.png>, advertised by the official site's document |
 
 Every current service section has a locally embedded image. DXRating's individual
 PNG favicon URLs returned HTTP 404, but its advertised ICO works and contains
 16px, 32px and 48px images. Keep the adjacent service name readable at small sizes.
 BATCH-MANUAL appears as a file method in Kamaitachi, not a separate service.
 
-Four services use original maimai.party pictograms under the project's MIT
-license. These describe the service and are not presented as provider logos.
-They replace the previous initial badges; they contain no upstream artwork,
-fonts, scripts or external references. The 24px shapes remain readable at 16px.
+JiETNG and AquaDX use the unchanged PNG logos supplied by the user for these
+connectors on 2026-10-18. Their official upstream provenance and reuse license
+were not independently established from those files; no license grant is
+asserted. JiETNG's white transparent artwork has a dark CSS background for
+contrast in the light chooser. The image itself is unchanged. Tomomai's mascot
+replaces the original music-list pictogram using the official-site asset above;
+its repository software license is not asserted as a separate brand-use grant.
+
+mai-tools uses an original maimai.party wrench pictogram under the project's MIT
+license. It describes the service and is not presented as a provider logo. It
+contains no upstream artwork, fonts, scripts or external references. Keep the
+adjacent service labels readable; detailed supplied marks are small at 24px.
 
 | Service | Original icon | Asset decision and primary source |
 | --- | --- | --- |
-| JiETNG | Chat bot | The [pinned license](https://github.com/Matsuk1/JiETNG-maimai-dx-bot/blob/abc6ebf3e00dd033f549bc8e9c17870f61f357ae/LICENSE) restricts copying/distribution. The documentation logo is not bundled. |
-| AquaDX | Server | The [pinned license](https://github.com/MewoLab/AquaDX/blob/4a0254ec198fe0448a2682eba82f8222a233605a/LICENSE) is CC BY-NC-SA 4.0. Its favicon remains outside this asset collection. |
-| Tomomai | Music score list | The [pinned license](https://github.com/shedaniel/tomomai/blob/9ae41413a34e066ca77500f27249b4a7631c7576/LICENSE) specifies AGPL v3. No separate permissive provider-mark license was located; its favicon is not bundled. |
 | mai-tools | Wrench | The [homepage](https://myjian.github.io/mai-tools/) and [pinned repository](https://github.com/myjian/mai-tools/tree/70874757c28e948913fbc8365da8f185f9b11801) provide no dedicated brand image. The userscript icon is a transparent 1px image. |
 
 The [new icon provenance](import-service-icon-provenance.json) records exact
-embedded hashes, source URLs and the distinction between provider and original
-icons. Existing provider marks and the Party ring remain unchanged. The source
-registry retains defensive text fallbacks for future unknown services; none of
+embedded hashes, source URLs and the distinction between official-site,
+user-supplied and original icons. Other provider marks and the Party ring remain
+unchanged. The source registry retains defensive text fallbacks for future
+unknown services; none of
 the ten current services uses them. Browser coverage requires all ten images to
 decode locally before the chooser is accepted.
 

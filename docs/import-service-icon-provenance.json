@@ -6,19 +6,18 @@
   "icons": [
     {
       "service": "tomomai",
-      "mimeType": "image/svg+xml",
-      "bytes": 483,
-      "sha256": "71376345af559cf3282af894c4f50109daf3045be5ac178dbc9ec71fdde4ba44",
-      "meaning": "Music score list",
-      "providerMark": false,
-      "source": "Original maimai.party pictogram",
-      "license": "MIT",
-      "copyright": "Copyright (c) 2026 arussin",
-      "dimensions": [
-        24,
-        24
-      ],
-      "externalResources": false
+      "mimeType": "image/png",
+      "bytes": 56115,
+      "sha256": "ea894e9c0285ee1343c51c80001886dcd2f14bc8c52801d9f970bc34a0b00b5f",
+      "dimensions": [256, 256],
+      "providerMark": true,
+      "unaltered": true,
+      "externalResources": false,
+      "meaning": "Official-site mascot icon",
+      "source": "https://www.tomomai.lol/icon.png",
+      "sourceType": "official-site",
+      "advertisedBy": "https://www.tomomai.lol/",
+      "license": "No separate brand-use license asserted"
     },
     {
       "service": "mai-tools",
@@ -30,10 +29,7 @@
       "source": "Original maimai.party pictogram",
       "license": "MIT",
       "copyright": "Copyright (c) 2026 arussin",
-      "dimensions": [
-        24,
-        24
-      ],
+      "dimensions": [24, 24],
       "externalResources": false
     },
     {
@@ -52,35 +48,34 @@
     },
     {
       "service": "jietng",
-      "mimeType": "image/svg+xml",
-      "bytes": 526,
-      "sha256": "ff53d7ba0a39b3a5cb0ac06d1b931d769a5613fd5ed924ceb7d20b03768968bb",
-      "meaning": "Chat bot",
-      "providerMark": false,
-      "source": "Original maimai.party pictogram",
-      "license": "MIT",
-      "copyright": "Copyright (c) 2026 arussin",
-      "dimensions": [
-        24,
-        24
-      ],
-      "externalResources": false
+      "mimeType": "image/png",
+      "bytes": 42657,
+      "sha256": "e09e98a456936fdaba863d58beb93057034bcf66ed0e967b24ced1f5d9fc6aa7",
+      "dimensions": [600, 600],
+      "providerMark": true,
+      "unaltered": true,
+      "externalResources": false,
+      "meaning": "User-supplied connector logo",
+      "source": "User-provided image supplied on 2026-10-18",
+      "sourceType": "user-supplied",
+      "provenance": "Official upstream provenance not independently verified.",
+      "license": "No license grant asserted",
+      "presentation": "Unchanged white artwork on a dark CSS background for contrast."
     },
     {
       "service": "aqua",
-      "mimeType": "image/svg+xml",
-      "bytes": 505,
-      "sha256": "bdecae286014d1bec5f8660e9629e93941c6c47b6cc69f450f6763ee60a4c0fc",
-      "meaning": "Server",
-      "providerMark": false,
-      "source": "Original maimai.party pictogram",
-      "license": "MIT",
-      "copyright": "Copyright (c) 2026 arussin",
-      "dimensions": [
-        24,
-        24
-      ],
-      "externalResources": false
+      "mimeType": "image/png",
+      "bytes": 1567,
+      "sha256": "3a72f424bb3bd401114ed47a4694e3147f50067983c52622e6c994ecf4d66317",
+      "dimensions": [28, 28],
+      "providerMark": true,
+      "unaltered": true,
+      "externalResources": false,
+      "meaning": "User-supplied connector logo",
+      "source": "User-provided image supplied on 2026-10-18",
+      "sourceType": "user-supplied",
+      "provenance": "Official upstream provenance not independently verified.",
+      "license": "No license grant asserted"
     }
   ]
 }

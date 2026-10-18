@@ -98,29 +98,39 @@ checks, and disabled request logs/traces. Localhost and Pages preview origins
 cannot complete the production OAuth callback. The default global and Fish
 and LXNS feature flags remain false in this CL.
 
-Before activation, deploy the reviewed privacy/help text and compatible usage
-collector/report contract. Apply the additive `0002_import_receipts.sql` migration
-through the existing owner release workflow before deploying the updated collector
-and report; deploy those before the browser. Historical totals remain intact, with
-unknown receipt times. Live acceptance requires a controlled production-origin
-activation window: start, callback and read fail while either the global or that
-provider's flag is false. Enabling both enables that service for eligible users,
-not just a test account; this is
-not a private test mode. Coordinate that activation before general availability,
-and return the affected provider flag to false if acceptance fails. Keep the
-global flag false unless at least one provider has passed acceptance.
+The selected launch is an open public test with all 12 implemented import methods
+proposed for availability. It still requires the owner's approval of the exact
+tested candidate and screenshot review, plus verified production configuration.
+This decision does not activate any method by itself. Prior success from a
+recruited score-bearing tester is not a launch prerequisite; real-account OAuth,
+authentic file exports and China catalog/Best 50 behavior remain disclosed
+validation limits. Each OAuth user must still sign in and consent on the provider.
 
-Verify an actual consenting account: sign-in and
-consent, exact PB comparison with masking off, unchanged/new-score refresh,
+Before activation, deploy the reviewed privacy/help text and compatible usage
+collector/report contract. Check the migration ledger, retain production
+`0003_diagnostics.sql`, and apply additive `0002_import_receipts.sql` only if
+pending through the existing owner release workflow. Deploy the updated collector
+and report before the browser. Historical totals and unknown receipt times remain
+intact. Verify the actual bindings, registered callbacks/scopes, encrypted grant
+storage, privacy settings and runtime visibility manifest before enabling the
+approved services. Start, callback and read fail while either the global or that
+provider's flag is false. Enabling both makes the service available to eligible
+consenting users, rather than only an owner test account. At the approved public
+launch, enable the global, Fish and LXNS switches and the reviewed visibility
+manifest; keep compatible encrypted-session recovery material. If a provider
+needs to be withdrawn, disable its availability switch as well as its new-import
+visibility flag, preserving saved scores and Disconnect/Forget controls.
+
+Follow up with actual consenting accounts to verify sign-in and consent, exact
+PB comparison with masking off, unchanged/new-score refresh,
 renewal, cancelled account replacement, import once, disconnect, and revoked
 access. Check LXNS's complete personal score response, missing-game/empty-account
 guidance, refreshed grants and separate-provider isolation. LXNS has no documented
 public OAuth revocation endpoint: disconnect deletes Party's encrypted grant;
 players can additionally revoke access in LXNS's application settings.
-Local fixtures and installed secrets do not establish these gates.
-Leave a provider enabled for general availability only after its own
-acceptance; deferred providers must remain unavailable. Preserve compatible
-encrypted-session recovery material.
+Local fixtures and installed secrets do not establish these real-account results.
+Record fixture, public-profile, consenting-account OAuth and authentic-file
+evidence separately; availability is not proof that every provider flow works.
 
 The app-owner Fish and LXNS accounts currently have no scores. They can verify
 real sign-in/consent and empty-data handling, but score comparisons need a
