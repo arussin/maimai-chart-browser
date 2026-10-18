@@ -217,6 +217,7 @@ test('plain import support note preserves inputs, focuses its link on return, an
     if (locale === 'en') await page.setViewportSize({width: 1280, height: 900});
     await link.focus(); await page.keyboard.press('Enter');
     await expect(frame(page).getByRole('heading')).toBeVisible();
+    await expect(page.locator('#support-checkout-dialog')).toHaveCSS('opacity', '1');
     await expect(dialog).toHaveAttribute('open', '');
     if (locale === 'en') await page.screenshot({path: testInfo.outputPath('import-fixture-checkout-en-1280.png')});
     await page.keyboard.press('Escape');
@@ -280,6 +281,7 @@ for (const kind of ['best50', 'pb', 'play']) test('ready-only export support pre
   if (kind === 'best50') await page.setViewportSize({width: 1280, height: 900});
   await link.focus(); await page.keyboard.press('Enter');
   await expect(frame(page).getByRole('heading')).toBeVisible();
+  await expect(page.locator('#support-checkout-dialog')).toHaveCSS('opacity', '1');
   if (kind === 'best50') await page.screenshot({path: testInfo.outputPath('export-fixture-checkout-en-1280.png')});
   await page.keyboard.press('Escape'); await expect(link).toBeFocused();
   await expect(download).toHaveAttribute('href', href); await expect(preview).toHaveAttribute('src', src);

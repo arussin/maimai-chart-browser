@@ -618,16 +618,24 @@ export function createPlayerData(ports: PersonalPorts) {
       );
       return card;
     }
-    const count = offer.profile?.sessionCount;
     card.append(
       make(
         'span',
-        count
-          ? `${count.toLocaleString()} retained ${count === 1 ? 'session' : 'sessions'}`
-          : `${offer.playCount.toLocaleString()} retained ${offer.playCount === 1 ? 'play' : 'plays'}`,
+        ports.localization.message('{0} PBs', [offer.pbCount.toLocaleString()]),
         'player-profile-history',
       ),
     );
+    const count = offer.profile?.sessionCount;
+    if (count || offer.playCount)
+      card.append(
+        make(
+          'span',
+          count
+            ? `${count.toLocaleString()} retained ${count === 1 ? 'session' : 'sessions'}`
+            : `${offer.playCount.toLocaleString()} retained ${offer.playCount === 1 ? 'play' : 'plays'}`,
+          'player-profile-history',
+        ),
+      );
     return card;
   }
   function ask(

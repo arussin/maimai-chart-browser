@@ -528,6 +528,7 @@ test("Kamaitachi game-profile URL imports exact PBs, survives reload and failed 
     "https://kamai.tachi.ac/api/v1/users/42/games/maimaidx/pbs/all",
   ]);
   expect(await saved(page)).toBeNull();
+  await expect(page.locator('#player-import-dialog .player-profile-history')).toHaveText('1 PBs');
   await page.screenshot({ path: testInfo.outputPath('kamaitachi-fixture-preview.png') });
   await accept(page);
   const first = await saved(page);
@@ -544,6 +545,7 @@ test("Kamaitachi game-profile URL imports exact PBs, survives reload and failed 
     ),
   ).toBe(991234);
   await captureSavedProfile(page, testInfo, 'kamaitachi');
+  await expect(page.locator('#player-status .player-profile-history')).toHaveText('1 PBs');
   await boot(page);
   await configureKamaitachi(page);
   expect((await saved(page)).revision).toBe(first.revision);
