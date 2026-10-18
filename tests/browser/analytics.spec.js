@@ -207,14 +207,16 @@ test('imported player card remains accessible outside the Settings action menu',
   await expect(page.locator('#player-status')).toBeVisible();
   await expect(page.getByRole('menu',{name:'Settings'})).toBeVisible();
   const tabEntry=page.locator('#settings-actions [role=menuitem][tabindex="0"]');
-  await expect(tabEntry).toHaveCount(1);await expect(tabEntry).toHaveAttribute('id','player-import');
+  // Imported data enables Export Best 50, which is prepended before Import.
+  expect(await page.locator('#settings-actions [role=menuitem]').evaluateAll(nodes=>nodes.filter(node=>!node.hidden).map(node=>node.id))).toEqual(['player-export-menu','player-import','player-toggle','player-forget','analytics-settings','report-issue','site-share','site-support']);
+  await expect(tabEntry).toHaveCount(1);await expect(tabEntry).toHaveAttribute('id','player-export-menu');
   await expect(page.locator('#settings-toggle')).toBeFocused();
   expect((await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21aa']).analyze()).violations).toEqual([]);
-  await page.keyboard.press('Tab');await expect(page.locator('#player-import')).toBeFocused();
+  await page.keyboard.press('Tab');await expect(page.locator('#player-export-menu')).toBeFocused();
   await page.keyboard.press('End');await expect(page.locator('#site-support')).toBeFocused();
   await expect(tabEntry).toHaveCount(1);await expect(tabEntry).toHaveAttribute('id','site-support');
-  await page.keyboard.press('Home');await expect(page.locator('#player-import')).toBeFocused();
-  await expect(tabEntry).toHaveCount(1);await expect(tabEntry).toHaveAttribute('id','player-import');
+  await page.keyboard.press('Home');await expect(page.locator('#player-export-menu')).toBeFocused();
+  await expect(tabEntry).toHaveCount(1);await expect(tabEntry).toHaveAttribute('id','player-export-menu');
   await page.keyboard.press('Shift+Tab');await expect(page.locator('#settings-toggle')).toBeFocused();
   await page.keyboard.press('Escape');await expect(page.locator('#settings-menu')).toBeHidden();
   await expect(tabEntry).toHaveCount(0);
