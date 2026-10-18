@@ -78,6 +78,15 @@ export function createScoreExporter(ports: ExportPorts) {
     if (imageURL) URL.revokeObjectURL(imageURL);
     imageURL = null;
   }
+  function dismiss() {
+    // A native close event is queued; invalidate work at the user's dismissal.
+    discard('cancelled');
+    dialog.close();
+  }
+  dialog.addEventListener('cancel', (event) => {
+    event.preventDefault();
+    dismiss();
+  });
   dialog.addEventListener('close', () => {
     discard('cancelled');
     disposeFields();
@@ -128,7 +137,7 @@ export function createScoreExporter(ports: ExportPorts) {
     };
     const close = make('button', 'Close');
     close.type = 'button';
-    close.onclick = () => dialog.close();
+    close.onclick = dismiss;
     actions.append(generate, download, close);
     dialog.append(fields, status, preview, actions);
     const support = createSupportPrompt(document, i18n, 'export');

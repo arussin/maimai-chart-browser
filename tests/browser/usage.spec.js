@@ -196,18 +196,32 @@ for(const fault of ['renderer_module','canvas_context','preview_preparation','ar
  expect(JSON.stringify(counts)).not.toContain('PRIVATE-SENTINEL');expect(external).toEqual([]);
 });
 
-for(const action of ['close','replace'])test('render '+action+' is a single cancellation or supersession',async({page,context})=>{
+for(const action of ['close','close button','replace'])test('render '+action+' is a single cancellation or supersession',async({page,context})=>{
  const {counts}=await hosted(context);await prepareExport(page);
  await page.evaluate(()=>HTMLCanvasElement.prototype.toBlob=function(callback){window.releaseUsagePNG=()=>callback(null);});
  await page.locator('#player-export-best50').click();await page.locator('#player-export-generate').click();
  await page.waitForFunction(()=>!!window.releaseUsagePNG);
+ await page.evaluate(action=>{
+  const dialog=document.getElementById('player-export-dialog');
+  window.exportCloseOrder=[];
+  window.exportClosed=new Promise(resolve=>dialog.addEventListener('close',()=>{window.exportCloseOrder.push('close');resolve();},{once:true}));
+  if(action==='replace')return;
+  // Resume encoding before the queued close event, rather than relying on browser timing.
+  const target=action==='close'?dialog:dialog.querySelector('.player-export-actions button:last-child');
+  target.addEventListener(action==='close'?'cancel':'click',()=>queueMicrotask(()=>{
+   window.exportCloseOrder.push('encode');window.exportOpenDuringRelease=dialog.open;window.releaseUsagePNG();
+  }),{once:true});
+ },action);
  if(action==='close')await page.keyboard.press('Escape');
+ else if(action==='close button')await page.locator('#player-export-dialog').getByRole('button',{name:'Close',exact:true}).click();
  else await page.evaluate(()=>document.getElementById('player-forget').click());
  await expect(page.locator('#player-export-dialog')).not.toBeVisible();
- await page.evaluate(()=>releaseUsagePNG());await page.evaluate(()=>maimaiUsage.flush());
+ await page.evaluate(async action=>{if(action==='replace')releaseUsagePNG();await window.exportClosed;},action);
+ if(action!=='replace')expect(await page.evaluate(()=>({order:window.exportCloseOrder,open:window.exportOpenDuringRelease}))).toEqual({order:['encode','close'],open:false});
+ await page.evaluate(()=>maimaiUsage.flush());
  const rows=counts.filter(b=>b.version===2).flatMap(b=>b.events).filter(r=>r.operation==='image_export');
- expect(rows.reduce((n,r)=>n+r.count,0)).toBe(1);expect(rows[0].outcome).toBe(action==='close'?'cancelled':'superseded');
- expect(counts.flatMap(b=>b.events).some(r=>r.event==='score_export_failed')).toBe(false);
+ expect(rows.reduce((n,r)=>n+r.count,0)).toBe(1);expect(rows[0]).toMatchObject({outcome:action==='replace'?'superseded':'cancelled',reason:'none',stage:'encode'});
+ expect(counts.flatMap(b=>b.events).some(r=>r.event==='score_export_failed'||r.event==='score_export_completed')).toBe(false);
 });
 
 test('comparison exceptions are finite and deliberate same-chart selections are not failures',async({page,context})=>{
