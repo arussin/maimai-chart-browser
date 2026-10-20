@@ -12,9 +12,14 @@ export const OPERATIONS = [
   'image_export',
   'comparison',
   'similar',
+  'provider_connect',
+  'provider_disconnect',
+  'provider_cleanup',
+  'connector_config',
 ] as const;
 export const STAGES = [
   'start',
+  'authorization',
   'transport',
   'response',
   'normalize',
@@ -62,6 +67,13 @@ export const REASONS = [
   'not_prepared',
   'insufficient_coverage',
   'no_matches',
+  'popup_blocked',
+  'authorization_failed',
+  'connection_expired',
+  'agreement_required',
+  'empty_scores',
+  'cleanup_required',
+  'configuration_unavailable',
 ] as const;
 export const OUTCOMES = [
   'success',
@@ -80,6 +92,15 @@ export const SOURCES = [
   'file',
   'report',
   'maishift',
+  'kamaitachi',
+  'diving-fish',
+  'lxns',
+  'file:mai-tools',
+  'file:dxrating',
+  'file:tomomai',
+  'file:jietng',
+  'file:aqua',
+  'file:tachi',
   'temporary',
   'persistent',
   'best50',
@@ -126,15 +147,35 @@ export function validateDiagnostic(value: unknown): DiagnosticRow | null {
     Number(r.count) > 100
   )
     return null;
-  const importSource = member(['file', 'report', 'maishift'], r.source);
+  const importSource = member(
+    [
+      'file',
+      'report',
+      'maishift',
+      'kamaitachi',
+      'diving-fish',
+      'lxns',
+      'file:mai-tools',
+      'file:dxrating',
+      'file:tomomai',
+      'file:jietng',
+      'file:aqua',
+      'file:tachi',
+    ],
+    r.source,
+  );
   if (
     ['import', 'refresh'].includes(String(r.operation))
       ? !importSource
-      : ['restore', 'storage', 'preferences'].includes(String(r.operation))
-        ? !member(['temporary', 'persistent'], r.source)
-        : r.operation === 'image_export'
-          ? !member(['best50', 'achievement_pb', 'achievement_play'], r.source)
-          : r.source !== 'none'
+      : ['provider_connect', 'provider_disconnect', 'provider_cleanup'].includes(
+            String(r.operation),
+          )
+        ? !member(['diving-fish', 'lxns'], r.source)
+        : ['restore', 'storage', 'preferences'].includes(String(r.operation))
+          ? !member(['temporary', 'persistent'], r.source)
+          : r.operation === 'image_export'
+            ? !member(['best50', 'achievement_pb', 'achievement_play'], r.source)
+            : r.source !== 'none'
   )
     return null;
   if (r.outcome === 'failed' && r.reason === 'none') return null;

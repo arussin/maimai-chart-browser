@@ -56,13 +56,14 @@ async function open(page) {
   await page.locator('#site-share').click();
 }
 
-test('share is the final settings action above the imported player badge, with an icon', async ({page, context}, info) => {
+test('share stays above optional Support and the imported player badge, with an icon', async ({page, context}, info) => {
   const external = await hosted(context); await ready(page, '/lab/');
   await page.locator('input[type=file]').setInputFiles(fileURLToPath(new URL('../../output/player-accessibility.gz', import.meta.url)));
   await page.getByRole('button', {name:'Import data', exact:true}).click();
   await expect(page.locator('#player-import-dialog')).toBeHidden();
   await page.locator('#settings-toggle').click();
-  await expect(page.locator('#settings-actions [role=menuitem]').last()).toHaveAttribute('id','site-share');
+  if(await page.locator('#site-support').count())expect(await page.locator('#site-support').evaluate(node=>node.previousElementSibling.id)).toBe('site-share');
+  else await expect(page.locator('#settings-actions [role=menuitem]').last()).toHaveAttribute('id','site-share');
   await expect(page.locator('#site-share svg')).toBeVisible();
   await expect(page.locator('#site-share')).toHaveText('Share this site');
   await expect(page.locator('#player-status')).toBeVisible();
@@ -186,7 +187,9 @@ test('every provider and More link contains only the public URL and title, with 
 
 test('share is keyboard reachable, traps dialog focus and returns focus on Escape or Close', async ({page, context}) => {
   await hosted(context); await ready(page);
-  await page.locator('#settings-toggle').press('ArrowUp'); await expect(page.locator('#site-share')).toBeFocused();
+  await page.locator('#settings-toggle').press('ArrowUp');
+  if(await page.locator('#site-support').count()){await expect(page.locator('#site-support')).toBeFocused();await page.keyboard.press('ArrowUp');}
+  await expect(page.locator('#site-share')).toBeFocused();
   await page.keyboard.press('Enter'); await expect(page.locator('#site-share-copy')).toBeFocused();
   await page.keyboard.press('Tab'); await expect(page.locator('#site-share-more')).toBeFocused();
   await page.keyboard.press('Tab'); await expect(page.locator('#site-share-close')).toBeFocused();

@@ -113,21 +113,29 @@ test('regional labels preserve the jacket through repeated preference, difficult
   const row=page.locator('#songs .song-row[data-difficulty=MASTER]'),preference=page.getByRole('checkbox',{name:'Use maimai international data',exact:true});
   await expect(row).toHaveCount(1);
   const jacket=row.locator('.song-jacket');
-  await expect(jacket).not.toHaveClass(/artwork-missing/);
+  const expectLoadedJacket=async target=>{
+    // Mobile WebKit may defer offscreen lazy images below the expanded filters.
+    // Resolve the current row again if catalog startup replaces it mid-scroll.
+    await expect(async()=>{
+      await target.scrollIntoViewIfNeeded();
+      await expect(target).not.toHaveClass(/artwork-missing/);
+    }).toPass({timeout:5000});
+  };
+  await expectLoadedJacket(jacket);
   const source=await jacket.locator('img').getAttribute('src');
   for(let i=0;i<2;i++){
     await preference.check();await expect(row).toContainText('Soteria fixture');
-    await expect(jacket).not.toHaveClass(/artwork-missing/);
+    await expectLoadedJacket(jacket);
     await expect(jacket.locator('img')).toHaveAttribute('src',source);
     await expect(jacket).not.toHaveClass(/artwork-missing/);
     await row.getByRole('button',{name:'Compare this chart'}).click();
     await expect(page.locator('#compare-left-search')).toHaveValue(/Soteria fixture/);
     await page.locator('#catalog-tab').click();await preference.uncheck();
-    await expect(row).toContainText('ソテリア');await expect(jacket).not.toHaveClass(/artwork-missing/);
+    await expect(row).toContainText('ソテリア');await expectLoadedJacket(jacket);
   }
   await preference.check();await page.locator('#reset-filters').click();
   await expect(preference).not.toBeChecked();
-  await expect(page.locator('#songs .song-row').filter({hasText:'ソテリア'}).first().locator('.song-jacket')).not.toHaveClass(/artwork-missing/);
+  await expectLoadedJacket(page.locator('#songs .song-row').filter({hasText:'ソテリア'}).first().locator('.song-jacket'));
 });
 
 test('filter disclosures default closed, count active groups and remember independent choices',async({page,context})=>{

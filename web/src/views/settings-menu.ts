@@ -35,9 +35,16 @@ export function createSettingsMenu(ports: SettingsPorts): SettingsMenu | undefin
       control = toggle.parentElement!;
     const items = () =>
       [...menu.querySelectorAll<HTMLElement>('[role="menuitem"]')].filter((item) => !item.hidden);
+    function tabEntry(selected?: HTMLElement) {
+      // Keep one existing action reachable after a pointer-opened scrollable menu.
+      // Arrow navigation moves that entry; the container adds no extra tab stop.
+      for (const item of menu.querySelectorAll<HTMLElement>('[role="menuitem"]'))
+        item.tabIndex = item === selected ? 0 : -1;
+    }
     function close(focus = false) {
       menu.hidden = true;
       toggle.setAttribute('aria-expanded', 'false');
+      tabEntry();
       if (focus) toggle.focus();
     }
     function open(last = false, focus = true) {
@@ -45,8 +52,10 @@ export function createSettingsMenu(ports: SettingsPorts): SettingsMenu | undefin
       menu.hidden = false;
       toggle.setAttribute('aria-expanded', 'true');
       fitMenu();
-      const entries = items();
-      if (focus) entries[last ? entries.length - 1 : 0]?.focus();
+      const entries = items(),
+        selected = entries[last ? entries.length - 1 : 0];
+      tabEntry(selected);
+      if (focus) selected?.focus();
       else toggle.focus({ preventScroll: true });
     }
     function fitMenu() {
@@ -66,6 +75,10 @@ export function createSettingsMenu(ports: SettingsPorts): SettingsMenu | undefin
     menu.addEventListener('click', (event) => {
       if (event.target instanceof window.Element && event.target.closest('a[role="menuitem"]'))
         setTimeout(() => close(true), 0);
+    });
+    menu.addEventListener('focusin', (event) => {
+      if (event.target instanceof window.HTMLElement && items().includes(event.target))
+        tabEntry(event.target);
     });
     menu.onkeydown = (event) => {
       const entries = items(),

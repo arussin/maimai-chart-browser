@@ -1,0 +1,42 @@
+{
+  "reviewer": "Codex",
+  "date": "2026-10-17",
+  "method": "AI contextual translation review; not native-speaker certification.",
+  "locales": ["en", "zh-Hans", "ko", "ja", "id"],
+  "entries": 6,
+  "scope": [
+    "maimai.party is free to use, but costs quite a bit to maintain.",
+    "Please consider supporting its development and hosting.",
+    "Finding maimai.party useful?",
+    "CC",
+    "Combo achievement",
+    "Sync achievement"
+  ],
+  "checks": [
+    "English support copy exactly matches the approved handoff, with the entire second sentence linked.",
+    "Translations describe meaningful maintenance costs and invite voluntary support for development and hosting; none imply payment is required to import or export.",
+    "Support terminology follows the existing locale catalogs: sponsorship/support in Chinese, 후원 in Korean, 支援 in Japanese, and dukungan in Indonesian.",
+    "CC is the compact observed chart-constant caption, translated as 定数, 상수, 定数 and Konst.; it does not rename or recalculate the source value.",
+    "Combo and sync captions distinguish the two achievement categories and remain suitable for accessible image descriptions.",
+    "Existing official grade/lamp symbols and difficulty categories remain game labels, including UTAGE. Other existing translations and player/catalog identities are unchanged."
+  ],
+  "invariants": [
+    {"value": "UTAGE", "reason": "Official game difficulty-category label in the painter."},
+    {"value": "#settings-actions #site-share", "reason": "Exact CSS descendant selector used only by querySelector to place Support after Share in the settings menu; not visible or accessible copy."}
+  ],
+  "classification_followup": {
+    "date": "2026-10-17",
+    "reviewer": "Codex logging_reconcile",
+    "method": "Inspected the typed source and generated literal inventory under the exact protocol-token classification rule in docs/LOCALIZATION.md.",
+    "result": "The selector is an internal DOM lookup. Registered this exact value as an invariant; no message, translation, runtime behavior or scanner exemption changed.",
+    "generated_inventory": "The prepared candidate inventory contained 253 strings and only this unclassified selector. An in-memory addition of the exact invariant left no unclassified strings; this does not assert browser or visual validation passed."
+  },
+  "independent_review": {
+    "reviewer": "Codex logging_reconcile",
+    "method": "Read-only semantic review against the approved English copy, adjacent existing translations, painter context and support dialog behavior; not native-speaker certification.",
+    "result": "No required corrections. The support invitations remain voluntary, maintenance/development/hosting meanings are preserved, and the compact export captions agree with existing chart constant, Combo and Sync terminology.",
+    "settings": "The settings entry reuses the existing Support maimai.party key and all four translations, without adding another message.",
+    "fingerprint_scope": ["support.json", "score-export.json", "invariants.json"]
+  },
+  "visual_validation": "The combined candidate must be checked at desktop and narrow widths in all five locales and in downloaded PNGs. This copy-review record does not assert those checks have passed."
+}

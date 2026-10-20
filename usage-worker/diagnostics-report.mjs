@@ -26,6 +26,7 @@ export function diagnosticMarkdown(report){
   const health=report.diagnostic_health??{schema:'unknown',last_receipt:null};
   return ['## Diagnostic outcomes','',`Schema: ${health.schema}. Latest known diagnostic receipt: ${health.last_receipt??'unknown'}. Current collector write health: unknown.`,
     'Coverage is incomplete. Opt-outs, dropped or unconfirmed sends and rejected batches cannot be reconstructed. No received rows means unknown, not zero. Schema compatibility proves the query can read this schema, not that current browsers or the collector deployed it.','',
+    'The diagnostics-1 vocabulary includes additive connector categories. Older clients or collectors can lack those categories; a known receipt does not establish their rollout or coverage.','',
     '| Day | Operation | Source | Mode | Stage | Outcome | Reason | Duration | Instrumentation | Received |',
     '|---|---|---|---|---|---|---|---|---|---:|',
     ...(report.diagnostics??[]).map(r=>'| '+[r.day,r.operation,r.source,r.mode,r.stage,r.outcome,r.reason,r.duration,r.instrumentation,r.count].join(' | ')+' |'),''].join('\n');

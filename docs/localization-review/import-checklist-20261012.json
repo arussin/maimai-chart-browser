@@ -1,0 +1,28 @@
+{
+  "date": "2026-10-12",
+  "reviewer": "Codex with independent agent review",
+  "method": "Independent contextual AI linguistic and product review; not native-speaker certification",
+  "locales": [
+    "en",
+    "zh-Hans",
+    "ko",
+    "ja",
+    "id"
+  ],
+  "scope": "Seven short provider checklist and disclosure messages, service-only introduction, and five localized setup walkthroughs",
+  "corrections": [
+    "Moved tracker preparation, read-only approval and masking details into named question-mark disclosures",
+    "Preserved separate tracker links and explicit user acknowledgements",
+    "Removed duplicated introductory instructions in all five help files",
+    "Retained Fish-only masking requirement and no developer registration or personal API key for players",
+    "Independent contextual review accepted all five locales without blocking copy concerns"
+  ],
+  "inputs": {
+    "src/maimai_intelligence/assets/locales/player-connections.json": "85a2f7e1798a718145dd149ea539e0404de58634a9af8c94544a45a2442f05ae",
+    "src/maimai_intelligence/assets/import-help/README.id.md": "82a1c5e8ca3c032b4508afbf7b094449996c7b16dca0bc8f5a25f6d7a4f875b8",
+    "src/maimai_intelligence/assets/import-help/README.ja.md": "7e38a69363cd2f2ae7a7490c7ff00e610495d933d0824b200f7cb01bb25a6bbc",
+    "src/maimai_intelligence/assets/import-help/README.ko.md": "518792009898657f1d166d3d25b490498946c087e43b1359b64a8c958272fe8b",
+    "src/maimai_intelligence/assets/import-help/README.md": "a24b2158854f14fbc182623a98f75942e339a9f46d1e34bccc32cb0b75618759",
+    "src/maimai_intelligence/assets/import-help/README.zh-Hans.md": "cd55ff6ab437ac7e92e92eb89b0012924af0e1a3dbc067f6398243e29bed97a9"
+  }
+}

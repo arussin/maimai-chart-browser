@@ -1,4 +1,6 @@
 import {test,expect} from './fixtures.js';
+import {selectImportMethod} from './player-import-fixture.mjs';
+import {clickOutsideDialog} from './dialog-dismiss-fixture.mjs';
 import {readFile} from 'node:fs/promises';
 import {resolve,extname,sep} from 'node:path';
 import {gzipSync} from 'node:zlib';
@@ -35,6 +37,107 @@ test('actual user hooks produce only finite page/actions after GA refusal',async
  expect(await page.evaluate(()=>window.dataLayer)).toBeUndefined();
  for(const batch of counts)for(const row of batch.events)expect(Object.keys(row).sort()).toEqual(batch.version===1?['count','detail','event','failure','page']:['count','duration','instrumentation','mode','operation','outcome','reason','source','stage']);
  const persisted=await page.evaluate(()=>[...Object.keys(localStorage),...Object.keys(sessionStorage)].filter(k=>/usage/i.test(k)));expect(persisted).toEqual([]);
+});
+test('opening imports checks visibility without emitting import attempts or provider activity',async({page,context})=>{
+ const {counts,external}=await hosted(context),configurationRequests=[],providerRequests=[];
+ let malformed=false;
+ await context.route('https://maimai.party/api/player-import/oauth/connectors',async route=>{
+  const request=route.request();configurationRequests.push({url:request.url(),method:request.method()});
+  await route.fulfill({status:200,contentType:'application/json',body:malformed?'{invalid':JSON.stringify({schemaVersion:1,methods:{'file:tomomai':true}})});
+ });
+ page.on('request',request=>{
+  const url=new URL(request.url());
+  if(url.pathname.startsWith('/api/player-import/')&&!(request.method()==='GET'&&url.pathname==='/api/player-import/oauth/connectors'&&!url.search))providerRequests.push(request.url());
+ });
+ await page.goto('https://maimai.party/');
+ await expect.poll(()=>page.evaluate(()=>!!window.maimaiPersonal)).toBe(true);await page.evaluate(()=>maimaiPersonal.ready);
+ await page.locator('#player-import-primary').click();
+ await expect(page.locator('#player-import-dialog [data-import-service="tomomai"]')).toBeVisible();
+ await page.keyboard.press('Escape');await expect(page.locator('#player-import-dialog')).toBeHidden();
+ malformed=true;await page.locator('#player-import-primary').click();
+ await expect(page.locator('#player-import-dialog')).toContainText('You can still upload a Session Report file.');
+ await expect(page.locator('#player-import-dialog [data-import-service]')).toHaveCount(1);
+ await expect(page.locator('#player-import-dialog [data-import-service="session-report"]')).toBeVisible();
+ await page.evaluate(()=>maimaiUsage.flush());
+ const rows=counts.flatMap(batch=>batch.events);
+ expect(rows.filter(row=>row.event==='import_opened').reduce((total,row)=>total+row.count,0)).toBe(2);
+ expect(rows.filter(row=>row.event?.startsWith('provider_')||/^import_(?:started|previewed|confirmed|completed|failed|cancelled)$/.test(row.event))).toEqual([]);
+ const diagnostics=rows.filter(row=>row.operation==='connector_config');
+ expect(diagnostics.reduce((total,row)=>total+row.count,0)).toBe(2);
+ expect(diagnostics).toEqual(expect.arrayContaining([
+  expect.objectContaining({source:'none',mode:'automatic',stage:'complete',outcome:'success',reason:'none',count:1}),
+  expect.objectContaining({source:'none',mode:'automatic',stage:'response',outcome:'failed',reason:'malformed_response',count:1}),
+ ]));
+ expect(configurationRequests).toEqual(Array.from({length:2},()=>({url:'https://maimai.party/api/player-import/oauth/connectors',method:'GET'})));
+ expect(providerRequests).toEqual([]);expect(external).toEqual([]);
+});
+test('outside dismissal of an import preview logs one cancellation without saving or failure',async({page,context})=>{
+ const {counts,external}=await hosted(context);
+ await page.goto('https://maimai.party/');await expect.poll(()=>page.evaluate(()=>!!window.maimaiPersonal)).toBe(true);await page.evaluate(()=>maimaiPersonal.ready);
+ const fixture=JSON.parse(await readFile(new URL('../../output/reconciliation-fixture.json',import.meta.url),'utf8'));
+ const data=await page.evaluate(data=>maimaiPlayerData.reconcile(data),fixture);
+ await page.locator('input[type=file]').setInputFiles({name:'PRIVATE-CANCEL-FILE.gz',mimeType:'application/gzip',buffer:gzipSync(Buffer.from(JSON.stringify(data)))});
+ const dialog=page.locator('#player-import-dialog');await expect(dialog.locator('.player-remember')).toBeVisible();
+ await clickOutsideDialog(page,dialog);await expect(dialog).toBeHidden();await expect(page.locator('#settings-toggle')).toBeFocused();
+ await page.evaluate(()=>maimaiUsage.flush());
+ const rows=counts.flatMap(batch=>batch.events),actions=rows.filter(row=>row.detail==='file');
+ for(const [event,count] of [['import_started',1],['import_previewed',1],['import_cancelled',1],['import_confirmed',0],['import_completed',0],['import_failed',0]])expect(actions.filter(row=>row.event===event).reduce((sum,row)=>sum+row.count,0),event).toBe(count);
+ const diagnostics=rows.filter(row=>row.operation==='import'&&row.source==='file');
+ expect(diagnostics).toEqual([expect.objectContaining({outcome:'cancelled',reason:'none',mode:'manual',count:1})]);
+ expect(await page.evaluate(async()=>(await maimaiPlayerStorage.read()).active)).toBeNull();expect(await page.evaluate(()=>maimaiPersonal.enabled())).toBe(false);
+ expect(JSON.stringify(counts)).not.toContain('PRIVATE-CANCEL-FILE');expect(external).toEqual([]);
+});
+
+test('Tomomai file chooser logs finite preview, saved import, and malformed-file outcomes',async({page,context})=>{
+ const {counts,external}=await hosted(context),providerRequests=[];
+ await context.route('https://maimai.party/api/player-import/oauth/connectors',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({schemaVersion:1,methods:{'file:tomomai':true}})}));
+ page.on('request',request=>{
+  const url=new URL(request.url());
+  if(url.pathname.startsWith('/api/player-import/')&&!(request.method()==='GET'&&url.pathname==='/api/player-import/oauth/connectors'&&!url.search))providerRequests.push(request.url());
+ });
+ await page.goto('https://maimai.party/');await expect(page.locator('#catalog-count strong')).toHaveText('6');
+ const snapshot=await page.evaluate(async()=>{
+  await maimaiPersonal.ready;
+  const chart=maimaiResearchCatalog.catalog[0];
+  return {fetchedAt:'2026-10-01T12:00:00Z',displayName:'PRIVATE-TOMOMAI-DISPLAY',songs:[{songId:'abcdefgh:i11',songName:chart.title,artist:chart.artist,type:chart.format,difficulty:chart.difficulty,achievement:987643,fc:'fc',fs:'',dxScore:null,level:chart.level||'',levelPrecise:null}]};
+ });
+ const choose=async data=>{
+  await page.locator('#settings-toggle').click();await page.locator('#player-import').click();
+  await selectImportMethod(page,'file:tomomai');
+  await page.locator('#player-file-account').fill('PRIVATE-TOMOMAI-ACCOUNT');await page.locator('#player-file-region').selectOption('intl');
+  const choosing=page.waitForEvent('filechooser');await page.locator('#player-import-dialog .player-actions button').first().click();
+  await (await choosing).setFiles({name:'PRIVATE-TOMOMAI-FILE.json',mimeType:'application/json',buffer:Buffer.from(typeof data==='string'?data:JSON.stringify(data))});
+ };
+ const amount=(event,failure)=>counts.flatMap(batch=>batch.events).filter(row=>row.event===event&&row.detail==='file:tomomai'&&(failure===undefined||row.failure===failure)).reduce((sum,row)=>sum+row.count,0);
+ await choose(snapshot);await expect(page.locator('#player-import-dialog .player-remember')).toBeVisible();
+ expect(await page.evaluate(async()=>(await maimaiPlayerStorage.read()).active)).toBeNull();
+ await page.evaluate(()=>maimaiUsage.flush());
+ expect(amount('import_started')).toBe(1);expect(amount('import_previewed')).toBe(1);expect(amount('import_confirmed')).toBe(0);expect(amount('import_completed')).toBe(0);
+ await page.locator('#player-import-dialog .player-remember input').check();await page.locator('#player-import-dialog .player-actions button').first().click();
+ await expect(page.locator('#player-import-dialog')).toBeHidden();
+ await expect.poll(()=>page.evaluate(async()=>typeof (await maimaiPlayerStorage.read()).active?.revision)).toBe('string');
+ await expect.poll(()=>page.evaluate(()=>maimaiPersonal.enabled())).toBe(true);
+ const saved=await page.evaluate(async()=>{
+  const {active}=await maimaiPlayerStorage.read(),data=await maimaiPlayerData.decode(active.bytes);
+  return {revision:active.revision,key:data.player.key,achievement:Object.values(data.records)[0].achievement};
+ });
+ expect(saved.key).toBe('tomomai:maimaidx:intl:PRIVATE-TOMOMAI-ACCOUNT');expect(saved.achievement).toBe(987643);
+ await choose('{invalid');await expect(page.locator('#player-import-dialog')).toContainText('Choose a valid JSON export for the selected source.');
+ expect(await page.evaluate(async()=>(await maimaiPlayerStorage.read()).active?.revision)).toBe(saved.revision);
+ await page.evaluate(()=>maimaiUsage.flush());
+ for(const [event,count] of [['import_started',2],['import_previewed',1],['import_confirmed',1],['import_completed',1],['import_failed',1],['import_cancelled',0]])expect(amount(event),event).toBe(count);
+ expect(amount('import_failed','invalid')).toBe(1);
+ const diagnostics=counts.filter(batch=>batch.version===2).flatMap(batch=>batch.events).filter(row=>row.operation==='import'&&row.source==='file:tomomai');
+ expect(diagnostics.reduce((sum,row)=>sum+row.count,0)).toBe(2);
+ expect(diagnostics).toEqual(expect.arrayContaining([
+  expect.objectContaining({mode:'manual',stage:'commit',outcome:'success',reason:'none',count:1}),
+  expect.objectContaining({mode:'manual',stage:'decode',outcome:'failed',reason:'malformed_response',count:1}),
+ ]));
+ const rows=counts.flatMap(batch=>batch.events),stages=rows.filter(row=>/^import_(?:started|previewed|confirmed|completed|failed|cancelled)$/.test(row.event));
+ expect(stages.every(row=>row.detail==='file:tomomai')).toBe(true);expect(rows.filter(row=>row.event?.startsWith('provider_'))).toEqual([]);
+ for(const batch of counts)for(const row of batch.events)expect(Object.keys(row).sort()).toEqual(batch.version===1?['count','detail','event','failure','page']:['count','duration','instrumentation','mode','operation','outcome','reason','source','stage']);
+ expect(JSON.stringify(counts)).not.toMatch(/PRIVATE-TOMOMAI|abcdefgh:i11|987643|2026-10-01T12:00:00Z/);
+ expect(providerRequests).toEqual([]);expect(external).toEqual([]);
 });
 for(const option of [{gpc:true},{dnt:true},{disabled:true}])test('collection suppression '+JSON.stringify(option),async({page,context})=>{
  const {counts}=await hosted(context,option);await page.goto('https://maimai.party/');await expect(page.locator('#catalog-count strong')).toHaveText('6');
@@ -95,7 +198,7 @@ async function prepareExport(page){
 for(const fault of ['renderer_module','canvas_context','preview_preparation','artwork_failed'])test('export diagnostic boundary '+fault,async({page,context})=>{
  const {counts,external}=await hosted(context);await prepareExport(page);
  if(fault==='renderer_module')await page.route('**/score-export-canvas-*.js',route=>route.abort());
- if(fault==='artwork_failed')await page.route('**/score-export-artwork-*.js',route=>route.abort());
+ if(fault==='artwork_failed')await page.route('**/score-export-afterglow-artwork-*.js',route=>route.abort());
  if(fault==='canvas_context')await page.evaluate(()=>HTMLCanvasElement.prototype.getContext=()=>null);
  if(fault==='preview_preparation')await page.evaluate(()=>{
   const decode=HTMLImageElement.prototype.decode;
@@ -111,18 +214,33 @@ for(const fault of ['renderer_module','canvas_context','preview_preparation','ar
  expect(JSON.stringify(counts)).not.toContain('PRIVATE-SENTINEL');expect(external).toEqual([]);
 });
 
-for(const action of ['close','replace'])test('render '+action+' is a single cancellation or supersession',async({page,context})=>{
+for(const action of ['close','close button','outside','replace'])test('render '+action+' is a single cancellation or supersession',async({page,context})=>{
  const {counts}=await hosted(context);await prepareExport(page);
  await page.evaluate(()=>HTMLCanvasElement.prototype.toBlob=function(callback){window.releaseUsagePNG=()=>callback(null);});
  await page.locator('#player-export-best50').click();await page.locator('#player-export-generate').click();
  await page.waitForFunction(()=>!!window.releaseUsagePNG);
+ await page.evaluate(action=>{
+  const dialog=document.getElementById('player-export-dialog');
+  window.exportCloseOrder=[];
+  window.exportClosed=new Promise(resolve=>dialog.addEventListener('close',()=>{window.exportCloseOrder.push('close');resolve();},{once:true}));
+  if(action==='replace')return;
+  // Resume encoding before the queued close event, rather than relying on browser timing.
+  const cancels=action==='close'||action==='outside',target=cancels?dialog:dialog.querySelector('.player-export-actions button:last-child');
+  target.addEventListener(cancels?'cancel':'click',()=>queueMicrotask(()=>{
+   window.exportCloseOrder.push('encode');window.exportOpenDuringRelease=dialog.open;window.releaseUsagePNG();
+  }),{once:true});
+ },action);
  if(action==='close')await page.keyboard.press('Escape');
+ else if(action==='close button')await page.locator('#player-export-dialog').getByRole('button',{name:'Close',exact:true}).click();
+ else if(action==='outside')await clickOutsideDialog(page,page.locator('#player-export-dialog'));
  else await page.evaluate(()=>document.getElementById('player-forget').click());
  await expect(page.locator('#player-export-dialog')).not.toBeVisible();
- await page.evaluate(()=>releaseUsagePNG());await page.evaluate(()=>maimaiUsage.flush());
+ await page.evaluate(async action=>{if(action==='replace')releaseUsagePNG();await window.exportClosed;},action);
+ if(action!=='replace')expect(await page.evaluate(()=>({order:window.exportCloseOrder,open:window.exportOpenDuringRelease}))).toEqual({order:['encode','close'],open:false});
+ await page.evaluate(()=>maimaiUsage.flush());
  const rows=counts.filter(b=>b.version===2).flatMap(b=>b.events).filter(r=>r.operation==='image_export');
- expect(rows.reduce((n,r)=>n+r.count,0)).toBe(1);expect(rows[0].outcome).toBe(action==='close'?'cancelled':'superseded');
- expect(counts.flatMap(b=>b.events).some(r=>r.event==='score_export_failed')).toBe(false);
+ expect(rows.reduce((n,r)=>n+r.count,0)).toBe(1);expect(rows[0]).toMatchObject({outcome:action==='replace'?'superseded':'cancelled',reason:'none',stage:'encode'});
+ expect(counts.flatMap(b=>b.events).some(r=>r.event==='score_export_failed'||r.event==='score_export_completed')).toBe(false);
 });
 
 test('comparison exceptions are finite and deliberate same-chart selections are not failures',async({page,context})=>{
@@ -157,6 +275,11 @@ test('similar exceptions and empty matches have different outcomes',async({page,
 test('export actions count explicit intent and current outcomes without private values or restored choices',async({page,context})=>{
  const {counts,external}=await hosted(context);
  await prepareExport(page);
+ // The real UI sends the completed local import promptly, without calling flush
+ // from this test or waiting for the ordinary ten-second batching timer.
+ await expect.poll(()=>counts.flatMap(batch=>batch.events).filter(row=>row.event==='import_completed'&&row.detail==='file').reduce((sum,row)=>sum+row.count,0),{timeout:3000}).toBe(1);
+ for(const event of ['import_started','import_previewed','import_confirmed'])
+  expect(counts.flatMap(batch=>batch.events).filter(row=>row.event===event&&row.detail==='file').reduce((sum,row)=>sum+row.count,0)).toBe(1);
  const flush=()=>page.evaluate(()=>maimaiUsage.flush());
  const amount=(event,detail)=>counts.flatMap(batch=>batch.events).filter(row=>row.event===event&&row.detail===detail).reduce((sum,row)=>sum+row.count,0);
  const generate=async()=>{await page.locator('#player-export-generate').click();await expect(page.locator('#player-export-download')).toBeVisible();};
@@ -171,10 +294,12 @@ test('export actions count explicit intent and current outcomes without private 
  await generate();await download();await close();await page.locator('#player-export-best50').click();
  await expect(page.locator('#player-export-version')).toHaveValue('magical');await close();await flush();
  expect(amount('score_export_option_changed','version')).toBe(1);
- await page.locator('.player-export-achievement').first().click();await page.locator('#player-export-partner').selectOption('kanadera-magical');
- await page.evaluate(()=>{const encode=HTMLCanvasElement.prototype.toBlob;window.restoreUsagePNG=()=>HTMLCanvasElement.prototype.toBlob=encode;HTMLCanvasElement.prototype.toBlob=function(callback){window.releaseUsagePNG=()=>encode.call(this,callback,'image/png');};});
+ await page.locator('.player-export-achievement').first().click();await expect(page.locator('#player-export-partner')).toHaveCount(0);
+ await page.evaluate(()=>{const encode=HTMLCanvasElement.prototype.toBlob;window.restoreUsagePNG=()=>HTMLCanvasElement.prototype.toBlob=encode;HTMLCanvasElement.prototype.toBlob=function(callback){window.releaseUsagePNG=()=>new Promise(resolve=>encode.call(this,blob=>{callback(blob);resolve();},'image/png'));};});
  await page.locator('#player-export-generate').click();await page.waitForFunction(()=>!!window.releaseUsagePNG);
- await page.locator('#player-export-partner').selectOption('derakkuma-magical');await page.evaluate(()=>{restoreUsagePNG();releaseUsagePNG();});
+ // Closing cancels this render; its delayed encoder must not fill the reopened dialog.
+ await close();await expect(page.locator('.player-export-achievement').first()).toBeFocused();await page.locator('.player-export-achievement').first().click();
+ await page.evaluate(async()=>{restoreUsagePNG();await releaseUsagePNG();});
  await expect(page.locator('#player-export-download')).toBeHidden();await flush();
  expect(amount('score_export_completed','achievement_pb')).toBe(0);expect(amount('score_export_failed','achievement_pb')).toBe(0);
  await generate();await close();await page.locator('.player-export-play').first().click();await generate();await download();
@@ -184,12 +309,13 @@ test('export actions count explicit intent and current outcomes without private 
  for(const [kind,started] of [['best50',1],['achievement_pb',2],['achievement_play',2]]){
   expect(amount('score_export_started',kind)).toBe(started);expect(amount('score_export_completed',kind)).toBe(1);
  }
- expect(amount('score_export_opened','best50')).toBe(2);expect(amount('score_export_opened','achievement_pb')).toBe(1);expect(amount('score_export_opened','achievement_play')).toBe(1);
+ expect(amount('score_export_opened','best50')).toBe(2);expect(amount('score_export_opened','achievement_pb')).toBe(2);expect(amount('score_export_opened','achievement_play')).toBe(1);
  expect(amount('score_export_failed','achievement_play')).toBe(1);expect(amount('score_export_download_clicked','best50')).toBe(1);expect(amount('score_export_download_clicked','achievement_play')).toBe(1);
- expect(amount('score_export_option_changed','partner')).toBe(2);expect(amount('data_action','clear')).toBe(1);expect(amount('data_action','forget')).toBe(0);
+ expect(amount('score_export_option_changed','partner')).toBe(0);expect(amount('data_action','clear')).toBe(1);expect(amount('data_action','forget')).toBe(0);
  const diagnostics=counts.filter(b=>b.version===2).flatMap(b=>b.events).filter(r=>r.operation==='image_export');
  const outcomes=(kind,outcome,reason)=>diagnostics.filter(r=>r.source===kind&&r.outcome===outcome&&(!reason||r.reason===reason)).reduce((n,r)=>n+r.count,0);
- expect(outcomes('achievement_pb','superseded')).toBe(1);expect(outcomes('achievement_play','failed','png_encoding')).toBe(1);
+ expect(outcomes('achievement_pb','cancelled','none')).toBe(1);expect(outcomes('achievement_pb','superseded')).toBe(0);expect(outcomes('achievement_play','failed','png_encoding')).toBe(1);
+ expect(diagnostics.find(row=>row.source==='achievement_pb'&&row.outcome==='cancelled')).toMatchObject({mode:'manual',stage:'encode',reason:'none',count:1});
  expect(diagnostics.reduce((n,r)=>n+r.count,0)).toBe(5);
  expect(JSON.stringify(counts)).not.toMatch(/PRIVATE-SENTINEL|private-export-chart|private-song|private-source|private-session|kanadera|derakkuma|magical|prismplus/i);expect(external).toEqual([]);
 });

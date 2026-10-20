@@ -1,0 +1,81 @@
+{
+  "schemaVersion": 1,
+  "reviewedAt": "2026-10-18",
+  "localOnly": true,
+  "brandUse": "Service identification only; no endorsement or trademark license is asserted.",
+  "icons": [
+    {
+      "service": "tomomai",
+      "mimeType": "image/png",
+      "bytes": 56115,
+      "sha256": "ea894e9c0285ee1343c51c80001886dcd2f14bc8c52801d9f970bc34a0b00b5f",
+      "dimensions": [256, 256],
+      "providerMark": true,
+      "unaltered": true,
+      "externalResources": false,
+      "meaning": "Official-site mascot icon",
+      "source": "https://www.tomomai.lol/icon.png",
+      "sourceType": "official-site",
+      "advertisedBy": "https://www.tomomai.lol/",
+      "license": "No separate brand-use license asserted"
+    },
+    {
+      "service": "mai-tools",
+      "mimeType": "image/svg+xml",
+      "bytes": 350,
+      "sha256": "359c812855855bb6f79323990596a251e7007b9885375efb1a61266f1f5eb193",
+      "meaning": "Wrench",
+      "providerMark": false,
+      "source": "Original maimai.party pictogram",
+      "license": "MIT",
+      "copyright": "Copyright (c) 2026 arussin",
+      "dimensions": [24, 24],
+      "externalResources": false
+    },
+    {
+      "service": "dxrating",
+      "mimeType": "image/x-icon",
+      "bytes": 15086,
+      "sha256": "37c89dd1a293ef8e9bbe68da94d869deca41bd3e6e2ee3be34ccd74620dccf50",
+      "meaning": "Provider favicon",
+      "providerMark": true,
+      "source": "https://shama.dxrating.net/favicon/pack/v1/favicon.ico",
+      "license": "MIT",
+      "advertisedBy": "https://dxrating.net/search",
+      "sourceLicense": "https://github.com/gekichumai/dxrating/blob/2ee0c4ef6bda9abe0612ecdc0eff03a4f1dab431/LICENSE",
+      "copyright": "Copyright (c) 2024 Gekichumai",
+      "unaltered": true
+    },
+    {
+      "service": "jietng",
+      "mimeType": "image/png",
+      "bytes": 42657,
+      "sha256": "e09e98a456936fdaba863d58beb93057034bcf66ed0e967b24ced1f5d9fc6aa7",
+      "dimensions": [600, 600],
+      "providerMark": true,
+      "unaltered": true,
+      "externalResources": false,
+      "meaning": "User-supplied connector logo",
+      "source": "User-provided image supplied on 2026-10-18",
+      "sourceType": "user-supplied",
+      "provenance": "Official upstream provenance not independently verified.",
+      "license": "No license grant asserted",
+      "presentation": "Unchanged white artwork on a dark CSS background for contrast."
+    },
+    {
+      "service": "aqua",
+      "mimeType": "image/png",
+      "bytes": 1567,
+      "sha256": "3a72f424bb3bd401114ed47a4694e3147f50067983c52622e6c994ecf4d66317",
+      "dimensions": [28, 28],
+      "providerMark": true,
+      "unaltered": true,
+      "externalResources": false,
+      "meaning": "User-supplied connector logo",
+      "source": "User-provided image supplied on 2026-10-18",
+      "sourceType": "user-supplied",
+      "provenance": "Official upstream provenance not independently verified.",
+      "license": "No license grant asserted"
+    }
+  ]
+}

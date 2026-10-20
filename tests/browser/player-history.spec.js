@@ -20,7 +20,7 @@ test('old imports and remembered data retain one source play and one persistent 
   for(let attempt=0;attempt<2;attempt++){
     await page.locator('input[type=file]').setInputFiles({name:'player.gz',mimeType:'application/gzip',buffer:bytes});
     await expect(page.getByRole('heading',{name:'Import this profile?',exact:true})).toBeVisible();
-    await expect(page.locator('.player-dialog .player-profile-history')).toHaveText('1 retained play');
+    await expect(page.locator('.player-dialog .player-profile-history')).toHaveText(['1 PBs','1 retained play']);
     await page.getByLabel('Remember on this device',{exact:true}).check();
     await page.getByRole('button',{name:'Import data',exact:true}).click();
     const history=page.locator('.player-history');
@@ -45,11 +45,37 @@ test('a saved PB without a play never creates a play-history row',async({page})=
   const input=JSON.parse(await readFile(new URL('../../output/reconciliation-fixture.json',import.meta.url),'utf8'));
   const data=await page.evaluate(async d=>{d.plays={};const captures={};for(const c of Object.values(d.captures)){c.playIDs=[];captures[await maimaiPlayerData.digest(c)]=c;}d.captures=captures;const {revision,...body}=d;d.revision=await maimaiPlayerData.digest(body);return d;},input);
   await page.locator('input[type=file]').setInputFiles({name:'pb-only.gz',mimeType:'application/gzip',buffer:gzipSync(Buffer.from(JSON.stringify(data)))});
+  await expect(page.locator('.player-dialog .player-profile-history')).toHaveText('1 PBs');
   await page.getByRole('button',{name:'Import data',exact:true}).click();
   await expect(page.locator('.player-history')).toHaveCount(0);
   await expect(page.locator('.player-history').getByRole('region',{name:'Recorded plays',exact:true})).toHaveCount(0);
   await expect(page.locator('.song-row.is-expanded>.chart-summary>.player-achievement')).toContainText('97.0000%');
   await expect(page.locator('.song-row.is-expanded>.chart-summary>.player-achievement')).toBeVisible();
+});
+
+test('a retained play without a PB snapshot previews zero PBs and an unknown rating',async({page})=>{
+  await page.goto('/lab/');await configure(page);
+  const input=JSON.parse(await readFile(new URL('../../output/reconciliation-fixture.json',import.meta.url),'utf8'));
+  const data=await page.evaluate(async input=>{
+    const core=maimaiPlayerData,d=await core.reconcile(input);
+    d.snapshots={};
+    const captures={};
+    for(const capture of Object.values(d.captures)){
+      const row={...capture,snapshotIDs:[]};
+      captures[await core.digest(row)]=row;
+    }
+    d.captures=captures;
+    const {revision,...body}=d;d.revision=await core.digest(body);
+    return core.validate(d);
+  },input);
+  expect(Object.keys(data.plays)).toHaveLength(1);
+  await page.locator('input[type=file]').setInputFiles({name:'play-only.gz',mimeType:'application/gzip',buffer:gzipSync(Buffer.from(JSON.stringify(data)))});
+  await expect(page.locator('.player-dialog .player-profile-history')).toHaveText(['0 PBs','1 retained play']);
+  await expect(page.locator('.player-dialog .player-profile-rating-label')).toHaveText('Rating unknown');
+  await page.getByRole('button',{name:'Import data',exact:true}).click();
+  await expect(page.locator('.player-history').getByRole('region',{name:'Recorded plays',exact:true}).locator('tbody tr')).toHaveCount(1);
+  await expect(page.locator('.song-row.is-expanded>.chart-summary>.player-achievement')).toContainText('No recorded PB');
+  await expect(page.locator('.song-row.is-expanded>.chart-summary>.player-achievement .player-achievement-value')).toHaveCount(0);
 });
 
 async function historyFixture(page,total){

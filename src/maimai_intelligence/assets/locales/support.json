@@ -1,5 +1,17 @@
 {
   "messages": {
+    "maimai.party is free to use, but costs quite a bit to maintain.": {
+      "zh-Hans": "maimai.party 可以免费使用，但维护成本并不低。",
+      "ko": "maimai.party는 무료로 이용할 수 있지만, 유지에는 적지 않은 비용이 듭니다.",
+      "ja": "maimai.party は無料で使えますが、維持にはかなりの費用がかかります。",
+      "id": "maimai.party gratis digunakan, tetapi biaya pemeliharaannya cukup besar."
+    },
+    "Please consider supporting its development and hosting.": {
+      "zh-Hans": "请考虑赞助本站的开发和托管。",
+      "ko": "개발과 호스팅을 위한 후원을 고려해 주세요.",
+      "ja": "開発とホスティングへのご支援をご検討ください。",
+      "id": "Silakan pertimbangkan untuk mendukung pengembangan dan hostingnya."
+    },
     "Support maimai.party": {
       "zh-Hans": "赞助 maimai.party",
       "ko": "maimai.party 후원",

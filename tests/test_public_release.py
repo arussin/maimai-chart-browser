@@ -102,6 +102,31 @@ class PublicReleaseTests(unittest.TestCase):
         self.assertIsNone(plan.prepared_seo)
         self.assertEqual(plan.write_to(self.output)["files"], len(plan.assets) + 1)
 
+    def test_export_artwork_requires_explicit_verified_source_and_counts_toward_capacity(self):
+        from tests.test_export_artwork import export_fixture
+
+        store = self.root / "reviewed-export-input"
+        manifest, path, raw = export_fixture(store)
+        baseline = plan_public_release(self.source)
+        self.assertNotIn(path, baseline.assets)
+        with patch(
+            "maimai_intelligence.export_artwork.read_export_artwork_manifest",
+            return_value=manifest,
+        ):
+            plan = plan_public_release(self.source, export_artwork_source=store)
+            self.assertEqual(plan.assets[path], raw)
+            self.assertEqual(plan.manifest["releases"], baseline.manifest["releases"])
+            self.assertEqual(plan.summary["files"], baseline.summary["files"] + 1)
+            with patch(
+                "maimai_intelligence.public_release.MAX_PUBLIC_FILES", baseline.summary["files"]
+            ):
+                with self.assertRaisesRegex(ValueError, "file count limit"):
+                    build_public_release(self.source, self.output, export_artwork_source=store)
+            self.assertFalse(self.output.exists())
+            (store / path).write_bytes(b"changed after review")
+            with self.assertRaisesRegex(ValueError, "integrity"):
+                plan_public_release(self.source, export_artwork_source=store)
+
     def test_prepared_catalog_and_seo_are_reused_without_a_second_preparation(self):
         from maimai_intelligence.catalog_document import prepare_catalog_document
         from maimai_intelligence.lab import build_browser

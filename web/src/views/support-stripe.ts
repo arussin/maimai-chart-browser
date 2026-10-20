@@ -1,6 +1,7 @@
 import type { TextView, LocalizedText } from '../components/chart-card';
 import type { HistoryPort } from '../runtime/history';
 import type { CheckoutState, CheckoutStatus, SupportClient } from './support-client';
+import { supportHeart } from './support-prompt';
 export interface SupportLocalization extends Pick<TextView, 'text' | 'attribute'> {
   controls(host: Element): Element;
 }
@@ -100,9 +101,24 @@ export function createSupportStripe(ports: SupportPorts): void {
   opener.parentElement!.hidden = false;
   opener.setAttribute('aria-controls', dialog.id);
   i18n.text(opener.querySelector('span:last-child')!, config.title);
+  const share = root.querySelector('#settings-actions #site-share');
+  if (share && !root.querySelector('#site-support')) {
+    const support = element('button', 'site-support-action'),
+      label = element('span', '', 'Support maimai.party');
+    support.id = 'site-support';
+    support.type = 'button';
+    support.tabIndex = -1;
+    support.dataset.supportOpen = '';
+    support.setAttribute('role', 'menuitem');
+    support.setAttribute('aria-haspopup', 'dialog');
+    support.setAttribute('aria-controls', dialog.id);
+    support.append(supportHeart(document), label);
+    share.after(support);
+  }
   let instance: EmbeddedCheckout | null = null;
   let generation = 0,
     busy = false;
+  let returnFocus: HTMLElement = opener;
   let scriptPromise: Promise<void> | null = null;
   const destroy = () => {
     instance?.destroy();
@@ -274,8 +290,11 @@ export function createSupportStripe(ports: SupportPorts): void {
       if (token === generation) busy = false;
     }
   }
-  function open() {
+  function open(source: HTMLElement = opener) {
     if (dialog.open) return;
+    returnFocus = source.closest('#settings-menu')
+      ? (root.querySelector<HTMLElement>('#settings-toggle') ?? opener)
+      : source;
     dialog.showModal();
     document.body.classList.add('support-dialog-open');
     close.focus();
@@ -295,6 +314,16 @@ export function createSupportStripe(ports: SupportPorts): void {
     e.preventDefault();
     open();
   });
+  // Keep the underlying import/export modal intact while checkout is above it.
+  root.addEventListener('click', (e) => {
+    if (e.button || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
+    const source = (e.target as Element | null)?.closest<HTMLButtonElement>(
+      'button[data-support-open]',
+    );
+    if (!source || !root.contains(source)) return;
+    e.preventDefault();
+    open(source);
+  });
   close.onclick = () => dialog.close();
   dialog.addEventListener('click', (e) => {
     if (e.target === dialog) {
@@ -313,7 +342,16 @@ export function createSupportStripe(ports: SupportPorts): void {
     busy = false;
     destroy();
     document.body.classList.remove('support-dialog-open');
-    opener.focus();
+    if (
+      returnFocus.isConnected &&
+      returnFocus.getClientRects().length &&
+      !returnFocus.closest('dialog:not([open])')
+    )
+      returnFocus.focus({ preventScroll: true });
+    else
+      (root.querySelector<HTMLElement>('#settings-toggle') ?? opener).focus({
+        preventScroll: true,
+      });
   });
   // Only an explicit return-page action resumes automatically. Ordinary reloads wait for a click.
   const returning = read();

@@ -1,6 +1,7 @@
 import {test,expect} from './fixtures.js';
 import {readFile} from 'node:fs/promises';
 import {gzipSync} from 'node:zlib';
+import {clickOutsideDialog,dialogPoints,dragOutsideDialog} from './dialog-dismiss-fixture.mjs';
 
 const privateName='PRIVATE_EXPORT_SENTINEL';
 const dialog=page=>page.locator('#player-export-dialog');
@@ -58,9 +59,14 @@ async function generate(page){
   await page.evaluate(()=>{window.exportPaintText=[];window.exportCanvasLabels=[];});
   await page.locator('#player-export-generate').click();
   const download=page.locator('#player-export-download');
-  await expect(download).toBeVisible();
-  await expect(download).toHaveAttribute('href',/^blob:/);
-  await expect.poll(()=>page.locator('#player-export-preview').evaluate(img=>img.complete&&img.naturalWidth>0)).toBe(true);
+  // Artwork may use its full 5s deadline. Allow another 5s for lazy modules,
+  // the 2000x5380 Best 50 canvas, PNG encoding and preview decoding on CI.
+  // One shared bound still requires the real downloadable, decoded result.
+  await expect.poll(async()=>({
+    visible:await download.isVisible(),
+    blob:/^blob:/.test(await download.getAttribute('href')||''),
+    decoded:await page.locator('#player-export-preview').evaluate(img=>img.complete&&img.naturalWidth>0),
+  }),{timeout:10000,message:'Export must finish artwork, PNG encoding and preview preparation'}).toEqual({visible:true,blob:true,decoded:true});
   return download;
 }
 
@@ -100,7 +106,30 @@ test('Best 50 uses the imported version and downloads a local PNG without changi
   await page.keyboard.press('Escape');await expect(dialog(page)).not.toBeVisible();await expect(page.locator('#player-export-best50')).toBeFocused();
 });
 
-test('export canvas and artwork stay unloaded until Generate and only the chosen partner loads',async({page})=>{
+test('export backdrop dismissal preserves inside gestures and releases the prepared PNG once',async({page},testInfo)=>{
+  await boot(page);const data=await fixture(page);await importData(page,data);
+  await page.evaluate(()=>{
+    const revoke=URL.revokeObjectURL.bind(URL);window.dismissedExportURLs=[];
+    URL.revokeObjectURL=url=>{window.dismissedExportURLs.push(url);revoke(url);};
+  });
+  await page.locator('#player-export-best50').click();const download=await generate(page),url=await download.getAttribute('href');
+  const {inside}=await dialogPoints(dialog(page));await page.mouse.click(inside.x,inside.y);
+  await expect(dialog(page)).toBeVisible();await expect(download).toHaveAttribute('href',url);
+  await dragOutsideDialog(page,dialog(page));await expect(dialog(page)).toBeVisible();await expect(download).toHaveAttribute('href',url);
+  await clickOutsideDialog(page,dialog(page));await expect(dialog(page)).toBeHidden();await expect(dialog(page).locator('*')).toHaveCount(0);
+  await expect(page.locator('#player-export-best50')).toBeFocused();
+  expect(await page.evaluate(url=>window.dismissedExportURLs.filter(value=>value===url).length,url)).toBe(1);
+  expect(await page.evaluate(async()=>(await maimaiPlayerStorage.read()).active.revision)).toBe(data.revision);
+  await page.locator('#player-export-best50').click();await expect(page.locator('#player-export-download')).toBeHidden();
+  expect(await page.locator('#player-export-download').getAttribute('href')).toBeNull();
+  if(testInfo.project.use.hasTouch){
+    await page.screenshot({path:testInfo.outputPath('export-backdrop-mobile.png')});
+    const {outside}=await dialogPoints(dialog(page));await page.touchscreen.tap(outside.x,outside.y);
+    await expect(dialog(page)).toBeHidden();await expect(page.locator('#player-export-best50')).toBeFocused();
+  }
+});
+
+test('export canvas and artwork stay unloaded until Generate and unused partners never load',async({page})=>{
   const requested=[];
   page.on('request',request=>{const path=new URL(request.url()).pathname;if(/\/score-export-[^/]+\.js$/.test(path))requested.push(path);});
   await boot(page);await importData(page,await fixture(page));
@@ -109,17 +138,17 @@ test('export canvas and artwork stay unloaded until Generate and only the chosen
   expect(requested).toEqual([]);
   await generate(page);
   expect(requested.some(path=>path.includes('/score-export-canvas-'))).toBe(true);
-  expect(requested.some(path=>path.includes('/score-export-artwork-'))).toBe(true);
-  expect(requested.some(path=>path.includes('/score-export-result-artwork-'))).toBe(false);
+  expect(requested.some(path=>path.includes('/score-export-afterglow-artwork-'))).toBe(true);
+  expect(requested.filter(path=>path.includes('/score-export-artwork-'))).toEqual([]);
+  expect(requested.some(path=>path.includes('/score-export-result-artwork-'))).toBe(true);
   expect(requested.filter(path=>path.includes('/score-export-partner-'))).toEqual([]);
   await page.keyboard.press('Escape');await page.locator('.player-export-achievement').first().click();
-  await page.locator('#player-export-partner').selectOption('kanadera-magical');
+  await expect(page.locator('#player-export-partner')).toHaveCount(0);
   expect(requested.filter(path=>path.includes('/score-export-partner-'))).toEqual([]);
   await generate(page);
   expect(requested.some(path=>path.includes('/score-export-result-artwork-'))).toBe(true);
-  const partners=requested.filter(path=>/\/score-export-partner-kanadera-magical-/.test(path));
-  expect(partners).toHaveLength(1);
-  expect(requested.filter(path=>/\/score-export-partner-(?!artwork-)/.test(path))).toEqual(partners);
+  expect(requested.filter(path=>path.includes('/score-export-artwork-'))).toEqual([]);
+  expect(requested.filter(path=>path.includes('/score-export-partner-'))).toEqual([]);
 });
 
 test('an import without version evidence requires a choice and changing version discards the previous preview',async({page})=>{
@@ -191,7 +220,8 @@ test('achievement profile rating preserves a real zero and a later unknown profi
   expect(text).not.toContain('Current reconstructed rating');expect(text).not.toContain('Current imported rating');expect(await page.evaluate(()=>exportPaintText)).toContain('315');
 });
 
-test('manual version and verified partner choices survive exports and reload without storing player data',async({page},testInfo)=>{
+test('manual version survives exports and reload while unused partner preferences remain intact',async({page},testInfo)=>{
+  await page.addInitScript(()=>{if(!localStorage.getItem('maimai-score-export-preferences-v1'))localStorage.setItem('maimai-score-export-preferences-v1',JSON.stringify({schemaVersion:1,versionID:'prismplus',partnerKey:'kanadera-magical'}));});
   await boot(page);await importData(page,await fixture(page));
   await page.locator('#player-export-best50').click();
   await page.locator('#player-export-version-button').click();
@@ -199,19 +229,10 @@ test('manual version and verified partner choices survive exports and reload wit
   await expect(dialog(page)).toContainText('Using your saved version choice. Check that it matches this record.');
   await page.keyboard.press('Escape');
   await page.locator('.player-export-achievement').first().click();
-  const partner=page.locator('#player-export-partner');
-  await expect(partner).toHaveValue('none');
-  const keys=await partner.locator('option').evaluateAll(nodes=>nodes.map(n=>n.value));
-  expect(keys[0]).toBe('none');expect(keys).toContain('derakkuma-magical');expect(keys).toContain('kanadera-magical');expect(new Set(keys).size).toBe(keys.length);
-  await partner.selectOption('kanadera-magical');
-  await downloadedPNG(page,await generate(page),testInfo,'achievement-kanadera.png');
-  await partner.selectOption('derakkuma-magical');
-  await expect(page.locator('#player-export-download')).toBeHidden();
-  await downloadedPNG(page,await generate(page),testInfo,'achievement-derakkuma.png');
-  await page.keyboard.press('Escape');await page.locator('.player-export-achievement').first().click();
-  await expect(partner).toHaveValue('derakkuma-magical');
+  await expect(page.locator('#player-export-partner')).toHaveCount(0);
+  await downloadedPNG(page,await generate(page),testInfo,'achievement-no-partner.png');
   await page.keyboard.press('Escape');
-  expect(await page.evaluate(()=>JSON.parse(localStorage.getItem('maimai-score-export-preferences-v1')))).toEqual({schemaVersion:1,versionID:'magical',partnerKey:'derakkuma-magical'});
+  expect(await page.evaluate(()=>JSON.parse(localStorage.getItem('maimai-score-export-preferences-v1')))).toEqual({schemaVersion:1,versionID:'magical',partnerKey:'kanadera-magical'});
   await page.reload();await expect.poll(()=>page.evaluate(()=>!!window.maimaiPersonal)).toBe(true);await page.evaluate(()=>maimaiPersonal.ready);
   await expect.poll(()=>page.evaluate(()=>maimaiPersonal.enabled())).toBe(true);
   await fixture(page); // Restore the synthetic chart mapping after the actual reload.
@@ -219,13 +240,11 @@ test('manual version and verified partner choices survive exports and reload wit
   await expect(page.locator('#player-export-version')).toHaveValue('magical');
   await expect(dialog(page)).toContainText('Using your saved version choice. Check that it matches this record.');
   await page.keyboard.press('Escape');await page.locator('.player-export-achievement').first().click();
-  await expect(partner).toHaveValue('derakkuma-magical');
-  await partner.selectOption('none');await page.keyboard.press('Escape');
-  await page.locator('.player-export-achievement').first().click();await expect(partner).toHaveValue('none');
+  await expect(page.locator('#player-export-partner')).toHaveCount(0);
   await page.keyboard.press('Escape');await page.evaluate(()=>document.getElementById('player-forget').click());
   await expect.poll(()=>page.evaluate(()=>maimaiPersonal.enabled())).toBe(false);
   expect(await page.evaluate(async()=>(await maimaiPlayerStorage.read()).active)).toBeNull();
-  expect(await page.evaluate(()=>JSON.parse(localStorage.getItem('maimai-score-export-preferences-v1')))).toEqual({schemaVersion:1,versionID:'magical',partnerKey:'none'});
+  expect(await page.evaluate(()=>JSON.parse(localStorage.getItem('maimai-score-export-preferences-v1')))).toEqual({schemaVersion:1,versionID:'magical',partnerKey:'kanadera-magical'});
 });
 
 test('invalid stored export choices fall back to detected version and no partner',async({page})=>{
@@ -234,7 +253,7 @@ test('invalid stored export choices fall back to detected version and no partner
   await page.locator('#player-export-best50').click();await expect(page.locator('#player-export-version')).toHaveValue('prismplus');
   await expect(dialog(page)).toContainText('Version detected from your imported report.');
   await page.keyboard.press('Escape');await page.locator('.player-export-achievement').first().click();
-  await expect(page.locator('#player-export-partner')).toHaveValue('none');
+  await expect(page.locator('#player-export-partner')).toHaveCount(0);
 });
 
 test('Escape removes the generated preview and private modal content and revokes its download URL',async({page})=>{
@@ -253,7 +272,7 @@ test('Escape removes the generated preview and private modal content and revokes
   expect(await page.evaluate(()=>revokedExportURLs)).toContain(url);
 });
 
-for(const action of ['hide','forget','partner','version'])test(action+' during PNG encoding discards the export and rejects late completion',async({page})=>{
+for(const action of ['hide','forget','version'])test(action+' during PNG encoding discards the export and rejects late completion',async({page})=>{
   await boot(page);await importData(page,await fixture(page));
   await page.evaluate(()=>{
     const original=HTMLCanvasElement.prototype.toBlob,createURL=URL.createObjectURL.bind(URL);
@@ -271,12 +290,9 @@ for(const action of ['hide','forget','partner','version'])test(action+' during P
   await page.locator('#player-export-generate').click();
   await expect.poll(()=>page.evaluate(()=>!!window.pendingExportPNG)).toBe(true);
   await expect(page.locator('#player-export-generate')).toBeDisabled();
-  if(action==='partner'||action==='version'){
-    if(action==='partner')await page.locator('#player-export-partner').selectOption('kanadera-magical');
-    else{
+  if(action==='version'){
       await page.locator('#player-export-version-button').click();
       await page.getByRole('option',{name:'maimai DX MAGiCAL',exact:true}).click();
-    }
     await page.evaluate(()=>releaseExportPNG());
     await expect(page.locator('#player-export-download')).toBeHidden();
     await expect(page.locator('#player-export-generate')).toBeEnabled();
@@ -313,7 +329,7 @@ for(const locale of ['en','zh-Hans','ko','ja','id'])test('export controls fit at
   if(locale!=='en')await expect(page.locator('#player-export-generate')).not.toHaveText('Create image');
   await generate(page);await fits(page);await dialog(page).screenshot({path:testInfo.outputPath('best50-'+locale+'-280.png')});
   await page.keyboard.press('Escape');await page.locator('.player-export-achievement').first().click();await fits(page);
-  await page.locator('#player-export-partner').selectOption('kanadera-magical');await fits(page);
+  await expect(page.locator('#player-export-partner')).toHaveCount(0);await fits(page);
   await generate(page);await fits(page);await dialog(page).screenshot({path:testInfo.outputPath('achievement-'+locale+'-280.png')});
   const captions={en:'Current reconstructed rating','zh-Hans':'当前重建的 Rating',ko:'현재 재구성한 레이팅',ja:'現在の再計算レーティング',id:'Rating hasil rekonstruksi saat ini'};
   expect(await page.evaluate(()=>[...exportPaintText,...exportCanvasLabels].join(''))).toContain(captions[locale]);

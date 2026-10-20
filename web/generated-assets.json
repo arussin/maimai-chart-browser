@@ -19,19 +19,19 @@
       "bytes": 1601
     },
     "support-stripe.js": {
-      "sha256": "9ed95bfaec54206f7c97d62537ed9178f8252751eb64d16e5f4784378c684cda",
-      "bytes": 6364
+      "sha256": "a6c3417cc356bfed821ef6fc71612f4376011d115b63d867dba7662b424f7c94",
+      "bytes": 7831
     },
     "settings-menu.js": {
-      "sha256": "b7e130f89ccffd86bf1fe0ebfaf4c2fdc0cca7efcdf35bd906b882b4299886ee",
-      "bytes": 18290
+      "sha256": "be357c17be53a225cf79c7cb9918589952e707c0765adc0a8e98e62a90e4e9a9",
+      "bytes": 18498
     },
     "player-data-core.js": {
-      "sha256": "4fe825e98a38754af2e20a8c6afce74e36189c86960c4881b2c9da2470e7afa4",
-      "bytes": 10645
+      "sha256": "428a61efbd69d9719f064ce6417c66bb9b810b398b9bc3b88916e98082c5fbbe",
+      "bytes": 12129
     },
     "player-maishift.js": {
-      "sha256": "3afdc839e1438dd20578fa435d6b7190790a9b02fa364d23ac3c2f7a2e42900d",
+      "sha256": "1a3f0a8068c6532d136b1f3afc52876a1e89d335d87a76e7218b6183b1e0de75",
       "bytes": 7235
     },
     "chart-visuals.js": {

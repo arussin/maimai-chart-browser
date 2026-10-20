@@ -187,6 +187,7 @@ export async function createApplication(options: ApplicationOptions) {
   const playerCore = createPlayerDataCore({}),
     maishift = createPlayerMaishift({ playerCore });
   const playerSources = createPlayerSources({
+    diagnose: usage.diagnose,
     playerContext,
     playerCore,
     features: configuration.features,

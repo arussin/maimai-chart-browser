@@ -9,6 +9,7 @@ import { basename, join, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { Miniflare, convertV4MiniflareOptions } from "miniflare";
 import worker from "../worker.mjs";
+import { importMethods, importDiagnosticRows } from "./provider-usage-fixture.mjs";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
 const command = join(root, "report.mjs");
@@ -78,6 +79,9 @@ async function snapshot(db) {
         .prepare("SELECT * FROM usage_coverage ORDER BY day,version")
         .all()
     ).results,
+    diagnostics: (
+      await db.prepare("SELECT * FROM usage_diagnostics_daily ORDER BY source,stage,outcome").all()
+    ).results,
   };
 }
 
@@ -124,11 +128,13 @@ test(
 
       mf = localStore(persistTo, database.database_id);
       const db = await mf.getD1Database("USAGE_DB");
-      let schema = await readFile(
-        join(root, "migrations", "0001_daily.sql"),
-        "utf8",
-      );
-      schema+='\n'+await readFile(join(root,'migrations','0003_diagnostics.sql'),'utf8');
+      const schema = (
+        await Promise.all(
+          ["0001_daily.sql", "0002_import_receipts.sql", "0003_diagnostics.sql"].map((name) =>
+            readFile(join(root, "migrations", name), "utf8"),
+          ),
+        )
+      ).join("\n");
       for (const sql of schema
         .replace(/--[^\n]*/g, "")
         .split(";")
@@ -174,6 +180,18 @@ test(
           t.mock.timers.reset();
         }
       }
+      t.mock.timers.enable({apis:["Date"],now:new Date("2026-03-09T17:00:00.000Z")});
+      try {
+        const events=importDiagnosticRows.filter(row=>row.outcome==='success');
+        for(let offset=0;offset<events.length;offset+=8){
+          const response=await worker.fetch(new Request("https://maimai.party/__usage",{
+            method:"POST",headers:{Origin:"https://maimai.party","Content-Type":"application/json"},
+            body:JSON.stringify({version:2,events:events.slice(offset,offset+8)}),
+          }),{USAGE_DB:db,USAGE_ENABLED:"true"});
+          assert.equal(response.status,204);
+          assert.equal(response.headers.get("X-Maimai-Usage-Receipt"),"stored");
+        }
+      } finally { t.mock.timers.reset(); }
       for (const [day, status] of [
         ["2026-03-08", "complete"],
         ["2026-03-09", "partial"],
@@ -231,6 +249,16 @@ test(
       const parsed = JSON.parse(files[".json"]);
       assert.equal(parsed.schema_version, "usage-report-1");
       assert.deepEqual(parsed.totals, before.totals);
+      assert.deepEqual(parsed.diagnostics.map(row=>row.source).sort(),[...importMethods].sort());
+      assert.equal(parsed.diagnostics.length,before.diagnostics.length);
+      assert.equal(parsed.diagnostic_health.schema,'diagnostics-1');
+      assert.equal(parsed.diagnostic_health.last_receipt,'2026-03-09T17:00:00.000Z');
+      assert.equal(parsed.diagnostic_health.collector,'unknown');
+      assert.equal(parsed.diagnostic_health.coverage,'incomplete');
+      for (const row of parsed.totals) {
+        assert.equal(row.first_received_at, row.day + "T16:00:00.000Z");
+        assert.equal(row.last_received_at, row.first_received_at);
+      }
       assert.deepEqual(
         parsed.coverage.map((row) => [
           row.day,
@@ -288,6 +316,7 @@ test(
         JSON.stringify({
           collector_rows: before.totals.length,
           received_count: 6,
+          diagnostic_rows: before.diagnostics.length,
           coverage_states: ["complete", "partial", "off", "unknown"],
           actual_owner_cli: true,
           actual_wrangler_query: true,

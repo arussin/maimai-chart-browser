@@ -25,6 +25,7 @@ from .catalog_loading import (
     prepare_catalog_projection,
 )
 from .corpus_failures import PublicationCapacityError
+from .export_artwork import read_export_artwork_assets
 from .publication_capacity import PAID_FILES, ReviewedCapacity
 from .release_assembly import assemble_release as assemble_release
 from .release_composition import plan_release_composition as plan_release_composition
@@ -803,6 +804,7 @@ def plan_public_release(
     capacity: ReviewedCapacity | None = None,
     prepared_catalogs: Mapping[str, CatalogDocument] | None = None,
     preserve_web_analytics: bool = False,
+    export_artwork_source: Path | str | None = None,
 ) -> ReleasePlan:
     """Prepare shell, verified catalogs, public routes, then the complete release inventory."""
     source = Path(source).resolve()
@@ -861,6 +863,17 @@ def plan_public_release(
         next(entry["sha256"] for entry in releases if entry["version"] == manifest["default"]),
     )
     pending.update(pages.assets)
+    # An explicit retained input store supplies export-only bytes. Source packages
+    # and small lab fixtures never acquire or duplicate the entire image corpus.
+    export_assets = (
+        read_export_artwork_assets(Path(export_artwork_source))
+        if export_artwork_source is not None
+        else {}
+    )
+    for path, raw in export_assets.items():
+        if path in pending and pending[path] != raw:
+            raise ValueError("Immutable export artwork differs")
+        pending[path] = raw
     if pages.song_index:
         current = next(entry for entry in releases if entry["version"] == manifest["default"])
         indexes = current.setdefault("song_catalog_indexes", [])
@@ -890,6 +903,7 @@ def build_public_release(
     capacity: ReviewedCapacity | None = None,
     prepared_catalogs: Mapping[str, CatalogDocument] | None = None,
     preserve_web_analytics: bool = False,
+    export_artwork_source: Path | str | None = None,
 ) -> dict[str, Any]:
     source, output = Path(source).resolve(), Path(output).resolve()
     if source == output or output.is_relative_to(source) or source.is_relative_to(output):
@@ -904,4 +918,5 @@ def build_public_release(
         capacity=capacity,
         prepared_catalogs=prepared_catalogs,
         preserve_web_analytics=preserve_web_analytics,
+        export_artwork_source=export_artwork_source,
     ).write_to(output)

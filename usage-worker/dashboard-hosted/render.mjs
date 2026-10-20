@@ -1,4 +1,5 @@
 import {makeDashboardData} from '../dashboard-model.mjs';
+import {summarizeImports} from '../action-labels.mjs';
 const safeJSON = value => JSON.stringify(value).replaceAll('<','\\u003c').replaceAll('>','\\u003e').replaceAll('&','\\u0026').replaceAll('\u2028','\\u2028').replaceAll('\u2029','\\u2029');
 async function hash(text) {
   const bytes = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text)));
@@ -6,7 +7,8 @@ async function hash(text) {
 }
 export async function renderHosted(input, capturedAt, assets) {
   const data = makeDashboardData(input, {capturedAt});
-  const {template, script, style} = assets;
+  const {template, script:client, style} = assets;
+  const script='const summarizeImports='+summarizeImports.toString()+';\n'+client;
   const csp = "default-src 'none'; connect-src 'none'; img-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; script-src 'sha256-" + await hash(script) + "'; style-src 'sha256-" + await hash(style) + "'";
   const html = template
     .replace('Private local snapshot','Authenticated private dashboard')

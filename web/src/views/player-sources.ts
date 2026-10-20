@@ -6,6 +6,17 @@ import type {
 } from '../runtime/player-session-contracts';
 import type { createPlayerDataCore } from './player-data-core';
 import type { createPlayerMaishift } from './player-maishift';
+import { createPlayerKamaitachi } from './player-kamaitachi';
+import {
+  createPlayerProviderConnections,
+  authorizeProvider,
+  isOAuthProvider,
+} from './player-provider-connections';
+import type { OAuthProvider } from '../runtime/player-session-contracts';
+import { ImportFailureError } from '../runtime/import-failure';
+import type { Failure } from '../usage-contract';
+import type { DiagnosticSink } from '../diagnostic-contract';
+import { beginDiagnostic } from '../runtime/operation-diagnostics';
 import { DiagnosticError, diagnosticError } from '../runtime/diagnostic-error';
 import { sourceRequest, sourceJSON, workerReason } from '../runtime/source-transport';
 interface SavedConnection extends SourceConnection {
@@ -28,6 +39,7 @@ interface ReadOptions {
   manual?: boolean;
 }
 interface SourcesPorts {
+  diagnose?: DiagnosticSink;
   playerCore: ReturnType<typeof createPlayerDataCore>;
   maishift: ReturnType<typeof createPlayerMaishift>;
   features?: { maishift: boolean };
@@ -36,10 +48,16 @@ interface SourcesPorts {
 /** Source adapters perform bounded acquisition; connection metadata remains local. */
 export function createPlayerSources(ports: SourcesPorts) {
   const core = ports.playerCore;
+  const kamaitachi = createPlayerKamaitachi({ core });
+  const providers = createPlayerProviderConnections({
+    bounded: core.bounded,
+    diagnose: ports.diagnose,
+  });
   const capabilities = Object.freeze({
     file: true,
     report: true,
     maishift: ports.features?.maishift === true || ports.playerContext?.pilot === true,
+    kamaitachi: true,
   });
   const AUTO_INTERVAL = 15 * 60 * 1000,
     MANUAL_INTERVAL = 30000;
@@ -76,7 +94,7 @@ export function createPlayerSources(ports: SourcesPorts) {
     if (
       !source ||
       source.schemaVersion !== 1 ||
-      !['report', 'maishift'].includes(source.type) ||
+      !['report', 'maishift', 'kamaitachi', 'diving-fish', 'lxns'].includes(source.type) ||
       !(source.type === 'maishift' ? [1, 2] : [1]).includes(source.adapterVersion) ||
       source.playerKey !== playerKey ||
       source.autoRefresh !== true ||
@@ -87,6 +105,31 @@ export function createPlayerSources(ports: SourcesPorts) {
     if (source.type === 'report') {
       const parsed = reportURL(source.url);
       if (!parsed.manifest || parsed.manifest !== source.url)
+        throw new Error('Invalid saved source connection.');
+    } else if (source.type === 'kamaitachi') {
+      if (
+        typeof source.account !== 'string' ||
+        !/^(?:0|[1-9][0-9]{0,15})$/.test(source.account) ||
+        source.url !== kamaitachiURL(source.account) ||
+        playerKey !== 'kamaitachi:maimaidx:' + source.account ||
+        !/^[a-f0-9]{64}$/.test(source.contentRevision)
+      )
+        throw new Error('Invalid saved source connection.');
+    } else if (isOAuthProvider(source.type)) {
+      if (
+        typeof source.account !== 'string' ||
+        !/^[a-f0-9]{64}$/.test(source.account) ||
+        typeof source.connectionID !== 'string' ||
+        !/^[A-Za-z0-9_-]{16,128}$/.test(source.connectionID) ||
+        source.url !== oauthURL(source.type) ||
+        playerKey !== source.type + ':maimaidx:cn:' + source.account ||
+        !/^[a-f0-9]{64}$/.test(source.contentRevision) ||
+        (source.warnings !== undefined &&
+          (!Array.isArray(source.warnings) ||
+            source.warnings.some(
+              (warning) => source.type !== 'diving-fish' || warning !== 'fish_masking_unverified',
+            )))
+      )
         throw new Error('Invalid saved source connection.');
     } else {
       const parsed = ports.maishift.location(source.url, source.region);
@@ -134,7 +177,185 @@ export function createPlayerSources(ports: SourcesPorts) {
         throw new Error('Invalid saved source connection.');
     if (!/^[a-f0-9]{64}$/.test(source.sourceRevision))
       throw new Error('Invalid saved source connection.');
+    if (
+      source.excludedUtage !== undefined &&
+      (!Number.isSafeInteger(source.excludedUtage) ||
+        source.excludedUtage < 0 ||
+        source.excludedUtage > 100000)
+    )
+      throw new Error('Invalid saved source connection.');
     return source;
+  }
+  function kamaitachiURL(account: string) {
+    return 'https://kamai.tachi.ac/u/' + encodeURIComponent(account);
+  }
+  function oauthURL(provider: OAuthProvider) {
+    return '/api/player-import/oauth/' + provider + '/read';
+  }
+  async function directCapabilities(signal?: AbortSignal) {
+    // Readiness is failure-only. Successful capability reads and authorization
+    // status polls are not separate imports and must not produce a success burst.
+    const operation = beginDiagnostic(ports.diagnose, 'connector_config');
+    operation.stage('transport');
+    try {
+      return { kamaitachi: true, checked: true, ...(await providers.capabilities(signal)) };
+    } catch (error) {
+      signal?.throwIfAborted();
+      operation.fail(error, 'configuration_unavailable');
+      return { kamaitachi: true, checked: false, 'diving-fish': false, lxns: false };
+    }
+  }
+  async function authorize(
+    provider: OAuthProvider,
+    popup: Window,
+    nonce: string,
+    maskingDisabled: boolean,
+    signal: AbortSignal,
+    locale = 'en',
+    onCleanup?: (outcome: 'started' | 'completed' | 'failed', failure?: Failure) => void,
+  ): Promise<SourceLocation> {
+    const operation = beginDiagnostic(ports.diagnose, 'provider_connect', provider, 'manual');
+    operation.stage('authorization');
+    try {
+      const grant = await authorizeProvider(
+        providers,
+        provider,
+        popup,
+        nonce,
+        maskingDisabled,
+        signal,
+        window,
+        locale,
+        onCleanup,
+      );
+      operation.finish('success');
+      return {
+        type: provider,
+        account: grant.accountID,
+        connectionID: grant.connectionID,
+        previousConnectionIDs: grant.previousConnectionIDs,
+      };
+    } catch (error) {
+      if (signal.aborted || (error instanceof Error && error.name === 'AbortError'))
+        operation.finish('cancelled');
+      else operation.fail(error);
+      throw error;
+    }
+  }
+  async function disconnect(source: SourceLocation | SourceConnection, manual = false) {
+    if (
+      isOAuthProvider(source.type) &&
+      'connectionID' in source &&
+      typeof source.connectionID === 'string'
+    )
+      await providers.disconnect(
+        source.type,
+        { connectionID: source.connectionID },
+        'provider_disconnect',
+        manual ? 'manual' : 'automatic',
+      );
+  }
+  async function readDirect(
+    value: SourceLocation | SourceConnection,
+    { signal = new AbortController().signal, expectedPlayer = null }: ReadOptions = {},
+  ) {
+    let data: PlayerDataset, account: string, url: string;
+    let connectionID: string | undefined,
+      warnings: string[] = [],
+      excludedUtage = 0;
+    const accountValue = 'account' in value ? value.account : undefined;
+    const grantID = 'connectionID' in value ? value.connectionID : undefined;
+    if (value.type === 'kamaitachi') {
+      const result = await kamaitachi.read(String(accountValue ?? ''), { signal, expectedPlayer });
+      data = result.data;
+      account = result.account;
+      url = kamaitachiURL(account);
+    } else if (isOAuthProvider(value.type)) {
+      if (typeof grantID !== 'string' || !/^[A-Za-z0-9_-]{16,128}$/.test(grantID))
+        throw new ImportFailureError(
+          'The connection needs to be renewed. Connect your account again.',
+          'connection_expired',
+        );
+      const result = await providers.read(value.type, grantID, signal);
+      if (accountValue !== undefined && accountValue !== result.accountID)
+        throw new ImportFailureError(
+          'The source now identifies a different player. Import it again to confirm the switch.',
+          'account_mismatch',
+        );
+      const { normalizeImportDocument } = await import('../runtime/import-provider');
+      try {
+        data = await normalizeImportDocument(
+          core,
+          result.data,
+          {
+            provider: value.type,
+            username: result.accountID,
+            region: 'cn',
+          },
+          {
+            capturedAt: result.capturedAt ?? result.fetchedAt,
+            sourceKind: 'provider-api',
+            sourceID: value.type,
+          },
+          (count) => {
+            excludedUtage = count;
+          },
+        );
+      } catch (error) {
+        signal.throwIfAborted();
+        throw new ImportFailureError(
+          error instanceof Error ? error.message : String(error),
+          'invalid_response',
+          undefined,
+          diagnosticError(error) ?? { reason: 'normalization', stage: 'normalize' },
+        );
+      }
+      if (Object.keys(data.records).length === 0)
+        throw new ImportFailureError(
+          value.type === 'diving-fish'
+            ? 'No supported scores were found in Diving-Fish. Open its tracker, accept the agreement, and add your scores before trying again.'
+            : 'No supported scores were found in LXNS. Sync your maimai DX scores to LXNS first, then try again.',
+          'empty_scores',
+          value.type === 'lxns' ? 'lxns_player_missing' : 'fish_scores_empty',
+        );
+      data.player.displayName = result.displayName || data.player.displayName;
+      const { revision, ...body } = data;
+      data.revision = await core.digest(body);
+      try {
+        data = await core.validate(data);
+      } catch (error) {
+        throw new ImportFailureError(
+          error instanceof Error ? error.message : String(error),
+          'invalid_response',
+          undefined,
+          diagnosticError(error) ?? { reason: 'normalization', stage: 'normalize' },
+        );
+      }
+      account = result.accountID;
+      connectionID = result.connectionID;
+      warnings = result.warnings;
+      url = oauthURL(value.type);
+    } else throw new Error('Invalid saved source connection.');
+    if (expectedPlayer && data.player.key !== expectedPlayer)
+      throw new ImportFailureError(
+        'The source now identifies a different player. Import it again to confirm the switch.',
+        'account_mismatch',
+      );
+    const source: SourceConnection = {
+      ...connection(url, data),
+      type: value.type,
+      account,
+      ...(connectionID ? { connectionID } : {}),
+      warnings,
+      excludedUtage,
+      contentRevision: await core.digest({
+        player: data.player,
+        charts: data.charts,
+        records: data.records,
+      }),
+    };
+    signal.throwIfAborted();
+    return { data, source };
   }
   function connection(url: string, data: PlayerDataset, now = Date.now()): SourceConnection {
     return {
@@ -406,9 +627,9 @@ export function createPlayerSources(ports: SourcesPorts) {
     return { data, source };
   }
   function readSource(source: SourceLocation | SourceConnection, options: ReadOptions = {}) {
-    return source.type === 'maishift'
-      ? readMaishift(source, options)
-      : readReport(source.url, options);
+    if (source.type === 'maishift') return readMaishift(source, options);
+    if (source.type === 'report') return readReport(source.url, options);
+    return readDirect(source, options);
   }
   return Object.freeze({
     capabilities,
@@ -417,6 +638,15 @@ export function createPlayerSources(ports: SourcesPorts) {
     connection,
     readReport,
     readMaishift,
+    readDirect,
+    kamaitachiMatch: kamaitachi.matchChart,
+    directCapabilities,
+    authorize,
+    disconnect,
+    pendingCleanup: providers.pendingCleanup,
+    pendingCleanupProviders: providers.pendingCleanupProviders,
+    connectionStatus: providers.status,
+    retryCleanup: providers.retryCleanup,
     readSource,
     AUTO_INTERVAL,
     MANUAL_INTERVAL,

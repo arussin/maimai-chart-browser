@@ -1,5 +1,6 @@
 import type { TextView, LocalizedText } from '../components/chart-card';
 import { createVersionPicker } from '../components/version-picker';
+import { dismissDialogOnOutsideClick } from '../components/dialog-dismiss';
 import type { PlayerChart, PlayerDataset, PlayerRecord } from '../domain/player-data';
 import {
   buildBest50,
@@ -8,7 +9,7 @@ import {
   type ExportPlayerRating,
 } from '../domain/score-export';
 import type { renderAchievement } from './score-export-canvas';
-import { defaultScoreExportPartner, scoreExportPartners } from './score-export-partners';
+import { createSupportPrompt } from './support-prompt';
 import type { ScoreExportPreferences } from '../runtime/score-export-preferences';
 import type { ScoreExportKind, ScoreExportUsageArguments } from '../usage-contract';
 import type { DiagnosticSink, Reason, Outcome } from '../diagnostic-contract';
@@ -34,7 +35,8 @@ interface ExportPorts {
         alias?: boolean;
       }
     | undefined;
-  jacketURL(chart: PlayerChart): string | undefined;
+  jacketURL(chart: PlayerChart): string | undefined | Promise<string | undefined>;
+  jacketFallbackURL?(chart: PlayerChart): string | undefined | Promise<string | undefined>;
   versionLogo(name: string): HTMLElement | undefined;
   versionLogoURL?(version: string): string | undefined;
   artworkURL?(key: string): string | undefined;
@@ -49,6 +51,7 @@ export function createScoreExporter(ports: ExportPorts) {
   dialog.className = 'player-dialog player-export-dialog';
   dialog.setAttribute('aria-labelledby', 'player-export-title');
   ports.root.append(dialog);
+  dismissDialogOnOutsideClick(dialog);
   let trigger: HTMLElement | null = null,
     imageURL: string | null = null,
     generation = 0,
@@ -77,6 +80,15 @@ export function createScoreExporter(ports: ExportPorts) {
     if (imageURL) URL.revokeObjectURL(imageURL);
     imageURL = null;
   }
+  function dismiss() {
+    // A native close event is queued; invalidate work at the user's dismissal.
+    discard('cancelled');
+    dialog.close();
+  }
+  dialog.addEventListener('cancel', (event) => {
+    event.preventDefault();
+    dismiss();
+  });
   dialog.addEventListener('close', () => {
     discard('cancelled');
     disposeFields();
@@ -127,14 +139,20 @@ export function createScoreExporter(ports: ExportPorts) {
     };
     const close = make('button', 'Close');
     close.type = 'button';
-    close.onclick = () => dialog.close();
+    close.onclick = dismiss;
     actions.append(generate, download, close);
     dialog.append(fields, status, preview, actions);
+    const support = createSupportPrompt(document, i18n, 'export');
+    if (support) {
+      support.hidden = true;
+      dialog.append(support);
+    }
     if (!dialog.open) dialog.showModal();
     ports.usage('score_export_opened', kind);
     const invalidate = () => {
       discard();
       preview.hidden = download.hidden = true;
+      if (support) support.hidden = true;
       preview.removeAttribute('src');
       download.removeAttribute('href');
       i18n.text(status, '');
@@ -188,6 +206,7 @@ export function createScoreExporter(ports: ExportPorts) {
         download.href = imageURL;
         download.download = filename;
         preview.hidden = download.hidden = false;
+        if (support) support.hidden = false;
         i18n.text(status, 'Image ready. Download it or save the preview.');
         download.focus({ preventScroll: true });
         ports.usage('score_export_completed', kind);
@@ -301,6 +320,7 @@ export function createScoreExporter(ports: ExportPorts) {
         return renderer.renderBest50(document, model, {
           translate,
           jacketURL: ports.jacketURL,
+          jacketFallbackURL: ports.jacketFallbackURL,
           versionLogoURL: ports.versionLogoURL,
           artworkURL: ports.artworkURL,
           artworkFallback,
@@ -339,27 +359,9 @@ export function createScoreExporter(ports: ExportPorts) {
       playerName: dataset.player.displayName,
       recordKind,
       playerRating: ports.playerRating?.() ?? null,
-      partnerKey: ports.preferences.read().partnerKey,
+      // Keep stored partner choices intact; the approved design has no partner.
+      partnerKey: 'none',
     };
-    const partnerLabel = make('label', 'Partner illustration'),
-      partner = make('select');
-    partner.id = 'player-export-partner';
-    partnerLabel.htmlFor = partner.id;
-    partner.append(i18n.option('None', 'none'));
-    for (const choice of scoreExportPartners)
-      partner.append(i18n.option(i18n.verbatim(choice.name), choice.key));
-    partner.value = input.partnerKey ?? defaultScoreExportPartner;
-    partner.onchange = () => {
-      const next =
-        scoreExportPartners.find((choice) => choice.key === partner.value)?.key ?? 'none';
-      if (next === input.partnerKey) return;
-      input.partnerKey = next;
-      ports.preferences.setPartner(input.partnerKey);
-      ports.usage('score_export_option_changed', 'partner');
-      ui.invalidate();
-      ui.generate.disabled = false;
-    };
-    ui.fields.append(partnerLabel, partner);
     ui.generate.onclick = () => {
       const selectedInput = { ...input };
       void ui.render(
@@ -368,6 +370,7 @@ export function createScoreExporter(ports: ExportPorts) {
           return renderer.renderAchievement(document, selectedInput, {
             translate,
             jacketURL: ports.jacketURL,
+            jacketFallbackURL: ports.jacketFallbackURL,
             versionLogoURL: ports.versionLogoURL,
             artworkURL: ports.artworkURL,
             artworkFallback,

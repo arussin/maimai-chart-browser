@@ -4,6 +4,11 @@ const isolated = isolatedTest(base, {origins: [`http://127.0.0.1:${process.env.M
 // Compatibility names belong only to the test harness; deployed entries expose no service globals.
 export const test = isolated.extend({
  context: async ({context}, use) => {
+  await context.route('**/api/player-import/oauth/connectors', route => route.fulfill({
+   status:200, contentType:'application/json', body:JSON.stringify({schemaVersion:1,methods:Object.fromEntries([
+    'file','report','maishift','kamaitachi','diving-fish','lxns','file:tomomai','file:mai-tools','file:dxrating','file:jietng','file:aqua','file:tachi'
+   ].map(method=>[method,true]))})
+  }));
   await context.addInitScript(mapping=>{
    addEventListener('DOMContentLoaded',async()=>{
     const entry=document.querySelector('script[data-maimai-browser]');if(!entry)return;

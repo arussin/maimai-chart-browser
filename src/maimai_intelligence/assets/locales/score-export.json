@@ -1,5 +1,23 @@
 {
   "messages": {
+    "CC": {
+      "zh-Hans": "定数",
+      "ko": "상수",
+      "ja": "定数",
+      "id": "Konst."
+    },
+    "Combo achievement": {
+      "zh-Hans": "连击成就",
+      "ko": "콤보 달성",
+      "ja": "コンボ達成",
+      "id": "Pencapaian combo"
+    },
+    "Sync achievement": {
+      "zh-Hans": "同步成就",
+      "ko": "싱크 달성",
+      "ja": "シンク達成",
+      "id": "Pencapaian sync"
+    },
     "Current imported rating": {
       "zh-Hans": "当前导入的 Rating",
       "ko": "현재 가져온 레이팅",

@@ -100,7 +100,10 @@ test('unchanged refresh saves freshness without replacing portable observations'
   assert.equal(f.owner.lastImportedAt, 1000000);
   assert.equal(f.calls.save, 1);
   assert.equal(f.owner.refreshing, false);
-  assert.equal(f.calls.events.length, 0);
+  assert.deepEqual(f.calls.events, [
+    ['provider_refresh_started', 'report'],
+    ['provider_refresh_completed', 'report'],
+  ]);
 });
 
 test('interrupted and mismatched handoff transactions close their port without committing', async () => {
@@ -180,6 +183,99 @@ test('the handoff adapter aborts an outstanding transfer and exposes only protoc
     sent.map((value) => JSON.stringify(value)),
     ['{"type":"accept"}'],
   );
+});
+
+test('cancelling a confirmed handoff transfer logs one cancellation and keeps the saved profile', async () => {
+  const f = makeSession({ initial: dataset(), source: connection() }),
+    accepted = deferred(),
+    sent = [];
+  await f.owner.ready;
+  const saved = structuredClone(f.state.active);
+  let closed = 0;
+  const port = {
+    postMessage: (value) => {
+      sent.push(value.type);
+      if (value.type === 'accept') accepted.resolve();
+    },
+    close: () => closed++,
+    onmessage: null,
+  };
+  const importing = f.owner.handoff(
+    f.ports.core.offer(dataset('offered', 200)),
+    false,
+    handoffTransfer(port),
+  );
+  await accepted.promise;
+  f.owner.cancel();
+  f.owner.cancel();
+  await importing;
+  assert.deepEqual(f.calls.events, [
+    ['import_opened'],
+    ['import_started', 'report'],
+    ['import_previewed', 'report'],
+    ['import_confirmed', 'report'],
+    ['import_cancelled', 'report'],
+  ]);
+  assert.equal(f.calls.save, 0);
+  assert.equal(f.owner.active.revision, 'one');
+  assert.deepEqual(f.state.active, saved);
+  assert.equal(f.owner.remembered, true);
+  assert.equal(f.calls.messages.length, 0);
+  assert.equal(port.onmessage, null);
+  assert.equal(closed, 1);
+  assert.deepEqual(sent, ['accept', 'error']);
+});
+
+test('a committed handoff remains one success when cancelled before the save result returns', async () => {
+  const f = makeSession({ initial: dataset(), source: connection() }),
+    accepted = deferred(),
+    persisted = deferred(),
+    release = deferred(),
+    offered = dataset('offered', 200),
+    sent = [],
+    save = f.ports.storage.save;
+  await f.owner.ready;
+  f.ports.storage.save = async (...args) => {
+    const token = await save(...args);
+    persisted.resolve();
+    await release.promise;
+    return token;
+  };
+  let closed = 0;
+  const port = {
+    postMessage: (value) => {
+      sent.push(value.type);
+      if (value.type === 'accept') accepted.resolve();
+    },
+    close: () => closed++,
+    onmessage: null,
+  };
+  const importing = f.owner.handoff(f.ports.core.offer(offered), false, handoffTransfer(port));
+  await accepted.promise;
+  port.onmessage({ data: { type: 'data', bytes: await file(offered).arrayBuffer() } });
+  await persisted.promise;
+  f.owner.cancel();
+  release.resolve();
+  await importing;
+  f.owner.cancel();
+  assert.deepEqual(f.calls.events, [
+    ['import_opened'],
+    ['import_started', 'report'],
+    ['import_previewed', 'report'],
+    ['import_confirmed', 'report'],
+    ['import_completed', 'report'],
+  ]);
+  assert.equal(f.calls.save, 1);
+  assert.equal(f.state.active.revision, 'offered');
+  assert.equal(f.owner.active.revision, 'one'); // A superseded view stays unchanged.
+  assert.equal(f.calls.messages.length, 0);
+  assert.equal(port.onmessage, null);
+  assert.equal(closed, 1);
+  assert.deepEqual(sent, ['accept', 'error']);
+  const restored = new f.owner.constructor(f.ports);
+  await restored.ready;
+  assert.equal(restored.active.revision, 'offered');
+  assert.equal(restored.remembered, true);
 });
 
 test('a cancelled handoff waiting for storage cannot unlock a newer import', async () => {
