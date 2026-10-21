@@ -30,6 +30,8 @@ export interface ImportRow {
 
 export interface ImportResult {
   rows: ImportRow[];
+  /** Provider-selected CN pools, including their exact score observations. */
+  best50?: { old: ImportRow[]; new: ImportRow[] };
   capturedAt: number | null;
   displayName: string | null;
   coverage: 'partial' | 'unknown' | 'full';
@@ -263,62 +265,98 @@ function divingFish(input: unknown): ImportResult {
   const data = object(input);
   const b50 = data.charts == null ? null : object(data.charts);
   const scores = b50 ? [...array(b50.sd), ...array(b50.dx)] : array(data.records);
+  const convert = (score: JsonObject) =>
+    row({
+      sourceSongID: numericID(score.song_id),
+      title: text(score.title, 'song title'),
+      format: format(score.type),
+      difficulty: difficulty(score.level_index, true),
+      achievement: percentage(score.achievements),
+      rate: optionalNumber(score.ra, 'chart rating', 1000, true),
+      lamp: flag(score.fc),
+      sync: flag(score.fs, true),
+      dxScore: optionalNumber(score.dxScore, 'DX score', 100_000_000, true),
+      constant: constant(score.ds),
+      level: text(score.level, 'level'),
+    });
+  // Older accepted file exports may omit ratings. Keep their PB import usable,
+  // but only retain a B50 selection when every selected row has its own rating.
+  const pools =
+    data.best50 !== undefined
+      ? data.best50
+      : b50 && scores.every((score) => object(score).ra != null)
+        ? { old: b50.sd, new: b50.dx }
+        : undefined;
   return {
     capturedAt: null,
     displayName: text(data.nickname, 'display name') || null,
     coverage: b50 ? 'partial' : 'unknown',
-    ...mapRows(scores, (score) =>
-      row({
-        sourceSongID: numericID(score.song_id),
-        title: text(score.title, 'song title'),
-        format: format(score.type),
-        difficulty: difficulty(score.level_index, true),
-        achievement: percentage(score.achievements),
-        lamp: flag(score.fc),
-        sync: flag(score.fs, true),
-        dxScore: optionalNumber(score.dxScore, 'DX score', 100_000_000, true),
-        constant: constant(score.ds),
-        level: text(score.level, 'level'),
-      }),
-    ),
+    ...mapRows(scores, convert),
+    ...(pools === undefined ? {} : { best50: best50Pools(pools, convert) }),
   };
 }
 
 function lxns(input: unknown): ImportResult {
-  // This launch reads the personal OAuth scores endpoint, never developer
-  // SimpleScore, B50, CSV or an arbitrary user-supplied export shape.
+  // Personal OAuth full scores, with optional independently selected B50 rows.
   const envelope = object(input);
   if (envelope.success !== true || envelope.code !== 200)
     throw new Error('LXNS response was not successful.');
+  const convert = (score: JsonObject) => {
+    const sourceSongID = String(integer(score.id, 'song ID', 0, 999_999_999_999));
+    if (!['standard', 'dx', 'utage'].includes(String(score.type)))
+      throw new Error('Invalid chart type.');
+    const chartFormat = format(score.type);
+    if (!('achievements' in score))
+      throw new Error('LXNS simplified scores contain no achievement percentage.');
+    const dxRating = optionalNumber(score.dx_rating, 'DX Rating', Number.MAX_SAFE_INTEGER);
+    return row({
+      sourceSongID,
+      title: text(score.song_name, 'song title'),
+      format: chartFormat,
+      difficulty: difficulty(score.level_index, true),
+      achievement: percentage(score.achievements),
+      // LXNS documents DX Rating as a float whose displayed value is floored.
+      rate: dxRating === null ? null : Math.floor(dxRating),
+      lamp: flag(score.fc),
+      sync: flag(score.fs, true),
+      dxScore: optionalNumber(score.dx_score, 'DX score', 100_000_000, true),
+      level: text(score.level, 'level'),
+      // upload_time and last_played_time are not the time this PB was achieved.
+      timeAchieved: timestamp(score.play_time),
+    });
+  };
   return {
     capturedAt: null,
     displayName: null,
     coverage: 'unknown',
-    ...mapRows(array(envelope.data), (score) => {
-      const sourceSongID = String(integer(score.id, 'song ID', 0, 999_999_999_999));
-      if (!['standard', 'dx', 'utage'].includes(String(score.type)))
-        throw new Error('Invalid chart type.');
-      const chartFormat = format(score.type);
-      if (!('achievements' in score))
-        throw new Error('LXNS simplified scores contain no achievement percentage.');
-      const dxRating = optionalNumber(score.dx_rating, 'DX Rating', Number.MAX_SAFE_INTEGER);
-      return row({
-        sourceSongID,
-        title: text(score.song_name, 'song title'),
-        format: chartFormat,
-        difficulty: difficulty(score.level_index, true),
-        achievement: percentage(score.achievements),
-        // LXNS documents DX Rating as a float whose displayed value is floored.
-        rate: dxRating === null ? null : Math.floor(dxRating),
-        lamp: flag(score.fc),
-        sync: flag(score.fs, true),
-        dxScore: optionalNumber(score.dx_score, 'DX score', 100_000_000, true),
-        level: text(score.level, 'level'),
-        // upload_time and last_played_time are not the time this PB was achieved.
-        timeAchieved: timestamp(score.play_time),
-      });
-    }),
+    ...mapRows(array(envelope.data), convert),
+    ...(envelope.best50 === undefined ? {} : { best50: best50Pools(envelope.best50, convert) }),
   };
+}
+
+function best50Pools(value: unknown, convert: (score: JsonObject) => ImportRow) {
+  const pools = object(value);
+  if (Object.keys(pools).length !== 2 || !('old' in pools) || !('new' in pools))
+    throw new Error('Invalid provider Best 50 pools.');
+  const seen = new Set<string>();
+  const read = (name: 'old' | 'new', maximum: number) => {
+    const values = array(pools[name]);
+    if (values.length > maximum) throw new Error('Invalid provider Best 50 pool size.');
+    return values.map((value) => {
+      const score = convert(object(value));
+      if (
+        score.rate == null ||
+        !Number.isSafeInteger(score.rate) ||
+        score.rate < 0 ||
+        score.rate > 1000
+      )
+        throw new Error('Provider Best 50 is missing a chart rating.');
+      if (seen.has(score.sourceID)) throw new Error('Duplicate provider Best 50 chart.');
+      seen.add(score.sourceID);
+      return score;
+    });
+  };
+  return { old: read('old', 35), new: read('new', 15) };
 }
 
 /** Input is already parsed JSON. This module never requests or stores credentials. */

@@ -49,6 +49,7 @@ for (const provider of ['diving-fish','lxns']) test(provider + ' OAuth standalon
       else if(request.url===p.userinfo)value={sub:'fictional-subject',name:'Fictional player'};
       else if(request.url===p.player)value={success:true,code:200,data:{name:'Fictional player',friend_code:123456}};
       else if(request.url===p.records)value=provider==='diving-fish'?{nickname:'Fictional player',records:[{song_id:1,title:'Fictional song',type:'DX',level_index:3,achievements:100,dxScore:1000}]}:{success:true,code:200,data:[{id:1,song_name:'Fictional song',type:'dx',level_index:3,achievements:100,dx_score:1000,dx_rating:300.9}]};
+      else if(request.url===p.best50)value=provider==='diving-fish'?{charts:{sd:[{song_id:1,title:'Fictional song',type:'DX',level_index:3,achievements:100,dxScore:1000,ra:300}],dx:[]}}:{success:true,code:200,data:{standard:[{id:1,song_name:'Fictional song',type:'dx',level_index:3,achievements:100,dx_score:1000,dx_rating:300.9}],dx:[]}};
       else if(request.url===p.revoke)return new Response(null,{status:200});
       else throw Error('unexpected network request in deterministic fixture');
       return new Response(JSON.stringify(value),{headers:{'Content-Type':'application/json'}});
@@ -67,7 +68,9 @@ for (const provider of ['diving-fish','lxns']) test(provider + ' OAuth standalon
     const status=await(await call('/status')).json(),c=status.connections[0];assert.equal(c.flowNonce,nonce);assert.equal(c.accountID.length,64);
     const data=await(await call(prefix+'/read',{connectionID:c.connectionID})).json(),records=provider==='diving-fish'?data.data.records:data.data.data;assert.equal(records[0].achievements,100);assert.equal(records.length,1);
     assert.deepEqual(data.warnings,provider==='diving-fish'?['fish_masking_unverified']:[]);
-    assert.equal(calls.length,4);assert.ok(calls.every(c=>!c.headers.has('cookie')));assert.equal(new URLSearchParams(calls.find(c=>c.url===PROVIDERS[provider].token).body).get('client_secret'),'fictional-secret');
+    assert.equal(data.data.best50.old.length,1);assert.equal(data.data.best50.new.length,0);
+    assert.equal(calls.find(c=>c.url===PROVIDERS[provider].best50).body,provider==='diving-fish'?'{"b50":true}':null);
+    assert.equal(calls.length,5);assert.ok(calls.every(c=>!c.headers.has('cookie')));assert.equal(new URLSearchParams(calls.find(c=>c.url===PROVIDERS[provider].token).body).get('client_secret'),'fictional-secret');
     assert.equal((await call(prefix+'/read',{connectionID:c.connectionID})).status,429);
     const disconnected=await call(prefix+'/disconnect',{connectionID:c.connectionID});assert.equal(disconnected.status,200);assert.equal((await disconnected.json()).revocation,provider==='diving-fish'?'requested':'unavailable');assert.deepEqual((await(await call('/status')).json()).connections,[]);
   }finally{await mf.dispose();}

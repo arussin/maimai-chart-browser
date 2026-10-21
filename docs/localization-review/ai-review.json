@@ -26,7 +26,7 @@
     "src/maimai_intelligence/assets/locales/about.json": "0bc7a173a5f434878ca26e362c9d4d1341d66fe933cc4b43ce11eaa18eaed252",
     "src/maimai_intelligence/assets/locales/analysis.json": "6d11ca6347dbbb2a255588b55cd21b2db566f05a16741725312100d4131aeff6",
     "src/maimai_intelligence/assets/locales/composed.json": "602228d6df4bfe352306c56fee97413782940df51388ebbd2bba5e876354918c",
-    "src/maimai_intelligence/assets/locales/errors.json": "e1558b23ab0eacd4d2246f74aeae6a36c7a73204f2f9eddb01ce1d929d5a28ee",
+    "src/maimai_intelligence/assets/locales/errors.json": "3af9b24192c074ea414f68436141c38be691b0adc09fdc668581a22af1b8c8ba",
     "src/maimai_intelligence/assets/locales/invariants.json": "7e76cff9ebe62d7eadac2aeac1b802e80a3ef37d7a42cc9f9456c3f1bab4ccf9",
     "src/maimai_intelligence/assets/locales/lessons.json": "002f4515304ae70e5ddc91807649f08428fd85c8c4e7f9f52177864e2654354f",
     "src/maimai_intelligence/assets/locales/messages.json": "36c67c70d240d071e131e173b9e700699234760ca105640b8d5ecf7b9a35274a",
@@ -45,17 +45,17 @@
     "src/maimai_intelligence/assets/locales/player-sources.json": "05867d0353294479696a09fc05457596d9bdb8ce00dbf5113d9dcdc0cc5c8f70",
     "src/maimai_intelligence/assets/locales/player-maishift.json": "e1dd639655b9916aa5c8fe51dd4526aedca1cb347ec430291034a15e99bea277",
     "src/maimai_intelligence/assets/locales/maishift-pilot.json": "a8bf4dd18c54c7898241462e7cbc5272d360aa645d9c989c92ef8aca26b695d3",
-    "src/maimai_intelligence/assets/import-help/README.ja.md": "06c1afdac183b7adc0a72456e4a16a002137a131f177fc6b92a24367dd032dcf",
-    "src/maimai_intelligence/assets/import-help/README.ko.md": "bfd011cf6181797265f938b6176d4af6493d14e3386307703051f66a46b51159",
-    "src/maimai_intelligence/assets/import-help/README.md": "5a735476cff3edac861415c5ea2c3080cc3dfc719d2d76a002765f4c88220169",
-    "src/maimai_intelligence/assets/import-help/README.zh-Hans.md": "517c20e86275a97aa28c00fa514102f8cc2c4c2ae64495873724efe611566260",
+    "src/maimai_intelligence/assets/import-help/README.ja.md": "87d5dcb4a611bf9ab927275b3feeb1a381a2bd30613cfa0d0a076d1a58e3d577",
+    "src/maimai_intelligence/assets/import-help/README.ko.md": "091cab284321c91c941f976d2dac023bed4e8b95125a0a4948305ca991f26a1c",
+    "src/maimai_intelligence/assets/import-help/README.md": "4178520da193293a200f329d82dacb62304b5a5bed22c937caccb1473d563d73",
+    "src/maimai_intelligence/assets/import-help/README.zh-Hans.md": "628274e107b43297bc86aad1556970fa461cd20ab60eb6976a02a49e5099c3f2",
     "src/maimai_intelligence/assets/song-display-readings.json": "71960f736531381708777e1d61f5818f393f7b37dc014abec2c58ff08376a63d",
     "src/maimai_intelligence/assets/locales/card-history.json": "0d706787dad9dbbce0a748b55fe2a89a86661ae0f6cca95fe97c408912ccad36",
     "README.id.md": "f95b7c38bbcec394c785fa97ae4f6168eb9bb01b8516ffa6d194138a6a8e4708",
-    "src/maimai_intelligence/assets/import-help/README.id.md": "2280e7aeb7863082ff3ba6eb4a7fab97d38a16aecd2cb3ffe41f4900adb7027d",
+    "src/maimai_intelligence/assets/import-help/README.id.md": "1ac687ef1fa2c47dae65a38b03888fbf9ca7e19ac349d897520b54b71102d754",
     "src/maimai_intelligence/assets/locales/bpm-filter.json": "de56afac29a72d7fcd7b55e74215fab9a34bb5ae16300984f692846866b71034",
-    "src/maimai_intelligence/assets/locales/score-export.json": "2f880eaaadfd79d5c987b1942e37d8e596956f501bb1b89be4de1ea0133b4f20",
-    "src/maimai_intelligence/assets/locales/player-connections.json": "bf9bd326281d53334f47a449cfd981927ff014b3800cb3fa654780eb4ef7be0f",
+    "src/maimai_intelligence/assets/locales/score-export.json": "809afff2d3022fde956718923e64050497cd749fe0efda20c2ab927caa8e4c9f",
+    "src/maimai_intelligence/assets/locales/player-connections.json": "3823ae51818713d2e30801e57ad5e7e3594afc33d6d54847b4d3fab5fe9c6c35",
     "src/maimai_intelligence/assets/locales/player-file-imports.json": "bdeaed703505e64eb5e871a019af0fc946b11d4263573c6f83ca7b568e667c01",
     "src/maimai_intelligence/assets/support-footer.html": "90258419b15f9281e37a82478da07a53f20e3d58c24cbbe697af3c94f48b94c8"
   },
@@ -271,6 +271,88 @@
         "README.ko.md",
         "README.zh-Hans.md"
       ]
+    },
+    {
+      "date": "2026-10-20",
+      "reviewer": "Codex logging_reconcile",
+      "method": "AI contextual semantic review of the current five-language diff, export/import consumers, adjacent accepted translations and docs/LOCALIZATION_TERMINOLOGY.md; not native-speaker certification. No new external terminology research.",
+      "scope": "Three new UI messages and the mainland provider introductions/Best 50 paragraph in all five import-help pages. Existing account setup, consent, masking and recovery instructions were read for context and retained.",
+      "messages": [
+        "舞萌 DX · Mainland China",
+        "Refresh your connected tracker to load its Best 50.",
+        "Best 50 selection and ratings come from the provider at import time."
+      ],
+      "locales": [
+        "en",
+        "zh-Hans",
+        "ja",
+        "ko",
+        "id"
+      ],
+      "corrections": [
+        "Aligned translated Fish/LXNS introductions with the English mainland edition scope: 国服, 中国本土版, 중국 본토판 and Tiongkok daratan. No Taiwan/international compatibility claim.",
+        "Chinese 35/15/50 counts now name charts rather than distinct songs; Korean explicitly names 채보 in both pools.",
+        "Indonesian refresh instruction now says to refresh the saved connection one time, avoiding the ambiguous koneksi lama sekali phrase."
+      ],
+      "decisions": [
+        "The three short UI translations preserve tracker-at-import provenance and one refresh action; no automatic arcade synchronization or official verification claim.",
+        "Japanese 譜面, Korean 채보, Chinese 谱面 and Indonesian chart follow the maintained terminology. Rating/game/provider identifiers remain recognizable.",
+        "All five help paragraphs describe the provider selection, retained unmatched artwork, refresh after upstream updates and a visibly partial selection below 50; consent and read-only limitations remain unchanged.",
+        "No placeholder, chart identity, saved source, API contract or telemetry vocabulary changed during this language review."
+      ],
+      "files": [
+        "src/maimai_intelligence/assets/locales/player-connections.json",
+        "src/maimai_intelligence/assets/locales/score-export.json",
+        "src/maimai_intelligence/assets/import-help/README.md",
+        "src/maimai_intelligence/assets/import-help/README.zh-Hans.md",
+        "src/maimai_intelligence/assets/import-help/README.ja.md",
+        "src/maimai_intelligence/assets/import-help/README.ko.md",
+        "src/maimai_intelligence/assets/import-help/README.id.md"
+      ],
+      "visual_validation": "Pending the replacement prepared candidate. This review does not certify browser wrapping, rendered PNGs, live OAuth or native-speaker acceptance."
+    },
+    {
+      "date": "2026-10-20",
+      "reviewer": "Codex logging_reconcile",
+      "method": "AI contextual semantic review in the CN export missing-selection branch and adjacent provider labels; not native-speaker certification.",
+      "scope": "Replaces the connected-tracker-only instruction for all mainland profiles, including legacy Tomomai, portable-file and import-once profiles.",
+      "supersedes_message": "Refresh your connected tracker to load its Best 50.",
+      "message": "Connect or refresh Diving-Fish or LXNS to load Best 50.",
+      "locales": [
+        "en",
+        "zh-Hans",
+        "ja",
+        "ko",
+        "id"
+      ],
+      "result": "All four translations name Diving-Fish and LXNS and retain both possible actions: connect a provider or refresh an existing connection. None imply a Tomomai refresh supplies provider membership, automatic score synchronization, or that a remembered connection already exists. Provider names and Best 50 remain recognizable.",
+      "files": [
+        "src/maimai_intelligence/assets/locales/score-export.json"
+      ],
+      "visual_validation": "The existing five-locale browser case now includes legacy Tomomai with no picker, explicit help and disabled generation at 640/320/280px. Execution remains pending the final prepared candidate."
+    },
+    {
+      "date": "2026-10-20",
+      "reviewer": "Codex logging_reconcile",
+      "method": "AI contextual semantic review against the portable snapshot validator and Best 50 export rejection branches, with adjacent accepted error translations; not native-speaker certification.",
+      "scope": "Three user-visible finite validation errors; localized as messages, not protocol invariants.",
+      "messages": [
+        "Invalid provider Best 50 snapshot.",
+        "Invalid provider Best 50 observation.",
+        "Invalid provider Best 50 rating total."
+      ],
+      "locales": [
+        "en",
+        "zh-Hans",
+        "ja",
+        "ko",
+        "id"
+      ],
+      "result": "Translations distinguish invalid snapshot structure, an invalid selected score observation and an invalid sum of selected ratings. Best 50 and Rating terminology remains consistent with existing export copy. They do not claim account authorization failure, data loss or official verification, and contain no player or provider response details.",
+      "files": [
+        "src/maimai_intelligence/assets/locales/errors.json"
+      ],
+      "visual_validation": "Catalog-only addition after the immutable candidate was prepared. These strings require the next exact candidate build; no prior browser result is relabeled as testing this delta."
     }
   ],
   "followups": [

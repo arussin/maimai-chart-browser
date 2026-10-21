@@ -1,6 +1,6 @@
 import {PROVIDERS, SESSION_MS, OAuthError, encoder, base64url, randomID, digest, accountDigest, encryptionKey, credentials, callbackURL, jsonResponse, readJSON, validateDisconnectInput} from './provider-oauth.mjs';
 
-const MAX_DATA_BYTES = 8 * 1024 * 1024, MAX_RECORDS = 25000, FLOW_MS = 10 * 60000;
+const MAX_DATA_BYTES = 8 * 1024 * 1024, MAX_BEST50_BYTES = 512 * 1024, MAX_RECORDS = 25000, FLOW_MS = 10 * 60000;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const GRANT_ID = /^[A-Za-z0-9_-]{43}$/;
 const object = v => !!v && typeof v === 'object' && !Array.isArray(v);
@@ -37,7 +37,7 @@ function pickRecord(provider, record) {
   const required = fish ? ['song_id','achievements','level_index','type'] : ['id','achievements','level_index','type'];
   if (required.some(k => !(k in record))) throw new OAuthError('provider_contract_changed');
   if (typeof record.achievements !== 'number' || !Number.isFinite(record.achievements) || record.achievements < 0 || record.achievements > 101) throw new OAuthError('provider_contract_changed');
-  const keys = fish ? ['song_id','title','type','level','level_index','level_label','achievements','dxScore','ds','fc','fs']
+  const keys = fish ? ['song_id','title','type','level','level_index','level_label','achievements','dxScore','ds','ra','fc','fs']
     : ['id','song_name','type','level','level_index','achievements','dx_score','dx_rating','rate','fc','fs','play_time','upload_time','last_played_time'];
   const result = {};
   for (const k of keys) if (k in record) {
@@ -55,6 +55,33 @@ function minimize(provider, value) {
   if (provider === 'diving-fish' && value.mask === true) throw new OAuthError('scores_masked', 409);
   const records = rows.map(row => pickRecord(provider, row));
   return provider === 'diving-fish' ? {records, nickname:label(value.nickname) || ''} : {success:true, code:200, data:records};
+}
+function minimizeBest50(provider, value) {
+  const fish = provider === 'diving-fish';
+  if (fish && value?.mask === true) throw new OAuthError('scores_masked', 409);
+  const pools = fish ? value?.charts : envelope(value);
+  if (!object(pools)) throw new OAuthError('provider_contract_changed');
+  const seen = new Set();
+  const read = (name, maximum) => {
+    const rows = pools[name];
+    if (!Array.isArray(rows) || rows.length > maximum) throw new OAuthError('provider_contract_changed');
+    return rows.map(raw => {
+      const row = pickRecord(provider, raw), id = fish ? row.song_id : row.id;
+      const validID = Number.isSafeInteger(id) && id >= 0 && id < 100000
+        || fish && typeof id === 'string' && /^\d{1,12}$/.test(id) && Number(id) < 100000;
+      const rating = fish ? row.ra : row.dx_rating;
+      if (!validID || !(fish ? ['SD','DX'] : ['standard','dx']).includes(row.type)
+        || !Number.isInteger(row.level_index) || row.level_index < 0 || row.level_index > 4
+        || typeof rating !== 'number' || !Number.isFinite(rating) || rating < 0 || Math.floor(rating) > 1000
+        || fish && !Number.isInteger(rating)) throw new OAuthError('provider_contract_changed');
+      const key = Number(id) + ':' + row.type + ':' + row.level_index;
+      if (seen.has(key)) throw new OAuthError('provider_contract_changed');
+      seen.add(key); return row;
+    });
+  };
+  // These are rating pools, not chart formats. Selection 10 and provider totals
+  // are deliberately omitted; each selected score must supply its own rating.
+  return {old:read(fish ? 'sd' : 'standard', 35), new:read('dx', 15)};
 }
 
 /** One object per opaque browser session. No scores
@@ -123,14 +150,17 @@ export class ProviderOAuthSessionCore {
     if (state.expiresAt <= this.now()) await this.storage.delete('session');
     else if (Object.keys(state.connections).length || Object.keys(state.candidates).length || Object.keys(state.pending).length) await this.storage.setAlarm(state.expiresAt);
   }); }
-  async upstream(url, {method = 'GET', form = null, token = null, maximum = 65536, signal, optionalBody = false} = {}) {
+  async upstream(url, {method = 'GET', form = null, jsonBody = null, token = null, maximum = 65536, signal, optionalBody = false} = {}) {
     // Never accept a caller-supplied endpoint, host, redirect, or request header.
-    const allowed = typeof url === 'string' && Object.values(PROVIDERS).some(p => [p.discovery,p.token,p.userinfo,p.revoke,p.records,p.player].includes(url));
+    const allowed = typeof url === 'string' && Object.values(PROVIDERS).some(p => [p.discovery,p.token,p.userinfo,p.revoke,p.records,p.player,p.best50].includes(url));
     if (!allowed) throw new OAuthError('invalid_endpoint', 500);
+    if (jsonBody && (url !== PROVIDERS['diving-fish'].best50 || method !== 'POST' || form
+      || !object(jsonBody) || Object.keys(jsonBody).length !== 1 || jsonBody.b50 !== true)) throw new OAuthError('invalid_request', 400);
     const timeout = AbortSignal.timeout(this.timeoutMs);
     const timed = AbortSignal.any([signal || new AbortController().signal, timeout]);
     const headers = {Accept:'application/json'};
     if (form) headers['Content-Type'] = 'application/x-www-form-urlencoded';
+    if (jsonBody) headers['Content-Type'] = 'application/json';
     if (token) headers.Authorization = 'Bearer ' + token;
     let response;
     try {
@@ -138,11 +168,11 @@ export class ProviderOAuthSessionCore {
       // workerd's global fetch rejects a foreign receiver. Detach the injected
       // callable instead of invoking it as a method on this session core.
       const fetcher = this.fetcher;
-      response = await fetcher(url, {method, headers, body:form ? new URLSearchParams(form).toString() : undefined,
+      response = await fetcher(url, {method, headers, body:jsonBody ? JSON.stringify(jsonBody) : form ? new URLSearchParams(form).toString() : undefined,
         redirect:'manual', credentials:'omit', cache:'no-store', referrerPolicy:'no-referrer', signal:timed});
       timed.throwIfAborted();
       if (!response.ok) {
-        if (response.status === 404 && [PROVIDERS.lxns.player,PROVIDERS.lxns.records].includes(url)) {
+        if (response.status === 404 && [PROVIDERS.lxns.player,PROVIDERS.lxns.records,PROVIDERS.lxns.best50].includes(url)) {
           // LXNS documents matching HTTP/JSON status codes for absent resources.
           // Only these own-player endpoints imply missing game data; a proxy
           // page, unrelated endpoint or inconsistent envelope is not that signal.
@@ -151,7 +181,7 @@ export class ProviderOAuthSessionCore {
           if (object(missing) && missing.success === false && missing.code === 404)
             throw new OAuthError('lxns_player_missing', 404);
         }
-        if (response.status === 403 && url === PROVIDERS['diving-fish'].records) {
+        if (response.status === 403 && [PROVIDERS['diving-fish'].records,PROVIDERS['diving-fish'].best50].includes(url)) {
           // Recognize only the documented tracker-agreement response. Never
           // relay provider text or confuse a scope/token rejection with setup.
           const denied = await readJSON(response, 2048, timed).catch(() => null);
@@ -297,6 +327,11 @@ export class ProviderOAuthSessionCore {
       }
       const raw = await this.upstream(PROVIDERS[provider].records, {token, maximum:MAX_DATA_BYTES, signal});
       const data = minimize(provider, raw);
+      // One successful preview requires both reads. A missing/changed B50 must
+      // not silently fall back to Japan/international version reconstruction.
+      const best50 = await this.upstream(PROVIDERS[provider].best50, {token, maximum:MAX_BEST50_BYTES, signal,
+        ...(provider === 'diving-fish' ? {method:'POST', jsonBody:{b50:true}} : {})});
+      data.best50 = minimizeBest50(provider, best50);
       c.displayName = label(provider === 'diving-fish' ? raw.nickname : player.name) || c.displayName;
       c.retryAt = 0; await this.save(state);
       // No fabricated score-capture or play time. fetchedAt is acquisition only.

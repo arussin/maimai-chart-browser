@@ -1,4 +1,9 @@
-import type { PlayerChart, PlayerDataset, PlayerRecord } from '../domain/player-data';
+import type {
+  PlayerChart,
+  PlayerDataset,
+  PlayerRecord,
+  PlayerSnapshot,
+} from '../domain/player-data';
 import type { ProviderImportOptions } from '../domain/import-provider-options';
 import { filePlayerKey, type FileProvider, type FileRegion } from '../domain/import-identities';
 import { enrichImportRow } from '../domain/import-metadata';
@@ -88,6 +93,10 @@ export async function normalizeParsedImportDocument(
     captures: {},
   };
   const pbs: Record<string, string> = {};
+  const pools: { old: string[]; new: string[] } = { old: [], new: [] };
+  const rows: { row: ImportRow; pool?: 'old' | 'new' }[] = parsed.rows.map((row) => ({ row }));
+  for (const pool of ['old', 'new'] as const)
+    for (const row of parsed.best50?.[pool] ?? []) rows.push({ row, pool });
   const explicitPBs = new Set<string>();
   const hashes = new Map<string, Promise<string>>();
   const identityHash = (value: string) => {
@@ -98,9 +107,9 @@ export async function normalizeParsedImportDocument(
     }
     return pending;
   };
-  for (let i = 0; i < parsed.rows.length; i += 128) {
+  for (let i = 0; i < rows.length; i += 128) {
     const batch = await Promise.all(
-      parsed.rows.slice(i, i + 128).map(async (input) => {
+      rows.slice(i, i + 128).map(async ({ row: input, pool }) => {
         const row = enrichImportRow(provider, input);
         if (!difficulties.includes(row.difficulty))
           throw new Error('Unsupported chart difficulty.');
@@ -127,6 +136,7 @@ export async function normalizeParsedImportDocument(
         };
         const record = observation(chartID, row);
         return {
+          pool,
           row,
           chartID,
           chart,
@@ -136,7 +146,7 @@ export async function normalizeParsedImportDocument(
         };
       }),
     );
-    for (const { row, chartID, chart, record, ref, playID } of batch) {
+    for (const { row, chartID, chart, record, ref, playID, pool } of batch) {
       const prior = data.charts[chartID];
       if (
         prior &&
@@ -147,7 +157,11 @@ export async function normalizeParsedImportDocument(
         throw new Error('Conflicting chart identities in this export. Nothing was imported.');
       data.charts[chartID] = chart;
       data.records[ref] = record;
-      if (playID !== undefined) {
+      if (pool) {
+        // B50 is a separate provider observation. A later PB must never replace
+        // a score in this saved selection, even when both use the same chart.
+        pools[pool].push(ref);
+      } else if (playID !== undefined) {
         if (Object.hasOwn(data.plays, playID) && data.plays[playID] !== ref)
           throw new Error('Conflicting play identities in this export. Nothing was imported.');
         data.plays[playID] = ref;
@@ -161,7 +175,18 @@ export async function normalizeParsedImportDocument(
   }
   // Neither an export nor a current API response proves that an omitted chart
   // should erase a retained PB. Acquisition time is never a gameplay timestamp.
-  const snapshot = { capturedAt, phase: 'after', complete: false, versions: [], pbs };
+  const snapshot: PlayerSnapshot = {
+    capturedAt,
+    phase: 'after',
+    complete: false,
+    versions: [],
+    pbs,
+  };
+  if (parsed.best50) {
+    if ((provider !== 'diving-fish' && provider !== 'lxns') || options.region !== 'cn')
+      throw new Error('Unsupported Best 50 provider or region.');
+    snapshot.best50 = { provider, region: 'cn', ...pools };
+  }
   const snapshotID = await core.digest(snapshot);
   data.snapshots[snapshotID] = snapshot;
   const capture = {

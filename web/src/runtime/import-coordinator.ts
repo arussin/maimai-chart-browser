@@ -575,7 +575,11 @@ export class ImportCoordinator {
       operation.stage('reconcile');
       const linked = new Set([
         ...Object.values(data.plays),
-        ...Object.values(data.snapshots).flatMap((snapshot) => Object.values(snapshot.pbs)),
+        ...Object.values(data.snapshots).flatMap((snapshot) => [
+          ...Object.values(snapshot.pbs),
+          ...(snapshot.best50?.old ?? []),
+          ...(snapshot.best50?.new ?? []),
+        ]),
       ]);
       const reconciled = await core.reconcile(data);
       this.assert(expected);

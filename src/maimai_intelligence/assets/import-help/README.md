@@ -50,7 +50,7 @@ For an interchange file, choose **Upload BATCH-MANUAL** in Kamaitachi. See [the 
 
 ## Diving-Fish / 水鱼查分器
 
-This connection imports China-region scores already stored in Diving-Fish. Its current sign-in, profile settings and setup guides are in Chinese.
+This connection imports **舞萌 DX (Mainland China / 国服)** scores already stored in Diving-Fish. Its current sign-in, profile settings and setup guides are in Chinese.
 
 1. Open [Diving-Fish](https://maimai.diving-fish.com/), sign in, accept its tracker agreement and confirm your scores are visible there.
 2. If you are new to Fish, register and complete email verification when prompted, then follow its [score-import guide](https://maimai.diving-fish.com/manual/docs/category/%E5%AF%BC%E5%85%A5%E6%88%90%E7%BB%A9/). Creating an account does not add arcade scores. Complete the upstream import on Fish before returning to Party.
@@ -68,7 +68,9 @@ To stop future access, disconnect in Party. You can also revoke Party in [Fish's
 
 ## LXNS / 落雪咖啡屋
 
-Use this connection for China-region maimai DX scores already linked to your LXNS account. LXNS's setup instructions are in Chinese.
+Use this connection for **舞萌 DX (Mainland China / 国服)** scores already linked to your LXNS account. LXNS's setup instructions are in Chinese.
+
+**Best 50:** Fish and LXNS imports retain the tracker's own older 35/newer 15 selection and chart ratings. Export uses that saved selection without a Japanese/international version picker. Refresh older connections once to obtain it. This reflects the tracker at import time; refresh after updating scores there. Missing artwork does not remove a selected chart. Fewer than 50 returned scores produce a clearly marked partial image.
 
 1. Sign in to [LXNS](https://maimai.lxns.net/) and check your scores. If none appear, follow its [game-data sync guide](https://maimai.lxns.net/docs/sync) first. Creating an account alone does not add scores; the initial online sync links game data to your account.
 2. In Party, open LXNS, check **My scores are updated.**, then choose **Connect LXNS**. Use **?** for details. Sign in on `maimai.lxns.net` and approve the read-only request. Players do not need a developer application or personal API key.

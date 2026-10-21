@@ -1,5 +1,17 @@
 {
   "messages": {
+    "Connect or refresh Diving-Fish or LXNS to load Best 50.": {
+      "zh-Hans": "请连接或刷新 Diving-Fish 或 LXNS，以获取 Best 50。",
+      "ko": "Diving-Fish 또는 LXNS에 연결하거나 연결을 새로고침하여 Best 50을 불러오세요.",
+      "ja": "Diving-Fish または LXNS に接続するか、接続を更新して Best 50 を取得してください。",
+      "id": "Hubungkan atau segarkan Diving-Fish atau LXNS untuk memuat Best 50."
+    },
+    "Best 50 selection and ratings come from the provider at import time.": {
+      "zh-Hans": "Best 50 选曲及 Rating 采用导入时查分器提供的数据。",
+      "ko": "Best 50 선곡과 레이팅은 가져올 당시 점수 서비스의 데이터입니다.",
+      "ja": "Best 50 の選曲とレーティングは、読み込み時のスコアサービスのデータです。",
+      "id": "Pilihan Best 50 dan rating berasal dari layanan skor saat diimpor."
+    },
     "CC": {
       "zh-Hans": "定数",
       "ko": "상수",

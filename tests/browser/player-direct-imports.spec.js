@@ -196,6 +196,7 @@ async function mockOAuth(context, { enabled = true } = {}) {
     agreementRequired: false,
     playerMissing: false,
     records: null,
+    best50: undefined,
     enabled,
     fetchedAt: Date.now(),
   };
@@ -283,6 +284,7 @@ async function mockOAuth(context, { enabled = true } = {}) {
                 },
               ],
             };
+      if (state.best50 !== undefined) data.best50 = state.best50;
       return fulfill(route, {
         ...grant,
         coverage: "full",
@@ -341,8 +343,9 @@ for (const provider of ['diving-fish', 'lxns']) test(provider + ' exact metadata
     dx_rating: 260.8, rate: 'ss', play_time: null,
   }] : [{
     song_id: 8, title: 'True Love Song', type: 'SD', level_index: 3,
-    achievements: 99.4321, fc: 'fc', fs: '', level: '12', dxScore: 1000, ds: 12.4,
+    achievements: 99.4321, fc: 'fc', fs: '', level: '12', dxScore: 1000, ds: 12.4, ra: 260,
   }];
+  state.best50 = { old: [...state.records], new: [] };
   await page.addInitScript(() => {
     localStorage.setItem('maimai-chart-sections-v1', JSON.stringify({ chart: false, player: false }));
     window.fishExportJacketDraws = 0;
@@ -410,13 +413,11 @@ for (const provider of ['diving-fish', 'lxns']) test(provider + ' exact metadata
   expect(await page.evaluate(chartID => maimaiPersonal.record(maimaiResearchCatalog.catalog.find(row => row.chart_id === chartID))?.achievement, fixture.chartID)).toBe(994321);
 
   await page.locator('#player-export-best50').click();
-  await expect(page.locator('#player-export-version')).toHaveValue('');
-  await expect(page.locator('#player-export-generate')).toBeDisabled();
-  await expect(page.locator('#player-export-dialog')).toContainText('Your import does not identify its version. Choose the version when these scores were recorded.');
-  await page.locator('#player-export-version-button').click();
-  await page.getByRole('option', { name: 'maimai DX PRiSM PLUS', exact: true }).click();
-  await expect(page.locator('#player-export-summary')).toContainText('Old 35: 1/35 · New 15: 0/15');
-  await expect(page.locator('#player-export-summary')).toContainText('Chart release groups use community metadata and may differ by region.');
+  await expect(page.locator('#player-export-version')).toHaveCount(0);
+  await expect(page.locator('#player-export-version-button')).toHaveCount(0);
+  await expect(page.locator('#player-export-dialog')).toContainText('舞萌 DX · Mainland China');
+  await expect(page.locator('#player-export-summary')).toContainText('Old 35: 1/35 · New 15: 0/15 · Rating: 260');
+  await expect(page.locator('#player-export-summary')).toContainText('Best 50 selection and ratings come from the provider at import time.');
   await expect(page.locator('#player-export-generate')).toBeEnabled();
   await page.locator('#player-export-generate').click();
   await expect(page.locator('#player-export-download')).toHaveAttribute('href', /^blob:/);
@@ -812,7 +813,7 @@ async function unclipped(page) {
     const bounds = dialog.getBoundingClientRect();
     const controls = [
       ...dialog.querySelectorAll(
-        "input:not([type=radio]):not([type=checkbox]), button, a, .player-setup-step .player-remember span",
+        "input:not([type=radio]):not([type=checkbox]), button, a, .player-service-region, .player-setup-step .player-remember span",
       ),
     ].filter((node) => node.getClientRects().length);
     return {
@@ -844,6 +845,15 @@ for (const locale of ["en", "zh-Hans", "ko", "ja", "id"]) {
         await expect(page.locator("#player-import-dialog")).toContainText(
           translated("Kamaitachi username or profile URL", locale),
         );
+        const regionLabel = translated("舞萌 DX · Mainland China", locale);
+        await expect(page.locator("#player-import-dialog .player-service-region")).toHaveCount(2);
+        for (const [provider, title] of [["diving-fish", "Diving-Fish"], ["lxns", "LXNS"]]) {
+          const toggle = page.locator(`[data-service-toggle="${provider}"]`);
+          await expect(toggle).toHaveAttribute("aria-expanded", "false");
+          await expect(toggle.locator(".player-service-region")).toBeVisible();
+          await expect(toggle.locator(".player-service-region")).toHaveText(regionLabel);
+          await expect(toggle).toHaveAccessibleName(`${title} ${regionLabel}`);
+        }
         await unclipped(page);
         if (locale === "en" && width === 1280)
           await page.screenshot({ path: testInfo.outputPath("kamaitachi-desktop.png") });

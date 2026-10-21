@@ -39,12 +39,21 @@ export interface PlayerRecord {
   perfect: number | null;
   pcrit: number | null;
 }
+/** Ordered, provider-selected observations, independent from the snapshot's current PBs. */
+export interface ProviderBest50Snapshot {
+  provider: 'diving-fish' | 'lxns';
+  region: 'cn';
+  old: string[];
+  new: string[];
+}
 export interface PlayerSnapshot {
   capturedAt: number;
   phase: string;
   complete: boolean;
   versions: string[];
   pbs: Record<string, string>;
+  /** Optional v1 extension. Absence in the latest snapshot means unavailable. */
+  best50?: ProviderBest50Snapshot;
 }
 export interface PlayerCapture {
   capturedAt: number;

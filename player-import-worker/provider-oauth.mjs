@@ -13,6 +13,7 @@ export const PROVIDERS = Object.freeze({
     userinfo: 'https://auth.diving-fish.com/oauth/userinfo',
     revoke: 'https://auth.diving-fish.com/oauth/revoke',
     records: 'https://www.diving-fish.com/api/maimaidxprober/player/records',
+    best50: 'https://www.diving-fish.com/api/maimaidxprober/query/player',
     scopes: ['openid', 'profile', 'prober.records.read'],
   }),
   lxns: Object.freeze({
@@ -21,6 +22,7 @@ export const PROVIDERS = Object.freeze({
     token: 'https://maimai.lxns.net/api/v0/oauth/token',
     userinfo: 'https://maimai.lxns.net/api/v0/oauth/userinfo', revoke: null,
     records: 'https://maimai.lxns.net/api/v0/user/maimai/player/scores',
+    best50: 'https://maimai.lxns.net/api/v0/user/maimai/player/bests',
     player: 'https://maimai.lxns.net/api/v0/user/maimai/player',
     scopes: ['openid', 'read_player'],
   }),
