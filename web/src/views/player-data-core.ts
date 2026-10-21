@@ -12,9 +12,9 @@ export function createPlayerDataCore(_ports: Record<string, never> = {}) {
   const MAX_COMPRESSED = 32 * 1024 * 1024,
     MAX_DECODED = 128 * 1024 * 1024,
     HEX = /^[a-f0-9]{64}$/;
-  const fail = (message: string): never => {
+  function fail(message: string): never {
     throw new Error(message);
-  };
+  }
   const object = (x: unknown): x is Record<string, unknown> =>
     x !== null && typeof x === 'object' && !Array.isArray(x);
   const keys = (value: unknown, names: readonly string[]) =>
@@ -185,7 +185,14 @@ export function createPlayerDataCore(_ports: Record<string, never> = {}) {
     for (const [id, s] of Object.entries(d.snapshots)) {
       if (
         !HEX.test(id) ||
-        !keys(s, ['capturedAt', 'phase', 'complete', 'versions', 'pbs']) ||
+        !keys(s, [
+          'capturedAt',
+          'phase',
+          'complete',
+          'versions',
+          'pbs',
+          ...(object(s) && Object.hasOwn(s, 'best50') ? ['best50'] : []),
+        ]) ||
         !integer(s.capturedAt) ||
         !['before', 'after'].includes(s.phase) ||
         typeof s.complete !== 'boolean' ||
@@ -201,6 +208,33 @@ export function createPlayerDataCore(_ports: Record<string, never> = {}) {
           d.records[ref].chartID !== cid
         )
           fail('PB chart mismatch.');
+      if (Object.hasOwn(s, 'best50')) {
+        const best50 = s.best50;
+        if (
+          !keys(best50, ['provider', 'region', 'old', 'new']) ||
+          !best50 ||
+          !['diving-fish', 'lxns'].includes(best50.provider) ||
+          best50.provider !== d.player.provider ||
+          best50.region !== 'cn' ||
+          !d.player.key.startsWith(best50.provider + ':maimaidx:cn:') ||
+          !Array.isArray(best50.old) ||
+          best50.old.length > 35 ||
+          !Array.isArray(best50.new) ||
+          best50.new.length > 15
+        )
+          fail('Invalid provider Best 50 snapshot.');
+        const seen = new Set<string>();
+        let total = 0;
+        for (const ref of [...best50.old, ...best50.new]) {
+          const record =
+            typeof ref === 'string' && Object.hasOwn(d.records, ref) ? d.records[ref] : null;
+          if (!record || !integer(record.rate) || seen.has(record.chartID))
+            fail('Invalid provider Best 50 observation.');
+          seen.add(record.chartID);
+          total += record.rate!;
+          if (!integer(total)) fail('Invalid provider Best 50 rating total.');
+        }
+      }
     }
     for (const [id, c] of Object.entries(d.captures)) {
       if (
@@ -362,6 +396,7 @@ export function createPlayerDataCore(_ports: Record<string, never> = {}) {
     let rating: number | null = null;
     const rows = [...pbs.values()];
     if (
+      !d.player.key.startsWith(d.player.provider + ':maimaidx:cn:') &&
       snapshot?.complete &&
       snapshot.versions.length &&
       rows.every((r) => r.rate !== null && r.displayVersion)
@@ -457,7 +492,12 @@ export function createPlayerDataCore(_ports: Record<string, never> = {}) {
       dates.charts[cid] = Math.max(dates.charts[cid] || 0, time);
     }
     for (const s of Object.values(d.snapshots))
-      for (const cid of Object.keys(s.pbs))
+      for (const cid of [
+        ...Object.keys(s.pbs),
+        ...(s.best50
+          ? [...s.best50.old, ...s.best50.new].map((ref) => d.records[ref].chartID)
+          : []),
+      ])
         dates.charts[cid] = Math.max(dates.charts[cid] || 0, s.capturedAt);
     return dates;
   }

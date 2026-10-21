@@ -50,7 +50,7 @@ Untuk berkas pertukaran, pilih **Unggah BATCH-MANUAL** di Kamaitachi. Lihat [bat
 
 ## Diving-Fish / 水鱼查分器
 
-Koneksi ini mengimpor skor wilayah Tiongkok yang sudah tersimpan di Diving-Fish. Layar masuk, pengaturan profil, dan panduan penyiapannya saat ini berbahasa Mandarin.
+Koneksi ini mengimpor skor **舞萌 DX (Tiongkok daratan)** yang sudah tersimpan di Diving-Fish. Layar masuk, pengaturan profil, dan panduan penyiapannya saat ini berbahasa Mandarin.
 
 1. Buka [Diving-Fish](https://maimai.diving-fish.com/), masuk, setujui ketentuan layanan pencatat skornya, dan pastikan skor Anda terlihat di sana.
 2. Jika baru menggunakan Fish, daftar dan selesaikan verifikasi email ketika diminta, lalu ikuti [panduan impor skor](https://maimai.diving-fish.com/manual/docs/category/%E5%AF%BC%E5%85%A5%E6%88%90%E7%BB%A9/). Membuat akun tidak menambahkan skor arcade. Selesaikan impor ke Fish sebelum kembali ke Party.
@@ -68,7 +68,9 @@ Untuk menghentikan akses berikutnya, putuskan koneksi di Party. Anda juga dapat 
 
 ## LXNS / 落雪咖啡屋
 
-Gunakan koneksi ini untuk skor maimai DX wilayah Tiongkok yang sudah terhubung ke akun LXNS Anda. Panduan pengaturan LXNS tersedia dalam bahasa Mandarin.
+**Best 50 versi Tiongkok daratan:** Impor Fish dan LXNS menyimpan pilihan 35 chart lama/15 chart baru beserta rating dari layanan tersebut. Tidak perlu memilih versi Jepang/internasional. Segarkan koneksi yang sudah tersimpan satu kali untuk mendapatkannya. Gambar mencerminkan data saat diimpor; segarkan lagi setelah memperbarui skor di layanan. Chart tanpa gambar sampul tetap disertakan. Jika kurang dari 50 chart, gambar ditandai sebagai laporan sebagian.
+
+Gunakan koneksi ini untuk skor **舞萌 DX (Tiongkok daratan)** yang sudah terhubung ke akun LXNS Anda. Panduan pengaturan LXNS tersedia dalam bahasa Mandarin.
 
 1. Masuk ke [LXNS](https://maimai.lxns.net/) dan periksa skor Anda. Jika belum ada, ikuti [panduan sinkronisasi data permainan](https://maimai.lxns.net/docs/sync) dahulu. Membuat akun saja tidak menambahkan skor; sinkronisasi daring pertama menghubungkan data permainan ke akun.
 2. Di Party, buka LXNS, centang **Skor saya sudah diperbarui.**, lalu pilih **Hubungkan LXNS**. Gunakan **?** untuk penjelasan. Masuk di `maimai.lxns.net` dan izinkan akses baca saja. Pemain tidak perlu mendaftarkan aplikasi pengembang atau menyediakan kunci API pribadi.

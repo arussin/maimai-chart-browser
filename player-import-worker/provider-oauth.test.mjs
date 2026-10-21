@@ -5,7 +5,7 @@ import {ProviderOAuthSessionCore} from './provider-oauth-session-core.mjs';
 
 const nonce = () => crypto.randomUUID();
 const json = (v, status = 200, extra = {}) => new Response(JSON.stringify(v), {status, headers:{'Content-Type':'application/json', ...extra}});
-const fishScore = () => ({song_id:1,title:'Fictional song',type:'DX',level:'13+',level_index:3,achievements:100.1234,dxScore:1200,ds:13.7,fc:'fc',fs:''});
+const fishScore = () => ({song_id:1,title:'Fictional song',type:'DX',level:'13+',level_index:3,achievements:100.1234,dxScore:1200,ds:13.7,ra:300,fc:'fc',fs:''});
 const lxScore = () => ({id:1,song_name:'Fictional song',type:'dx',level:'13+',level_index:3,achievements:100.1234,dx_score:1200,dx_rating:300.9,rate:'sssp',fc:'fc',fs:null,play_time:null,upload_time:'2026-10-11T00:00:00Z',last_played_time:null,private:'not returned'});
 class Storage {
   values = new Map(); alarm = null;
@@ -25,13 +25,14 @@ function setup() {
   s.fetcher = async (url, options) => {
     s.calls.push({url, options});
     const changed = await s.override?.(url, options); if (changed) return changed;
-    const provider = Object.entries(PROVIDERS).find(([,p]) => [p.discovery,p.token,p.userinfo,p.records,p.revoke,p.player].includes(url))?.[0];
+    const provider = Object.entries(PROVIDERS).find(([,p]) => [p.discovery,p.token,p.userinfo,p.records,p.revoke,p.player,p.best50].includes(url))?.[0];
     assert.ok(provider, 'all upstream URLs must be fixed'); const p = PROVIDERS[provider];
     if (url === p.discovery) return json({issuer:p.issuer,authorization_endpoint:p.authorize,token_endpoint:p.token,userinfo_endpoint:p.userinfo,revocation_endpoint:p.revoke,code_challenge_methods_supported:['S256']});
     if (url === p.token) { s.tokenNumber++; return json({access_token:'fixture-access-' + s.tokenNumber,refresh_token:'fixture-refresh-' + s.tokenNumber,token_type:'Bearer',expires_in:900,scope:p.scopes.join(' ')}); }
     if (url === p.userinfo) return json({sub:'fixture-' + provider, name:'Fictional player', email:'not-returned@example.test'});
     if (url === p.player) return json({success:true,code:200,data:{name:'Fictional player',friend_code:123456,upload_time:'2026-10-11T00:00:00Z'}});
     if (url === p.records) return provider === 'diving-fish' ? json({nickname:'Fictional player',records:[fishScore()],user_general_data:{private:'not returned'},access_token:'not returned'}) : json({success:true,code:200,data:[lxScore()]});
+    if (url === p.best50) return provider === 'diving-fish' ? json({charts:{sd:[fishScore()],dx:[]}}) : json({success:true,code:200,data:{standard:[lxScore()],dx:[]}});
     if (url === p.revoke) return new Response(null, {status:200});
     throw Error('unexpected fixture request');
   };
@@ -133,6 +134,12 @@ test('full PB reads use exact Fish and LXNS contracts and strip unrelated profil
     assert.equal(records[0].achievements,100.1234); assert.ok(!JSON.stringify(body).includes('not returned')); assert.ok(!JSON.stringify(body).includes('friend_code'));
     assert.ok(s.calls.filter(c => c.url === PROVIDERS[provider].records).every(c => c.options.method === 'GET' && c.options.headers.Authorization.startsWith('Bearer fixture-access-')));
     if (provider === 'lxns') { assert.equal(records[0].dx_rating,300.9); assert.equal(records[0].rate,'sssp'); }
+    assert.deepEqual(body.data.best50,{old:[records[0]],new:[]});
+    const selection = s.calls.find(c => c.url === PROVIDERS[provider].best50);
+    assert.equal(selection.options.headers.Authorization,'Bearer fixture-access-1');
+    assert.equal(selection.options.method,provider === 'diving-fish' ? 'POST' : 'GET');
+    assert.equal(selection.options.body,provider === 'diving-fish' ? '{"b50":true}' : undefined);
+    if (provider === 'diving-fish') assert.equal(selection.options.headers['Content-Type'],'application/json');
     assert.equal((await s.call('/' + provider + '/read',{connectionID:c.connectionID})).status,429);
   }
 });
@@ -195,7 +202,7 @@ test('agreement recovery does not override first-import cleanup or replacement c
   s.override = null;
   assert.equal((await s.call('/diving-fish/read',{connectionID:original.connectionID})).status,200);
 });
-test('only the exact bounded Fish records agreement error receives setup recovery', async () => {
+test('only the exact bounded Fish score-read agreement error receives setup recovery', async () => {
   for (const denied of [
     () => json({status:'error',message:'access token 缺少权限：prober.records.read',private:'never disclose'},403),
     () => json({status:'error',message:'该用户未同意用户协议 extra private text'},403),
@@ -546,7 +553,7 @@ test('LXNS rate limits survive restart and authorization rejection never imperso
 });
 
 test('LXNS absent player data has a finite recovery error without discarding either provider grant', async () => {
-  for (const endpoint of [PROVIDERS.lxns.player,PROVIDERS.lxns.records]) {
+  for (const endpoint of [PROVIDERS.lxns.player,PROVIDERS.lxns.records,PROVIDERS.lxns.best50]) {
     const s = setup(), fish = await s.connect(), lxns = await s.connect('lxns');
     s.override = url => url === endpoint ? json({success:false,code:404,message:'private upstream detail'},404) : null;
     const response = await s.call('/lxns/read',{connectionID:lxns.connectionID});
@@ -582,4 +589,103 @@ test('LXNS missing-player recovery requires the documented status and envelope o
   core.fetcher = async () => json({success:false,code:404},404);
   for (const url of [PROVIDERS.lxns.token,PROVIDERS.lxns.userinfo,PROVIDERS['diving-fish'].records])
     await assert.rejects(core.upstream(url),{code:'source_unavailable'});
+});
+
+test('provider Best 50 preserves selected order and ratings without trimming the full score list or including Selection 10', async () => {
+  for (const provider of ['diving-fish','lxns']) {
+    const s = setup(), c = await s.connect(provider), fish = provider === 'diving-fish';
+    const rows = Array.from({length:52},(_,i) => fish ? {...fishScore(),song_id:i + 1,ra:400 - i} : {...lxScore(),id:i + 1,dx_rating:400.9 - i});
+    // Deliberately use DX-format charts in the old pool: grouping is not format.
+    const old = rows.slice(0,35).reverse(), recent = rows.slice(35,50).reverse();
+    s.override = url => url === PROVIDERS[provider].records
+      ? json(fish ? {records:rows} : {success:true,code:200,data:rows})
+      : url === PROVIDERS[provider].best50 ? json(fish
+        ? {rating:99999,charts:{sd:old,dx:recent},username:'not returned'}
+        : {success:true,code:200,data:{standard:old,dx:recent,standard_total:99999,dx_total:99999,standard_selections:rows.slice(50),dx_selections:rows.slice(50)}}) : null;
+    const response = await s.call('/' + provider + '/read',{connectionID:c.connectionID});
+    assert.equal(response.status,200); const result = await response.json();
+    const full = fish ? result.data.records : result.data.data;
+    assert.equal(full.length,52); assert.deepEqual(result.data.best50,{old:full.slice(0,35).reverse(),new:full.slice(35,50).reverse()});
+    assert.ok(!JSON.stringify(result).includes('99999')); assert.ok(!JSON.stringify(result).includes('selections'));
+    assert.ok(!JSON.stringify(result).includes('not returned'));
+    const state = await [...s.cores.values()][0].load();
+    assert.ok(!JSON.stringify(state).includes('Fictional song')); assert.ok(!JSON.stringify(state).includes('best50'));
+    assert.ok(!JSON.stringify(state).includes('achievements'));
+  }
+});
+
+test('missing, oversized, duplicated and unrated Best 50 pools fail atomically without replacing established account metadata', async () => {
+  for (const provider of ['diving-fish','lxns']) {
+    const s = setup(), c = await s.connect(provider), fish = provider === 'diving-fish', score = fish ? fishScore() : lxScore();
+    const original = (await [...s.cores.values()][0].load()).connections[provider];
+    const wrap = pools => fish ? {charts:pools} : {success:true,code:200,data:pools};
+    const oldKey = fish ? 'sd' : 'standard', ratingKey = fish ? 'ra' : 'dx_rating';
+    const pools = (old = [score], recent = []) => ({[oldKey]:old,dx:recent});
+    const missingRating = {...score}; delete missingRating[ratingKey];
+    const invalid = [
+      {}, wrap(null), wrap({[oldKey]:[score]}), wrap(pools({},[])),
+      wrap(pools(Array(36).fill(score))), wrap(pools([],Array(16).fill(score))),
+      wrap(pools([score,score])), wrap(pools([score],[score])),
+      wrap(pools([missingRating])), wrap(pools([{...score,[ratingKey]:null}])),
+      wrap(pools([{...score,[ratingKey]:-1}])), wrap(pools([{...score,[ratingKey]:1001}])),
+      wrap(pools([{...score,[fish ? 'song_id' : 'id']:100000}])),
+      wrap(pools([{...score,level_index:5}])), wrap(pools([{...score,type:'utage'}])),
+      wrap(pools([{...score,achievements:102}])),
+      ...(fish ? [wrap(pools([{...score,ra:300.9}])),wrap(pools([score,{...score,song_id:'01'}]))] : [{success:false,code:200,data:pools()}]),
+    ];
+    for (const value of invalid) {
+      s.time += 30001;
+      s.override = url => url === PROVIDERS[provider].best50 ? json(value) : null;
+      const response = await s.call('/' + provider + '/read',{connectionID:c.connectionID});
+      assert.equal(response.status,502); assert.deepEqual(await response.json(),{error:'provider_contract_changed'});
+      const current = (await [...s.cores.values()][0].load()).connections[provider];
+      for (const key of ['id','accountID','displayName','tokens','requiresReconnect']) assert.deepEqual(current[key],original[key]);
+      assert.ok(!JSON.stringify(current).includes('achievements'));
+    }
+    s.time += 30001; s.override = url => url === PROVIDERS[provider].best50 ? json(wrap(pools([],[]))) : null;
+    const empty = await s.call('/' + provider + '/read',{connectionID:c.connectionID});
+    assert.equal(empty.status,200); assert.deepEqual((await empty.json()).data.best50,{old:[],new:[]});
+  }
+});
+
+test('Best 50 transport stays bounded, rejects redirects and exposes only finite failure codes', async () => {
+  for (const provider of ['diving-fish','lxns']) {
+    const s = setup(), c = await s.connect(provider);
+    for (const [expected, fixture] of [
+      ['response_too_large',() => json({},200,{'Content-Length':String(512*1024+1)})],
+      ['response_too_large',() => new Response(' '.repeat(512*1024+1),{headers:{'Content-Type':'application/json'}})],
+      ['invalid_response',() => new Response('<html>private fixture</html>',{headers:{'Content-Type':'text/html'}})],
+      ['source_unavailable',() => new Response(null,{status:302,headers:{Location:'https://private.example.test'}})],
+      ['upstream_network',() => { throw Error('private fixture network detail'); }],
+    ]) {
+      s.time += 30001; s.override = url => url === PROVIDERS[provider].best50 ? fixture() : null;
+      const response = await s.call('/' + provider + '/read',{connectionID:c.connectionID});
+      assert.equal(response.status,502); assert.deepEqual(await response.json(),{error:expected});
+      assert.equal((await s.status())[0].connected,true);
+    }
+  }
+});
+
+test('Fish Best 50 retains masking uncertainty, rejects an explicit mask and preserves setup recovery', async () => {
+  const s = setup(), c = await s.connect();
+  s.override = url => url === PROVIDERS['diving-fish'].best50 ? json({mask:true,charts:{sd:[fishScore()],dx:[]}}) : null;
+  let response = await s.call('/diving-fish/read',{connectionID:c.connectionID});
+  assert.equal(response.status,409); assert.deepEqual(await response.json(),{error:'scores_masked'});
+  s.time += 30001; s.override = url => url === PROVIDERS['diving-fish'].best50 ? json({status:'error',message:'该用户未同意用户协议'},403) : null;
+  response = await s.call('/diving-fish/read',{connectionID:c.connectionID});
+  assert.equal(response.status,403); assert.deepEqual(await response.json(),{error:'tracker_agreement_required'});
+  assert.equal((await s.status())[0].connected,true);
+  s.time += 30001; s.override = url => url === PROVIDERS['diving-fish'].best50 ? json({charts:{sd:[{...fishScore(),dxScore:0}],dx:[]}}) : null;
+  response = await s.call('/diving-fish/read',{connectionID:c.connectionID});
+  assert.equal(response.status,200); assert.deepEqual((await response.json()).warnings,['fish_masking_unverified']);
+});
+
+test('Best 50 JSON input cannot relay an account selector or target another endpoint', async () => {
+  const s = setup(), core = new ProviderOAuthSessionCore(new Storage(),s.env,{fetcher:s.fetcher});
+  for (const [url,options] of [
+    [PROVIDERS['diving-fish'].best50,{method:'POST',jsonBody:{b50:true,username:'private'}}],
+    [PROVIDERS['diving-fish'].best50,{method:'GET',jsonBody:{b50:true}}],
+    [PROVIDERS.lxns.best50,{method:'POST',jsonBody:{b50:true}}],
+  ]) await assert.rejects(core.upstream(url,options),{code:'invalid_request'});
+  assert.equal(s.calls.length,0);
 });

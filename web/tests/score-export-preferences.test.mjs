@@ -69,6 +69,13 @@ const preferences = (storage) =>
 
 test('persistable release choices match the domain list and exclude custom report pools', () => {
   const choices = versionChoices({
+    player: {
+      key: 'kamaitachi:maimaidx:fixture',
+      provider: 'kamaitachi',
+      game: 'maimaidx',
+      username: 'fixture',
+      displayName: 'Fixture',
+    },
     snapshots: {
       latest: { capturedAt: 1, phase: 'after', complete: true, versions: ['Custom pool'], pbs: {} },
     },

@@ -60,6 +60,24 @@
       "ja": "自己ベストのスナップショットが無効です。",
       "id": "Snapshot PB tidak valid."
     },
+    "Invalid provider Best 50 snapshot.": {
+      "zh-Hans": "查分器提供的 Best 50 快照无效。",
+      "ko": "점수 서비스의 Best 50 스냅샷이 올바르지 않습니다.",
+      "ja": "スコアサービスの Best 50 スナップショットが無効です。",
+      "id": "Snapshot Best 50 dari layanan skor tidak valid."
+    },
+    "Invalid provider Best 50 observation.": {
+      "zh-Hans": "查分器提供的 Best 50 成绩记录无效。",
+      "ko": "점수 서비스의 Best 50 점수 기록이 올바르지 않습니다.",
+      "ja": "スコアサービスの Best 50 スコア記録が無効です。",
+      "id": "Catatan skor Best 50 dari layanan skor tidak valid."
+    },
+    "Invalid provider Best 50 rating total.": {
+      "zh-Hans": "查分器 Best 50 的 Rating 总和无效。",
+      "ko": "점수 서비스의 Best 50 레이팅 합계가 올바르지 않습니다.",
+      "ja": "スコアサービスの Best 50 レーティング合計が無効です。",
+      "id": "Total rating Best 50 dari layanan skor tidak valid."
+    },
     "PB chart mismatch.": {
       "zh-Hans": "个人最佳成绩与谱面不匹配。",
       "ko": "개인 최고 기록과 채보가 일치하지 않습니다.",

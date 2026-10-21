@@ -1,5 +1,17 @@
 {
   "messages": {
+    "Mainland China only": {
+      "zh-Hans": "仅限国服",
+      "ko": "중국 본토 버전 전용",
+      "ja": "中国本土版のみ",
+      "id": "Khusus versi Tiongkok daratan"
+    },
+    "舞萌 DX · Mainland China": {
+      "zh-Hans": "舞萌 DX · 国服",
+      "ko": "舞萌 DX · 중국 본토판",
+      "ja": "舞萌 DX · 中国本土版",
+      "id": "舞萌 DX · Tiongkok daratan"
+    },
     "Choose a service and an import method.": {
       "zh-Hans": "请选择服务和导入方式。",
       "ko": "서비스와 가져오기 방법을 선택하세요.",

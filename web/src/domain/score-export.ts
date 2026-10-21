@@ -17,7 +17,7 @@ export interface VersionChoice {
   label: string;
   /** Chart debut releases in the New 15 pool, not catalog-build versions. */
   versions: string[];
-  source: 'known' | 'snapshot';
+  source: 'known' | 'snapshot' | 'provider';
   /** Canonical artwork label, independent from imported spelling or chart identity. */
   logoVersion: string | null;
   supportsBest50: boolean;
@@ -140,7 +140,26 @@ function importedChoice(snapshot: PlayerSnapshot | null) {
 }
 
 export function versionChoices(data: PlayerDataset): VersionChoice[] {
-  const imported = importedChoice(current(data).snapshot);
+  const snapshot = current(data).snapshot;
+  if (data.player.key.startsWith(data.player.provider + ':maimaidx:cn:')) {
+    const best50 = snapshot?.best50;
+    return best50 &&
+      best50.region === 'cn' &&
+      best50.provider === data.player.provider &&
+      ['diving-fish', 'lxns'].includes(best50.provider)
+      ? [
+          {
+            id: 'cn-provider',
+            label: '舞萌 DX · Mainland China',
+            versions: [],
+            source: 'provider',
+            logoVersion: null,
+            supportsBest50: true,
+          },
+        ]
+      : [];
+  }
+  const imported = importedChoice(snapshot);
   // Splash PLUS introduced the modern rating model. CiRCLE extended New 15
   // to the immediately preceding release (including a distinct PLUS release).
   // Primary sources: https://info-maimai.sega.jp/616/ and /7725/.
@@ -181,7 +200,7 @@ export function versionChoices(data: PlayerDataset): VersionChoice[] {
 
 /** A chart's debut alone cannot reveal which game release the player used. */
 export function detectVersion(data: PlayerDataset): string | null {
-  return versionChoices(data).find((choice) => choice.source === 'snapshot')?.id ?? null;
+  return versionChoices(data).find((choice) => choice.source !== 'known')?.id ?? null;
 }
 
 export function gradeForAchievement(value: number | null): string {
@@ -332,6 +351,62 @@ export function buildBest50(
     duplicate: 0,
     total: 0,
   };
+  if (version.source === 'provider') {
+    const membership = snapshot!.best50!;
+    const seen = new Set<string>();
+    const entries = (refs: string[], maximum: number): ExportEntry[] => {
+      if (!Array.isArray(refs) || refs.length > maximum)
+        throw Error('Invalid provider Best 50 snapshot.');
+      return refs.map((ref) => {
+        const record = data.records[ref];
+        const chart = record && data.charts[record.chartID];
+        if (
+          !chart ||
+          !record ||
+          record.rate === null ||
+          !Number.isSafeInteger(record.rate) ||
+          record.rate < 0 ||
+          seen.has(record.chartID)
+        )
+          throw Error('Invalid provider Best 50 observation.');
+        seen.add(record.chartID);
+        return {
+          chart,
+          record,
+          rating: record.rate,
+          ratingSource: 'imported',
+          canonicalChartID: resolve?.(chart, record)?.canonicalChartID || null,
+        };
+      });
+    };
+    // The provider owns both membership and order. Catalog matching is artwork
+    // assistance only: never regroup, replace observations or calculate ratings.
+    const old = entries(membership.old, 35);
+    const recent = entries(membership.new, 15);
+    const oldTotal = old.reduce((sum, row) => sum + row.rating, 0);
+    const newTotal = recent.reduce((sum, row) => sum + row.rating, 0);
+    const totalRating = oldTotal + newTotal;
+    if (!Number.isSafeInteger(totalRating)) throw Error('Invalid provider Best 50 rating total.');
+    const partial = old.length < 35 || recent.length < 15;
+    const warnings = ['Best 50 selection and ratings come from the provider at import time.'];
+    if (partial) warnings.push('There are not enough eligible records to fill all 50 slots.');
+    return {
+      player: data.player,
+      capturedAt: snapshot!.capturedAt,
+      version,
+      detectedVersion,
+      old,
+      new: recent,
+      oldTotal,
+      newTotal,
+      totalRating,
+      calculatedRatings: 0,
+      unqualifiedVersions: 0,
+      coverage: partial ? 'partial' : 'complete',
+      excluded,
+      warnings,
+    };
+  }
   const newVersions = new Set(version.versions.map(versionToken));
   const knownRanks = [...newVersions].map((v) => releaseRank.get(v));
   const latestRank = knownRanks.every((rank) => rank !== undefined)

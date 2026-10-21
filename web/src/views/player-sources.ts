@@ -352,6 +352,7 @@ export function createPlayerSources(ports: SourcesPorts) {
         player: data.player,
         charts: data.charts,
         records: data.records,
+        best50: core.current(data).snapshot?.best50 ?? null,
       }),
     };
     signal.throwIfAborted();

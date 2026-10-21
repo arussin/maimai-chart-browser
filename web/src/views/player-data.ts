@@ -947,7 +947,11 @@ export function createPlayerData(ports: PersonalPorts) {
       }
       const chevron = make('span', i18n.verbatim('⌄'), 'player-service-chevron');
       chevron.setAttribute('aria-hidden', 'true');
-      toggle.append(make('span', i18n.verbatim(service.title)), chevron);
+      const label = make('span', undefined, 'player-service-label');
+      label.append(make('span', i18n.verbatim(service.title)));
+      if (service.regionLabel)
+        label.append(make('span', service.regionLabel, 'player-service-region'));
+      toggle.append(label, chevron);
       toggle.onclick = () => {
         if (openService === service.id) {
           openService = null;

@@ -65,6 +65,58 @@ const lxns = (scores = [lxnsScore]) => ({ success: true, code: 200, data: scores
 const normalizeLXNS = (input = lxns(), observation = lxnsAcquisition) =>
   normalize(input, lxnsOptions, observation);
 
+test('provider-selected CN B50 keeps its exact observations independent of current PBs', async () => {
+  for (const provider of ['diving-fish', 'lxns']) {
+    const input = provider === 'diving-fish' ? fish() : lxns();
+    const row = provider === 'diving-fish' ? input.records[0] : input.data[0];
+    const selected =
+      provider === 'diving-fish'
+        ? { ...row, achievements: 99, ra: 280 }
+        : { ...row, achievements: 99, dx_rating: 280.9 };
+    input.best50 = { old: [selected], new: [] };
+    const data = await normalize(input, { ...options, provider });
+    const snapshot = Object.values(data.snapshots)[0];
+    assert.equal(snapshot.best50.provider, provider);
+    assert.equal(snapshot.best50.region, 'cn');
+    assert.equal(snapshot.complete, false);
+    assert.equal(snapshot.versions.length, 0);
+    const record = data.records[snapshot.best50.old[0]];
+    assert.equal(record.achievement, 990000);
+    assert.equal(record.rate, 280);
+    assert.equal(core.current(data).pbs.get(record.chartID).achievement, 1001234);
+    assert.equal((await core.decode(await core.encode(data))).revision, data.revision);
+    const { buildBest50, versionChoices } = await loadModule('domain/score-export', globals);
+    const choices = versionChoices(data);
+    assert.equal(choices.length, 1);
+    const model = buildBest50(data, choices[0].id, () => ({
+      displayVersion: 'maimai DX PRiSM PLUS',
+    }));
+    assert.equal(model.old[0].record.achievement, 990000);
+    assert.equal(model.oldTotal, 280);
+    assert.equal(model.new.length, 0);
+    assert.equal(model.calculatedRatings, 0);
+  }
+});
+
+test('CN B50 rejects malformed, duplicate or unrated pools instead of guessing', async () => {
+  for (const provider of ['diving-fish', 'lxns']) {
+    const input = provider === 'diving-fish' ? fish() : lxns();
+    const row = provider === 'diving-fish' ? { ...input.records[0], ra: 300 } : input.data[0];
+    for (const best50 of [
+      { old: [row], new: [row] },
+      { old: Array(36).fill(row), new: [] },
+      { old: [], new: Array(16).fill(row) },
+      { old: [row], new: [], selections: [] },
+      { old: [{ ...row, ra: undefined, dx_rating: undefined }], new: [] },
+    ]) {
+      await assert.rejects(
+        () => normalize({ ...input, best50 }, { ...options, provider }),
+        /Best 50/,
+      );
+    }
+  }
+});
+
 test('network acquisition preserves scores without pretending retrieval is play time', async () => {
   const data = await normalize(fish());
   assert.equal(Object.values(data.snapshots)[0].capturedAt, acquisition.capturedAt);

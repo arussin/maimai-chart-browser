@@ -231,13 +231,16 @@ def validate(data, *, check_revision=True):
         if not isinstance(ref, str) or ref not in data["records"]:
             raise ValueError("Play observation missing")
     for key, snap in data["snapshots"].items():
-        if not isinstance(snap, dict) or set(snap) != {
+        snapshot_fields = {
             "capturedAt",
             "phase",
             "complete",
             "versions",
             "pbs",
-        }:
+        }
+        if isinstance(snap, dict) and "best50" in snap:
+            snapshot_fields.add("best50")
+        if not isinstance(snap, dict) or set(snap) != snapshot_fields:
             raise ValueError("Invalid PB snapshot")
         _integer(snap["capturedAt"])
         if not isinstance(snap["phase"], str) or snap["phase"] not in {"before", "after"}:
@@ -255,6 +258,32 @@ def validate(data, *, check_revision=True):
                 or data["records"][ref]["chartID"] != cid
             ):
                 raise ValueError("PB chart mismatch")
+        if "best50" in snap:
+            best50 = snap["best50"]
+            if (
+                not isinstance(best50, dict)
+                or set(best50) != {"provider", "region", "old", "new"}
+                or best50["provider"] not in ("diving-fish", "lxns")
+                or best50["provider"] != data["player"]["provider"]
+                or best50["region"] != "cn"
+                or not data["player"]["key"].startswith(best50["provider"] + ":maimaidx:cn:")
+                or not isinstance(best50["old"], list)
+                or len(best50["old"]) > 35
+                or not isinstance(best50["new"], list)
+                or len(best50["new"]) > 15
+            ):
+                raise ValueError("Invalid provider Best 50 snapshot")
+            seen, total = set(), 0
+            for ref in best50["old"] + best50["new"]:
+                if not isinstance(ref, str) or ref not in data["records"]:
+                    raise ValueError("Invalid provider Best 50 observation")
+                record = data["records"][ref]
+                _integer(record["rate"])
+                if record["chartID"] in seen:
+                    raise ValueError("Invalid provider Best 50 observation")
+                seen.add(record["chartID"])
+                total += record["rate"]
+                _integer(total)
         if digest(snap) != key:
             raise ValueError("Snapshot integrity mismatch")
     for key, capture in data["captures"].items():
@@ -329,6 +358,7 @@ def offer(data):
     rating = None
     if (
         snap
+        and not data["player"]["key"].startswith(data["player"]["provider"] + ":maimaidx:cn:")
         and snap["complete"]
         and snap["versions"]
         and all(r["rate"] is not None and r["displayVersion"] for r in pbs.values())
@@ -372,7 +402,13 @@ def observation_dates(data):
         cid = data["records"][data["plays"][pid]]["chartID"]
         dates["charts"][cid] = max(dates["charts"].get(cid, 0), when)
     for snap in data["snapshots"].values():
-        for cid in snap["pbs"]:
+        charts = list(snap["pbs"])
+        if "best50" in snap:
+            charts.extend(
+                data["records"][ref]["chartID"]
+                for ref in snap["best50"]["old"] + snap["best50"]["new"]
+            )
+        for cid in charts:
             dates["charts"][cid] = max(dates["charts"].get(cid, 0), snap["capturedAt"])
     return dates
 

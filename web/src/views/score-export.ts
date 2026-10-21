@@ -229,6 +229,47 @@ export function createScoreExporter(ports: ExportPorts) {
   function best50(source: HTMLElement) {
     const dataset = ports.dataset();
     if (!dataset) return;
+    if (dataset.player.key.startsWith(`${dataset.player.provider}:maimaidx:cn:`)) {
+      const ui = begin('Export Best 50', source, dataset, 'best50');
+      ui.fields.append(make('p', '舞萌 DX · Mainland China'));
+      const choice = versionChoices(dataset)[0];
+      if (!choice) {
+        ui.fields.append(make('p', 'Connect or refresh Diving-Fish or LXNS to load Best 50.'));
+        ui.generate.disabled = true;
+        ui.fields.tabIndex = -1;
+        ui.fields.focus();
+        return;
+      }
+      const model = buildBest50(dataset, choice.id, ports.resolve);
+      const summary = make('div');
+      summary.id = 'player-export-summary';
+      summary.append(
+        make(
+          'p',
+          i18n.message('Old 35: {0}/35 · New 15: {1}/15 · Rating: {2}', [
+            model.old.length,
+            model.new.length,
+            model.totalRating,
+          ]),
+        ),
+      );
+      for (const warning of model.warnings) summary.append(make('p', warning));
+      ui.fields.append(summary);
+      ui.generate.disabled = model.old.length + model.new.length === 0;
+      ui.generate.onclick = () =>
+        void ui.render(async (artworkFallback) => {
+          const renderer = await loadRenderer();
+          return renderer.renderBest50(document, model, {
+            translate,
+            jacketURL: ports.jacketURL,
+            jacketFallbackURL: ports.jacketFallbackURL,
+            artworkURL: ports.artworkURL,
+            artworkFallback,
+          });
+        }, 'maimai-cn-best50.png');
+      ui.generate.focus();
+      return;
+    }
     const ui = begin('Export Best 50', source, dataset, 'best50'),
       choices = versionChoices(dataset),
       detected = detectVersion(dataset),

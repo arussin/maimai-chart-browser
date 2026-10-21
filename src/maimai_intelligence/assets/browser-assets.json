@@ -2,16 +2,16 @@
   "version": 1,
   "tool": "esbuild-0.28.2",
   "entries": {
-    "hosted": "browser/browser-entry-6SVG7UFB.js",
-    "offline": "browser/browser-offline-TDLSWTCZ.js"
+    "hosted": "browser/browser-entry-4LP3EA7U.js",
+    "offline": "browser/browser-offline-DQIXNVGY.js"
   },
   "assets": {
-    "browser/browser-entry-6SVG7UFB.js": {
-      "sha256": "7bd1702a7c74fbf9691187b2bc46527442598c6555e73125dd6ddb7d0bbadd0d",
+    "browser/browser-entry-4LP3EA7U.js": {
+      "sha256": "fd44da5ee84a88a63a840b93a898b4ed8c972e1758e2138fc611a56e5b34b6ab",
       "bytes": 25035
     },
-    "browser/import-provider-UO3Q5PWK.js": {
-      "sha256": "24e17bffbba6c6fb9b4b607c65165d84f3ee3f31b7031511be8a168463061f9c",
+    "browser/import-provider-4ECDPE65.js": {
+      "sha256": "ecd780bf38410c73c4184bd0311c164e3aacca5a2c11d99cd5e2fba0004e2ba0",
       "bytes": 148
     },
     "browser/score-export-afterglow-artwork-KIAHTOTK.js": {
@@ -22,29 +22,29 @@
       "sha256": "067738c39f4e09f707b43c2028d873a12f3dc814b02fd3d85fe09c266d102f56",
       "bytes": 388361
     },
-    "browser/score-export-canvas-PXBOZQPW.js": {
-      "sha256": "86f8181370b722478bb29c5121ea291f440c6356ca0f04327ee64dc1ead7240d",
-      "bytes": 17329
+    "browser/score-export-canvas-WQGVH5OR.js": {
+      "sha256": "9e30d06b4b536f3523e84dfad4fadab78a942d46b361a10fde5775317d31bf08",
+      "bytes": 17340
     },
     "browser/export-artwork-7N3HWYBT.js": {
       "sha256": "6a6ec07e821ee244762870c520eef986d899e15090b66369423ac8f0e0867404",
       "bytes": 1133568
     },
-    "browser/application-Y3Y2KTVC.js": {
-      "sha256": "6f79781a388a43ed66f6c3359988f6855872c78dbdae5780d489df93e6b5d01d",
-      "bytes": 590006
+    "browser/application-PVGHASNG.js": {
+      "sha256": "b8c48943510345565490874a0f4c7bd3c14deeb201bd40041c87c49da57e2ae3",
+      "bytes": 592013
     },
     "browser/chunk-MIG5D6U7.js": {
       "sha256": "405365ee201790666cea0173db2b2d3e706167edb4bb4a9051f4d11ee3487c80",
       "bytes": 3038
     },
-    "browser/chunk-WQ253DOY.js": {
-      "sha256": "718e2da82c691a105388f8c555ce74a6c740ee36807553fedc6106a0d1516590",
-      "bytes": 576719
+    "browser/chunk-7UPDCRZP.js": {
+      "sha256": "e0054f5d00d855c28aad4c058cdf700ea64135ded881f622cfb964e88116e3bb",
+      "bytes": 577826
     },
-    "browser/chunk-O6LFC2PG.js": {
-      "sha256": "13bbec638bf1bd1521aaabea965e3e1caae8485c1d4852657f5eecd49df7536a",
-      "bytes": 6650
+    "browser/chunk-XOOJNQ5X.js": {
+      "sha256": "058c5e589582c45caaf756990bb9964473b6646a03ff4851d70608f0ece869b3",
+      "bytes": 8028
     },
     "browser/chunk-OAHMEW7Y.js": {
       "sha256": "68d4313eba4dad1faec88d61cd9c9518dc856c2336384ba12d5c242d12036fb7",
@@ -54,9 +54,9 @@
       "sha256": "ff9e0dca4365b7b1581e7275f3c6dbcf1474ffb874d81a3375ecf7a835dbaa6f",
       "bytes": 106
     },
-    "browser/browser-offline-TDLSWTCZ.js": {
-      "sha256": "f1e982c95856f061ad5d991225fe668e74bd309a948a50e2d62ab5cace243103",
-      "bytes": 2735731
+    "browser/browser-offline-DQIXNVGY.js": {
+      "sha256": "70b3b2deb03cd782f5e9fff116cab348f2ac1763767770e4e60de0fb75ada507",
+      "bytes": 2740225
     },
     "browser/recovery-pagination-c898b2432a221525.js": {
       "sha256": "c898b2432a221525bd523d99a8666f562002886ac907d715f3d1687e07c366b6",
@@ -83,12 +83,12 @@
     "lab-loader.js"
   ],
   "preloads": [
-    "browser/application-Y3Y2KTVC.js",
+    "browser/application-PVGHASNG.js",
+    "browser/chunk-7UPDCRZP.js",
     "browser/chunk-MIG5D6U7.js",
-    "browser/chunk-O6LFC2PG.js",
     "browser/chunk-OAHMEW7Y.js",
     "browser/chunk-WOT6VMZA.js",
-    "browser/chunk-WQ253DOY.js"
+    "browser/chunk-XOOJNQ5X.js"
   ],
   "recoveryPagination": "browser/recovery-pagination-c898b2432a221525.js"
 }

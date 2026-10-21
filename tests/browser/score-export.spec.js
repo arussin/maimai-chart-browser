@@ -2,9 +2,16 @@ import {test,expect} from './fixtures.js';
 import {readFile} from 'node:fs/promises';
 import {gzipSync} from 'node:zlib';
 import {clickOutsideDialog,dialogPoints,dragOutsideDialog} from './dialog-dismiss-fixture.mjs';
+import {mockBrowserConfiguration} from './browser-configuration-fixture.mjs';
 
 const privateName='PRIVATE_EXPORT_SENTINEL';
 const dialog=page=>page.locator('#player-export-dialog');
+const cnLabel='舞萌 DX · Mainland China';
+const cnRefresh='Connect or refresh Diving-Fish or LXNS to load Best 50.';
+const cnMessages=Object.assign({},...await Promise.all(['score-export','player-connections'].map(async name=>JSON.parse(await readFile(new URL(`../../src/maimai_intelligence/assets/locales/${name}.json`,import.meta.url),'utf8')).messages)));
+const translatedCN=(key,locale)=>locale==='en'?key:cnMessages[key][locale];
+const versionArtwork=JSON.parse(await readFile(new URL('../../src/maimai_intelligence/assets/version-artwork/manifest.json',import.meta.url),'utf8'));
+const isVersionLogo=url=>Object.values(versionArtwork.versions).some(path=>new URL(url).pathname.endsWith('/'+path));
 
 async function boot(page){
   await page.addInitScript(()=>{
@@ -49,10 +56,60 @@ async function fixture(page,{version=true,missingAchievement=false,zeroRating=fa
 }
 
 async function importData(page,data){
+  const expected=await page.evaluate(async data=>{
+    const core=maimaiPlayerData,active=(await maimaiPlayerStorage.read()).active;
+    const previous=active?await core.decode(active.bytes):null;
+    const merged=previous?.player.key===data.player.key?await core.merge(previous,data):await core.reconcile(data);
+    return {key:data.player.key,snapshotIDs:Object.keys(data.snapshots),current:await core.digest(core.current(merged).snapshot)};
+  },data);
   await page.locator('input[type=file]').setInputFiles({name:'fictional-export.gz',mimeType:'application/gzip',buffer:gzipSync(Buffer.from(JSON.stringify(data)))});
-  await page.locator('.player-dialog .player-remember input').check();
-  await page.locator('.player-dialog .player-actions button').first().click();
+  const preview=page.locator('#player-import-dialog[open]');
+  await expect(preview).toBeVisible();
+  const remember=preview.locator('.player-remember input');
+  await expect(remember).toBeVisible();
+  await remember.check();
+  await expect(remember).toBeChecked();
+  await preview.locator('.player-actions button').first().click();
+  await expect(page.locator('#player-import-dialog')).toBeHidden();
+  // An existing profile is already enabled while the next import is committing.
+  // Wait for its durable merged snapshot, not the old profile's enabled flag.
+  await expect.poll(()=>page.evaluate(async expected=>{
+    const core=maimaiPlayerData,active=(await maimaiPlayerStorage.read()).active;
+    if(!active)return false;
+    const saved=await core.decode(active.bytes);
+    return saved.player.key===expected.key&&expected.snapshotIDs.every(id=>Object.hasOwn(saved.snapshots,id))&&await core.digest(core.current(saved).snapshot)===expected.current;
+  },expected)).toBe(true);
   await expect.poll(()=>page.evaluate(()=>maimaiPersonal.enabled())).toBe(true);
+}
+
+/** Fictional CN observations: no canonical match or Japanese debut evidence. */
+async function cnFixture(page,provider,{membership=true}={}){
+  return page.evaluate(async({provider,membership,privateName})=>{
+    const core=maimaiPlayerData,username='private_cn_export_sentinel';
+    const body={format:'maimai-player-data',schemaVersion:1,player:{key:`${provider}:maimaidx:cn:${username}`,provider,game:'maimaidx',username,displayName:privateName},charts:{},records:{},plays:{},snapshots:{},captures:{}};
+    const pbs={},refs=[];
+    for(let i=0;i<52;i++){
+      const chartID=`${provider}:cn:fictional:${i}`;
+      const title=i<35?'CN old '+String(i).padStart(2,'0'):i<50?'CN new '+String(i-35).padStart(2,'0'):'CN extra '+String(i-50).padStart(2,'0');
+      body.charts[chartID]={chartID,songID:'fictional-cn-'+i,title,artist:'Fictional CN artist',format:'DX',difficulty:'MASTER',level:'14',constant:140,displayVersion:'',inGameID:null};
+      const record={chartID,achievement:1005000-i,grade:'SSS+',rate:i===0?0:i<50?250+i:999,lamp:'ALL PERFECT',sync:'',constant:140,displayVersion:'',timeAchieved:null,dxScore:null,maxDxScore:null,maxCombo:null,fast:null,slow:null,miss:null,good:null,great:null,perfect:null,pcrit:null};
+      const ref=await core.digest(record);body.records[ref]=record;pbs[chartID]=ref;refs.push(ref);
+    }
+    // The provider's B50 references a specific observation, not the latest PB.
+    const changed={...body.records[refs[0]],rate:999};
+    const changedRef=await core.digest(changed);body.records[changedRef]=changed;pbs[changed.chartID]=changedRef;
+    const snapshot={capturedAt:Date.UTC(2026,8,membership?14:13),phase:'after',complete:false,versions:[],pbs,...(membership?{best50:{provider,region:'cn',old:refs.slice(0,35),new:refs.slice(35,50)}}:{})};
+    const snapshotID=await core.digest(snapshot);body.snapshots[snapshotID]=snapshot;
+    const capture={capturedAt:snapshot.capturedAt,sourceKind:'sync',sourceID:'fictional-cn-export',sessionID:'fictional-cn-export-session',historyCoverage:'unknown',playIDs:[],snapshotIDs:[snapshotID]};
+    body.captures[await core.digest(capture)]=capture;
+    const data={...body,revision:await core.digest(body)};
+    await core.validate(data);
+    return data;
+  },{provider,membership,privateName});
+}
+
+async function savedExportRevision(page){
+  return page.evaluate(async()=>{const saved=await maimaiPlayerStorage.read();return (await maimaiPlayerData.decode(saved.active.bytes)).revision;});
 }
 
 async function generate(page){
@@ -104,6 +161,91 @@ test('Best 50 uses the imported version and downloads a local PNG without changi
   expect(requests.join('\n')).not.toContain('private_export_sentinel');
   expect(await page.evaluate(async()=>{const saved=await maimaiPlayerStorage.read();return (await maimaiPlayerData.decode(saved.active.bytes)).revision;})).toBe(data.revision);
   await page.keyboard.press('Escape');await expect(dialog(page)).not.toBeVisible();await expect(page.locator('#player-export-best50')).toBeFocused();
+});
+
+for(const provider of ['diving-fish','lxns'])test(provider+' CN Best 50 downloads the exact tracker selection without JP preferences or chart matches',async({page,context},testInfo)=>{
+  const origin=`http://127.0.0.1:${process.env.MAIMAI_TEST_PORT||8766}`;
+  await mockBrowserConfiguration(context,value=>({...value,support:{...value.support,origin,enabled:true,publishableKey:'pk_test_fixture'}}));
+  await boot(page);
+  await page.evaluate(()=>localStorage.setItem('maimai-score-export-preferences-v1',JSON.stringify({schemaVersion:1,versionID:'circle',partnerKey:'kanadera-magical'})));
+  const data=await cnFixture(page,provider);await importData(page,data);
+  await expect(page.locator('.player-export-achievement')).toHaveCount(0);
+  const before=await savedExportRevision(page),preferences=await page.evaluate(()=>localStorage.getItem('maimai-score-export-preferences-v1'));
+  await page.waitForLoadState('networkidle');
+  const requests=[];page.on('request',request=>requests.push({url:request.url(),body:request.postData()||''}));
+  await page.locator('#player-export-best50').click();
+  await expect(dialog(page)).toContainText(cnLabel);
+  await expect(page.locator('#player-export-version,#player-export-version-button')).toHaveCount(0);
+  await expect(page.locator('#player-export-summary')).toContainText('Old 35: 35/35 · New 15: 15/15 · Rating: 13475');
+  await expect(dialog(page)).not.toContainText('Using your saved version choice.');
+  const support=dialog(page).locator('.player-support-prompt');
+  await expect(support).toBeHidden();
+  const download=await generate(page);await downloadedPNG(page,download,testInfo,provider+'-cn-best50.png');
+  await expect(download).toHaveAttribute('download','maimai-cn-best50.png');
+  await expect(support).toBeVisible();
+  const painted=await page.evaluate(()=>({text:exportPaintText,labels:exportCanvasLabels}));
+  expect(painted.labels).toHaveLength(1);
+  const description=painted.labels[0];
+  expect(description.match(/CN (?:old|new) \d{2}/g)).toEqual([
+    ...Array.from({length:35},(_,i)=>'CN old '+String(i).padStart(2,'0')),
+    ...Array.from({length:15},(_,i)=>'CN new '+String(i).padStart(2,'0')),
+  ]);
+  expect(description).toContain('13475');expect(description).not.toContain('CN extra');
+  expect(description).toMatch(/CN old 00.*?Chart rating 0/);
+  expect(painted.text).toContain('9,095');expect(painted.text).toContain('4,380');
+  expect(painted.text.join('\n')).not.toMatch(/PRiSM|CiRCLE|MAGiCAL/);
+  for(const phrase of ['maimai.party is free to use, but costs quite a bit to maintain.','Please consider supporting its development and hosting.']){
+    expect(painted.text.join('\n')).not.toContain(phrase);expect(description).not.toContain(phrase);
+  }
+  const actions=await dialog(page).locator('.player-export-actions').boundingBox(),note=await support.boundingBox();
+  expect(note.y).toBeGreaterThanOrEqual(actions.y+actions.height);
+  await dialog(page).screenshot({path:testInfo.outputPath(provider+'-cn-best50-ready.png')});
+  expect(requests.filter(row=>isVersionLogo(row.url))).toEqual([]);
+  expect(JSON.stringify(requests)).not.toContain(privateName);
+  expect(JSON.stringify(requests)).not.toContain('private_cn_export_sentinel');
+  expect(JSON.stringify(requests)).not.toContain('CN old');
+  expect(requests.some(row=>/\/oauth\/[^/]+\/(?:start|read)|\/api\/support\//.test(row.url))).toBe(false);
+  await page.keyboard.press('Escape');await expect(dialog(page)).toBeHidden();
+  await expect(page.locator('#player-export-best50')).toBeFocused();
+  expect(await savedExportRevision(page)).toBe(before);
+  expect(await page.evaluate(()=>localStorage.getItem('maimai-score-export-preferences-v1'))).toBe(preferences);
+});
+
+for(const locale of ['en','zh-Hans','ko','ja','id'])test('CN export eligibility and refresh guidance fit narrow controls in '+locale,async({page},testInfo)=>{
+  await boot(page);
+  await page.evaluate(()=>localStorage.setItem('maimai-score-export-preferences-v1',JSON.stringify({schemaVersion:1,versionID:'circle',partnerKey:'kanadera-magical'})));
+  await page.evaluate(locale=>maimaiI18n.setLocale(locale),locale);
+  for(const provider of ['diving-fish','lxns','tomomai']){
+    await importData(page,await cnFixture(page,provider,{membership:false}));
+    await page.locator('#player-export-best50').click();
+    await expect(dialog(page)).toContainText(translatedCN(cnLabel,locale));
+    await expect(dialog(page)).toContainText(translatedCN(cnRefresh,locale));
+    await expect(page.locator('#player-export-version,#player-export-version-button')).toHaveCount(0);
+    await expect(dialog(page).locator('.version-logo')).toHaveCount(0);
+    await expect(page.locator('#player-export-generate')).toBeDisabled();
+    await expect(page.locator('#player-export-download')).toBeHidden();
+    for(const width of [640,320,280]){await page.setViewportSize({width,height:900});await fits(page);}
+    if(locale==='en')await dialog(page).screenshot({path:testInfo.outputPath(provider+'-cn-refresh-required-280.png')});
+    await page.keyboard.press('Escape');
+    if(provider==='tomomai')continue;
+    await importData(page,await cnFixture(page,provider));
+    await page.locator('#player-export-best50').click();
+    await expect(dialog(page)).toContainText(translatedCN(cnLabel,locale));
+    await expect(dialog(page)).not.toContainText(translatedCN(cnRefresh,locale));
+    await expect(page.locator('#player-export-version,#player-export-version-button')).toHaveCount(0);
+    await expect(page.locator('#player-export-generate')).toBeEnabled();
+    await expect(page.locator('#player-export-summary')).toContainText('35/35');
+    await expect(page.locator('#player-export-summary')).toContainText('15/15');
+    await expect(page.locator('#player-export-summary')).toContainText('13475');
+    if(provider==='lxns'&&locale==='zh-Hans'){
+      await downloadedPNG(page,await generate(page),testInfo,'lxns-cn-best50-zh-Hans.png');
+      expect(await page.evaluate(()=>exportCanvasLabels[0])).toContain(translatedCN(cnLabel,locale));
+      expect(await page.evaluate(()=>exportPaintText.join('\n'))).not.toContain('Mainland China');
+    }
+    await fits(page);await dialog(page).screenshot({path:testInfo.outputPath(provider+'-cn-best50-'+locale+'-280.png')});
+    await page.keyboard.press('Escape');
+  }
+  expect(await page.evaluate(()=>JSON.parse(localStorage.getItem('maimai-score-export-preferences-v1')).versionID)).toBe('circle');
 });
 
 test('export backdrop dismissal preserves inside gestures and releases the prepared PNG once',async({page},testInfo)=>{

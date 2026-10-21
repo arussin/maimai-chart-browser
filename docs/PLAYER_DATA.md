@@ -26,6 +26,21 @@ Canonical JSON has sorted keys, no insignificant whitespace, UTF-8 text and inte
 
 A current PB is the newest applicable snapshot observation, not the maximum percentage ever retained. A complete snapshot replaces the current collection; later incomplete snapshots add observed charts. At the same date, after-capture observations follow before-capture observations. Earlier observations remain available as history. Plays deduplicate by provider identity; provider corrections use the newest associated capture. A snapshot never manufactures a play.
 
+A snapshot may also contain the v1 extension `best50`, with exactly
+`provider`, `region`, `old`, and `new`. It is allowed only for the matching
+`diving-fish` or `lxns` mainland (`cn`) player identity. The ordered arrays contain
+at most 35 and 15 record hashes respectively, with no repeated chart across either
+pool. Each referenced observation must have a nonnegative integer imported rating;
+the combined total must remain a safe integer. These observations can differ from
+the snapshot's current PB references and never imply recorded plays. The latest
+snapshot alone controls availability: an absent `best50` does not revive an older
+selection. Mainland Best 50 exports use those exact observations, ratings and order,
+including unmatched charts, without Japanese release inference or rating calculation.
+Fewer than 35/15 rows is a partial selection, independent of PB collection coverage.
+Existing five-field v1 snapshots remain valid unchanged. Earlier strict v1 readers
+may reject files containing this extension; both maintained validators and codecs
+preserve it in snapshot and dataset hashes.
+
 The limits are 32 MiB compressed, 128 MiB expanded, and one million entries per collection. Errors preserve usable data and do not truncate history. Gzip byte sequences may differ across implementations; decoded canonical JSON and dataset revision are the interoperability boundary.
 
 ## Personal browsing
@@ -42,7 +57,7 @@ The status strip reports identity, capture date and retained-only coverage. Pers
 
 ## Image exports
 
-Best 50 uses the imported personal bests and an editable record-version picker.
+Outside mainland profiles, Best 50 uses the imported personal bests and an editable record-version picker.
 All 28 known releases, from maimai through maimai DX MAGiCAL, appear newest first
 with their bundled official logos. Detected versions stay in chronological order
 without a duplicate entry; detection preserves the report's exact New 15 release

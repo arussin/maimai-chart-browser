@@ -678,6 +678,8 @@ export function paintAfterglowBest50(
 ): HTMLCanvasElement {
   const t = options.translate;
   const name = model.player.displayName || model.player.username || t('Player');
+  const versionLabel =
+    model.version.source === 'provider' ? t(model.version.label) : model.version.label;
   const notices = [
     model.coverage === 'partial' ? t('Partial report') : '',
     model.excluded.total ? t('{0} excluded records', [model.excluded.total]) : '',
@@ -686,7 +688,7 @@ export function paintAfterglowBest50(
   const description = [
     t('Best 50'),
     name,
-    model.version.label,
+    versionLabel,
     t(model.coverage === 'partial' ? 'Rating estimate' : 'Rating total') + ' ' + model.totalRating,
     ...notices,
     ...[...model.old, ...model.new].map((entry) => recordDescription(entry, t)),
@@ -709,7 +711,7 @@ export function paintAfterglowBest50(
   if (options.regionLabel) label(ctx, options.regionLabel, 592, 252, 790, 22, muted);
   brand(ctx, 1756, 102, 322, 52, 'center');
   if (!fit(ctx, images.get('art:version'), 1560, 126, 392, 154))
-    wrappedLabel(ctx, model.version.label, 1560, 157, 392, 28, 3, white, 800);
+    wrappedLabel(ctx, versionLabel, 1560, 157, 392, 28, 3, white, 800);
   rule(ctx, 48, 299, 1904);
   if (noticeLines.length) {
     box(ctx, 48, 318, 1904, noticeHeight - 8, '#2c2133', 8, '#8e6c63');
@@ -722,13 +724,13 @@ export function paintAfterglowBest50(
     model.old,
     35,
     model.oldTotal,
-    model.version.label,
+    versionLabel,
     false,
     344 + noticeHeight,
     images,
     t,
   );
-  section(ctx, model.new, 15, model.newTotal, model.version.label, true, oldEnd + 60, images, t);
+  section(ctx, model.new, 15, model.newTotal, versionLabel, true, oldEnd + 60, images, t);
   return canvas;
 }
 

@@ -69,6 +69,123 @@ function add(data, id, version = 'PRiSM', rate = 300, extra = {}) {
   return record;
 }
 
+function mainland(provider = 'diving-fish') {
+  const data = dataset(['PRiSM PLUS']);
+  Object.assign(data.player, { provider, key: provider + ':maimaidx:cn:demo' });
+  data.snapshots.latest.best50 = { provider, region: 'cn', old: [], new: [] };
+  return data;
+}
+
+test('mainland export uses exact provider observations and order, without Japanese inference', () => {
+  for (const provider of ['diving-fish', 'lxns']) {
+    const data = mainland(provider);
+    add(data, 'low', 'CiRCLE PLUS', 0);
+    add(data, 'high', '', 310);
+    add(data, 'new', 'maimai', 220);
+    add(data, 'not-selected', 'PRiSM PLUS', 999);
+    data.records['newer-pb'] = { ...data.records.low, rate: 500, achievement: 1010000 };
+    data.snapshots.latest.pbs.low = 'newer-pb';
+    data.snapshots.latest.best50.old = ['low', 'high'];
+    data.snapshots.latest.best50.new = ['new'];
+    assert.deepEqual(versionChoices(data), [
+      {
+        id: 'cn-provider',
+        label: '舞萌 DX · Mainland China',
+        versions: [],
+        source: 'provider',
+        logoVersion: null,
+        supportsBest50: true,
+      },
+    ]);
+    assert.equal(detectVersion(data), 'cn-provider');
+    assert.throws(() => buildBest50(data, 'prismplus'), /Choose the game version/);
+    const result = buildBest50(data, 'cn-provider', (chart) =>
+      chart.chartID === 'high'
+        ? undefined
+        : { canonicalChartID: 'same-alias', displayVersion: 'MAGiCAL' },
+    );
+    assert.deepEqual(
+      result.old.map((row) => [row.chart.chartID, row.rating]),
+      [
+        ['low', 0],
+        ['high', 310],
+      ],
+    );
+    assert.deepEqual(
+      result.new.map((row) => [row.chart.chartID, row.rating]),
+      [['new', 220]],
+    );
+    assert.equal(result.old[1].canonicalChartID, null);
+    assert.equal(result.totalRating, 530);
+    assert.equal(result.calculatedRatings, 0);
+    assert.equal(result.unqualifiedVersions, 0);
+    assert.equal(result.excluded.total, 0);
+    assert.equal(result.coverage, 'partial');
+    assert.deepEqual(result.warnings, [
+      'Best 50 selection and ratings come from the provider at import time.',
+      'There are not enough eligible records to fill all 50 slots.',
+    ]);
+  }
+});
+
+test('mainland coverage describes the selected pools independently of all-PB completeness', () => {
+  const data = mainland('lxns');
+  data.snapshots.latest.complete = false;
+  for (const [pool, count] of [
+    ['old', 35],
+    ['new', 15],
+  ]) {
+    for (let i = 0; i < count; i++) {
+      const id = pool + i;
+      add(data, id, '', i);
+      data.snapshots.latest.best50[pool].push(id);
+    }
+  }
+  const result = buildBest50(data, 'cn-provider');
+  assert.equal(result.coverage, 'complete');
+  assert.equal(result.warnings.length, 1);
+  assert.equal(result.totalRating, 700);
+});
+
+test('latest mainland acquisition without a provider selection cannot reuse older groups', () => {
+  const data = mainland();
+  add(data, 'old');
+  data.snapshots.latest.best50.old = ['old'];
+  data.snapshots.next = {
+    capturedAt: 2000,
+    phase: 'after',
+    complete: false,
+    versions: ['CiRCLE'],
+    pbs: {},
+  };
+  assert.deepEqual(versionChoices(data), []);
+  assert.equal(detectVersion(data), null);
+  assert.throws(() => buildBest50(data, 'cn-provider'), /Choose the game version/);
+  delete data.snapshots.next;
+  delete data.snapshots.latest.best50;
+  assert.deepEqual(versionChoices(data), []);
+  data.player.provider = 'mai-tools';
+  data.player.key = 'mai-tools:maimaidx:cn:demo';
+  assert.deepEqual(versionChoices(data), []);
+});
+
+test('mainland export never calculates missing rates or silently drops malformed membership', () => {
+  for (const rate of [null, -1, 1.5]) {
+    const data = mainland();
+    add(data, 'selected', 'PRiSM', rate);
+    data.snapshots.latest.best50.old = ['selected'];
+    assert.throws(() => buildBest50(data, 'cn-provider'), /Best 50 observation/);
+  }
+  const data = mainland();
+  add(data, 'selected', '', Number.MAX_SAFE_INTEGER);
+  add(data, 'another', '', 1);
+  data.snapshots.latest.best50.old = ['selected'];
+  data.snapshots.latest.best50.new = ['selected'];
+  assert.throws(() => buildBest50(data, 'cn-provider'), /Best 50 observation/);
+  data.snapshots.latest.best50.new = ['another'];
+  assert.throws(() => buildBest50(data, 'cn-provider'), /rating total/);
+});
+
 test('snapshot aliases are detected exactly; chart debut never infers record version', () => {
   const data = dataset();
   add(data, 'a', 'CiRCLE');

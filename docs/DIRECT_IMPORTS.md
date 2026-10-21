@@ -57,14 +57,41 @@ PBs are not invented plays. Missing charts do not erase retained PBs. Unmatched
 and unsupported chart counts remain visible. The last-imported date records
 Party's retrieval, not the last arcade play or tracker synchronization.
 
-China-region imports do not imply a complete China-version catalog or verified
-China Best 50 reconstruction. Fish constants and LXNS rating contributions are
-preserved only when supplied; missing values are not filled from Japanese catalog
-constants. Unknown/China-only records remain unmatched. Matching cannot detect a
-regional chart revision with identical title, artist, format and difficulty.
-The existing export version pools are not a verified China release model, so do
-not present their Best 50 output as an exact China B35/B15 result. Regional chart
-equivalence and China release/rating policies remain separate acceptance work.
+China-region imports do not imply a complete China-version catalog. Connected
+Fish and LXNS reads now retain the tracker's own old-35/new-15 selection and each
+selected score's supplied rating. This supports a provider-selected 舞萌 DX
+Best 50 without applying Japanese/international release pools or catalog constants.
+It is a snapshot of the tracker, not independent verification against the cabinet.
+Existing saved imports without this selection need a successful refresh before
+they can provide this China Best 50. Missing ratings are not fabricated.
+Unknown/China-only records remain unmatched but can retain their provider-selected
+Best 50 membership. Matching cannot detect a regional chart revision with identical
+title, artist, format and difficulty; regional chart equivalence remains separate.
+
+### Provider Best 50 contract
+
+The existing read scopes suffice; no new grant or account selector is required:
+
+- Fish: `POST https://www.diving-fish.com/api/maimaidxprober/query/player`, Bearer
+  token and JSON `{"b50":true}` only, using `prober.records.read`. `charts.sd` is
+  old 35 and `charts.dx` is new 15; these keys do not describe chart format. Keep
+  each row's supplied integer `ra`. Score masking still applies to OAuth reads.
+- LXNS: `GET https://maimai.lxns.net/api/v0/user/maimai/player/bests`, Bearer token,
+  using `read_player`. The personal endpoint is used by the official frontend.
+  Its `standard` and `dx` arrays are old 35/new 15. Keep `dx_rating`, flooring it
+  when normalizing the displayed contribution. `standard_selections` and
+  `dx_selections` are extra candidate lists, not part of Best 50 or its total.
+
+Each Worker read obtains the existing complete-score response and then Best 50.
+Both must succeed before the preview is returned. The existing minimized data
+object gains `best50: {old: [...], new: [...]}`; full scores stay intact. The B50
+response is bounded to 512 KiB and 35/15 entries, with ordinary-chart identities,
+unique chart membership and supplied finite ratings required. Changed or missing
+contracts fail with finite diagnostics, preserving existing browser data and the
+grant except for normal authorization-recovery rules. Scores, selection arrays,
+and upstream error text are never persisted in Worker session storage or logs.
+Provider totals and Selection 10 fields are omitted. Retrieval time does not
+establish when the player last synchronized the tracker or played the arcade.
 
 ## Operator setup and activation gates
 
@@ -103,7 +130,7 @@ proposed for availability. It still requires the owner's approval of the exact
 tested candidate and screenshot review, plus verified production configuration.
 This decision does not activate any method by itself. Prior success from a
 recruited score-bearing tester is not a launch prerequisite; real-account OAuth,
-authentic file exports and China catalog/Best 50 behavior remain disclosed
+authentic file exports and real-account China Best 50 comparisons remain disclosed
 validation limits. Each OAuth user must still sign in and consent on the provider.
 
 Before activation, deploy the reviewed privacy/help text and compatible usage
@@ -170,6 +197,9 @@ ordering.
 - [Fish OAuth documentation](https://maimai.diving-fish.com/manual/docs/developer/oauth-api-document/)
 - [LXNS OAuth guide](https://maimai.lxns.net/docs/oauth-guide)
 - [LXNS score API](https://maimai.lxns.net/docs/api/maimai)
+- [Fish Best 50 endpoint](https://github.com/Diving-Fish/maimaidx-prober/blob/280ec6936f983cfc309763553fa705d0f7ffccf3/doc/docs/developer/zh-api-document.md#317-获取用户的简略成绩信息)
+- [LXNS personal Best 50 route](https://github.com/Lxns-Network/maimai-prober-frontend/blob/4aeab0913d1e35d964ffa95e90dfdad311715461/src/hooks/queries/queryKeys.ts)
+- [LXNS Selection 10 change](https://maimai.lxns.net/docs/changelog#2026629)
 - [Fish score-import guide](https://maimai.diving-fish.com/manual/docs/category/%E5%AF%BC%E5%85%A5%E6%88%90%E7%BB%A9/)
 - [Tachi public PB implementation](https://github.com/zkldi/Tachi/blob/b38e07245b629237ce7041db9e95d603a1299694/typescript/server/src/server/router/api/v1/users/_userID/games/_game/_playtype/pbs/router.ts)
 - [Tachi maimai DX configuration](https://github.com/zkldi/Tachi/blob/b38e07245b629237ce7041db9e95d603a1299694/typescript/common/src/config/game-support/maimai-dx.ts)
