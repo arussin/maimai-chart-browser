@@ -55,7 +55,7 @@
     "src/maimai_intelligence/assets/import-help/README.id.md": "1ac687ef1fa2c47dae65a38b03888fbf9ca7e19ac349d897520b54b71102d754",
     "src/maimai_intelligence/assets/locales/bpm-filter.json": "de56afac29a72d7fcd7b55e74215fab9a34bb5ae16300984f692846866b71034",
     "src/maimai_intelligence/assets/locales/score-export.json": "809afff2d3022fde956718923e64050497cd749fe0efda20c2ab927caa8e4c9f",
-    "src/maimai_intelligence/assets/locales/player-connections.json": "3823ae51818713d2e30801e57ad5e7e3594afc33d6d54847b4d3fab5fe9c6c35",
+    "src/maimai_intelligence/assets/locales/player-connections.json": "e3447337f450115c39e4f98f6dddd26a7b4009c924d8eb52a204de1650c283cb",
     "src/maimai_intelligence/assets/locales/player-file-imports.json": "bdeaed703505e64eb5e871a019af0fc946b11d4263573c6f83ca7b568e667c01",
     "src/maimai_intelligence/assets/support-footer.html": "90258419b15f9281e37a82478da07a53f20e3d58c24cbbe697af3c94f48b94c8"
   },
@@ -353,6 +353,25 @@
         "src/maimai_intelligence/assets/locales/errors.json"
       ],
       "visual_validation": "Catalog-only addition after the immutable candidate was prepared. These strings require the next exact candidate build; no prior browser result is relabeled as testing this delta."
+    },
+    {
+      "date": "2026-10-21",
+      "reviewer": "Codex logging_reconcile",
+      "method": "AI contextual semantic review of the two import-service subtitles and their accessible names; not native-speaker certification.",
+      "scope": "Only the Diving-Fish and LXNS service subtitles now express mainland-edition exclusivity. Other service cards and the Best 50 edition label are unchanged.",
+      "message": "Mainland China only",
+      "locales": [
+        "en",
+        "zh-Hans",
+        "ja",
+        "ko",
+        "id"
+      ],
+      "result": "The Chinese 仅限国服, Japanese 中国本土版のみ, Korean 중국 본토 버전 전용 and Indonesian Khusus versi Tiongkok daratan all limit these connections to the mainland game edition. They do not restrict the user by location, imply other editions are supported, or claim a successful OAuth import. The separate 舞萌 DX · Mainland China key remains unchanged for Best 50.",
+      "files": [
+        "src/maimai_intelligence/assets/locales/player-connections.json"
+      ],
+      "visual_validation": "The existing five-locale direct-connection case checks exactly two subtitles, their accessible names and unclipped controls at 280/320/430/1280px. Execution of this copy revision remains pending the next prepared candidate."
     }
   ],
   "followups": [

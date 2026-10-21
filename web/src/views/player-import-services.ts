@@ -51,7 +51,7 @@ export const IMPORT_SERVICES: readonly ImportService[] = [
   {
     id: 'diving-fish',
     title: 'Diving-Fish',
-    regionLabel: '舞萌 DX · Mainland China',
+    regionLabel: 'Mainland China only',
     help: 'diving-fish',
     helpLabel: 'About Diving-Fish imports',
     methods: [{ value: 'diving-fish', label: 'Connect directly' }],
@@ -59,7 +59,7 @@ export const IMPORT_SERVICES: readonly ImportService[] = [
   {
     id: 'lxns',
     title: 'LXNS',
-    regionLabel: '舞萌 DX · Mainland China',
+    regionLabel: 'Mainland China only',
     help: 'lxns',
     helpLabel: 'About LXNS imports',
     methods: [{ value: 'lxns', label: 'Connect directly' }],

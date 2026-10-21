@@ -845,7 +845,7 @@ for (const locale of ["en", "zh-Hans", "ko", "ja", "id"]) {
         await expect(page.locator("#player-import-dialog")).toContainText(
           translated("Kamaitachi username or profile URL", locale),
         );
-        const regionLabel = translated("舞萌 DX · Mainland China", locale);
+        const regionLabel = translated("Mainland China only", locale);
         await expect(page.locator("#player-import-dialog .player-service-region")).toHaveCount(2);
         for (const [provider, title] of [["diving-fish", "Diving-Fish"], ["lxns", "LXNS"]]) {
           const toggle = page.locator(`[data-service-toggle="${provider}"]`);
