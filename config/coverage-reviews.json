@@ -20,6 +20,260 @@
       }
     }
   ],
-  "providers": [],
+  "providers": [
+    {
+      "provider": "kamaitachi",
+      "provider_song_id": "S19d35e0d6b6632414cc",
+      "song_id": "song:6aa4153b-4f5a-491b-90f0-64a68ed77b13",
+      "expected_source": {
+        "title": "-OutsideR:RequieM-",
+        "artist": "箱部 なる(CV:M・A・O)"
+      },
+      "canonical_assertion": "98664294dcb4df48b9b01c4d788ef4b2aa6275c6199546878bd11e5871d8850c",
+      "evidence": {
+        "kind": "provider-credit-respelling",
+        "revision": "22b339416ddae37079f39670da18d6050e4ededf",
+        "note": "Same provider song and chart IDs, title, format and difficulty; only the credit text changed.",
+        "accepted_artist": "箱部なる(CV:M・A・O)",
+        "official_jp_artist": "箱部 なる(CV:M・A・O)",
+        "provider_chart_ids": [
+          "C19d35e1553ea9e70941",
+          "C19d35e1553eb2f6e4bc",
+          "C19d35e1553ec36efc9f",
+          "C19d35e1553eca09d86a"
+        ]
+      }
+    },
+    {
+      "provider": "kamaitachi",
+      "provider_song_id": "S19d35e0d6b7bf742e77",
+      "song_id": "song:4cfe7cad-2313-4109-8810-bd9b80e51d60",
+      "expected_source": {
+        "title": "イロトリドリのメロディ",
+        "artist": "小仏 凪(CV:佐倉薫)"
+      },
+      "canonical_assertion": "2d17786075ef43c79bc519ba1ffebb1ea7b09cd56e927a8a7008dbd2b7d6dc85",
+      "evidence": {
+        "kind": "provider-credit-respelling",
+        "revision": "22b339416ddae37079f39670da18d6050e4ededf",
+        "note": "Same provider song and chart IDs, title, format and difficulty; only the credit text changed.",
+        "accepted_artist": "小仏凪(CV:佐倉薫)",
+        "official_jp_artist": "小仏 凪(CV:佐倉 薫)",
+        "provider_chart_ids": [
+          "C19d35e1553f7f789db3",
+          "C19d35e1553fe5f3a9da",
+          "C19d35e1553ff18e22fe",
+          "C19d35e1553ffa3963b7"
+        ]
+      }
+    },
+    {
+      "provider": "kamaitachi",
+      "provider_song_id": "S19d35e0d6b82949acc0",
+      "song_id": "song:b0529c36-eb34-4c97-aa4d-321a19d77fc8",
+      "expected_source": {
+        "title": "奏者はただ背中と提琴で語るのみ",
+        "artist": "月鈴 那知(CV:今村彩夏)"
+      },
+      "canonical_assertion": "d59baa1d0dcf304b6030f1bb43fa089187c5f20abb0af9ce9d990f2545e27318",
+      "evidence": {
+        "kind": "provider-credit-respelling",
+        "revision": "22b339416ddae37079f39670da18d6050e4ededf",
+        "note": "Same provider song and chart IDs, title, format and difficulty; only the credit text changed.",
+        "accepted_artist": "月鈴那知(CV:今村彩夏)",
+        "official_jp_artist": "月鈴 那知(CV:今村 彩夏)",
+        "provider_chart_ids": [
+          "C19d35e1554068bcad87",
+          "C19d35e155408e7936be",
+          "C19d35e15540a1b413f0",
+          "C19d35e15540adc37498"
+        ]
+      }
+    },
+    {
+      "provider": "kamaitachi",
+      "provider_song_id": "S19d35e0d773c2f84eea",
+      "song_id": "song:3da3616b-0cef-4e5a-8831-cc5c0ecca5e2",
+      "expected_source": {
+        "title": "劣等上等",
+        "artist": "Giga / Vivid BAD SQUAD × 鏡音リン・レン「プロジェクトセカイ カラフルステージ！ feat. 初音ミク」"
+      },
+      "canonical_assertion": "e6c96c30778a9324939e014ba7fc948430d71e104a8f2f826f0f95453a92a3c1",
+      "evidence": {
+        "kind": "provider-credit-respelling",
+        "revision": "22b339416ddae37079f39670da18d6050e4ededf",
+        "note": "Same provider song and chart IDs, title, format and difficulty; only the credit text changed.",
+        "accepted_artist": "Giga / 鏡音リン・レン / Vivid BAD SQUAD「プロジェクトセカイ カラフルステージ！ feat. 初音ミク」",
+        "official_jp_artist": "Giga / Vivid BAD SQUAD × 鏡音リン・レン「プロジェクトセカイ カラフルステージ！ feat. 初音ミク」",
+        "provider_chart_ids": [
+          "C19d35e155fb349c29d1",
+          "C19d35e155fbb0715e97",
+          "C19d35e155fbb14674f1",
+          "C19d35e155fbbc2e48a1"
+        ]
+      }
+    },
+    {
+      "provider": "kamaitachi",
+      "provider_song_id": "S19d35e0d78732942f2e",
+      "song_id": "song:92a4f3a7-8e8e-4b1c-ae00-94cdafacca87",
+      "expected_source": {
+        "title": "自傷無色",
+        "artist": "ササノマリイ / 25時、ナイトコードで。 × 初音ミク「プロジェクトセカイ カラフルステージ！ feat. 初音ミク」"
+      },
+      "canonical_assertion": "20d0a98c2189e947a472234ea2a7fee84b678a442d5e15d7c0d101c1c97beb4b",
+      "evidence": {
+        "kind": "provider-credit-respelling",
+        "revision": "22b339416ddae37079f39670da18d6050e4ededf",
+        "note": "Same provider song and chart IDs, title, format and difficulty; only the credit text changed.",
+        "accepted_artist": "ササノマリイ / 初音ミク / 25時、ナイトコードで。「プロジェクトセカイ カラフルステージ！ feat. 初音ミク」",
+        "official_jp_artist": "ササノマリイ / 25時、ナイトコードで。 × 初音ミク「プロジェクトセカイ カラフルステージ！ feat. 初音ミク」",
+        "provider_chart_ids": [
+          "C19d35e1560f4a4425bc",
+          "C19d35e1560fe0400fa0",
+          "C19d35e1560fe0b02b9c",
+          "C19d35e1560fed1c64a1"
+        ]
+      }
+    },
+    {
+      "provider": "kamaitachi",
+      "provider_song_id": "S19d35e0d7f80499a348",
+      "song_id": "song:2329bd41-d7b5-4861-9fcc-b9f6d1621885",
+      "expected_source": {
+        "title": "セカイはまだ始まってすらいない",
+        "artist": "ピノキオピー / ワンダーランズ×ショウタイム × 初音ミク「プロジェクトセカイ カラフルステージ！ feat. 初音ミク」"
+      },
+      "canonical_assertion": "2df2fcc34b62a813d48b3e5abc93a86f02d7f577652dc19a0e8c0193c6abe9a5",
+      "evidence": {
+        "kind": "provider-credit-respelling",
+        "revision": "22b339416ddae37079f39670da18d6050e4ededf",
+        "note": "Same provider song and chart IDs, title, format and difficulty; only the credit text changed.",
+        "accepted_artist": "ピノキオピー / 初音ミク / ワンダーランズ×ショウタイム「プロジェクトセカイ カラフルステージ！ feat. 初音ミク」",
+        "official_jp_artist": "ピノキオピー / ワンダーランズ×ショウタイム × 初音ミク「プロジェクトセカイ カラフルステージ！ feat. 初音ミク」",
+        "provider_chart_ids": [
+          "C19d35e156810697c102",
+          "C19d35e156814c0fa101",
+          "C19d35e1568159eb2111",
+          "C19d35e1568177619edd"
+        ]
+      }
+    },
+    {
+      "provider": "kamaitachi",
+      "provider_song_id": "S19d35e0d815a4cd6f0c",
+      "song_id": "song:1c1169e7-402c-4f39-acc4-352c0f399cea",
+      "expected_source": {
+        "title": "アイドル新鋭隊",
+        "artist": "Mitchie M / MORE MORE JUMP！ × 初音ミク「プロジェクトセカイ カラフルステージ！ feat. 初音ミク」"
+      },
+      "canonical_assertion": "aa95789debaf3080eff5190142d8f7b3ec9af95464d128cb3a8c6b844e2108a1",
+      "evidence": {
+        "kind": "provider-credit-respelling",
+        "revision": "22b339416ddae37079f39670da18d6050e4ededf",
+        "note": "Same provider song and chart IDs, title, format and difficulty; only the credit text changed.",
+        "accepted_artist": "Mitchie M / 初音ミク / MORE MORE JUMP！「プロジェクトセカイ カラフルステージ！ feat. 初音ミク」",
+        "official_jp_artist": "Mitchie M / MORE MORE JUMP！ × 初音ミク「プロジェクトセカイ カラフルステージ！ feat. 初音ミク」",
+        "provider_chart_ids": [
+          "C19d35e1569e0b5a73b8",
+          "C19d35e1569e11fd0842",
+          "C19d35e1569e58ba5536",
+          "C19d35e1569eb0b8141a"
+        ]
+      }
+    },
+    {
+      "provider": "kamaitachi",
+      "provider_song_id": "S19d35e0d816edb941d3",
+      "song_id": "song:e260c3a1-8b09-4464-b75f-9a82b0eacd45",
+      "expected_source": {
+        "title": "needLe",
+        "artist": "DECO*27 / Leo/need × 初音ミク「プロジェクトセカイ カラフルステージ！ feat. 初音ミク」"
+      },
+      "canonical_assertion": "29014249f778a4f22b817b533b1e91036aaf9ed03bc5e833f0a1f89666bb6960",
+      "evidence": {
+        "kind": "provider-credit-respelling",
+        "revision": "22b339416ddae37079f39670da18d6050e4ededf",
+        "note": "Same provider song and chart IDs, title, format and difficulty; only the credit text changed.",
+        "accepted_artist": "DECO*27 / 初音ミク / Leo/need「プロジェクトセカイ カラフルステージ！ feat. 初音ミク」",
+        "official_jp_artist": "DECO*27 / Leo/need × 初音ミク「プロジェクトセカイ カラフルステージ！ feat. 初音ミク」",
+        "provider_chart_ids": [
+          "C19d35e1569f5fceb825",
+          "C19d35e1569f6dbb13e7",
+          "C19d35e1569fb2362483",
+          "C19d35e1569fb7d341ae"
+        ]
+      }
+    },
+    {
+      "provider": "kamaitachi",
+      "provider_song_id": "S19d35e0d91bbefb43a0",
+      "song_id": "song:e71afb35-afb7-443a-9277-0777e869cd16",
+      "expected_source": {
+        "title": "RAD DOGS",
+        "artist": "八王子P / Vivid BAD SQUAD × 初音ミク「プロジェクトセカイ カラフルステージ！ feat. 初音ミク」"
+      },
+      "canonical_assertion": "9367d572f565fe33056c92a69f3f93c5d195a2af21f8916c12b0f9a08a9760b5",
+      "evidence": {
+        "kind": "provider-credit-respelling",
+        "revision": "22b339416ddae37079f39670da18d6050e4ededf",
+        "note": "Same provider song and chart IDs, title, format and difficulty; only the credit text changed.",
+        "accepted_artist": "八王子P / 初音ミク / Vivid BAD SQUAD「プロジェクトセカイ カラフルステージ！ feat. 初音ミク」",
+        "official_jp_artist": "八王子P / Vivid BAD SQUAD × 初音ミク「プロジェクトセカイ カラフルステージ！ feat. 初音ミク」",
+        "provider_chart_ids": [
+          "C19d35e157a453497f19",
+          "C19d35e157a47ef5177e",
+          "C19d35e157a49e54aab8",
+          "C19d35e157a4f566e3f3"
+        ]
+      }
+    },
+    {
+      "provider": "kamaitachi",
+      "provider_song_id": "S19d35e0d91c6be35992",
+      "song_id": "song:952dd1c1-c5b3-429a-943a-92413849a89e",
+      "expected_source": {
+        "title": "アイディスマイル",
+        "artist": "とあ / 25時、ナイトコードで。 × MEIKO「プロジェクトセカイ カラフルステージ！ feat. 初音ミク」"
+      },
+      "canonical_assertion": "de7e934cdf235ebeb83c45d371ee4885bea18b3e007a10c4be12e9ae9ca7d5e4",
+      "evidence": {
+        "kind": "provider-credit-respelling",
+        "revision": "22b339416ddae37079f39670da18d6050e4ededf",
+        "note": "Same provider song and chart IDs, title, format and difficulty; only the credit text changed.",
+        "accepted_artist": "とあ / MEIKO / 25時、ナイトコードで。「プロジェクトセカイ カラフルステージ！ feat. 初音ミク」",
+        "official_jp_artist": "とあ / 25時、ナイトコードで。 × MEIKO「プロジェクトセカイ カラフルステージ！ feat. 初音ミク」",
+        "provider_chart_ids": [
+          "C19d35e157a52437a71f",
+          "C19d35e157a55dbad915",
+          "C19d35e157a5c1dbd20a",
+          "C19d35e157a5dc3fbadb"
+        ]
+      }
+    },
+    {
+      "provider": "kamaitachi",
+      "provider_song_id": "S19d35e0d91d49cf592e",
+      "song_id": "song:b75d7636-d268-4117-a609-57a9bd8505cd",
+      "expected_source": {
+        "title": "にっこり^^調査隊のテーマ",
+        "artist": "ワンダフル☆オポチュニティ！ / ワンダーランズ×ショウタイム × 初音ミク「プロジェクトセカイ カラフルステージ！ feat. 初音ミク」"
+      },
+      "canonical_assertion": "65f487cd3c104109f57f26747ef532100efc238f30c00f08fc439e35dcf127a1",
+      "evidence": {
+        "kind": "provider-credit-respelling",
+        "revision": "22b339416ddae37079f39670da18d6050e4ededf",
+        "note": "Same provider song and chart IDs, title, format and difficulty; only the credit text changed.",
+        "accepted_artist": "ワンダフル☆オポチュニティ！ / 初音ミク / ワンダーランズ×ショウタイム「プロジェクトセカイ カラフルステージ！ feat. 初音ミク」",
+        "official_jp_artist": "ワンダフル☆オポチュニティ！ / ワンダーランズ×ショウタイム × 初音ミク「プロジェクトセカイ カラフルステージ！ feat. 初音ミク」",
+        "provider_chart_ids": [
+          "C19d35e157a6796ef976",
+          "C19d35e157a68ffc3a52",
+          "C19d35e157a6c99b37b5",
+          "C19d35e157a6eea15ee6"
+        ]
+      }
+    }
+  ],
   "artwork": []
 }
