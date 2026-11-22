@@ -16,7 +16,7 @@ from maimai_analyzer.dataset import SOURCE_LOCK
 
 from .artwork import MEDIA_PATH
 from .catalog_loading import MAX_CATALOG_BYTES
-from .corpus_attempts import bind_attempt
+from .corpus_attempts import bind_attempt, bound_input_inventory
 from .corpus_diagnostics import Diagnostics
 from .corpus_models import PreparedLegacy, PreparedRegistry, PreparedResult, RegistryContext
 from .corpus_registry import capture_claims, project_corpus, reconcile_evidence
@@ -282,6 +282,8 @@ def prepare_update(
     implementation: Callable[[], str] | None = None,
     registry_seed: Path | str | None = None,
     predecessor: dict[str, str] | None = None,
+    export_artwork_source: Path | str | None = None,
+    preserve_web_analytics: bool = False,
 ) -> Path:
     """Compatibility entry point; production stages consume PreparationRequest."""
     request = preparation_request(
@@ -303,6 +305,8 @@ def prepare_update(
         player_maishift=player_maishift,
         registry_seed=registry_seed,
         predecessor=predecessor,
+        export_artwork_source=export_artwork_source,
+        preserve_web_analytics=preserve_web_analytics,
     )
     return prepare_corpus(request, implementation=implementation, source_fetcher=source_fetcher)
 
@@ -362,6 +366,13 @@ def prepare_corpus(
                     request.predecessor,
                     policy_context=policy_context,
                 )
+                release_inputs = _release_inputs(attempt)
+                if replay:
+                    prior_path = Path(replay).parent / "release-inputs.json"
+                    prior_inputs = read_json(prior_path) if prior_path.is_file() else None
+                    if prior_inputs != release_inputs:
+                        raise ValueError("Source replay public release inputs differ")
+                atomic_json(run / "release-inputs.json", release_inputs)
             with diagnostics.stage("source_capture"):
                 package_path = _prepare_package(request, run)
             corpus: PreparedResult
@@ -402,7 +413,22 @@ def prepare_corpus(
                     counts.records = len(corpus.charts)
                     counts.evidence = ["mai-notes-audit.json"]
             with diagnostics.stage("render"):
-                rendered = _render_artifacts(run, retained, capacity, corpus)
+                rendered = _render_artifacts(
+                    run,
+                    retained,
+                    capacity,
+                    corpus,
+                    export_artwork_source=request.export_artwork_source,
+                    preserve_web_analytics=request.preserve_web_analytics,
+                )
+                if (
+                    request.export_artwork_source is not None
+                    and bound_input_inventory(
+                        "export_artwork_source", request.export_artwork_source
+                    )
+                    != release_inputs["export_artwork"]
+                ):
+                    raise ValueError("Export artwork changed during preparation")
             with diagnostics.stage("review") as counts:
                 _describe_changes(run, retained.before, corpus, rendered.version)
                 counts.evidence = ["changes.json", "report.md"]
@@ -410,6 +436,7 @@ def prepare_corpus(
                 receipt = _ready_receipt(run, request, retained, corpus, rendered, implementation)
                 receipt["attempt_sha256"] = attempt["sha256"]
                 receipt["source_registrations"] = policy_context.manifest()
+                receipt["release_inputs"] = release_inputs
             atomic_json(run / "state.json", {"status": "ready"})
             atomic_json(run / "ready.json", receipt)
             return run
@@ -513,7 +540,13 @@ def _prepare_legacy(
 
 
 def _render_artifacts(
-    run: Path, retained: RetainedPublic, capacity: ReviewedCapacity | None, corpus: PreparedResult
+    run: Path,
+    retained: RetainedPublic,
+    capacity: ReviewedCapacity | None,
+    corpus: PreparedResult,
+    *,
+    export_artwork_source: Path | None = None,
+    preserve_web_analytics: bool = False,
 ) -> RenderedCandidate:
     features, previous_public, previous_identity = (
         retained.features,
@@ -536,6 +569,8 @@ def _render_artifacts(
         previous_public=previous_public,
         capacity=capacity,
         prepared_catalogs={version: browser.catalog},
+        export_artwork_source=export_artwork_source,
+        preserve_web_analytics=preserve_web_analytics,
     )
     if previous_public_identity(previous_public) != previous_identity:
         raise ValueError("Preceding public inputs changed during preparation")
@@ -675,6 +710,14 @@ def _ready_receipt(
     return receipt
 
 
+def _release_inputs(attempt: dict[str, Any]) -> dict[str, Any]:
+    body = attempt["body"]
+    return {
+        "preserve_web_analytics": body["values"].get("preserve_web_analytics", False),
+        "export_artwork": body["bindings"].get("export_artwork_source", {}).get("files"),
+    }
+
+
 def verify_candidate(
     run: Path | str,
     *,
@@ -701,9 +744,14 @@ def verify_candidate(
     if "attempt_sha256" in receipt:
         from .corpus_attempts import verify_attempt
 
-        verify_attempt(
+        attempt = verify_attempt(
             run, implementation(), input_locations=input_locations, policy_context=policy_context
         )
+        if "preserve_web_analytics" in attempt["body"]["values"] and (
+            receipt.get("release_inputs") != _release_inputs(attempt)
+            or read_json(run / "release-inputs.json") != receipt["release_inputs"]
+        ):
+            raise ValueError("Candidate public release inputs changed")
     preceding_public = published_public(run.parent.parent)
     if preceding_public is not None and preceding_public.parent != run:
         if receipt.get("previous_public", {}).get("inputs") != previous_public_identity(

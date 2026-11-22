@@ -58,6 +58,14 @@ def implementation_hash(root=REPO_ROOT):
 
 def prepare_update(store, previous_browser, **options):
     """Owner defaults around the installed preparation service."""
+    source = options.get("export_artwork_source")
+    if source is None:
+        source = options.get("previous_public") or published_public(store)
+    if source is None:
+        raise ValueError("Owner preparation requires --export-artwork-source or --previous-public")
+    options["export_artwork_source"] = source
+    # Fixed owner publication policy; installed synthetic preparations remain opt-in.
+    options["preserve_web_analytics"] = True
     options.setdefault("registry_seed", REPO_ROOT / "registry")
     if options.get("coverage_reviews") is None:
         options["coverage_reviews"] = read_json(REPO_ROOT / "config/coverage-reviews.json")
@@ -209,6 +217,7 @@ def refresh_latest(
     capacity_sha256=None,
     reassess_captured_policy=False,
     player_maishift=None,
+    export_artwork_source=None,
 ):
     """Continue from the last verified publication, including its accepted registry."""
     store = Path(store).resolve()
@@ -229,6 +238,7 @@ def refresh_latest(
         previous / "browser",
         previous_public=preceding_public,
         player_maishift=player_maishift,
+        export_artwork_source=export_artwork_source,
         package=previous / "package",
         registry=registry,
         offline=offline,
@@ -276,6 +286,11 @@ def main(argv=None):
     refresh.add_argument("--offline", action="store_true")
     refresh.add_argument("--replay-sources", type=Path)
     for action in (prepare, refresh):
+        action.add_argument(
+            "--export-artwork-source",
+            type=Path,
+            help="Complete reviewed export artwork; defaults to the verified preceding public tree",
+        )
         action.add_argument(
             "--player-maishift",
             action=argparse.BooleanOptionalAction,

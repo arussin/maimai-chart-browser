@@ -62,6 +62,8 @@ class AttemptFields(TypedDict):
     capacity_review: Path | None
     capacity_sha256: str | None
     player_maishift: bool | None
+    export_artwork_source: Path | None
+    preserve_web_analytics: bool
 
 
 @dataclass(frozen=True)
@@ -85,6 +87,8 @@ class PreparationRequest:
     player_maishift: bool | None
     predecessor: dict[str, str] | None
     historical: HistoricalInputs
+    export_artwork_source: Path | None = None
+    preserve_web_analytics: bool = False
 
     def __post_init__(self) -> None:
         if isinstance(self.source, LegacySource) and self.package is None:
@@ -115,6 +119,8 @@ class PreparationRequest:
             "capacity_review": self.capacity.review if self.capacity else None,
             "capacity_sha256": self.capacity.sha256 if self.capacity else None,
             "player_maishift": self.player_maishift,
+            "export_artwork_source": self.export_artwork_source,
+            "preserve_web_analytics": self.preserve_web_analytics,
         }
 
 
@@ -138,10 +144,14 @@ def preparation_request(
     player_maishift: bool | None = None,
     registry_seed: Path | str | None = None,
     predecessor: dict[str, str] | None = None,
+    export_artwork_source: Path | str | None = None,
+    preserve_web_analytics: bool = False,
 ) -> PreparationRequest:
     """Normalize CLI/legacy arguments once; downstream stages receive this request."""
     if player_maishift is not None and type(player_maishift) is not bool:
         raise CorpusInputError("Maishift capability must be an explicit boolean")
+    if type(preserve_web_analytics) is not bool:
+        raise CorpusInputError("Web Analytics allowance must be an explicit boolean")
     if (capacity_review is None) != (capacity_sha256 is None):
         raise CorpusInputError(
             "Capacity review and its explicitly reviewed SHA256 are required together"
@@ -167,6 +177,7 @@ def preparation_request(
         overrides,
         artwork_cache,
         registry_seed,
+        export_artwork_source,
     ):
         if value is not None and store.is_relative_to(Path(value).resolve()):
             raise CorpusInputError("Update store must not replace or sit inside an input directory")
@@ -217,4 +228,6 @@ def preparation_request(
         player_maishift,
         predecessor,
         HistoricalInputs(snapshot, path(overrides), cache, coverage_reviews),
+        path(export_artwork_source),
+        preserve_web_analytics,
     )

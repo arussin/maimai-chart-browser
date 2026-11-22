@@ -29,7 +29,7 @@ from maimai_intelligence.registry_catalog import (
     validate_catalog,
 )
 from maimai_intelligence.snapshots import canonical
-from scripts import capture_official_inventory, update_catalog
+from scripts import capture_official_inventory
 from tests.registry_fixture import admit, fixture, official_row
 
 
@@ -146,6 +146,8 @@ class RegistryTests(unittest.TestCase):
             self.assertIn(selected, value["charts"][cid]["transcription_history"].values())
 
     def test_registry_only_build_and_offline_repeated_updates(self):
+        from maimai_intelligence import corpus_update as update_catalog
+
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
             value, legacy, package = fixture(root)

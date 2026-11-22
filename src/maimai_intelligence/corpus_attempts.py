@@ -22,6 +22,7 @@ PATH_OPTIONS = (
     "mai_notes_snapshot",
     "overrides",
     "capacity_review",
+    "export_artwork_source",
 )
 VALUE_OPTIONS = (
     "revision",
@@ -30,12 +31,31 @@ VALUE_OPTIONS = (
     "reassess_captured_policy",
     "capacity_sha256",
     "player_maishift",
+    "preserve_web_analytics",
 )
 
 
 class InputBinding(TypedDict):
     path: str
     files: dict[str, dict[str, str | int]]
+
+
+def bound_input_inventory(name: str, path: Path) -> dict[str, dict[str, str | int]]:
+    if name == "export_artwork_source":
+        from .export_artwork import read_export_artwork_assets
+
+        # Bind only the reviewed read closure, never provenance or unrelated files.
+        try:
+            assets = read_export_artwork_assets(path)
+        except FileNotFoundError as exc:
+            raise ValueError(
+                "Required export artwork is missing; supply a complete --export-artwork-source"
+            ) from exc
+        return {
+            name: {"bytes": len(raw), "sha256": hashlib.sha256(raw).hexdigest()}
+            for name, raw in assets.items()
+        }
+    return input_inventory(path)
 
 
 def input_inventory(path: Path) -> dict[str, dict[str, str | int]]:
@@ -68,12 +88,13 @@ def bind_attempt(
     policy_context: PolicyContext = BUILTIN_CONTEXT,
 ) -> dict[str, Any]:
     values = {name: options.get(name) for name in VALUE_OPTIONS}
+    values["preserve_web_analytics"] = options.get("preserve_web_analytics", False)
     bindings: dict[str, InputBinding] = {}
     for name in PATH_OPTIONS:
         path = options.get(name)
         if path is not None:
             path = Path(path).resolve()
-            bindings[name] = {"path": str(path), "files": input_inventory(path)}
+            bindings[name] = {"path": str(path), "files": bound_input_inventory(name, path)}
     observations: dict[str, Any] = {}
     if predecessor is not None:
         name = predecessor.get("run", "")
@@ -88,6 +109,11 @@ def bind_attempt(
         if verified["sha256"] != predecessor.get("attempt_sha256"):
             raise ValueError("Predecessor attempt changed")
         previous = verified["body"]
+        if (
+            previous["values"].get("preserve_web_analytics", False)
+            != values["preserve_web_analytics"]
+        ):
+            raise ValueError("Continuation public release policy differs")
         observations = previous.get("observations", {})
         if "mai_notes_snapshot" in bindings and "mai_notes_snapshot" not in observations:
             raise ValueError("Legacy attempt lacks bound capture metadata; prepare a new attempt")
@@ -172,7 +198,8 @@ def verify_retained_inputs(
         raise ValueError("Attempt receipt integrity mismatch")
     previous = {name: row["files"] for name, row in body["bindings"].items()}
     current = {
-        name: input_inventory(path) for name, path in _input_paths(body, input_locations).items()
+        name: bound_input_inventory(name, path)
+        for name, path in _input_paths(body, input_locations).items()
     }
     reviews = digest(body["values"].get("coverage_reviews"))
     ReuseIdentity(digest(previous), body["implementation"], reviews).require_evidence(

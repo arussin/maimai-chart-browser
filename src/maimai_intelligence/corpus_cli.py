@@ -40,10 +40,12 @@ def add_commands(commands: argparse._SubParsersAction[argparse.ArgumentParser]) 
         "mai-notes-snapshot",
         "reviews",
         "overrides",
+        "export-artwork-source",
     ):
         prepare.add_argument("--" + name, type=Path)
     prepare.add_argument("--revision")
     prepare.add_argument("--online", action="store_true")
+    prepare.add_argument("--preserve-web-analytics", action="store_true")
     for action in ("resume", "replay", "reassess"):
         command = actions.add_parser(
             action, help="Create a new attempt from verified predecessor inputs"
@@ -127,6 +129,8 @@ def execute(args: argparse.Namespace) -> None:
             args.store,
             args.previous_browser,
             previous_public=args.previous_public,
+            export_artwork_source=args.export_artwork_source,
+            preserve_web_analytics=args.preserve_web_analytics,
             package=args.package,
             registry=args.registry,
             revision=args.revision,
