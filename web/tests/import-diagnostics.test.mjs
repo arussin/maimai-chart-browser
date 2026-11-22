@@ -211,7 +211,8 @@ test('OAuth Worker response categories survive without relaying arbitrary respon
     ['upstream_busy', 'upstream_busy', 'unavailable'],
     ['invalid_response', 'malformed_response', 'invalid_response'],
     ['response_too_large', 'oversized_response', 'invalid_response'],
-    ['provider_configuration_changed', 'contract_changed', 'invalid_response'],
+    ['provider_configuration_changed', 'provider_configuration', 'invalid_response'],
+    ['invalid_token_response', 'token_response', 'invalid_response'],
     ['provider_contract_changed', 'contract_changed', 'invalid_response'],
     ['integration_disabled', 'configuration_unavailable', 'unavailable'],
     ['PRIVATE unknown', 'unknown', 'unavailable'],
@@ -230,11 +231,62 @@ test('OAuth Worker response categories survive without relaying arbitrary respon
   }
 });
 
+test('a changed tracker contract records which fixed response check failed, and nothing else', async () => {
+  const read = (body) =>
+    createPlayerProviderConnections({ bounded, fetch: async () => json(body, 502) }).read(
+      'diving-fish',
+      grantID,
+      new AbortController().signal,
+    );
+  for (const check of [
+    'contract_envelope',
+    'contract_list',
+    'contract_count',
+    'contract_row',
+    'contract_field',
+    'contract_value',
+    'contract_best50',
+    'contract_best50_value',
+    'contract_player',
+  ]) {
+    await assert.rejects(
+      read({ error: 'provider_contract_changed', diagnosticCode: check }),
+      (error) => {
+        assert.equal(diagnosticError(error).reason, check);
+        assert.equal(diagnosticError(error).stage, 'response');
+        // The player-facing failure and message are the same as before.
+        assert.equal(importFailure(error), 'invalid_response');
+        assert(!error.message.includes(check));
+        return true;
+      },
+    );
+  }
+  // Anything outside the fixed list, or attached to another code, is ignored.
+  for (const [body, reason] of [
+    [{ error: 'provider_contract_changed', diagnosticCode: 'PRIVATE title' }, 'contract_changed'],
+    [{ error: 'provider_contract_changed', diagnosticCode: 'record_shape' }, 'contract_changed'],
+    [
+      { error: 'provider_contract_changed', diagnosticCode: { check: 'contract_list' } },
+      'contract_changed',
+    ],
+    [{ error: 'provider_contract_changed' }, 'contract_changed'],
+    [{ error: 'upstream_busy', diagnosticCode: 'contract_list' }, 'upstream_busy'],
+    [{ error: 'PRIVATE unknown', diagnosticCode: 'contract_list' }, 'unknown'],
+  ]) {
+    await assert.rejects(read(body), (error) => {
+      assert.equal(diagnosticError(error).reason, reason);
+      assert(!error.message.includes('PRIVATE'));
+      return true;
+    });
+  }
+});
+
 test('uncertain OAuth renewal retains reauthorization behavior and only a finite diagnostic cause', async () => {
   for (const [code, cause, reason] of [
     ['reconnect_required', 'worker_timeout', 'worker_timeout'],
     ['reconnect_required', 'upstream_network', 'network'],
-    ['reconnect_required', 'invalid_token_response', 'contract_changed'],
+    ['reconnect_required', 'invalid_token_response', 'token_response'],
+    ['reconnect_required', 'provider_configuration_changed', 'provider_configuration'],
     ['reconnect_required', 'PRIVATE raw cause', 'connection_expired'],
     ['reconnect_required', { reason: 'worker_timeout' }, 'connection_expired'],
     ['not_connected', 'worker_timeout', 'connection_expired'],

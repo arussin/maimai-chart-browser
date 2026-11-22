@@ -185,8 +185,8 @@ export function createPlayerProviderConnections(ports: ConnectionPorts) {
           upstream_busy: 'upstream_busy',
           invalid_response: 'malformed_response',
           response_too_large: 'oversized_response',
-          invalid_token_response: 'contract_changed',
-          provider_configuration_changed: 'contract_changed',
+          invalid_token_response: 'token_response',
+          provider_configuration_changed: 'provider_configuration',
         };
         const cause =
           code === 'reconnect_required' &&
@@ -232,22 +232,44 @@ export function createPlayerProviderConnections(ports: ConnectionPorts) {
         invalid_response: 'malformed_response',
         response_too_large: 'oversized_response',
         provider_contract_changed: 'contract_changed',
-        provider_configuration_changed: 'contract_changed',
+        provider_configuration_changed: 'provider_configuration',
         integration_disabled: 'configuration_unavailable',
         session_unavailable: 'configuration_unavailable',
-        invalid_token_response: 'contract_changed',
+        invalid_token_response: 'token_response',
         invalid_identity: 'identity',
         authorization_failed: 'authorization_failed',
       };
-      const reason: Reason = Object.hasOwn(reasons, code)
-        ? reasons[code]
-        : response.status === 429
-          ? 'rate_limited'
-          : response.status === 503
-            ? 'upstream_busy'
-            : response.status === 403
-              ? 'authorization_failed'
-              : 'unknown';
+      // The Worker names which reviewed check a tracker response failed. Only
+      // these fixed labels are accepted; anything else stays the general reason.
+      const contractChecks: readonly Reason[] = [
+        'contract_envelope',
+        'contract_list',
+        'contract_count',
+        'contract_row',
+        'contract_field',
+        'contract_value',
+        'contract_best50',
+        'contract_best50_value',
+        'contract_player',
+      ];
+      const check =
+        code === 'provider_contract_changed' &&
+        object(value) &&
+        typeof value.diagnosticCode === 'string' &&
+        (contractChecks as readonly string[]).includes(value.diagnosticCode)
+          ? (value.diagnosticCode as Reason)
+          : null;
+      const reason: Reason = check
+        ? check
+        : Object.hasOwn(reasons, code)
+          ? reasons[code]
+          : response.status === 429
+            ? 'rate_limited'
+            : response.status === 503
+              ? 'upstream_busy'
+              : response.status === 403
+                ? 'authorization_failed'
+                : 'unknown';
       const failure: Failure =
         code === 'worker_timeout'
           ? 'timeout'
@@ -541,8 +563,8 @@ export async function authorizeProvider(
             rate_limited: 'rate_limited',
             upstream_busy: 'upstream_busy',
             provider_contract_changed: 'contract_changed',
-            provider_configuration_changed: 'contract_changed',
-            invalid_token_response: 'contract_changed',
+            provider_configuration_changed: 'provider_configuration',
+            invalid_token_response: 'token_response',
             invalid_identity: 'identity',
             integration_disabled: 'configuration_unavailable',
             session_unavailable: 'configuration_unavailable',

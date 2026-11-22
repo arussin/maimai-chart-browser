@@ -4,6 +4,10 @@ const MAX_DATA_BYTES = 8 * 1024 * 1024, MAX_BEST50_BYTES = 512 * 1024, MAX_RECOR
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const GRANT_ID = /^[A-Za-z0-9_-]{43}$/;
 const object = v => !!v && typeof v === 'object' && !Array.isArray(v);
+// One finite label per reviewed response check. It travels beside the unchanged
+// public error code so the site can record which check failed. It is never a
+// field name, a value or provider text.
+const contract = check => new OAuthError('provider_contract_changed', 502, null, check);
 const tokenString = v => typeof v === 'string' && /^[\x21-\x7e]{1,8192}$/.test(v);
 function label(value) {
   if (typeof value !== 'string') return null;
@@ -28,28 +32,29 @@ function retryAt(value, now) {
   return Number.isFinite(v) ? Math.min(now + 86400000, Math.max(now + 30000, v)) : now + 60000;
 }
 function envelope(value) {
-  if (!object(value) || value.success !== true || value.code !== 200) throw new OAuthError('provider_contract_changed');
+  if (!object(value) || value.success !== true || value.code !== 200) throw contract('contract_envelope');
   return value.data;
 }
 function pickRecord(provider, record) {
-  if (!object(record)) throw new OAuthError('provider_contract_changed');
+  if (!object(record)) throw contract('contract_row');
   const fish = provider === 'diving-fish';
   const required = fish ? ['song_id','achievements','level_index','type'] : ['id','achievements','level_index','type'];
-  if (required.some(k => !(k in record))) throw new OAuthError('provider_contract_changed');
-  if (typeof record.achievements !== 'number' || !Number.isFinite(record.achievements) || record.achievements < 0 || record.achievements > 101) throw new OAuthError('provider_contract_changed');
+  if (required.some(k => !(k in record))) throw contract('contract_field');
+  if (typeof record.achievements !== 'number' || !Number.isFinite(record.achievements) || record.achievements < 0 || record.achievements > 101) throw contract('contract_value');
   const keys = fish ? ['song_id','title','type','level','level_index','level_label','achievements','dxScore','ds','ra','fc','fs']
     : ['id','song_name','type','level','level_index','achievements','dx_score','dx_rating','rate','fc','fs','play_time','upload_time','last_played_time'];
   const result = {};
   for (const k of keys) if (k in record) {
     const value = record[k];
-    if (value !== null && !['string','number','boolean'].includes(typeof value) || typeof value === 'string' && value.length > 512 || typeof value === 'number' && (!Number.isFinite(value) || Math.abs(value) > 1e12)) throw new OAuthError('provider_contract_changed');
+    if (value !== null && !['string','number','boolean'].includes(typeof value) || typeof value === 'string' && value.length > 512 || typeof value === 'number' && (!Number.isFinite(value) || Math.abs(value) > 1e12)) throw contract('contract_value');
     result[k] = value;
   }
   return result;
 }
 function minimize(provider, value) {
   const rows = provider === 'diving-fish' ? value?.records : envelope(value);
-  if (!Array.isArray(rows) || rows.length > MAX_RECORDS) throw new OAuthError('provider_contract_changed');
+  if (!Array.isArray(rows)) throw contract('contract_list');
+  if (rows.length > MAX_RECORDS) throw contract('contract_count');
   // A future explicit mask flag is a positive rejection signal. Absence/false,
   // or any pattern in dxScore, cannot independently prove exactness today.
   if (provider === 'diving-fish' && value.mask === true) throw new OAuthError('scores_masked', 409);
@@ -60,11 +65,11 @@ function minimizeBest50(provider, value) {
   const fish = provider === 'diving-fish';
   if (fish && value?.mask === true) throw new OAuthError('scores_masked', 409);
   const pools = fish ? value?.charts : envelope(value);
-  if (!object(pools)) throw new OAuthError('provider_contract_changed');
+  if (!object(pools)) throw contract('contract_best50');
   const seen = new Set();
   const read = (name, maximum) => {
     const rows = pools[name];
-    if (!Array.isArray(rows) || rows.length > maximum) throw new OAuthError('provider_contract_changed');
+    if (!Array.isArray(rows) || rows.length > maximum) throw contract('contract_best50');
     return rows.map(raw => {
       const row = pickRecord(provider, raw), id = fish ? row.song_id : row.id;
       const validID = Number.isSafeInteger(id) && id >= 0 && id < 100000
@@ -73,9 +78,9 @@ function minimizeBest50(provider, value) {
       if (!validID || !(fish ? ['SD','DX'] : ['standard','dx']).includes(row.type)
         || !Number.isInteger(row.level_index) || row.level_index < 0 || row.level_index > 4
         || typeof rating !== 'number' || !Number.isFinite(rating) || rating < 0 || Math.floor(rating) > 1000
-        || fish && !Number.isInteger(rating)) throw new OAuthError('provider_contract_changed');
+        || fish && !Number.isInteger(rating)) throw contract('contract_best50_value');
       const key = Number(id) + ':' + row.type + ':' + row.level_index;
-      if (seen.has(key)) throw new OAuthError('provider_contract_changed');
+      if (seen.has(key)) throw contract('contract_best50_value');
       seen.add(key); return row;
     });
   };
@@ -323,7 +328,7 @@ export class ProviderOAuthSessionCore {
       let player = null;
       if (provider === 'lxns') {
         player = envelope(await this.upstream(PROVIDERS[provider].player, {token, signal}));
-        if (!object(player)) throw new OAuthError('provider_contract_changed');
+        if (!object(player)) throw contract('contract_player');
       }
       const raw = await this.upstream(PROVIDERS[provider].records, {token, maximum:MAX_DATA_BYTES, signal});
       const data = minimize(provider, raw);

@@ -28,6 +28,9 @@ export const PROVIDERS = Object.freeze({
   }),
 });
 const RENEWAL_DIAGNOSTICS = ['worker_timeout','upstream_network','rate_limited','upstream_busy','invalid_response','response_too_large','invalid_token_response','provider_configuration_changed'];
+// Which reviewed response check a tracker's answer failed: one fixed label per
+// check, never a field name, a value or provider text.
+export const CONTRACT_CHECKS = Object.freeze(['contract_envelope','contract_list','contract_count','contract_row','contract_field','contract_value','contract_best50','contract_best50_value','contract_player']);
 export class OAuthError extends Error {
   constructor(code, status = 502, retryAt = null, diagnosticCode = undefined) {
     super(code); this.code = code; this.status = status; this.retryAt = retryAt;
@@ -35,6 +38,8 @@ export class OAuthError extends Error {
     // token exchange. A separate finite cause can diagnose that boundary without
     // exposing provider text, secrets, or persisting anything with the grant.
     if (code === 'reconnect_required' && RENEWAL_DIAGNOSTICS.includes(diagnosticCode)) this.diagnosticCode = diagnosticCode;
+    // The public code stays provider_contract_changed; the label only says which check.
+    if (code === 'provider_contract_changed' && CONTRACT_CHECKS.includes(diagnosticCode)) this.diagnosticCode = diagnosticCode;
   }
 }
 export function validateDisconnectInput(input) {

@@ -140,6 +140,29 @@ Without that cause, `connection_expired` means reauthorization is required, not
 proof that expiration caused the failure. A failed renewal never replays the old
 refresh token to improve telemetry.
 
+The same field also names which reviewed response check a tracker's answer
+failed. `provider_contract_changed` remains the public code and the player's
+message is unchanged; `diagnosticCode` carries one label from a fixed list
+(`contract_envelope`, `contract_list`, `contract_count`, `contract_row`,
+`contract_field`, `contract_value`, `contract_best50`, `contract_best50_value`,
+`contract_player`), which the browser records as the diagnostic reason. It is
+never a field name, a value, a row number or provider text, and nothing outside
+the list is accepted on either side. A changed OpenID configuration and an
+invalid token response are recorded as `provider_configuration` and
+`token_response` instead of the general `contract_changed`.
+
+Score documents (local files and tracker exports) record which kind of rule they
+broke: `record_shape`, `record_identity`, `record_chart`, `record_score` or
+`record_time`, at the `decode` stage. The category comes from the parser's own
+fixed helper, not from the document. The player's message, including any row
+number, never enters telemetry.
+
+These reasons were added on 22 November 2026: in the preceding 30 days every
+real Diving-Fish read and every DXRating file had failed in production with a
+single undifferentiated reason, so the cause could not be told apart. As with
+any addition to the vocabulary, the collector and the report readers must be
+deployed before the browser that sends the new reasons.
+
 ## Release ordering
 
 1. Recheck current production and the exact reconciled connector candidate.

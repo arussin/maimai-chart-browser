@@ -74,6 +74,25 @@ export const REASONS = [
   'empty_scores',
   'cleanup_required',
   'configuration_unavailable',
+  // Which finite response check a tracker's answer failed. Never a field name,
+  // value or provider text: one label per reviewed check in the import Worker.
+  'contract_envelope',
+  'contract_list',
+  'contract_count',
+  'contract_row',
+  'contract_field',
+  'contract_value',
+  'contract_best50',
+  'contract_best50_value',
+  'contract_player',
+  'provider_configuration',
+  'token_response',
+  // Which kind of rule a score document (file or tracker export) broke.
+  'record_shape',
+  'record_identity',
+  'record_chart',
+  'record_score',
+  'record_time',
 ] as const;
 export const OUTCOMES = [
   'success',
