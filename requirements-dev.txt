@@ -4,7 +4,7 @@ ruff==0.16.5
 -r requirements-localization.txt
 
 # Offline artwork acquisition validates decoded content before publishing thumbnails.
-Pillow==12.3.0
+Pillow==13.0.0
 
 # Strict extracted boundaries and measured branch coverage (development only).
 mypy==2.3.1

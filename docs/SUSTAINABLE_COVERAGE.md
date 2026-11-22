@@ -20,7 +20,7 @@ New automatic mappings require one canonical ordinary chart and one provider cha
 
 ## Bounded artwork work
 
-Every accepted song participates, including metadata-only and historical entries. Valid retained assets are reused first. Eligible regional official references come from accepted source observations. Wiki fallback requires an identity-bearing metadata table with matching complete title/artist and exactly one supported jacket reference. Arbitrary page images and ambiguous accepted song identities are rejected. Fixed HTTPS origins, no redirects, public DNS addresses, path checks and bounded reads apply before decoding. PNG/JPEG/WebP inputs must satisfy decoded pixel and byte bounds. Conversion uses pinned Pillow 12.3.0 and the existing 128-pixel WebP thumbnail format; conversion results are content-addressed and cached by input bytes/policy. Minimalist artwork is not rejected heuristically.
+Every accepted song participates, including metadata-only and historical entries. Valid retained assets are reused first. Eligible regional official references come from accepted source observations. Wiki fallback requires an identity-bearing metadata table with matching complete title/artist and exactly one supported jacket reference. Arbitrary page images and ambiguous accepted song identities are rejected. Fixed HTTPS origins, no redirects, public DNS addresses, path checks and bounded reads apply before decoding. PNG/JPEG/WebP inputs must satisfy decoded pixel and byte bounds. Conversion uses pinned Pillow 13.0.0 and the existing 128-pixel WebP thumbnail format; conversion results are content-addressed and cached by input bytes/policy. Minimalist artwork is not rejected heuristically.
 
 A run handles at most 300 songs and shares a 300 song-page Wiki budget with metadata discovery, reserving 100 for coverage. The oldest 100 eligible jobs precede new evidence, so repeated additions cannot starve old gaps. Pending evidence becomes processed only when attempted; a batch limit or offline pass cannot consume it. Negative results use reason-specific retry deadlines, exponential outage backoff and HTTP Retry-After. Changed relevant evidence invalidates ordinary negatives, while active 429 deadlines remain respected. Failed changed artwork retains accepted bytes and remains eligible after its retry deadline. Review fingerprints deduplicate unchanged unresolved evidence.
 
@@ -29,6 +29,27 @@ A run handles at most 300 songs and shares a 300 song-page Wiki budget with meta
 ## Receipts and validation
 
 Each candidate includes `coverage-start.json`, `coverage-inputs.json`, `coverage-state.json`, `coverage-audit.json` and `source-captures.json`. Inputs bind starting registry, configuration, title/provider reviews and selected work; captures retain immutable blobs and recorded HTTP failure details. Exact replay uses those bytes and selected work, even if newer URL pointers exist. Offline preparation validates and reuses accepted enrichment without network.
+
+Pillow 13.0.0 changes the runtime recorded by `coverage_runtime.producer_identity`,
+the producer policy digest, queue evidence and conversion-cache keys. An exact
+replay recorded with Pillow 12.3.0 is rejected; use explicit
+`--reassess-captured-policy` (or `corpus reassess`) to reevaluate the retained
+captures with the current producer and record `reassessment_of`. Reassessment
+preserves the original receipts and uses their starting state and selected work.
+Conversions actually required by that work can produce different WebP bytes,
+SHA-256 names and package inventories. Ordinary online refresh still verifies and
+reuses accepted artwork, including official selections with unchanged evidence;
+the producer change does not force all retained jackets through the encoder.
+Offline retained preparation does not encode new artwork.
+
+The authored bytes in `tests/artwork_fixture.py` and hashes derived from those
+bytes stay fixed. Generated export and regional test fixtures compute their hashes
+from the current encoder output rather than pinning Pillow's bytes. The checked-in
+`assets/export-artwork/manifest.json` pins previously reviewed asset bytes; this
+dependency update neither regenerates that artwork nor changes its manifest.
+Newly encoded bytes cannot replace those assets under their old hashes. The
+Pillow 12.3.0 producer in `architecture/COVERAGE-REVISION.md` is a historical
+receipt and remains unchanged.
 
 The coverage audit gives identity-level added/removed/replaced/unchanged mappings and artwork, remaining gaps, provider outcomes and JP/INTL/historical inventories. Unexplained accepted coverage loss or missing/tampered accepted asset bytes blocks preparation. `ready.json` binds candidate registry, public files, implementation/configuration and coverage receipts; it is written last. The updater additionally binds `previous-public.json` when retaining prior startup references and permalink identities; source replay requires the same preceding publication inputs. Operational queue progress stays outside accepted registry state. Preparation creates a review candidate only; publication remains a separate owner action.
 

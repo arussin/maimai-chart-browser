@@ -4,5 +4,6 @@
   "private": true,
   "type": "module",
   "scripts": {"test":"node --test *.test.mjs", "types":"wrangler types --env-interface Env --include-runtime false"},
-  "devDependencies": {"wrangler":"4.135.0", "miniflare":"5.20260918.0-alpha", "@cloudflare/workers-types":"5.20260921.1"}
+  "devDependencies": {"wrangler":"4.135.0", "miniflare":"5.20260918.0-alpha", "@cloudflare/workers-types":"5.20260921.1"},
+  "overrides": {"miniflare": {"undici": "7.30.1", "sharp": "0.35.5"}}
 }
