@@ -49,6 +49,7 @@ def thumbnail(raw, logo=False):
         with Image.open(io.BytesIO(raw)) as image:
             if image.format not in {"PNG", "JPEG", "WEBP"} or image.width * image.height > 16000000:
                 raise ValueError("Unsupported public artwork")
+            image.load()
             image.thumbnail((160, 88) if logo else (128, 128), Image.Resampling.LANCZOS)
             output = io.BytesIO()
             image.convert("RGBA" if logo else "RGB").save(output, "WEBP", quality=85, method=4)
