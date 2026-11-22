@@ -138,10 +138,9 @@ def _search_metadata(raw: bytes) -> bytes:
     )
     if len(re.findall(r"<title>.*?</title>", head, re.S)) != 1:
         raise ValueError("Expected a single public page head and title")
-    lines = head.splitlines(keepends=True)
     offsets = [0]
-    for line in lines:
-        offsets.append(offsets[-1] + len(line))
+    for line in head.split("\n"):
+        offsets.append(offsets[-1] + len(line) + 1)
 
     class ManagedTags(HTMLParser):
         spans: list[tuple[int, int]]
@@ -159,13 +158,16 @@ def _search_metadata(raw: bytes) -> bytes:
                 line, column = self.getpos()
                 start = offsets[line - 1] + column
                 end = start + len(self.get_starttag_text() or "")
-                if head[end : end + 1] == "\n":
+                if head[end : end + 2] == "\r\n":
+                    end += 2
+                elif head[end : end + 1] == "\n":
                     end += 1
                 self.spans.append((start, end))
 
     parser = ManagedTags()
     parser.spans = []
     parser.feed(head)
+    parser.close()
     for start, end in reversed(parser.spans):
         head = head[:start] + head[end:]
     title, description = escape(SEARCH_TITLE, quote=True), escape(SEARCH_DESCRIPTION, quote=True)
@@ -568,7 +570,7 @@ def _prepare_browser_shell(source: Path) -> dict[str, bytes]:
         b"/support-*\n  Cache-Control: no-store\n"
         b"/support\n  Cache-Control: no-store\n  X-Robots-Tag: noindex, nofollow\n"
         b"/support.html\n  Cache-Control: no-store\n  X-Robots-Tag: noindex, nofollow\n"
-        b"/support-return\n  Cache-Control: no-store\n  X-Robots-Tag: noindex, nofollow\n"
+        b"/support-return\n  X-Robots-Tag: noindex, nofollow\n"
         b"  Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self'; "
         b"img-src data:; connect-src 'self'; base-uri 'none'; form-action 'none'; "
         b"frame-ancestors 'none'\n"

@@ -62,6 +62,13 @@ def bound_input_inventory(name: str, path: Path) -> dict[str, dict[str, str | in
             # IsADirectoryError. Reject this input shape before attempting to open it.
             if any((path / name).is_dir() for name in _assets(manifest)):
                 raise CorpusInputError("Required export artwork must be files, not directories")
+            # The post-render check refuses aliased files; refuse them here too, so an
+            # unchanged input is never reported later as changed during preparation.
+            if any(
+                (path / name).is_symlink() or (path / name).parent.is_symlink()
+                for name in _assets(manifest)
+            ):
+                raise CorpusInputError("Required export artwork must not be symbolic links")
             assets = read_export_artwork_assets(path, manifest=manifest)
         except (FileNotFoundError, IsADirectoryError, NotADirectoryError) as exc:
             raise CorpusInputError(

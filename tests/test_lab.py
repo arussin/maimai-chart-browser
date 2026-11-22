@@ -2,6 +2,7 @@ import hashlib
 import json
 import tempfile
 import unittest
+from importlib.resources import files
 from pathlib import Path
 
 from maimai_intelligence.lab import build_lab
@@ -35,6 +36,11 @@ class LabTests(unittest.TestCase):
             source = write_package(root / "package")
             result = build_lab(source, root / "site", catalog_version="fixture-v1")
             html = result.read_text("utf-8")
+            for name in ("favicon.ico", "og-image.png"):
+                self.assertEqual(
+                    (root / "site" / name).read_bytes(),
+                    files("maimai_intelligence.assets").joinpath(name).read_bytes(),
+                )
             self.assertIn('id="filter-genre"', html)
             self.assertIn('id="version-options"', html)
             self.assertIn('id="sort-rules"', html)

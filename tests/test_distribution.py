@@ -63,6 +63,9 @@ class DistributionTests(unittest.TestCase):
                     self.assertEqual(direct.read(name), rebuilt_archive.read(name), name)
             installed = destination / "installed"
             with zipfile.ZipFile(destination / wheel) as archive:
+                for name in ("favicon.ico", "og-image.png"):
+                    path = "maimai_intelligence/assets/" + name
+                    self.assertEqual(archive.read(path), (root / "src" / path).read_bytes())
                 self.assertFalse(
                     any(name.startswith("maimai_report/") for name in archive.namelist())
                 )

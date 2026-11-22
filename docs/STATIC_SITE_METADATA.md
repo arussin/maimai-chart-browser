@@ -31,10 +31,45 @@ and `refresh`. Python callers pass `release_date` to `plan_public_release`,
 fallback: capture dates do not reliably describe an interface change. Omission
 leaves new/changed URLs undated and preserves dates for unchanged URLs.
 
-Sitemaps are dated after the final browser resources are sealed. Exact published
-HTML byte equality retains the preceding URL date; otherwise the explicit input
-date is used. Home also compares the default catalog checksum. The sitemap index
-uses the maximum dated URL in each child. Missing historical dates are seeded
+Sitemaps are dated after the final browser resources are sealed. A localized song
+or version page changes when its parsed markup, text, search/social metadata,
+artwork references or own data binding changes, excluding shared browser resource
+descriptors, browser entry scripts, generated module preloads, stylesheet links,
+runtime CSP/base metadata and release-wide catalog membership checksums.
+The song binding's path, checksum and byte count verify its referenced data, then
+the comparison retains its identities and a semantic digest of that data, so a
+song's data change counts even when its static text stays the same; changes to
+shared scripts or styles alone do not advance localized page dates. The digest
+excludes artwork acquisition URLs/source hashes and dimension annotations (the
+image's immutable path, bytes and hash still count), and normalizes regional
+artwork records that select exactly the same path/title/artist as their fallback.
+This follows `web/src/domain/artwork.ts`; it does not suppress changed artwork,
+regional titles/artists, charts, constants, analysis or other own data. The
+November 22 catalog refresh updated artwork provenance and added redundant JP
+records widely, so comparing raw song payload hashes would also over-date pages.
+
+Read-only comparison of `import-diagnostics-pr67-20261122/public` with
+`catalog-38c3efcc0fdf-20261122/public` finds **2,035 of 8,670** current localized
+pages changed: 60 additions, 955 changed rendered documents, and 1,020 whose own
+data changed without changing the static document. Of the latter, 850 gained
+Mai Notes data, 25 changed Mai Notes and provider mappings, 140 changed provider
+mappings, and 5 changed analysis/catalog/navigation/provider data. The other
+6,635 pages are unchanged; none were removed. Thus the brief's expectation of
+only a few dozen changed songs does not describe these complete release trees,
+even after excluding shared runtime and artwork provenance churn. The read-only
+comparison script and per-page/category receipts are `compare-page-content.py`,
+`followup-real-data.json` and `followup-change-categories.json` in the work folder
+above; no full release plan was run against the published trees.
+
+This comparison is only a dating projection of maintained HTML, never an input to
+catalog or application assembly. Home and other nonlocalized pages keep exact
+byte comparison, and home also compares the default catalog checksum. Unchanged
+URLs retain their preceding date; changed/new URLs use the explicit release date
+or remain undated when it is omitted. The sitemap index uses the maximum child
+URL date only when every URL is dated; URL removals additionally require the
+explicit release date and include it in that maximum, so deletions cannot leave
+a stale index date. An unchanged child preserves its preceding index date,
+including a date established by an earlier removal. Missing historical dates are seeded
 on the first explicitly dated release. Catalog bytes and permalink identities
 are untouched. The planner/build summary records the input; corpus attempts,
 release-inputs and ready receipts bind it, and resume/replay preserve it.
@@ -43,7 +78,7 @@ The cache-only `release-tools/prepare_interface_release.py` is an older owner
 adapter, not canonical source. It currently freezes `_headers` and sitemaps and
 reseals against a full production manifest. It must not be used unchanged for
 this release: it will reject the intended metadata changes. The canonical
-`public-release` API/CLI above supports the date input and final-byte comparison.
+`public-release` API/CLI above supports the date input and final-content comparison.
 Any adapter that reseals again must call `date_sitemaps` only after that final
 seal, with the verified preceding public directory and the recorded release
 date, and include new brand assets. Dating is idempotent, so a second finalization

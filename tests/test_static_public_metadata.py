@@ -2,11 +2,13 @@
 
 import base64
 import fnmatch
+import hashlib
 import json
 import re
 import struct
 import tempfile
 import unittest
+import xml.etree.ElementTree as ET
 from html.parser import HTMLParser
 from importlib.resources import files
 from pathlib import Path
@@ -15,7 +17,13 @@ from unittest.mock import patch
 from maimai_intelligence.browser_bundle import read_browser_assets
 from maimai_intelligence.public_release import _prepare_browser_shell, _search_metadata
 from maimai_intelligence.seo import _document
-from maimai_intelligence.sitemap_dates import date_sitemaps, validate_release_date
+from maimai_intelligence.sitemap_dates import (
+    date_sitemaps,
+    page_content,
+    song_content,
+    song_content_reader,
+    validate_release_date,
+)
 from tests.test_browser_resources import source_assets
 
 
@@ -30,6 +38,21 @@ class Tags(HTMLParser):
 
 
 class StaticMetadataTests(unittest.TestCase):
+    def test_metadata_offsets_follow_lf_and_consume_crlf(self):
+        for separator in ("\r", "\v", "\f", "\x1c", "\x85", "\u2028", "\u2029", ""):
+            with self.subTest(separator=repr(separator)):
+                raw = (
+                    "<html><head><title>old</title><style>/*a"
+                    + separator
+                    + 'b*/</style>\n<meta name="description" content="old">\r\n'
+                    '<link rel="canonical" href="/old">\r\n</head><body>same</body></html>'
+                ).encode()
+                result = _search_metadata(raw)
+                self.assertIn(("<style>/*a" + separator + "b*/</style>\n").encode(), result)
+                self.assertNotIn(b'content="old"', result)
+                self.assertNotIn(b"\r\n", result)
+                self.assertEqual(_search_metadata(result), result)
+
     def test_metadata_replacement_is_idempotent_and_preserves_body_and_unmanaged_head(self):
         body = '<body><meta name="description" content="body fixture"><p>Unchanged</p></body>'
         raw = (
@@ -120,6 +143,10 @@ class StaticMetadataTests(unittest.TestCase):
             "/browser-config.json",
             "/browser-shell.html",
             "/manifest.json",
+            "/support",
+            "/support.html",
+            "/support-return",
+            "/support-return.html",
         ):
             values = [
                 h
@@ -132,12 +159,25 @@ class StaticMetadataTests(unittest.TestCase):
             self.assertIn(
                 "immutable"
                 if path.startswith(("/browser/", "/browser-resources/"))
+                else "no-store"
+                if path.startswith("/support")
                 else "no-cache",
                 values[0],
             )
         for path in ("/support-return", "/support-return.html"):
             self.assertTrue(any("default-src 'none'" in h for h in blocks[path]))
+            self.assertTrue(any("frame-ancestors 'none'" in h for h in blocks[path]))
             self.assertIn("X-Robots-Tag: noindex, nofollow", blocks[path])
+        for path in ("/support", "/support.html"):
+            self.assertFalse(any(h.startswith("Content-Security-Policy:") for h in blocks[path]))
+        for path in ("/favicon.ico", "/og-image.png", "/", "/en/songs/fixture/"):
+            matched = [
+                h
+                for pattern, rows in blocks.items()
+                if fnmatch.fnmatchcase(path, pattern)
+                for h in rows
+            ]
+            self.assertFalse(any("immutable" in h for h in matched), path)
 
     def test_unhashed_browser_graph_entry_is_rejected(self):
         assets = source_assets()
@@ -152,6 +192,161 @@ class StaticMetadataTests(unittest.TestCase):
 
 
 class SitemapDatesTests(unittest.TestCase):
+    def test_index_keeps_a_prior_removal_date_on_the_next_unchanged_release(self):
+        first = self.assets()
+        date_sitemaps(first, None, "2026-11-22")
+        # A prior deletion changed the child sitemap after its remaining page.
+        first["sitemap.xml"] = first["sitemap.xml"].replace(
+            b"sitemap-en.xml</loc><lastmod>2026-11-22",
+            b"sitemap-en.xml</loc><lastmod>2026-11-23",
+        )
+        with tempfile.TemporaryDirectory() as directory:
+            previous = Path(directory)
+            for name, raw in first.items():
+                target = previous / name
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_bytes(raw)
+            for release_date in (None, "2026-11-24"):
+                current = self.assets()
+                date_sitemaps(current, previous, release_date)
+                self.assertEqual(current["sitemap.xml"], first["sitemap.xml"])
+
+    def test_song_content_ignores_only_artwork_provenance_and_equivalent_fallbacks(self):
+        original = {
+            "data": {
+                "catalog": [{"level": "12"}],
+                "artwork": {
+                    "assets": {"media/a.webp": {"bytes": 20, "sha256": "a", "source": "old"}},
+                    "songs": {
+                        "song": {"path": "media/a.webp", "title": "Title", "artist": "Artist"}
+                    },
+                },
+            }
+        }
+        raw = json.dumps(original).encode()
+        revised = json.loads(raw)
+        art = revised["data"]["artwork"]
+        art["assets"]["media/a.webp"].update(
+            source="new", source_sha256="capture", width=190, height=190
+        )
+        art["songs"]["song"]["regions"] = {
+            "JP": {"path": "media/a.webp", "title": "Title", "artist": "Artist"},
+            "INTL": {"path": "media/a.webp"},
+        }
+        same = json.dumps(revised).encode()
+        self.assertEqual(song_content(raw), song_content(same))
+        for mutate in (
+            lambda data: data["data"]["catalog"][0].update(level="13"),
+            lambda data: data["data"]["artwork"]["songs"]["song"]["regions"]["JP"].update(
+                path="media/b.webp"
+            ),
+            lambda data: data["data"]["artwork"]["songs"]["song"]["regions"]["JP"].update(
+                title="New title"
+            ),
+            lambda data: data["data"]["artwork"]["assets"]["media/a.webp"].update(sha256="b"),
+        ):
+            changed = json.loads(same)
+            mutate(changed)
+            self.assertNotEqual(song_content(raw), song_content(json.dumps(changed).encode()))
+        sha = hashlib.sha256(raw).hexdigest()
+        reader = song_content_reader(lambda path: raw)
+        self.assertEqual(reader(f"song-catalog/{sha}.json", sha, len(raw)), song_content(raw))
+        for path, checksum, size in (
+            ("../private.json", sha, len(raw)),
+            (f"song-catalog/{sha}.json", sha, len(raw) + 1),
+            (f"song-catalog/{'0' * 64}.json", "0" * 64, len(raw)),
+        ):
+            with self.assertRaises(ValueError):
+                reader(path, checksum, size)
+
+    def test_content_comparison_retains_visible_metadata_artwork_and_own_data(self):
+        path = "en/songs/fixture/index.html"
+        raw = (
+            b'<html><head><title>Title</title><meta name="description" content="Detail">'
+            b'</head><body><h1>Song</h1><img src="/media/old.png"><section data-song-binding="'
+            b"{&quot;path&quot;:&quot;song-catalog/old.json&quot;,&quot;sha256&quot;:&quot;old&quot;,"
+            b'&quot;source_catalog_sha256&quot;:&quot;global&quot;}" '
+            b'data-catalog-sha256="global"></section></body></html>'
+        )
+        for before, after in (
+            (b"Title", b"New title"),
+            (b"Detail", b"New detail"),
+            (b"Song", b"New song"),
+            (b"old.png", b"new.png"),
+            (b"old.json", b"new.json"),
+            (b";old&quot", b";new&quot"),
+        ):
+            with self.subTest(before=before):
+                self.assertNotEqual(
+                    page_content(path, raw), page_content(path, raw.replace(before, after))
+                )
+        self.assertEqual(
+            page_content(path, raw), page_content(path, raw.replace(b"global", b"next"))
+        )
+
+    @staticmethod
+    def dates(raw):
+        ns = "{http://www.sitemaps.org/schemas/sitemap/0.9}"
+        root = ET.fromstring(raw)  # noqa: S314 - locally authored/generated sitemap
+        return {n.findtext(ns + "loc"): n.findtext(ns + "lastmod") for n in root}
+
+    def test_mixed_unicode_dates_and_index_mapping_without_release_date(self):
+        first = self.assets()
+        url = "https://maimai.party/en/songs/%E6%97%A5%E6%9C%AC/"
+        path = "en/songs/日本/index.html"
+        first[path] = b"Japanese song"
+        first["sitemap-en.xml"] = first["sitemap-en.xml"].replace(
+            b"</urlset>", f"<url><loc>{url}</loc></url></urlset>".encode()
+        )
+        with tempfile.TemporaryDirectory() as directory:
+            previous = Path(directory)
+
+            def save(assets):
+                for name, raw in assets.items():
+                    target = previous / name
+                    target.parent.mkdir(parents=True, exist_ok=True)
+                    target.write_bytes(raw)
+
+            save(first)  # An undated predecessor must seed all dates explicitly.
+            date_sitemaps(first, previous, "2026-11-22")
+            self.assertEqual(set(self.dates(first["sitemap-en.xml"]).values()), {"2026-11-22"})
+            save(first)
+            for kind in ("changed", "added", "removed"):
+                for release_date in (None, "2026-11-23"):
+                    with self.subTest(kind=kind, release_date=release_date):
+                        current = dict(first)
+                        if kind == "changed":
+                            current[path] = b"Changed Japanese song"
+                        elif kind == "added":
+                            current["en/songs/new/index.html"] = b"new"
+                            current["sitemap-en.xml"] = current["sitemap-en.xml"].replace(
+                                b"</urlset>",
+                                b"<url><loc>https://maimai.party/en/songs/new/</loc></url></urlset>",
+                            )
+                        else:
+                            current["sitemap-en.xml"] = re.sub(
+                                rb"<url><loc>" + re.escape(url.encode()) + rb"</loc>.*?</url>",
+                                b"",
+                                current["sitemap-en.xml"],
+                            )
+                        date_sitemaps(current, previous, release_date)
+                        expected = {"https://maimai.party/en/songs/fixture/": "2026-11-22"}
+                        if kind != "removed":
+                            expected[url] = release_date if kind == "changed" else "2026-11-22"
+                        if kind == "added":
+                            expected["https://maimai.party/en/songs/new/"] = release_date
+                        self.assertEqual(self.dates(current["sitemap-en.xml"]), expected)
+                        self.assertEqual(
+                            self.dates(current["sitemap.xml"]),
+                            {
+                                "https://maimai.party/sitemap-pages.xml": "2026-11-22",
+                                "https://maimai.party/sitemap-en.xml": release_date,
+                            },
+                        )
+            unchanged = dict(first)
+            date_sitemaps(unchanged, previous, None)
+            self.assertEqual(unchanged, first)
+
     def assets(self):
         return {
             "index.html": b"home",
