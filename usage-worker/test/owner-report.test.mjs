@@ -164,6 +164,7 @@ test(
             headers: {
               Origin: "https://maimai.party",
               "Content-Type": "application/json",
+              "CF-Connecting-IP": "192.0.2.10",
             },
             body: JSON.stringify({ version: 1, events }),
           });
@@ -172,6 +173,7 @@ test(
               await worker.fetch(request, {
                 USAGE_DB: db,
                 USAGE_ENABLED: "true",
+                USAGE_LIMITER: {limit:async()=>({success:true})},
               })
             ).status,
             204,
@@ -185,9 +187,9 @@ test(
         const events=importDiagnosticRows.filter(row=>row.outcome==='success');
         for(let offset=0;offset<events.length;offset+=8){
           const response=await worker.fetch(new Request("https://maimai.party/__usage",{
-            method:"POST",headers:{Origin:"https://maimai.party","Content-Type":"application/json"},
+            method:"POST",headers:{Origin:"https://maimai.party","Content-Type":"application/json","CF-Connecting-IP":"192.0.2.10"},
             body:JSON.stringify({version:2,events:events.slice(offset,offset+8)}),
-          }),{USAGE_DB:db,USAGE_ENABLED:"true"});
+          }),{USAGE_DB:db,USAGE_ENABLED:"true",USAGE_LIMITER:{limit:async()=>({success:true})}});
           assert.equal(response.status,204);
           assert.equal(response.headers.get("X-Maimai-Usage-Receipt"),"stored");
         }

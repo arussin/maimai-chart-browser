@@ -6,6 +6,83 @@ The Worker accepts only POST https://maimai.party/__usage with the production Or
 
 Days use America/New_York. Aggregate counts and their known receipt bounds are retained indefinitely. The optional owner-maintained usage_coverage ledger records complete/partial/off by day and instrumentation version. Missing ledger rows mean unknown coverage, even when counts exist; zero is measurable only for a day the owner has confirmed complete. Never infer exact unobserved drop counts, users, sessions, funnels, retention, geography or owner exclusion.
 
+## Per-client request limit (source only; owner deployment required)
+
+Production checks a native `USAGE_LIMITER` before reading the body or writing D1.
+Use **120 requests per 60 seconds**, per IPv4 /32 or IPv6 /64 per Cloudflare location.
+This allows shared arcade/NAT clients some headroom; it is not a global quota or
+proof that counts represent humans. Accepted responses are unchanged. A denied
+request returns empty `429`, `Retry-After: 60`, no receipt and `Cache-Control:
+no-store`. Both browser action and diagnostic queues drop it without retrying.
+DNT/GPC and `USAGE_ENABLED=false` return before accessing the limiter or address.
+
+Only the edge-supplied `CF-Connecting-IP` is read; forwarded headers are not a
+fallback. Validate its syntax and length (at most 45 ASCII characters), unwrap
+IPv4-mapped IPv6 to IPv4, and canonicalize other IPv6 addresses to their /64
+prefix before hashing. IPv4 stays at /32. Alternate spellings and IPv6 interface
+address rotation therefore share the same bucket. The network's
+domain-separated SHA-256 digest is passed only to the native
+limiter's in-memory counters. Neither address nor digest is written to D1,
+logged, returned to the client or sent by an HTTP request. Keep observability
+and Logpush disabled. There is no new identifier in the usage schema.
+
+**Production fails closed:** missing binding, missing/invalid address or limiter failure
+returns empty `503`, `X-Maimai-Usage-Limiter: unavailable`, no receipt, and makes
+no D1 write. This prevents configuration failures from reopening unlimited writes.
+Deploying code alone without its binding interrupts enabled collection. It is
+not a safe rollout order. The explicit response header distinguishes limiter
+unavailability from database errors without logging private request data.
+
+**Staging bypasses the limiter**, even if one is bound: its separately built entry
+is behind the Access-protected Pages bridge, which strips IP, cookies, Access
+identity and cf metadata. Do not forward an address just to rate-limit staging.
+Keep Access protection, no public Worker route/workers.dev, `USAGE_COLLECTOR`
+service binding and the separate staging `USAGE_DB`. This is deliberately not
+per-client limiting on staging; production cannot opt into this bypass at runtime.
+
+**DEPLOYMENT GATE: the binding must be in the deployed Wrangler configuration
+itself. A dashboard-only binding is removed by the next `wrangler deploy` if
+that configuration omits it or declares `ratelimits: []`. Enabled production
+then rejects every usage request with 503; browser queues drop these without
+retry and logging is disabled. Do not declare rollout successful until the
+owner canary below passes.**
+
+Owner checklist (no deployment or account changes are performed by these sources):
+
+1. Preserve the existing deployed Worker version and production configuration.
+   In that private configuration, provision a unique **account-wide** namespace
+   for `USAGE_LIMITER` (not the player-import namespace) with this binding shape:
+   `{"name":"USAGE_LIMITER","namespace_id":"<owner-selected numeric namespace>","simple":{"limit":120,"period":60}}`
+   in `ratelimits` in the exact Wrangler configuration/environment used to deploy.
+   Deploy that configuration with the old Worker first, or deliver binding and
+   new code atomically using that configuration. Never upload new code first;
+   setting a dashboard binding alone does not satisfy this step.
+2. Keep the existing production `USAGE_DB` and its migrations, `USAGE_ENABLED`
+   value (`"true"` for collection), exact `maimai.party/__usage` route, disabled
+   workers.dev/preview URLs, observability and Logpush. Do not deploy the repository's
+   all-zero local D1 placeholder. The placeholder uses the player-import pattern:
+   `ratelimits: []`; `bindings.d.ts` adds the optional native `RateLimit` type
+   without pretending a production binding exists in generated placeholder types.
+3. Deploy the production bundle with those settings. From `usage-worker`, run
+   `node tools/canary.mjs <URL>` with the intended full `/__usage` URL. This owner
+   canary sends exactly one valid synthetic `page_view` count (charts), uses the
+   URL's origin, has a 10-second timeout, sends no credentials and never retries
+   or follows redirects. It exits nonzero unless it receives `204` plus
+   `X-Maimai-Usage-Receipt: stored` and no `X-Maimai-Usage-Limiter` header.
+   This adds one aggregate count and is not run automatically by builds/tests
+   against any real host; tests inject local fixtures. A disabled collector's
+   unreceipted 204 also fails. Confirm limiting in
+   an isolated test namespace/database, and treat any limiter `503` as a failed
+   activation. Do not flood production to test it. Deploy staging separately only
+   with its Access/service/database protections; no limiter binding is needed there.
+4. Roll back code to the saved Worker version first, retaining D1, migrations and
+   counts. The extra binding can remain. Remove it only after old code is restored.
+   The previous code has no per-client limit; record any collection gap. The
+   existing `USAGE_ENABLED=false` kill switch remains available independently.
+
+A separate owner-reviewed edge/WAF rate rule could reduce Worker invocation cost;
+none is provisioned here, and native limiting alone does not prevent that cost.
+
 ## Import and provider actions
 
 The maintained contract adds these finite counters. They describe explicit actions
