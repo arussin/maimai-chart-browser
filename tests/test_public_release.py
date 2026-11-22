@@ -1,4 +1,5 @@
 import hashlib
+import io
 import json
 import os
 import shutil
@@ -6,6 +7,7 @@ import subprocess
 import tempfile
 import unittest
 import xml.etree.ElementTree as ET
+from contextlib import redirect_stdout
 from html.parser import HTMLParser
 from pathlib import Path
 from unittest.mock import patch
@@ -66,6 +68,46 @@ class PublicAssetReadTests(unittest.TestCase):
 
 
 class PublicReleaseTests(unittest.TestCase):
+    def test_public_cli_reports_the_release_date_in_its_receipt(self):
+        from maimai_intelligence.cli import main
+
+        stdout = io.StringIO()
+        with redirect_stdout(stdout):
+            main(
+                [
+                    "public-release",
+                    "--source",
+                    str(self.source),
+                    "--output",
+                    str(self.output),
+                    "--release-date",
+                    "2026-11-22",
+                ]
+            )
+        receipt = json.loads(stdout.getvalue().splitlines()[-1])
+        self.assertEqual(receipt["release_date"], "2026-11-22")
+        self.assertTrue(receipt["deployable"])
+
+    def test_interface_date_is_explicit_repeatable_and_keeps_unchanged_home_date(self):
+        first = plan_public_release(self.source, release_date="2026-11-22")
+        repeated = plan_public_release(self.source, release_date="2026-11-22")
+        self.assertEqual(dict(first.assets), dict(repeated.assets))
+        first.write_to(self.output)
+        second = plan_public_release(
+            self.source, previous_public=self.output, release_date="2026-11-23"
+        )
+        self.assertEqual(first.assets["sitemap.xml"], second.assets["sitemap.xml"])
+        self.assertIn(b"<lastmod>2026-11-22</lastmod>", second.assets["sitemap.xml"])
+        self.assertEqual(first.manifest, second.manifest)
+        self.assertEqual(first.summary["release_date"], "2026-11-22")
+        raw = (self.source / "index.html").read_bytes().replace(b"Find a chart", b"Find your chart")
+        (self.source / "index.html").write_bytes(raw)
+        changed = plan_public_release(
+            self.source, previous_public=self.output, release_date="2026-11-23"
+        )
+        self.assertIn(b"<lastmod>2026-11-23</lastmod>", changed.assets["sitemap.xml"])
+        self.assertEqual(changed.manifest, first.manifest)
+
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory()
         self.addCleanup(self.temporary.cleanup)
@@ -359,9 +401,9 @@ class PublicReleaseTests(unittest.TestCase):
         body = b"export const fictional = true;"
         refs = {}
         for name in (
-            "browser/browser-entry.js",
-            "browser/browser-offline.js",
-            "browser/chunk-ABC.js",
+            "browser/browser-entry-ABCDEFGH.js",
+            "browser/browser-offline-ABCDEFGH.js",
+            "browser/chunk-ABCDEFGH.js",
         ):
             (self.source / name).write_bytes(body)
             refs[name] = {"sha256": hashlib.sha256(body).hexdigest(), "bytes": len(body)}
@@ -369,8 +411,8 @@ class PublicReleaseTests(unittest.TestCase):
             "version": 1,
             "tool": "test",
             "entries": {
-                "hosted": "browser/browser-entry.js",
-                "offline": "browser/browser-offline.js",
+                "hosted": "browser/browser-entry-ABCDEFGH.js",
+                "offline": "browser/browser-offline-ABCDEFGH.js",
             },
             "assets": refs,
             "replaces": ["lab-loader.js"],
@@ -384,15 +426,31 @@ class PublicReleaseTests(unittest.TestCase):
         self.assertTrue(set(refs) <= set(plan.assets))
         self.assertNotIn("lab-loader.js", plan.assets)
         self.assertNotIn("browser/private.json", plan.assets)
-        (self.source / "browser/chunk-ABC.js").write_bytes(b"tampered")
+        (self.source / "browser/chunk-ABCDEFGH.js").write_bytes(b"tampered")
         with self.assertRaisesRegex(ValueError, "asset integrity"):
             plan_public_release(self.source)
-        (self.source / "browser/chunk-ABC.js").write_bytes(body)
-        for invalid in ("../private.js", "browser/../../private.js", "browser/private.json"):
-            manifest["assets"] = {**refs, invalid: refs["browser/browser-entry.js"]}
+        (self.source / "browser/chunk-ABCDEFGH.js").write_bytes(body)
+        for invalid in (
+            "../private.js",
+            "browser/../../private.js",
+            "browser/private.json",
+            "browser/unhashed.js",
+        ):
+            manifest["assets"] = {**refs, invalid: refs["browser/browser-entry-ABCDEFGH.js"]}
             atomic_json(self.source / "browser-assets.json", manifest)
             with self.subTest(invalid=invalid), self.assertRaises(ValueError):
                 plan_public_release(self.source)
+        plan.write_to(self.output)
+        changed = b"export const fictional = false;"
+        name = "browser/chunk-ABCDEFGH.js"
+        (self.source / name).write_bytes(changed)
+        manifest["assets"] = {
+            **refs,
+            name: {"sha256": hashlib.sha256(changed).hexdigest(), "bytes": len(changed)},
+        }
+        atomic_json(self.source / "browser-assets.json", manifest)
+        with self.assertRaisesRegex(ValueError, "immutable browser bytes changed"):
+            plan_public_release(self.source, previous_public=self.output)
 
     def test_exact_catalog_bytes_and_only_allowlisted_assets_survive(self):
         (self.source / "personal.json").write_text("PRIVATE", encoding="utf-8")

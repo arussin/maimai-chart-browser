@@ -96,7 +96,9 @@ def validate_browser_resources(value: Any) -> BrowserResources:
         ):
             raise ValueError("Invalid browser resource reference")
         if name == "entry":
-            valid = re.fullmatch(r"browser/[A-Za-z0-9][A-Za-z0-9._-]*\.js", row["path"])
+            valid = re.fullmatch(
+                r"browser/[A-Za-z0-9][A-Za-z0-9._-]*-(?:[A-Z0-9]{8}|[a-f0-9]{16})\.js", row["path"]
+            )
         else:
             valid = row["path"] == f"browser-resources/{row['sha256']}.{extension}"
             # Retained documents may still describe the previous HTML shell asset.
@@ -314,7 +316,9 @@ def read_browser_assets(
             else BROWSER_MODULE_LIMIT
         )
         if (
-            not re.fullmatch(r"browser/[A-Za-z0-9][A-Za-z0-9._-]*\.js", name)
+            not re.fullmatch(
+                r"browser/[A-Za-z0-9][A-Za-z0-9._-]*-(?:[A-Z0-9]{8}|[a-f0-9]{16})\.js", name
+            )
             or not isinstance(record, dict)
             or set(record) != {"sha256", "bytes"}
             or not isinstance(record["sha256"], str)

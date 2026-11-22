@@ -44,6 +44,7 @@ def add_commands(commands: argparse._SubParsersAction[argparse.ArgumentParser]) 
     ):
         prepare.add_argument("--" + name, type=Path)
     prepare.add_argument("--revision")
+    prepare.add_argument("--release-date", help="Explicit sitemap change date, YYYY-MM-DD")
     prepare.add_argument("--online", action="store_true")
     prepare.add_argument("--preserve-web-analytics", action="store_true")
     for action in ("resume", "replay", "reassess"):
@@ -131,6 +132,7 @@ def execute(args: argparse.Namespace) -> None:
             previous_public=args.previous_public,
             export_artwork_source=args.export_artwork_source,
             preserve_web_analytics=args.preserve_web_analytics,
+            release_date=args.release_date,
             package=args.package,
             registry=args.registry,
             revision=args.revision,

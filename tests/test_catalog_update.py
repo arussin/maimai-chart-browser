@@ -72,22 +72,33 @@ class CatalogUpdateTests(unittest.TestCase):
     def test_owner_release_inputs_are_complete_bound_and_replayable(self):
         from maimai_intelligence.corpus_attempts import resume_options
 
-        first = self.prepare()
+        first = self.prepare(release_date="2026-11-22")
         receipt = update.verify_candidate(first)
         self.assertEqual((first / "public" / self.export_path).read_bytes(), self.export_raw)
         self.assertTrue(receipt["release_inputs"]["preserve_web_analytics"])
+        self.assertEqual(receipt["release_inputs"]["release_date"], "2026-11-22")
+        self.assertEqual(receipt["release"]["release_date"], "2026-11-22")
+        self.assertIn(b"<lastmod>2026-11-22</lastmod>", (first / "public/sitemap.xml").read_bytes())
         self.assertEqual(set(receipt["release_inputs"]["export_artwork"]), {self.export_path})
         for name in ("index.html", "browser-shell.html"):
             self.assertIn(b"static.cloudflareinsights.com", (first / "public" / name).read_bytes())
         options = resume_options(first, receipt["implementation_hash"])
         self.assertEqual(options["export_artwork_source"], self.export_source.resolve())
         self.assertTrue(options["preserve_web_analytics"])
+        self.assertEqual(options["release_date"], "2026-11-22")
         second = update.corpus_update.prepare_update(
             self.store,
             **options,
             implementation=lambda: receipt["implementation_hash"],
         )
         self.assertEqual(receipt["files"], update.verify_candidate(second)["files"])
+        altered_date = {**options, "release_date": "2026-11-23"}
+        with self.assertRaisesRegex(ValueError, "release policy differs"):
+            update.corpus_update.prepare_update(
+                self.store,
+                **altered_date,
+                implementation=lambda: receipt["implementation_hash"],
+            )
         options["preserve_web_analytics"] = False
         with self.assertRaisesRegex(ValueError, "release policy differs"):
             update.corpus_update.prepare_update(

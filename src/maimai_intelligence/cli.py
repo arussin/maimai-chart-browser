@@ -53,6 +53,7 @@ def main(argv=None):
     )
     release.add_argument("--source", required=True, type=Path)
     release.add_argument("--output", required=True, type=Path)
+    release.add_argument("--release-date", help="Explicit sitemap change date, YYYY-MM-DD")
     release.add_argument(
         "--preserve-web-analytics",
         action="store_true",
@@ -86,8 +87,14 @@ def main(argv=None):
                 song_redirects=args.song_redirects,
                 previous_public=args.previous_public,
                 preserve_web_analytics=args.preserve_web_analytics,
+                release_date=args.release_date,
             )
             print(f"Prepared {result['catalogs']} catalogs in {result['files']} public files")
+            if args.release_date is not None:
+                import json
+
+                # Keep the explicit dating input in the command's retained receipt output.
+                print(json.dumps(result, sort_keys=True))
         elif args.command == "lab":
             from .lab import build_lab
 

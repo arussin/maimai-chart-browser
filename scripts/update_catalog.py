@@ -218,6 +218,7 @@ def refresh_latest(
     reassess_captured_policy=False,
     player_maishift=None,
     export_artwork_source=None,
+    release_date=None,
 ):
     """Continue from the last verified publication, including its accepted registry."""
     store = Path(store).resolve()
@@ -239,6 +240,7 @@ def refresh_latest(
         previous_public=preceding_public,
         player_maishift=player_maishift,
         export_artwork_source=export_artwork_source,
+        release_date=release_date,
         package=previous / "package",
         registry=registry,
         offline=offline,
@@ -286,6 +288,7 @@ def main(argv=None):
     refresh.add_argument("--offline", action="store_true")
     refresh.add_argument("--replay-sources", type=Path)
     for action in (prepare, refresh):
+        action.add_argument("--release-date", help="Explicit sitemap change date, YYYY-MM-DD")
         action.add_argument(
             "--export-artwork-source",
             type=Path,

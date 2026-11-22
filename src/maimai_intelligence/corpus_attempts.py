@@ -32,6 +32,7 @@ VALUE_OPTIONS = (
     "capacity_sha256",
     "player_maishift",
     "preserve_web_analytics",
+    "release_date",
 )
 
 
@@ -112,6 +113,7 @@ def bind_attempt(
         if (
             previous["values"].get("preserve_web_analytics", False)
             != values["preserve_web_analytics"]
+            or previous["values"].get("release_date") != values["release_date"]
         ):
             raise ValueError("Continuation public release policy differs")
         observations = previous.get("observations", {})

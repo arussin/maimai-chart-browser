@@ -177,6 +177,8 @@ class _StaticDocument(HTMLParser):
         "hreflang",
         "charset",
         "name",
+        "property",
+        "sizes",
         "content",
         "http-equiv",
         "aria-label",
@@ -242,6 +244,26 @@ class _StaticDocument(HTMLParser):
         attrs = dict(items)
         if tag not in self._tags or len(attrs) != len(items) or set(attrs) - self._attributes:
             raise ValueError("Unknown or duplicate public markup needs review")
+        if "property" in attrs and (
+            tag != "meta"
+            or set(attrs) != {"property", "content"}
+            or attrs["property"]
+            not in {
+                "og:type",
+                "og:site_name",
+                "og:title",
+                "og:description",
+                "og:url",
+                "og:image",
+                "og:image:width",
+                "og:image:height",
+                "og:image:type",
+                "og:image:alt",
+            }
+        ):
+            raise ValueError("Unknown public social metadata")
+        if "sizes" in attrs and (tag != "link" or attrs.get("rel") != "icon"):
+            raise ValueError("Unknown public icon metadata")
         if any(name.startswith("on") for name in attrs) or any(
             name in attrs for name in ("style", "contenteditable", "autofocus", "srcdoc")
         ):
@@ -297,6 +319,8 @@ class _StaticDocument(HTMLParser):
 
     def _link(self, attrs: Attributes) -> Attributes:
         href = attrs.get("href", "") or ""
+        if attrs == {"rel": "icon", "href": "/favicon.ico", "sizes": "16x16 32x32 48x48"}:
+            return attrs
         if attrs.get("rel") == "stylesheet":
             reference = self.styles.get(href)
             if reference is None or href in self.used_styles:

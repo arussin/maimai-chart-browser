@@ -284,6 +284,7 @@ def prepare_update(
     predecessor: dict[str, str] | None = None,
     export_artwork_source: Path | str | None = None,
     preserve_web_analytics: bool = False,
+    release_date: str | None = None,
 ) -> Path:
     """Compatibility entry point; production stages consume PreparationRequest."""
     request = preparation_request(
@@ -307,6 +308,7 @@ def prepare_update(
         predecessor=predecessor,
         export_artwork_source=export_artwork_source,
         preserve_web_analytics=preserve_web_analytics,
+        release_date=release_date,
     )
     return prepare_corpus(request, implementation=implementation, source_fetcher=source_fetcher)
 
@@ -420,6 +422,7 @@ def prepare_corpus(
                     corpus,
                     export_artwork_source=request.export_artwork_source,
                     preserve_web_analytics=request.preserve_web_analytics,
+                    release_date=request.release_date,
                 )
                 if (
                     request.export_artwork_source is not None
@@ -547,6 +550,7 @@ def _render_artifacts(
     *,
     export_artwork_source: Path | None = None,
     preserve_web_analytics: bool = False,
+    release_date: str | None = None,
 ) -> RenderedCandidate:
     features, previous_public, previous_identity = (
         retained.features,
@@ -571,6 +575,7 @@ def _render_artifacts(
         prepared_catalogs={version: browser.catalog},
         export_artwork_source=export_artwork_source,
         preserve_web_analytics=preserve_web_analytics,
+        release_date=release_date,
     )
     if previous_public_identity(previous_public) != previous_identity:
         raise ValueError("Preceding public inputs changed during preparation")
@@ -715,6 +720,11 @@ def _release_inputs(attempt: dict[str, Any]) -> dict[str, Any]:
     return {
         "preserve_web_analytics": body["values"].get("preserve_web_analytics", False),
         "export_artwork": body["bindings"].get("export_artwork_source", {}).get("files"),
+        **(
+            {"release_date": body["values"]["release_date"]}
+            if "release_date" in body["values"]
+            else {}
+        ),
     }
 
 

@@ -64,6 +64,7 @@ class AttemptFields(TypedDict):
     player_maishift: bool | None
     export_artwork_source: Path | None
     preserve_web_analytics: bool
+    release_date: str | None
 
 
 @dataclass(frozen=True)
@@ -89,8 +90,12 @@ class PreparationRequest:
     historical: HistoricalInputs
     export_artwork_source: Path | None = None
     preserve_web_analytics: bool = False
+    release_date: str | None = None
 
     def __post_init__(self) -> None:
+        from .sitemap_dates import validate_release_date
+
+        validate_release_date(self.release_date)
         if isinstance(self.source, LegacySource) and self.package is None:
             raise CorpusInputError("Legacy preparation requires a retained package or revision")
 
@@ -121,6 +126,7 @@ class PreparationRequest:
             "player_maishift": self.player_maishift,
             "export_artwork_source": self.export_artwork_source,
             "preserve_web_analytics": self.preserve_web_analytics,
+            "release_date": self.release_date,
         }
 
 
@@ -146,6 +152,7 @@ def preparation_request(
     predecessor: dict[str, str] | None = None,
     export_artwork_source: Path | str | None = None,
     preserve_web_analytics: bool = False,
+    release_date: str | None = None,
 ) -> PreparationRequest:
     """Normalize CLI/legacy arguments once; downstream stages receive this request."""
     if player_maishift is not None and type(player_maishift) is not bool:
@@ -230,4 +237,5 @@ def preparation_request(
         HistoricalInputs(snapshot, path(overrides), cache, coverage_reviews),
         path(export_artwork_source),
         preserve_web_analytics,
+        release_date,
     )

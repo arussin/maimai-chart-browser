@@ -17,7 +17,7 @@ from maimai_intelligence.serialization import canonical
 
 def source_assets():
     script = b"export const fictional = true;"
-    paths = ("browser/browser-entry-FIXTURE.js", "browser/browser-offline-FIXTURE.js")
+    paths = ("browser/browser-entry-FIXTURE0.js", "browser/browser-offline-FIXTURE0.js")
     entries = {
         name: {"sha256": hashlib.sha256(script).hexdigest(), "bytes": len(script)} for name in paths
     }
@@ -48,7 +48,7 @@ def source_assets():
             b'<script defer src="support-stripe.js"></script></html>'
         ),
         "index.html": header + b'<main>Fixture</main><script type="module" data-maimai-browser '
-        b'src="browser/browser-entry-FIXTURE.js"></script></body></html>',
+        b'src="browser/browser-entry-FIXTURE0.js"></script></body></html>',
         "en/songs/fixture/index.html": (
             b'<html><head><link rel="stylesheet" href="/seo-pages.css">'
             b'<link rel="stylesheet" href="/challenge-review.css">'
@@ -67,7 +67,7 @@ class BrowserResourceTests(unittest.TestCase):
     def preload_assets(self):
         assets = dict(self.assets)
         graph = json.loads(assets["browser-assets.json"])
-        graph["preloads"] = ["browser/application-FIXTURE.js", "browser/shared-FIXTURE.js"]
+        graph["preloads"] = ["browser/application-FIXTURE0.js", "browser/shared-FIXTURE0.js"]
         for name in graph["preloads"]:
             body = b"export const dependency = true;"
             assets[name] = body
@@ -92,7 +92,7 @@ class BrowserResourceTests(unittest.TestCase):
             if kind in ("hosted", "offline"):
                 path = graph["entries"][kind]
             else:
-                path = "browser/artwork-FIXTURE.js"
+                path = "browser/artwork-FIXTURE0.js"
                 if kind == "renamed_offline":
                     graph["entries"]["offline"] = path
             body = b" " * size
@@ -126,7 +126,7 @@ class BrowserResourceTests(unittest.TestCase):
         graph = json.loads(values["browser-assets.json"])
         chunk = b" " * (2 * 1024 * 1024)
         for index in range(8):
-            path = f"browser/partner-{index}.js"
+            path = f"browser/partner-{index}-ABCDEFGH.js"
             values[path] = chunk
             graph["assets"][path] = {
                 "bytes": len(chunk),

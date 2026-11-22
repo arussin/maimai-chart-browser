@@ -82,6 +82,8 @@ PUBLIC_FILES = (
     "seo-navigation.js",
     "feature-announcements.js",
     "maishift-favicon.ico",
+    "favicon.ico",
+    "og-image.png",
     "player-import-help.css",
     *(f"player-import-help.{locale}.html" for locale in ("en", "zh-Hans", "ko", "ja", "id")),
 )
@@ -120,26 +122,61 @@ def _browser_assets(source: Path) -> dict[str, bytes]:
 def _search_metadata(raw: bytes) -> bytes:
     """Describe the public app without adding or changing any page-body content."""
     from html import escape
+    from html.parser import HTMLParser
+
+    from .public_metadata import social_metadata
 
     html = raw.decode("utf-8")
-    if html.count("</head>") != 1 or len(re.findall(r"<title>.*?</title>", html, re.S)) != 1:
+    openings = list(re.finditer(r"<head\b[^>]*>", html, re.I))
+    closings = list(re.finditer(r"</head\s*>", html, re.I))
+    if len(openings) != 1 or len(closings) != 1 or openings[0].end() > closings[0].start():
         raise ValueError("Expected a single public page head and title")
+    prefix, head, suffix = (
+        html[: openings[0].end()],
+        html[openings[0].end() : closings[0].start()],
+        html[closings[0].start() :],
+    )
+    if len(re.findall(r"<title>.*?</title>", head, re.S)) != 1:
+        raise ValueError("Expected a single public page head and title")
+    lines = head.splitlines(keepends=True)
+    offsets = [0]
+    for line in lines:
+        offsets.append(offsets[-1] + len(line))
+
+    class ManagedTags(HTMLParser):
+        spans: list[tuple[int, int]]
+
+        def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+            values = {key: (value or "").lower() for key, value in attrs}
+            if (tag == "link" and "canonical" in values.get("rel", "").split()) or (
+                tag == "meta"
+                and (
+                    values.get("name") in {"description", "maimai-song-pages"}
+                    or values.get("name", "").startswith("twitter:")
+                    or values.get("property", "").startswith("og:")
+                )
+            ):
+                line, column = self.getpos()
+                start = offsets[line - 1] + column
+                end = start + len(self.get_starttag_text() or "")
+                if head[end : end + 1] == "\n":
+                    end += 1
+                self.spans.append((start, end))
+
+    parser = ManagedTags()
+    parser.spans = []
+    parser.feed(head)
+    for start, end in reversed(parser.spans):
+        head = head[:start] + head[end:]
     title, description = escape(SEARCH_TITLE, quote=True), escape(SEARCH_DESCRIPTION, quote=True)
-    html = re.sub(r"<title>.*?</title>", f"<title>{title}</title>", html, count=1, flags=re.S)
+    head = re.sub(r"<title>.*?</title>", f"<title>{title}</title>", head, count=1, flags=re.S)
     metadata = (
         '<meta name="maimai-song-pages" content="1">\n'
         f'<meta name="description" content="{description}">\n'
         f'<link rel="canonical" href="{CANONICAL_URL}">\n'
-        '<meta property="og:type" content="website">\n'
-        '<meta property="og:site_name" content="maimai.party">\n'
-        f'<meta property="og:title" content="{title}">\n'
-        f'<meta property="og:description" content="{description}">\n'
-        f'<meta property="og:url" content="{CANONICAL_URL}">\n'
-        '<meta name="twitter:card" content="summary">\n'
-        f'<meta name="twitter:title" content="{title}">\n'
-        f'<meta name="twitter:description" content="{description}">\n'
+        + social_metadata(SEARCH_TITLE, SEARCH_DESCRIPTION, CANONICAL_URL)
     )
-    return html.replace("</head>", metadata + "</head>").encode("utf-8")
+    return (prefix + head + metadata + suffix).encode("utf-8")
 
 
 def _browser_csp(raw: bytes) -> str | None:
@@ -520,7 +557,8 @@ def _prepare_browser_shell(source: Path) -> dict[str, bytes]:
         b"/song-catalog-index/*\n  Cache-Control: public, max-age=31536000, immutable\n"
         b"/media/*\n  Cache-Control: public, max-age=31536000, immutable\n"
         b"/browser-resources/*\n  Cache-Control: public, max-age=31536000, immutable\n"
-        b"/browser/*\n  Cache-Control: no-cache\n"
+        b"/browser/*\n  Cache-Control: public, max-age=31536000, immutable\n"
+        b"/browser-resources.json\n  Cache-Control: no-cache\n"
         b"/browser-assets.json\n  Cache-Control: no-cache\n"
         b"/browser-config.json\n  Cache-Control: no-cache\n"
         b"/browser-shell.html\n  Cache-Control: no-cache\n"
@@ -529,9 +567,7 @@ def _prepare_browser_shell(source: Path) -> dict[str, bytes]:
         b"/sitemap.xml\n  Content-Type: application/xml; charset=utf-8\n  Cache-Control: no-cache\n"
         b"/support-*\n  Cache-Control: no-store\n"
         b"/support\n  Cache-Control: no-store\n  X-Robots-Tag: noindex, nofollow\n"
-        b"  Content-Security-Policy: frame-ancestors 'none'\n"
         b"/support.html\n  Cache-Control: no-store\n  X-Robots-Tag: noindex, nofollow\n"
-        b"  Content-Security-Policy: frame-ancestors 'none'\n"
         b"/support-return\n  Cache-Control: no-store\n  X-Robots-Tag: noindex, nofollow\n"
         b"  Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self'; "
         b"img-src data:; connect-src 'self'; base-uri 'none'; form-action 'none'; "
@@ -541,6 +577,7 @@ def _prepare_browser_shell(source: Path) -> dict[str, bytes]:
         b"img-src data:; connect-src 'self'; base-uri 'none'; form-action 'none'; "
         b"frame-ancestors 'none'\n"
         b"/*\n  X-Content-Type-Options: nosniff\n  Referrer-Policy: no-referrer\n"
+        b"  Content-Security-Policy: frame-ancestors 'none'\n"
         b"  Permissions-Policy: payment=(self "
         b'"https://checkout.stripe.com" "https://js.stripe.com" "https://hooks.stripe.com")\n'
     )
@@ -740,6 +777,7 @@ def _finalize_release_plan(
     capacity: ReviewedCapacity | None,
     file_limit: int,
     prepared_seo: PreparedSEO | None = None,
+    release_date: str | None = None,
 ) -> ReleasePlan:
     public_manifest = {
         **manifest,
@@ -756,6 +794,36 @@ def _finalize_release_plan(
     from .browser_bundle import seal_browser_resources
 
     pending = seal_browser_resources(pending, public_manifest)
+    from .sitemap_dates import date_sitemaps
+
+    def default_sha(value: dict[str, Any]) -> str:
+        return str(
+            next(row["sha256"] for row in value["releases"] if row["version"] == value["default"])
+        )
+
+    date_sitemaps(
+        pending,
+        previous_public,
+        release_date,
+        home_catalog_unchanged=previous_public is not None
+        and default_sha(public_manifest)
+        == default_sha(read_json(previous_public / "manifest.json")),
+    )
+    # Reject every non-generated browser file, including retained/unlisted assets.
+    from .browser_bundle import read_browser_assets
+
+    if any(name.startswith("browser/") for name in pending):
+        _, graph = read_browser_assets(lambda name, _limit: pending[name])
+        if {name for name in pending if name.startswith("browser/")} - set(graph):
+            raise ValueError("Unlisted immutable browser asset")
+        for name in graph:
+            if (
+                name.startswith("browser/")
+                and previous_public is not None
+                and (previous_public / name).exists()
+            ):
+                if _read(previous_public, name, 25 * 1024 * 1024) != pending[name]:
+                    raise ValueError("Previously published immutable browser bytes changed")
     sizes = {name: len(raw) for name, raw in pending.items()}
     sizes["manifest.json"] = len(canonical(public_manifest)) + 1
     capacity_error = None
@@ -783,6 +851,7 @@ def _finalize_release_plan(
         "seo": seo_summary,
         "deployable": capacity_error is None,
         "capacity_error": capacity_error,
+        "release_date": release_date,
     }
     return ReleasePlan(
         _freeze(pending),
@@ -805,9 +874,13 @@ def plan_public_release(
     prepared_catalogs: Mapping[str, CatalogDocument] | None = None,
     preserve_web_analytics: bool = False,
     export_artwork_source: Path | str | None = None,
+    release_date: str | None = None,
 ) -> ReleasePlan:
     """Prepare shell, verified catalogs, public routes, then the complete release inventory."""
     source = Path(source).resolve()
+    from .sitemap_dates import validate_release_date
+
+    validate_release_date(release_date)
     if capacity is not None:
         if not isinstance(capacity, ReviewedCapacity):
             raise ValueError("Paid capacity requires a reviewed capacity object")
@@ -890,6 +963,7 @@ def plan_public_release(
         capacity,
         file_limit,
         pages.seo,
+        release_date,
     )
 
 
@@ -904,6 +978,7 @@ def build_public_release(
     prepared_catalogs: Mapping[str, CatalogDocument] | None = None,
     preserve_web_analytics: bool = False,
     export_artwork_source: Path | str | None = None,
+    release_date: str | None = None,
 ) -> dict[str, Any]:
     source, output = Path(source).resolve(), Path(output).resolve()
     if source == output or output.is_relative_to(source) or source.is_relative_to(output):
@@ -919,4 +994,5 @@ def build_public_release(
         prepared_catalogs=prepared_catalogs,
         preserve_web_analytics=preserve_web_analytics,
         export_artwork_source=export_artwork_source,
+        release_date=release_date,
     ).write_to(output)
