@@ -1,4 +1,5 @@
 import { formatCount, formatExactCount } from './analytics.mjs';
+import { AUTOMATION_NETWORKS } from './traffic-networks.mjs';
 
 export function xml(value) {
   return String(value).replace(/[<>&"']/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', "'": '&apos;' })[c]);
@@ -34,7 +35,9 @@ export function renderBadge(snapshot, state, assets) {
   const date = available ? snapshot.updatedAt.slice(0, 16).replace('T', ' ') + ' UTC' : '';
   const details = (available ? 'Rolling past 30 days (UTC): ' + snapshot.start + ' to ' + snapshot.updatedAt + '. ' : '') +
     'Cloudflare HTTP traffic analytics visits, not unique people or players. ' +
-    'Direct or external-referrer visits; maimai.party only. Identified automated tests, monitors and crawlers, and Tencent Cloud Hong Kong (AS132203), excluded. May include other automated traffic. ' +
+    'Direct or external-referrer visits; maimai.party only. Identified automated tests, monitors and crawlers excluded. ' +
+    (AUTOMATION_NETWORKS.length ? 'Excluded automation networks: ' + AUTOMATION_NETWORKS.map(asn=>'AS'+asn).join(', ') + '. ' : '') +
+    'May include other automated traffic. ' +
     (available && snapshot.estimated ? 'Cloudflare sampled estimates. ' : '') +
     (state === 'stale' ? 'Cached result; live refresh unavailable. ' : '') +
     (available && snapshot.regions.length < 5 ? 'There are fewer than five measured regions. ' : '') +
@@ -86,4 +89,3 @@ export function renderBadge(snapshot, state, assets) {
     '<image x="0" y="0" width="2172" height="724" href="data:image/png;base64,' + assets.artwork + '"/>' +
     main + rows + lettering(footer, Math.max(100, (2172 - footerWidth) / 2), 610, 24, '#64748b', a, 1980) + '</svg>';
 }
-

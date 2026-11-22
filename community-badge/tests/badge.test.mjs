@@ -1,4 +1,5 @@
-import {NETWORK_POLICY, networkExclusions} from '../traffic-networks.mjs';
+import {AUTOMATION_NETWORKS, NETWORK_POLICY, networkExclusions} from '../traffic-networks.mjs';
+import {readFile} from 'node:fs/promises';
 import {TRAFFIC_POLICY, automationExclusions} from '../traffic-policy.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -7,7 +8,7 @@ import { handle, cacheKey } from '../handler.mjs';
 import { renderBadge } from '../render.mjs';
 import assets from '../assets.mjs';
 
-const env = { CF_ZONE_ID: 'a'.repeat(32), CF_ANALYTICS_TOKEN: 'test-only-not-a-real-token' };
+const env = { CF_ACCOUNT_ID: 'b'.repeat(32), CF_ZONE_ID: 'a'.repeat(32), CF_ANALYTICS_TOKEN: 'test-only-not-a-real-token' };
 const now = new Date('2026-09-20T12:00:00Z');
 const period = monthPeriod(now);
 function payload(total = 12000) {
@@ -47,8 +48,10 @@ test('zone/network policy never accepts an old account snapshot, including under
 test('missing zone/token and rejected network permission never fall back to account analytics', async () => {
   for(const settings of [{...env,CF_ZONE_ID:undefined},{...env,CF_ZONE_ID:'invalid'},{...env,CF_ANALYTICS_TOKEN:''},env]){
     let calls=0;
-    const result=await handle(request(),settings,{}, {now,cache:new Cache(),fetcher:async()=>{calls++;return Response.json({errors:[{message:"does not have access to the field 'clientasn'"}]});}});
+    const queries=[];
+    const result=await handle(request(),settings,{}, {now,cache:new Cache(),fetcher:async(url,options)=>{calls++;queries.push(JSON.parse(options.body));return Response.json({errors:[{message:"does not have access to the field 'clientasn'"}]});}});
     assert.equal(calls,settings===env?1:0);
+    for(const body of queries){assert.match(body.query,/viewer\s*\{\s*zones\(/);assert.doesNotMatch(body.query,/accounts|accountTag/);assert.equal(body.variables.zone,env.CF_ZONE_ID);}
     assert.equal(result.headers.get('X-Badge-State'),'unavailable');
     assert.doesNotMatch(await result.text(),/clientasn|12,000 visits/);
   }
@@ -56,6 +59,49 @@ test('missing zone/token and rejected network permission never fall back to acco
   const result=await handle(request(),{...env,CF_ANALYTICS_TOKEN:''},{}, {now:new Date(now.getTime()+7200000),cache,fetcher:async()=>{throw Error('must not query');}});
   assert.equal(result.headers.get('X-Badge-State'),'stale');
   assert.match(await result.text(),/Cached result/);
+});
+
+test('403 and empty zone permissions never fall back to an account, with or without a v6 cache',async()=>{
+ for(const failure of [()=>new Response('private rejection',{status:403}),()=>Response.json({data:{viewer:{zones:[]}}})]){
+  for(const primed of [false,true]){
+   const cache=new Cache();if(primed)await handle(request(),env,{}, {now,cache,fetcher});
+   const queries=[];
+   const result=await handle(request(),env,{}, {now:new Date(now.getTime()+7200000),cache,fetcher:async(url,options)=>{queries.push(JSON.parse(options.body));return failure();}});
+   assert.equal(queries.length,1);
+   assert.match(queries[0].query,/viewer\s*\{\s*zones\(/);assert.doesNotMatch(queries[0].query,/accounts|accountTag/);
+   assert.equal(queries[0].variables.zone,env.CF_ZONE_ID);
+   assert.equal(result.headers.get('X-Badge-State'),primed?'stale':'unavailable');
+   assert.doesNotMatch(await result.text(),/private rejection/);
+  }
+ }
+});
+
+test('missing, invalid or changed zones cannot reuse another zone v6 snapshot, fresh or stale',async()=>{
+ const cache=new Cache();await handle(request(),env,{}, {now,cache,fetcher});
+ for(const CF_ZONE_ID of [undefined,'invalid','c'.repeat(32)])for(const elapsed of [1000,7200000]){
+  let calls=0;
+  const result=await handle(request(),{...env,CF_ZONE_ID},{}, {now:new Date(now.getTime()+elapsed),cache,fetcher:async(url,options)=>{
+   calls++;const body=JSON.parse(options.body);assert.equal(body.variables.zone,CF_ZONE_ID);assert.doesNotMatch(body.query,/accounts|accountTag/);throw Error('offline');
+  }});
+  assert.equal(calls,CF_ZONE_ID==='c'.repeat(32)?1:0);
+  assert.equal(result.headers.get('X-Badge-State'),'unavailable');assert.doesNotMatch(await result.text(),/12,000 visits/);
+ }
+});
+
+test('SVG exclusions follow the shared network policy, including a changed policy',async()=>{
+ const source=await readFile(new URL('../render.mjs',import.meta.url),'utf8');
+ // Evaluate the renderer with a hypothetical future shared list, without changing files.
+ const fixture="export const AUTOMATION_NETWORKS=['64500','64501'];";
+ const isolated=source.replaceAll("'./analytics.mjs'",JSON.stringify(new URL('../analytics.mjs',import.meta.url).href))
+  .replaceAll("'./traffic-networks.mjs'",JSON.stringify('data:text/javascript,'+encodeURIComponent(fixture)));
+ const changed=await import('data:text/javascript;base64,'+Buffer.from(isolated).toString('base64'));
+ for(const [render,networks] of [[renderBadge,AUTOMATION_NETWORKS],[changed.renderBadge,['64500','64501']]]){
+  for(const [snapshot,state] of [[parseAnalytics(payload(),period),'fresh'],[parseAnalytics(payload(),period),'stale'],[null,'unavailable']]){
+   const desc=render(snapshot,state,assets).match(/<desc id="description">([^<]+)<\/desc>/)[1];
+   for(const asn of networks)assert(desc.includes('AS'+asn),desc);
+   if(render===changed.renderBadge)assert(!desc.includes('AS132203'));
+  }
+ }
 });
 
 test('numbers stay exact below 10,000 and compact from 10,000 with unit promotion', () => {

@@ -41,8 +41,14 @@ test('built production Worker enforces a real native limiter in the local runtim
   assert.equal(first.status,204);assert.equal(first.headers.get('X-Maimai-Usage-Receipt'),'stored');
   const second=await runtime.dispatchFetch('https://maimai.party/__usage',{...options,body:JSON.stringify({version:2,events:[diagnostic]})});
   assert.equal(second.status,429);assert.equal(second.headers.get('X-Maimai-Usage-Receipt'),null);
-  assert.equal((await database.prepare('SELECT SUM(count) AS n FROM usage_daily').first()).n,1);
-  assert.equal((await database.prepare('SELECT COUNT(*) AS n FROM usage_diagnostics_daily').first()).n,0);
+  const third=await runtime.dispatchFetch('https://maimai.party/__usage',{...options,headers:{...options.headers,'CF-Connecting-IP':'192.0.2.11'},body:JSON.stringify({version:2,events:[diagnostic]})});
+  assert.equal(third.status,204);assert.equal(third.headers.get('X-Maimai-Usage-Receipt'),'stored');
+  for(const [ip,status] of [['2001:db8:1:2::1',204],['2001:0DB8:1:2:ffff:ffff:ffff:ffff',429],['2001:db8:1:3::1',204],['::ffff:c000:20a',429]]){
+   const response=await runtime.dispatchFetch('https://maimai.party/__usage',{...options,headers:{...options.headers,'CF-Connecting-IP':ip}});
+   assert.equal(response.status,status);assert.equal(response.headers.get('X-Maimai-Usage-Receipt'),status===204?'stored':null);
+  }
+  assert.equal((await database.prepare('SELECT SUM(count) AS n FROM usage_daily').first()).n,3);
+  assert.equal((await database.prepare('SELECT SUM(count) AS n FROM usage_diagnostics_daily').first()).n,1);
  }finally{await runtime.dispose();}
 });
 
@@ -50,7 +56,7 @@ test('native limiter rejects before reading a body or writing D1; keys never lea
  const keys=[],logs=[];
  for(const method of ['log','info','warn','error','debug'])t.mock.method(console,method,(...args)=>logs.push(args));
  const before=await db.prepare('SELECT SUM(count) AS n FROM usage_daily').first();
- const env={USAGE_DB:db,USAGE_ENABLED:'true',USAGE_LIMITER:{async limit({key}){keys.push(key);return {success:keys.length===1};}}};
+ const env={USAGE_DB:db,USAGE_ENABLED:'true',USAGE_LIMITER:{async limit({key}){const success=!keys.includes(key);keys.push(key);return {success};}}};
  const accepted=await worker.fetch(req(),env);
  assert.equal(accepted.status,204);assert.equal(accepted.headers.get('X-Maimai-Usage-Receipt'),'stored');
  const rejectedRequest=req('not-json');
@@ -63,11 +69,12 @@ test('native limiter rejects before reading a body or writing D1; keys never lea
  const expected=Buffer.from(await crypto.subtle.digest('SHA-256',new TextEncoder().encode('usage:192.0.2.10'))).toString('hex');
  assert.deepEqual(keys,[expected,expected]);
  assert.equal((await db.prepare('SELECT SUM(count) AS n FROM usage_daily').first()).n,(before.n??0)+1);
- const different=req(undefined,{headers:{'CF-Connecting-IP':'192.0.2.11','X-Forwarded-For':'192.0.2.10'}});
- assert.equal((await worker.fetch(different,env)).status,429);
- assert.notEqual(keys[2],expected);
- const stored=JSON.stringify((await db.prepare('SELECT * FROM usage_daily').all()).results);
- const exposed=stored+JSON.stringify([...accepted.headers,...rejected.headers])+JSON.stringify(logs);
+ const different=req({version:2,events:[diagnostic]},{headers:{'CF-Connecting-IP':'192.0.2.11','X-Forwarded-For':'192.0.2.10'}});
+ const other=await worker.fetch(different,env);
+ assert.equal(other.status,204);assert.equal(other.headers.get('X-Maimai-Usage-Receipt'),'stored');
+ assert.equal(keys[2],Buffer.from(await crypto.subtle.digest('SHA-256',new TextEncoder().encode('usage:192.0.2.11'))).toString('hex'));
+ const stored=JSON.stringify([(await db.prepare('SELECT * FROM usage_daily').all()).results,(await db.prepare('SELECT * FROM usage_diagnostics_daily').all()).results]);
+ const exposed=stored+JSON.stringify([...accepted.headers,...rejected.headers,...other.headers])+await accepted.text()+await other.text()+JSON.stringify(logs);
  for(const value of ['192.0.2.10','192.0.2.11',...keys])assert(!exposed.includes(value));
  assert.deepEqual(logs,[]);
 });
@@ -82,8 +89,55 @@ test('production fails closed for missing limiter/address and limiter failures, 
  }
  const noAddress=req();noAddress.headers.delete('CF-Connecting-IP');
  noAddress.headers.set('X-Forwarded-For','192.0.2.10');
- assert.equal((await worker.fetch(noAddress,{...env,USAGE_LIMITER:limiter})).status,503);
+ let calls=0;
+ const absent=await worker.fetch(noAddress,{...env,USAGE_LIMITER:{limit(){calls++;throw Error('must not call');}}});
+ assert.equal(absent.status,503);assert.equal(absent.headers.get('X-Maimai-Usage-Limiter'),'unavailable');
+ assert.equal(absent.headers.get('X-Maimai-Usage-Receipt'),null);assert.equal(absent.headers.get('Cache-Control'),'no-store');
+ assert.equal(await absent.text(),'');assert.equal(calls,0);assert.equal(noAddress.bodyUsed,false);
  assert.equal(writes,0);
+});
+
+test('IPv6 rotations share a /64 bucket and IPv4-mapped spellings share the IPv4 /32 bucket',async(t)=>{
+ const keys=[],logs=[],bindings=[],seen=new Set();
+ for(const method of ['log','info','warn','error','debug'])t.mock.method(console,method,(...args)=>logs.push(args));
+ const env={USAGE_ENABLED:'true',USAGE_LIMITER:{async limit({key}){keys.push(key);const success=!seen.has(key);seen.add(key);return {success};}},
+  USAGE_DB:{prepare(sql){return {bind(...values){bindings.push([sql,values]);return {};}}},async batch(){}}};
+ const cases=[
+  ['2001:db8:abcd:12::1','2001:db8:abcd:12::/64',204],
+  ['2001:0DB8:ABCD:0012:ffff:ffff:ffff:ffff','2001:db8:abcd:12::/64',429],
+  ['2001:db8:abcd:13::1','2001:db8:abcd:13::/64',204],
+  ['::','0:0:0:0::/64',204],['::1','0:0:0:0::/64',429],
+  ['192.0.2.10','192.0.2.10',204],['::ffff:192.0.2.10','192.0.2.10',429],
+  ['0:0:0:0:0:FFFF:c000:20a','192.0.2.10',429],['::ffff:192.0.2.11','192.0.2.11',204],
+  ['2001:db8::192.0.2.10','2001:db8:0:0::/64',204],
+ ];
+ const responses=[];
+ for(const [ip,network,status] of cases){
+  const request=req({version:2,events:[diagnostic]},{headers:{'CF-Connecting-IP':ip}});
+  const response=await worker.fetch(request,env);
+  assert.equal(response.status,status,ip);
+  assert.equal(request.bodyUsed,status===204);
+  assert.equal(keys.at(-1),Buffer.from(await crypto.subtle.digest('SHA-256',new TextEncoder().encode('usage:'+network))).toString('hex'));
+  responses.push([...response.headers,await response.text()]);
+ }
+ const exposed=JSON.stringify([bindings,responses,logs]);
+ for(const value of [...cases.flatMap(([ip,network])=>[ip,network]),...keys])assert(!exposed.includes(value));
+ assert.deepEqual(logs,[]);
+});
+
+test('invalid or oversized edge addresses fail closed before limiter, body or D1 access',async()=>{
+ const invalid=['','garbage','192.0.2','192.0.2.256','192.00.2.10','0xc000020a','3221225994',
+  '192.0.2.10:80','192.0.2.10,192.0.2.11','[2001:db8::1]','fe80::1%eth0','2001:::1',
+  '1:2:3:4:5:6:7','1:2:3:4:5:6:7:8:9','1:2:3:4:5:6:7:8::','::ffff:192.0.2.999',
+  '::ffff:192.00.2.10','g::1','a'.repeat(46),'1'.repeat(4096)];
+ for(const ip of invalid){
+  let calls=0;
+  const request=req(undefined,{headers:{'CF-Connecting-IP':ip}});
+  const response=await worker.fetch(request,{USAGE_ENABLED:'true',USAGE_LIMITER:{limit(){calls++;throw Error('must not call');}},get USAGE_DB(){throw Error('must not access');}});
+  assert.equal(response.status,503,ip);assert.equal(response.headers.get('X-Maimai-Usage-Limiter'),'unavailable');
+  assert.equal(response.headers.get('X-Maimai-Usage-Receipt'),null);assert.equal(response.headers.get('Cache-Control'),'no-store');
+  assert.equal(await response.text(),'');assert.equal(calls,0,ip);assert.equal(request.bodyUsed,false);
+ }
 });
 
 test('privacy and protocol gates run before any limiter access; staging bypasses even a bound limiter',async()=>{

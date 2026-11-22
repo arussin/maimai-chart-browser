@@ -10,7 +10,7 @@ import {handle,cacheKey} from '../handler.mjs';
 import {renderBadge} from '../render.mjs';
 import assets from '../assets.mjs';
 const now=new Date('2026-10-01T23:13:00Z'), period=monthPeriod(now);
-const env={CF_ZONE_ID:'a'.repeat(32),CF_ANALYTICS_TOKEN:'fixture-only'};
+const env={CF_ACCOUNT_ID:'b'.repeat(32),CF_ZONE_ID:'a'.repeat(32),CF_ANALYTICS_TOKEN:'fixture-only'};
 const native='Mozilla/5.0 (compatible;Cloudflare-Healthchecks/1.0;+https://www.cloudflare.com/; healthcheck-id: 9d3d35aa9299c6ce)';
 const local='Adam-Tidbyt-Suite/0.1 (read-only)';
 const rows=[

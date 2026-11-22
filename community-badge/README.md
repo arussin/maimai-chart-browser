@@ -52,10 +52,12 @@ not receive this field. Other scanner traffic can still contribute.
 policy, matching the dashboard feed. Do not fork network lists or bump the shared
 user-agent policy to represent a network change. Before publishing either Worker,
 synchronize both policy files and run the byte comparison from the prepared badge
-directory (it fails on any difference):
+directory (it fails on any difference, missing file, self-comparison or copied
+badge directory). `npm test` also exercises the guard with independent fixtures;
+the owner must still supply the actual dashboard source for release parity:
 
 ```sh
-node tools/check-policy-sync.mjs C:/Dev/tidbyt-suite/cloudflare/traffic-worker
+npm run check:policy -- C:/Dev/tidbyt-suite/cloudflare/traffic-worker
 node tools/build-assets.mjs
 node --test tests/*.test.mjs
 ```
