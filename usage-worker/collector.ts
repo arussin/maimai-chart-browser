@@ -1,7 +1,7 @@
 import {validateBatch} from '../web/src/usage-contract';
 import {validateDiagnosticBatch} from '../web/src/diagnostic-contract';
 const headers={'Cache-Control':'no-store','Content-Type':'text/plain; charset=utf-8','X-Content-Type-Options':'nosniff'};
-const answer=(status:number,stored=false)=>new Response(null,{status,headers:{...headers,'X-Maimai-Usage-Schema':'1,2',...(stored?{'X-Maimai-Usage-Receipt':'stored'}:{})}});
+const answer=(status:number,stored=false,extra:Record<string,string>={})=>new Response(null,{status,headers:{...headers,'X-Maimai-Usage-Schema':'1,2',...(stored?{'X-Maimai-Usage-Receipt':'stored'}:{}),...extra}});
 export function dayKey(now:Date):string{
   return new Intl.DateTimeFormat('en-CA',{timeZone:'America/New_York',year:'numeric',month:'2-digit',day:'2-digit'}).format(now);
 }
@@ -16,7 +16,7 @@ async function readBody(request:Request):Promise<unknown>{
   return JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes));
 }
 /** Only separately built entry points choose a collector origin. */
-export function createCollector(origin: 'https://maimai.party' | 'https://maimai-party-staging.pages.dev') {
+export function createCollector(origin: 'https://maimai.party' | 'https://maimai-party-staging.pages.dev', {requireLimiter = true}: {requireLimiter?: boolean} = {}) {
 return {
   async fetch(request:Request,env:Env):Promise<Response>{
     const url=new URL(request.url);
@@ -24,6 +24,17 @@ return {
     if(request.method!=='POST')return answer(405);
     if(request.headers.get('Origin')!==origin||request.headers.get('Content-Type')!=='application/json')return answer(400);
     if(request.headers.get('Sec-GPC')==='1'||request.headers.get('DNT')==='1'||String(env.USAGE_ENABLED)!=='true')return answer(204);
+    if(requireLimiter){
+      // Only the trusted edge header is used. The digest exists only in memory
+      // and in the native limiter's transient counters, never D1, logs or HTTP.
+      const ip=request.headers.get('CF-Connecting-IP');
+      if(!env.USAGE_LIMITER||!ip)return answer(503,false,{'X-Maimai-Usage-Limiter':'unavailable'});
+      try{
+        const digest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode('usage:'+ip));
+        const key=Array.from(new Uint8Array(digest),b=>b.toString(16).padStart(2,'0')).join('');
+        if(!(await env.USAGE_LIMITER.limit({key})).success)return answer(429,false,{'Retry-After':'60'});
+      }catch{return answer(503,false,{'X-Maimai-Usage-Limiter':'unavailable'});}
+    }
     let batch;try{const body=await readBody(request);batch=validateBatch(body)??validateDiagnosticBatch(body);}catch{return answer(400);}
     if(!batch)return answer(400);
     if(!env.USAGE_DB)return answer(503);

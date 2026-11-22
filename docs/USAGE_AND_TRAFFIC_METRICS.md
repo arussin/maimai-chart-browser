@@ -76,6 +76,20 @@ The three query templates in cloudflare-dashboard/ require an existing authorize
 
 The community badge and Tidbyt traffic Worker share the identified-automation policy in [traffic-policy.mjs](../community-badge/traffic-policy.mjs). It excludes identifiable tests, monitors and crawlers using 50 user-agent patterns and two exact client names. Ordinary or unknown browser identities remain eligible, so the result is not a count of unique humans and cannot reliably remove tests that impersonate normal browsers.
 
+The badge's pending v6 source also shares the dashboard feed's
+[network policy](../community-badge/traffic-networks.mjs): `clientAsn_neq: "132203"`
+excludes Tencent Cloud Hong Kong for **maimai.party only**, using zone-scoped
+analytics. The user-agent policy is unchanged. Keep both policy files byte-identical
+with `C:\Dev\tidbyt-suite\cloudflare\traffic-worker` and run the badge's
+`tools/check-policy-sync.mjs` before publishing either Worker. A Free-plan zone
+rejected this field in the dashboard rollout; do not apply it to other hosts.
+The badge owner must set `CF_ZONE_ID` and grant `CF_ANALYTICS_TOKEN`
+**Zone > Analytics > Read** for maimai.party before deploying new code.
+V6 cache keys/snapshots include the zone/query policy and cannot reuse account-scoped
+v5 figures. Query failures keep a labelled valid v6 cache for under 24 hours in
+the current UTC month, otherwise show unavailable. This source work does not
+verify current permissions or deploy the badge; see its README for rollout/rollback.
+
 Native dashboard charts labeled **Filtered** use the corresponding exclusions. On the traffic dashboard these cover visit and request totals, their trends, and visit breakdowns by country and device. The companion dashboard includes a filtered HTTP visit counter and whole-site trend. Charts labeled **All traffic** retain operational diagnostics, including errors, cache status, bandwidth and security actions. Charts labeled **Browser beacon** retain their RUM scope and are a separate measurement; neither group should be compared directly with the badge or Tidbyt visit count. The general query templates do not add automation exclusions automatically.
 
 Compare filtered visits using the same exact hostname and start/end timestamps. The badge uses a cached rolling 30-day snapshot, while Tidbyt presents New York calendar-day buckets; the current day is partial. Native dashboard links can select a rolling 30-day window, and changing the window changes the total. Filtering analytics does not block requests or prevent search-engine indexing. No dashboard identifiers, personal-site topology or private verification snapshots are required by this guide.

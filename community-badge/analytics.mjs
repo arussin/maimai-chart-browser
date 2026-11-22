@@ -1,7 +1,8 @@
-import { automationExclusions } from './traffic-policy.mjs';
+import { TRAFFIC_POLICY, automationExclusions } from './traffic-policy.mjs';
+import { NETWORK_POLICY, networkExclusions } from './traffic-networks.mjs';
 export const GRAPHQL_ENDPOINT = 'https://api.cloudflare.com/client/v4/graphql';
-export const GRAPHQL_QUERY = `query CommunityBadge($account: string!, $filter: AccountHttpRequestsAdaptiveGroupsFilter_InputObject!) {
-  viewer { accounts(filter: {accountTag: $account}) {
+export const GRAPHQL_QUERY = `query CommunityBadge($zone: string!, $filter: ZoneHttpRequestsAdaptiveGroupsFilter_InputObject!) {
+  viewer { zones(filter: {zoneTag: $zone}) {
     total: httpRequestsAdaptiveGroups(limit: 1, filter: $filter) { sum { visits } avg { sampleInterval } }
     regions: httpRequestsAdaptiveGroups(limit: 250, filter: $filter, orderBy: [sum_visits_DESC, clientCountryName_ASC]) {
       dimensions { countryName: clientCountryName } sum { visits } avg { sampleInterval }
@@ -27,15 +28,15 @@ export function monthPeriod(now = new Date()) {
 }
 
 export function queryBody(env, period) {
-  if (!/^[a-f0-9]{32}$/.test(env.CF_ACCOUNT_ID ?? '')) throw new Error('Missing configuration');
+  if (!/^[a-f0-9]{32}$/.test(env.CF_ZONE_ID ?? '')) throw new Error('Missing configuration');
   return {
     query: GRAPHQL_QUERY,
     variables: {
-      account: env.CF_ACCOUNT_ID,
+      zone: env.CF_ZONE_ID,
       filter: {
         clientRequestHTTPHost: 'maimai.party',
         requestSource: 'eyeball',
-        AND: automationExclusions(),
+        AND: [...automationExclusions(), ...networkExclusions('maimai.party')],
         datetime_geq: period.start,
         datetime_lt: period.end,
       },
@@ -57,9 +58,9 @@ function sampled(row) {
 export function parseAnalytics(payload, period) {
   if (!payload || (payload.errors != null && (!Array.isArray(payload.errors) || payload.errors.length)))
     throw new Error('Analytics query failed');
-  const accounts = payload.data?.viewer?.accounts;
-  if (!Array.isArray(accounts) || accounts.length !== 1) throw new Error('Account unavailable');
-  const { total, regions } = accounts[0];
+  const zones = payload.data?.viewer?.zones;
+  if (!Array.isArray(zones) || zones.length !== 1) throw new Error('Zone unavailable');
+  const { total, regions } = zones[0];
   if (!Array.isArray(total) || total.length > 1 || !Array.isArray(regions) || regions.length >= 250)
     throw new Error('Incomplete analytics response');
   // A successful empty query means no measured visits. An error never becomes zero.
@@ -79,7 +80,7 @@ export function parseAnalytics(payload, period) {
     rows.push({ country, visits: count });
   }
   rows.sort((a, b) => b.visits - a.visits || a.country.localeCompare(b.country, 'en'));
-  return { version: 5, source: 'httpRequestsAdaptiveGroups', metric: 'visits', month: period.month, start: period.start,
+  return { version: 6, scope: 'zone', trafficPolicy: TRAFFIC_POLICY, networkPolicy: NETWORK_POLICY, source: 'httpRequestsAdaptiveGroups', metric: 'visits', month: period.month, start: period.start,
     updatedAt: period.end, visits, estimated, regions: rows.slice(0, 5) };
 }
 
@@ -118,7 +119,7 @@ export async function fetchAnalytics(env, period, fetcher = fetch) {
 
 export function validSnapshot(value, now = new Date()) {
   try {
-    if (value?.version !== 5 || value.source !== 'httpRequestsAdaptiveGroups' || value.metric !== 'visits' || value.month !== monthPeriod(now).month ||
+    if (value?.version !== 6 || value.scope !== 'zone' || value.trafficPolicy !== TRAFFIC_POLICY || value.networkPolicy !== NETWORK_POLICY || value.source !== 'httpRequestsAdaptiveGroups' || value.metric !== 'visits' || value.month !== monthPeriod(now).month ||
         value.start !== monthPeriod(new Date(value.updatedAt)).start || typeof value.estimated !== 'boolean' ||
         !Array.isArray(value.regions) || value.regions.length > 5) return false;
     checkedCount(value.visits);

@@ -1,4 +1,5 @@
-import {automationExclusions} from '../traffic-policy.mjs';
+import {NETWORK_POLICY, networkExclusions} from '../traffic-networks.mjs';
+import {TRAFFIC_POLICY, automationExclusions} from '../traffic-policy.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { formatCount, formatExactCount, monthPeriod, queryBody, parseAnalytics, readJsonBounded, validSnapshot } from '../analytics.mjs';
@@ -6,11 +7,11 @@ import { handle, cacheKey } from '../handler.mjs';
 import { renderBadge } from '../render.mjs';
 import assets from '../assets.mjs';
 
-const env = { CF_ACCOUNT_ID: 'a'.repeat(32), CF_ANALYTICS_TOKEN: 'test-only-not-a-real-token' };
+const env = { CF_ZONE_ID: 'a'.repeat(32), CF_ANALYTICS_TOKEN: 'test-only-not-a-real-token' };
 const now = new Date('2026-09-20T12:00:00Z');
 const period = monthPeriod(now);
 function payload(total = 12000) {
-  return { data: { viewer: { accounts: [{
+  return { data: { viewer: { zones: [{
     total: [{ sum: { visits: total }, avg: { sampleInterval: 1 } }],
     regions: [['US',9600],['KR',1200],['JP',600],['SG',300],['TW',200],['AU',100]].map(([countryName,visits]) =>
       ({ dimensions: { countryName }, sum: { visits }, avg: { sampleInterval: 1 } })),
@@ -23,6 +24,39 @@ class Cache {
 }
 const request = (suffix = '', options) => new Request('https://maimai.party/badges/community.svg' + suffix, options);
 const fetcher = async () => Response.json(payload());
+
+test('zone/network policy never accepts an old account snapshot, including under the new key', async () => {
+  const current=parseAnalytics(payload(),period);
+  const previous={...current,version:5,visits:987654};
+  delete previous.scope;delete previous.trafficPolicy;delete previous.networkPolicy;
+  const key=cacheKey(env,period.month,'https://maimai.party');
+  const oldKey=new Request('https://maimai.party/.community-badge-cache/v5/http-visits-30d-identified-automation-excluded/'+env.CF_ZONE_ID+'/maimai.party/'+period.month);
+  assert.notEqual(key.url,oldKey.url);
+  for(const snapshot of [previous,{...current,networkPolicy:'old'},{...current,trafficPolicy:'old'},{...current,scope:'account'}])assert.equal(validSnapshot(snapshot,now),false);
+  for(const storedKey of [oldKey,key])for(const offline of [true,false]){
+    const cache=new Cache();let calls=0;
+    await cache.put(storedKey,Response.json({snapshot:previous,retryAfter:now.getTime()+3600000}));
+    const result=await handle(request(),env,{}, {now,cache,fetcher:async()=>{calls++;if(offline)throw Error('offline');return fetcher();}});
+    assert.equal(calls,1);assert.equal(result.headers.get('X-Badge-State'),offline?'unavailable':'fresh');
+    assert.equal(result.headers.get('X-Traffic-Policy'),TRAFFIC_POLICY);
+    assert.equal(result.headers.get('X-Traffic-Network-Policy'),NETWORK_POLICY);
+    assert.doesNotMatch(await result.text(),/987,654/);
+  }
+});
+
+test('missing zone/token and rejected network permission never fall back to account analytics', async () => {
+  for(const settings of [{...env,CF_ZONE_ID:undefined},{...env,CF_ZONE_ID:'invalid'},{...env,CF_ANALYTICS_TOKEN:''},env]){
+    let calls=0;
+    const result=await handle(request(),settings,{}, {now,cache:new Cache(),fetcher:async()=>{calls++;return Response.json({errors:[{message:"does not have access to the field 'clientasn'"}]});}});
+    assert.equal(calls,settings===env?1:0);
+    assert.equal(result.headers.get('X-Badge-State'),'unavailable');
+    assert.doesNotMatch(await result.text(),/clientasn|12,000 visits/);
+  }
+  const cache=new Cache();await handle(request(),env,{}, {now,cache,fetcher});
+  const result=await handle(request(),{...env,CF_ANALYTICS_TOKEN:''},{}, {now:new Date(now.getTime()+7200000),cache,fetcher:async()=>{throw Error('must not query');}});
+  assert.equal(result.headers.get('X-Badge-State'),'stale');
+  assert.match(await result.text(),/Cached result/);
+});
 
 test('numbers stay exact below 10,000 and compact from 10,000 with unit promotion', () => {
   for (const [input, output] of [[0,'0'],[999,'999'],[1000,'1,000'],[9600,'9,600'],[9999,'9,999'],[10000,'10k'],[12000,'12k'],[12450,'12.5k'],[1200000,'1.2m'],[999950,'1m'],[999949,'999.9k'],[1000000000,'1b'],[Number.MAX_SAFE_INTEGER,'9007.2t']])
@@ -50,39 +84,43 @@ test('rolling window covers exactly 30 days across month, year, leap-year and DS
 });
 test('analytics query uses dashboard visits restricted to the production hostname', () => {
   const body = queryBody(env,period);
-  assert.deepEqual(body.variables.filter, {clientRequestHTTPHost:'maimai.party',requestSource:'eyeball',AND:automationExclusions(),datetime_geq:period.start,datetime_lt:period.end});
+  assert.deepEqual(body.variables.filter, {clientRequestHTTPHost:'maimai.party',requestSource:'eyeball',AND:[...automationExclusions(),...networkExclusions('maimai.party')],datetime_geq:period.start,datetime_lt:period.end});
+  assert.equal(body.variables.zone,env.CF_ZONE_ID);
+  assert.match(body.query,/ZoneHttpRequestsAdaptiveGroupsFilter_InputObject/);
+  assert.match(body.query,/zones\(filter: \{zoneTag: \$zone\}\)/);
+  assert.doesNotMatch(body.query,/accounts|accountTag/);
   assert.match(body.query,/sum \{ visits \}/);
   assert.match(body.query,/httpRequestsAdaptiveGroups/);
   assert.match(body.query,/countryName: clientCountryName/);
   assert.doesNotMatch(body.query,/rumPageload|siteTag|pageViews|clientIP|userId|uniq/);
 });
 test('uses independent total and visit metric, not page views or top-five sum', () => {
-  const p=payload(); p.data.viewer.accounts[0].total[0].count=999999;
+  const p=payload(); p.data.viewer.zones[0].total[0].count=999999;
   const result=parseAnalytics(p,period);
   assert.equal(result.visits,12000);
   assert.equal(result.regions.length,5);
   assert.equal(result.regions[0].visits,9600);
 });
 test('sampled responses keep source estimates and mark them explicitly', () => {
-  const p=payload(); p.data.viewer.accounts[0].total[0].avg.sampleInterval=10;
+  const p=payload(); p.data.viewer.zones[0].total[0].avg.sampleInterval=10;
   assert.equal(parseAnalytics(p,period).estimated,true);
 });
 test('unknown countries are not turned into invented flags; ties deterministic', () => {
-  const p=payload(); p.data.viewer.accounts[0].regions=[
+  const p=payload(); p.data.viewer.zones[0].regions=[
     {dimensions:{countryName:'XX'},sum:{visits:99},avg:{sampleInterval:1}},
     ...['KR','JP','US'].map(countryName=>({dimensions:{countryName},sum:{visits:10},avg:{sampleInterval:1}}))];
   assert.deepEqual(parseAnalytics(p,period).regions.map(r=>r.country),['JP','KR','US']);
 });
 test('upstream errors, missing metrics, invalid counts, and truncated results never become zero', () => {
-  for(const value of [null,{}, {errors:[{message:'private upstream detail'}],...payload()}, {data:{viewer:{accounts:[]}}}])
+  for(const value of [null,{}, {errors:[{message:'private upstream detail'}],...payload()}, {data:{viewer:{zones:[]}}}])
     assert.throws(()=>parseAnalytics(value,period));
-  const p=payload(); p.data.viewer.accounts[0].total[0].sum.visits=null;
+  const p=payload(); p.data.viewer.zones[0].total[0].sum.visits=null;
   assert.throws(()=>parseAnalytics(p,period));
-  const large=payload(); large.data.viewer.accounts[0].regions=Array(250).fill(large.data.viewer.accounts[0].regions[0]);
+  const large=payload(); large.data.viewer.zones[0].regions=Array(250).fill(large.data.viewer.zones[0].regions[0]);
   assert.throws(()=>parseAnalytics(large,period));
 });
 test('successful empty measurements are zero with no invented regions', () => {
-  const p={data:{viewer:{accounts:[{total:[],regions:[]}]}}};
+  const p={data:{viewer:{zones:[{total:[],regions:[]}]}}};
   assert.deepEqual(parseAnalytics(p,period).regions,[]);
   assert.equal(parseAnalytics(p,period).visits,0);
 });
@@ -158,7 +196,7 @@ test('HEAD, ETag, method and route semantics are GitHub image compatible', async
   assert.equal((await handle(new Request('https://maimai.party/'),env,{},deps)).status,404);
 });
 test('zero and fewer-than-five states have no fabricated sample flags/counts', () => {
-  const p={data:{viewer:{accounts:[{total:[],regions:[]}]}}};
+  const p={data:{viewer:{zones:[{total:[],regions:[]}]}}};
   const svg=renderBadge(parseAnalytics(p,period),'fresh',assets);
   assert.match(svg,/0 visits/);
   assert.equal((svg.match(/data:image\/png;base64,/g)||[]).length,1);
@@ -174,7 +212,7 @@ test('switching sources never reuses browser visit totals, even during an outage
   assert.equal(validSnapshot(current,now),true);
   assert.equal(validSnapshot(previous,now),false);
   assert.equal(validSnapshot({...current,source:'rumPageloadEventsAdaptiveGroups'},now),false);
-  const oldKey = new Request('https://maimai.party/.community-badge-cache/v1/' + env.CF_ACCOUNT_ID + '/' + 'b'.repeat(32) + '/' + period.month);
+  const oldKey = new Request('https://maimai.party/.community-badge-cache/v1/' + env.CF_ZONE_ID + '/' + 'b'.repeat(32) + '/' + period.month);
   assert.notEqual(cacheKey(env,period.month,'https://maimai.party').url,oldKey.url);
   for (const offline of [false,true]) {
     const cache = new Cache();
@@ -222,7 +260,7 @@ test('rolling snapshots cannot reuse calendar-month totals, including during an 
   const previous={...current,version:2,start:'2026-09-01T00:00:00.000Z',visits:7494};
   assert.equal(validSnapshot(previous,now),false);
   assert.equal(validSnapshot({...previous,version:3},now),false);
-  const oldKey=new Request('https://maimai.party/.community-badge-cache/v2/http-visits/'+env.CF_ACCOUNT_ID+'/maimai.party/'+period.month);
+  const oldKey=new Request('https://maimai.party/.community-badge-cache/v2/http-visits/'+env.CF_ZONE_ID+'/maimai.party/'+period.month);
   const key=cacheKey(env,period.month,'https://maimai.party');
   assert.notEqual(key.url,oldKey.url);
   for(const storedKey of [oldKey,key]) {

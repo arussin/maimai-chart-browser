@@ -34,7 +34,7 @@ export function renderBadge(snapshot, state, assets) {
   const date = available ? snapshot.updatedAt.slice(0, 16).replace('T', ' ') + ' UTC' : '';
   const details = (available ? 'Rolling past 30 days (UTC): ' + snapshot.start + ' to ' + snapshot.updatedAt + '. ' : '') +
     'Cloudflare HTTP traffic analytics visits, not unique people or players. ' +
-    'Direct or external-referrer visits; maimai.party only. Known Cloudflare and Tidbyt monitors excluded. May include other automated traffic. ' +
+    'Direct or external-referrer visits; maimai.party only. Identified automated tests, monitors and crawlers, and Tencent Cloud Hong Kong (AS132203), excluded. May include other automated traffic. ' +
     (available && snapshot.estimated ? 'Cloudflare sampled estimates. ' : '') +
     (state === 'stale' ? 'Cached result; live refresh unavailable. ' : '') +
     (available && snapshot.regions.length < 5 ? 'There are fewer than five measured regions. ' : '') +

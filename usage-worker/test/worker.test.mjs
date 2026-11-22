@@ -1,6 +1,7 @@
 import {test,before,after} from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
+import {fileURLToPath} from 'node:url';
 import {Miniflare,convertV4MiniflareOptions} from 'miniflare';
 import worker,{dayKey} from '../worker.mjs';
 import staging from '../staging.mjs';
@@ -21,8 +22,81 @@ before(async()=>{
 after(async()=>{await mf?.dispose();});
 const row={event:'page_view',page:'charts',detail:'',count:1};
 const diagnostic={operation:'refresh',stage:'transport',reason:'worker_timeout',outcome:'failed',source:'maishift',mode:'automatic',duration:'over_10s',instrumentation:'diagnostics-1',count:1};
-const req=(body={version:1,events:[row]},opts={})=>new Request(opts.url||'https://maimai.party/__usage',{method:opts.method||'POST',headers:{Origin:'https://maimai.party','Content-Type':'application/json',...opts.headers},...(opts.method==='GET'?{}:{body:typeof body==='string'?body:JSON.stringify(body)})});
-const call=(request,enabled='true')=>worker.fetch(request,{USAGE_DB:db,USAGE_ENABLED:enabled});
+const limiter={limit:async()=>({success:true})};
+const req=(body={version:1,events:[row]},opts={})=>new Request(opts.url||'https://maimai.party/__usage',{method:opts.method||'POST',headers:{Origin:'https://maimai.party','Content-Type':'application/json','CF-Connecting-IP':'192.0.2.10',...opts.headers},...(opts.method==='GET'?{}:{body:typeof body==='string'?body:JSON.stringify(body)})});
+const call=(request,enabled='true')=>worker.fetch(request,{USAGE_DB:db,USAGE_ENABLED:enabled,USAGE_LIMITER:limiter});
+
+test('built production Worker enforces a real native limiter in the local runtime',async()=>{
+ const runtime=new Miniflare(convertV4MiniflareOptions({
+  modules:true,scriptPath:fileURLToPath(new URL('../worker.mjs',import.meta.url)),
+  compatibilityDate:'2026-09-22',bindings:{USAGE_ENABLED:'true'},d1Databases:['USAGE_DB'],
+  ratelimits:{USAGE_LIMITER:{namespace_id:'987654',simple:{limit:1,period:60}}},
+  outboundService:()=>{throw Error('No external requests allowed');},
+ }));
+ try{
+  const database=await runtime.getD1Database('USAGE_DB');
+  for(const name of ['0001_daily.sql','0002_import_receipts.sql','0003_diagnostics.sql'])await migrate(database,name);
+  const options={method:'POST',headers:{Origin:'https://maimai.party','Content-Type':'application/json','CF-Connecting-IP':'192.0.2.10'},body:JSON.stringify({version:1,events:[row]})};
+  const first=await runtime.dispatchFetch('https://maimai.party/__usage',options);
+  assert.equal(first.status,204);assert.equal(first.headers.get('X-Maimai-Usage-Receipt'),'stored');
+  const second=await runtime.dispatchFetch('https://maimai.party/__usage',{...options,body:JSON.stringify({version:2,events:[diagnostic]})});
+  assert.equal(second.status,429);assert.equal(second.headers.get('X-Maimai-Usage-Receipt'),null);
+  assert.equal((await database.prepare('SELECT SUM(count) AS n FROM usage_daily').first()).n,1);
+  assert.equal((await database.prepare('SELECT COUNT(*) AS n FROM usage_diagnostics_daily').first()).n,0);
+ }finally{await runtime.dispose();}
+});
+
+test('native limiter rejects before reading a body or writing D1; keys never leave counters',async(t)=>{
+ const keys=[],logs=[];
+ for(const method of ['log','info','warn','error','debug'])t.mock.method(console,method,(...args)=>logs.push(args));
+ const before=await db.prepare('SELECT SUM(count) AS n FROM usage_daily').first();
+ const env={USAGE_DB:db,USAGE_ENABLED:'true',USAGE_LIMITER:{async limit({key}){keys.push(key);return {success:keys.length===1};}}};
+ const accepted=await worker.fetch(req(),env);
+ assert.equal(accepted.status,204);assert.equal(accepted.headers.get('X-Maimai-Usage-Receipt'),'stored');
+ const rejectedRequest=req('not-json');
+ const rejected=await worker.fetch(rejectedRequest,env);
+ assert.equal(rejectedRequest.bodyUsed,false);
+ assert.equal(rejected.status,429);assert.equal(rejected.headers.get('Retry-After'),'60');
+ assert.equal(rejected.headers.get('X-Maimai-Usage-Receipt'),null);
+ assert.equal(rejected.headers.get('Cache-Control'),'no-store');
+ assert.equal(await rejected.text(),'');
+ const expected=Buffer.from(await crypto.subtle.digest('SHA-256',new TextEncoder().encode('usage:192.0.2.10'))).toString('hex');
+ assert.deepEqual(keys,[expected,expected]);
+ assert.equal((await db.prepare('SELECT SUM(count) AS n FROM usage_daily').first()).n,(before.n??0)+1);
+ const different=req(undefined,{headers:{'CF-Connecting-IP':'192.0.2.11','X-Forwarded-For':'192.0.2.10'}});
+ assert.equal((await worker.fetch(different,env)).status,429);
+ assert.notEqual(keys[2],expected);
+ const stored=JSON.stringify((await db.prepare('SELECT * FROM usage_daily').all()).results);
+ const exposed=stored+JSON.stringify([...accepted.headers,...rejected.headers])+JSON.stringify(logs);
+ for(const value of ['192.0.2.10','192.0.2.11',...keys])assert(!exposed.includes(value));
+ assert.deepEqual(logs,[]);
+});
+
+test('production fails closed for missing limiter/address and limiter failures, without touching D1',async()=>{
+ let writes=0;
+ const env={USAGE_ENABLED:'true',USAGE_DB:{prepare(){writes++;throw Error('must not write');}}};
+ for(const binding of [undefined,{limit:async()=>{throw Error('PRIVATE 192.0.2.10');}}]){
+  const response=await worker.fetch(req(),{...env,USAGE_LIMITER:binding});
+  assert.equal(response.status,503);assert.equal(response.headers.get('X-Maimai-Usage-Limiter'),'unavailable');
+  assert.equal(response.headers.get('X-Maimai-Usage-Receipt'),null);assert.equal(await response.text(),'');
+ }
+ const noAddress=req();noAddress.headers.delete('CF-Connecting-IP');
+ noAddress.headers.set('X-Forwarded-For','192.0.2.10');
+ assert.equal((await worker.fetch(noAddress,{...env,USAGE_LIMITER:limiter})).status,503);
+ assert.equal(writes,0);
+});
+
+test('privacy and protocol gates run before any limiter access; staging bypasses even a bound limiter',async()=>{
+ const env={USAGE_DB:db,USAGE_ENABLED:'true',get USAGE_LIMITER(){throw Error('must not access');}};
+ for(const headers of [{DNT:'1'},{'Sec-GPC':'1'}])assert.equal((await worker.fetch(req(undefined,{headers}),env)).status,204);
+ assert.equal((await worker.fetch(req(),{...{USAGE_DB:db,USAGE_ENABLED:'false'},get USAGE_LIMITER(){throw Error('must not access');}})).status,204);
+ for(const [opts,status] of [[{url:'https://other.invalid/__usage'},404],[{method:'GET'},405],[{headers:{Origin:'https://other.invalid'}},400],[{headers:{'Content-Type':'text/plain'}},400]])
+  assert.equal((await worker.fetch(req(undefined,opts),env)).status,status);
+ const origin='https://maimai-party-staging.pages.dev';
+ const request=req(undefined,{url:origin+'/__usage',headers:{Origin:origin}});request.headers.delete('CF-Connecting-IP');
+ const response=await staging.fetch(request,env);
+ assert.equal(response.status,204);assert.equal(response.headers.get('X-Maimai-Usage-Receipt'),'stored');
+});
 test('version 2 diagnostics coexist with old actions and acknowledge only stored batches',async()=>{
  await db.prepare('DELETE FROM usage_diagnostics_daily').run();
  const body={version:2,events:[diagnostic]};
@@ -36,7 +110,7 @@ test('version 2 diagnostics coexist with old actions and acknowledge only stored
  assert.equal((await call(req(body),'false')).headers.get('X-Maimai-Usage-Receipt'),null);
  for(const field of ['operation','stage','reason','outcome','source','mode','duration','instrumentation','url','stack','player','query'])assert.equal((await call(req({version:2,events:[diagnostic,{...diagnostic,[field]:'PRIVATE-SENTINEL'}]}))).status,400);
  assert.deepEqual((await db.prepare('SELECT * FROM usage_diagnostics_daily').all()).results,rows);
- const failed=await worker.fetch(req(body),{USAGE_ENABLED:'true',USAGE_DB:{prepare(){return {bind(){return {}}}},batch(){throw Error('PRIVATE')}}});
+ const failed=await worker.fetch(req(body),{USAGE_ENABLED:'true',USAGE_LIMITER:limiter,USAGE_DB:{prepare(){return {bind(){return {}}}},batch(){throw Error('PRIVATE')}}});
  assert.equal(failed.status,503);assert.equal(failed.headers.get('X-Maimai-Usage-Receipt'),null);assert.equal(await failed.text(),'');
  assert.equal((await call(req())).status,204);
 });
@@ -117,16 +191,16 @@ test('migration preserves historical counts and null receipt bounds until a new 
  await legacyDB.prepare('INSERT INTO usage_daily(day,version,event,page,detail,failure,count) VALUES(?,?,?,?,?,?,?)').bind('2026-10-12',1,'page_view','charts','','',7).run();
  // Production already has 0003. Receipt migration 0002 is still additive and
  // required: an incompatible write must not falsely acknowledge storage.
- const missing=await worker.fetch(req(),{USAGE_DB:legacyDB,USAGE_ENABLED:'true'});
+ const missing=await worker.fetch(req(),{USAGE_DB:legacyDB,USAGE_ENABLED:'true',USAGE_LIMITER:limiter});
  assert.equal(missing.status,503);assert.equal(missing.headers.get('X-Maimai-Usage-Receipt'),null);
  await migrate(legacyDB,'0002_import_receipts.sql');
  const historical=await legacyDB.prepare('SELECT * FROM usage_daily').first();
  assert.equal(historical.count,7);assert.equal(historical.first_received_at,null);assert.equal(historical.last_received_at,null);
  t.mock.timers.enable({apis:['Date'],now:new Date('2026-10-12T18:00:00.000Z')});
- assert.equal((await worker.fetch(req(),{USAGE_DB:legacyDB,USAGE_ENABLED:'true'})).status,204);
+ assert.equal((await worker.fetch(req(),{USAGE_DB:legacyDB,USAGE_ENABLED:'true',USAGE_LIMITER:limiter})).status,204);
  const updated=await legacyDB.prepare('SELECT * FROM usage_daily').first();
  assert.equal(updated.count,8);assert.equal(updated.first_received_at,'2026-10-12T18:00:00.000Z');assert.equal(updated.last_received_at,'2026-10-12T18:00:00.000Z');
- const diagnosed=await worker.fetch(req({version:2,events:[diagnostic]}),{USAGE_DB:legacyDB,USAGE_ENABLED:'true'});
+ const diagnosed=await worker.fetch(req({version:2,events:[diagnostic]}),{USAGE_DB:legacyDB,USAGE_ENABLED:'true',USAGE_LIMITER:limiter});
  assert.equal(diagnosed.status,204);assert.equal(diagnosed.headers.get('X-Maimai-Usage-Receipt'),'stored');
  assert.equal((await legacyDB.prepare('SELECT COUNT(*) AS n FROM usage_diagnostics_daily').first()).n,1);
  t.mock.timers.reset();
@@ -202,7 +276,7 @@ test('exact route, origin, method, type and opt-out controls fail closed',async(
  assert.deepEqual(await db.prepare('SELECT SUM(count) AS n FROM usage_daily').first(),prior);
 });
 test('database failure has no leaked error details and batch rollback is atomic',async()=>{
- const response=await worker.fetch(req(),{USAGE_ENABLED:'true',USAGE_DB:{prepare(){return {bind(){return {}}}},batch(){throw Error('PRIVATE-SENTINEL')}}});
+ const response=await worker.fetch(req(),{USAGE_ENABLED:'true',USAGE_LIMITER:limiter,USAGE_DB:{prepare(){return {bind(){return {}}}},batch(){throw Error('PRIVATE-SENTINEL')}}});
  assert.equal(response.status,503);assert.equal(await response.text(),'');
  const before=(await db.prepare('SELECT * FROM usage_daily ORDER BY day,version,event,page,detail,failure').all()).results;
  await assert.rejects(db.batch([db.prepare("UPDATE usage_daily SET count=count+1,last_received_at='2026-12-31T23:59:59.999Z'"),db.prepare('INSERT INTO usage_daily(day,version,event,page,detail,failure,count) VALUES(?,?,?,?,?,?,?)').bind('2026-09-22',1,'x','charts','','',-1)]));
@@ -226,7 +300,7 @@ test('New York boundary follows DST rather than UTC day',()=>{
 
 test('stream limits ignore forged length and reject malformed bytes before any database write',async()=>{
  const before=await db.prepare('SELECT SUM(count) AS n FROM usage_daily').first();
- const headers={Origin:'https://maimai.party','Content-Type':'application/json'};
+ const headers={Origin:'https://maimai.party','Content-Type':'application/json','CF-Connecting-IP':'192.0.2.10'};
  const malformed=new Request('https://maimai.party/__usage',{method:'POST',headers,body:new Uint8Array([0xc3,0x28])});
  assert.equal((await call(malformed)).status,400);
  let cancelled=false,chunk=0;

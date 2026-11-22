@@ -11,6 +11,18 @@ import {
 } from '../../usage-worker/test/provider-usage-fixture.mjs';
 const source = await moduleSource('usage');
 const stagingSource = await moduleSource('usage-staging', { staging: true });
+test('429 drops action and diagnostic batches without retrying on later flushes', async () => {
+  const f = fixture({ status: 429 });
+  f.api.emit('page_view');
+  f.api.diagnose(diagnostic);
+  await f.api.flush();
+  assert.equal(f.requests.length, 2);
+  assert.equal(f.api.delivery().last, 'rejected');
+  assert.equal(f.api.delivery().dropped, 2);
+  await f.api.flush();
+  await f.api.flush();
+  assert.equal(f.requests.length, 2);
+});
 import { DETAILS, FAILURES, validateRow } from '../src/usage-contract.ts';
 function fixture({
   host = 'maimai.party',
