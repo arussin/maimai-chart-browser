@@ -46,16 +46,53 @@ const MAX_ROWS = 100_000;
 
 class UnsupportedUtage extends Error {}
 
+/** Which kind of rule a score document broke. A fixed list, for diagnostics only. */
+type RecordCheck =
+  'record_shape' | 'record_identity' | 'record_chart' | 'record_score' | 'record_time';
+const RECORD_CHECKS: readonly string[] = [
+  'record_shape',
+  'record_identity',
+  'record_chart',
+  'record_score',
+  'record_time',
+];
+// The same tag runtime/diagnostic-error.ts reads. A symbol cannot arrive in an
+// imported document, and only the category is attached: never the message, a
+// value, a title or a row number.
+const diagnosticTag = Symbol.for('maimai.party.diagnostic-error-v1');
+
+function rejected(check: RecordCheck, message: string): Error {
+  const error = new Error(message);
+  Object.defineProperty(error, diagnosticTag, { value: { reason: check, stage: 'decode' } });
+  return error;
+}
+
+function recordCheck(error: unknown): RecordCheck | null {
+  if (!error || typeof error !== 'object' || !(diagnosticTag in error)) return null;
+  const reason = (error as Record<symbol, { reason?: unknown } | undefined>)[diagnosticTag]?.reason;
+  return typeof reason === 'string' && RECORD_CHECKS.includes(reason)
+    ? (reason as RecordCheck)
+    : null;
+}
+
+/** Classify by the helper's own fixed field label, never by a supplied value. */
+function checkFor(name: string): RecordCheck {
+  if (/\bID\b|title|artist|name|genre/i.test(name)) return 'record_identity';
+  if (/difficulty|chart type|level/i.test(name)) return 'record_chart';
+  if (/timestamp/i.test(name)) return 'record_time';
+  return 'record_score';
+}
+
 function object(value: unknown): JsonObject {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
-    throw new Error('Expected a score object.');
+    throw rejected('record_shape', 'Expected a score object.');
   }
   return value as JsonObject;
 }
 
 function array(value: unknown): unknown[] {
   if (!Array.isArray(value) || value.length > MAX_ROWS) {
-    throw new Error('Expected a score list containing at most 100,000 records.');
+    throw rejected('record_shape', 'Expected a score list containing at most 100,000 records.');
   }
   return value;
 }
@@ -63,7 +100,7 @@ function array(value: unknown): unknown[] {
 function text(value: unknown, name: string, required = false): string {
   if (value == null && !required) return '';
   if (typeof value !== 'string' || value.length > 2000 || (required && !value.trim())) {
-    throw new Error(`Invalid ${name}.`);
+    throw rejected(checkFor(name), `Invalid ${name}.`);
   }
   return value;
 }
@@ -76,20 +113,20 @@ function songTitle(value: unknown, allowEmpty = false): string {
     (!allowEmpty && value.length === 0) ||
     /[\x00-\x1f\uD800-\uDFFF]/u.test(value)
   )
-    throw new Error('Invalid song title.');
+    throw rejected('record_identity', 'Invalid song title.');
   return text(value, 'song title');
 }
 
 function number(value: unknown, name: string, min: number, max: number): number {
   if (typeof value !== 'number' || !Number.isFinite(value) || value < min || value > max) {
-    throw new Error(`Invalid ${name}.`);
+    throw rejected(checkFor(name), `Invalid ${name}.`);
   }
   return value;
 }
 
 function integer(value: unknown, name: string, min: number, max: number): number {
   const result = number(value, name, min, max);
-  if (!Number.isSafeInteger(result)) throw new Error(`Invalid ${name}.`);
+  if (!Number.isSafeInteger(result)) throw rejected(checkFor(name), `Invalid ${name}.`);
   return result;
 }
 
@@ -107,7 +144,7 @@ function percentage(value: unknown): number {
   const percent = number(value, 'achievement percentage', 0, 101);
   const ticks = Math.round(percent * 10000);
   if (Math.abs(percent * 10000 - ticks) > 0.000001) {
-    throw new Error('Achievement percentage has more than four decimal places.');
+    throw rejected('record_score', 'Achievement percentage has more than four decimal places.');
   }
   return ticks;
 }
@@ -122,7 +159,7 @@ function constant(value: unknown): number | null {
   const decimal = number(value, 'chart constant', 0, 20);
   const tenths = Math.round(decimal * 10);
   if (Math.abs(decimal * 10 - tenths) > 0.000001)
-    throw new Error('Invalid chart constant precision.');
+    throw rejected('record_score', 'Invalid chart constant precision.');
   return tenths;
 }
 
@@ -135,15 +172,15 @@ function maiConstant(value: unknown): number | null {
 function difficulty(value: unknown, indexed = false): string {
   if (indexed) {
     if (value === 5 || value === 10)
-      throw new Error('Utage charts are not supported by this importer.');
+      throw rejected('record_chart', 'Utage charts are not supported by this importer.');
     return DIFFICULTIES[integer(value, 'difficulty index', 0, 4)];
   }
   const name = text(value, 'difficulty', true).toUpperCase().replace(/[:\s]/g, '');
   if (name === 'UTAGE' || name.startsWith('【')) {
-    throw new Error('Utage charts are not supported by this importer.');
+    throw rejected('record_chart', 'Utage charts are not supported by this importer.');
   }
   const index = ['BASIC', 'ADVANCED', 'EXPERT', 'MASTER', 'REMASTER'].indexOf(name);
-  if (index < 0) throw new Error('Invalid difficulty.');
+  if (index < 0) throw rejected('record_chart', 'Invalid difficulty.');
   return DIFFICULTIES[index];
 }
 
@@ -160,7 +197,7 @@ function format(value: unknown, indexed = false): 'STD' | 'DX' {
     if (['SD', 'STD', 'STANDARD'].includes(name)) return 'STD';
     if (name === 'DX') return 'DX';
   }
-  throw new Error('Invalid chart type.');
+  throw rejected('record_chart', 'Invalid chart type.');
 }
 
 function flag(value: unknown, sync = false): string {
@@ -187,7 +224,8 @@ function flag(value: unknown, sync = false): string {
         APP: 'ALL PERFECT+',
         'AP+': 'ALL PERFECT+',
       };
-  if (!(name in names)) throw new Error(`Invalid ${sync ? 'sync' : 'combo'} status.`);
+  if (!(name in names))
+    throw rejected('record_score', `Invalid ${sync ? 'sync' : 'combo'} status.`);
   return names[name];
 }
 
@@ -200,13 +238,13 @@ function timestamp(value: unknown): number | null {
       value,
     )
   )
-    throw new Error('Expected an ISO timestamp with an explicit timezone.');
+    throw rejected('record_time', 'Expected an ISO timestamp with an explicit timezone.');
   const date = Date.parse(value);
-  if (!Number.isFinite(date) || date < 0) throw new Error('Invalid timestamp.');
+  if (!Number.isFinite(date) || date < 0) throw rejected('record_time', 'Invalid timestamp.');
   const day = value.slice(0, 10);
   const calendar = new Date(`${day}T00:00:00Z`);
   if (!Number.isFinite(calendar.getTime()) || calendar.toISOString().slice(0, 10) !== day)
-    throw new Error('Invalid timestamp calendar date.');
+    throw rejected('record_time', 'Invalid timestamp calendar date.');
   return date;
 }
 
@@ -226,7 +264,8 @@ function row(
     timeAchieved: null,
     ...fields,
   };
-  if (!result.title && !result.sourceSongID) throw new Error('Score has no song identity.');
+  if (!result.title && !result.sourceSongID)
+    throw rejected('record_identity', 'Score has no song identity.');
   if (!result.sourceID) {
     result.sourceID = JSON.stringify([
       result.sourceSongID || result.title,
@@ -251,13 +290,18 @@ function mapRows(
         excludedUtage++;
         return;
       }
-      throw new Error(
+      // Keep the inner rule's category; the row number is for the player only.
+      throw rejected(
+        recordCheck(error) ?? 'record_score',
         `Record ${index + 1}: ${error instanceof Error ? error.message : 'Invalid score.'}`,
       );
     }
   });
   if (!rows.length && excludedUtage)
-    throw new Error('This export contains only unsupported Utage charts. Nothing was imported.');
+    throw rejected(
+      'record_chart',
+      'This export contains only unsupported Utage charts. Nothing was imported.',
+    );
   return { rows, excludedUtage };
 }
 
@@ -300,14 +344,14 @@ function lxns(input: unknown): ImportResult {
   // Personal OAuth full scores, with optional independently selected B50 rows.
   const envelope = object(input);
   if (envelope.success !== true || envelope.code !== 200)
-    throw new Error('LXNS response was not successful.');
+    throw rejected('record_shape', 'LXNS response was not successful.');
   const convert = (score: JsonObject) => {
     const sourceSongID = String(integer(score.id, 'song ID', 0, 999_999_999_999));
     if (!['standard', 'dx', 'utage'].includes(String(score.type)))
-      throw new Error('Invalid chart type.');
+      throw rejected('record_chart', 'Invalid chart type.');
     const chartFormat = format(score.type);
     if (!('achievements' in score))
-      throw new Error('LXNS simplified scores contain no achievement percentage.');
+      throw rejected('record_score', 'LXNS simplified scores contain no achievement percentage.');
     const dxRating = optionalNumber(score.dx_rating, 'DX Rating', Number.MAX_SAFE_INTEGER);
     return row({
       sourceSongID,
@@ -337,11 +381,12 @@ function lxns(input: unknown): ImportResult {
 function best50Pools(value: unknown, convert: (score: JsonObject) => ImportRow) {
   const pools = object(value);
   if (Object.keys(pools).length !== 2 || !('old' in pools) || !('new' in pools))
-    throw new Error('Invalid provider Best 50 pools.');
+    throw rejected('record_shape', 'Invalid provider Best 50 pools.');
   const seen = new Set<string>();
   const read = (name: 'old' | 'new', maximum: number) => {
     const values = array(pools[name]);
-    if (values.length > maximum) throw new Error('Invalid provider Best 50 pool size.');
+    if (values.length > maximum)
+      throw rejected('record_shape', 'Invalid provider Best 50 pool size.');
     return values.map((value) => {
       const score = convert(object(value));
       if (
@@ -350,8 +395,9 @@ function best50Pools(value: unknown, convert: (score: JsonObject) => ImportRow) 
         score.rate < 0 ||
         score.rate > 1000
       )
-        throw new Error('Provider Best 50 is missing a chart rating.');
-      if (seen.has(score.sourceID)) throw new Error('Duplicate provider Best 50 chart.');
+        throw rejected('record_score', 'Provider Best 50 is missing a chart rating.');
+      if (seen.has(score.sourceID))
+        throw rejected('record_identity', 'Duplicate provider Best 50 chart.');
       seen.add(score.sourceID);
       return score;
     });
@@ -367,7 +413,7 @@ export function parseOfficialExport(
   let result: ImportResult;
   if (provider === 'diving-fish') result = divingFish(input);
   else if (provider === 'lxns') result = lxns(input);
-  else throw new Error('Unsupported official-network score export.');
+  else throw rejected('record_shape', 'Unsupported official-network score export.');
   if (result.excludedUtage) result.coverage = 'partial';
   return result;
 }
@@ -406,12 +452,13 @@ function dxrating(input: unknown): ImportResult {
     ...mapRows(array(input), (score) => {
       const sheetID = text(score.sheetId, 'DXRating sheet ID', true);
       const pieces = sheetID.split('__dxrt__');
-      if (pieces.length !== 3 || !pieces[0]) throw new Error('Invalid DXRating sheet ID.');
+      if (pieces.length !== 3 || !pieces[0])
+        throw rejected('record_identity', 'Invalid DXRating sheet ID.');
       const [songID, type, diff] = pieces;
       if (score.identity != null) {
         const identity = object(score.identity);
         if (identity.songId !== songID || identity.type !== type || identity.difficulty !== diff) {
-          throw new Error('DXRating identity disagrees with its sheet ID.');
+          throw rejected('record_identity', 'DXRating identity disagrees with its sheet ID.');
         }
       }
       return row({
@@ -433,7 +480,7 @@ function tomomaiChartID(value: unknown): string {
   const id = text(value, 'Tomomai song ID', true);
   // Public API catalogue IDs distinguish a stable chart from a versioned instance.
   const match = /^([A-Za-z0-9_-]{8})(?::[jic]-?(?:0|[1-9]\d*))?$/.exec(id);
-  if (!match) throw new Error('Invalid Tomomai song ID.');
+  if (!match) throw rejected('record_identity', 'Invalid Tomomai song ID.');
   return match[1];
 }
 
@@ -441,7 +488,7 @@ function tomomai(input: unknown): ImportResult {
   const data = object(input);
   const recent = 'plays' in data;
   if (!recent && data.songs === null)
-    throw new Error('Tomomai response does not include song scores.');
+    throw rejected('record_shape', 'Tomomai response does not include song scores.');
   const scores = array(recent ? data.plays : data.songs);
   const b50 = !recent && scores.some((score) => 'rating' in object(score));
   return {
@@ -473,7 +520,7 @@ function tomomai(input: unknown): ImportResult {
         result.maxDxScore = optionalNumber(score.maxDxScore, 'maximum DX score', 100_000_000, true);
         if (score.maxCombo != null) {
           const count = text(score.maxCombo, 'maximum combo');
-          if (!/^\d{1,8}$/.test(count)) throw new Error('Invalid maximum combo.');
+          if (!/^\d{1,8}$/.test(count)) throw rejected('record_score', 'Invalid maximum combo.');
           result.maxCombo = integer(Number(count), 'maximum combo', 0, 100_000_000);
         }
         if (score.notes != null) {
@@ -507,9 +554,9 @@ function tomomai(input: unknown): ImportResult {
 function jietng(input: unknown): ImportResult {
   const data = object(input);
   if (data.format !== 'JiETNGExport' || data.schema_version !== 2)
-    throw new Error('Choose a native JiETNG version-2 JSON export.');
+    throw rejected('record_shape', 'Choose a native JiETNG version-2 JSON export.');
   if (data.maimai_version !== 'jp' && data.maimai_version !== 'intl')
-    throw new Error('Invalid JiETNG game region.');
+    throw rejected('record_shape', 'Invalid JiETNG game region.');
   const generated = text(data.generated_at, 'JiETNG export timestamp', true);
   let capturedAt: number | null;
   if (/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d$/.test(generated)) {
@@ -549,7 +596,7 @@ function jietng(input: unknown): ImportResult {
         constant: score.internal_level === 0 ? null : constant(score.internal_level),
       });
       if (result.dxScore != null && result.maxDxScore != null && result.dxScore > result.maxDxScore)
-        throw new Error('DX score exceeds its maximum.');
+        throw rejected('record_score', 'DX score exceeds its maximum.');
       return result;
     }),
   };
@@ -575,7 +622,7 @@ export function parseOfficialFileExport(
       result = jietng(input);
       break;
     default:
-      throw new Error('Unsupported official-network file export.');
+      throw rejected('record_shape', 'Unsupported official-network file export.');
   }
   if (result.excludedUtage) result.coverage = 'partial';
   return result;

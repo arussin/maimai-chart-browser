@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {createProviderOAuthService, PROVIDERS, OAUTH_PREFIX, PARTY_ORIGIN, SESSION_COOKIE, randomID} from './provider-oauth.mjs';
+import {createProviderOAuthService, PROVIDERS, OAUTH_PREFIX, PARTY_ORIGIN, SESSION_COOKIE, randomID, OAuthError, CONTRACT_CHECKS} from './provider-oauth.mjs';
 import {ProviderOAuthSessionCore} from './provider-oauth-session-core.mjs';
 
 const nonce = () => crypto.randomUUID();
@@ -310,11 +310,49 @@ for (const provider of ['diving-fish','lxns']) test(provider + ' Worker exposes 
     s.time += 60001;
     s.override = url => url === PROVIDERS[provider].records ? response() : null;
     const result = await s.call('/'+provider+'/read',{connectionID:c.connectionID});
-    assert.deepEqual(await result.json(),{error:code});
+    // A changed contract also names which reviewed check failed: a fixed label only.
+    assert.deepEqual(await result.json(),code === 'provider_contract_changed' ? {error:code,diagnosticCode:'contract_field'} : {error:code});
     const current = (await s.status()).find(row => row.provider === provider);
     assert.equal(current.connectionID,c.connectionID); assert.equal(current.connected,true);
     assert.equal(current.requiresReconnect,false);
   }
+  s.time += 60001; s.override = null;
+  assert.equal((await s.call('/'+provider+'/read',{connectionID:c.connectionID})).status,200);
+});
+
+for (const provider of ['diving-fish','lxns']) test(provider + ' names which response check a changed contract failed, using a fixed label only', async () => {
+  const s = setup(), c = await s.connect(provider), fish = provider === 'diving-fish';
+  const wrap = rows => fish ? {records:rows} : {success:true,code:200,data:rows};
+  const row = fish ? {song_id:1,achievements:100.5,level_index:3,type:'DX'} : {id:1,achievements:100.5,level_index:3,type:'dx'};
+  const cases = [
+    ['contract_list', wrap(null)],
+    ['contract_list', fish ? {private:'unreported'} : wrap({private:'unreported'})],
+    ['contract_count', wrap(Array(25001).fill(row))],
+    ['contract_row', wrap([null])],
+    ['contract_row', wrap(['unreported'])],
+    ['contract_field', wrap([{achievements:100.5,private:'unreported'}])],
+    ['contract_value', wrap([{...row,achievements:101.5}])],
+    ['contract_value', wrap([{...row,fc:{private:'unreported'}}])],
+    ...(fish ? [] : [['contract_envelope', {success:false,code:200,data:[row]}],['contract_envelope', [row]]]),
+  ];
+  for (const [check, value] of cases) {
+    s.time += 60001;
+    s.override = url => url === PROVIDERS[provider].records ? json(value) : null;
+    const result = await s.call('/'+provider+'/read',{connectionID:c.connectionID});
+    assert.equal(result.status,502);
+    const text = await result.text();
+    // The label is the only addition: no provider field name, value or text.
+    assert.deepEqual(JSON.parse(text),{error:'provider_contract_changed',diagnosticCode:check});
+    assert.equal(text.includes('unreported') || text.includes('private'),false);
+    assert.ok(CONTRACT_CHECKS.includes(check));
+    const current = (await s.status()).find(item => item.provider === provider);
+    assert.equal(current.connected,true); assert.equal(current.requiresReconnect,false);
+  }
+  // Nothing outside the fixed list can travel in this field, and no other code carries it.
+  assert.equal(new OAuthError('provider_contract_changed',502,null,'title').diagnosticCode,undefined);
+  assert.equal(new OAuthError('provider_contract_changed',502,null,'contract_list').diagnosticCode,'contract_list');
+  assert.equal(new OAuthError('source_unavailable',502,null,'contract_list').diagnosticCode,undefined);
+  assert.equal(JSON.stringify((await [...s.cores.values()][0].load())).includes('diagnosticCode'),false);
   s.time += 60001; s.override = null;
   assert.equal((await s.call('/'+provider+'/read',{connectionID:c.connectionID})).status,200);
 });
@@ -633,11 +671,25 @@ test('missing, oversized, duplicated and unrated Best 50 pools fail atomically w
       wrap(pools([{...score,achievements:102}])),
       ...(fish ? [wrap(pools([{...score,ra:300.9}])),wrap(pools([score,{...score,song_id:'01'}]))] : [{success:false,code:200,data:pools()}]),
     ];
-    for (const value of invalid) {
+    // The label for each case above, in order: which reviewed check rejects it.
+    const pool = 'contract_best50', entry = 'contract_best50_value';
+    const checks = [
+      fish ? pool : 'contract_envelope', pool, pool, pool,
+      pool, pool,
+      entry, entry,
+      entry, entry,
+      entry, entry,
+      entry,
+      entry, entry,
+      'contract_value',
+      ...(fish ? [entry,entry] : ['contract_envelope']),
+    ];
+    assert.equal(checks.length,invalid.length);
+    for (const [index,value] of invalid.entries()) {
       s.time += 30001;
       s.override = url => url === PROVIDERS[provider].best50 ? json(value) : null;
       const response = await s.call('/' + provider + '/read',{connectionID:c.connectionID});
-      assert.equal(response.status,502); assert.deepEqual(await response.json(),{error:'provider_contract_changed'});
+      assert.equal(response.status,502); assert.deepEqual(await response.json(),{error:'provider_contract_changed',diagnosticCode:checks[index]});
       const current = (await [...s.cores.values()][0].load()).connections[provider];
       for (const key of ['id','accountID','displayName','tokens','requiresReconnect']) assert.deepEqual(current[key],original[key]);
       assert.ok(!JSON.stringify(current).includes('achievements'));

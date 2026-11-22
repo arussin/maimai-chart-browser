@@ -315,3 +315,61 @@ test('file parsers reject malformed precision, timestamps and undocumented forma
     [0, 1010000],
   );
 });
+
+test('each rejected score document names the kind of rule it broke, and only that', () => {
+  const tag = Symbol.for('maimai.party.diagnostic-error-v1');
+  const cases = [
+    // A DXRating file must be a list of entries; anything else is the wrong shape.
+    [() => parseOfficialExport('dxrating', { entries: [dx] }), 'record_shape'],
+    [() => parseOfficialExport('dxrating', 'PRIVATE text'), 'record_shape'],
+    [() => parseOfficialExport('dxrating', [dx, null]), 'record_shape'],
+    [
+      () => parseOfficialExport('dxrating', [{ ...dx, sheetId: 'PRIVATE title' }]),
+      'record_identity',
+    ],
+    [
+      () =>
+        parseOfficialExport('dxrating', [
+          { ...dx, identity: { songId: 'PRIVATE other', type: 'dx', difficulty: 'master' } },
+        ]),
+      'record_identity',
+    ],
+    [
+      () =>
+        parseOfficialExport('dxrating', [
+          { ...dx, sheetId: 'Fictional Chart__dxrt__dx__dxrt__PRIVATE' },
+        ]),
+      'record_chart',
+    ],
+    [
+      () =>
+        parseOfficialExport('dxrating', [
+          { ...dx, sheetId: 'Fictional Chart__dxrt__PRIVATE__dxrt__master' },
+        ]),
+      'record_chart',
+    ],
+    [
+      () => parseOfficialExport('dxrating', [{ ...dx, achievementRate: 100.12345 }]),
+      'record_score',
+    ],
+    [
+      () => parseOfficialExport('dxrating', [{ ...dx, achievementRate: 'PRIVATE' }]),
+      'record_score',
+    ],
+    [() => parseOfficialExport('mai-tools', [{ ...mai, songName: 7 }]), 'record_identity'],
+    [() => parseOfficialExport('tomomai', { PRIVATE: true }), 'record_shape'],
+    [() => parseOfficialExport('jietng', { PRIVATE: true }), 'record_shape'],
+  ];
+  for (const [run, check] of cases) {
+    let error;
+    try {
+      run();
+    } catch (caught) {
+      error = caught;
+    }
+    assert.ok(error instanceof Error);
+    // Only the fixed category and stage are attached; the message stays for the player.
+    assert.deepEqual(error[tag], { reason: check, stage: 'decode' }, error.message);
+    assert.deepEqual(Object.keys(error[tag]).sort(), ['reason', 'stage']);
+  }
+});

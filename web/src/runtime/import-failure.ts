@@ -84,6 +84,23 @@ export function importFailure(error: unknown, fallback: Failure = 'unavailable')
       agreement_required: 'agreement_required',
       empty_scores: 'empty_scores',
       cleanup_required: 'cleanup_required',
+      // Finer diagnostics keep the player-facing failure they refine.
+      contract_envelope: 'invalid_response',
+      contract_list: 'invalid_response',
+      contract_count: 'invalid_response',
+      contract_row: 'invalid_response',
+      contract_field: 'invalid_response',
+      contract_value: 'invalid_response',
+      contract_best50: 'invalid_response',
+      contract_best50_value: 'invalid_response',
+      contract_player: 'invalid_response',
+      provider_configuration: 'invalid_response',
+      token_response: 'invalid_response',
+      record_shape: 'invalid',
+      record_identity: 'invalid',
+      record_chart: 'invalid',
+      record_score: 'invalid',
+      record_time: 'invalid',
     };
     return mapped[classified.reason] ?? fallback;
   }

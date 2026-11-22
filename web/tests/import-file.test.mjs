@@ -451,3 +451,22 @@ test('mai-tools duplicate Link titles need recognized genre evidence before cata
     assert.equal(exactFileChartIndex(catalog, unknown.data.charts).size, 0);
   }
 });
+
+test('a rejected file reports which kind of rule it broke, at the decode stage', async () => {
+  const tag = Symbol.for('maimai.party.diagnostic-error-v1');
+  for (const [input, format, check] of [
+    [{ entries: [] }, 'dxrating', 'record_shape'],
+    [[{ sheetId: 'PRIVATE title', achievementRate: 100 }], 'dxrating', 'record_identity'],
+    [[{ ...mai()[0], achievement: 'PRIVATE' }], 'mai-tools', 'record_score'],
+  ]) {
+    await assert.rejects(
+      () => readImportFile(core, file(input), { ...options, format }),
+      (error) => {
+        // The module runs in its own context, so compare fields, not object identity.
+        assert.equal(error[tag].reason, check, error.message);
+        assert.equal(error[tag].stage, 'decode');
+        return true;
+      },
+    );
+  }
+});
