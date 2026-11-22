@@ -79,6 +79,9 @@ class CorpusRequestTests(unittest.TestCase):
             base = {"registry": root / "registry", "offline": True}
             for extra in (
                 {"player_maishift": "yes"},
+                {"preserve_web_analytics": "yes"},
+                {"release_date": "2026-02-30"},
+                {"export_artwork_source": root},
                 {"capacity_review": root / "capacity"},
                 {"capacity_sha256": "a" * 64},
                 {"reassess_captured_policy": True},

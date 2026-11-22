@@ -160,6 +160,15 @@ class CorpusPipelineTests(unittest.TestCase):
 
     def test_owner_attempt_uses_same_explicit_source_identity_in_installed_cli(self):
         from scripts.update_catalog import prepare_update as owner_prepare
+        from tests.test_export_artwork import export_fixture
+
+        export_source = self.root / "export"
+        manifest, _, _ = export_fixture(export_source)
+        mock = patch(
+            "maimai_intelligence.export_artwork.read_export_artwork_manifest", return_value=manifest
+        )
+        mock.start()
+        self.addCleanup(mock.stop)
 
         run = owner_prepare(
             self.store,
@@ -167,6 +176,7 @@ class CorpusPipelineTests(unittest.TestCase):
             package=self.package,
             mai_notes_snapshot=self.snapshot,
             offline=True,
+            export_artwork_source=export_source,
         )
         root = Path(__file__).resolve().parents[1]
         with contextlib.redirect_stdout(io.StringIO()):

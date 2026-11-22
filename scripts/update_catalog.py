@@ -58,6 +58,10 @@ def implementation_hash(root=REPO_ROOT):
 
 def prepare_update(store, previous_browser, **options):
     """Owner defaults around the installed preparation service."""
+    # Resolve the fallback from the same preceding publication under the store lock.
+    options["export_artwork_from_previous_public"] = options.get("export_artwork_source") is None
+    # Fixed owner publication policy; installed synthetic preparations remain opt-in.
+    options["preserve_web_analytics"] = True
     options.setdefault("registry_seed", REPO_ROOT / "registry")
     if options.get("coverage_reviews") is None:
         options["coverage_reviews"] = read_json(REPO_ROOT / "config/coverage-reviews.json")
@@ -70,9 +74,27 @@ def prepare_update(store, previous_browser, **options):
 
 
 def verify_candidate(run):
-    return corpus_update.verify_candidate(
+    receipt = corpus_update.verify_candidate(
         run, implementation=lambda: verified_source_implementation_hash(REPO_ROOT)
     )
+    from maimai_intelligence.export_artwork import _assets, read_export_artwork_manifest
+
+    required = {
+        name: {"bytes": row["bytes"], "sha256": row["sha256"]}
+        for name, row in _assets(read_export_artwork_manifest()).items()
+    }
+    inputs = receipt.get("release_inputs", {})
+    if (
+        inputs.get("preserve_web_analytics") is not True
+        or not required
+        or inputs.get("export_artwork") != required
+        or any(receipt["files"].get(name) != row for name, row in required.items())
+    ):
+        raise ValueError(
+            "Owner publication requires Web Analytics and complete current export artwork; "
+            "prepare a new owner candidate with --export-artwork-source or --previous-public"
+        )
+    return receipt
 
 
 def command(args, *, cwd=REPO_ROOT, env=None):
@@ -209,6 +231,8 @@ def refresh_latest(
     capacity_sha256=None,
     reassess_captured_policy=False,
     player_maishift=None,
+    export_artwork_source=None,
+    release_date=None,
 ):
     """Continue from the last verified publication, including its accepted registry."""
     store = Path(store).resolve()
@@ -229,6 +253,8 @@ def refresh_latest(
         previous / "browser",
         previous_public=preceding_public,
         player_maishift=player_maishift,
+        export_artwork_source=export_artwork_source,
+        release_date=release_date,
         package=previous / "package",
         registry=registry,
         offline=offline,
@@ -276,6 +302,12 @@ def main(argv=None):
     refresh.add_argument("--offline", action="store_true")
     refresh.add_argument("--replay-sources", type=Path)
     for action in (prepare, refresh):
+        action.add_argument("--release-date", help="Explicit sitemap change date, YYYY-MM-DD")
+        action.add_argument(
+            "--export-artwork-source",
+            type=Path,
+            help="Complete reviewed export artwork; defaults to the verified preceding public tree",
+        )
         action.add_argument(
             "--player-maishift",
             action=argparse.BooleanOptionalAction,

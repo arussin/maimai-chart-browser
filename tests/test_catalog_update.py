@@ -11,6 +11,7 @@ from maimai_intelligence.snapshots import atomic_json, read_json
 from scripts import update_catalog as update
 from tests.lab_fixture import write_package
 from tests.mai_notes_fixture import encoded
+from tests.test_export_artwork import export_fixture
 
 
 class CatalogUpdateTests(unittest.TestCase):
@@ -25,9 +26,18 @@ class CatalogUpdateTests(unittest.TestCase):
         self.snapshot = self.root / "mai-notes.json"
         self.snapshot.write_bytes(encoded(self.charts, unavailable={1}))
         self.store = self.root / "updates"
+        self.export_source = self.root / "export"
+        self.export_manifest, self.export_path, self.export_raw = export_fixture(self.export_source)
+        mock = patch(
+            "maimai_intelligence.export_artwork.read_export_artwork_manifest",
+            return_value=self.export_manifest,
+        )
+        mock.start()
+        self.addCleanup(mock.stop)
 
     def prepare(self, **kwargs):
         kwargs.setdefault("offline", True)
+        kwargs.setdefault("export_artwork_source", self.export_source)
         return update.prepare_update(
             self.store,
             self.browser,
@@ -58,6 +68,93 @@ class CatalogUpdateTests(unittest.TestCase):
         (first / "public/index.html").write_text("tampered", "utf-8")
         with self.assertRaisesRegex(ValueError, "Candidate changed"):
             update.verify_candidate(first)
+
+    def test_owner_release_inputs_are_complete_bound_and_replayable(self):
+        from maimai_intelligence.corpus_attempts import resume_options
+
+        first = self.prepare(release_date="2026-11-22")
+        receipt = update.verify_candidate(first)
+        self.assertEqual((first / "public" / self.export_path).read_bytes(), self.export_raw)
+        self.assertTrue(receipt["release_inputs"]["preserve_web_analytics"])
+        self.assertEqual(receipt["release_inputs"]["release_date"], "2026-11-22")
+        self.assertEqual(receipt["release"]["release_date"], "2026-11-22")
+        self.assertIn(b"<lastmod>2026-11-22</lastmod>", (first / "public/sitemap.xml").read_bytes())
+        self.assertEqual(set(receipt["release_inputs"]["export_artwork"]), {self.export_path})
+        for name in ("index.html", "browser-shell.html"):
+            self.assertIn(b"static.cloudflareinsights.com", (first / "public" / name).read_bytes())
+        options = resume_options(first, receipt["implementation_hash"])
+        self.assertEqual(options["export_artwork_source"], self.export_source.resolve())
+        self.assertTrue(options["preserve_web_analytics"])
+        self.assertEqual(options["release_date"], "2026-11-22")
+        second = update.corpus_update.prepare_update(
+            self.store,
+            **options,
+            implementation=lambda: receipt["implementation_hash"],
+        )
+        self.assertEqual(receipt["files"], update.verify_candidate(second)["files"])
+        altered_date = {**options, "release_date": "2026-11-23"}
+        with self.assertRaisesRegex(ValueError, "release policy differs"):
+            update.corpus_update.prepare_update(
+                self.store,
+                **altered_date,
+                implementation=lambda: receipt["implementation_hash"],
+            )
+        options["preserve_web_analytics"] = False
+        with self.assertRaisesRegex(ValueError, "release policy differs"):
+            update.corpus_update.prepare_update(
+                self.store,
+                **options,
+                implementation=lambda: receipt["implementation_hash"],
+            )
+        (self.export_source / self.export_path).write_bytes(b"changed")
+        with self.assertRaisesRegex(ValueError, "integrity"):
+            update.verify_candidate(first)
+
+    def test_owner_requires_complete_export_source_before_capture(self):
+        with self.assertRaisesRegex(ValueError, "requires --export-artwork-source"):
+            update.prepare_update(
+                self.store,
+                self.browser,
+                package=self.package,
+                mai_notes_snapshot=self.snapshot,
+                offline=True,
+            )
+        for source in (self.root / "absent", self.browser):
+            with (
+                self.subTest(source=source),
+                self.assertRaisesRegex(ValueError, "Required export artwork is missing"),
+            ):
+                self.prepare(export_artwork_source=source)
+        self.assertFalse(any((self.store / "runs").glob("*/ready.json")))
+        self.assertFalse(any((self.store / "runs").glob("*/package")))
+
+    def test_owner_resolves_export_source_from_explicit_and_published_public(self):
+        first = self.prepare()
+        second = self.prepare(previous_public=first / "public", export_artwork_source=None)
+        binding = read_json(second / "attempt.json")["body"]["bindings"]["export_artwork_source"]
+        self.assertEqual(binding["path"], str((first / "public").resolve()))
+        self.assertEqual(set(binding["files"]), {self.export_path})
+        atomic_json(first / "publication.json", {"run": first.name})
+        atomic_json(self.store / "latest.json", {"run": first.name})
+        third = self.prepare(export_artwork_source=None)
+        self.assertEqual(
+            read_json(third / "attempt.json")["body"]["bindings"]["export_artwork_source"], binding
+        )
+
+    def test_release_input_receipt_tampering_is_rejected(self):
+        run = self.prepare()
+        path = run / "release-inputs.json"
+        value = read_json(path)
+        value["preserve_web_analytics"] = False
+        atomic_json(path, value)
+        with self.assertRaisesRegex(ValueError, "public release inputs changed"):
+            update.verify_candidate(run)
+        atomic_json(path, read_json(run / "ready.json")["release_inputs"])
+        ready = read_json(run / "ready.json")
+        del ready["release_inputs"]
+        atomic_json(run / "ready.json", ready)
+        with self.assertRaisesRegex(ValueError, "public release inputs changed"):
+            update.verify_candidate(run)
 
     def test_refresh_preserves_retained_public_maishift_capability(self):
         enabled_browser = self.root / "enabled-browser"
@@ -147,6 +244,26 @@ class CatalogUpdateTests(unittest.TestCase):
                 replay_sources=prior / "source-captures.json",
             )
 
+    def test_source_replay_requires_matching_public_release_inputs_before_capture(self):
+        prior = self.root / "prior-replay"
+        atomic_json(prior / "source-captures.json", {})
+        registry = self.root / "unused-registry"
+        registry.mkdir()
+        (registry / "sentinel.json").write_text("{}")
+        for record in (
+            None,
+            {"preserve_web_analytics": False, "export_artwork": {}},
+            {"preserve_web_analytics": True, "export_artwork": {}},
+        ):
+            if record is not None:
+                atomic_json(prior / "release-inputs.json", record)
+            with (
+                self.subTest(record=record),
+                self.assertRaisesRegex(ValueError, "public release inputs differ"),
+            ):
+                self.prepare(registry=registry, replay_sources=prior / "source-captures.json")
+        self.assertFalse(any((self.store / "runs").glob("*/ready.json")))
+
     def test_verified_pointer_supplies_public_history_and_rejects_unbound_candidate(self):
         retained, unbound = self.prepare(), self.prepare()
         publication = {"run": retained.name}
@@ -203,9 +320,27 @@ class CatalogUpdateTests(unittest.TestCase):
                     str(self.root / "public"),
                     "--package",
                     str(self.package),
+                    "--export-artwork-source",
+                    str(self.export_source),
                 ]
             )
         self.assertEqual(prepare.call_args.kwargs["previous_public"], self.root / "public")
+        self.assertEqual(prepare.call_args.kwargs["export_artwork_source"], self.export_source)
+
+    def test_refresh_cli_passes_export_source_override(self):
+        with patch.object(
+            update, "refresh_latest", return_value=self.root / "candidate"
+        ) as refresh:
+            update.main(
+                [
+                    "refresh",
+                    "--store",
+                    str(self.store),
+                    "--export-artwork-source",
+                    str(self.export_source),
+                ]
+            )
+        self.assertEqual(refresh.call_args.kwargs["export_artwork_source"], self.export_source)
 
     def test_readiness_rejects_changed_dependency_pins_and_build_policy(self):
         implementation_root = self.root / "implementation"

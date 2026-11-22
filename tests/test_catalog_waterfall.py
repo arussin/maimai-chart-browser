@@ -13,13 +13,14 @@ from maimai_intelligence.catalog_identity import key, rules
 from maimai_intelligence.catalog_refresh import METADATA_URLS, refresh
 from maimai_intelligence.catalog_sources import WIKI, discovery_pages, mai_catalog, wiki_catalog
 from maimai_intelligence.catalog_transcriptions import prepare_body
+from maimai_intelligence.corpus_update import prepare_update, verify_candidate
 from maimai_intelligence.coverage_types import IntegrityError
 from maimai_intelligence.lab import build_lab
 from maimai_intelligence.overview_codec import compact_overview
 from maimai_intelligence.registry import read_registry, write_registry
 from maimai_intelligence.registry_catalog import build_registry_package, project_registry
 from maimai_intelligence.snapshots import atomic_json, read_json
-from scripts.update_catalog import prepare_update, refresh_latest, verify_candidate
+from scripts.update_catalog import refresh_latest
 from tests.mai_notes_fixture import manifest
 from tests.registry_fixture import admit, fixture, official_row
 

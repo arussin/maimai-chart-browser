@@ -3,6 +3,7 @@
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from maimai_intelligence.corpus_attempts import bind_attempt, resume_options, verify_attempt
 from maimai_intelligence.corpus_cli import input_locations
@@ -11,6 +12,28 @@ from maimai_intelligence.snapshots import atomic_json
 
 
 class AttemptLocationTests(unittest.TestCase):
+    def test_export_binding_is_complete_relocatable_and_excludes_unreviewed_files(self):
+        from maimai_intelligence.corpus_attempts import bound_input_inventory
+        from tests.test_export_artwork import export_fixture
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            manifest, path, raw = export_fixture(root / "source")
+            export_fixture(root / "relocated")
+            (root / "source/private-provenance.json").write_text("unrelated")
+            with patch(
+                "maimai_intelligence.export_artwork.read_export_artwork_manifest",
+                return_value=manifest,
+            ):
+                expected = bound_input_inventory("export_artwork_source", root / "source")
+                self.assertEqual(set(expected), {path})
+                self.assertEqual(
+                    expected, bound_input_inventory("export_artwork_source", root / "relocated")
+                )
+                (root / "relocated" / path).write_bytes(raw + b"changed")
+                with self.assertRaisesRegex(ValueError, "integrity"):
+                    bound_input_inventory("export_artwork_source", root / "relocated")
+
     def test_argument_names_are_explicit_unique_and_preserve_path_separators(self):
         self.assertEqual(
             input_locations(["previous-browser=C:/Restored/browser"]),

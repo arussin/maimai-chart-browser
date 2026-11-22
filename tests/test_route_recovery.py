@@ -2,6 +2,7 @@
 
 import hashlib
 import json
+import re
 import unittest
 from dataclasses import replace
 from urllib.parse import parse_qs, unquote, urlsplit
@@ -29,7 +30,7 @@ def style_inputs():
 
     script = b"export const fixture = true;"
     return BrowserResources(
-        BrowserResourceReference("browser/fixture.js", digest(script), len(script)),
+        BrowserResourceReference("browser/fixture-FIXTURE0.js", digest(script), len(script)),
         reference(b"{}", "json"),
         reference(b"<main>Fixture</main>", "html"),
         reference(b'{"catalog":true}', "json"),
@@ -138,9 +139,26 @@ class RouteRecoveryTests(unittest.TestCase):
         # only titles/descriptions change in 25 fictional song documents, in
         # both ordinary and recovery inventories. Routes, bodies, chart recovery
         # decisions and version documents remain identical (see SEO validation).
-        # These are complete path-to-content inventories, not selected HTML text.
+        # Compare the complete historical inventory after removing ONLY this
+        # audit's new icon/social head tags. Bodies, routes, catalogs and every
+        # other byte must still match the previously reviewed fixtures.
         def inventory_digest(assets):
-            return digest(canonical({name: digest(raw) for name, raw in sorted(assets.items())}))
+            normalized = {}
+            for name, raw in sorted(assets.items()):
+                if name.endswith(".html"):
+                    head, separator, body = raw.partition(b"</head>")
+                    head = head.replace(
+                        b'<link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48">', b""
+                    )
+                    head = re.sub(
+                        rb'<meta (?:property="og:[^"]+"|name="twitter:[^"]+") '
+                        rb'content="[^"]*">\n?',
+                        b"",
+                        head,
+                    )
+                    raw = head + separator + body
+                normalized[name] = digest(raw)
+            return digest(canonical(normalized))
 
         self.assertEqual(
             inventory_digest(self.prepared.assets),
@@ -164,6 +182,17 @@ class RouteRecoveryTests(unittest.TestCase):
             ),
             "5d359b5ad8c9c7950b0fad2b1790f04d8459032ec92dd8c2522a48c35ddd59c6",
         )
+
+    def test_recovery_accepts_only_the_reviewed_brand_link_and_social_properties(self):
+        for raw in self.prepare().assets.values():
+            self.assertIn(b'href="/favicon.ico"', raw)
+            self.assertIn(b'property="og:image" content="https://maimai.party/og-image.png"', raw)
+        for old, new in (
+            (b'href="/favicon.ico"', b'href="https://unreviewed.example/icon.ico"'),
+            (b'property="og:image"', b'property="og:unreviewed"'),
+        ):
+            with self.subTest(new=new), self.assertRaises(ValueError):
+                self.prepare(self.mutate_document(old, new))
 
     def test_static_recovery_removes_application_module_preloads(self):
         prepared = self.mutate_document(

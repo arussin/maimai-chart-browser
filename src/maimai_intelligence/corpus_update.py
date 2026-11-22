@@ -6,7 +6,7 @@ import hashlib
 import json
 import re
 from collections.abc import Callable, Iterable
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, TypedDict
@@ -16,8 +16,9 @@ from maimai_analyzer.dataset import SOURCE_LOCK
 
 from .artwork import MEDIA_PATH
 from .catalog_loading import MAX_CATALOG_BYTES
-from .corpus_attempts import bind_attempt
+from .corpus_attempts import bind_attempt, bound_input_inventory, verify_recorded_artwork
 from .corpus_diagnostics import Diagnostics
+from .corpus_failures import CorpusInputError
 from .corpus_models import PreparedLegacy, PreparedRegistry, PreparedResult, RegistryContext
 from .corpus_registry import capture_claims, project_corpus, reconcile_evidence
 from .corpus_requests import (
@@ -282,6 +283,10 @@ def prepare_update(
     implementation: Callable[[], str] | None = None,
     registry_seed: Path | str | None = None,
     predecessor: dict[str, str] | None = None,
+    export_artwork_source: Path | str | None = None,
+    preserve_web_analytics: bool = False,
+    release_date: str | None = None,
+    export_artwork_from_previous_public: bool = False,
 ) -> Path:
     """Compatibility entry point; production stages consume PreparationRequest."""
     request = preparation_request(
@@ -303,6 +308,10 @@ def prepare_update(
         player_maishift=player_maishift,
         registry_seed=registry_seed,
         predecessor=predecessor,
+        export_artwork_source=export_artwork_source,
+        preserve_web_analytics=preserve_web_analytics,
+        release_date=release_date,
+        export_artwork_from_previous_public=export_artwork_from_previous_public,
     )
     return prepare_corpus(request, implementation=implementation, source_fetcher=source_fetcher)
 
@@ -353,6 +362,31 @@ def prepare_corpus(
                     request.player_maishift,
                     run,
                 )
+                if (
+                    request.export_artwork_from_previous_public
+                    and request.export_artwork_source is None
+                ):
+                    if retained.previous_public is None:
+                        raise CorpusInputError(
+                            "Owner preparation requires --export-artwork-source "
+                            "or --previous-public"
+                        )
+                    request = replace(request, export_artwork_source=retained.previous_public)
+                if request.export_artwork_source is not None:
+                    try:
+                        bound_input_inventory(
+                            "export_artwork_source", request.export_artwork_source
+                        )
+                    except CorpusInputError as exc:
+                        if request.predecessor:
+                            raise CorpusInputError(
+                                "Export artwork no longer satisfies the current index; "
+                                "prepare a new candidate"
+                            ) from exc
+                        raise
+                retained = replace(
+                    retained, before=retain_history(previous_browser, run / "browser")
+                )
                 if isinstance(source, RegistrySource) and source.verify_legacy_identity:
                     _validate_legacy_seed(source.path, retained.before)
                 attempt = bind_attempt(
@@ -362,6 +396,17 @@ def prepare_corpus(
                     request.predecessor,
                     policy_context=policy_context,
                 )
+                release_inputs = _release_inputs(attempt)
+                if replay:
+                    prior_inputs = _recorded_release_inputs(Path(replay).parent)
+                    if _normalized_release_inputs(prior_inputs) != _normalized_release_inputs(
+                        release_inputs
+                    ):
+                        raise CorpusInputError(
+                            "Source replay public release inputs differ; prepare a fresh candidate "
+                            "to change owner artwork, analytics or release date"
+                        )
+                atomic_json(run / "release-inputs.json", release_inputs)
             with diagnostics.stage("source_capture"):
                 package_path = _prepare_package(request, run)
             corpus: PreparedResult
@@ -402,7 +447,23 @@ def prepare_corpus(
                     counts.records = len(corpus.charts)
                     counts.evidence = ["mai-notes-audit.json"]
             with diagnostics.stage("render"):
-                rendered = _render_artifacts(run, retained, capacity, corpus)
+                rendered = _render_artifacts(
+                    run,
+                    retained,
+                    capacity,
+                    corpus,
+                    export_artwork_source=request.export_artwork_source,
+                    preserve_web_analytics=request.preserve_web_analytics,
+                    release_date=request.release_date,
+                )
+                if request.export_artwork_source is not None:
+                    try:
+                        verify_recorded_artwork(
+                            request.export_artwork_source, release_inputs["export_artwork"]
+                        )
+                        verify_recorded_artwork(run / "public", release_inputs["export_artwork"])
+                    except CorpusInputError as exc:
+                        raise CorpusInputError("Export artwork changed during preparation") from exc
             with diagnostics.stage("review") as counts:
                 _describe_changes(run, retained.before, corpus, rendered.version)
                 counts.evidence = ["changes.json", "report.md"]
@@ -410,6 +471,7 @@ def prepare_corpus(
                 receipt = _ready_receipt(run, request, retained, corpus, rendered, implementation)
                 receipt["attempt_sha256"] = attempt["sha256"]
                 receipt["source_registrations"] = policy_context.manifest()
+                receipt["release_inputs"] = release_inputs
             atomic_json(run / "state.json", {"status": "ready"})
             atomic_json(run / "ready.json", receipt)
             return run
@@ -479,8 +541,7 @@ def _retain_public_inputs(
             and read_json(prior_ready).get("browser_features", features) != features
         ):
             raise ValueError("Source replay browser capabilities differ")
-    before = retain_history(previous_browser, run / "browser")
-    return RetainedPublic(previous_public, previous_identity, features, before)
+    return RetainedPublic(previous_public, previous_identity, features, {})
 
 
 def _prepare_legacy(
@@ -513,7 +574,14 @@ def _prepare_legacy(
 
 
 def _render_artifacts(
-    run: Path, retained: RetainedPublic, capacity: ReviewedCapacity | None, corpus: PreparedResult
+    run: Path,
+    retained: RetainedPublic,
+    capacity: ReviewedCapacity | None,
+    corpus: PreparedResult,
+    *,
+    export_artwork_source: Path | None = None,
+    preserve_web_analytics: bool = False,
+    release_date: str | None = None,
 ) -> RenderedCandidate:
     features, previous_public, previous_identity = (
         retained.features,
@@ -536,6 +604,9 @@ def _render_artifacts(
         previous_public=previous_public,
         capacity=capacity,
         prepared_catalogs={version: browser.catalog},
+        export_artwork_source=export_artwork_source,
+        preserve_web_analytics=preserve_web_analytics,
+        release_date=release_date,
     )
     if previous_public_identity(previous_public) != previous_identity:
         raise ValueError("Preceding public inputs changed during preparation")
@@ -675,6 +746,51 @@ def _ready_receipt(
     return receipt
 
 
+def _release_inputs(attempt: dict[str, Any]) -> dict[str, Any]:
+    body = attempt["body"]
+    return {
+        "preserve_web_analytics": body["values"].get("preserve_web_analytics", False),
+        "export_artwork": body["bindings"].get("export_artwork_source", {}).get("files"),
+        **(
+            {"release_date": body["values"]["release_date"]}
+            if "release_date" in body["values"]
+            else {}
+        ),
+    }
+
+
+def _normalized_release_inputs(value: dict[str, Any]) -> dict[str, Any]:
+    # Before release-date support, absence meant the same thing as explicit None.
+    return {"release_date": None, **value}
+
+
+def _recorded_release_inputs(run: Path) -> dict[str, Any]:
+    """Accept absent receipts only for authenticated pre-release-input attempts."""
+    from .serialization import digest
+
+    path = run / "release-inputs.json"
+    attempt_path = run / "attempt.json"
+    if attempt_path.is_file():
+        attempt = read_json(attempt_path)
+        body = attempt.get("body", {})
+        values = body.get("values", {})
+        if body.get("version") == "corpus-attempt-1" and digest(body) == attempt.get("sha256"):
+            if path.is_file():
+                recorded = read_json(path)
+                if recorded == _release_inputs(attempt):
+                    return recorded
+            elif (
+                "preserve_web_analytics" not in values
+                and "release_date" not in values
+                and "export_artwork_source" not in body.get("bindings", {})
+            ):
+                return {"preserve_web_analytics": False, "export_artwork": None}
+    raise CorpusInputError(
+        "Source replay public release inputs differ: missing or changed release-inputs.json; "
+        "prepare again"
+    )
+
+
 def verify_candidate(
     run: Path | str,
     *,
@@ -701,9 +817,28 @@ def verify_candidate(
     if "attempt_sha256" in receipt:
         from .corpus_attempts import verify_attempt
 
-        verify_attempt(
+        attempt = verify_attempt(
             run, implementation(), input_locations=input_locations, policy_context=policy_context
         )
+        values = attempt["body"]["values"]
+        has_release_inputs = (
+            "preserve_web_analytics" in values
+            or "release_date" in values
+            or "export_artwork_source" in attempt["body"]["bindings"]
+        )
+        if has_release_inputs:
+            if (
+                receipt.get("release_inputs") != _release_inputs(attempt)
+                or not (run / "release-inputs.json").is_file()
+                or read_json(run / "release-inputs.json") != receipt["release_inputs"]
+            ):
+                raise ValueError("Candidate public release inputs changed")
+        elif "release_inputs" in receipt or (run / "release-inputs.json").exists():
+            raise ValueError("Candidate public release inputs changed")
+        if receipt.get("release", {}).get("release_date") != attempt["body"]["values"].get(
+            "release_date"
+        ):
+            raise ValueError("Candidate release date differs from bound input")
     preceding_public = published_public(run.parent.parent)
     if preceding_public is not None and preceding_public.parent != run:
         if receipt.get("previous_public", {}).get("inputs") != previous_public_identity(

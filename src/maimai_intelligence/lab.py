@@ -129,6 +129,8 @@ def build_browser(
     manifest["default"] = catalog_version
     assets = files("maimai_intelligence.assets")
     build_player_help(root)
+    for name in ("favicon.ico", "og-image.png"):
+        (root / name).write_bytes(assets.joinpath(name).read_bytes())
     bundle = write_browser_assets(root, player_pilot=player_pilot, player_maishift=player_maishift)
     # Separate public support documents use small entry adapters from the same source graph.
     for name in ("localization.js", "support-config.js", "support-client.js", "support-stripe.js"):

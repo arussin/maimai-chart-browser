@@ -361,6 +361,8 @@ def _version_facts(charts, navigation, locale, ledger, unknown):
 
 
 def _document(locale, kind, slug, title, description, body, words, browser_csp=None):
+    from .public_metadata import social_metadata
+
     path = route(locale, kind, slug)
     alternates = "".join(
         f'<link rel="alternate" hreflang="{language}" href="{ORIGIN}{route(code, kind, slug)}">'
@@ -397,7 +399,9 @@ def _document(locale, kind, slug, title, description, body, words, browser_csp=N
         f'<title>{escape(title)} | maimai.party</title><meta name="description" '
         f'content="{escape(description, quote=True)}">'
         f'<link rel="canonical" href="{ORIGIN}{path}">{alternates}'
-        '<link rel="stylesheet" '
+        '<link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48">'
+        + social_metadata(f"{title} | maimai.party", description, f"{ORIGIN}{path}")
+        + '<link rel="stylesheet" '
         'href="/seo-pages.css"><link rel="stylesheet" href="/challenge-review.css">'
         '<meta name="maimai-browser-base" content="/">'
         '<script type="module" data-maimai-browser '

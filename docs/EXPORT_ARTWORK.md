@@ -31,6 +31,13 @@ not the production coverage definition. The current coverage receipt is in
 
 ## Release and preview assembly
 
+The owner `scripts.update_catalog prepare` and `refresh` workflows require all
+reviewed images. Pass `--export-artwork-source PATH`, or let them use the verified
+previous public release. Initial owner runs need an explicit store. Missing or
+changed artwork fails preparation; the selected paths and hashes are retained in
+attempt/readiness receipts for replay. See [catalog updates](CATALOG_UPDATES.md).
+The lower-level planner and ordinary lab fixtures keep their opt-in behavior below.
+
 Supply the reviewed source explicitly when preparing a release:
 
 ```python

@@ -30,6 +30,35 @@ Readiness binds its manifest and ledger, and publication rejects an unbound or
 changed live preceding manifest before any upload attempt. Existing publication
 and uncertain-upload state guards continue to apply.
 
+Owner `prepare` and `refresh` always enable the existing Web Analytics CSP
+allowance. This is a fixed owner-workflow policy, not inferred from page text;
+it neither configures an account nor inserts a new analytics token.
+They also require the complete packaged export-artwork inventory. Supply
+`--export-artwork-source PATH` to select a reviewed input store, or omit it to
+use `--previous-public` (otherwise the verified `latest.json` public directory).
+An initial owner run must supply an explicit artwork store. A missing or corrupt
+image stops preparation before source acquisition; there is no thumbnail-only
+owner fallback. A newer packaged artwork index may require a newer explicit store.
+
+`attempt.json` records the resolved artwork source and checksums of every reviewed
+image, excluding unrelated files. The packaged index is bound by implementation
+identity. `release-inputs.json` and `ready.json.release_inputs` bind those checksums
+and the analytics boolean. Continuations preserve these inputs; relocated artwork
+is accepted only with the same verified bytes. Source replay requires the same
+release-input receipt. Artwork is rechecked after rendering and during candidate
+verification. Installed synthetic preparations remain opt-in through
+`--export-artwork-source` and `--preserve-web-analytics`; the generic release
+planner and interface-only release defaults are unchanged.
+
+**Historical-path limitation:** the planner retains verified catalog/startup/index
+references and permalink history, but not every unreferenced file in the previous
+public directory. `publish` uploads the candidate as-is; it does not merge the
+preceding deployment. Old chunks, shell resources and other unreferenced URLs can
+therefore disappear. Blanket preservation is deferred pending explicit path
+ownership and validation rules; this change does not claim full old-tab continuity.
+The 20,000-file default guard remains mandatory, including for real-data review
+plans. A nondeployable plan is not a ready candidate.
+
 New official inventory admissions and primary corpus pin changes still follow
 [the accepted inventory workflow](REGISTRY_IMPLEMENTATION.md#owner-preparation).
 
@@ -83,6 +112,8 @@ Each invocation creates a fresh `STORE/runs/RUN_ID/` containing:
 - `registry/`: the accepted registry for the next update.
 - `previous-public.json`: bound preceding manifest/permalink identities when supplied
   or resolved from the current publication. Exact source replay requires those same inputs.
+- `release-inputs.json`: bound export-artwork inventory and explicit analytics allowance;
+  source locations are retained privately in `attempt.json`.
 - `source-captures.json` and `source-audit.json`: reproducible inputs, metadata gaps,
   validation outcomes and provider failures for online registry updates.
 - `package/`: the complete versioned research package with its link index.
