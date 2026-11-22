@@ -91,6 +91,7 @@ class PreparationRequest:
     export_artwork_source: Path | None = None
     preserve_web_analytics: bool = False
     release_date: str | None = None
+    export_artwork_from_previous_public: bool = False
 
     def __post_init__(self) -> None:
         from .sitemap_dates import validate_release_date
@@ -153,6 +154,7 @@ def preparation_request(
     export_artwork_source: Path | str | None = None,
     preserve_web_analytics: bool = False,
     release_date: str | None = None,
+    export_artwork_from_previous_public: bool = False,
 ) -> PreparationRequest:
     """Normalize CLI/legacy arguments once; downstream stages receive this request."""
     if player_maishift is not None and type(player_maishift) is not bool:
@@ -238,4 +240,5 @@ def preparation_request(
         path(export_artwork_source),
         preserve_web_analytics,
         release_date,
+        export_artwork_from_previous_public,
     )

@@ -9,6 +9,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, TypedDict
 
+from .corpus_failures import CorpusInputError
 from .corpus_policy import ReuseIdentity, ReuseOperation, reuse_operation
 from .metadata_policy import BUILTIN_CONTEXT, PolicyContext
 from .serialization import digest
@@ -43,20 +44,58 @@ class InputBinding(TypedDict):
 
 def bound_input_inventory(name: str, path: Path) -> dict[str, dict[str, str | int]]:
     if name == "export_artwork_source":
-        from .export_artwork import read_export_artwork_assets
+        from .export_artwork import (
+            _assets,
+            read_export_artwork_assets,
+            read_export_artwork_manifest,
+        )
 
         # Bind only the reviewed read closure, never provenance or unrelated files.
+        if not path.is_dir():
+            raise CorpusInputError(
+                "Required export artwork is missing; "
+                "supply a complete --export-artwork-source directory"
+            )
         try:
-            assets = read_export_artwork_assets(path)
-        except FileNotFoundError as exc:
-            raise ValueError(
+            manifest = read_export_artwork_manifest()
+            # Windows may report opening a directory as PermissionError instead of
+            # IsADirectoryError. Reject this input shape before attempting to open it.
+            if any((path / name).is_dir() for name in _assets(manifest)):
+                raise CorpusInputError("Required export artwork must be files, not directories")
+            assets = read_export_artwork_assets(path, manifest=manifest)
+        except (FileNotFoundError, IsADirectoryError, NotADirectoryError) as exc:
+            raise CorpusInputError(
                 "Required export artwork is missing; supply a complete --export-artwork-source"
             ) from exc
+        except ValueError as exc:
+            raise CorpusInputError(str(exc)) from exc
         return {
             name: {"bytes": len(raw), "sha256": hashlib.sha256(raw).hexdigest()}
             for name, raw in assets.items()
         }
     return input_inventory(path)
+
+
+def verify_recorded_artwork(path: Path, files: dict[str, Any]) -> dict[str, Any]:
+    """Verify the retained read closure, independently of today's packaged index."""
+    root = path.resolve()
+    if not root.is_dir():
+        raise CorpusInputError("Export artwork integrity mismatch: missing input directory")
+    for name, expected in files.items():
+        if re.fullmatch(r"media/[a-f0-9]{64}\.webp", name) is None:
+            raise CorpusInputError("Export artwork integrity mismatch: invalid recorded path")
+        target = root / name
+        if (
+            target.is_symlink()
+            or target.parent.is_symlink()
+            or not target.resolve().is_relative_to(root)
+            or not target.is_file()
+        ):
+            raise CorpusInputError("Export artwork integrity mismatch: missing or aliased file")
+        raw = target.read_bytes()
+        if {"bytes": len(raw), "sha256": hashlib.sha256(raw).hexdigest()} != expected:
+            raise CorpusInputError("Export artwork integrity mismatch: recorded bytes changed")
+    return files
 
 
 def input_inventory(path: Path) -> dict[str, dict[str, str | int]]:
@@ -110,6 +149,11 @@ def bind_attempt(
         if verified["sha256"] != predecessor.get("attempt_sha256"):
             raise ValueError("Predecessor attempt changed")
         previous = verified["body"]
+        export_binding = bindings.get("export_artwork_source")
+        if previous["bindings"].get("export_artwork_source", {}).get("files") != (
+            export_binding["files"] if export_binding is not None else None
+        ):
+            raise CorpusInputError("Export artwork index changed; prepare a new candidate")
         if (
             previous["values"].get("preserve_web_analytics", False)
             != values["preserve_web_analytics"]
@@ -200,7 +244,9 @@ def verify_retained_inputs(
         raise ValueError("Attempt receipt integrity mismatch")
     previous = {name: row["files"] for name, row in body["bindings"].items()}
     current = {
-        name: bound_input_inventory(name, path)
+        name: verify_recorded_artwork(path, previous[name])
+        if name == "export_artwork_source"
+        else bound_input_inventory(name, path)
         for name, path in _input_paths(body, input_locations).items()
     }
     reviews = digest(body["values"].get("coverage_reviews"))

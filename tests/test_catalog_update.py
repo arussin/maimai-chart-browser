@@ -112,7 +112,13 @@ class CatalogUpdateTests(unittest.TestCase):
 
     def test_owner_requires_complete_export_source_before_capture(self):
         with self.assertRaisesRegex(ValueError, "requires --export-artwork-source"):
-            update.prepare_update(self.store, self.browser)
+            update.prepare_update(
+                self.store,
+                self.browser,
+                package=self.package,
+                mai_notes_snapshot=self.snapshot,
+                offline=True,
+            )
         for source in (self.root / "absent", self.browser):
             with (
                 self.subTest(source=source),
@@ -143,6 +149,7 @@ class CatalogUpdateTests(unittest.TestCase):
         atomic_json(path, value)
         with self.assertRaisesRegex(ValueError, "public release inputs changed"):
             update.verify_candidate(run)
+        atomic_json(path, read_json(run / "ready.json")["release_inputs"])
         ready = read_json(run / "ready.json")
         del ready["release_inputs"]
         atomic_json(run / "ready.json", ready)

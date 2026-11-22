@@ -58,12 +58,8 @@ def implementation_hash(root=REPO_ROOT):
 
 def prepare_update(store, previous_browser, **options):
     """Owner defaults around the installed preparation service."""
-    source = options.get("export_artwork_source")
-    if source is None:
-        source = options.get("previous_public") or published_public(store)
-    if source is None:
-        raise ValueError("Owner preparation requires --export-artwork-source or --previous-public")
-    options["export_artwork_source"] = source
+    # Resolve the fallback from the same preceding publication under the store lock.
+    options["export_artwork_from_previous_public"] = options.get("export_artwork_source") is None
     # Fixed owner publication policy; installed synthetic preparations remain opt-in.
     options["preserve_web_analytics"] = True
     options.setdefault("registry_seed", REPO_ROOT / "registry")
@@ -78,9 +74,27 @@ def prepare_update(store, previous_browser, **options):
 
 
 def verify_candidate(run):
-    return corpus_update.verify_candidate(
+    receipt = corpus_update.verify_candidate(
         run, implementation=lambda: verified_source_implementation_hash(REPO_ROOT)
     )
+    from maimai_intelligence.export_artwork import _assets, read_export_artwork_manifest
+
+    required = {
+        name: {"bytes": row["bytes"], "sha256": row["sha256"]}
+        for name, row in _assets(read_export_artwork_manifest()).items()
+    }
+    inputs = receipt.get("release_inputs", {})
+    if (
+        inputs.get("preserve_web_analytics") is not True
+        or not required
+        or inputs.get("export_artwork") != required
+        or any(receipt["files"].get(name) != row for name, row in required.items())
+    ):
+        raise ValueError(
+            "Owner publication requires Web Analytics and complete current export artwork; "
+            "prepare a new owner candidate with --export-artwork-source or --previous-public"
+        )
+    return receipt
 
 
 def command(args, *, cwd=REPO_ROOT, env=None):
