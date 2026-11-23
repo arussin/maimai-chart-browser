@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
+  <title>Party ring</title>
+  <!-- Measured from the 48px PNG in favicon.html; clockwise: red, orange, yellow, green, blue. -->
+  <circle cx="23.97" cy="24.00" r="10.95" fill="#ffffff"/>
+  <path d="M 11.472507 8.232088 A 20.12 20.12 0 0 1 36.483999 8.245184 L 30.780551 15.425684 A 10.95 10.95 0 0 0 17.168432 15.418557 Z" fill="#ec5153" stroke="#003054" stroke-width="0.85" stroke-linejoin="round"/>
+  <path d="M 36.483999 8.245184 A 20.12 20.12 0 0 1 43.152439 30.070292 L 34.409747 27.303663 A 10.95 10.95 0 0 0 30.780551 15.425684 Z" fill="#f28f34" stroke="#003054" stroke-width="0.85" stroke-linejoin="round"/>
+  <path d="M 43.152439 30.070292 A 20.12 20.12 0 0 1 23.962977 44.119999 L 23.966178 34.949999 A 10.95 10.95 0 0 0 34.409747 27.303663 Z" fill="#f7c729" stroke="#003054" stroke-width="0.85" stroke-linejoin="round"/>
+  <path d="M 23.962977 44.119999 A 20.12 20.12 0 0 1 4.785443 30.063596 L 13.529101 27.300018 A 10.95 10.95 0 0 0 23.966178 34.949999 Z" fill="#8bbe48" stroke="#003054" stroke-width="0.85" stroke-linejoin="round"/>
+  <path d="M 4.785443 30.063596 A 20.12 20.12 0 0 1 11.472507 8.232088 L 17.168432 15.418557 A 10.95 10.95 0 0 0 13.529101 27.300018 Z" fill="#23aae4" stroke="#003054" stroke-width="0.85" stroke-linejoin="round"/>
+</svg>
