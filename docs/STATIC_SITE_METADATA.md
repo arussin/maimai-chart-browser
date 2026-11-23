@@ -5,14 +5,37 @@ The public planner publishes the Party-ring `favicon.ico` and one shared
 PNG payloads already in `assets/favicon.html`; Maishift's icon is unrelated.
 Inline PNG icons remain in the self-contained offline exports.
 
-The 1200 by 630 preview PNG was drawn locally with Windows System.Drawing: white
-background, the existing 48 pixel Party ring scaled to 192 pixels, and the
-`site-brand.html` wordmark in its existing Segoe UI system-font fallback, bold
-italic, using the exact colors from `site-brand.css`. No font file, image or
-artwork was downloaded. Only the PNG is a packaged preview asset. Its small
-generation script and Adam's review copy are in
-`C:\DevCache\projects\maimai-chart-browser-registry\audit-source-fixes-20261122`
-(`generate-brand-assets.ps1`, `og-image.png`).
+The 1200 by 630 preview PNG uses the measured vector `assets/party-ring.svg`,
+rendered locally with Pillow at eight times the target resolution and downsampled
+with Lanczos. The ring retains its original 192 by 192 canvas at (504, 110).
+Every pixel outside that canvas, including the original System.Drawing wordmark
+and white background, is preserved from the prior PNG. The wordmark uses the
+site's existing Segoe UI system-font fallback and `site-brand.css` colours; no
+font file, image or artwork was downloaded. The SVG is included by the existing
+package rules without configuration changes; public metadata still uses the PNG.
+
+The vector was fitted against the embedded **48 px** PNG, on white: centre
+(23.97, 24.00), outer/inner arc radii 20.12/10.95 px and 0.85 px outline/gaps in
+measured dark `#003054`. Clockwise boundaries, in degrees from the right with
+positive angles downward, are -128.40, -51.54, 17.56, 90.02 and 162.46.
+Median interior colours, clockwise from the top, are red `#ec5153`, orange
+`#f28f34`, yellow `#f7c729`, green `#8bbe48` and blue `#23aae4`.
+The 48 px comparison has mean absolute RGB error 3.58/255 (RMSE 8.39/255).
+Clean circular edges and flat fills replace the source PNG's faint edge
+highlights and pixel-level colour variation. The centre is explicitly white;
+the original centre is transparent and appears white on this background.
+The 16/32/48 PNG icons and ICO remain unchanged.
+
+Generation scripts, measurements and review copies are retained in
+`C:\DevCache\projects\maimai-chart-browser-registry\og-image-20261122`:
+`fit-ring.py` measures/fits the PNG, `write-vector.py` records that geometry as
+SVG, and `generate-og-image.py` renders the SVG's circular paths and replaces
+only the ring canvas in retained `og-image-original.png`. Run with the Python
+environment selected by `tools/Use-DevelopmentEnvironment.ps1` (Pillow 13).
+Outputs include `og-image.png` (35,287 bytes), `ring-compare.png` (old left,
+new right at the preview size), `ring-compare-48.png`, and `validation.json`
+with dimensions, hashes and the pixel-preservation check. No build, deployment
+or favicon regeneration is part of this image-generation script.
 
 Home metadata replacement removes managed tags only within the head and is
 idempotent. The old implementation unconditionally appended tags; feeding a
