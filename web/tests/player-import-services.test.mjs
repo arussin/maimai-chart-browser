@@ -15,16 +15,17 @@ test('every supported upload belongs to a named service with a deliberate parser
   assert.deepEqual(
     Array.from(IMPORT_SERVICES, (service) => service.id),
     [
+      'maishift',
       'kamaitachi',
       'diving-fish',
       'lxns',
-      'maishift',
       'session-report',
       'tomomai',
       'mai-tools',
       'dxrating',
       'jietng',
       'aqua',
+      'tachi',
     ],
   );
   assert.equal(new Set(methods.map((method) => method.value)).size, 12);
@@ -43,20 +44,20 @@ test('every supported upload belongs to a named service with a deliberate parser
     }
 });
 
-test('OAuth services stay connection only while Kamaitachi groups its interchange upload', () => {
+test('OAuth and public Kamaitachi stay separate from private Tachi uploads', () => {
   const values = (id) =>
     Array.from(
       IMPORT_SERVICES.find((service) => service.id === id).methods,
       (method) => method.value,
     );
-  assert.deepEqual(values('kamaitachi'), ['kamaitachi', 'file:tachi']);
+  assert.deepEqual(values('kamaitachi'), ['kamaitachi']);
   assert.deepEqual(values('diving-fish'), ['diving-fish']);
   assert.deepEqual(values('lxns'), ['lxns']);
   assert.deepEqual(values('session-report'), ['file', 'report']);
   assert.deepEqual(values('maishift'), ['maishift']);
   assert.equal(importServiceForMethod('file').title, 'maimai.party Session Report');
   assert.equal(importServiceForMethod('kamaitachi').methods[0].label, 'Import by username');
-  assert.equal(importServiceForMethod('file:tachi').id, 'kamaitachi');
+  assert.equal(importServiceForMethod('file:tachi').id, 'tachi');
   for (const unsupported of ['invented', 'file:diving-fish', 'file:lxns'])
     assert.throws(() => importServiceForMethod(unsupported), /Unknown player import method/);
 });
@@ -66,11 +67,11 @@ test('visibility filters both methods and empty service boxes without changing t
   const services = visibleImportServices({ 'file:tachi': true, 'file:tomomai': true, file: false });
   assert.deepEqual(
     Array.from(services, (service) => service.id),
-    ['kamaitachi', 'tomomai'],
+    ['tomomai', 'tachi'],
   );
   assert.deepEqual(
-    Array.from(services[0].methods, (method) => method.value),
+    Array.from(services[1].methods, (method) => method.value),
     ['file:tachi'],
   );
-  assert.equal(importServiceForMethod('kamaitachi').methods.length, 2);
+  assert.equal(importServiceForMethod('kamaitachi').methods.length, 1);
 });

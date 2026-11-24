@@ -56,7 +56,9 @@ test('dismissing an import preview outside cancels consent and permits a new imp
   await dialog.getByRole('button',{name:'Import data',exact:true}).click();await expect.poll(()=>page.evaluate(()=>maimaiPersonal.enabled())).toBe(true);
 });
 
-for(const [locale,message] of Object.entries({en:'Unknown failure','zh-Hans':'未知错误',ko:'알 수 없는 오류',ja:'不明なエラー',id:'Kesalahan tidak diketahui'}))test('unknown import failure is localized and preserves saved data: '+locale,async({page},testInfo)=>{
+const recoveryCopy=JSON.parse(await readFile(new URL('../../src/maimai_intelligence/assets/locales/import-chooser.json',import.meta.url),'utf8')).messages;
+const storageRecovery="Your browser could not save these scores. Free some device storage or import without remembering, then try again.";
+for(const [locale,message] of Object.entries({en:storageRecovery,...recoveryCopy[storageRecovery]}))test('unknown import failure is localized and preserves saved data: '+locale,async({page},testInfo)=>{
   await boot(page);
   const data=await fixture(page),upload={name:'fictional.gz',mimeType:'application/gzip',buffer:gzipSync(Buffer.from(JSON.stringify(data)))};
   await page.locator('input[type=file]').setInputFiles(upload);
@@ -90,8 +92,9 @@ for(const [locale,message] of Object.entries({en:'Unknown failure','zh-Hans':'�
 
 test('source selection makes no requests and blocked Maishift tells the truth',async({page},testInfo)=>{
   await boot(page);let requests=0;page.on('request',r=>{if(r.url().includes('shiftpsh')||r.url().includes('public-report'))requests++;});await openImport(page);
-  await expect(page.locator('[data-import-service="session-report"]').getByRole('radio')).toHaveCount(2);await expect(page.getByLabel('Upload a file',{exact:true})).toBeChecked();
-  await page.getByLabel('Upload a file',{exact:true}).focus();await page.keyboard.press('ArrowDown');await expect(page.getByLabel('Hosted Session Report',{exact:true})).toBeChecked();
+  await expect(page.locator('[data-import-service]:visible')).toHaveCount(11);await expect(page.locator('.player-service-body:visible')).toHaveCount(0);
+  await selectImportMethod(page,'file');await expect(page.getByLabel('Upload a file',{exact:true})).toBeChecked();
+  await selectImportMethod(page,'report');await expect(page.getByLabel('Hosted Session Report',{exact:true})).toBeChecked();
   await selectImportMethod(page,'maishift');await expect(page.getByRole('button',{name:'Continue',exact:true})).toBeDisabled();await expect(page.locator('#player-import-dialog')).toContainText('not available yet');expect(requests).toBe(0);
   await expect(page.locator('.feature-announcement,#feature-announcement-replay')).toHaveCount(0);
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
@@ -104,7 +107,7 @@ test('public source previews and remembers atomically; requests omit credentials
   await importReport(page);const state=await saved(page);expect(state.active.source.url).toBe(manifest);expect(state.active.source.playerKey).toBe(data.player.key);expect(state.active.source.generation).toBe(state.control.version);
   await expect(page.locator('#player-status .player-profile .player-profile-link')).toHaveAttribute('href',manifest);await expect(page.locator('#player-status > a')).toHaveCount(0);await expect(page.locator('#player-status .player-storage-label')).toContainText('Last Updated:');
   expect(await page.evaluate(()=>sourceOptions.every(o=>o.credentials==='omit'&&o.referrerPolicy==='no-referrer'&&o.redirect==='error'))).toBe(true);
-  await page.reload();await expect.poll(()=>page.evaluate(()=>!!window.maimaiPersonal)).toBe(true);await page.evaluate(()=>maimaiPersonal.ready);expect((await saved(page)).active.revision).toBe(state.active.revision);await openImport(page);await expect(page.getByLabel('Hosted Session Report',{exact:true})).toBeChecked();
+  await page.reload();await expect.poll(()=>page.evaluate(()=>!!window.maimaiPersonal)).toBe(true);await page.evaluate(()=>maimaiPersonal.ready);expect((await saved(page)).active.revision).toBe(state.active.revision);await openImport(page);await expect(page.locator('[data-import-refresh]')).toBeVisible();await selectImportMethod(page,'report');await expect(page.getByLabel('Hosted Session Report',{exact:true})).toBeChecked();
 });
 
 test('one-time source import reloads in this tab without storing a connection',async({page,context})=>{
