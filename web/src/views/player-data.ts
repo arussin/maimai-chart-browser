@@ -4,7 +4,7 @@ import { ImportCoordinator } from '../runtime/import-coordinator';
 import { readImportFile } from '../runtime/import-file';
 import {
   fetchImportConnectorFlags,
-  OFFLINE_IMPORT_CONNECTORS,
+  DEFAULT_IMPORT_CONNECTORS,
 } from '../runtime/import-connector-flags';
 import { importFailure } from '../runtime/import-failure';
 import {
@@ -12,6 +12,8 @@ import {
   IMPORT_SERVICE_MONOGRAMS,
   importServiceForMethod,
   importMethodFileFormat,
+  IMPORT_METHOD_DETAILS,
+  type ImportChoice,
   type ImportMethodValue,
 } from './player-import-services';
 import { IMPORT_SERVICE_ICONS } from './import-service-icons';
@@ -210,6 +212,16 @@ export function createPlayerData(ports: PersonalPorts) {
       ask,
       reading,
       message,
+      imported: () => {
+        root.querySelector('[data-support-context="import"]')?.remove();
+        const support = createSupportPrompt(document, i18n, 'import');
+        if (support) {
+          const success = make('p', 'Scores imported.');
+          success.setAttribute('role', 'status');
+          support.prepend(success);
+          root.querySelector('#catalog > .page-heading')?.after(support);
+        }
+      },
       recovery: reportRecovery,
       usage,
       notify: browserSession.notify,
@@ -874,43 +886,69 @@ export function createPlayerData(ports: PersonalPorts) {
     const heading = make('h2', 'Import player data');
     heading.id = 'player-dialog-title';
     dialog.addEventListener('close', () => availability.abort(), { once: true });
-    const loading = make('p', 'Checking import options…'),
-      loadingCancel = make('button', 'Cancel');
-    loading.setAttribute('role', 'status');
-    loadingCancel.onclick = () => {
-      availability.abort();
-      dialog.close();
-      focusDialogTrigger();
-    };
-    dialog.append(heading, loading, loadingCancel);
-    if (!dialog.open) dialog.showModal();
-    let flags = OFFLINE_IMPORT_CONNECTORS,
-      optionsUnavailable = false;
-    try {
-      flags = await fetchImportConnectorFlags(
-        availability.signal,
-        fetch,
-        4000,
-        ports.usage.diagnose,
-      );
-    } catch {
-      optionsUnavailable = true;
+    let flags = DEFAULT_IMPORT_CONNECTORS;
+    // Keep the full set of controls so a runtime override can show as well as hide.
+    const services = visibleImportServices(
+      Object.fromEntries(Object.keys(DEFAULT_IMPORT_CONNECTORS).map((method) => [method, true])),
+    );
+    let choice: ImportChoice | null = null;
+    const choices = make('div', undefined, 'player-import-choices'),
+      choiceHeading = make('p', 'What do you have?'),
+      back = make('button', 'Back to import choices'),
+      notice = make('p'),
+      walkthroughs = make('div', undefined, 'player-import-walkthroughs');
+    notice.setAttribute('role', 'status');
+    notice.hidden = true;
+    back.type = 'button';
+    back.dataset.importBack = '';
+    for (const [value, label] of [
+      ['tracker', 'A score tracker account'],
+      ['file', 'A file'],
+      ['help', 'Help getting my scores'],
+    ] as const) {
+      const button = make('button', label);
+      button.type = 'button';
+      button.dataset.importChoice = value;
+      button.onclick = () => {
+        choice = value;
+        openService = null;
+        updateSections();
+        back.focus();
+      };
+      choices.append(button);
     }
-    if (availability.signal.aborted || !dialog.open) return;
-    dialog.replaceChildren();
-    const services = visibleImportServices(flags);
+    back.onclick = () => {
+      choice = null;
+      openService = null;
+      updateSections();
+      choices.querySelector('button')?.focus();
+    };
+    walkthroughs.append(make('h3', 'Score import walkthroughs'));
+    for (const service of services) {
+      const link = helpLink(service.help, service.helpLabel);
+      link.className = 'player-import-walkthrough';
+      i18n.text(link, i18n.parts([i18n.verbatim(service.title), service.helpLabel], ' — '));
+      walkthroughs.append(link);
+    }
     const group = make('div', undefined, 'player-source-options');
     const fields = make('div', undefined, 'player-source-fields'),
       actions = make('div', undefined, 'player-actions'),
       next = make('button', 'Continue'),
       cancel = make('button', 'Cancel');
-    let selected: ImportMethodValue = player.source?.type || 'file',
+    let selected: ImportMethodValue = 'file',
       rememberChoice = true;
-    if (!services.some((service) => service.methods.some((method) => method.value === selected)))
-      selected = services[0]?.methods[0]?.value ?? 'file';
-    let openService: string | null = importServiceForMethod(selected).id;
-    const sections = new Map<string, { toggle: HTMLButtonElement; body: HTMLDivElement }>();
-    const lastMethods = new Map<string, ImportMethodValue>([[openService, selected]]);
+    let openService: string | null = null;
+    const sections = new Map<
+      string,
+      {
+        section: HTMLElement;
+        toggle: HTMLButtonElement;
+        body: HTMLDivElement;
+        label: HTMLSpanElement;
+      }
+    >();
+    const lastMethods = new Map<string, ImportMethodValue>();
+    const groups = new Map<string, HTMLElement>();
     let directAvailable: Awaited<ReturnType<typeof sources.directCapabilities>> | null = null;
     let checkingAvailability = false;
     for (const service of services) {
@@ -949,14 +987,20 @@ export function createPlayerData(ports: PersonalPorts) {
       chevron.setAttribute('aria-hidden', 'true');
       const label = make('span', undefined, 'player-service-label');
       label.append(make('span', i18n.verbatim(service.title)));
-      if (service.regionLabel)
-        label.append(make('span', service.regionLabel, 'player-service-region'));
       toggle.append(label, chevron);
       toggle.onclick = () => {
         if (openService === service.id) {
           openService = null;
           updateSections();
-        } else selectMethod(lastMethods.get(service.id) ?? service.methods[0]!.value);
+        } else {
+          const available = service.methods.filter(
+            (method) =>
+              flags[method.value] && IMPORT_METHOD_DETAILS[method.value].choice === choice,
+          );
+          const last = lastMethods.get(service.id);
+          const method = available.find((method) => method.value === last) ?? available[0];
+          if (method) selectMethod(method.value);
+        }
       };
       title.append(toggle);
       header.append(title, helpLink(service.help, service.helpLabel));
@@ -975,17 +1019,56 @@ export function createPlayerData(ports: PersonalPorts) {
       }
       if (service.methods.length > 1) body.append(methods);
       section.append(header, body);
-      group.append(section);
-      sections.set(service.id, { toggle, body });
+      const groupName = IMPORT_METHOD_DETAILS[service.methods[0]!.value].group;
+      let regionGroup = groups.get(groupName);
+      if (!regionGroup) {
+        regionGroup = make('div', undefined, 'player-import-region');
+        regionGroup.append(make('h3', groupName));
+        groups.set(groupName, regionGroup);
+        group.append(regionGroup);
+      }
+      regionGroup.append(section);
+      sections.set(service.id, { section, toggle, body, label });
     }
     function updateSections() {
-      for (const [id, { toggle, body }] of sections) {
+      choices.hidden = choice !== null;
+      choiceHeading.hidden = choice !== null;
+      back.hidden = choice === null;
+      group.hidden = choice === null;
+      walkthroughs.hidden = choice !== 'help';
+      for (const service of services) {
+        const { section, toggle, body, label } = sections.get(service.id)!;
+        const id = service.id;
+        const available = service.methods.filter(
+          (method) => flags[method.value] && IMPORT_METHOD_DETAILS[method.value].choice === choice,
+        );
+        section.hidden = !available.length && openService !== id;
         toggle.setAttribute('aria-expanded', String(openService === id));
         body.hidden = openService !== id;
+        const method = openService === id ? selected : available[0]?.value;
+        label.replaceChildren(make('span', i18n.verbatim(service.title)));
+        if (method) {
+          const details = IMPORT_METHOD_DETAILS[method];
+          label.append(
+            make('span', details.region, 'player-service-region'),
+            make('span', details.data, 'player-service-region'),
+          );
+        }
+        for (const radio of body.querySelectorAll<HTMLInputElement>('input[data-import-method]')) {
+          radio.closest('label')!.hidden = !available.some(
+            (method) => method.value === radio.value,
+          );
+        }
       }
+      for (const regionGroup of groups.values())
+        regionGroup.hidden = ![
+          ...regionGroup.querySelectorAll<HTMLElement>('[data-import-service]'),
+        ].some((section) => !section.hidden);
     }
     function selectMethod(value: ImportMethodValue) {
-      const unchanged = selected === value;
+      const unchanged =
+        selected === value &&
+        fields.parentElement === sections.get(importServiceForMethod(value).id)!.body;
       selected = value;
       openService = importServiceForMethod(value).id;
       lastMethods.set(openService, value);
@@ -995,6 +1078,16 @@ export function createPlayerData(ports: PersonalPorts) {
       else render();
     }
     function render() {
+      if (!flags[selected]) {
+        next.disabled = true;
+        i18n.text(
+          notice,
+          'This import method is temporarily unavailable. Choose another method or try again later.',
+        );
+        notice.hidden = false;
+        return;
+      }
+      notice.hidden = true;
       const body = sections.get(importServiceForMethod(selected).id)!.body;
       body.append(fields, actions);
       updateSections();
@@ -1372,24 +1465,24 @@ export function createPlayerData(ports: PersonalPorts) {
     actions.append(next);
     const footer = make('div', undefined, 'player-actions player-source-footer');
     footer.append(cancel);
-    dialog.append(
-      heading,
-      make(
-        'p',
-        optionsUnavailable
-          ? 'Import options are unavailable. You can still upload a Session Report file.'
-          : services.length
-            ? 'Choose a service.'
-            : 'No import options are available right now.',
-      ),
-    );
-    if (optionsUnavailable || !services.length) {
-      const retry = make('button', 'Retry');
-      retry.onclick = () => {
-        dialog.addEventListener('close', () => void selectSource(), { once: true });
+    dialog.append(heading, choiceHeading, choices, back, notice);
+    if (player.source) {
+      const refresh = make('button', 'Refresh now');
+      refresh.type = 'button';
+      refresh.dataset.importRefresh = '';
+      refresh.onclick = () => {
+        if (!flags[player.source!.type]) {
+          i18n.text(
+            notice,
+            'This import method is temporarily unavailable. Choose another method or try again later.',
+          );
+          notice.hidden = false;
+          return;
+        }
         dialog.close();
+        void player.refresh(true);
       };
-      dialog.append(retry);
+      dialog.append(refresh);
     }
     if (sources.pendingCleanup()) {
       const retry = make('button', 'Retry connection cleanup'),
@@ -1431,15 +1524,34 @@ export function createPlayerData(ports: PersonalPorts) {
           'player-import-replace-warning',
         ),
       );
-    dialog.append(group, footer);
-    const support = createSupportPrompt(document, i18n, 'import');
-    if (support) dialog.append(support);
-    if (services.length) render();
+    dialog.append(group, walkthroughs, footer);
+    updateSections();
     if (!dialog.open) dialog.showModal();
-    (
-      group.querySelector<HTMLInputElement>('input[data-import-method]:checked') ??
-      sections.get(openService!)?.toggle
-    )?.focus();
+    choices.querySelector('button')?.focus();
+    // The request never gates rendering, file selection, or a deliberate source read.
+    void fetchImportConnectorFlags(availability.signal, fetch, 4000, ports.usage.diagnose)
+      .then((value) => {
+        if (availability.signal.aborted || !group.isConnected) return;
+        flags = value;
+        updateSections();
+        if (openService && !flags[selected]) {
+          next.disabled = true;
+          fields
+            .querySelectorAll<HTMLButtonElement>('button')
+            .forEach((button) => (button.disabled = true));
+          i18n.text(
+            notice,
+            'This import method is temporarily unavailable. Choose another method or try again later.',
+          );
+          notice.hidden = false;
+        } else if (!Object.values(flags).some(Boolean)) {
+          i18n.text(notice, 'No import options are available right now.');
+          notice.hidden = false;
+        }
+      })
+      .catch(() => {
+        /* Bundled defaults remain usable when the override is unavailable. */
+      });
   }
   function importReport(
     value: string | ReturnType<PersonalPorts['maishift']['location']>,

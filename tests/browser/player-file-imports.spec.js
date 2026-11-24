@@ -350,7 +350,7 @@ test("partial JSON updates keep omitted charts and malformed files keep the acti
   await openFileOptions(page);
   await uploadSelected(page, "{invalid");
   await expect(page.locator("#player-import-dialog")).toContainText(
-    "Choose a valid JSON export for the selected source.",
+    "This file was not recognised for the selected source. Choose the matching file method and a fresh JSON or gzip export, then try again.",
   );
   expect((await saved(page)).revision).toBe(updated.revision);
   expect(

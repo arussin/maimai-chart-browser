@@ -13,6 +13,7 @@ import type {
 } from './player-session-contracts';
 import { importTime, errorMessage, isAbort } from './player-session-contracts';
 import { importFailure } from './import-failure';
+import { importErrorMessage } from './import-error-message';
 import type { Failure } from '../usage-contract';
 import type { ImportFile, FileImportOptions } from '../domain/import-options';
 type ProviderFlow =
@@ -607,6 +608,7 @@ export class ImportCoordinator {
             effects.usage('import_completed', method);
           },
         });
+        if (expected === this.revision) effects.imported?.();
       } else {
         operation.finish('cancelled');
         effects.usage('import_cancelled', method);
@@ -620,7 +622,10 @@ export class ImportCoordinator {
         // Version 1 local-file counters retain invalid/storage categories;
         // the diagnostic above carries the detailed decode or storage cause.
         effects.usage('import_failed', method, stage);
-        effects.message('Player data could not be imported', errorMessage(error));
+        effects.message(
+          'Player data could not be imported',
+          importErrorMessage(error, stage === 'storage' ? 'storage' : 'file'),
+        );
       } else if (!committed) effects.usage('import_cancelled', method);
     } finally {
       if (expected === this.revision || expected === undefined) this.importing = false;
@@ -654,7 +659,7 @@ export class ImportCoordinator {
       operation.fail(error, 'normalization');
       effects.usage('import_started', 'report');
       effects.usage('import_failed', 'report', 'invalid');
-      effects.message('Player data could not be imported', errorMessage(error));
+      effects.message('Player data could not be imported', importErrorMessage(error));
       return;
     }
     const method = parsed.type;
@@ -751,6 +756,7 @@ export class ImportCoordinator {
           !releasedIDs.includes(result.source.connectionID ?? '')
         )
           await this.releaseConnection(result.source);
+        if (expected === this.revision) effects.imported?.();
       } else {
         operation.finish('cancelled');
         effects.usage('import_cancelled', method);
@@ -778,7 +784,11 @@ export class ImportCoordinator {
           importFailure(error, reading ? 'unavailable' : stage),
         );
         if (reading && parsed.type === 'report') effects.recovery(recovery!);
-        else effects.message('Player data could not be imported', errorMessage(error));
+        else
+          effects.message(
+            'Player data could not be imported',
+            importErrorMessage(error, stage === 'storage' ? 'storage' : 'source'),
+          );
       } else if (!cancelled && !committed) effects.usage('import_cancelled', method);
     } finally {
       if (acquired && !retained) await this.releaseConnection(acquired);
@@ -1112,6 +1122,7 @@ export class ImportCoordinator {
         },
       });
       transfer.send('imported');
+      if (expected === this.revision) effects.imported?.();
     } catch (error) {
       if (!committed) {
         if (isAbort(error)) operation.finish('cancelled');
@@ -1128,7 +1139,10 @@ export class ImportCoordinator {
       transfer.send('error');
       if (!isAbort(error) && !committed && expected === this.revision) {
         if (measured) effects.usage('import_failed', 'report', importFailure(error, stage));
-        effects.message('Player data could not be imported', errorMessage(error));
+        effects.message(
+          'Player data could not be imported',
+          importErrorMessage(error, stage === 'storage' ? 'storage' : 'file'),
+        );
       } else if (measured && !committed) effects.usage('import_cancelled', 'report');
     } finally {
       transfer.close();

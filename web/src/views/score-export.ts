@@ -9,7 +9,7 @@ import {
   type ExportPlayerRating,
 } from '../domain/score-export';
 import type { renderAchievement } from './score-export-canvas';
-import { createSupportPrompt } from './support-prompt';
+import { createSupportPrompt, supportPromptsDismissed } from './support-prompt';
 import type { ScoreExportPreferences } from '../runtime/score-export-preferences';
 import type { ScoreExportKind, ScoreExportUsageArguments } from '../usage-contract';
 import type { DiagnosticSink, Reason, Outcome } from '../diagnostic-contract';
@@ -206,7 +206,7 @@ export function createScoreExporter(ports: ExportPorts) {
         download.href = imageURL;
         download.download = filename;
         preview.hidden = download.hidden = false;
-        if (support) support.hidden = false;
+        if (support) support.hidden = supportPromptsDismissed(document);
         i18n.text(status, 'Image ready. Download it or save the preview.');
         download.focus({ preventScroll: true });
         ports.usage('score_export_completed', kind);

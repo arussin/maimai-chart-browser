@@ -1,4 +1,19 @@
 import type { TextView } from '../components/chart-card';
+const dismissalKey = 'maimai-support-prompts-dismissed-v1';
+const dismissed = new WeakSet<Document>();
+const listening = new WeakSet<Document>();
+export function supportPromptsDismissed(document: Document): boolean {
+  if (dismissed.has(document)) return true;
+  try {
+    return document.defaultView?.localStorage.getItem(dismissalKey) === '1';
+  } catch {
+    return false;
+  }
+}
+function removePrompts(document: Document) {
+  dismissed.add(document);
+  document.querySelectorAll('[data-support-context]').forEach((node) => node.remove());
+}
 
 export function supportHeart(document: Document): SVGSVGElement {
   const heart = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
@@ -27,21 +42,44 @@ export function createSupportPrompt(
   localization: Pick<TextView, 'text'>,
   context: 'import' | 'export',
 ): HTMLDivElement | null {
+  if (supportPromptsDismissed(document)) return null;
   if (!document.querySelector('#support-open[data-checkout-ready="stripe"]')) return null;
+  if (!listening.has(document)) {
+    listening.add(document);
+    document.defaultView?.addEventListener('storage', (event) => {
+      if (event.key === dismissalKey && event.newValue === '1') removePrompts(document);
+    });
+  }
   const note = document.createElement('div');
   note.className = 'player-support-prompt';
   note.dataset.supportContext = context;
   const text = document.createElement('p'),
     intro = document.createElement('span'),
     link = document.createElement('button');
-  localization.text(intro, 'maimai.party is free to use, but costs quite a bit to maintain.');
+  localization.text(intro, 'maimai.party is free to use. Hosting costs about US$25 a month.');
   link.type = 'button';
   link.className = 'player-support-link';
   link.dataset.supportOpen = '';
   link.setAttribute('aria-haspopup', 'dialog');
   link.setAttribute('aria-controls', 'support-checkout-dialog');
-  localization.text(link, 'Please consider supporting its development and hosting.');
+  localization.text(
+    link,
+    'If you’d like, the price of a few credits helps pay for hosting and development.',
+  );
   text.append(intro, document.createElement('br'), link);
   note.append(supportHeart(document), text);
+  const dismiss = document.createElement('button');
+  dismiss.type = 'button';
+  dismiss.className = 'player-support-dismiss';
+  localization.text(dismiss, 'Don’t show again');
+  dismiss.onclick = () => {
+    try {
+      document.defaultView?.localStorage.setItem(dismissalKey, '1');
+    } catch {
+      /* Still dismiss for this page when storage is blocked. */
+    }
+    removePrompts(document);
+  };
+  note.append(dismiss);
   return note;
 }

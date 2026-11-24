@@ -194,7 +194,7 @@ for(const provider of ['diving-fish','lxns'])test(provider+' CN Best 50 download
   expect(description).toMatch(/CN old 00.*?Chart rating 0/);
   expect(painted.text).toContain('9,095');expect(painted.text).toContain('4,380');
   expect(painted.text.join('\n')).not.toMatch(/PRiSM|CiRCLE|MAGiCAL/);
-  for(const phrase of ['maimai.party is free to use, but costs quite a bit to maintain.','Please consider supporting its development and hosting.']){
+  for(const phrase of ['maimai.party is free to use. Hosting costs about US$25 a month.','If you’d like, the price of a few credits helps pay for hosting and development.']){
     expect(painted.text.join('\n')).not.toContain(phrase);expect(description).not.toContain(phrase);
   }
   const actions=await dialog(page).locator('.player-export-actions').boundingBox(),note=await support.boundingBox();

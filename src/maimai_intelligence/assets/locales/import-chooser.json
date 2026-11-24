@@ -1,0 +1,220 @@
+{
+  "messages": {
+    "What do you have?": {
+      "zh-Hans": "你准备用什么导入？",
+      "ko": "어떤 방식으로 가져올까요?",
+      "ja": "何を使って取り込みますか？",
+      "id": "Apa yang Anda miliki?"
+    },
+    "A score tracker account": {
+      "zh-Hans": "查分器账号",
+      "ko": "점수 관리 사이트 계정",
+      "ja": "スコア管理サイトのアカウント",
+      "id": "Akun pelacak skor"
+    },
+    "A file": {
+      "zh-Hans": "成绩文件",
+      "ko": "파일",
+      "ja": "ファイル",
+      "id": "File"
+    },
+    "Help getting my scores": {
+      "zh-Hans": "获取成绩的方法",
+      "ko": "점수를 가져오는 방법 안내",
+      "ja": "スコアの取得方法を知りたい",
+      "id": "Bantuan mendapatkan skor"
+    },
+    "Back to import choices": {
+      "zh-Hans": "返回导入方式选择",
+      "ko": "가져오기 방식 선택으로 돌아가기",
+      "ja": "取り込み方法の選択に戻る",
+      "id": "Kembali ke pilihan impor"
+    },
+    "Score import walkthroughs": {
+      "zh-Hans": "成绩导入指南",
+      "ko": "점수 가져오기 안내",
+      "ja": "スコア取り込みガイド",
+      "id": "Panduan impor skor"
+    },
+    "International and Japan": {
+      "zh-Hans": "国际版和日本版",
+      "ko": "국제판 및 일본판",
+      "ja": "国際版・日本版",
+      "id": "Versi internasional dan Jepang"
+    },
+    "Mainland China": {
+      "zh-Hans": "中国大陆",
+      "ko": "중국 본토",
+      "ja": "中国本土",
+      "id": "Tiongkok daratan"
+    },
+    "Session Report": {
+      "zh-Hans": "Session Report",
+      "ko": "Session Report",
+      "ja": "Session Report",
+      "id": "Session Report"
+    },
+    "Official game exports": {
+      "zh-Hans": "官方游戏成绩导出",
+      "ko": "공식 게임 점수 내보내기",
+      "ja": "公式版のスコア書き出し",
+      "id": "Ekspor skor game resmi"
+    },
+    "Private servers": {
+      "zh-Hans": "私服",
+      "ko": "사설 서버",
+      "ja": "プライベートサーバー",
+      "id": "Server privat"
+    },
+    "maimai DX · International / Japan": {
+      "zh-Hans": "maimai DX · 国际版 / 日本版",
+      "ko": "maimai DX · 국제판 / 일본판",
+      "ja": "maimai DX · 国際版 / 日本版",
+      "id": "maimai DX · Internasional / Jepang"
+    },
+    "maimai DX · Mainland China": {
+      "zh-Hans": "maimai DX · 中国大陆版",
+      "ko": "maimai DX · 중국 본토판",
+      "ja": "maimai DX · 中国本土版",
+      "id": "maimai DX · Tiongkok daratan"
+    },
+    "maimai · Region recorded in the report": {
+      "zh-Hans": "maimai · 以报告中记录的地区为准",
+      "ko": "maimai · 리포트에 기록된 지역",
+      "ja": "maimai · レポートに記録された地域",
+      "id": "maimai · Wilayah yang tercatat dalam laporan"
+    },
+    "maimai DX · International / Japan / Mainland China": {
+      "zh-Hans": "maimai DX · 国际版 / 日本版 / 中国大陆版",
+      "ko": "maimai DX · 국제판 / 일본판 / 중국 본토판",
+      "ja": "maimai DX · 国際版 / 日本版 / 中国本土版",
+      "id": "maimai DX · Internasional / Jepang / Tiongkok daratan"
+    },
+    "maimai DX · Private server": {
+      "zh-Hans": "maimai DX · 私服",
+      "ko": "maimai DX · 사설 서버",
+      "ja": "maimai DX · プライベートサーバー",
+      "id": "maimai DX · Server privat"
+    },
+    "Personal bests": {
+      "zh-Hans": "个人最佳成绩",
+      "ko": "개인 최고 기록",
+      "ja": "自己ベスト",
+      "id": "Skor terbaik pribadi"
+    },
+    "Personal bests (may be partial)": {
+      "zh-Hans": "个人最佳成绩（可能不完整）",
+      "ko": "개인 최고 기록 (일부만 포함될 수 있음)",
+      "ja": "自己ベスト（一部のみの場合あり）",
+      "id": "Skor terbaik pribadi (mungkin tidak lengkap)"
+    },
+    "Personal bests and recent plays, when included": {
+      "zh-Hans": "个人最佳成绩及近期游玩记录（如有）",
+      "ko": "개인 최고 기록 및 최근 플레이 이력 (포함된 경우)",
+      "ja": "自己ベストと最近のプレイ履歴（含まれる場合）",
+      "id": "Skor terbaik pribadi dan riwayat permainan terbaru, jika tersedia"
+    },
+    "Personal bests or recent score observations, depending on the export": {
+      "zh-Hans": "个人最佳成绩或近期成绩记录，取决于导出内容",
+      "ko": "내보낸 내용에 따라 개인 최고 기록 또는 최근 점수 기록",
+      "ja": "書き出し内容に応じて、自己ベストまたは最近のスコア記録",
+      "id": "Skor terbaik pribadi atau catatan skor terbaru, tergantung isi ekspor"
+    },
+    "Personal bests and recent score observations": {
+      "zh-Hans": "个人最佳成绩和近期成绩记录",
+      "ko": "개인 최고 기록 및 최근 점수 기록",
+      "ja": "自己ベストと最近のスコア記録",
+      "id": "Skor terbaik pribadi dan catatan skor terbaru"
+    },
+    "Score observations only; no personal bests or play history": {
+      "zh-Hans": "仅成绩记录；不含个人最佳成绩或游玩历史",
+      "ko": "점수 기록만 포함; 개인 최고 기록이나 플레이 이력은 없음",
+      "ja": "スコア記録のみ。自己ベストやプレイ履歴は含みません",
+      "id": "Hanya catatan skor; tanpa skor terbaik pribadi atau riwayat permainan"
+    },
+    "This import method is temporarily unavailable. Choose another method or try again later.": {
+      "zh-Hans": "此导入方式暂时不可用。请选择其他方式，或稍后重试。",
+      "ko": "이 가져오기 방식은 일시적으로 사용할 수 없습니다. 다른 방식을 선택하거나 나중에 다시 시도해 주세요.",
+      "ja": "この取り込み方法は一時的に利用できません。別の方法を選ぶか、時間をおいてお試しください。",
+      "id": "Metode impor ini sementara tidak tersedia. Pilih metode lain atau coba lagi nanti."
+    },
+    "Scores imported.": {
+      "zh-Hans": "成绩已导入。",
+      "ko": "점수를 가져왔습니다.",
+      "ja": "スコアを取り込みました。",
+      "id": "Skor berhasil diimpor."
+    },
+    "Your browser could not save these scores. Free some device storage or import without remembering, then try again.": {
+      "zh-Hans": "浏览器无法保存这些成绩。请释放设备存储空间，或取消记住数据后重试导入。",
+      "ko": "브라우저가 점수를 저장하지 못했습니다. 기기 저장 공간을 확보하거나 저장 옵션을 끄고 다시 가져와 주세요.",
+      "ja": "ブラウザーにスコアを保存できませんでした。端末の空き容量を増やすか、保存する設定をオフにして取り込み直してください。",
+      "id": "Browser tidak dapat menyimpan skor ini. Kosongkan sebagian penyimpanan perangkat atau impor tanpa mengingat data, lalu coba lagi."
+    },
+    "The export does not match the selected game region. Choose the region used for this export and try again.": {
+      "zh-Hans": "导出文件与所选游戏地区不一致。请选择该文件对应的地区后重试。",
+      "ko": "내보낸 파일과 선택한 게임 지역이 다릅니다. 파일에 맞는 지역을 선택하고 다시 시도해 주세요.",
+      "ja": "書き出しファイルと選択したゲーム地域が一致しません。ファイルに合う地域を選んで、もう一度お試しください。",
+      "id": "File ekspor tidak sesuai dengan wilayah game yang dipilih. Pilih wilayah yang digunakan dalam ekspor ini, lalu coba lagi."
+    },
+    "This file is too large to import. Choose a smaller export from the same source.": {
+      "zh-Hans": "此文件过大，无法导入。请选择同一来源的较小导出文件。",
+      "ko": "파일이 너무 커서 가져올 수 없습니다. 같은 출처에서 더 작은 파일을 내보내 선택해 주세요.",
+      "ja": "ファイルが大きすぎるため取り込めません。同じサービスから書き出した、より小さいファイルを選んでください。",
+      "id": "File ini terlalu besar untuk diimpor. Pilih ekspor yang lebih kecil dari sumber yang sama."
+    },
+    "This file was not recognised for the selected source. Choose the matching file method and a fresh JSON or gzip export, then try again.": {
+      "zh-Hans": "无法将此文件识别为所选来源的格式。请选择对应的文件导入方式，并重新导出 JSON 或 gzip 文件后重试。",
+      "ko": "선택한 출처의 파일 형식으로 인식되지 않았습니다. 파일에 맞는 가져오기 방식을 선택하고 새 JSON 또는 gzip 파일을 내보내 다시 시도해 주세요.",
+      "ja": "選択したサービスのファイルとして認識できませんでした。ファイルに合う取り込み方法を選び、新しく書き出した JSON または gzip ファイルでお試しください。",
+      "id": "File ini tidak dikenali untuk sumber yang dipilih. Pilih metode file yang sesuai dan ekspor JSON atau gzip yang baru, lalu coba lagi."
+    },
+    "The file contains scores Party could not read safely. Export it again from the selected source and check the game region. If it still fails, keep the export for a bug report.": {
+      "zh-Hans": "文件中有 Party 无法可靠读取的成绩。请从所选来源重新导出，并核对游戏地区。若仍失败，请保留导出文件，以便报告问题。",
+      "ko": "파일에 Party가 안전하게 읽을 수 없는 점수가 있습니다. 선택한 출처에서 다시 내보내고 게임 지역을 확인해 주세요. 계속 실패하면 버그 제보를 위해 파일을 보관해 주세요.",
+      "ja": "Party が正確に読み取れないスコアが含まれています。選択したサービスから書き出し直し、ゲーム地域を確認してください。解決しない場合は、不具合報告用にファイルを保管してください。",
+      "id": "File berisi skor yang tidak dapat dibaca Party dengan aman. Ekspor ulang dari sumber yang dipilih dan periksa wilayah game. Jika masih gagal, simpan file untuk laporan bug."
+    },
+    "No readable scores were found. Check the profile name and game region, sync your scores on the tracker, and make the profile public if required. Then try again.": {
+      "zh-Hans": "未找到可读取的成绩。请核对个人资料名称和游戏地区，在查分器中同步成绩，并在需要时将个人资料设为公开，然后重试。",
+      "ko": "읽을 수 있는 점수를 찾지 못했습니다. 프로필 이름과 게임 지역을 확인하고, 점수 관리 사이트에서 동기화한 뒤 필요하면 프로필을 공개로 설정하고 다시 시도해 주세요.",
+      "ja": "読み取れるスコアが見つかりませんでした。プロフィール名とゲーム地域を確認し、スコア管理サイトで同期してください。必要に応じてプロフィールを公開してから、もう一度お試しください。",
+      "id": "Tidak ditemukan skor yang dapat dibaca. Periksa nama profil dan wilayah game, sinkronkan skor di pelacak, dan jadikan profil publik jika diperlukan. Lalu coba lagi."
+    },
+    "The score service received too many requests. Wait a few minutes before trying again.": {
+      "zh-Hans": "成绩服务收到的请求过多。请等待几分钟后重试。",
+      "ko": "점수 서비스에 요청이 너무 많이 들어왔습니다. 몇 분 기다린 뒤 다시 시도해 주세요.",
+      "ja": "スコアサービスへのアクセスが集中しています。数分待ってから、もう一度お試しください。",
+      "id": "Layanan skor menerima terlalu banyak permintaan. Tunggu beberapa menit sebelum mencoba lagi."
+    },
+    "Sign-in was cancelled or permission was not granted. Start Connect again and approve read-only access to your scores.": {
+      "zh-Hans": "登录已取消或未获得授权。请重新连接，并允许以只读方式访问成绩。",
+      "ko": "로그인이 취소되었거나 권한이 허용되지 않았습니다. 다시 연결하고 점수에 대한 읽기 전용 접근을 허용해 주세요.",
+      "ja": "ログインがキャンセルされたか、アクセスが許可されませんでした。もう一度接続し、スコアへの読み取り専用アクセスを許可してください。",
+      "id": "Proses masuk dibatalkan atau izin tidak diberikan. Hubungkan kembali dan izinkan akses baca-saja ke skor Anda."
+    },
+    "Your connection has expired. Connect your account again to refresh your scores.": {
+      "zh-Hans": "连接已过期。请重新连接账号以刷新成绩。",
+      "ko": "연결이 만료되었습니다. 점수를 새로고침하려면 계정을 다시 연결해 주세요.",
+      "ja": "接続の有効期限が切れました。スコアを更新するには、アカウントを接続し直してください。",
+      "id": "Koneksi Anda telah kedaluwarsa. Hubungkan akun kembali untuk memperbarui skor."
+    },
+    "The score service returned a format Party cannot read safely. Try again later or use another import method. Your saved scores have been kept.": {
+      "zh-Hans": "成绩服务返回了 Party 无法可靠读取的格式。请稍后重试或使用其他导入方式。已保存的成绩保持不变。",
+      "ko": "점수 서비스가 Party에서 안전하게 읽을 수 없는 형식을 반환했습니다. 나중에 다시 시도하거나 다른 방식으로 가져와 주세요. 저장된 점수는 유지되었습니다.",
+      "ja": "スコアサービスから、Party が正確に読み取れない形式のデータが返されました。時間をおくか、別の取り込み方法をお試しください。保存済みのスコアはそのままです。",
+      "id": "Layanan skor mengirim format yang tidak dapat dibaca Party dengan aman. Coba lagi nanti atau gunakan metode impor lain. Skor tersimpan tetap dipertahankan."
+    },
+    "The score service could not be reached in time. Check your connection and try again in a few minutes.": {
+      "zh-Hans": "未能及时连接到成绩服务。请检查网络连接，几分钟后重试。",
+      "ko": "점수 서비스에 제때 연결하지 못했습니다. 인터넷 연결을 확인하고 몇 분 뒤 다시 시도해 주세요.",
+      "ja": "スコアサービスに接続できないまま時間切れになりました。通信状況を確認し、数分後にもう一度お試しください。",
+      "id": "Layanan skor tidak dapat dihubungi tepat waktu. Periksa koneksi Anda dan coba lagi dalam beberapa menit."
+    },
+    "These scores could not be imported. Check the source and game region, then try again or choose another import method. Your saved scores have been kept.": {
+      "zh-Hans": "无法导入这些成绩。请核对来源和游戏地区后重试，或选择其他导入方式。已保存的成绩保持不变。",
+      "ko": "점수를 가져오지 못했습니다. 출처와 게임 지역을 확인한 뒤 다시 시도하거나 다른 방식을 선택해 주세요. 저장된 점수는 유지되었습니다.",
+      "ja": "スコアを取り込めませんでした。サービスとゲーム地域を確認して再試行するか、別の取り込み方法を選んでください。保存済みのスコアはそのままです。",
+      "id": "Skor ini tidak dapat diimpor. Periksa sumber dan wilayah game, lalu coba lagi atau pilih metode lain. Skor tersimpan tetap dipertahankan."
+    }
+  }
+}

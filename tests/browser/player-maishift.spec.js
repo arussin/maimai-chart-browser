@@ -29,6 +29,15 @@ async function commit(page,remember=true){await preview(page);await page.locator
 async function age(page){await page.evaluate(async()=>{const db=await new Promise(resolve=>{const q=indexedDB.open('maimai-player-data',2);q.onsuccess=()=>resolve(q.result);});await new Promise((resolve,reject)=>{const t=db.transaction('datasets','readwrite'),s=t.objectStore('datasets'),q=s.get('active');q.onsuccess=()=>s.put({...q.result,source:{...q.result.source,lastAttempt:0}},'active');t.oncomplete=resolve;t.onabort=reject;});db.close();});}
 async function refresh(page){await page.locator('#settings-toggle').click();await page.locator('#player-refresh').click();}
 
+test('a connected source refreshes in one step from the choice screen', async({page,context})=>{
+  const state=await prepare(context);await boot(page);await commit(page);await age(page);
+  await open(page);await expect(page.locator('[data-import-refresh]')).toBeVisible();
+  await expect(page.locator('.player-service-body:visible')).toHaveCount(0);
+  const calls=state.calls;await page.locator('[data-import-refresh]').click();
+  await expect(page.locator('#player-import-dialog')).toBeHidden();
+  await expect.poll(()=>state.calls).toBe(calls+1);
+});
+
 test('Maishift grades use exact integer boundaries and preserve unknown achievements',async({page})=>{
   await boot(page);
   const thresholds=[[0,'D'],[500000,'C'],[600000,'B'],[700000,'BB'],[750000,'BBB'],[800000,'A'],[900000,'AA'],[940000,'AAA'],[970000,'S'],[980000,'S+'],[990000,'SS'],[995000,'SS+'],[1000000,'SSS'],[1005000,'SSS+']];
@@ -88,7 +97,7 @@ test('proxy preview has explicit consent, region, precision and unmatched covera
   for(const options of captured){expect(options.credentials).toBe('omit');expect(options.referrerPolicy).toBe('no-referrer');}expect(page.url()).not.toContain('fictional-player');
   const result=await page.evaluate(async()=>{const state=await maimaiPlayerStorage.read(),data=await maimaiPlayerData.decode(state.active.bytes);return {achievements:Object.values(data.records).map(r=>r.achievement),plays:Object.keys(data.plays),counts:Object.keys(data.charts).length,portable:JSON.stringify(data)};});
   expect(result.achievements).toContain(987654);expect(result.plays).toHaveLength(0);expect(result.counts).toBe(3);expect(result.portable).not.toContain('profileCreatedAt');
-  await open(page);await expect(page.locator('[data-service-toggle=maishift]')).toHaveAttribute('aria-expanded','true');
+  await open(page);await expect(page.locator('[data-import-refresh]')).toBeVisible();await expect(page.locator('[data-service-toggle=maishift]')).toHaveAttribute('aria-expanded','false');
 });
 test('Import once stores no refresh connection and remains available in this tab',async({page,context})=>{
   const state=await prepare(context);await boot(page);await commit(page,false);expect((await saved(page)).active).toBeNull();await page.reload();await expect.poll(()=>page.evaluate(()=>!!window.maimaiPersonal)).toBe(true);await page.evaluate(()=>maimaiPersonal.ready);expect(await page.evaluate(()=>maimaiPersonal.enabled())).toBe(true);expect(state.calls).toBe(1);await expect(page.locator('#player-refresh')).toBeHidden();

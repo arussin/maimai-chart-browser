@@ -11,6 +11,8 @@ const messages = JSON.parse(
     "utf8",
   ),
 ).messages;
+
+Object.assign(messages, JSON.parse(await readFile(new URL('../../src/maimai_intelligence/assets/locales/import-chooser.json',import.meta.url),'utf8')).messages);
 const translated = (key, locale) =>
   locale === "en" ? key : messages[key][locale];
 const legacy = "a".repeat(40);
@@ -442,17 +444,13 @@ test('service sections expose grouped imports, local marks, and keyboard control
   await boot(page);
   await openImport(page);
   const dialog = page.locator('#player-import-dialog');
-  await expect(dialog.locator('[data-import-service]')).toHaveCount(10);
-  await expect(dialog.locator('input[name=player-source]')).toHaveCount(4);
-  expect(await dialog.locator('[data-import-service]').evaluateAll(nodes => nodes.map(node => node.dataset.importService))).toEqual(['kamaitachi', 'diving-fish', 'lxns', 'maishift', 'session-report', 'tomomai', 'mai-tools', 'dxrating', 'jietng', 'aqua']);
-  await expect(dialog.locator('.player-service-body:visible')).toHaveCount(1);
-  await expect(dialog.locator('[data-service-toggle="session-report"]')).toHaveAttribute('aria-expanded', 'true');
-  await expect(dialog.getByRole('radio')).toHaveCount(2);
-  await expect(dialog.locator('input[value=file]')).toBeFocused();
-  await page.keyboard.press('ArrowDown');
-  await expect(dialog.locator('input[value=report]')).toBeChecked();
+  await expect(dialog.locator('[data-import-service]')).toHaveCount(11);
+  await expect(dialog.locator('.player-service-body:visible')).toHaveCount(0);
+  await expect(dialog.locator('[data-import-choice=tracker]')).toBeFocused();
+  await page.keyboard.press('Enter');
+  expect(await dialog.locator('[data-import-service]:visible').evaluateAll(nodes=>nodes.map(node=>node.dataset.importService))).toEqual(['maishift','kamaitachi','diving-fish','lxns']);
   expect(state.calls).toEqual([]);
-  await expect.poll(() => dialog.locator('.player-service-toggle img').evaluateAll(nodes => nodes.length === 10 && nodes.every(node => node.src.startsWith('data:image/') && node.complete && node.naturalWidth > 0))).toBe(true);
+  await expect.poll(()=>dialog.locator('.player-service-toggle img').evaluateAll(nodes=>nodes.length===10&&nodes.every(node=>node.src.startsWith('data:image/')&&node.complete&&node.naturalWidth>0))).toBe(true);
   const kamaitachiMark = dialog.locator('[data-import-service="kamaitachi"] .player-service-toggle img');
   await expect(kamaitachiMark).toHaveCount(1);
   await expect(kamaitachiMark).toHaveAttribute('src', /^data:image\//);
@@ -462,7 +460,7 @@ test('service sections expose grouped imports, local marks, and keyboard control
   await expect(kamaitachi).toBeFocused();
   await expect(kamaitachi).toHaveAttribute('aria-expanded', 'true');
   await expect(dialog.locator('.player-service-body:visible')).toHaveCount(1);
-  await expect(dialog.getByRole('radio')).toHaveCount(2);
+  await expect(dialog.getByRole('radio')).toHaveCount(0);
   await expect(dialog.getByRole('button', { name: 'Preview scores', exact: true })).toBeVisible();
   await page.locator('#player-kamaitachi-account').fill('UnsubmittedDraft');
   await kamaitachi.focus();
@@ -520,7 +518,7 @@ test("Kamaitachi game-profile URL imports exact PBs, survives reload and failed 
   const chart = await configureKamaitachi(page),
     state = await mockKamaitachi(context, chart);
   await openImport(page, "kamaitachi");
-  await expect(page.locator('#player-import-dialog [data-import-help="kamaitachi"]')).toHaveCount(1);
+  await expect(page.locator('#player-import-dialog .player-source-help[data-import-help="kamaitachi"]')).toHaveCount(1);
   await page.locator("#player-kamaitachi-account").fill("https://kamai.tachi.ac/u/Fixture42/games/maimaidx/");
   await page.screenshot({ path: testInfo.outputPath('kamaitachi-fixture-setup.png') });
   await page.locator("#player-import-dialog .player-actions button").first().click();
@@ -576,8 +574,8 @@ test('empty or missing Kamaitachi game profiles preserve the saved profile and c
   await accept(page);
   const first = await saved(page);
   for (const [flag, message] of [
-    ['empty', 'This Kamaitachi profile has no maimai DX personal bests to import. Update its scores in Kamaitachi first, then try again.'],
-    ['missingGame', 'This Kamaitachi user has no maimai DX profile. Import maimai DX scores into Kamaitachi first, then try again.'],
+    ['empty', 'No readable scores were found. Check the profile name and game region, sync your scores on the tracker, and make the profile public if required. Then try again.'],
+    ['missingGame', 'No readable scores were found. Check the profile name and game region, sync your scores on the tracker, and make the profile public if required. Then try again.'],
   ]) {
     state[flag] = true;
     await openImport(page, 'kamaitachi');
@@ -760,7 +758,7 @@ test('Fish agreement and empty-account failures preserve local data, clean up th
   const first = await saved(page);
   for (const [flag, message] of [
     ['agreementRequired', 'Open Diving-Fish, accept its tracker agreement, and confirm your scores are visible. Then try again.'],
-    ['empty', 'No supported scores were found in Diving-Fish. Open its tracker, accept the agreement, and add your scores before trying again.'],
+    ['empty', 'No readable scores were found. Check the profile name and game region, sync your scores on the tracker, and make the profile public if required. Then try again.'],
   ]) {
     fish[flag] = true;
     await openImport(page, 'diving-fish');
@@ -840,19 +838,19 @@ for (const locale of ["en", "zh-Hans", "ko", "ja", "id"]) {
         await page.setViewportSize({ width, height: 1000 });
         await openImport(page, "kamaitachi");
         await expect(page.locator("#player-import-dialog")).toContainText(
-          translated("Choose a service.", locale),
+          translated("Back to import choices", locale),
         );
         await expect(page.locator("#player-import-dialog")).toContainText(
           translated("Kamaitachi username or profile URL", locale),
         );
-        const regionLabel = translated("Mainland China only", locale);
-        await expect(page.locator("#player-import-dialog .player-service-region")).toHaveCount(2);
+        const regionLabel = translated("maimai DX · Mainland China", locale);
+        await expect(page.locator("#player-import-dialog .player-service-region:visible")).toHaveCount(8);
         for (const [provider, title] of [["diving-fish", "Diving-Fish"], ["lxns", "LXNS"]]) {
           const toggle = page.locator(`[data-service-toggle="${provider}"]`);
           await expect(toggle).toHaveAttribute("aria-expanded", "false");
-          await expect(toggle.locator(".player-service-region")).toBeVisible();
-          await expect(toggle.locator(".player-service-region")).toHaveText(regionLabel);
-          await expect(toggle).toHaveAccessibleName(`${title} ${regionLabel}`);
+          await expect(toggle.locator(".player-service-region").first()).toBeVisible();
+          await expect(toggle.locator(".player-service-region").first()).toHaveText(regionLabel);
+          await expect(toggle).toHaveAccessibleName(`${title} ${regionLabel} ${translated("Personal bests", locale)}`);
         }
         await unclipped(page);
         if (locale === "en" && width === 1280)
@@ -890,7 +888,7 @@ for (const locale of ["en", "zh-Hans", "ko", "ja", "id"]) {
         await help.click();
         await page.locator('#player-provider-updated').check();
         await expect(lxnsConnect).toBeEnabled();
-        const lxnsHelp = page.locator('[data-import-help=lxns]');
+        const lxnsHelp = page.locator('.player-source-help[data-import-help=lxns]');
         await expect(lxnsHelp).toHaveCount(1);
         for (const link of await lxnsHelp.all())
           await expect(link).toHaveAttribute('href', 'player-import-help.' + locale + '.html#lxns');
@@ -948,7 +946,7 @@ for (const failure of ['empty', 'playerMissing']) test('LXNS ' + failure + ' pre
   await openImport(page, 'lxns');
   await page.locator('#player-provider-updated').check();
   await page.getByRole('button', { name: 'Connect LXNS', exact: true }).click();
-  await expect(page.locator('#player-import-dialog')).toContainText('No supported scores were found in LXNS. Sync your maimai DX scores to LXNS first, then try again.');
+  await expect(page.locator('#player-import-dialog')).toContainText('No readable scores were found. Check the profile name and game region, sync your scores on the tracker, and make the profile public if required. Then try again.');
   await expect.poll(() => lxns.grants.length).toBe(0);
   expect((await saved(page)).revision).toBe(first.revision);
   await page.screenshot({ path: testInfo.outputPath('lxns-' + failure + '-account.png') });

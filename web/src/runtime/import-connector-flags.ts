@@ -2,6 +2,7 @@ import type { DiagnosticSink } from '../diagnostic-contract';
 import { DiagnosticError } from './diagnostic-error';
 import { beginDiagnostic } from './operation-diagnostics';
 import { IMPORT_SERVICES, type ImportMethodValue } from '../views/player-import-services';
+import defaults from '../../../config/import-connectors.json';
 
 export type ImportConnectorFlags = Readonly<Record<ImportMethodValue, boolean>>;
 const methods = IMPORT_SERVICES.flatMap((service) => service.methods.map((method) => method.value));
@@ -35,11 +36,8 @@ export function parseImportConnectorFlags(value: unknown): ImportConnectorFlags 
   );
 }
 
-/** Offline recovery is local only; a successful all-off response is respected. */
-export const OFFLINE_IMPORT_CONNECTORS = parseImportConnectorFlags({
-  schemaVersion: 1,
-  methods: { file: true },
-});
+/** Bundled defaults render immediately; a successful runtime response replaces them. */
+export const DEFAULT_IMPORT_CONNECTORS = parseImportConnectorFlags(defaults);
 
 function untilAborted<T>(pending: Promise<T>, signal: AbortSignal): Promise<T> {
   signal.throwIfAborted();

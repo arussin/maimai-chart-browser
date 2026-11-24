@@ -53,7 +53,7 @@ for(const [name,url]of [['main','/lab/'],['pilot',entry]]){
     for(const view of ['catalog']){
       await page.locator('#'+view+'-tab').click();await expect(launch).toBeVisible();
       await launch.focus();await page.keyboard.press('Enter');await expect(dialog).toBeVisible();
-      await expect(page.locator('input[value=file]')).toBeFocused();
+      await expect(page.locator('[data-import-choice=tracker]')).toBeFocused();
       await page.keyboard.press('Escape');await expect(dialog).toBeHidden();await expect(launch).toBeFocused();
       await launch.press('Enter');await page.getByRole('button',{name:'Cancel',exact:true}).click();await expect(launch).toBeFocused();
     }
@@ -225,15 +225,15 @@ test('new file replaces a delayed refresh and temporary imports remain isolated'
 for(const locale of ['en','zh-Hans','ko','ja','id'])test(`browser pilot ${locale} fits narrow controls and supports keyboard import`,async({page,context},testInfo)=>{
   await page.setViewportSize({width:320,height:800});await setup(page,context,locale);
   await page.locator('#player-import-primary').focus();await page.keyboard.press('Enter');
-  await expect(page.locator('.player-source-help')).toHaveCount(10);await expect(page.locator('.player-import-help')).toHaveCount(0);
-  expect(await page.locator('#player-import-dialog [data-import-service]').evaluateAll(nodes=>nodes.map(node=>node.dataset.importService))).toEqual(['kamaitachi','diving-fish','lxns','maishift','session-report','tomomai','mai-tools','dxrating','jietng','aqua']);
-  const help=page.locator('[data-import-help=maishift]');await expect(help).toHaveAttribute('href','player-import-help.'+locale+'.html#maishift');
+  await expect(page.locator('.player-source-help')).toHaveCount(11);await expect(page.locator('.player-import-help')).toHaveCount(0);
+  expect(await page.locator('#player-import-dialog [data-import-service]').evaluateAll(nodes=>nodes.map(node=>node.dataset.importService))).toEqual(['maishift','kamaitachi','diving-fish','lxns','session-report','tomomai','mai-tools','dxrating','jietng','aqua','tachi']);
+  await selectImportMethod(page,'maishift');const help=page.locator('.player-source-help[data-import-help=maishift]');await expect(help).toHaveAttribute('href','player-import-help.'+locale+'.html#maishift');
   const opened=context.waitForEvent('page');await help.click();const guide=await opened;await guide.setViewportSize({width:320,height:800});await expect(guide).toHaveURL(new RegExp('player-import-help\\.'+locale+'\\.html#maishift$'));
   await expect(guide.locator('html')).toHaveAttribute('lang',locale);await expect(guide.locator('#maishift')).toHaveCount(1);expect(await guide.evaluate(()=>window.opener===null)).toBe(true);await guide.close();
   // Firefox shares the native window with the help tab; restore the narrow click surface.
   await page.setViewportSize({width:320,height:800});
-  await expect(page.locator('input[value=file]')).toBeChecked();expect(await page.locator('.player-source-options img').evaluateAll(nodes=>nodes.every(n=>n.complete&&n.naturalWidth>0))).toBe(true);
-  await selectImportMethod(page,'report');await expect(page.locator('.player-source-fields a')).toHaveCount(0);await expect(page.locator('[data-import-help=session-report]')).toHaveAttribute('href','player-import-help.'+locale+'.html#session-report');await selectImportMethod(page,'file');
+  await expect(page.locator('[data-service-toggle=maishift]')).toHaveAttribute('aria-expanded','true');expect(await page.locator('.player-source-options img').evaluateAll(nodes=>nodes.every(n=>n.complete&&n.naturalWidth>0))).toBe(true);
+  await selectImportMethod(page,'report');await expect(page.locator('.player-source-fields a')).toHaveCount(0);await expect(page.locator('.player-source-help[data-import-help=session-report]')).toHaveAttribute('href','player-import-help.'+locale+'.html#session-report');await selectImportMethod(page,'file');
   await page.screenshot({path:testInfo.outputPath('import-sources-'+locale+'.png')});
   await selectImportMethod(page,'maishift');await page.locator('#player-maishift-url').fill('fictional-player');await page.locator('.player-actions button').first().click();
   await expect(page.locator('.player-source-fields select,.player-import-details')).toHaveCount(0);
@@ -259,7 +259,7 @@ for(const locale of ['en','zh-Hans','ko','ja','id'])test(`browser pilot ${locale
   await page.screenshot({path:testInfo.outputPath('profile-settings-'+locale+'.png')});await page.locator('#settings-toggle').click();
   const forgetLabels={en:'Forget player data','zh-Hans':'删除玩家数据',ko:'플레이어 데이터 삭제',ja:'プレイヤーデータを削除',id:'Hapus data pemain'};
   await expect(page.locator('#player-forget')).toHaveText(forgetLabels[locale]);await expect(page.locator('#player-clear')).toHaveCount(0);
-  await menu(page,'player-import');await expect(page.locator('[data-service-toggle=maishift]')).toHaveAttribute('aria-expanded','true');
+  await menu(page,'player-import');await expect(page.locator('[data-import-refresh]')).toBeVisible();await selectImportMethod(page,'maishift');
   const warning=page.locator('.player-import-replace-warning');await expect(warning).toBeVisible();
   const overwrite={en:'Importing will overwrite data from the currently imported account.','zh-Hans':'导入将覆盖当前已导入账号的数据。',ko:'가져오면 현재 가져온 계정의 데이터를 덮어씁니다.',ja:'読み込むと、現在読み込み済みのアカウントのデータが上書きされます。',id:'Impor akan menimpa data dari akun yang saat ini diimpor.'};
   await expect(warning).toHaveText(overwrite[locale]);
@@ -375,7 +375,7 @@ test('automatic region is resolved and remembered explicitly; a regional link sw
   const state=await setup(page,context);state.profile.region='JAPAN';await importData(page);
   expect(state.requests[0].region).toBe('auto');let s=(await saved(page)).active.source;expect(s.region).toBe('jp');expect(s.playerKey).toBe('maishift:maimaidx:jp:fictional-player');expect(s.url).toContain('/en@jp/');
   await page.clock.fastForward(31000);await refreshAndWait(page);expect(state.requests.length).toBe(2);expect(state.requests[1].region).toBe('jp');
-  state.profile.region='ASIA';await menu(page,'player-import');await page.locator('#player-maishift-url').fill('https://maimai.shiftpsh.com/en@intl/profile/fictional-player');await page.locator('.player-actions button').first().click();
+  state.profile.region='ASIA';await menu(page,'player-import');await selectImportMethod(page,'maishift');await page.locator('#player-maishift-url').fill('https://maimai.shiftpsh.com/en@intl/profile/fictional-player');await page.locator('.player-actions button').first().click();
   await expect(page.locator('#player-import-dialog')).toContainText('1 PBs');await expect(page.locator('#player-import-dialog')).toContainText('Importing will overwrite data from the currently imported account.');
   await page.locator('#player-import-dialog .player-actions button').first().click();await expect.poll(async()=>(await saved(page)).active.source.region).toBe('intl');
   expect(await page.evaluate(async()=>{const d=await maimaiPlayerData.decode((await maimaiPlayerStorage.read()).active.bytes);return Object.keys(d.charts).every(id=>id.startsWith('maishift:intl:'));})).toBe(true);
