@@ -225,6 +225,34 @@ test("JSON preview preserves exact and unmatched scores, reloads locally, and ne
   ).toEqual([]);
 });
 
+test("current DXRating file loads its lookup on import, matches, and survives reload without provider calls", async ({ page }) => {
+  const requests = [];
+  page.on("request", request => requests.push(request.url()));
+  await page.goto("/dxrating-import/");
+  await expect.poll(() => page.evaluate(() => !!window.maimaiPersonal)).toBe(true);
+  await page.evaluate(() => maimaiPersonal.ready);
+  await expect(page.locator("#catalog-count strong")).toHaveText("6");
+  expect(requests.some(url => /import-dxrating-metadata-/.test(url))).toBe(false);
+  const data = JSON.parse(await readFile(new URL("../../web/tests/fixtures/dxrating-all-records.json", import.meta.url), "utf8"));
+  await preview(page, data, {format:"dxrating"});
+  expect(requests.some(url => /import-dxrating-metadata-/.test(url))).toBe(true);
+  await expect(page.locator("#player-import-dialog")).toContainText("Unmatched PB charts: 1");
+  await commit(page);
+  const first = await saved(page);
+  expect(first.data.player.key).toBe("dxrating:maimaidx:intl:FileFixture");
+  expect(Object.keys(first.data.charts)).toHaveLength(2);
+  expect(Object.values(first.data.records).map(row=>row.achievement).sort()).toEqual([991000,1005432].sort());
+  const matched = () => page.evaluate(() => maimaiPersonal.record(maimaiResearchCatalog.catalog.find(chart=>chart.title === "君の知らない物語"))?.achievement);
+  expect(await matched()).toBe(1005432);
+  await page.reload();
+  await expect.poll(() => page.evaluate(() => !!window.maimaiPersonal)).toBe(true);
+  await page.evaluate(() => maimaiPersonal.ready);
+  await expect.poll(matched).toBe(1005432);
+  expect((await saved(page)).revision).toBe(first.revision);
+  const origin = new URL(page.url()).origin;
+  expect(requests.filter(url=>/^https?:/.test(url) && new URL(url).origin !== origin)).toEqual([]);
+});
+
 for (const [format, data] of [
   [
     "mai-tools",

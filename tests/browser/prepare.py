@@ -151,6 +151,20 @@ search_package_manifest["files"].append(write(search_package, "catalog.json", se
 atomic_json(search_package / "package.json", search_package_manifest)
 build_lab(search_package, root / "romaji", catalog_version="romaji-v1")
 
+# Synthetic chart bodies with public identity labels, solely for file-import matching.
+dxrating_package = write_package(Path("output/dxrating-import-fixture"))
+dxrating_charts = json.loads((dxrating_package / "catalog.json").read_bytes())
+dxrating_charts[0].update(
+    title="君の知らない物語", artist="supercell「化物語」", format="DX", difficulty="MASTER"
+)
+dxrating_manifest = read_json(dxrating_package / "package.json")
+dxrating_manifest["files"] = [
+    row for row in dxrating_manifest["files"] if row["path"] != "catalog.json"
+]
+dxrating_manifest["files"].append(write(dxrating_package, "catalog.json", dxrating_charts))
+atomic_json(dxrating_package / "package.json", dxrating_manifest)
+build_lab(dxrating_package, root / "dxrating-import", catalog_version="dxrating-import-v1")
+
 # Provider UUIDs and chart identities are authored fixtures; the provider is never fetched.
 player_package = write_package(Path("output/mai-notes-fixture"), grouped=True)
 player_charts = json.loads((player_package / "catalog.json").read_bytes())

@@ -79,7 +79,13 @@ export async function normalizeFileImportDocument(
   }
   const parsed = privateSource
     ? parsePrivateExport(provider, input)
-    : parseOfficialFileExport(provider, input);
+    : parseOfficialFileExport(
+        provider,
+        input,
+        provider === 'dxrating'
+          ? (await import('../domain/import-dxrating-metadata')).lookupDXRatingSheet
+          : undefined,
+      );
   if ('sourceRegion' in parsed && parsed.sourceRegion && parsed.sourceRegion !== options.region)
     throw new DiagnosticError(
       'The export and selected game region do not match.',
