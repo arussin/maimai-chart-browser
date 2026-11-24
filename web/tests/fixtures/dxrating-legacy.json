@@ -1,0 +1,8 @@
+[
+  { "sheetId": "True Love Song__dxrt__std__dxrt__master", "achievementRate": 100 },
+  {
+    "sheetId": "君の知らない物語__dxrt__dx__dxrt__master",
+    "identity": { "songId": "君の知らない物語", "type": "dx", "difficulty": "master" },
+    "achievementRate": 0
+  }
+]

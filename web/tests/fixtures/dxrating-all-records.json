@@ -1,0 +1,18 @@
+[
+  { "sheetId": "dsht_5mk3yr8gme", "achievementRate": 99.1 },
+  {
+    "sheetId": "dsht_e5nsvt8k2a",
+    "identity": { "songId": "dsng_kkx38yfx4t", "type": "dx", "difficulty": "master" },
+    "achievementRate": 100.5432,
+    "comboFlag": "ap",
+    "syncFlag": null,
+    "dxScore": 234,
+    "source": {
+      "provider": "maimai-net",
+      "providerSongName": "Synthetic source label",
+      "best50Bucket": "b15"
+    },
+    "providerConfig": { "divingFish": { "ratingEligibility": null } },
+    "somethingNewer": { "kept": true }
+  }
+]
