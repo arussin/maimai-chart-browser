@@ -57,6 +57,13 @@ def powershell(argv):
     return "& " + " ".join("'" + item.replace("'", "''") + "'" for item in argv)
 
 
+def loaded_library():
+    """The library file this interpreter imports; a release must use its own source."""
+    import maimai_intelligence.public_release as library
+
+    return Path(library.__file__).resolve()
+
+
 def validate_spec(spec):
     common = {
         "kind",
@@ -120,11 +127,8 @@ def validate_spec(spec):
     tool.require(digest(spec["wrangler"]) == spec["wrangler_sha256"], "Reviewed Wrangler changed")
     # Both owner tools import the library in this interpreter. Never silently use
     # a different checkout's installed library for the claimed source commit.
-    import maimai_intelligence.public_release as library
-
     tool.require(
-        Path(library.__file__).resolve()
-        == Path(spec["source"]) / "src/maimai_intelligence/public_release.py",
+        loaded_library() == Path(spec["source"]) / "src/maimai_intelligence/public_release.py",
         "Set PYTHONPATH to the release source's src directory and repository",
     )
     return spec

@@ -274,8 +274,20 @@ class DriverGates(unittest.TestCase):
         tool.save(self.root / "hosting.json", {})
         tool.save(self.root / "observed.json", {})
         self.make_release(self.base, b"old")
+        # CI imports the installed package; the source binding itself is tested below.
+        bound = Path(__file__).resolve().parents[1] / "src/maimai_intelligence/public_release.py"
+        binding = patch.object(driver, "loaded_library", return_value=bound)
+        binding.start()
+        self.addCleanup(binding.stop)
         self.pre_id = "11111111-1111-4111-8111-111111111111"
         self.prod_id = "22222222-2222-4222-8222-222222222222"
+
+    def test_library_from_another_location_is_refused(self):
+        tool.save(self.root / "spec.json", self.spec)
+        elsewhere = Path(self.root / "site-packages/maimai_intelligence/public_release.py")
+        with patch.object(driver, "loaded_library", return_value=elsewhere):
+            with self.assertRaisesRegex(ValueError, "PYTHONPATH"):
+                driver.validate_spec(tool.read(self.root / "spec.json"))
 
     def make_release(self, root, html):
         (root / "public").mkdir(parents=True)
