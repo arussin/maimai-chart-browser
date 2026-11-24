@@ -1,5 +1,5 @@
 import { test, expect } from "./fixtures.js";
-import { selectImportMethod } from './player-import-fixture.mjs';
+import { openImport, selectImportMethod } from './player-import-fixture.mjs';
 import { readFile } from "node:fs/promises";
 
 const messages = JSON.parse(
@@ -37,11 +37,6 @@ async function boot(page) {
     .poll(() => page.evaluate(() => !!window.maimaiPersonal))
     .toBe(true);
   await page.evaluate(() => maimaiPersonal.ready);
-}
-async function openImport(page, provider) {
-  await page.locator("#settings-toggle").click();
-  await page.locator("#player-import").click();
-  if (provider) await selectImportMethod(page, provider);
 }
 async function accept(page, remember = true) {
   await expect(page.getByRole('heading', { name: 'Import this profile?', exact: true })).toBeVisible();
@@ -828,81 +823,80 @@ async function unclipped(page) {
   expect(layout).toEqual({ contained: true, clipped: [], overflow: false });
 }
 for (const locale of ["en", "zh-Hans", "ko", "ja", "id"]) {
-  test(
-    "direct connection controls stay translated and unclipped in " + locale,
+  // Each viewport is independent: all controls keep the normal 30-second budget.
+  for (const width of [280, 320, 430, 1280]) test(
+    `direct connection controls stay translated and unclipped in ${locale} at ${width}px`,
     async ({ page, context }, testInfo) => {
       await mockOAuth(context);
       await boot(page);
       await page.evaluate((locale) => maimaiI18n.setLocale(locale), locale);
-      for (const width of [280, 320, 430, 1280]) {
-        await page.setViewportSize({ width, height: 1000 });
-        await openImport(page, "kamaitachi");
-        await expect(page.locator("#player-import-dialog")).toContainText(
-          translated("Back to import choices", locale),
-        );
-        await expect(page.locator("#player-import-dialog")).toContainText(
-          translated("Kamaitachi username or profile URL", locale),
-        );
-        const regionLabel = translated("maimai DX · Mainland China", locale);
-        await expect(page.locator("#player-import-dialog .player-service-region:visible")).toHaveCount(8);
-        for (const [provider, title] of [["diving-fish", "Diving-Fish"], ["lxns", "LXNS"]]) {
-          const toggle = page.locator(`[data-service-toggle="${provider}"]`);
-          await expect(toggle).toHaveAttribute("aria-expanded", "false");
-          await expect(toggle.locator(".player-service-region").first()).toBeVisible();
-          await expect(toggle.locator(".player-service-region").first()).toHaveText(regionLabel);
-          await expect(toggle).toHaveAccessibleName(`${title} ${regionLabel} ${translated("Personal bests", locale)}`);
-        }
-        await unclipped(page);
-        if (locale === "en" && width === 1280)
-          await page.screenshot({ path: testInfo.outputPath("kamaitachi-desktop.png") });
-        await selectImportMethod(page, 'diving-fish');
-        await expect(page.locator("#player-fish-masking")).toBeVisible();
-        await expect(page.locator("#player-import-dialog")).toContainText(
-          translated("Score masking is off.", locale),
-        );
-        await expect(page.getByRole('button', { name: translated('Connect Diving-Fish', locale), exact: true })).toBeDisabled();
-        await unclipped(page);
-        const maskHelp = page.getByRole('button', { name: translated('About score masking', locale), exact: true });
-        await maskHelp.click();
-        await expect(page.locator('#player-fish-masking-help')).toBeVisible();
-        await unclipped(page);
-        await maskHelp.click();
-        if (locale === "en" && width === 1280)
-          await page.screenshot({ path: testInfo.outputPath("diving-fish-desktop.png") });
-        if (width === 280 || width === 320)
-          await page.screenshot({
-            path: testInfo.outputPath("direct-import-" + locale + "-" + width + ".png"),
-          });
-        await selectImportMethod(page, 'lxns');
-        await expect(page.locator('#player-fish-masking')).toHaveCount(0);
-        const lxnsConnect = page.getByRole('button', { name: translated('Connect LXNS', locale), exact: true });
-        await expect(lxnsConnect).toBeDisabled();
-        await expect(page.locator('#player-import-dialog')).toContainText(translated('My scores are updated.', locale));
-        const help = page.getByRole('button', { name: translated('Why update scores first?', locale), exact: true });
-        await expect(help).toHaveAttribute('aria-expanded', 'false');
-        await expect(page.locator('#player-provider-updated-help')).toBeHidden();
-        await help.click();
-        await expect(help).toHaveAttribute('aria-expanded', 'true');
-        await expect(page.locator('#player-provider-updated-help')).toBeVisible();
-        await unclipped(page);
-        await help.click();
-        await page.locator('#player-provider-updated').check();
-        await expect(lxnsConnect).toBeEnabled();
-        const lxnsHelp = page.locator('.player-source-help[data-import-help=lxns]');
-        await expect(lxnsHelp).toHaveCount(1);
-        for (const link of await lxnsHelp.all())
-          await expect(link).toHaveAttribute('href', 'player-import-help.' + locale + '.html#lxns');
-        await unclipped(page);
-        if (width === 280 || width === 320 || (locale === 'en' && width === 1280))
-          await page.screenshot({ path: testInfo.outputPath('lxns-' + locale + '-' + width + '.png') });
-        await selectImportMethod(page, 'maishift');
-        await unclipped(page);
-        await selectImportMethod(page, 'report');
-        await unclipped(page);
-        await selectImportMethod(page, 'file');
-        await unclipped(page);
-        await page.locator('#player-import-dialog .player-source-footer button').click();
+      await page.setViewportSize({ width, height: 1000 });
+      await openImport(page, "kamaitachi");
+      await expect(page.locator("#player-import-dialog")).toContainText(
+        translated("Back to import choices", locale),
+      );
+      await expect(page.locator("#player-import-dialog")).toContainText(
+        translated("Kamaitachi username or profile URL", locale),
+      );
+      const regionLabel = translated("maimai DX · Mainland China", locale);
+      await expect(page.locator("#player-import-dialog .player-service-region:visible")).toHaveCount(8);
+      for (const [provider, title] of [["diving-fish", "Diving-Fish"], ["lxns", "LXNS"]]) {
+        const toggle = page.locator(`[data-service-toggle="${provider}"]`);
+        await expect(toggle).toHaveAttribute("aria-expanded", "false");
+        await expect(toggle.locator(".player-service-region").first()).toBeVisible();
+        await expect(toggle.locator(".player-service-region").first()).toHaveText(regionLabel);
+        await expect(toggle).toHaveAccessibleName(`${title} ${regionLabel} ${translated("Personal bests", locale)}`);
       }
+      await unclipped(page);
+      if (locale === "en" && width === 1280)
+        await page.screenshot({ path: testInfo.outputPath("kamaitachi-desktop.png") });
+      await selectImportMethod(page, 'diving-fish');
+      await expect(page.locator("#player-fish-masking")).toBeVisible();
+      await expect(page.locator("#player-import-dialog")).toContainText(
+        translated("Score masking is off.", locale),
+      );
+      await expect(page.getByRole('button', { name: translated('Connect Diving-Fish', locale), exact: true })).toBeDisabled();
+      await unclipped(page);
+      const maskHelp = page.getByRole('button', { name: translated('About score masking', locale), exact: true });
+      await maskHelp.click();
+      await expect(page.locator('#player-fish-masking-help')).toBeVisible();
+      await unclipped(page);
+      await maskHelp.click();
+      if (locale === "en" && width === 1280)
+        await page.screenshot({ path: testInfo.outputPath("diving-fish-desktop.png") });
+      if (width === 280 || width === 320)
+        await page.screenshot({
+          path: testInfo.outputPath("direct-import-" + locale + "-" + width + ".png"),
+        });
+      await selectImportMethod(page, 'lxns');
+      await expect(page.locator('#player-fish-masking')).toHaveCount(0);
+      const lxnsConnect = page.getByRole('button', { name: translated('Connect LXNS', locale), exact: true });
+      await expect(lxnsConnect).toBeDisabled();
+      await expect(page.locator('#player-import-dialog')).toContainText(translated('My scores are updated.', locale));
+      const help = page.getByRole('button', { name: translated('Why update scores first?', locale), exact: true });
+      await expect(help).toHaveAttribute('aria-expanded', 'false');
+      await expect(page.locator('#player-provider-updated-help')).toBeHidden();
+      await help.click();
+      await expect(help).toHaveAttribute('aria-expanded', 'true');
+      await expect(page.locator('#player-provider-updated-help')).toBeVisible();
+      await unclipped(page);
+      await help.click();
+      await page.locator('#player-provider-updated').check();
+      await expect(lxnsConnect).toBeEnabled();
+      const lxnsHelp = page.locator('.player-source-help[data-import-help=lxns]');
+      await expect(lxnsHelp).toHaveCount(1);
+      for (const link of await lxnsHelp.all())
+        await expect(link).toHaveAttribute('href', 'player-import-help.' + locale + '.html#lxns');
+      await unclipped(page);
+      if (width === 280 || width === 320 || (locale === 'en' && width === 1280))
+        await page.screenshot({ path: testInfo.outputPath('lxns-' + locale + '-' + width + '.png') });
+      await selectImportMethod(page, 'maishift');
+      await unclipped(page);
+      await selectImportMethod(page, 'report');
+      await unclipped(page);
+      await selectImportMethod(page, 'file');
+      await unclipped(page);
+      await page.locator('#player-import-dialog .player-source-footer button').click();
       expect(await saved(page)).toBeNull();
     },
   );
