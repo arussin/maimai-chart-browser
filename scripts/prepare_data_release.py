@@ -1,16 +1,15 @@
 """Assemble a maimai.party catalog (data) release from a ready ``update_catalog prepare`` run.
 
-Why this exists (found November 22, 2026): the catalog pipeline builds its ``public``
-tree without two things every release since October 20, 2026 has carried:
+The November 22 historical candidate omitted two release inputs:
 
 * the export-sized song artwork (``export_artwork_source``), which the score-export
   loader still references, and
 * the Cloudflare Web Analytics allowance in the page policy (``preserve_web_analytics``).
 
-Publishing the pipeline's tree as it stands would drop 1,571 artwork files and the
-analytics allowance. This tool plans the same candidate again with both options, proves
-that nothing else differs from the pipeline's output, and lays the result over the live
-release so that no published path disappears (the rule interface releases already follow).
+The pipeline now carries both inputs. This tool accepts either generation, proves
+that its re-plan differs only in those inputs, and lays the result over the previous
+release. That overlay remains necessary: the pipeline does not retain every
+unreferenced published path. Source/readiness and paid hosting gates still apply.
 
 The release also retains a compact ``planner-input`` for the next interface release:
 the planner's browser assets, default-catalog artwork and a one-entry research
@@ -19,8 +18,7 @@ that interface release is prepared; historical preview files are unnecessary.
 
 It never uploads, deploys, changes an account or deletes anything. It refuses to write
 into an existing release folder. Run with ``-B`` and ``PYTHONPATH=<repo>/src;<repo>``.
-The durable fix is to give ``update_catalog prepare`` these two options; until then this
-is the release step for catalog updates.
+Receipts have no generation timestamp. Explicit candidate sitemap dates are reused.
 """
 
 from __future__ import annotations
@@ -125,7 +123,7 @@ def prepare(args):
     tool.bind_source(args.expected_commit)
     hosting = tool.hosting_check(args.hosting_check, args.base_deployment)
     prior, prior_inventory_sha, base_manifest = tool.baseline(base)
-    live = tool.live_manifest()
+    live = tool.observed_manifest(args, hosting)
     require(
         live == raw_file(base / "public" / "manifest.json"),
         "The live site is not the release this candidate is built on",
@@ -202,6 +200,7 @@ def prepare(args):
         prepared_catalogs={version: document},
         preserve_web_analytics=True,
         export_artwork_source=source,
+        release_date=ready.get("release", {}).get("release_date"),
     )
     require(
         public_release._plain(plan.manifest) == candidate_manifest,
@@ -223,7 +222,9 @@ def prepare(args):
         "Shell copies are not where the planner normally puts them",
     )
     require(
-        set(candidate_rows) - set(planned) == {old_shell_copy}, "Replanning lost a candidate path"
+        set(candidate_rows) - set(planned)
+        == ({old_shell_copy} if old_shell_copy != shell_copy else set()),
+        "Replanning lost a candidate path",
     )
     added_media = set(planned) - set(candidate_rows) - {shell_copy}
     require(
@@ -275,7 +276,6 @@ def prepare(args):
     changed = sorted(name for name in delta if name in prior)
     receipt = {
         "schema": "maimai-data-release-1",
-        "at": tool.now().isoformat(),
         "status": "complete_verified_not_deployed",
         "published": False,
         "root": str(release / "public"),
@@ -292,7 +292,8 @@ def prepare(args):
         "base_deployment": args.base_deployment,
         "base_inventory_sha256": prior_inventory_sha,
         "base_manifest_sha256": sha(live),
-        "live_manifest_matched_base": True,
+        "live_manifest_matched_base": getattr(args, "observed_manifest", None) is None,
+        "saved_manifest_matched_base": getattr(args, "observed_manifest", None) is not None,
         "inventory_sha256": sha(inventory_raw),
         "files": len(rows),
         "bytes": sum(row["bytes"] for row in rows.values()),
@@ -365,6 +366,9 @@ def main():
     )
     parser.add_argument("--release", type=Path, required=True, help="Fresh folder for this release")
     parser.add_argument("--hosting-check", type=Path, required=True)
+    parser.add_argument(
+        "--observed-manifest", type=Path, help="Saved live manifest; no network read"
+    )
     parser.add_argument("--export-artwork-source", type=Path, required=True)
     parser.add_argument("--git", default="git")
     args = parser.parse_args()

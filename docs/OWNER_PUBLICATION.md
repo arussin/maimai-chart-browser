@@ -23,12 +23,17 @@ refuses to write into an existing folder. Run them with `python -B` and
   `inventory.json.gz`), a clean checkout at the commit being released and a
   hosting check. A changed `_headers` needs `--allow-headers-change`; a changed
   sitemap needs `--release-date YYYY-MM-DD`. Authored shell templates must be
-  unchanged since the previous release.
+  unchanged since the previous release. `--allow-invitation-change` permits only
+  replacement of `support.invitation` text, recording the exact old/new text in
+  `planner_refresh.invitation_change`; payment, feature and other configuration
+  changes still fail, even with this flag.
 - `scripts/prepare_data_release.py` assembles a catalog release from a ready
-  `update_catalog prepare` run. It adds the export artwork and the Web
-  Analytics allowance that the pipeline's own `public` tree lacks, proves that
-  nothing else differs, and writes the `planner-input` the next interface
-  release starts from.
+  `update_catalog prepare` run. It verifies a re-plan with export artwork and
+  the Web Analytics allowance (also accepting older runs missing those options),
+  overlays the previous release to retain all published paths, and writes the
+  `planner-input` the next interface release starts from. The current pipeline
+  carries artwork and the allowance but still omits unreferenced historical
+  paths; this tool remains necessary. It does not bypass readiness/source checks.
 - `scripts/retain_release_state.py` writes one archive of a published release
   folder, and any extra folders, for keeping outside the build cache. Run it
   after every release; the next one cannot be built without the previous
@@ -49,6 +54,123 @@ live `manifest.json` matches the base release byte for byte.
 After preparation, upload `public` as a preview with the reviewed Wrangler,
 check it, and publish to production only with the owner's approval. Record the
 deployment in `deployment.json` beside `preparation.json`.
+
+### Offline release driver
+
+Use `python -B -m scripts.release_driver` with `PYTHONPATH=<source>/src;<source>`.
+The driver never runs Wrangler, reads authentication stores or contacts hosting.
+It calls the existing prepare tool, verifies the result, and records explicit
+owner-supplied upload/check results. Uploaded deployment ids and check results
+are assertions from the operator, not independent network verification.
+
+Start with a JSON specification outside the checkout, using absolute paths:
+
+```json
+{
+  "kind": "interface",
+  "source": "C:/Dev/maimai/maimai-chart-browser-registry",
+  "expected_commit": "FULL_40_CHARACTER_COMMIT_SHA",
+  "base_commit": "FULL_40_CHARACTER_BASE_COMMIT_SHA",
+  "base_release": "C:/DevCache/projects/maimai-chart-browser-registry/CACHE/releases/BASE",
+  "base_deployment": "FULL_BASE_DEPLOYMENT_UUID",
+  "release": "C:/DevCache/projects/maimai-chart-browser-registry/CACHE/releases/NEW",
+  "hosting_check": "C:/DevCache/REVIEW/hosting.json",
+  "observed_manifest": "C:/DevCache/REVIEW/live-manifest.json",
+  "node": "C:/DevTools/REVIEWED/node.exe",
+  "wrangler": "C:/DevTools/REVIEWED/wrangler/bin/wrangler.js",
+  "wrangler_sha256": "REVIEWED_WRANGLER_ENTRYPOINT_SHA256",
+  "preview_branch": "review-release",
+  "release_date": "2026-11-23",
+  "allow_headers_change": false,
+  "allow_invitation_change": false
+}
+```
+
+For a catalog release set `kind` to `catalog`, replace `base_commit` and the
+interface-only date/opt-in fields with `run` (ready update run folder) and
+`export_artwork_source`. Interface releases may also specify export artwork.
+The source must be clean and exactly at the full commit, with Git line endings;
+the imported library must come from that source. The release must not exist and
+its parent must exist. Unknown specification fields fail rather than being ignored.
+
+The hosting JSON retains the existing one-hour check, paid-plan profile and base
+deployment binding. For offline preparation it additionally needs
+`live_manifest_sha256`, the SHA-256 of the separately saved live manifest from
+that same observation. The saved bytes must match the base release. Do not copy
+the base manifest and describe it as a fresh live observation. Direct prepare
+tools accept `--observed-manifest` for the same offline path; omitting it retains
+their existing live read. Receipts distinguish saved observations from live reads.
+
+```text
+python -B -m scripts.release_driver prepare --spec SPEC.json
+python -B -m scripts.release_driver status --release RELEASE
+python -B -m scripts.release_driver upload-command --release RELEASE --stage preview
+```
+
+Preparation prints changed/added files and pages, the headers diff and previous/
+candidate sitemap dates, and retains `review-summary.json`. Inspect that summary.
+`upload-command` prints a PowerShell command using the explicit local Node and
+reviewed Wrangler, fixed project `maimai-party`, the preview branch and source
+commit. Run that command separately only when authorized; the driver never
+executes it. No `npx`, installation or implicit uploader discovery is used.
+
+After uploading and checking the preview, supply a checks JSON:
+
+```json
+{
+  "passed": true,
+  "manifest_sha256": "SHA256_OF_VERIFIED_DEPLOYMENT_MANIFEST",
+  "checks": {
+    "headers": "Describe the observed headers",
+    "browser": "Describe the tested pages and results"
+  }
+}
+```
+
+```text
+python -B -m scripts.release_driver record --release RELEASE --stage preview --deployment-id UUID --checks preview-checks.json --ran-at 2026-11-23T12:00:00Z --released-by OPERATOR
+```
+
+The preview receipt records the exact command, id, operator-supplied upload time
+and checks. Recording twice is refused. Once Adam approves the checked preview,
+write an approval JSON with `approved: true`, `approved_by: "Adam"`, `approved_at`
+(with timezone), `evidence` (his actual instruction), `preparation_sha256` (from
+`driver.json`) and `preview_deployment` (the full checked preview UUID). This
+records existing approval; it is not a new confirmation phrase or a substitute
+for approval. Production commands are gated on that bound approval and preview.
+
+```text
+python -B -m scripts.release_driver upload-command --release RELEASE --stage production --approval approval.json
+python -B -m scripts.release_driver record --release RELEASE --stage production --deployment-id UUID --checks production-checks.json --ran-at 2026-11-23T13:00:00Z --released-by OPERATOR
+python -B -m scripts.release_driver retain --release RELEASE --target ARCHIVE.zip --root CACHE_ROOT
+python -B -m scripts.release_driver status --release RELEASE
+```
+
+Production checks additionally require `live_manifest_sha256`, matching the
+prepared manifest after checking the custom domain. `record` writes the existing
+`maimai-release-deployment-1` shape, including source, site, changes, before/after
+checks and rollback base. It refuses production before approval. It does not
+claim to update the catalog store's `latest.json` or Worker deployments.
+
+Every subsequent operation verifies the entire public inventory and bound
+preparation/summary. Node and Wrangler entrypoint hashes are checked before
+printing or recording commands. Keep the reviewed Wrangler installation and its
+dependencies unchanged. `retain` invokes the existing archiver with the release
+and, for catalog releases, the retained run inputs/receipts excluding its redundant
+`public` tree and disposable caches. It rejects missing inputs, archive overwrite,
+or an archive inside its own inputs. The archive's hash is checked and recorded;
+`status` checks it again. Retention is a local archive check, not backup recovery
+acceptance. Status leaves the production record and `WORKSPACE-RETENTION.md`
+updates as an explicit final owner gate; it never silently marks them done.
+
+To automate hosting observations later, a separately authorized broker/connector
+would need to return the plan, Pages upload setting, production deployment and
+timestamp through an existing authenticated read-only interface, plus fetch and
+hash the public manifest in the same observation. The driver would consume only
+that non-secret output. This change implements no broker, token access or
+authentication-store reader. Fresh hosting evidence and approval remain necessary
+at the actual upload; this offline driver cannot prevent someone running a printed
+command later against changed hosting state.
 
 The official site is a static Cloudflare Pages Direct Upload project named
 `maimai-party`, with `main` as its production branch and `maimai.party` as its

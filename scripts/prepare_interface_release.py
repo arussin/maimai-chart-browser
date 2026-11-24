@@ -268,7 +268,41 @@ def hosting_check(path, base_deployment):
     return check
 
 
-def planner_refresh_preflight(planner, base_commit):
+def observed_manifest(args, hosting):
+    """Use an explicitly supplied observation offline, or the legacy live read."""
+    path = getattr(args, "observed_manifest", None)
+    if path is None:
+        return live_manifest()
+    raw = raw_file(path, 8 * 1024**2)
+    require(
+        hosting.get("live_manifest_sha256") == sha(raw),
+        "Saved manifest must be bound by live_manifest_sha256 in the fresh hosting check",
+    )
+    return raw
+
+
+def configuration_changes(previous, current, *, allow_invitation_change=False):
+    """Messages may refresh; only support.invitation has a separate opt-in."""
+    old = {k: v for k, v in previous.items() if k != "messages"}
+    new = {k: v for k, v in current.items() if k != "messages"}
+    old_support, new_support = old.get("support", {}), new.get("support", {})
+    before, after = old_support.get("invitation"), new_support.get("invitation")
+    change = None
+    if before != after:
+        require(
+            allow_invitation_change, "Support invitation changed; pass --allow-invitation-change"
+        )
+        require(
+            isinstance(before, str) and isinstance(after, str),
+            "Invitation opt-in permits only replacement text",
+        )
+        change = {"old": before, "new": after}
+        new = {**new, "support": {**new_support, "invitation": before}}
+    require(old == new, "Unrequested feature, payment or analytics configuration change")
+    return change
+
+
+def planner_refresh_preflight(planner, base_commit, *, allow_invitation_change=False):
     """Resolve and validate every shell/configuration seam before allocation."""
     from maimai_intelligence.browser_bundle import (
         STATIC_RESOURCES,
@@ -302,10 +336,8 @@ def planner_refresh_preflight(planner, base_commit):
     current = browser_configuration(
         player_pilot=previous["pilot"], player_maishift=previous["features"]["maishift"]
     )
-    require(
-        {k: v for k, v in previous.items() if k != "messages"}
-        == {k: v for k, v in current.items() if k != "messages"},
-        "Unrequested feature, payment or analytics configuration change",
+    invitation = configuration_changes(
+        previous, current, allow_invitation_change=allow_invitation_change
     )
     browser_assets()  # Verifies the generated dependency graph and every copied source.
     for name in (*STATIC_RESOURCES, *BRAND_INPUTS, "support.html", "support-return.html"):
@@ -321,6 +353,7 @@ def planner_refresh_preflight(planner, base_commit):
             "changed_stylesheets": changed_styles,
             "stylesheet_matches_per_input": 1,
             "validated_before_allocation": True,
+            "invitation_change": invitation,
         },
     }
 
@@ -528,7 +561,7 @@ def prepare(args):
     bind_source(args.expected_commit)
     hosting = hosting_check(args.hosting_check, args.base_deployment)
     prior, prior_inventory_sha, manifest = baseline(base)
-    live = live_manifest()
+    live = observed_manifest(args, hosting)
     require(
         live == raw_file(base / "public" / "manifest.json"),
         "The live site is not the release this candidate is built on",
@@ -539,7 +572,11 @@ def prepare(args):
         shutil.disk_usage(release.parent).free >= FREE_RESERVE + 2 * total_prior,
         "Not enough free disk space",
     )
-    refresh = planner_refresh_preflight(base / "planner-input", args.base_commit)
+    refresh = planner_refresh_preflight(
+        base / "planner-input",
+        args.base_commit,
+        allow_invitation_change=getattr(args, "allow_invitation_change", False),
+    )
     input_manifest = read(base / "planner-input" / "manifest.json")
     require(
         input_manifest["schema_version"] == "1.0.0"
@@ -643,7 +680,8 @@ def prepare(args):
         "base_deployment": args.base_deployment,
         "base_inventory_sha256": prior_inventory_sha,
         "base_manifest_sha256": sha(live),
-        "live_manifest_matched_base": True,
+        "live_manifest_matched_base": getattr(args, "observed_manifest", None) is None,
+        "saved_manifest_matched_base": getattr(args, "observed_manifest", None) is not None,
         "inventory_sha256": sha(inventory_raw),
         "files": len(rows),
         "bytes": sum(row["bytes"] for row in rows.values()),
@@ -716,6 +754,10 @@ def main():
     )
     parser.add_argument("--release", type=Path, required=True, help="Fresh folder for this release")
     parser.add_argument("--hosting-check", type=Path, required=True)
+    parser.add_argument(
+        "--observed-manifest", type=Path, help="Saved live manifest; no network read"
+    )
+    parser.add_argument("--allow-invitation-change", action="store_true")
     parser.add_argument("--export-artwork-source", type=Path)
     parser.add_argument(
         "--allow-headers-change",
