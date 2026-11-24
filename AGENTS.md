@@ -30,8 +30,12 @@
   player data, identifiers or searches to the collector; restored state and
   automatic refresh are not deliberate user actions.
 - Build publication through `plan_public_release`, retaining verified previous
-  manifest references. The 20,000-file guard remains mandatory. An over-capacity
-  review bundle is evidence only and is deliberately not a deployable release.
+  manifest references. The library's default 20,000-file guard remains. Since
+  November 22, 2026 production holds more than 20,000 files on the paid plan, so
+  production releases are assembled with `scripts/prepare_interface_release.py`
+  or `scripts/prepare_data_release.py` (see `docs/OWNER_PUBLICATION.md`), which
+  enforce 100,000 files, 25 MiB per file and a hosting check under an hour old.
+  An over-capacity review bundle is evidence only, not a deployable release.
 - SEO, active usage and owner reports share a combined launch gate. Local tests
   and configuration do not authorize account changes, provisioning or deployment.
 
