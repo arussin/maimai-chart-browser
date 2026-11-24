@@ -1,4 +1,5 @@
 import {test,expect} from './fixtures.js';
+import {openImport} from './player-import-fixture.mjs';
 test.beforeEach(async({fixtureOrigins})=>{for(const origin of ["https://fictional-report.example"])fixtureOrigins.synthetic(origin);});
 import {readFile} from 'node:fs/promises';
 import {gzipSync} from 'node:zlib';
@@ -53,8 +54,8 @@ for(const source of ['session-file','session-hosted','maishift-file'])test(`${so
   if(source==='session-hosted'){
     const sha=createHash('sha256').update(bytes).digest('hex'),offer=await page.evaluate(d=>maimaiPlayerData.offer(d),data);
     await context.route('https://fictional-report.example/**',route=>route.fulfill(route.request().url().endsWith('latest.json')?{contentType:'application/json',body:JSON.stringify({...offer,object:{path:'/report/party/data/'+sha+'.gz',sha256:sha,bytes:bytes.length}})}:{contentType:'application/gzip',body:bytes}));
-    await page.locator('#settings-toggle').click();await page.locator('#player-import').click();
-    await page.getByLabel('Hosted Session Report',{exact:true}).check();await page.getByLabel('Hosted Session Report URL',{exact:true}).fill('https://fictional-report.example/report/');await page.getByRole('button',{name:'Continue',exact:true}).click();
+    await openImport(page,'report');
+    await page.getByLabel('Hosted Session Report URL',{exact:true}).fill('https://fictional-report.example/report/');await page.getByRole('button',{name:'Continue',exact:true}).click();
     await page.getByRole('button',{name:'Import & remember',exact:true}).click();
   }else{
     await page.locator('input[type=file]').setInputFiles({name:'fictional.gz',mimeType:'application/gzip',buffer:bytes});

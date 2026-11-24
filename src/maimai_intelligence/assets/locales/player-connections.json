@@ -1,11 +1,5 @@
 {
   "messages": {
-    "Mainland China only": {
-      "zh-Hans": "仅限国服",
-      "ko": "중국 본토 버전 전용",
-      "ja": "中国本土版のみ",
-      "id": "Khusus versi Tiongkok daratan"
-    },
     "舞萌 DX · Mainland China": {
       "zh-Hans": "舞萌 DX · 国服",
       "ko": "舞萌 DX · 중국 본토판",
@@ -407,24 +401,6 @@
       "ko": "먼저 LXNS에서 중국 지역 maimai DX 성적을 동기화하세요. 연결 시 읽기 전용 권한을 요청하며, 가져오기 전에 성적을 확인할 수 있습니다.",
       "ja": "先に LXNS で中国版 maimai DX の成績を同期してください。接続時に読み取り専用の権限を求めます。読み込む前に成績を確認できます。",
       "id": "Sinkronkan skor maimai DX wilayah Tiongkok Anda di LXNS dahulu. Koneksi meminta izin baca saja; Anda dapat meninjau skor sebelum mengimpor."
-    },
-    "Choose a service.": {
-      "zh-Hans": "请选择服务。",
-      "ko": "서비스를 선택하세요.",
-      "ja": "サービスを選んでください。",
-      "id": "Pilih layanan."
-    },
-    "Checking import options…": {
-      "zh-Hans": "正在检查导入选项…",
-      "ko": "가져오기 옵션 확인 중…",
-      "ja": "読み込み方法を確認しています…",
-      "id": "Memeriksa opsi impor…"
-    },
-    "Import options are unavailable. You can still upload a Session Report file.": {
-      "zh-Hans": "导入选项暂不可用。仍可上传 Session Report 文件。",
-      "ko": "가져오기 옵션을 사용할 수 없습니다. Session Report 파일은 업로드할 수 있습니다.",
-      "ja": "読み込み方法を取得できません。Session Report ファイルはアップロードできます。",
-      "id": "Opsi impor tidak tersedia. Anda tetap dapat mengunggah berkas Session Report."
     },
     "No import options are available right now.": {
       "zh-Hans": "目前没有可用的导入选项。",

@@ -444,13 +444,78 @@ function maiTools(input: unknown): ImportResult {
   };
 }
 
-function dxrating(input: unknown): ImportResult {
+export type DXRatingSheetLookup = (id: string) =>
+  | {
+      songID: string;
+      title: string;
+      artist: string;
+      type: string;
+      difficulty: string;
+    }
+  | undefined;
+
+function dxrating(input: unknown, lookup?: DXRatingSheetLookup): ImportResult {
   return {
     capturedAt: null,
     displayName: null,
     coverage: 'unknown',
     ...mapRows(array(input), (score) => {
       const sheetID = text(score.sheetId, 'DXRating sheet ID', true);
+      if (/^dsht_[23456789abcdefghjkmnpqrstvwxyz]{10}$/.test(sheetID)) {
+        if (!lookup) throw rejected('record_identity', 'DXRating sheet lookup is unavailable.');
+        const supplied = score.identity;
+        // StoredPlay optional fields can be malformed in old saved data. Only
+        // a complete public identity is evidence; never derive titles from IDs.
+        const identity =
+          supplied && typeof supplied === 'object' && !Array.isArray(supplied)
+            ? (supplied as JsonObject)
+            : undefined;
+        const validIdentity =
+          identity &&
+          typeof identity.songId === 'string' &&
+          /^dsng_[23456789abcdefghjkmnpqrstvwxyz]{10}$/.test(identity.songId) &&
+          typeof identity.type === 'string' &&
+          ['std', 'dx', 'utage', 'utage2p'].includes(identity.type) &&
+          typeof identity.difficulty === 'string' &&
+          (['basic', 'advanced', 'expert', 'master', 'remaster'].includes(identity.difficulty) ||
+            (identity.type.startsWith('utage') && /^【.+】$/.test(identity.difficulty)));
+        const known = lookup(sheetID);
+        if (known && validIdentity) {
+          const sheet = known;
+          if (
+            identity.songId !== sheet.songID ||
+            identity.type !== sheet.type ||
+            identity.difficulty !== sheet.difficulty
+          ) {
+            throw rejected('record_identity', 'DXRating identity disagrees with its sheet ID.');
+          }
+        }
+        const sheet =
+          known ??
+          (validIdentity
+            ? {
+                songID: identity.songId as string,
+                title: '',
+                artist: '',
+                type: identity.type as string,
+                difficulty: identity.difficulty as string,
+              }
+            : undefined);
+        if (!sheet)
+          throw rejected('record_identity', 'Unknown DXRating sheet ID. Refresh the lookup.');
+        return row({
+          sourceID: sheetID,
+          sourceSongID: sheet.songID,
+          title: sheet.title,
+          artist: sheet.artist,
+          format: format(sheet.type),
+          difficulty: difficulty(sheet.difficulty),
+          achievement: percentage(score.achievementRate),
+          lamp: flag(score.comboFlag),
+          sync: flag(score.syncFlag, true),
+          dxScore: optionalNumber(score.dxScore, 'DX score', 100_000_000, true),
+        });
+      }
       const pieces = sheetID.split('__dxrt__');
       if (pieces.length !== 3 || !pieces[0])
         throw rejected('record_identity', 'Invalid DXRating sheet ID.');
@@ -606,6 +671,7 @@ function jietng(input: unknown): ImportResult {
 export function parseOfficialFileExport(
   provider: 'mai-tools' | 'dxrating' | 'tomomai' | 'jietng',
   input: unknown,
+  dxratingLookup?: DXRatingSheetLookup,
 ): ImportResult {
   let result: ImportResult;
   switch (provider) {
@@ -613,7 +679,7 @@ export function parseOfficialFileExport(
       result = maiTools(input);
       break;
     case 'dxrating':
-      result = dxrating(input);
+      result = dxrating(input, dxratingLookup);
       break;
     case 'tomomai':
       result = tomomai(input);

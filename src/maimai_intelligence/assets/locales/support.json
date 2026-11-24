@@ -221,6 +221,12 @@
       "ko": "결제 상태를 확인하려면 JavaScript가 필요합니다. Stripe 영수증으로도 확인할 수 있습니다.",
       "ja": "お支払い状況の確認には JavaScript が必要です。Stripe の領収書でも確認できます。",
       "id": "JavaScript diperlukan untuk memeriksa status pembayaran. Anda juga dapat memeriksa bukti pembayaran Stripe Anda."
+    },
+    "Don’t show again": {
+      "zh-Hans": "不再显示",
+      "ko": "다시 표시하지 않기",
+      "ja": "今後表示しない",
+      "id": "Jangan tampilkan lagi"
     }
   }
 }

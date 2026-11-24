@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { loadModule } from './module.mjs';
 import { CONNECTOR_METHODS } from '../../player-import-worker/connector-flags.mjs';
-const { parseImportConnectorFlags, fetchImportConnectorFlags, OFFLINE_IMPORT_CONNECTORS } =
+const { parseImportConnectorFlags, fetchImportConnectorFlags, DEFAULT_IMPORT_CONNECTORS } =
   await loadModule('runtime/import-connector-flags', {
     AbortController,
     TextDecoder,
@@ -13,13 +13,15 @@ const { parseImportConnectorFlags, fetchImportConnectorFlags, OFFLINE_IMPORT_CON
 const manifest = (methods = {}) => ({ schemaVersion: 1, methods });
 const response = (value) =>
   new Response(JSON.stringify(value), { headers: { 'content-type': 'application/json' } });
-test('browser methods match Worker allowlist; missing methods off and offline only local recovery', () => {
+test('browser methods match Worker allowlist; missing override methods off and bundled defaults cover all methods', () => {
   const flags = parseImportConnectorFlags(manifest());
   assert.deepEqual(Object.keys(flags).sort(), [...CONNECTOR_METHODS].sort());
   assert(Object.values(flags).every((value) => value === false));
   assert.deepEqual(
-    Object.entries(OFFLINE_IMPORT_CONNECTORS).filter(([, value]) => value),
-    [['file', true]],
+    Object.entries(DEFAULT_IMPORT_CONNECTORS)
+      .filter(([, value]) => value)
+      .sort(),
+    CONNECTOR_METHODS.map((method) => [method, true]).sort(),
   );
   for (const input of [
     null,
@@ -187,5 +189,5 @@ test('cancelling an in-flight body read discards it without changing offline rec
   controller.abort();
   await assert.rejects(pending);
   assert.equal(cancelled, true);
-  assert.equal(OFFLINE_IMPORT_CONNECTORS.file, true);
+  assert.equal(DEFAULT_IMPORT_CONNECTORS.file, true);
 });

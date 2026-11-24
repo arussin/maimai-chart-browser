@@ -124,6 +124,7 @@ export interface SessionNotification {
   version?: number;
 }
 export interface SessionEffects {
+  imported?(): void;
   diagnose?: DiagnosticSink;
   changed(redraw?: boolean): void;
   invalidate(): void;

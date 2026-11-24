@@ -53,10 +53,10 @@ test('opening imports checks visibility without emitting import attempts or prov
  await expect.poll(()=>page.evaluate(()=>!!window.maimaiPersonal)).toBe(true);await page.evaluate(()=>maimaiPersonal.ready);
  await page.locator('#player-import-primary').click();
  await expect(page.locator('#player-import-dialog [data-import-service="tomomai"]')).toBeVisible();
+ await expect(page.locator('#player-import-dialog [data-import-service]:visible')).toHaveCount(1);
  await page.keyboard.press('Escape');await expect(page.locator('#player-import-dialog')).toBeHidden();
  malformed=true;await page.locator('#player-import-primary').click();
- await expect(page.locator('#player-import-dialog')).toContainText('You can still upload a Session Report file.');
- await expect(page.locator('#player-import-dialog [data-import-service]')).toHaveCount(1);
+ await expect(page.locator('#player-import-dialog [data-import-service]:visible')).toHaveCount(11);
  await expect(page.locator('#player-import-dialog [data-import-service="session-report"]')).toBeVisible();
  await page.evaluate(()=>maimaiUsage.flush());
  const rows=counts.flatMap(batch=>batch.events);
@@ -122,7 +122,7 @@ test('Tomomai file chooser logs finite preview, saved import, and malformed-file
   return {revision:active.revision,key:data.player.key,achievement:Object.values(data.records)[0].achievement};
  });
  expect(saved.key).toBe('tomomai:maimaidx:intl:PRIVATE-TOMOMAI-ACCOUNT');expect(saved.achievement).toBe(987643);
- await choose('{invalid');await expect(page.locator('#player-import-dialog')).toContainText('Choose a valid JSON export for the selected source.');
+ await choose('{invalid');await expect(page.locator('#player-import-dialog')).toContainText('This file was not recognised for the selected source.');
  expect(await page.evaluate(async()=>(await maimaiPlayerStorage.read()).active?.revision)).toBe(saved.revision);
  await page.evaluate(()=>maimaiUsage.flush());
  for(const [event,count] of [['import_started',2],['import_previewed',1],['import_confirmed',1],['import_completed',1],['import_failed',1],['import_cancelled',0]])expect(amount(event),event).toBe(count);

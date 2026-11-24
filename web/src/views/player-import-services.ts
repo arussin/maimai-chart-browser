@@ -13,10 +13,81 @@ export interface ImportServiceMethod {
   label: string;
   fileFormat?: FileImportFormat;
 }
+/** Presentation only: adapter identities and region matching remain in the domain. */
+export const IMPORT_METHOD_DETAILS: Readonly<
+  Record<
+    ImportMethodValue,
+    {
+      group: string;
+      region: string;
+      data: string;
+    }
+  >
+> = {
+  maishift: {
+    group: 'International and Japan',
+    region: 'maimai DX · International / Japan',
+    data: 'Personal bests',
+  },
+  kamaitachi: {
+    group: 'International and Japan',
+    region: 'maimai DX · International / Japan',
+    data: 'Personal bests',
+  },
+  'diving-fish': {
+    group: 'Mainland China',
+    region: 'maimai DX · Mainland China',
+    data: 'Personal bests',
+  },
+  lxns: {
+    group: 'Mainland China',
+    region: 'maimai DX · Mainland China',
+    data: 'Personal bests',
+  },
+  file: {
+    group: 'Session Report',
+    region: 'maimai · Region recorded in the report',
+    data: 'Personal bests and recent plays, when included',
+  },
+  report: {
+    group: 'Session Report',
+    region: 'maimai · Region recorded in the report',
+    data: 'Personal bests and recent plays, when included',
+  },
+  'file:mai-tools': {
+    group: 'Official game exports',
+    region: 'maimai DX · International / Japan',
+    data: 'Personal bests (may be partial)',
+  },
+  'file:dxrating': {
+    group: 'Official game exports',
+    region: 'maimai DX · International / Japan',
+    data: 'Personal bests (may be partial)',
+  },
+  'file:tomomai': {
+    group: 'Official game exports',
+    region: 'maimai DX · International / Japan / Mainland China',
+    data: 'Personal bests or recent score observations, depending on the export',
+  },
+  'file:jietng': {
+    group: 'Official game exports',
+    region: 'maimai DX · International / Japan',
+    data: 'Personal bests and recent score observations',
+  },
+  'file:aqua': {
+    group: 'Private servers',
+    region: 'maimai DX · Private server',
+    data: 'Personal bests and recent plays, when included',
+  },
+  'file:tachi': {
+    group: 'Private servers',
+    region: 'maimai DX · Private server',
+    data: 'Score observations only; no personal bests or play history',
+  },
+};
 export interface ImportService {
   id: string;
   title: string;
-  regionLabel?: string;
   help: string;
   helpLabel: string;
   methods: readonly ImportServiceMethod[];
@@ -34,24 +105,28 @@ export const IMPORT_SERVICE_MONOGRAMS: Readonly<Record<string, string>> = {
   tomomai: 'TM',
   jietng: 'JT',
   aqua: 'AD',
+  tachi: 'T',
 };
 
 /** Service identity owns the available methods; labels never select a parser. */
 export const IMPORT_SERVICES: readonly ImportService[] = [
   {
+    id: 'maishift',
+    title: 'Maishift',
+    help: 'maishift',
+    helpLabel: 'About Maishift imports',
+    methods: [{ value: 'maishift', label: 'Public profile' }],
+  },
+  {
     id: 'kamaitachi',
     title: 'Kamaitachi',
     help: 'kamaitachi',
     helpLabel: 'About Kamaitachi imports',
-    methods: [
-      { value: 'kamaitachi', label: 'Import by username' },
-      { value: 'file:tachi', label: 'Upload BATCH-MANUAL', fileFormat: 'tachi' },
-    ],
+    methods: [{ value: 'kamaitachi', label: 'Import by username' }],
   },
   {
     id: 'diving-fish',
     title: 'Diving-Fish',
-    regionLabel: 'Mainland China only',
     help: 'diving-fish',
     helpLabel: 'About Diving-Fish imports',
     methods: [{ value: 'diving-fish', label: 'Connect directly' }],
@@ -59,17 +134,9 @@ export const IMPORT_SERVICES: readonly ImportService[] = [
   {
     id: 'lxns',
     title: 'LXNS',
-    regionLabel: 'Mainland China only',
     help: 'lxns',
     helpLabel: 'About LXNS imports',
     methods: [{ value: 'lxns', label: 'Connect directly' }],
-  },
-  {
-    id: 'maishift',
-    title: 'Maishift',
-    help: 'maishift',
-    helpLabel: 'About Maishift imports',
-    methods: [{ value: 'maishift', label: 'Public profile' }],
   },
   {
     id: 'session-report',
@@ -96,6 +163,13 @@ export const IMPORT_SERVICES: readonly ImportService[] = [
     helpLabel: 'About file exports',
     methods: [{ value: `file:${id}` as ImportMethodValue, label: 'Upload a file', fileFormat: id }],
   })),
+  {
+    id: 'tachi',
+    title: 'Tachi',
+    help: 'tachi',
+    helpLabel: 'About file exports',
+    methods: [{ value: 'file:tachi', label: 'Upload BATCH-MANUAL', fileFormat: 'tachi' }],
+  },
 ];
 
 export function importServiceForMethod(method: ImportMethodValue): ImportService {
