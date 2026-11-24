@@ -92,7 +92,7 @@ for(const [locale,message] of Object.entries({en:storageRecovery,...recoveryCopy
 
 test('source selection makes no requests and blocked Maishift tells the truth',async({page},testInfo)=>{
   await boot(page);let requests=0;page.on('request',r=>{if(r.url().includes('shiftpsh')||r.url().includes('public-report'))requests++;});await openImport(page);
-  await expect(page.locator('[data-import-choice]')).toHaveCount(3);await expect(page.locator('.player-service-body:visible')).toHaveCount(0);
+  await expect(page.locator('[data-import-service]:visible')).toHaveCount(11);await expect(page.locator('.player-service-body:visible')).toHaveCount(0);
   await selectImportMethod(page,'file');await expect(page.getByLabel('Upload a file',{exact:true})).toBeChecked();
   await selectImportMethod(page,'report');await expect(page.getByLabel('Hosted Session Report',{exact:true})).toBeChecked();
   await selectImportMethod(page,'maishift');await expect(page.getByRole('button',{name:'Continue',exact:true})).toBeDisabled();await expect(page.locator('#player-import-dialog')).toContainText('not available yet');expect(requests).toBe(0);

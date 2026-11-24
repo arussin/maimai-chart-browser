@@ -181,23 +181,53 @@ test('Support follows Share in settings, stays lazy, and returns keyboard focus 
   expect(await page.evaluate(() => supportEvents.every(name => ['support_opened', 'support_checkout_started', 'support_success_return'].includes(name)))).toBe(true);
 });
 
-test('support appears after import, stays out of the chooser, and dismissal persists across import and export', async({page,context},testInfo)=>{
- const state=await hosted(context);await playerBoot(page);
- await page.locator('#player-import-primary').click();await expect(page.locator('#player-import-dialog .player-support-prompt')).toHaveCount(0);await page.keyboard.press('Escape');
- const revision=await importSupportFixture(page);
- const note=page.locator('[data-support-context=import]'),link=note.locator('[data-support-open]');await expect(note).toBeVisible();
- for(const locale of ['en','zh-Hans','ko','ja','id']){
-  await page.evaluate(locale=>maimaiI18n.setLocale(locale),locale);
-  for(const width of [320,360,1280]){await page.setViewportSize({width,height:900});expect(await note.evaluate(node=>[node,...node.querySelectorAll('button')].every(n=>n.scrollWidth<=n.clientWidth+1))).toBe(true);}
-  await note.screenshot({path:testInfo.outputPath('import-success-'+locale+'.png')});
+for (const locale of ['en','zh-Hans','ko','ja','id']) test('chooser support is quiet, localized and opens checkout: '+locale, async({page,context},testInfo)=>{
+ await hosted(context);await playerBoot(page);
+ await page.evaluate(locale=>maimaiI18n.setLocale(locale),locale);
+ await page.locator('#player-import-primary').click();
+ const note=page.locator('#player-import-dialog [data-support-context=import]');
+ await expect(note).toBeVisible();
+ for(const width of [280,320,390,1280]){
+  await page.setViewportSize({width,height:900});
+  await note.scrollIntoViewIfNeeded();
+  expect(await note.evaluate(node=>{
+   const controls=[...node.querySelectorAll('button')];
+   return document.documentElement.scrollWidth<=innerWidth+1&&node.scrollWidth<=node.clientWidth+1&&controls.every(n=>{
+    const box=n.getBoundingClientRect(),range=document.createRange();range.selectNodeContents(n);
+    return n.scrollWidth<=n.clientWidth+1&&[...range.getClientRects()].every(r=>!r.width||(r.left>=box.left-1&&r.right<=box.right+1&&r.top>=box.top-1&&r.bottom<=box.bottom+1));
+   });
+  })).toBe(true);
+  await expect(note.locator('.player-support-dismiss')).toHaveCSS('border-top-width','0px');
  }
- await page.evaluate(()=>maimaiI18n.setLocale('en'));await link.click();await expect(frame(page).getByRole('heading')).toBeVisible();await page.keyboard.press('Escape');await expect(link).toBeFocused();
- expect(await page.evaluate(async()=>(await maimaiPlayerStorage.read()).active.revision)).toBe(revision);
- await note.getByRole('button',{name:'Don’t show again',exact:true}).click();await expect(note).toHaveCount(0);
- await page.reload();await expect.poll(()=>page.evaluate(()=>!!window.maimaiPersonal)).toBe(true);await page.evaluate(()=>maimaiPersonal.ready);
- await importSupportFixture(page);await expect(note).toHaveCount(0);
+ await note.screenshot({path:testInfo.outputPath('chooser-support-'+locale+'.png')});
+ const link=note.locator('[data-support-open]');await link.click();await expect(frame(page).getByRole('heading')).toBeVisible();await page.keyboard.press('Escape');await expect(link).toBeFocused();
+});
+
+test('chooser dismissal persists across reload and export and removes prompts in another tab',async({page,context})=>{
+ const state=await hosted(context);await playerBoot(page);await page.locator('#player-import-primary').click();
+ const other=await context.newPage();await playerBoot(other);await other.locator('#player-import-primary').click();
+ await expect(other.locator('[data-support-context=import]')).toBeVisible();
+ await page.locator('.player-support-dismiss').click();
+ await expect(page.locator('[data-support-context]')).toHaveCount(0);await expect(other.locator('[data-support-context]')).toHaveCount(0);
+ await other.close();await page.reload();await expect.poll(()=>page.evaluate(()=>!!window.maimaiPersonal)).toBe(true);await page.evaluate(()=>maimaiPersonal.ready);
+ await page.locator('#player-import-primary').click();await expect(page.locator('[data-support-context]')).toHaveCount(0);await page.keyboard.press('Escape');
+ await importSupportFixture(page);await expect(page.locator('#catalog [data-support-context]')).toHaveCount(0);
  await page.locator('#player-export-best50').click();await page.locator('#player-export-generate').click();await expect(page.locator('#player-export-download')).toBeVisible();await expect(page.locator('#player-export-dialog .player-support-prompt')).toHaveCount(0);
- await page.keyboard.press('Escape');await expect(page.locator('#support-open')).toBeAttached();expect(JSON.stringify(state.api)).not.toContain('PRIVATE');
+ await page.keyboard.press('Escape');await expect(page.locator('#support-open')).toBeAttached();await page.locator('#settings-toggle').click();await expect(page.locator('#site-support')).toBeVisible();expect(JSON.stringify(state.api)).not.toContain('PRIVATE');
+});
+
+for(const width of [1280,390])test('local chooser and completed-import screenshots at '+width,async({page,context},testInfo)=>{
+ await hosted(context);
+ await context.route('**/api/player-import/oauth/connectors',route=>route.fulfill({json:{schemaVersion:1,methods:Object.fromEntries(['file','report','maishift','kamaitachi','diving-fish','lxns','file:tomomai','file:mai-tools','file:dxrating','file:jietng','file:aqua','file:tachi'].map(m=>[m,true]))}}));
+ await page.setViewportSize({width,height:900});await playerBoot(page);
+ await page.locator('#player-import-primary').click();const dialog=page.locator('#player-import-dialog');
+ await expect(dialog.locator('[data-import-service]:visible')).toHaveCount(11);await expect(dialog.locator('.player-service-body:visible')).toHaveCount(0);
+ await page.screenshot({path:testInfo.outputPath('chooser-open-en-'+width+'.png'),fullPage:true});
+ await dialog.locator('.player-support-dismiss').scrollIntoViewIfNeeded();await page.screenshot({path:testInfo.outputPath('chooser-bottom-en-'+width+'.png'),fullPage:true});
+ await dialog.locator('[data-service-toggle=kamaitachi]').click();await page.locator('#player-kamaitachi-account').scrollIntoViewIfNeeded();await page.screenshot({path:testInfo.outputPath('chooser-expanded-en-'+width+'.png'),fullPage:true});
+ await page.keyboard.press('Escape');await importSupportFixture(page);
+ await expect(dialog).toBeHidden();await expect(page.locator('#catalog [data-support-context]')).toHaveCount(0);await expect(page.getByText('Scores imported.',{exact:true})).toHaveCount(0);
+ await page.screenshot({path:testInfo.outputPath('charts-after-import-en-'+width+'.png'),fullPage:true});
 });
 
 for (const kind of ['best50', 'pb', 'play']) test('ready-only export support preserves the PNG and imported data: ' + kind, async ({page, context}, testInfo) => {
@@ -211,11 +241,11 @@ for (const kind of ['best50', 'pb', 'play']) test('ready-only export support pre
   await page.locator('#player-export-generate').click();
   const download = page.locator('#player-export-download'), preview = page.locator('#player-export-preview');
   await expect(download).toBeVisible(); await expect(note).toBeVisible();
-  await expect(note.locator('p>span')).toHaveText('maimai.party is free to use. Hosting costs about US$25 a month.');
+  await expect(note.locator('p>span')).toHaveText('maimai.party is free to use, but costs quite a bit to maintain.');
   const href = await download.getAttribute('href'), src = await preview.getAttribute('src');
   const paint = await page.evaluate(() => supportPaintText.join('\n'));
-  expect(paint).not.toContain('maimai.party is free to use. Hosting costs about US$25 a month.');
-  expect(paint).not.toContain('If you’d like, the price of a few credits helps pay for hosting and development.');
+  expect(paint).not.toContain('maimai.party is free to use, but costs quite a bit to maintain.');
+  expect(paint).not.toContain('Please consider supporting its development and hosting.');
   const actions = await dialog.locator('.player-export-actions').boundingBox(), noteBox = await note.boundingBox();
   expect(noteBox.y).toBeGreaterThanOrEqual(actions.y + actions.height);
   if (kind === 'best50') {
@@ -226,8 +256,8 @@ for (const kind of ['best50', 'pb', 'play']) test('ready-only export support pre
     for (const locale of ['en', 'zh-Hans', 'ko', 'ja', 'id']) {
       await page.evaluate(locale => maimaiI18n.setLocale(locale), locale);
       if (locale !== 'en') {
-        await expect(note.locator('p>span')).not.toHaveText('maimai.party is free to use. Hosting costs about US$25 a month.');
-        await expect(link).not.toHaveText('If you’d like, the price of a few credits helps pay for hosting and development.');
+        await expect(note.locator('p>span')).not.toHaveText('maimai.party is free to use, but costs quite a bit to maintain.');
+        await expect(link).not.toHaveText('Please consider supporting its development and hosting.');
       }
       for (const width of [1280, 320, 280]) {
         await page.setViewportSize({width, height: 900});
@@ -253,9 +283,15 @@ for (const kind of ['best50', 'pb', 'play']) test('ready-only export support pre
   expect(await page.evaluate(async () => (await maimaiPlayerStorage.read()).active.revision)).toBe(revision);
   expect(JSON.stringify(state.api)).not.toContain('PRIVATE');
   expect(state.api[0].data).toEqual({project: 'maimai-party', attempt: (await page.evaluate(key => JSON.parse(sessionStorage.getItem(key)), storageKey)).attempt});
+  if (kind === 'best50') {
+    await note.locator('.player-support-dismiss').click();await expect(note).toHaveCount(0);
+    expect(await page.evaluate(()=>localStorage.getItem('maimai-support-prompts-dismissed-v1'))).toBe('1');
+    await expect(download).toHaveAttribute('href', href);
+  }
   const pending = page.waitForEvent('download'); await download.click(); const file = await pending;
   const bytes = await readFile(await file.path()); expect([...bytes.subarray(0,8)]).toEqual([137,80,78,71,13,10,26,10]);
   await page.keyboard.press('Escape'); await expect(dialog).toBeHidden();
+  if (kind === 'best50') {await page.locator('#player-import-primary').click();await expect(page.locator('#player-import-dialog .player-support-prompt')).toHaveCount(0);}
 });
 
 test('disabled support leaves import and export available without dormant donation controls', async ({page, context}) => {
@@ -325,7 +361,7 @@ test('separate support page uses native checkout and keeps wallet returns on tha
   await expect(page.locator('#support-checkout-dialog')).toBeVisible();
   await expect(frame(page).getByRole('heading')).toHaveText('Stripe test double');
   await expect(page.locator('.support-invitation')).toHaveText(
-    'maimai.party is free for everyone. Hosting costs about US$25 a month. If you’d like, a contribution equivalent to a few arcade credits helps cover hosting and domain costs.');
+    'maimai.party is free for everyone. If you’d like to help with hosting and domain costs, a few dollars is more than enough.');
   const stored = await page.evaluate(key => JSON.parse(sessionStorage.getItem(key)), storageKey);
   expect(stored.entry).toBe('support');
   expect(state.api[0].data).toEqual({project: 'maimai-party', attempt: stored.attempt});
@@ -360,7 +396,7 @@ test('native embedded checkout, lazy loading, consent and verified completion st
   await expect(page.locator('#support-open')).toHaveText('Support maimai.party');
   await expect(page.locator('.support-button-provider')).not.toHaveAttribute('hidden');
   await expect(page.locator('.support-button-provider img')).toHaveAttribute('alt', 'Stripe');
-  await expect(page.locator('.support-invitation')).toHaveText('maimai.party is free for everyone. Hosting costs about US$25 a month. If you’d like, a contribution equivalent to a few arcade credits helps cover hosting and domain costs.');
+  await expect(page.locator('.support-invitation')).toHaveText('maimai.party is free for everyone. If you’d like to help with hosting and domain costs, a few dollars is more than enough.');
   await expect(page.locator('#support-dialog-title .party-suffix')).toHaveText('.party');
   await expect(page.locator('.support-secure-hint')).toHaveCount(0);
   await expect(page.locator('.creator-support-via')).toHaveCount(0);

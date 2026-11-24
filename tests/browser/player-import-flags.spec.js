@@ -12,18 +12,21 @@ async function openImport(page){await page.locator('#player-import-primary').cli
 async function closeImport(page){await page.keyboard.press('Escape');await expect(dialog(page)).toBeHidden();}
 async function flagFixture(context,methods){const state={methods,status:200,malformed:false,reads:0};await context.route(flagsPath,route=>{state.reads++;return route.fulfill({status:state.status,contentType:'application/json',body:state.malformed?'{invalid':JSON.stringify({schemaVersion:1,methods:state.methods})});});return state;}
 async function ids(page){return services(page).evaluateAll(nodes=>nodes.map(node=>node.dataset.importService));}
-test('intent choices start collapsed; tracker order and private file separation follow the capability table',async({page})=>{
+test('one-screen chooser starts collapsed in region order with report options and help in place',async({page})=>{
  await boot(page);await openImport(page);
- await expect(dialog(page).locator('[data-import-choice]')).toHaveCount(3);
- await expect(services(page)).toHaveCount(0);await expect(dialog(page).locator('[aria-expanded=true]')).toHaveCount(0);
- await page.locator('[data-import-choice=tracker]').click();expect(await ids(page)).toEqual(['maishift','kamaitachi','diving-fish','lxns']);
+ await expect(dialog(page).locator('[data-import-choice],[data-import-back],.player-import-walkthroughs')).toHaveCount(0);
+ expect(await ids(page)).toEqual(['maishift','kamaitachi','diving-fish','lxns','session-report','tomomai','mai-tools','dxrating','jietng','aqua','tachi']);
+ await expect(dialog(page).locator('.player-import-region>h3')).toHaveText(['International and Japan','Mainland China','Session Report','Official game exports','Private servers']);
  await expect(dialog(page).locator('.player-service-body:visible')).toHaveCount(0);
- await selectImportMethod(page,'file:tachi');expect(await ids(page)).toEqual(['session-report','tomomai','mai-tools','dxrating','jietng','aqua','tachi']);
+ await expect(dialog(page).locator('[data-service-toggle=maishift]')).toBeFocused();
+ await page.keyboard.press('Enter');
+ await expect(page.locator('#player-service-body-maishift')).toBeVisible();
+ await selectImportMethod(page,'file:tachi');
  await expect(page.locator('[data-import-service=tachi]')).toContainText('Score observations only');
- await expect(page.locator('[data-import-service=kamaitachi]')).toBeHidden();
- await selectImportMethod(page,'report');await expect(page.locator('.player-import-walkthroughs')).toBeVisible();
- await expect(page.locator('#player-report-url')).toBeVisible();
- await expect(dialog(page).locator('.player-support-prompt')).toHaveCount(0);
+ await expect(page.locator('[data-import-service=kamaitachi]')).toBeVisible();
+ await selectImportMethod(page,'report');await expect(page.locator('#player-report-url')).toBeVisible();
+ await expect(dialog(page).getByRole('radio')).toHaveCount(2);
+ await expect(dialog(page).getByRole('link',{name:'About Session Report imports'})).toBeVisible();
 });
 test('defaults permit local files before a held override and late disable explains the change without resetting the form',async({page,context})=>{
  let release;const held=new Promise(resolve=>release=resolve);
@@ -32,14 +35,14 @@ test('defaults permit local files before a held override and late disable explai
  await page.locator('#player-file-account').fill('fictional-draft');await expect(dialog(page).getByRole('button',{name:'Choose file',exact:true})).toBeEnabled();
  release();await expect(dialog(page)).toContainText('This import method is temporarily unavailable.');
  await expect(page.locator('#player-file-account')).toHaveValue('fictional-draft');await expect(dialog(page).getByRole('button',{name:'Choose file',exact:true})).toBeDisabled();
- await page.locator('[data-import-back]').click();await selectImportMethod(page,'file');await expect(dialog(page).getByRole('button',{name:'Choose file',exact:true})).toBeEnabled();
+ await selectImportMethod(page,'file');await expect(dialog(page).getByRole('button',{name:'Choose file',exact:true})).toBeEnabled();
 });
 test('runtime off/on overrides are reread, all-off is respected, failures retain bundled defaults',async({page,context})=>{
  const state=await flagFixture(context,{file:true,'file:tomomai':true});await boot(page);
  for(const methods of [{file:true,'file:tomomai':true},{file:true},{'file:tomomai':true}]){
- state.methods=methods;await openImport(page);await page.locator('[data-import-choice=file]').click();await expect(services(page)).toHaveCount(Object.keys(methods).length);await closeImport(page);
+ state.methods=methods;await openImport(page);await expect(services(page)).toHaveCount(Object.keys(methods).length);await closeImport(page);
  }
- state.methods={};await openImport(page);await expect(dialog(page)).toContainText('No import options are available right now.');await page.locator('[data-import-choice=file]').click();await expect(services(page)).toHaveCount(0);await closeImport(page);
+ state.methods={};await openImport(page);await expect(dialog(page)).toContainText('No import options are available right now.');await expect(services(page)).toHaveCount(0);await closeImport(page);
  for(const mode of ['unavailable','malformed']){state.status=mode==='unavailable'?503:200;state.malformed=mode==='malformed';await openImport(page);await selectImportMethod(page,'file:dxrating');await expect(page.locator('#player-file-account')).toBeVisible();await closeImport(page);}
  expect(state.reads).toBe(6);
 });
@@ -70,9 +73,8 @@ test('hiding methods preserves a remembered dataset and leaves data controls ava
  await page.getByLabel('Remember on this device',{exact:true}).check();await page.getByRole('button',{name:'Import data',exact:true}).click();await expect.poll(()=>page.evaluate(()=>maimaiPersonal.enabled())).toBe(true);
  const saved=await page.evaluate(()=>maimaiPlayerStorage.read());expect(saved.active).not.toBeNull();state.methods={};await openImport(page);await expect(dialog(page)).toContainText('No import options are available right now.');expect(await page.evaluate(()=>maimaiPlayerStorage.read())).toEqual(saved);await closeImport(page);await page.locator('#settings-toggle').click();await expect(page.locator('#player-forget')).toBeVisible();
 });
-for(const locale of ['en','ja','ko','zh-Hans','id'])test('chooser routes, errors and controls fit every supported language: '+locale,async({page,context},testInfo)=>{
+for(const locale of ['en','ja','ko','zh-Hans','id'])for(const width of [320,360,375,390,414,1280])test('chooser routes, errors and controls fit: '+locale+' '+width,async({page,context},testInfo)=>{
  await flagFixture(context,Object.fromEntries(all.map(method=>[method,true])));await boot(page);await page.evaluate(locale=>maimaiI18n.setLocale(locale),locale);
- for(const width of [320,360,375,390,414,1280]){
   await page.setViewportSize({width,height:900});await openImport(page);
   await expect(page.locator('html')).toHaveAttribute('lang',locale);
   if(['en','ja'].includes(locale)&&[360,1280].includes(width))await page.screenshot({path:testInfo.outputPath(`after-${locale}-${width}.png`)});
@@ -84,7 +86,6 @@ for(const locale of ['en','ja','ko','zh-Hans','id'])test('chooser routes, errors
     return {overflow:document.documentElement.scrollWidth>innerWidth+1,contained:controls.every(n=>{const r=n.getBoundingClientRect();return r.left>=bounds.left&&r.right<=bounds.right;}),clipped};
    });expect(layout).toEqual({overflow:false,contained:true,clipped:[]});
   }await closeImport(page);
- }
 });
 for(const locale of ['en','ja','ko','zh-Hans','id'])test('file recovery guidance fits at 360px in '+locale,async({page,context},testInfo)=>{
  await flagFixture(context,Object.fromEntries(all.map(method=>[method,true])));await boot(page);

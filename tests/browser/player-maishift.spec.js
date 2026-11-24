@@ -29,9 +29,10 @@ async function commit(page,remember=true){await preview(page);await page.locator
 async function age(page){await page.evaluate(async()=>{const db=await new Promise(resolve=>{const q=indexedDB.open('maimai-player-data',2);q.onsuccess=()=>resolve(q.result);});await new Promise((resolve,reject)=>{const t=db.transaction('datasets','readwrite'),s=t.objectStore('datasets'),q=s.get('active');q.onsuccess=()=>s.put({...q.result,source:{...q.result.source,lastAttempt:0}},'active');t.oncomplete=resolve;t.onabort=reject;});db.close();});}
 async function refresh(page){await page.locator('#settings-toggle').click();await page.locator('#player-refresh').click();}
 
-test('a connected source refreshes in one step from the choice screen', async({page,context})=>{
+test('a connected source refreshes in one step from the top of the list', async({page,context})=>{
   const state=await prepare(context);await boot(page);await commit(page);await age(page);
-  await open(page);await expect(page.locator('[data-import-refresh]')).toBeVisible();
+  await open(page);const refresh=page.locator('[data-import-refresh]');await expect(refresh).toBeVisible();await expect(refresh).toBeFocused();
+  const first=await page.locator('.player-import-region').first().boundingBox(),button=await refresh.boundingBox();expect(button.y+button.height).toBeLessThanOrEqual(first.y);
   await expect(page.locator('.player-service-body:visible')).toHaveCount(0);
   const calls=state.calls;await page.locator('[data-import-refresh]').click();
   await expect(page.locator('#player-import-dialog')).toBeHidden();

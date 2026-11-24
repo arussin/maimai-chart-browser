@@ -52,13 +52,11 @@ test('opening imports checks visibility without emitting import attempts or prov
  await page.goto('https://maimai.party/');
  await expect.poll(()=>page.evaluate(()=>!!window.maimaiPersonal)).toBe(true);await page.evaluate(()=>maimaiPersonal.ready);
  await page.locator('#player-import-primary').click();
- await page.locator('[data-import-choice=file]').click();
  await expect(page.locator('#player-import-dialog [data-import-service="tomomai"]')).toBeVisible();
  await expect(page.locator('#player-import-dialog [data-import-service]:visible')).toHaveCount(1);
  await page.keyboard.press('Escape');await expect(page.locator('#player-import-dialog')).toBeHidden();
  malformed=true;await page.locator('#player-import-primary').click();
- await page.locator('[data-import-choice=file]').click();
- await expect(page.locator('#player-import-dialog [data-import-service]:visible')).toHaveCount(7);
+ await expect(page.locator('#player-import-dialog [data-import-service]:visible')).toHaveCount(11);
  await expect(page.locator('#player-import-dialog [data-import-service="session-report"]')).toBeVisible();
  await page.evaluate(()=>maimaiUsage.flush());
  const rows=counts.flatMap(batch=>batch.events);

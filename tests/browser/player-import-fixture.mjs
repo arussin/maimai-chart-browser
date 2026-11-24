@@ -1,6 +1,6 @@
 import { expect } from './fixtures.js';
 
-/** Open Settings' import dialog and optionally follow its intent/service choices. */
+/** Open Settings' import dialog and optionally expand a service and select its method. */
 export async function openImport(page, method) {
   await page.locator('#settings-toggle').click();
   await page.locator('#player-import').click();
@@ -21,12 +21,6 @@ export async function selectImportMethod(page, method) {
   const toggle = page.locator(
     `#player-import-dialog [data-service-toggle="${service}"]`,
   );
-  {
-    const back = page.locator('[data-import-back]');
-    if (await back.isVisible()) await back.click();
-    const choice = method === 'report' ? 'help' : method === 'file' || method.startsWith('file:') ? 'file' : 'tracker';
-    await page.locator(`[data-import-choice="${choice}"]`).click();
-  }
   if ((await toggle.getAttribute("aria-expanded")) !== "true")
     await toggle.click();
   await expect(toggle).toHaveAttribute('aria-expanded', 'true');

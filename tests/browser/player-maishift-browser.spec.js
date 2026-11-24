@@ -53,7 +53,7 @@ for(const [name,url]of [['main','/lab/'],['pilot',entry]]){
     for(const view of ['catalog']){
       await page.locator('#'+view+'-tab').click();await expect(launch).toBeVisible();
       await launch.focus();await page.keyboard.press('Enter');await expect(dialog).toBeVisible();
-      await expect(page.locator('[data-import-choice=tracker]')).toBeFocused();
+      await expect(page.locator('[data-service-toggle=maishift]')).toBeFocused();
       await page.keyboard.press('Escape');await expect(dialog).toBeHidden();await expect(launch).toBeFocused();
       await launch.press('Enter');await page.getByRole('button',{name:'Cancel',exact:true}).click();await expect(launch).toBeFocused();
     }

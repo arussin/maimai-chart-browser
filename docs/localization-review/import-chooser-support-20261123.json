@@ -1,16 +1,26 @@
 {
-  "date": "2026-11-23",
+  "date": "2026-11-24",
   "reviewer": "Codex",
   "method": "Contextual AI linguistic review of all added and changed English, Simplified Chinese, Korean, Japanese and Indonesian copy against the typed chooser, strict adapter capabilities, existing recovery flows and LOCALIZATION_TERMINOLOGY.md. Not native-speaker certification.",
-  "locales": ["en", "zh-Hans", "ko", "ja", "id"],
-  "scope": "Intent choices, region and data descriptions, actionable import errors, completed-import status, support invitation and device-wide prompt dismissal. Existing payment controls and amounts are unchanged.",
+  "locales": [
+    "en",
+    "zh-Hans",
+    "ko",
+    "ja",
+    "id"
+  ],
+  "scope": "Grouped single-screen chooser, region and data descriptions, actionable import errors and device-wide prompt dismissal. Live support wording restored verbatim in all five languages; intent choices, walkthrough heading and completed-import status removed.",
   "decisions": [
     "Keep provider names and protocol identifiers literal, and game region independent of interface language.",
     "Distinguish recent score observations from verified plays and personal bests; Tomomai and JiETNG observations do not promise play history.",
     "Use the maintained personal-best and support vocabulary; use plain local-language instructions instead of internal diagnostic stage names.",
-    "Use games played as the Chinese and Korean equivalent of arcade credits, credits in Japanese, and kredit bermain in Indonesian. Avoid asking for a specific dollar contribution.",
-    "State hosting costs as approximately US$25 per month, explicitly distinguish hosting/development support from hosting/domain costs in checkout copy, and keep support optional.",
     "Permanent dismissal applies to prompts on this device, leaving explicit footer and Settings checkout entry points available. Blocked storage can only preserve dismissal for the current page."
   ],
-  "validation": "See the task REPORT.md and retained browser/localization logs in C:/DevCache/projects/maimai-chart-browser-registry/design-followups-20261123. English requires Adam's pre-publication editorial review; no publication is part of this change."
+  "validation": "Scale-back review: compared restored support keys and all four translations against origin/main; retained dismissal and method descriptions reviewed in their chooser/export contexts. See design-followups-20261123/scaleback/REPORT.md for checks. No new wording or translation added during scale-back.",
+  "removed_unused_live_keys": [
+    "Choose a service.",
+    "Checking import options…",
+    "Import options are unavailable. You can still upload a Session Report file.",
+    "Mainland China only"
+  ]
 }

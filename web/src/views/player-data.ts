@@ -13,7 +13,6 @@ import {
   importServiceForMethod,
   importMethodFileFormat,
   IMPORT_METHOD_DETAILS,
-  type ImportChoice,
   type ImportMethodValue,
 } from './player-import-services';
 import { IMPORT_SERVICE_ICONS } from './import-service-icons';
@@ -212,16 +211,6 @@ export function createPlayerData(ports: PersonalPorts) {
       ask,
       reading,
       message,
-      imported: () => {
-        root.querySelector('[data-support-context="import"]')?.remove();
-        const support = createSupportPrompt(document, i18n, 'import');
-        if (support) {
-          const success = make('p', 'Scores imported.');
-          success.setAttribute('role', 'status');
-          support.prepend(success);
-          root.querySelector('#catalog > .page-heading')?.after(support);
-        }
-      },
       recovery: reportRecovery,
       usage,
       notify: browserSession.notify,
@@ -891,45 +880,9 @@ export function createPlayerData(ports: PersonalPorts) {
     const services = visibleImportServices(
       Object.fromEntries(Object.keys(DEFAULT_IMPORT_CONNECTORS).map((method) => [method, true])),
     );
-    let choice: ImportChoice | null = null;
-    const choices = make('div', undefined, 'player-import-choices'),
-      choiceHeading = make('p', 'What do you have?'),
-      back = make('button', 'Back to import choices'),
-      notice = make('p'),
-      walkthroughs = make('div', undefined, 'player-import-walkthroughs');
+    const notice = make('p');
     notice.setAttribute('role', 'status');
     notice.hidden = true;
-    back.type = 'button';
-    back.dataset.importBack = '';
-    for (const [value, label] of [
-      ['tracker', 'A score tracker account'],
-      ['file', 'A file'],
-      ['help', 'Help getting my scores'],
-    ] as const) {
-      const button = make('button', label);
-      button.type = 'button';
-      button.dataset.importChoice = value;
-      button.onclick = () => {
-        choice = value;
-        openService = null;
-        updateSections();
-        back.focus();
-      };
-      choices.append(button);
-    }
-    back.onclick = () => {
-      choice = null;
-      openService = null;
-      updateSections();
-      choices.querySelector('button')?.focus();
-    };
-    walkthroughs.append(make('h3', 'Score import walkthroughs'));
-    for (const service of services) {
-      const link = helpLink(service.help, service.helpLabel);
-      link.className = 'player-import-walkthrough';
-      i18n.text(link, i18n.parts([i18n.verbatim(service.title), service.helpLabel], ' — '));
-      walkthroughs.append(link);
-    }
     const group = make('div', undefined, 'player-source-options');
     const fields = make('div', undefined, 'player-source-fields'),
       actions = make('div', undefined, 'player-actions'),
@@ -993,10 +946,7 @@ export function createPlayerData(ports: PersonalPorts) {
           openService = null;
           updateSections();
         } else {
-          const available = service.methods.filter(
-            (method) =>
-              flags[method.value] && IMPORT_METHOD_DETAILS[method.value].choice === choice,
-          );
+          const available = service.methods.filter((method) => flags[method.value]);
           const last = lastMethods.get(service.id);
           const method = available.find((method) => method.value === last) ?? available[0];
           if (method) selectMethod(method.value);
@@ -1031,17 +981,10 @@ export function createPlayerData(ports: PersonalPorts) {
       sections.set(service.id, { section, toggle, body, label });
     }
     function updateSections() {
-      choices.hidden = choice !== null;
-      choiceHeading.hidden = choice !== null;
-      back.hidden = choice === null;
-      group.hidden = choice === null;
-      walkthroughs.hidden = choice !== 'help';
       for (const service of services) {
         const { section, toggle, body, label } = sections.get(service.id)!;
         const id = service.id;
-        const available = service.methods.filter(
-          (method) => flags[method.value] && IMPORT_METHOD_DETAILS[method.value].choice === choice,
-        );
+        const available = service.methods.filter((method) => flags[method.value]);
         section.hidden = !available.length && openService !== id;
         toggle.setAttribute('aria-expanded', String(openService === id));
         body.hidden = openService !== id;
@@ -1465,7 +1408,7 @@ export function createPlayerData(ports: PersonalPorts) {
     actions.append(next);
     const footer = make('div', undefined, 'player-actions player-source-footer');
     footer.append(cancel);
-    dialog.append(heading, choiceHeading, choices, back, notice);
+    dialog.append(heading, notice);
     if (player.source) {
       const refresh = make('button', 'Refresh now');
       refresh.type = 'button';
@@ -1524,10 +1467,17 @@ export function createPlayerData(ports: PersonalPorts) {
           'player-import-replace-warning',
         ),
       );
-    dialog.append(group, walkthroughs, footer);
+    dialog.append(group, footer);
+    const support = createSupportPrompt(document, i18n, 'import');
+    if (support) dialog.append(support);
     updateSections();
     if (!dialog.open) dialog.showModal();
-    choices.querySelector('button')?.focus();
+    (
+      dialog.querySelector<HTMLButtonElement>('[data-import-refresh]') ??
+      group.querySelector<HTMLButtonElement>(
+        '[data-import-service]:not([hidden]) [data-service-toggle]',
+      )
+    )?.focus();
     // The request never gates rendering, file selection, or a deliberate source read.
     void fetchImportConnectorFlags(availability.signal, fetch, 4000, ports.usage.diagnose)
       .then((value) => {

@@ -56,16 +56,13 @@ export function createSupportPrompt(
   const text = document.createElement('p'),
     intro = document.createElement('span'),
     link = document.createElement('button');
-  localization.text(intro, 'maimai.party is free to use. Hosting costs about US$25 a month.');
+  localization.text(intro, 'maimai.party is free to use, but costs quite a bit to maintain.');
   link.type = 'button';
   link.className = 'player-support-link';
   link.dataset.supportOpen = '';
   link.setAttribute('aria-haspopup', 'dialog');
   link.setAttribute('aria-controls', 'support-checkout-dialog');
-  localization.text(
-    link,
-    'If you’d like, the price of a few credits helps pay for hosting and development.',
-  );
+  localization.text(link, 'Please consider supporting its development and hosting.');
   text.append(intro, document.createElement('br'), link);
   note.append(supportHeart(document), text);
   const dismiss = document.createElement('button');

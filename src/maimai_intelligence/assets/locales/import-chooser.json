@@ -1,41 +1,5 @@
 {
   "messages": {
-    "What do you have?": {
-      "zh-Hans": "你准备用什么导入？",
-      "ko": "어떤 방식으로 가져올까요?",
-      "ja": "何を使って取り込みますか？",
-      "id": "Apa yang Anda miliki?"
-    },
-    "A score tracker account": {
-      "zh-Hans": "查分器账号",
-      "ko": "점수 관리 사이트 계정",
-      "ja": "スコア管理サイトのアカウント",
-      "id": "Akun pelacak skor"
-    },
-    "A file": {
-      "zh-Hans": "成绩文件",
-      "ko": "파일",
-      "ja": "ファイル",
-      "id": "File"
-    },
-    "Help getting my scores": {
-      "zh-Hans": "获取成绩的方法",
-      "ko": "점수를 가져오는 방법 안내",
-      "ja": "スコアの取得方法を知りたい",
-      "id": "Bantuan mendapatkan skor"
-    },
-    "Back to import choices": {
-      "zh-Hans": "返回导入方式选择",
-      "ko": "가져오기 방식 선택으로 돌아가기",
-      "ja": "取り込み方法の選択に戻る",
-      "id": "Kembali ke pilihan impor"
-    },
-    "Score import walkthroughs": {
-      "zh-Hans": "成绩导入指南",
-      "ko": "점수 가져오기 안내",
-      "ja": "スコア取り込みガイド",
-      "id": "Panduan impor skor"
-    },
     "International and Japan": {
       "zh-Hans": "国际版和日本版",
       "ko": "국제판 및 일본판",
@@ -137,12 +101,6 @@
       "ko": "이 가져오기 방식은 일시적으로 사용할 수 없습니다. 다른 방식을 선택하거나 나중에 다시 시도해 주세요.",
       "ja": "この取り込み方法は一時的に利用できません。別の方法を選ぶか、時間をおいてお試しください。",
       "id": "Metode impor ini sementara tidak tersedia. Pilih metode lain atau coba lagi nanti."
-    },
-    "Scores imported.": {
-      "zh-Hans": "成绩已导入。",
-      "ko": "점수를 가져왔습니다.",
-      "ja": "スコアを取り込みました。",
-      "id": "Skor berhasil diimpor."
     },
     "Your browser could not save these scores. Free some device storage or import without remembering, then try again.": {
       "zh-Hans": "浏览器无法保存这些成绩。请释放设备存储空间，或取消记住数据后重试导入。",

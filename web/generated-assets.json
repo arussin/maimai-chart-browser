@@ -11,15 +11,15 @@
       "bytes": 1367
     },
     "support-config.js": {
-      "sha256": "9248a0cc5d239bb4f818c780cfc3174ce458809163f971b0bcd222fec897da10",
-      "bytes": 552
+      "sha256": "fa84866da34daff44fd98f6ba978f8cda7e19d95cd2881fb2099015989c568ff",
+      "bytes": 502
     },
     "support-client.js": {
       "sha256": "92c0c829f41bbbe65cf7801e9a8dc4950bf6bfb142774d1742d3abbf17b8b91a",
       "bytes": 1601
     },
     "support-stripe.js": {
-      "sha256": "4e9541f9c34c865e9a7a42463152d37b1d4760a07890d5c120238e38cc722053",
+      "sha256": "987290edc7b32c84e47e9d84c7484f544e08bae9132ef9afd085e7e24e5226ed",
       "bytes": 7831
     },
     "settings-menu.js": {

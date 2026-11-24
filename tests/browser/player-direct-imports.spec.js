@@ -441,9 +441,9 @@ test('service sections expose grouped imports, local marks, and keyboard control
   const dialog = page.locator('#player-import-dialog');
   await expect(dialog.locator('[data-import-service]')).toHaveCount(11);
   await expect(dialog.locator('.player-service-body:visible')).toHaveCount(0);
-  await expect(dialog.locator('[data-import-choice=tracker]')).toBeFocused();
+  await expect(dialog.locator('[data-service-toggle=maishift]')).toBeFocused();
   await page.keyboard.press('Enter');
-  expect(await dialog.locator('[data-import-service]:visible').evaluateAll(nodes=>nodes.map(node=>node.dataset.importService))).toEqual(['maishift','kamaitachi','diving-fish','lxns']);
+  expect(await dialog.locator('[data-import-service]:visible').evaluateAll(nodes=>nodes.map(node=>node.dataset.importService))).toEqual(['maishift','kamaitachi','diving-fish','lxns','session-report','tomomai','mai-tools','dxrating','jietng','aqua','tachi']);
   expect(state.calls).toEqual([]);
   await expect.poll(()=>dialog.locator('.player-service-toggle img').evaluateAll(nodes=>nodes.length===10&&nodes.every(node=>node.src.startsWith('data:image/')&&node.complete&&node.naturalWidth>0))).toBe(true);
   const kamaitachiMark = dialog.locator('[data-import-service="kamaitachi"] .player-service-toggle img');
@@ -833,13 +833,13 @@ for (const locale of ["en", "zh-Hans", "ko", "ja", "id"]) {
       await page.setViewportSize({ width, height: 1000 });
       await openImport(page, "kamaitachi");
       await expect(page.locator("#player-import-dialog")).toContainText(
-        translated("Back to import choices", locale),
+        translated("International and Japan", locale),
       );
       await expect(page.locator("#player-import-dialog")).toContainText(
         translated("Kamaitachi username or profile URL", locale),
       );
       const regionLabel = translated("maimai DX · Mainland China", locale);
-      await expect(page.locator("#player-import-dialog .player-service-region:visible")).toHaveCount(8);
+      await expect(page.locator("#player-import-dialog .player-service-region:visible")).toHaveCount(22);
       for (const [provider, title] of [["diving-fish", "Diving-Fish"], ["lxns", "LXNS"]]) {
         const toggle = page.locator(`[data-service-toggle="${provider}"]`);
         await expect(toggle).toHaveAttribute("aria-expanded", "false");

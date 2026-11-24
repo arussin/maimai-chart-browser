@@ -13,13 +13,11 @@ export interface ImportServiceMethod {
   label: string;
   fileFormat?: FileImportFormat;
 }
-export type ImportChoice = 'tracker' | 'file' | 'help';
 /** Presentation only: adapter identities and region matching remain in the domain. */
 export const IMPORT_METHOD_DETAILS: Readonly<
   Record<
     ImportMethodValue,
     {
-      choice: ImportChoice;
       group: string;
       region: string;
       data: string;
@@ -27,73 +25,61 @@ export const IMPORT_METHOD_DETAILS: Readonly<
   >
 > = {
   maishift: {
-    choice: 'tracker',
     group: 'International and Japan',
     region: 'maimai DX · International / Japan',
     data: 'Personal bests',
   },
   kamaitachi: {
-    choice: 'tracker',
     group: 'International and Japan',
     region: 'maimai DX · International / Japan',
     data: 'Personal bests',
   },
   'diving-fish': {
-    choice: 'tracker',
     group: 'Mainland China',
     region: 'maimai DX · Mainland China',
     data: 'Personal bests',
   },
   lxns: {
-    choice: 'tracker',
     group: 'Mainland China',
     region: 'maimai DX · Mainland China',
     data: 'Personal bests',
   },
   file: {
-    choice: 'file',
     group: 'Session Report',
     region: 'maimai · Region recorded in the report',
     data: 'Personal bests and recent plays, when included',
   },
   report: {
-    choice: 'help',
     group: 'Session Report',
     region: 'maimai · Region recorded in the report',
     data: 'Personal bests and recent plays, when included',
   },
   'file:mai-tools': {
-    choice: 'file',
     group: 'Official game exports',
     region: 'maimai DX · International / Japan',
     data: 'Personal bests (may be partial)',
   },
   'file:dxrating': {
-    choice: 'file',
     group: 'Official game exports',
     region: 'maimai DX · International / Japan',
     data: 'Personal bests (may be partial)',
   },
   'file:tomomai': {
-    choice: 'file',
     group: 'Official game exports',
     region: 'maimai DX · International / Japan / Mainland China',
     data: 'Personal bests or recent score observations, depending on the export',
   },
   'file:jietng': {
-    choice: 'file',
     group: 'Official game exports',
     region: 'maimai DX · International / Japan',
     data: 'Personal bests and recent score observations',
   },
   'file:aqua': {
-    choice: 'file',
     group: 'Private servers',
     region: 'maimai DX · Private server',
     data: 'Personal bests and recent plays, when included',
   },
   'file:tachi': {
-    choice: 'file',
     group: 'Private servers',
     region: 'maimai DX · Private server',
     data: 'Score observations only; no personal bests or play history',
