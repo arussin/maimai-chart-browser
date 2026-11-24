@@ -9,6 +9,47 @@ It joins the source, metadata, analysis, link preparation, change report and
 verified Direct Upload stages. Ordinary interface-only releases can still reuse
 the accepted package with the commands below.
 
+## Release tools (since November 22, 2026)
+
+Every release since November 22, 2026 has been assembled over the previous
+release with these owner scripts, so that no published path disappears. They
+were kept outside the repository at first and were added here on November 23.
+None of them uploads, deploys, changes an account or deletes anything, and each
+refuses to write into an existing folder. Run them with `python -B` and
+`PYTHONPATH=<repo>/src;<repo>`.
+
+- `scripts/prepare_interface_release.py` assembles an interface-only release.
+  It takes the previous release folder (`public`, `planner-input`,
+  `inventory.json.gz`), a clean checkout at the commit being released and a
+  hosting check. A changed `_headers` needs `--allow-headers-change`; a changed
+  sitemap needs `--release-date YYYY-MM-DD`. Authored shell templates must be
+  unchanged since the previous release.
+- `scripts/prepare_data_release.py` assembles a catalog release from a ready
+  `update_catalog prepare` run. It adds the export artwork and the Web
+  Analytics allowance that the pipeline's own `public` tree lacks, proves that
+  nothing else differs, and writes the `planner-input` the next interface
+  release starts from.
+- `scripts/retain_release_state.py` writes one archive of a published release
+  folder, and any extra folders, for keeping outside the build cache. Run it
+  after every release; the next one cannot be built without the previous
+  `public` tree and `planner-input`.
+- `scripts/write_capacity_review.py` and
+  `scripts/write_reconciliation_review.py` write the capacity review and the
+  new-song reconciliation review that `update_catalog` requires. The second
+  stops when a new official song might match an existing one; that decision
+  stays with a person.
+
+The hosting check is a small JSON file with schema `maimai-hosting-check-1`,
+read from the Cloudflare API no more than an hour before preparation:
+`observed_at`, `project` (`maimai-party`), `source` (`direct-upload`),
+`zone_plan`, `pages_wrangler_major_version` and `production_deployment`. The
+tools stop unless production is the release the candidate is built on and the
+live `manifest.json` matches the base release byte for byte.
+
+After preparation, upload `public` as a preview with the reviewed Wrangler,
+check it, and publish to production only with the owner's approval. Record the
+deployment in `deployment.json` beside `preparation.json`.
+
 The official site is a static Cloudflare Pages Direct Upload project named
 `maimai-party`, with `main` as its production branch and `maimai.party` as its
 custom domain. The site launched on 12 September 2026 at
