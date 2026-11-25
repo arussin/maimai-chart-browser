@@ -2,7 +2,25 @@
 
 ## Current production
 
-The [3 October 2026 release](PRODUCTION_RELEASE_20261003.md) records the current source, candidate and compatible recovery deployments, combined usage activation, sitemap submission and remaining verification limits. The launch record below is historical (12 September), not the current deployment. Reuse the sealed release files; never rerun a stopped release executor.
+Since 24 November 2026 production is Pages deployment
+`d304f59d-75c2-4e44-90b3-8f8b7da32550`
+(<https://d304f59d.maimai-party.pages.dev>), an interface release built from
+`main` at `84624211d1200320f8828b7141ca7afad6f85bd7`. The catalog is unchanged
+(`research-38c3efcc0fdf`) and the Workers were not redeployed. The rollback
+deployment is `4e3cff52-0792-4210-b37d-2cd25c18b0dd`, the 22 November release
+from `d802c2d2b0d070ea753fdc5ca575416eaaf3362b`.
+
+The release was prepared, previewed (`cbe6bb19-5806-48fa-bab8-3043365d6fdd`),
+approved and recorded with the release driver described below. Its
+`deployment.json`, in the release folder `interface-20261124`, is the full
+record: source, changes, checks before and after publication, the approval and
+the upload command. `C:\Dev\maimai\WORKSPACE-RETENTION.md` lists that folder,
+its archive and what the next release is built on. Update this section after
+each production release; the driver's `status` names it as the last step.
+
+The [3 October 2026 release](PRODUCTION_RELEASE_20261003.md) and the launch
+record further down (12 September) are historical, not the current deployment.
+Reuse the sealed release files; never rerun a stopped release executor.
 
 For catalog and mai-notes updates, use the [owner-run catalog workflow](CATALOG_UPDATES.md).
 It joins the source, metadata, analysis, link preparation, change report and
