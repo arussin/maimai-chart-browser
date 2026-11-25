@@ -153,7 +153,8 @@ test('mask uncertainty is never inferred from zero DX score and an explicit mask
 test('concurrent expired reads rotate once and the persisted replacement is used after restart', async () => {
   const s = setup(), c = await s.connect(); s.time += 901000;
   const rs = await Promise.all([s.call('/diving-fish/read',{connectionID:c.connectionID}),s.call('/diving-fish/read',{connectionID:c.connectionID})]);
-  assert.deepEqual(rs.map(r => r.status),[200,429]);
+  // Which request reaches the session first is not fixed (each awaits a digest before it), so only the outcome is.
+  assert.deepEqual(rs.map(r => r.status).sort((a,b) => a - b),[200,429]);
   assert.equal(s.calls.filter(c => c.url === PROVIDERS['diving-fish'].token).length,2);
   const form = new URLSearchParams(s.calls.find(c => c.url === PROVIDERS['diving-fish'].token && c.options.body.includes('grant_type=refresh_token')).options.body);
   assert.equal(form.get('refresh_token'),'fixture-refresh-1');
@@ -530,7 +531,7 @@ test('LXNS full-score envelopes reject simplified records, malformed data and ov
 test('LXNS rotating refresh serializes and persists across restart; uncertain exchange cannot replay', async () => {
   const s = setup(), c = await s.connect('lxns'); s.time += 901000;
   const responses = await Promise.all([s.call('/lxns/read',{connectionID:c.connectionID}),s.call('/lxns/read',{connectionID:c.connectionID})]);
-  assert.deepEqual(responses.map(r => r.status),[200,429]);
+  assert.deepEqual(responses.map(r => r.status).sort((a,b) => a - b),[200,429]); // arrival order is not fixed; see the Diving-Fish test above
   assert.equal(s.calls.filter(c => c.url === PROVIDERS.lxns.token).length,2);
   s.cores.clear(); s.time += 30001;
   assert.equal((await s.call('/lxns/read',{connectionID:c.connectionID})).status,200);
