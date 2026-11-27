@@ -539,3 +539,25 @@ for (const [name, module, host, forbidden] of [
     },
   );
 }
+test('support opens count only where the click came from', () => {
+  assert.deepEqual([...DETAILS.support_opened], ['about', 'menu', 'header', 'import', 'export']);
+  for (const detail of DETAILS.support_opened)
+    assert.ok(
+      validateRow({ event: 'support_opened', page: 'song', detail, failure: '', count: 1 }),
+    );
+  for (const detail of ['', 'cs_live_PRIVATE', '500', 'usd', 'https://private.invalid/'])
+    assert.equal(
+      validateRow({ event: 'support_opened', page: 'charts', detail, failure: '', count: 1 }),
+      null,
+    );
+  assert.equal(
+    validateRow({
+      event: 'support_opened',
+      page: 'charts',
+      detail: 'header',
+      failure: 'unknown',
+      count: 1,
+    }),
+    null,
+  );
+});

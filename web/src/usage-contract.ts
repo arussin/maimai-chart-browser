@@ -114,6 +114,8 @@ export const DETAILS = {
     'lxns',
   ],
   report_issue_opened: [''],
+  // Where a deliberate click opened support checkout; nothing about the payment.
+  support_opened: ['about', 'menu', 'header', 'import', 'export'],
 } as const satisfies Readonly<Record<string, readonly string[]>>;
 export type EventName = keyof typeof DETAILS;
 export type EventDetail<E extends EventName> = (typeof DETAILS)[E][number];

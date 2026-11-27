@@ -2,6 +2,13 @@
 
 #about .footer-credits{font-size:13px}#about .sources{margin-top:12px}
 .site-header nav{gap:clamp(8px,2vw,24px)}.site-header nav button{min-width:0}
+/* A quiet support entry beside the wordmark; the settings menu keeps the labelled one. */
+.header-support{display:inline-flex;align-items:center;justify-content:center;flex:none;width:40px;height:40px;min-height:0;margin:0 0 0 -8px;padding:0;border:0;border-radius:50%;background:none;color:#6f8a91}
+.header-support svg{width:18px;height:18px}.header-support:hover{border:0;background:none;color:#a04d67}.header-support:focus-visible{outline:2px solid #007887;outline-offset:1px}
+@media(max-width:740px){.header-support{margin-left:-10px}}
+@media(max-width:345px){.header-support{display:none}}
+@media(forced-colors:active){.header-support{color:ButtonText}}
+@media print{.header-support{display:none}}
 @media(max-width:600px){body>.analytics-controls{padding-left:18px;padding-right:18px}}
 .party-footer{padding-bottom:24px}.footer-project{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px 20px;padding:18px 0 12px;border-top:1px solid #dce7e9;font-size:12px;color:#52676d}.footer-project>a{display:inline-flex;align-items:center;gap:5px;min-height:44px;font-weight:600}.repository-status{font-weight:400}
 .party-footer a:not(.creator-support-link):not(.github-button){color:#007887;text-underline-offset:3px}.party-footer a:focus-visible{outline:3px solid #007887;outline-offset:3px;border-radius:2px}

@@ -2,6 +2,8 @@ import type { TextView, LocalizedText } from '../components/chart-card';
 import type { HistoryPort } from '../runtime/history';
 import type { CheckoutState, CheckoutStatus, SupportClient } from './support-client';
 import { supportHeart } from './support-prompt';
+import type { UsageAPI } from '../usage';
+import type { EventDetail } from '../usage-contract';
 export interface SupportLocalization extends Pick<TextView, 'text' | 'attribute'> {
   controls(host: Element): Element;
 }
@@ -10,6 +12,7 @@ export interface SupportPorts {
   localization?: SupportLocalization;
   supportClient?: SupportClient;
   historyPort: Pick<HistoryPort, 'replaceState'>;
+  usage?: Pick<UsageAPI, 'emit'>;
 }
 interface EmbeddedCheckout {
   destroy(): void;
@@ -115,6 +118,23 @@ export function createSupportStripe(ports: SupportPorts): void {
     support.append(supportHeart(document), label);
     share.after(support);
   }
+  // A quiet entry beside the wordmark, present only once checkout is ready.
+  const wordmark = root.querySelector('.site-header .brand');
+  if (wordmark && !root.querySelector('#header-support')) {
+    const quiet = element('button', 'header-support');
+    quiet.id = 'header-support';
+    quiet.type = 'button';
+    quiet.dataset.supportOpen = '';
+    quiet.setAttribute('aria-haspopup', 'dialog');
+    quiet.setAttribute('aria-controls', dialog.id);
+    i18n.attribute(quiet, 'aria-label', 'Support maimai.party');
+    i18n.attribute(quiet, 'title', 'Support maimai.party');
+    quiet.append(supportHeart(document));
+    wordmark.append(quiet);
+  }
+  // Counted only for a deliberate click, never for a resumed return.
+  const count = (detail: EventDetail<'support_opened'>) =>
+    ports.usage?.emit('support_opened', undefined, detail);
   let instance: EmbeddedCheckout | null = null;
   let generation = 0,
     busy = false;
@@ -312,6 +332,7 @@ export function createSupportStripe(ports: SupportPorts): void {
   opener.addEventListener('click', (e) => {
     if (e.button || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
     e.preventDefault();
+    if (!dialog.open) count('about');
     open();
   });
   // Keep the underlying import/export modal intact while checkout is above it.
@@ -322,6 +343,17 @@ export function createSupportStripe(ports: SupportPorts): void {
     );
     if (!source || !root.contains(source)) return;
     e.preventDefault();
+    if (!dialog.open)
+      count(
+        source.id === 'site-support'
+          ? 'menu'
+          : source.id === 'header-support'
+            ? 'header'
+            : source.closest<HTMLElement>('[data-support-context]')?.dataset.supportContext ===
+                'export'
+              ? 'export'
+              : 'import',
+      );
     open(source);
   });
   close.onclick = () => dialog.close();

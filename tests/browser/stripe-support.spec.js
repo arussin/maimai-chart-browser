@@ -297,6 +297,7 @@ for (const kind of ['best50', 'pb', 'play']) test('ready-only export support pre
 test('disabled support leaves import and export available without dormant donation controls', async ({page, context}) => {
   const state = await hosted(context, {enabled: false}); await playerBoot(page);
   await expect(page.locator('#site-support')).toHaveCount(0);
+  await expect(page.locator('#header-support')).toHaveCount(0);
   await page.locator('#player-import-primary').click();
   await expect(page.locator('#player-import-dialog .player-support-prompt')).toHaveCount(0);
   await page.keyboard.press('Escape'); await importSupportFixture(page);
@@ -304,6 +305,54 @@ test('disabled support leaves import and export available without dormant donati
   await expect(page.locator('#player-export-download')).toBeVisible();
   await expect(page.locator('#player-export-dialog .player-support-prompt')).toHaveCount(0);
   expect(state.api).toEqual([]); expect(state.external).toEqual([]);
+});
+
+test('header heart is quiet, labelled in every language, fits beside the wordmark and counts where support was opened', async ({page, context}, testInfo) => {
+  test.setTimeout(120000);
+  const state = await hosted(context), counted = [];
+  page.on('request', request => {
+    if (new URL(request.url()).pathname === '/__usage') counted.push(...(request.postDataJSON()?.events || []));
+  });
+  await playerBoot(page);
+  const heart = page.locator('#header-support');
+  await expect(heart).toHaveCount(1);
+  expect(await heart.evaluate(node => ({beside: node.previousElementSibling.matches('.site-header .brand > .party-brand'),
+    text: node.textContent, icon: node.querySelector('svg').getAttribute('aria-hidden')}))).toEqual({beside: true, text: '', icon: 'true'});
+  const labels = {en: 'Support maimai.party', 'zh-Hans': '赞助 maimai.party', ko: 'maimai.party 후원', ja: 'maimai.party を支援', id: 'Dukung maimai.party'};
+  const layout = () => page.evaluate(() => {
+    const box = selector => document.querySelector(selector).getBoundingClientRect(), heart = box('#header-support');
+    const apart = other => heart.right <= other.left + 1 || heart.left >= other.right - 1 || heart.bottom <= other.top + 1 || heart.top >= other.bottom - 1;
+    return {target: heart.width >= 36 && heart.height >= 36, inside: heart.left >= 0 && heart.right <= innerWidth,
+      overlaps: ['.site-header .party-brand', '.site-header nav', '.language-controls'].filter(selector => !apart(box(selector))),
+      page: document.documentElement.scrollWidth <= innerWidth + 1};
+  });
+  for (const locale of ['en', 'zh-Hans', 'ko', 'ja', 'id']) {
+    await page.evaluate(locale => maimaiI18n.setLocale(locale), locale);
+    await expect(heart).toHaveAttribute('aria-label', labels[locale]); await expect(heart).toHaveAttribute('title', labels[locale]);
+    for (const width of [1280, 740, 600, 390, 360, 346]) {
+      await page.setViewportSize({width, height: 900});
+      expect(await layout(), locale + ' ' + width).toEqual({target: true, inside: true, overlaps: [], page: true});
+      if (locale === 'en' && [1280, 390].includes(width)) await page.screenshot({path: testInfo.outputPath('header-support-' + width + '.png'), clip: {x: 0, y: 0, width, height: 160}});
+    }
+    // Too little room beside the wordmark: the labelled settings entry remains.
+    for (const width of [345, 320, 280]) {
+      await page.setViewportSize({width, height: 900}); await expect(heart).toBeHidden();
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), locale + ' ' + width).toBe(true);
+    }
+  }
+  await page.setViewportSize({width: 1280, height: 900}); await page.evaluate(() => maimaiI18n.setLocale('en'));
+  expect(state.api).toEqual([]); expect(state.external).toEqual([]);
+  await heart.click(); await expect(frame(page).getByRole('heading')).toBeVisible();
+  await page.keyboard.press('Escape'); await expect(heart).toBeFocused();
+  await page.locator('#settings-toggle').click(); await page.locator('#site-support').click();
+  await expect(frame(page).getByRole('heading')).toBeVisible(); await page.keyboard.press('Escape');
+  await page.locator('#about-tab').click(); await page.locator('#support-open').click();
+  await expect(frame(page).getByRole('heading')).toBeVisible(); await page.keyboard.press('Escape');
+  await page.evaluate(() => globalThis.maimaiUsage?.flush?.());
+  const opened = () => counted.filter(row => row.event === 'support_opened');
+  await expect.poll(() => opened().map(row => row.detail).sort()).toEqual(['about', 'header', 'menu']);
+  expect(opened().every(row => Object.keys(row).sort().join() === 'count,detail,event,failure,page' && row.count === 1 && row.failure === '')).toBe(true);
+  expect(JSON.stringify(counted)).not.toContain('cs_test_');
 });
 
 test('language changes translate Support without restarting or replacing checkout',async({page,context})=>{

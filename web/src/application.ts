@@ -232,7 +232,7 @@ export async function createApplication(options: ApplicationOptions) {
   });
   if (!configuration.pilot) {
     const supportClient = createSupportClient({ supportConfig: configuration.support });
-    createSupportStripe({ root: document.body, localization, supportClient, historyPort });
+    createSupportStripe({ root: document.body, localization, supportClient, historyPort, usage });
     createAnalytics({ root: document.body, localization, settings, historyPort });
   }
   const songSearch = createSongSearch({ configuration }),

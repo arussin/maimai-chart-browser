@@ -4,6 +4,7 @@ export const actionLabels = Object.freeze({
   '1_10s': '1–10 seconds',
   over_10s: 'Over 10 seconds',
   search_used: 'Search interactions',
+  support_opened: 'Support checkout opened',
   score_export_opened: 'Image exporter opened',
   score_export_option_changed: 'Export option changed',
   score_export_started: 'Create image requested',
